@@ -36,18 +36,18 @@
 <text class="t-sp-s" x="584" y="376">HELD</text>
 <circle class="bcn" cx="360" cy="300" r="11"/><text class="t-bcn" x="378" y="305">balise 2</text>
 <rect class="nd nd-hw" x="700" y="130" width="330" height="116" rx="3"/>
-<text class="t-nd" x="714" y="155">Borne d'entrée simulée</text>
-<text class="t-nd-s" x="714" y="174">Raspberry Pi · relais · témoin vert</text>
-<text class="t-nd-s" x="714" y="189">affiche du QR signé</text>
-<text class="t-nd-s" x="714" y="204">webcam pour la preuve de concept ANPR</text>
+<text class="t-nd" x="714" y="155">Borne d'entrée</text>
+<text class="t-nd-s" x="714" y="174">QR signé imprimé, affiché au mur</text>
+<text class="t-nd-s" x="714" y="189">aucune barrière physique</text>
+<text class="t-nd-s" x="714" y="204">l'app affiche l'ouverture</text>
 <rect class="nd nd-hw" x="700" y="274" width="330" height="116" rx="3"/>
-<text class="t-nd" x="714" y="299">Barrière de sortie simulée</text>
-<text class="t-nd-s" x="714" y="318">second relais · témoin</text>
-<text class="t-nd-s" x="714" y="333">n'ouvre qu'après capture Stripe</text>
-<text class="t-nd-s" x="714" y="348">QR de repli affiché</text>
+<text class="t-nd" x="714" y="299">Borne de sortie</text>
+<text class="t-nd-s" x="714" y="318">QR signé imprimé</text>
+<text class="t-nd-s" x="714" y="333">capture Stripe en mode test</text>
+<text class="t-nd-s" x="714" y="348">l'app affiche le reçu et l'ouverture</text>
 <path class="flow5" d="M700,188 H660 V148 H600" marker-end="url(#ar5)"/>
 <path class="flow5" d="M700,332 H660 V420 H600" marker-end="url(#ar5)"/>
 <text class="t-lnk" x="612" y="440">sortie</text>
 <text class="t-lnk" x="612" y="140">entrée</text>
-<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — le montage complet tient sur une table et deux murs.</text>
+<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — seules les balises sont du matériel ; tout le reste est du logiciel.</text>
 </svg>

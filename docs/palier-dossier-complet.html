@@ -1233,7 +1233,7 @@
         <tr><td>level</td><td class="t">lot_id, code, display_order</td><td>Le palier ; l'ordre de remplissage suit <code>display_order</code></td></tr>
         <tr><td>aisle</td><td class="t">level_id, code, beacon_major, map_polygon</td><td><code>beacon_major</code> lie l'allée à sa région iBeacon — une seule par allée</td></tr>
         <tr><td>beacon</td><td class="t">aisle_id, uuid, major, minor, battery_at, status</td><td>Le suivi de pile est une exigence d'exploitation, pas un luxe</td></tr>
-        <tr><td>gate</td><td class="t">lot_id, kind, qr_secret, controller_url</td><td><code>qr_secret</code> signe le jeton du QR (HMAC) ; <code>kind</code> vaut entrée ou sortie</td></tr>
+        <tr><td>gate</td><td class="t">lot_id, kind, qr_secret, integration_kind, endpoint, verified_at</td><td><code>qr_secret</code> signe le jeton du QR (HMAC) ; <code>kind</code> vaut entrée ou sortie. <code>integration_kind</code> distingue le contact sec de l'API du contrôle d'accès existant, et <code>verified_at</code> fait de la barrière un pré-requis d'adhésion au même titre que le Wi-Fi</td></tr>
         <tr><td>app_user</td><td class="t">oauth_provider, oauth_subject, email, stripe_customer_id, default_pm_id</td><td>Aucun mot de passe. Le client Stripe vit sur la plateforme, pas chez l'opérateur</td></tr>
         <tr><td>vehicle</td><td class="t">user_id, plate, province, is_default</td><td>Plusieurs plaques par compte ; <code>is_default</code> sert au rapprochement ANPR</td></tr>
         <tr><td>hold</td><td class="t">user_id, lot_id, spot_id, expires_at, status</td><td>Contrainte d'unicité sur <code>user_id</code> pour les holds actifs : un seul à la fois</td></tr>
@@ -1968,7 +1968,7 @@
     <tr><td>Module balises / mouvement</td><td>Swift (iOS) · Kotlin (Android)</td><td>iOS livré ; Android spécifié, non implémenté</td></tr>
     <tr><td>API</td><td>TypeScript · Postgres</td><td>Complète, y compris le planificateur</td></tr>
     <tr><td>Tableau de bord opérateur</td><td>Web · types partagés avec l'API</td><td>Onboarding Connect, tarifs, plan, occupation. Pas d'analytique</td></tr>
-    <tr><td>Contrôleur de barrière</td><td>Raspberry Pi · endpoint HTTP</td><td>Relais et témoin lumineux, pas de servomoteur</td></tr>
+    <tr><td>Adaptateur d'ouverture de barrière</td><td>Contact sec ou API du contrôle d'accès</td><td>Spécifié, non câblé : la démonstration confirme les ouvertures dans l'application</td></tr>
   </tbody></table></div>
 </section>
 
@@ -2032,8 +2032,8 @@
 <rect class="nd nd-hw" x="64" y="372" width="250" height="104" rx="3"/>
 <text class="t-nd" x="78" y="397">Borne d'entrée</text>
 <text class="t-nd-s" x="78" y="416">QR statique signé (HMAC)</text>
-<text class="t-nd-s" x="78" y="431">contrôleur Raspberry Pi</text>
-<text class="t-nd-s" x="78" y="446">relais de barrière</text>
+<text class="t-nd-s" x="78" y="431">contact sec ou API du système</text>
+<text class="t-nd-s" x="78" y="446">de contrôle d'accès existant</text>
 <rect class="nd nd-hw" x="334" y="372" width="250" height="104" rx="3"/>
 <text class="t-nd" x="348" y="397">Caméra d'entrée</text>
 <text class="t-nd-s" x="348" y="416">vise la plaque arrière</text>
@@ -2043,17 +2043,17 @@
 <text class="t-nd" x="618" y="397">Barrière de sortie</text>
 <text class="t-nd-s" x="618" y="416">caméra ANPR</text>
 <text class="t-nd-s" x="618" y="431">QR de repli</text>
-<text class="t-nd-s" x="618" y="446">contrôleur + relais</text>
+<text class="t-nd-s" x="618" y="446">contact sec ou API existante</text>
 <rect class="nd nd-hw" x="874" y="372" width="242" height="104" rx="3"/>
 <text class="t-nd" x="888" y="397">Balises BLE</text>
 <text class="t-nd-s" x="888" y="416">une par allée</text>
 <text class="t-nd-s" x="888" y="431">UUID unique · major = allée</text>
 <text class="t-nd-s" x="888" y="446">pile remontée à l'API</text>
 <rect class="nd nd-net" x="64" y="500" width="520" height="92" rx="3"/>
-<text class="t-nd" x="78" y="525">Réseau Wi-Fi du garage</text>
-<text class="t-nd-s" x="78" y="544">pré-requis d'adhésion à la charge de l'opérateur</text>
-<text class="t-nd-s" x="78" y="559">couverture exigée : paliers + les deux bornes</text>
-<text class="t-nd-s" x="78" y="574">matérialisé par parking_lot.wifi_verified_at</text>
+<text class="t-nd" x="78" y="525">Pré-requis d'adhésion</text>
+<text class="t-nd-s" x="78" y="544">Wi-Fi : paliers et les deux bornes</text>
+<text class="t-nd-s" x="78" y="559">barrière pilotable : contact sec ou API</text>
+<text class="t-nd-s" x="78" y="574">wifi_verified_at et gate.verified_at</text>
 <rect class="nd nd-neg" x="604" y="500" width="512" height="92" rx="3"/>
 <text class="t-nd" x="618" y="525">Ce que le Wi-Fi ne fait pas</text>
 <text class="t-nd-s" x="618" y="544">iOS n'expose aucun scan Wi-Fi aux apps tierces</text>
@@ -2080,12 +2080,13 @@
   <figcaption>Le bloc en pointillé rappelle ce que le Wi-Fi du garage ne fournit pas — une confusion facile à commettre en présentation.</figcaption></div></figure>
 <div class="note"><b>Le planificateur tourne en instance unique.</b>
   Deux instances exécutant <code>expire_holds</code> en parallèle libéreraient deux fois la même place, ou pire, annuleraient une session valide pendant qu'une autre instance la confirme. Un verrou consultatif Postgres suffit à le garantir — et c'est plus simple à défendre qu'un système de files.</div>
-<div class="note warn"><b>Le garage est la seule zone où une panne est invisible depuis le nuage.</b>
+<div class="note warn"><b>Le garage porte les deux pré-requis d'adhésion, et c'est la seule zone où une panne est invisible depuis le nuage.</b>
+  Un parking rejoint le réseau à deux conditions : une couverture Wi-Fi aux paliers et aux deux bornes, et une barrière pilotable — par contact sec, universel sur les opérateurs industriels, ou par l'API de son système de contrôle d'accès quand il en expose une. Palier n'installe pas de barrières ; il commande celles qui sont déjà là.
   Une balise dont la pile est morte n'émet rien : aucune erreur, juste des confirmations qui n'arrivent plus. D'où le <code>heartbeat</code> des contrôleurs et la remontée du niveau de pile — sans eux, le premier symptôme d'une panne serait une plainte d'usager.</div>
 </section>
 <section>
   <div class="sec-head"><h3>Montage de la démonstration</h3><span class="tag">2 allées · 10 places · 2 balises</span></div>
-  <p class="lede">Le prototype se démontre en environnement contrôlé. Les balises sont réelles — c'est le cœur technique et une balise simulée ne prouverait rien du comportement en arrière-plan. Les barrières, elles, n'ont rien à prouver.</p>
+  <p class="lede">Le prototype se démontre en environnement contrôlé. Les balises sont le seul matériel du montage : c'est le cœur technique, et une balise simulée ne prouverait rien du comportement en arrière-plan. Tout le reste — ouvertures de barrière comprises — se confirme dans l'application.</p>
   <figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1100 560" role="img" aria-label="Plan physique du montage de démonstration.">
 <rect class="floor" x="40" y="60" width="1020" height="440" rx="4"/>
 <text class="t-zn" x="60" y="90">Palier de démonstration — deux allées, dix places</text>
@@ -2124,20 +2125,20 @@
 <text class="t-sp-s" x="584" y="376">HELD</text>
 <circle class="bcn" cx="360" cy="300" r="11"/><text class="t-bcn" x="378" y="305">balise 2</text>
 <rect class="nd nd-hw" x="700" y="130" width="330" height="116" rx="3"/>
-<text class="t-nd" x="714" y="155">Borne d'entrée simulée</text>
-<text class="t-nd-s" x="714" y="174">Raspberry Pi · relais · témoin vert</text>
-<text class="t-nd-s" x="714" y="189">affiche du QR signé</text>
-<text class="t-nd-s" x="714" y="204">webcam pour la preuve de concept ANPR</text>
+<text class="t-nd" x="714" y="155">Borne d'entrée</text>
+<text class="t-nd-s" x="714" y="174">QR signé imprimé, affiché au mur</text>
+<text class="t-nd-s" x="714" y="189">aucune barrière physique</text>
+<text class="t-nd-s" x="714" y="204">l'app affiche l'ouverture</text>
 <rect class="nd nd-hw" x="700" y="274" width="330" height="116" rx="3"/>
-<text class="t-nd" x="714" y="299">Barrière de sortie simulée</text>
-<text class="t-nd-s" x="714" y="318">second relais · témoin</text>
-<text class="t-nd-s" x="714" y="333">n'ouvre qu'après capture Stripe</text>
-<text class="t-nd-s" x="714" y="348">QR de repli affiché</text>
+<text class="t-nd" x="714" y="299">Borne de sortie</text>
+<text class="t-nd-s" x="714" y="318">QR signé imprimé</text>
+<text class="t-nd-s" x="714" y="333">capture Stripe en mode test</text>
+<text class="t-nd-s" x="714" y="348">l'app affiche le reçu et l'ouverture</text>
 <path class="flow5" d="M700,188 H660 V148 H600" marker-end="url(#ar5)"/>
 <path class="flow5" d="M700,332 H660 V420 H600" marker-end="url(#ar5)"/>
 <text class="t-lnk" x="612" y="440">sortie</text>
 <text class="t-lnk" x="612" y="140">entrée</text>
-<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — le montage complet tient sur une table et deux murs.</text>
+<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — seules les balises sont du matériel ; tout le reste est du logiciel.</text>
 </svg></div>
   <figcaption>Dix places suffisent à montrer les six états, l'assignation par allée et le cas de la mauvaise place.</figcaption></div></figure>
 <div class="tbl-scroll"><table>
@@ -2145,14 +2146,14 @@
   <thead><tr><th>Élément</th><th>Quantité</th><th>Rôle dans la démonstration</th></tr></thead>
   <tbody>
     <tr><td>Balises BLE</td><td class="num">2</td><td>Une par allée. Prouvent le réveil de l'app en arrière-plan et la confirmation de zone — le seul matériel non simulable</td></tr>
-    <tr><td>Raspberry Pi + relais</td><td class="num">2</td><td>Barrière d'entrée et barrière de sortie ; un témoin vert remplace le bras</td></tr>
-    <tr><td>Webcam</td><td class="num">1</td><td>Preuve de concept ANPR sur image fixe, pas en conditions réelles</td></tr>
+        <tr><td>Webcam</td><td class="num">1</td><td>Preuve de concept de lecture de plaque sur image fixe, hors barrière</td></tr>
     <tr><td>QR imprimés</td><td class="num">2</td><td>Bornes d'entrée et de sortie. Aucun QR aux places — c'était la décision de conception</td></tr>
+    <tr><td>Matériel de barrière</td><td class="num">0</td><td>Aucun. Les ouvertures sont confirmées dans l'application ; la barrière ne prouve rien que le reste ne prouve déjà</td></tr>
     <tr><td>iPhone de test</td><td class="num">1</td><td>Démonstration au jury : arrière-plan plus prévisible qu'Android</td></tr>
     <tr><td>Étiquettes de places</td><td class="num">10</td><td>Numéros au sol ou au mur, sans marqueur scannable</td></tr>
   </tbody></table></div>
 <div class="note"><b>Ce que la démonstration ne montrera pas, et qu'il faut annoncer plutôt que laisser découvrir.</b>
-  L'ANPR en conditions réelles — plaque en mouvement, éclairage de garage — n'est pas reproductible sur une table. Le comportement Android non plus, puisque le module natif n'est pas livré au MVP. Les annoncer en ouverture vaut mieux que de se les faire signaler en question.</div>
+  L'ouverture physique d'une barrière : aucun matériel de barrière n'est monté, l'application affiche l'ouverture. La lecture de plaque en conditions réelles — plaque en mouvement, éclairage de garage — n'est pas reproductible sur une table. Le comportement Android non plus, puisque le module natif n'est pas livré au MVP. Les annoncer en ouverture vaut mieux que de se les faire signaler en question.</div>
 </section>
 <section>
   <div class="sec-head"><h3>Ordre de construction</h3><span class="tag">Ce qui débloque quoi</span></div>
@@ -2165,7 +2166,7 @@
       <tr><td>3</td><td>API et adaptateurs, Stripe en mode test</td><td>Le parcours complet en appels HTTP, sans app ni matériel</td></tr>
       <tr><td>4</td><td>Module natif iOS : balises et mouvement, avec le contrat du pont</td><td>Le mécanisme central — à faire tôt, c'est le risque technique du projet</td></tr>
       <tr><td>5</td><td>Écrans React Native</td><td>La démonstration au jury</td></tr>
-      <tr><td>6</td><td>Contrôleurs de barrière et tableau de bord opérateur</td><td>Le récit complet, de l'adhésion d'un opérateur à la sortie du véhicule</td></tr>
+      <tr><td>6</td><td>Tableau de bord opérateur et adaptateur d'ouverture de barrière</td><td>Le récit complet, de l'adhésion d'un opérateur à la sortie du véhicule</td></tr>
     </tbody></table></div>
   <div class="note warn"><b>L'étape 4 avant l'étape 5, pas l'inverse.</b>
     L'ordre naturel serait de construire les écrans d'abord — c'est visible, c'est gratifiant. Mais le module natif est le seul chantier dont l'échec remettrait en cause la conception elle-même : si le réveil en arrière-plan ne fonctionne pas de façon fiable, la confirmation par tap doit être repensée. Découvrir cela à trois semaines de la remise serait fatal ; le découvrir tôt laisse le temps de basculer sur un mécanisme de repli.</div>

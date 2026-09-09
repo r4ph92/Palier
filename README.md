@@ -33,7 +33,7 @@ pré-autorisation existante, puis la barrière ouvre. Aucun geste requis.
 Ouvrir un fichier directement dans un navigateur. Les pages s'adaptent au thème
 clair ou sombre et comportent une feuille de style d'impression.
 
-Les 30 décisions de conception qui ont produit ces documents sont consignées dans
+Les 32 décisions de conception qui ont produit ces documents sont consignées dans
 [`DECISIONS.md`](DECISIONS.md).
 
 ## Pile technique retenue
@@ -46,7 +46,7 @@ Les 30 décisions de conception qui ont produit ces documents sont consignées d
 | Base de données | Postgres — assignation atomique par `FOR UPDATE SKIP LOCKED` |
 | Paiement | Stripe Connect, comptes Express, charges destination, capture manuelle |
 | Authentification | OAuth Apple + Google, aucun mot de passe stocké |
-| Terrain | QR signés (HMAC) aux bornes, ANPR à la sortie, contrôleurs sur Raspberry Pi |
+| Terrain | QR signés (HMAC) aux bornes, ANPR à la sortie, ouverture par contact sec ou API du contrôle d'accès existant |
 
 ## Régénérer les diagrammes
 
@@ -69,7 +69,7 @@ Les SVG intermédiaires sont écrits dans `tools/out/`, les pages finales dans `
 3. API et adaptateurs, Stripe en mode test
 4. **Module natif iOS** — balises et mouvement ; à faire tôt, c'est le risque technique du projet
 5. Écrans React Native
-6. Contrôleurs de barrière et tableau de bord opérateur
+6. Tableau de bord opérateur et adaptateur d'ouverture de barrière
 
 L'étape 4 précède délibérément les écrans : c'est le seul chantier dont l'échec
 remettrait en cause la conception elle-même.

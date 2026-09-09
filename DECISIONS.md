@@ -169,6 +169,38 @@ comportement en arrière-plan. La barrière n'a rien à prouver.
 croissance est bornée aux parkings couverts ou prêts à investir ; l'installation
 par la plateforme reste une porte de sortie commerciale, pas un engagement.
 
+## Tour 7 — Intégration à la barrière
+
+| # | Décision | Réponse |
+|---|----------|---------|
+| Q31 | Comment Palier ouvre une barrière existante | Contact sec **et** API du contrôle d'accès, selon l'équipement |
+| Q32 | Matériel de barrière pour la démonstration | Aucun — toutes les ouvertures sont confirmées dans l'application |
+
+**Origine de ces deux questions** : le Raspberry Pi, décidé en Q26 pour le seul montage
+de démonstration, avait fui dans le diagramme de déploiement et dans le tableau du
+document 04, qui décrivent le système réel. Un artefact de prototype présenté comme de
+l'architecture produit.
+
+**Q31** — Palier n'installe pas de barrières, il commande celles qui sont déjà là. Le
+contact sec est le dénominateur commun de tout le parc : tout opérateur industriel
+s'ouvre en fermant un relais. L'API du système de contrôle d'accès évite d'ajouter du
+matériel, mais n'existe que sur les installations récentes. D'où les deux, avec le
+contact sec comme socle.
+
+Un Raspberry Pi en production aurait été refusé par n'importe quelle équipe de
+maintenance : carte SD qui se corrompt à la coupure, pas de chien de garde matériel,
+aucune plage de température industrielle, aucun contrat de support — le tout pour
+fermer un contact. Ce qui se pose vraiment est un module relais sur rail DIN.
+
+**Conséquence sur le modèle** : la table `gate` gagne `integration_kind`, `endpoint` et
+`verified_at`. La barrière devient un **deuxième pré-requis d'adhésion**, à côté du
+Wi-Fi de Q30 — et probablement le plus bloquant des deux, puisqu'il touche à de
+l'équipement sous contrat de service.
+
+**Q32** — Sans barrière physique, le montage se réduit aux deux balises, qui sont le
+seul matériel dont la simulation prouverait quelque chose de faux. Une barrière ne
+démontre rien que la capture Stripe et l'écran de l'application ne démontrent déjà.
+
 ## Décisions prises sans validation explicite
 
 Trois points ont été tranchés en cours de rédaction et méritent une relecture.

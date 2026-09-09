@@ -36,20 +36,20 @@ o.append(node(870, 210, 250, 58, "OAuth Apple · Google", ["authentification"], 
 
 o.append(zone(40, 320, 1100, 300, "Garage — équipement de terrain", "zn zn-site"))
 o.append(node(64, 372, 250, 104, "Borne d'entrée", ["QR statique signé (HMAC)",
-                                                    "contrôleur Raspberry Pi",
-                                                    "relais de barrière"], "nd nd-hw"))
+                                                    "contact sec ou API du système",
+                                                    "de contrôle d'accès existant"], "nd nd-hw"))
 o.append(node(334, 372, 250, 104, "Caméra d'entrée", ["vise la plaque arrière",
                                                       "posée après la barrière",
                                                       "reconnaissance hébergée"], "nd nd-hw"))
 o.append(node(604, 372, 250, 104, "Barrière de sortie", ["caméra ANPR",
                                                          "QR de repli",
-                                                         "contrôleur + relais"], "nd nd-hw"))
+                                                         "contact sec ou API existante"], "nd nd-hw"))
 o.append(node(874, 372, 242, 104, "Balises BLE", ["une par allée",
                                                   "UUID unique · major = allée",
                                                   "pile remontée à l'API"], "nd nd-hw"))
-o.append(node(64, 500, 520, 92, "Réseau Wi-Fi du garage", ["pré-requis d'adhésion à la charge de l'opérateur",
-                                                           "couverture exigée : paliers + les deux bornes",
-                                                           "matérialisé par parking_lot.wifi_verified_at"], "nd nd-net"))
+o.append(node(64, 500, 520, 92, "Pré-requis d'adhésion", ["Wi-Fi : paliers et les deux bornes",
+                                                           "barrière pilotable : contact sec ou API",
+                                                           "wifi_verified_at et gate.verified_at"], "nd nd-net"))
 o.append(node(604, 500, 512, 92, "Ce que le Wi-Fi ne fait pas", ["iOS n'expose aucun scan Wi-Fi aux apps tierces",
                                                                   "le Wi-Fi RTT est Android seulement",
                                                                   "aucun rôle dans le positionnement"], "nd nd-neg"))
@@ -91,17 +91,17 @@ for i in range(5):
     p.append('<text class="t-sp-s" x="%d" y="376">%s</text>' % (x + 52, st))
 p.append('<circle class="bcn" cx="360" cy="300" r="11"/><text class="t-bcn" x="378" y="305">balise 2</text>')
 
-p.append(node(700, 130, 330, 116, "Borne d'entrée simulée", ["Raspberry Pi · relais · témoin vert",
-                                                             "affiche du QR signé",
-                                                             "webcam pour la preuve de concept ANPR"], "nd nd-hw"))
-p.append(node(700, 274, 330, 116, "Barrière de sortie simulée", ["second relais · témoin",
-                                                                 "n'ouvre qu'après capture Stripe",
-                                                                 "QR de repli affiché"], "nd nd-hw"))
+p.append(node(700, 130, 330, 116, "Borne d'entrée", ["QR signé imprimé, affiché au mur",
+                                                     "aucune barrière physique",
+                                                     "l'app affiche l'ouverture"], "nd nd-hw"))
+p.append(node(700, 274, 330, 116, "Borne de sortie", ["QR signé imprimé",
+                                                       "capture Stripe en mode test",
+                                                       "l'app affiche le reçu et l'ouverture"], "nd nd-hw"))
 p.append('<path class="flow5" d="M700,188 H660 V148 H600" marker-end="url(#ar5)"/>')
 p.append('<path class="flow5" d="M700,332 H660 V420 H600" marker-end="url(#ar5)"/>')
 p.append('<text class="t-lnk" x="612" y="440">sortie</text>')
 p.append('<text class="t-lnk" x="612" y="140">entrée</text>')
-p.append('<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — le montage complet tient sur une table et deux murs.</text>')
+p.append('<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — seules les balises sont du matériel ; tout le reste est du logiciel.</text>')
 p.append('</svg>')
 io.open('out/plan.svg','w',encoding='utf-8').write("\n".join(p))
 print('ok')

@@ -319,7 +319,7 @@
         <tr><td>level</td><td class="t">lot_id, code, display_order</td><td>Le palier ; l'ordre de remplissage suit <code>display_order</code></td></tr>
         <tr><td>aisle</td><td class="t">level_id, code, beacon_major, map_polygon</td><td><code>beacon_major</code> lie l'allée à sa région iBeacon — une seule par allée</td></tr>
         <tr><td>beacon</td><td class="t">aisle_id, uuid, major, minor, battery_at, status</td><td>Le suivi de pile est une exigence d'exploitation, pas un luxe</td></tr>
-        <tr><td>gate</td><td class="t">lot_id, kind, qr_secret, controller_url</td><td><code>qr_secret</code> signe le jeton du QR (HMAC) ; <code>kind</code> vaut entrée ou sortie</td></tr>
+        <tr><td>gate</td><td class="t">lot_id, kind, qr_secret, integration_kind, endpoint, verified_at</td><td><code>qr_secret</code> signe le jeton du QR (HMAC) ; <code>kind</code> vaut entrée ou sortie. <code>integration_kind</code> distingue le contact sec de l'API du contrôle d'accès existant, et <code>verified_at</code> fait de la barrière un pré-requis d'adhésion au même titre que le Wi-Fi</td></tr>
         <tr><td>app_user</td><td class="t">oauth_provider, oauth_subject, email, stripe_customer_id, default_pm_id</td><td>Aucun mot de passe. Le client Stripe vit sur la plateforme, pas chez l'opérateur</td></tr>
         <tr><td>vehicle</td><td class="t">user_id, plate, province, is_default</td><td>Plusieurs plaques par compte ; <code>is_default</code> sert au rapprochement ANPR</td></tr>
         <tr><td>hold</td><td class="t">user_id, lot_id, spot_id, expires_at, status</td><td>Contrainte d'unicité sur <code>user_id</code> pour les holds actifs : un seul à la fois</td></tr>
