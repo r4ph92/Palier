@@ -13,7 +13,7 @@ def zone(x, y, w, h, label, cls="zn"):
             '<text class="t-zn" x="%d" y="%d">%s</text>') % (cls, x, y, w, h, x + 16, y + 24, label)
 
 # ---------------- deploiement ----------------
-o = ['<svg viewBox="0 0 1180 800" role="img" aria-label="Diagramme de déploiement de Palier.">']
+o = ['<svg viewBox="0 0 1180 664" role="img" aria-label="Diagramme de déploiement de Palier.">']
 
 o.append(zone(40, 30, 330, 250, "Appareils des usagers"))
 o.append(node(60, 66, 290, 92, "iPhone", ["app React Native + module Swift",
@@ -54,14 +54,21 @@ o.append(node(604, 500, 512, 92, "Ce que le Wi-Fi ne fait pas", ["iOS n'expose a
                                                                   "le Wi-Fi RTT est Android seulement",
                                                                   "aucun rôle dans le positionnement"], "nd nd-neg"))
 
+# liaisons fleches
 o.append('<g class="lnk">')
-for d in ["M350,112 H430", "M350,218 H430", "M790,112 H870", "M790,112 H830 V169 H870",
-          "M700,262 V300 H700", "M190,262 V320", "M700,158 V174",
-          "M314,424 H334", "M584,424 H604", "M854,424 H874",
-          "M204,372 V300", "M459,372 V300", "M729,372 V300", "M995,372 V300"]:
+for d in ["M350,112 H430",                       # iPhone -> API
+          "M350,218 H392 V112 H430",             # navigateur operateur -> API
+          "M790,112 H870",                       # API -> Stripe
+          "M790,112 H830 V169 H870",             # API -> APNs
+          "M790,112 H830 V210 H870",             # API -> OAuth
+          "M700,158 V174",                       # API -> planificateur
+          "M610,302 V158"]:                      # bus du garage -> API
     o.append('<path d="%s" marker-end="url(#ar5)"/>' % d)
 o.append('</g>')
-o.append('<text class="t-lnk" x="700" y="312">HTTPS · Wi-Fi du garage</text>')
+# bus de collecte du garage, sans tete de fleche
+o.append('<g class="lnk"><path d="M204,372 V302 H995 V372"/>'
+         '<path d="M459,372 V302"/><path d="M729,372 V302"/></g>')
+o.append('<text class="t-lnk" x="700" y="294">HTTPS · Wi-Fi du garage</text>')
 o.append('</svg>')
 io.open('out/dep.svg','w',encoding='utf-8').write("\n".join(o))
 
