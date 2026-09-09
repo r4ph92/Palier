@@ -28,6 +28,7 @@ pré-autorisation existante, puis la barrière ouvre. Aucun geste requis.
 | 03 | `docs/03-sequences.html` | 4 diagrammes de séquence UML : entrée, confirmation, sortie, adhésion opérateur |
 | 04 | `docs/04-architecture.html` | Couches de l'API, architecture React Native, contrat du pont natif |
 | 05 | `docs/05-deploiement.html` | Déploiement, montage de démonstration, matériel, ordre de construction |
+| — | `docs/palier-dossier-complet.html` | **Les cinq documents réunis en une seule page**, avec sommaire — la version à remettre |
 
 Ouvrir un fichier directement dans un navigateur. Les pages s'adaptent au thème
 clair ou sombre et comportent une feuille de style d'impression.
@@ -56,6 +57,7 @@ cd tools
 python3 build3.py && python3 assemble3.py    # séquences
 python3 build4.py && python3 assemble4.py    # architecture
 python3 build5.py && python3 assemble5.py    # déploiement
+python3 assemble_all.py                      # fusion des cinq en une page
 ```
 
 Les SVG intermédiaires sont écrits dans `tools/out/`, les pages finales dans `docs/`.
