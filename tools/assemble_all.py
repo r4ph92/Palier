@@ -105,7 +105,9 @@ SECH3 = "\n".join(
     u'#%s .sec-head h3{font-family:"Archivo",sans-serif;font-weight:600;font-size:1.42rem;'
     u'letter-spacing:-.02em;margin:0;line-height:1.15}' % a[0] for a in arts)
 
-HEAD = u"""<title>Palier — Dossier de conception</title>
+HEAD = u"""<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palier — Dossier de conception</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
