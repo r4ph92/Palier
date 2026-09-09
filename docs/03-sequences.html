@@ -1,0 +1,400 @@
+<title>Palier — Diagrammes de séquence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+  :root{
+    --ground:#EDEEEA; --surface:#F8F9F6; --surface-2:#E4E6E0;
+    --ink:#191C1A; --ink-2:#4B534D; --ink-3:#6E766F;
+    --line:#D2D6CE; --line-strong:#9BA298;
+    --accent:#1B4B8F; --accent-soft:#DFE7F3;
+    --store:#2E7D4F; --store-soft:#DFEEE6;
+    --ext:#5A6159; --ext-soft:#E7E9E3;
+    --held:#6C55A0; --held-soft:#E7E1F2;
+    --warn:#A06407; --warn-soft:#F6EBD6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#121513; --surface:#1A1E1B; --surface-2:#242925;
+      --ink:#E7EAE4; --ink-2:#AEB6AE; --ink-3:#8B948C;
+      --line:#2C322D; --line-strong:#59615A;
+      --accent:#8CB4E8; --accent-soft:#1C2A3A;
+      --store:#63B487; --store-soft:#17281F;
+      --ext:#A7AFA6; --ext-soft:#22261F;
+      --held:#A38FD4; --held-soft:#231D33;
+      --warn:#E0A63C; --warn-soft:#2E2410;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#121513; --surface:#1A1E1B; --surface-2:#242925;
+    --ink:#E7EAE4; --ink-2:#AEB6AE; --ink-3:#8B948C;
+    --line:#2C322D; --line-strong:#59615A;
+    --accent:#8CB4E8; --accent-soft:#1C2A3A;
+    --store:#63B487; --store-soft:#17281F;
+    --ext:#A7AFA6; --ext-soft:#22261F;
+    --held:#A38FD4; --held-soft:#231D33;
+    --warn:#E0A63C; --warn-soft:#2E2410;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);
+    font-family:"Newsreader",Georgia,serif;font-size:1.02rem;line-height:1.6;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(18px,4vw,40px) 90px}
+  header.mast{padding:clamp(44px,8vw,88px) 0 0}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:.78rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-3)}
+  h1{font-family:"Archivo",system-ui,sans-serif;font-weight:700;letter-spacing:-.028em;
+    line-height:1;font-size:clamp(2.2rem,6vw,3rem);margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-2);max-width:64ch;margin:.4em 0 0;font-size:1.1rem}
+  .mast-rule{height:5px;background:var(--ink);margin:30px 0 0;border:0}
+  .mast-rule::after{content:"";display:block;height:2px;background:var(--ink);margin-top:4px}
+  section{margin-top:clamp(46px,7vw,74px)}
+  .sec-head{display:flex;align-items:baseline;gap:16px;border-bottom:2px solid var(--ink);
+    padding-bottom:9px;margin-bottom:22px;flex-wrap:wrap}
+  .sec-head h2{font-family:"Archivo",sans-serif;font-weight:600;font-size:1.5rem;
+    letter-spacing:-.02em;margin:0}
+  .sec-head .tag{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:.78rem;
+    color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
+  .lede{max-width:70ch;color:var(--ink-2);margin:0 0 24px}
+  figure{margin:0}
+  .fig{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    padding:16px 8px 8px}
+  .fig-scroll{overflow-x:auto;overflow-y:hidden}
+  .fig-scroll svg{display:block;height:auto;min-width:1000px;width:100%}
+  figcaption{font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--ink-3);
+    padding:12px 14px 4px;line-height:1.6}
+  .ll{stroke:var(--line-strong);stroke-width:1.2;stroke-dasharray:4 5}
+  .p{stroke-width:1.9}
+  .p-ext{fill:var(--ext-soft);stroke:var(--ext)}
+  .p-app{fill:var(--accent-soft);stroke:var(--accent)}
+  .p-api{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.8}
+  .p-db{fill:var(--store-soft);stroke:var(--store)}
+  .p-svc{fill:var(--held-soft);stroke:var(--held)}
+  .t-p{font-family:"Archivo",sans-serif;font-size:13px;font-weight:600;fill:var(--ink)}
+  .t-ps{font-family:"IBM Plex Mono",monospace;font-size:10px;fill:var(--ink-3)}
+  .msg{fill:none;stroke:var(--ink-2);stroke-width:1.6}
+  .ret{fill:none;stroke:var(--ink-3);stroke-width:1.5;stroke-dasharray:6 4}
+  .frm{fill:none;stroke:var(--warn);stroke-width:1.4}
+  .frm-tab{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.4}
+  .frm-sep{stroke:var(--warn);stroke-width:1.2;stroke-dasharray:5 4}
+  .t-frag{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;fill:var(--warn)}
+  .t-frag-s{font-family:"IBM Plex Mono",monospace;font-size:10.5px;fill:var(--ink-3)}
+  .t-msg{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--ink-2)}
+  .found{fill:var(--ink-2)}
+  .note{background:var(--surface);border-left:3px solid var(--accent);border-radius:0 3px 3px 0;
+    padding:14px 18px;margin-top:20px;color:var(--ink-2);font-size:.96rem;max-width:78ch}
+  .note.warn{border-left-color:var(--warn)}
+  .note b{color:var(--ink);font-weight:500}
+  code{font-family:"IBM Plex Mono",monospace;font-size:.84em;background:var(--surface-2);
+    padding:1px 5px;border-radius:2px;color:var(--ink)}
+  .key{display:flex;flex-wrap:wrap;gap:8px 22px;margin:0 0 26px;padding:0;list-style:none;
+    font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--ink-3)}
+  .key li{display:flex;align-items:center;gap:8px}
+  .key i{width:26px;height:0;border-top-width:2px;display:inline-block}
+  footer{margin-top:70px;border-top:2px solid var(--ink);padding-top:16px;
+    font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--ink-3);
+    display:flex;flex-wrap:wrap;gap:6px 24px}
+  @media print{body{background:#fff;color:#000}.wrap{max-width:none;padding:0}
+    .fig{border:1px solid #999;break-inside:avoid}section{break-inside:avoid-page}}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="sq" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/></marker></defs></svg>
+<div class="wrap">
+<header class="mast">
+  <div class="eyebrow">Palier · Documentation de conception · 3 / 5</div>
+  <h1>Diagrammes de séquence</h1>
+  <p class="sub">Les quatre parcours où plusieurs systèmes se coordonnent et où l'ordre des appels est une décision de conception, pas un détail d'implémentation.</p>
+  <hr class="mast-rule">
+</header>
+<section>
+  <div class="sec-head"><h2>Séquence A — Entrée au parking</h2><span class="tag">7 participants · 17 messages</span></div>
+  <p class="lede">Le parcours le plus contraint du système : quatre sous-systèmes doivent réussir dans un ordre précis pendant qu'une voiture attend devant une barrière, avec une file derrière elle.</p>
+  <ul class="key">
+    <li><i style="border-top:2px solid var(--ink-2)"></i> appel</li>
+    <li><i style="border-top:2px dashed var(--ink-3)"></i> retour</li>
+    <li><span style="color:var(--warn)">▭</span> fragment conditionnel</li>
+  </ul>
+<figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1436 1082" role="img" aria-label="Séquence d&#x27;entrée">
+<line class="ll" x1="130" y1="78" x2="130" y2="1064"/>
+<line class="ll" x1="326" y1="78" x2="326" y2="1064"/>
+<line class="ll" x1="522" y1="78" x2="522" y2="1064"/>
+<line class="ll" x1="718" y1="78" x2="718" y2="1064"/>
+<line class="ll" x1="914" y1="78" x2="914" y2="1064"/>
+<line class="ll" x1="1110" y1="78" x2="1110" y2="1064"/>
+<line class="ll" x1="1306" y1="78" x2="1306" y2="1064"/>
+<rect class="frm" x="28" y="664" width="1380" height="346"/>
+<path class="frm-tab" d="M28,664 h58 l14,14 v10 h-72 z"/>
+<text class="t-frag" x="36" y="681">alt</text>
+<text class="t-frag-s" x="106" y="681">[ plaque lue et conforme ]</text>
+<line class="frm-sep" x1="28" y1="794" x2="1408" y2="794"/>
+<text class="t-frag-s" x="36" y="809">[ plaque lue mais différente du compte ]</text>
+<line class="frm-sep" x1="28" y1="916" x2="1408" y2="916"/>
+<text class="t-frag-s" x="36" y="931">[ aucune plaque lue après 2 min ]</text>
+<path class="msg" d="M136,124 H320" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="115" text-anchor="middle">scan du QR de la borne</text>
+<path class="msg" d="M332,170 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="161" text-anchor="middle">POST /v1/entries { gate_token }</text>
+<path class="msg" d="M522,216 H576 V246 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="588" y="235">vérifie la signature HMAC du jeton</text>
+<path class="msg" d="M528,292 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="283" text-anchor="middle">UPDATE spot ... FOR UPDATE SKIP LOCKED</text>
+<path class="ret" d="M712,338 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="329" text-anchor="middle">place 2-12 → ASSIGNED</text>
+<path class="msg" d="M528,384 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="375" text-anchor="middle">PaymentIntent · capture manuelle · plafond journalier</text>
+<path class="ret" d="M908,430 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="421" text-anchor="middle">requires_capture</text>
+<path class="msg" d="M528,476 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="467" text-anchor="middle">INSERT session → CREATED</text>
+<path class="msg" d="M528,522 H1104" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="513" text-anchor="middle">ouvrir la barrière</text>
+<path class="ret" d="M516,568 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="559" text-anchor="middle">place 2-12 · palier 2 · allée B</text>
+<path class="msg" d="M320,614 H136" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="605" text-anchor="middle">affiche la place · arme le suivi de balises</text>
+<path class="msg" d="M1300,694 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="685" text-anchor="middle">POST /v1/gates/{id}/plate { plaque }</text>
+<path class="msg" d="M528,740 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="731" text-anchor="middle">session → ENTRY_CONFIRMED</text>
+<path class="msg" d="M528,816 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="807" text-anchor="middle">plate_mismatch = true</text>
+<path class="ret" d="M516,862 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="853" text-anchor="middle">avertissement : la sortie devra passer par le QR</text>
+<path class="msg" d="M528,938 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="929" text-anchor="middle">session → CANCELLED · place → AVAILABLE</text>
+<path class="msg" d="M528,984 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="975" text-anchor="middle">annulation de la pré-autorisation</text>
+<rect class="p p-ext" x="44" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="130" y="48" text-anchor="middle">Conducteur</text>
+<text class="t-ps" x="130" y="65" text-anchor="middle"></text>
+<rect class="p p-app" x="240" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="326" y="48" text-anchor="middle">App mobile</text>
+<text class="t-ps" x="326" y="65" text-anchor="middle">React Native</text>
+<rect class="p p-api" x="436" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="522" y="48" text-anchor="middle">API</text>
+<text class="t-ps" x="522" y="65" text-anchor="middle"></text>
+<rect class="p p-db" x="632" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="718" y="48" text-anchor="middle">Base de données</text>
+<text class="t-ps" x="718" y="65" text-anchor="middle">Postgres</text>
+<rect class="p p-svc" x="828" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="914" y="48" text-anchor="middle">Stripe</text>
+<text class="t-ps" x="914" y="65" text-anchor="middle"></text>
+<rect class="p p-ext" x="1024" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="1110" y="48" text-anchor="middle">Contrôleur</text>
+<text class="t-ps" x="1110" y="65" text-anchor="middle">barrière d&#x27;entrée</text>
+<rect class="p p-ext" x="1220" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="1306" y="48" text-anchor="middle">Caméra d&#x27;entrée</text>
+<text class="t-ps" x="1306" y="65" text-anchor="middle">ANPR</text>
+</svg></div><figcaption>L'assignation précède l'appel à Stripe, et la pré-autorisation précède l'ouverture de la barrière.</figcaption></div></figure>
+<div class="note"><b>Trois contraintes d'ordre, et ce qui casse si on les inverse.</b>
+  L'assignation vient <b>avant</b> Stripe : appeler Stripe pour un parking complet coûte une latence inutile et une pré-autorisation à annuler.
+  La pré-autorisation vient <b>avant</b> l'ouverture : une carte refusée après l'ouverture de la barrière est irrattrapable, la voiture est déjà entrée.
+  La lecture de plaque vient <b>après</b> l'ouverture, et ce n'est pas un choix — la caméra vise la plaque arrière, donc elle ne voit le véhicule qu'une fois la barrière franchie.</div>
+<div class="note warn"><b>Le fragment conditionnel porte tout le risque de cette séquence.</b>
+  La branche « aucune plaque lue après 2 min » n'est pas déclenchée par un acteur mais par la tâche <code>cancel_unconfirmed_entries</code>. Elle doit annuler <b>deux</b> choses : l'état de la place et la pré-autorisation Stripe. Oublier la seconde laisse un montant bloqué sur la carte d'un conducteur qui n'est jamais entré.</div>
+</section>
+<section>
+  <div class="sec-head"><h2>Séquence B — Confirmation de la place</h2><span class="tag">7 participants · 15 messages</span></div>
+  <p class="lede">Le mécanisme central du produit. Rien n'est déclenché par un minuteur : c'est la balise qui réveille l'app, et le capteur de mouvement qui décide du moment de la notification.</p>
+<figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1436 960" role="img" aria-label="Séquence de confirmation de place">
+<line class="ll" x1="130" y1="78" x2="130" y2="942"/>
+<line class="ll" x1="326" y1="78" x2="326" y2="942"/>
+<line class="ll" x1="522" y1="78" x2="522" y2="942"/>
+<line class="ll" x1="718" y1="78" x2="718" y2="942"/>
+<line class="ll" x1="914" y1="78" x2="914" y2="942"/>
+<line class="ll" x1="1110" y1="78" x2="1110" y2="942"/>
+<line class="ll" x1="1306" y1="78" x2="1306" y2="942"/>
+<rect class="frm" x="28" y="496" width="1380" height="392"/>
+<path class="frm-tab" d="M28,496 h58 l14,14 v10 h-72 z"/>
+<text class="t-frag" x="36" y="513">alt</text>
+<text class="t-frag-s" x="106" y="513">[ l&#x27;utilisateur confirme ]</text>
+<line class="frm-sep" x1="28" y1="672" x2="1408" y2="672"/>
+<text class="t-frag-s" x="36" y="687">[ l&#x27;utilisateur corrige le numéro ]</text>
+<line class="frm-sep" x1="28" y1="840" x2="1408" y2="840"/>
+<text class="t-frag-s" x="36" y="855">[ aucune réponse ]</text>
+<path class="msg" d="M136,124 H320" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="115" text-anchor="middle">entrée dans la région · major = allée B</text>
+<path class="msg" d="M332,170 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="161" text-anchor="middle">réveil de l&#x27;app en arrière-plan</text>
+<path class="msg" d="M516,216 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="207" text-anchor="middle">démarrer le suivi d&#x27;activité</text>
+<path class="ret" d="M332,262 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="253" text-anchor="middle">automotive → walking · confiance élevée</text>
+<path class="msg" d="M528,308 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="299" text-anchor="middle">POST /v1/sessions/{id}/walking</text>
+<path class="msg" d="M724,354 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="345" text-anchor="middle">walking_at = now()</text>
+<path class="msg" d="M724,400 H1104" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="391" text-anchor="middle">« Confirmez la place 2-12 »</text>
+<path class="msg" d="M1116,446 H1300" marker-end="url(#sq)"/>
+<text class="t-msg" x="1208" y="437" text-anchor="middle">notification sur l&#x27;écran verrouillé</text>
+<path class="msg" d="M1300,526 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="517" text-anchor="middle">tap « Confirmer »</text>
+<path class="msg" d="M528,572 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="563" text-anchor="middle">POST /v1/sessions/{id}/parked { }</text>
+<path class="msg" d="M724,618 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="609" text-anchor="middle">session PARKED_CONFIRMED · 2-12 → OCCUPIED</text>
+<path class="msg" d="M1300,694 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="685" text-anchor="middle">saisit « 2-15 »</text>
+<path class="msg" d="M528,740 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="731" text-anchor="middle">POST /v1/sessions/{id}/parked { spot_id: 2-15 }</text>
+<path class="msg" d="M724,786 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="777" text-anchor="middle">TX : 2-15 → OCCUPIED · 2-12 → OCCUPIED_UNKNOWN</text>
+<path class="msg" d="M724,862 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="853" text-anchor="middle">session PARKED_UNCONFIRMED · 2-12 → OCCUPIED_UNKNOWN</text>
+<rect class="p p-ext" x="44" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="130" y="48" text-anchor="middle">Balise BLE</text>
+<text class="t-ps" x="130" y="65" text-anchor="middle">allée B</text>
+<rect class="p p-ext" x="240" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="326" y="48" text-anchor="middle">iOS</text>
+<text class="t-ps" x="326" y="65" text-anchor="middle">CoreLocation · CoreMotion</text>
+<rect class="p p-app" x="436" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="522" y="48" text-anchor="middle">App mobile</text>
+<text class="t-ps" x="522" y="65" text-anchor="middle"></text>
+<rect class="p p-api" x="632" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="718" y="48" text-anchor="middle">API</text>
+<text class="t-ps" x="718" y="65" text-anchor="middle"></text>
+<rect class="p p-db" x="828" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="914" y="48" text-anchor="middle">Base de données</text>
+<text class="t-ps" x="914" y="65" text-anchor="middle">Postgres</text>
+<rect class="p p-svc" x="1024" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="1110" y="48" text-anchor="middle">APNs</text>
+<text class="t-ps" x="1110" y="65" text-anchor="middle"></text>
+<rect class="p p-ext" x="1220" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="1306" y="48" text-anchor="middle">Conducteur</text>
+<text class="t-ps" x="1306" y="65" text-anchor="middle"></text>
+</svg></div><figcaption>Les trois branches du fragment correspondent aux trois issues réelles : confirmation, correction, silence.</figcaption></div></figure>
+<div class="note"><b>La correction de place est la seule opération à deux écritures.</b>
+  Quand l'utilisateur saisit un autre numéro, deux lignes de <code>spot</code> changent d'état dans la même transaction : la place réelle passe à <code>OCCUPIED</code>, l'ancienne à <code>OCCUPIED_UNKNOWN</code>. Hors transaction, une coupure réseau entre les deux laisse une place fantôme, réservée pour personne et invisible à l'inventaire.</div>
+<div class="note warn"><b>La branche « aucune réponse » n'a pas de message entrant.</b>
+  Elle se produit sans qu'aucun acteur n'agisse : le système écrit <code>PARKED_UNCONFIRMED</code> sur la seule foi du signal <em>walking</em>. C'est délibéré — attendre la confirmation pour écrire laisserait la place bloquée indéfiniment.</div>
+</section>
+<section>
+  <div class="sec-head"><h2>Séquence C — Sortie et facturation</h2><span class="tag">7 participants · 13 messages</span></div>
+  <p class="lede">Le cas nominal ne comporte aucun geste de l'utilisateur : la plaque déclenche toute la chaîne. Le chemin de repli n'existe que pour les lectures ratées et les sessions marquées <code>plate_mismatch</code>.</p>
+<figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1436 868" role="img" aria-label="Séquence de sortie et de facturation">
+<line class="ll" x1="130" y1="78" x2="130" y2="850"/>
+<line class="ll" x1="326" y1="78" x2="326" y2="850"/>
+<line class="ll" x1="522" y1="78" x2="522" y2="850"/>
+<line class="ll" x1="718" y1="78" x2="718" y2="850"/>
+<line class="ll" x1="914" y1="78" x2="914" y2="850"/>
+<line class="ll" x1="1110" y1="78" x2="1110" y2="850"/>
+<line class="ll" x1="1306" y1="78" x2="1306" y2="850"/>
+<rect class="frm" x="28" y="618" width="1380" height="178"/>
+<path class="frm-tab" d="M28,618 h58 l14,14 v10 h-72 z"/>
+<text class="t-frag" x="36" y="635">alt</text>
+<text class="t-frag-s" x="106" y="635">[ repli : plaque illisible ou plate_mismatch ]</text>
+<path class="msg" d="M136,124 H320" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="115" text-anchor="middle">POST /v1/gates/{id}/plate { plaque }</text>
+<path class="msg" d="M332,170 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="161" text-anchor="middle">session active pour cette plaque dans ce parking</text>
+<path class="ret" d="M516,216 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="207" text-anchor="middle">session #4A7 · entrée 18 h 02 · place 2-15</text>
+<path class="msg" d="M326,262 H380 V292 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="392" y="281">calcule la durée et le montant selon la politique</text>
+<path class="msg" d="M332,338 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="522" y="329" text-anchor="middle">capture sur la pré-autorisation existante</text>
+<path class="ret" d="M712,384 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="522" y="375" text-anchor="middle">succeeded · 9,75 $</text>
+<path class="msg" d="M332,430 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="421" text-anchor="middle">session CLOSED_PAID · place → AVAILABLE</text>
+<path class="msg" d="M332,476 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="467" text-anchor="middle">ouvrir la barrière</text>
+<path class="msg" d="M332,522 H1104" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="513" text-anchor="middle">reçu</text>
+<path class="msg" d="M1116,568 H1300" marker-end="url(#sq)"/>
+<text class="t-msg" x="1208" y="559" text-anchor="middle">affiche le reçu et le détail du calcul</text>
+<path class="msg" d="M1300,648 H1116" marker-end="url(#sq)"/>
+<text class="t-msg" x="1208" y="639" text-anchor="middle">scanne le QR de la borne de sortie</text>
+<path class="msg" d="M1104,694 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="685" text-anchor="middle">POST /v1/sessions/{id}/exit { gate_token }</text>
+<path class="msg" d="M326,740 H380 V770 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="392" y="759">reprend au calcul du montant</text>
+<rect class="p p-ext" x="44" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="130" y="48" text-anchor="middle">Caméra de sortie</text>
+<text class="t-ps" x="130" y="65" text-anchor="middle">ANPR</text>
+<rect class="p p-api" x="240" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="326" y="48" text-anchor="middle">API</text>
+<text class="t-ps" x="326" y="65" text-anchor="middle"></text>
+<rect class="p p-db" x="436" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="522" y="48" text-anchor="middle">Base de données</text>
+<text class="t-ps" x="522" y="65" text-anchor="middle">Postgres</text>
+<rect class="p p-svc" x="632" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="718" y="48" text-anchor="middle">Stripe</text>
+<text class="t-ps" x="718" y="65" text-anchor="middle"></text>
+<rect class="p p-ext" x="828" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="914" y="48" text-anchor="middle">Contrôleur</text>
+<text class="t-ps" x="914" y="65" text-anchor="middle">barrière de sortie</text>
+<rect class="p p-app" x="1024" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="1110" y="48" text-anchor="middle">App mobile</text>
+<text class="t-ps" x="1110" y="65" text-anchor="middle"></text>
+<rect class="p p-ext" x="1220" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="1306" y="48" text-anchor="middle">Conducteur</text>
+<text class="t-ps" x="1306" y="65" text-anchor="middle"></text>
+</svg></div><figcaption>La capture du paiement précède l'ouverture de la barrière, sans exception.</figcaption></div></figure>
+<div class="note"><b>Une seule règle non négociable ici : la barrière n'ouvre jamais avant que Stripe ait confirmé la capture.</b>
+  Ouvrir d'abord pour fluidifier le trafic transformerait chaque échec de capture en perte sèche, sans recours — le véhicule est parti. Le coût de cette règle est une latence de quelques centaines de millisecondes, absorbée par le temps que met le conducteur à avancer jusqu'à la barrière après la lecture de sa plaque.</div>
+</section>
+<section>
+  <div class="sec-head"><h2>Séquence D — Adhésion d'un opérateur</h2><span class="tag">5 participants · 14 messages</span></div>
+  <p class="lede">Le seul parcours asynchrone du système : la vérification d'identité se déroule chez Stripe, hors de l'application, et revient par un webhook qui peut arriver des minutes ou des jours plus tard.</p>
+<figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1044 832" role="img" aria-label="Séquence d&#x27;onboarding d&#x27;un opérateur">
+<line class="ll" x1="130" y1="78" x2="130" y2="814"/>
+<line class="ll" x1="326" y1="78" x2="326" y2="814"/>
+<line class="ll" x1="522" y1="78" x2="522" y2="814"/>
+<line class="ll" x1="718" y1="78" x2="718" y2="814"/>
+<line class="ll" x1="914" y1="78" x2="914" y2="814"/>
+<path class="msg" d="M136,124 H320" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="115" text-anchor="middle">crée un parking</text>
+<path class="msg" d="M332,170 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="161" text-anchor="middle">POST /v1/operators/onboarding</text>
+<path class="msg" d="M528,216 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="207" text-anchor="middle">créer un compte Express</text>
+<path class="ret" d="M712,262 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="253" text-anchor="middle">acct_1Q...</text>
+<path class="msg" d="M528,308 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="299" text-anchor="middle">INSERT operator · kyc_status = pending</text>
+<path class="ret" d="M516,354 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="345" text-anchor="middle">lien d&#x27;onboarding hébergé</text>
+<path class="msg" d="M320,400 H136" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="391" text-anchor="middle">redirection vers Stripe</text>
+<path class="msg" d="M136,446 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="437" text-anchor="middle">vérification d&#x27;identité sur la page hébergée</text>
+<path class="msg" d="M712,492 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="483" text-anchor="middle">webhook account.updated</text>
+<path class="msg" d="M528,538 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="529" text-anchor="middle">kyc_status = vérified</text>
+<path class="msg" d="M136,584 H320" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="575" text-anchor="middle">saisit la politique tarifaire et le plan des places</text>
+<path class="msg" d="M332,630 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="621" text-anchor="middle">PUT /v1/lots/{id}/pricing · PUT /v1/lots/{id}/map</text>
+<path class="msg" d="M522,676 H576 V706 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="588" y="695">refuse si le plafond journalier est absent</text>
+<path class="msg" d="M528,752 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="743" text-anchor="middle">parking mis en ligne si wifi_vérified_at est renseigné</text>
+<rect class="p p-ext" x="44" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="130" y="48" text-anchor="middle">Opérateur</text>
+<text class="t-ps" x="130" y="65" text-anchor="middle"></text>
+<rect class="p p-app" x="240" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="326" y="48" text-anchor="middle">Tableau de bord</text>
+<text class="t-ps" x="326" y="65" text-anchor="middle">web</text>
+<rect class="p p-api" x="436" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="522" y="48" text-anchor="middle">API</text>
+<text class="t-ps" x="522" y="65" text-anchor="middle"></text>
+<rect class="p p-svc" x="632" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="718" y="48" text-anchor="middle">Stripe Connect</text>
+<text class="t-ps" x="718" y="65" text-anchor="middle"></text>
+<rect class="p p-db" x="828" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="914" y="48" text-anchor="middle">Base de données</text>
+<text class="t-ps" x="914" y="65" text-anchor="middle">Postgres</text>
+</svg></div><figcaption>Le KYC se fait sur une page hébergée par Stripe ; l'API n'en voit que le résultat, par webhook.</figcaption></div></figure>
+<div class="note"><b>Deux verrous empêchent un parking d'être mis en ligne à moitié configuré.</b>
+  L'API refuse l'enregistrement d'une politique tarifaire sans plafond journalier, parce que c'est ce montant qui est pré-autorisé à l'entrée. Et un parking dont <code>wifi_verified_at</code> est nul reste hors ligne, quel que soit l'état de sa configuration : sans réseau au sous-sol, la confirmation de place ne remonterait jamais.</div>
+</section>
+<footer>
+  <span>Palier · diagrammes de séquence</span>
+  <span>4 parcours · 59 messages</span>
+  <span>Document 3 de 5</span>
+</footer>
+</div>

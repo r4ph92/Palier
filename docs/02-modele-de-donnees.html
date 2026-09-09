@@ -1,0 +1,539 @@
+<title>Palier — Modèle de données et états</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+  :root{
+    --ground:#EDEEEA; --surface:#F8F9F6; --surface-2:#E4E6E0;
+    --ink:#191C1A; --ink-2:#4B534D; --ink-3:#6E766F;
+    --line:#D2D6CE; --line-strong:#9BA298;
+    --accent:#1B4B8F; --accent-soft:#DFE7F3;
+    --store:#2E7D4F; --store-soft:#DFEEE6;
+    --ext:#5A6159; --ext-soft:#E7E9E3;
+    --held:#6C55A0; --held-soft:#E7E1F2;
+    --warn:#B0730A; --warn-soft:#F6EBD6;
+    --stop:#9C3A2A; --stop-soft:#F4E1DD;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#121513; --surface:#1A1E1B; --surface-2:#242925;
+      --ink:#E7EAE4; --ink-2:#AEB6AE; --ink-3:#8B948C;
+      --line:#2C322D; --line-strong:#59615A;
+      --accent:#8CB4E8; --accent-soft:#1C2A3A;
+      --store:#63B487; --store-soft:#17281F;
+      --ext:#A7AFA6; --ext-soft:#22261F;
+      --held:#A38FD4; --held-soft:#231D33;
+      --warn:#E0A63C; --warn-soft:#2E2410;
+      --stop:#D9705E; --stop-soft:#331C18;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#121513; --surface:#1A1E1B; --surface-2:#242925;
+    --ink:#E7EAE4; --ink-2:#AEB6AE; --ink-3:#8B948C;
+    --line:#2C322D; --line-strong:#59615A;
+    --accent:#8CB4E8; --accent-soft:#1C2A3A;
+    --store:#63B487; --store-soft:#17281F;
+    --ext:#A7AFA6; --ext-soft:#22261F;
+    --held:#A38FD4; --held-soft:#231D33;
+    --warn:#E0A63C; --warn-soft:#2E2410;
+    --stop:#D9705E; --stop-soft:#331C18;
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);
+    font-family:"Newsreader",Georgia,serif;font-size:1.02rem;line-height:1.6;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(18px,4vw,40px) 90px}
+
+  header.mast{padding:clamp(44px,8vw,88px) 0 0}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:.78rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-3)}
+  h1{font-family:"Archivo",system-ui,sans-serif;font-weight:700;letter-spacing:-.028em;
+    line-height:1;font-size:clamp(2.2rem,6vw,3rem);margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-2);max-width:64ch;margin:.4em 0 0;font-size:1.1rem}
+  .mast-rule{height:5px;background:var(--ink);margin:30px 0 0;border:0}
+  .mast-rule::after{content:"";display:block;height:2px;background:var(--ink);margin-top:4px}
+
+  section{margin-top:clamp(46px,7vw,74px)}
+  .sec-head{display:flex;align-items:baseline;gap:16px;border-bottom:2px solid var(--ink);
+    padding-bottom:9px;margin-bottom:24px;flex-wrap:wrap}
+  .sec-head h2{font-family:"Archivo",sans-serif;font-weight:600;font-size:1.55rem;
+    letter-spacing:-.02em;margin:0}
+  .sec-head .tag{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:.78rem;
+    color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
+  h3{font-family:"Archivo",sans-serif;font-weight:600;font-size:1.16rem;letter-spacing:-.01em;
+    margin:38px 0 12px}
+  .lede{max-width:70ch;color:var(--ink-2);margin:0 0 26px}
+
+  figure{margin:0}
+  .fig{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    padding:20px 8px 8px}
+  .fig-scroll{overflow-x:auto;overflow-y:hidden}
+  .fig-scroll svg{display:block;height:auto}
+  #erd{min-width:1020px;width:100%}
+  #stSpot{min-width:900px;width:100%}
+  #stSess{min-width:960px;width:100%}
+  figcaption{font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--ink-3);
+    padding:12px 14px 4px;line-height:1.6}
+
+  .s-ent{fill:var(--surface-2);stroke:var(--ink-3);stroke-width:1.7}
+  .s-key{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.9}
+  .s-rel{fill:none;stroke:var(--line-strong);stroke-width:1.6;stroke-linejoin:round}
+  .s-foot{fill:none;stroke:var(--line-strong);stroke-width:1.6}
+  .t-tbl{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;fill:var(--ink)}
+  .t-sm{font-family:"IBM Plex Mono",monospace;font-size:10px;fill:var(--ink-3)}
+
+  .st-node{stroke-width:2.2}
+  .t-st{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600}
+  .t-ev{font-family:"IBM Plex Mono",monospace;font-size:10.5px;fill:var(--ink-2)}
+
+  .tbl-scroll{overflow-x:auto;margin-top:14px}
+  table{border-collapse:collapse;width:100%;min-width:660px;font-size:.92rem}
+  caption{text-align:left;font-family:"Archivo",sans-serif;font-weight:600;font-size:1rem;
+    padding:22px 0 8px;color:var(--ink)}
+  th{font-family:"IBM Plex Mono",monospace;font-size:.71rem;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--ink-3);text-align:left;font-weight:500;
+    border-bottom:1.5px solid var(--ink);padding:0 12px 7px 0}
+  td{border-bottom:1px solid var(--line);padding:7px 12px 7px 0;vertical-align:top;
+    color:var(--ink-2)}
+  td:first-child{font-family:"IBM Plex Mono",monospace;font-size:.82rem;color:var(--ink);
+    white-space:nowrap}
+  td.t{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--ink-3);white-space:nowrap}
+  code{font-family:"IBM Plex Mono",monospace;font-size:.84em;background:var(--surface-2);
+    padding:1px 5px;border-radius:2px;color:var(--ink)}
+  .pk{color:var(--accent);font-weight:600}
+  .fk{color:var(--store);font-weight:600}
+
+  .note{background:var(--surface);border-left:3px solid var(--accent);border-radius:0 3px 3px 0;
+    padding:14px 18px;margin-top:22px;color:var(--ink-2);font-size:.96rem;max-width:78ch}
+  .note b{color:var(--ink);font-weight:500}
+  .note.warn{border-left-color:var(--warn)}
+
+  .todo{display:grid;gap:10px;margin-top:8px}
+  .todo li{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;
+    color:var(--ink-2);font-size:.98rem;list-style:none}
+  .todo{padding:0}
+  .todo .n{font-family:"IBM Plex Mono",monospace;font-size:.8rem;font-weight:600;
+    color:var(--accent);border:1.5px solid var(--accent);border-radius:2px;padding:1px 7px;
+    white-space:nowrap}
+  .todo b{color:var(--ink);font-weight:500}
+
+  footer{margin-top:70px;border-top:2px solid var(--ink);padding-top:16px;
+    font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--ink-3);
+    display:flex;flex-wrap:wrap;gap:6px 24px}
+
+  @media print{
+    body{background:#fff;color:#000}
+    .wrap{max-width:none;padding:0}
+    .fig{border:1px solid #999;break-inside:avoid}
+    section{break-inside:avoid-page}
+  }
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow">Palier · Documentation de conception · 2 / 5</div>
+  <h1>Modèle de données et états</h1>
+  <p class="sub">La couche fondation : les douze entités persistantes, les deux machines à états qui portent toute la logique métier, et la surface API qui les expose. Tous les autres diagrammes s'y réfèrent.</p>
+  <hr class="mast-rule">
+</header>
+
+<section>
+  <div class="sec-head"><h2>Modèle relationnel</h2><span class="tag">12 entités · pied-de-corbeau</span></div>
+  <p class="lede">Le schéma se lit en trois blocs : l'infrastructure d'un opérateur descend d'<code>operator</code> jusqu'à <code>spot</code> ; le compte du conducteur tient en deux tables ; la transaction relie les deux.</p>
+
+  <figure>
+    <div class="fig"><div class="fig-scroll">
+      <svg id="erd" viewBox="0 0 1020 800" role="img" aria-label="Modèle relationnel de Palier : douze entités et leurs cardinalités.">
+        <defs>
+          <g id="foot"><path class="s-foot" d="M0,0 L11,-7 M0,0 L11,0 M0,0 L11,7"/></g>
+        </defs>
+
+        <!-- relations -->
+        <g class="s-rel">
+          <path d="M170,88 V150"/>
+          <path d="M170,198 V260"/>
+          <path d="M170,308 V370"/>
+          <path d="M170,418 V480"/>
+          <path d="M280,174 H400"/>
+          <path d="M280,394 H400"/>
+          <path d="M280,504 H400"/>
+          <path d="M840,88 V150"/>
+          <path d="M840,198 V504 H620"/>
+          <path d="M840,198 V590"/>
+          <path d="M740,614 H620"/>
+          <path d="M170,504 V614 H400"/>
+          <path d="M60,174 H30 V614 H400"/>
+          <path d="M510,638 V724 H740"/>
+        </g>
+        <!-- crow feet -->
+        <g>
+          <use href="#foot" transform="translate(170,150) rotate(90)"/>
+          <use href="#foot" transform="translate(170,260) rotate(90)"/>
+          <use href="#foot" transform="translate(170,370) rotate(90)"/>
+          <use href="#foot" transform="translate(170,480) rotate(90)"/>
+          <use href="#foot" transform="translate(400,174) rotate(180)"/>
+          <use href="#foot" transform="translate(400,394) rotate(180)"/>
+          <use href="#foot" transform="translate(400,504) rotate(180)"/>
+          <use href="#foot" transform="translate(840,150) rotate(90)"/>
+          <use href="#foot" transform="translate(620,504)"/>
+          <use href="#foot" transform="translate(620,614)"/>
+          <use href="#foot" transform="translate(400,614) rotate(180)"/>
+          <use href="#foot" transform="translate(740,724) rotate(180)"/>
+        </g>
+        <!-- "one" ticks -->
+        <g class="s-foot">
+          <path d="M162,96 H178"/><path d="M162,206 H178"/><path d="M162,316 H178"/><path d="M162,426 H178"/>
+          <path d="M272,166 V182"/><path d="M272,386 V402"/><path d="M272,496 V512"/>
+          <path d="M832,96 H848"/>
+          <path d="M502,646 V662" transform="translate(0,0)"/>
+        </g>
+
+        <!-- relation labels -->
+        <g class="t-sm">
+          <text x="180" y="126">1—N</text>
+          <text x="180" y="236">1—N</text>
+          <text x="180" y="346">1—N</text>
+          <text x="180" y="456">1—N</text>
+          <text x="316" y="166">1—N</text>
+          <text x="316" y="386">1—N</text>
+          <text x="316" y="496">1—N</text>
+          <text x="850" y="126">1—N</text>
+          <text x="646" y="496">1—N</text>
+          <text x="646" y="606">1—N</text>
+          <text x="330" y="606">assignée</text>
+          <text x="40" y="606">1—N</text>
+          <text x="560" y="716">1—N</text>
+        </g>
+
+        <!-- entities -->
+        <g>
+          <rect class="s-key" x="60" y="40" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="76" y="62">operator</text>
+          <text class="t-sm" x="76" y="78">compte Connect Express</text>
+
+          <rect class="s-key" x="60" y="150" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="76" y="172">parking_lot</text>
+          <text class="t-sm" x="76" y="188">politique tarifaire · plafond</text>
+
+          <rect class="s-ent" x="60" y="260" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="76" y="282">level</text>
+          <text class="t-sm" x="76" y="298">palier</text>
+
+          <rect class="s-ent" x="60" y="370" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="76" y="392">aisle</text>
+          <text class="t-sm" x="76" y="408">allée · major de balise</text>
+
+          <rect class="s-key" x="60" y="480" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="76" y="502">spot</text>
+          <text class="t-sm" x="76" y="518">état · attributs · à vérifier</text>
+
+          <rect class="s-ent" x="400" y="150" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="416" y="172">gate</text>
+          <text class="t-sm" x="416" y="188">entrée ou sortie · secret QR</text>
+
+          <rect class="s-ent" x="400" y="370" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="416" y="392">beacon</text>
+          <text class="t-sm" x="416" y="408">uuid · major · minor</text>
+
+          <rect class="s-ent" x="400" y="480" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="416" y="502">hold</text>
+          <text class="t-sm" x="416" y="518">expire à 15 min</text>
+
+          <rect class="s-key" x="400" y="590" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="416" y="612">session</text>
+          <text class="t-sm" x="416" y="628">le cœur transactionnel</text>
+
+          <rect class="s-key" x="740" y="40" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="756" y="62">app_user</text>
+          <text class="t-sm" x="756" y="78">OAuth · client Stripe</text>
+
+          <rect class="s-ent" x="740" y="150" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="756" y="172">vehicle</text>
+          <text class="t-sm" x="756" y="188">plaque · province</text>
+
+          <rect class="s-ent" x="740" y="700" width="220" height="48" rx="3"/>
+          <text class="t-tbl" x="756" y="722">event_log</text>
+          <text class="t-sm" x="756" y="738">purge à 90 jours</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>Encadré bleu : les cinq tables dont la logique métier dépend directement. Les autres sont structurelles.</figcaption>
+    </div>
+  </figure>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>spot — l'inventaire, et l'objet de la concurrence</caption>
+      <thead><tr><th>Colonne</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td class="pk">id</td><td class="t">uuid PK</td><td>—</td></tr>
+        <tr><td class="fk">aisle_id</td><td class="t">uuid FK</td><td>Rattache la place à son allée, donc à son palier et à son parking</td></tr>
+        <tr><td>number</td><td class="t">text</td><td>Numéro peint au sol, unique dans le parking</td></tr>
+        <tr><td>state</td><td class="t">enum</td><td><code>AVAILABLE</code> · <code>HELD</code> · <code>ASSIGNED</code> · <code>OCCUPIED</code> · <code>OCCUPIED_UNKNOWN</code> · <code>OUT_OF_SERVICE</code></td></tr>
+        <tr><td>state_changed_at</td><td class="t">timestamptz</td><td>Base de calcul des expirations (15 min, 30 min)</td></tr>
+        <tr><td>current_session_id</td><td class="t">uuid FK null</td><td>Session qui détient la place ; nul si <code>AVAILABLE</code></td></tr>
+        <tr><td>is_ev</td><td class="t">bool</td><td>Borne de recharge — filtre d'assignation non négociable</td></tr>
+        <tr><td>is_accessible</td><td class="t">bool</td><td>Place PMR — filtre d'assignation non négociable</td></tr>
+        <tr><td>is_oversize</td><td class="t">bool</td><td>Gabarit large</td></tr>
+        <tr><td>distance_to_exit</td><td class="t">int</td><td>Mètres jusqu'à la sortie piétonne ; critère de tri secondaire</td></tr>
+        <tr><td>needs_check</td><td class="t">bool</td><td>Place sortie d'un <code>OCCUPIED_UNKNOWN</code> : réassignée en dernier recours</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>session — un séjour, de la borne d'entrée au paiement</caption>
+      <thead><tr><th>Colonne</th><th>Type</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td class="pk">id</td><td class="t">uuid PK</td><td>—</td></tr>
+        <tr><td class="fk">user_id · vehicle_id · lot_id</td><td class="t">uuid FK</td><td>Qui, avec quel véhicule, dans quel parking</td></tr>
+        <tr><td class="fk">assigned_spot_id</td><td class="t">uuid FK</td><td>Place attribuée à l'entrée</td></tr>
+        <tr><td class="fk">confirmed_spot_id</td><td class="t">uuid FK null</td><td>Place réellement occupée ; diffère si l'utilisateur a corrigé</td></tr>
+        <tr><td>state</td><td class="t">enum</td><td><code>CREATED</code> · <code>ENTRY_CONFIRMED</code> · <code>PARKED_CONFIRMED</code> · <code>PARKED_UNCONFIRMED</code> · <code>CLOSED_PAID</code> · <code>CANCELLED</code></td></tr>
+        <tr><td>entry_scan_at</td><td class="t">timestamptz</td><td>Scan du QR à la borne — début du compte à rebours de 2 minutes</td></tr>
+        <tr><td>entry_plate_at</td><td class="t">timestamptz null</td><td>Plaque lue après la barrière : preuve d'entrée effective</td></tr>
+        <tr><td>entry_plate_read</td><td class="t">text null</td><td>Plaque brute lue, conservée pour la réconciliation</td></tr>
+        <tr><td>plate_mismatch</td><td class="t">bool</td><td>La plaque lue diffère du compte : la sortie devra passer par le QR</td></tr>
+        <tr><td>walking_at</td><td class="t">timestamptz null</td><td>Transition CoreMotion — termine l'état <code>ASSIGNED</code> de la place</td></tr>
+        <tr><td>confirmed_at</td><td class="t">timestamptz null</td><td>Tap de l'utilisateur ; nul en cas de silence</td></tr>
+        <tr><td>exit_at</td><td class="t">timestamptz null</td><td>Plaque lue à la sortie ou QR de repli</td></tr>
+        <tr><td>payment_intent_id</td><td class="t">text</td><td>PaymentIntent Stripe en capture manuelle, créé à l'entrée</td></tr>
+        <tr><td>authorized_cents</td><td class="t">int</td><td>Plafond journalier pré-autorisé</td></tr>
+        <tr><td>captured_cents</td><td class="t">int null</td><td>Montant réellement capturé à la sortie</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>Les dix autres tables</caption>
+      <thead><tr><th>Table</th><th>Colonnes structurantes</th><th>Note de conception</th></tr></thead>
+      <tbody>
+        <tr><td>operator</td><td class="t">legal_name, stripe_account_id, kyc_status</td><td>Un compte Connect Express par opérateur ; <code>kyc_status</code> bloque la mise en ligne</td></tr>
+        <tr><td>parking_lot</td><td class="t">operator_id, name, geo, pricing_policy jsonb, daily_cap_cents, assignment_strategy, wifi_verified_at</td><td><code>daily_cap_cents</code> est <b>NOT NULL</b> : c'est le montant pré-autorisé. <code>wifi_verified_at</code> matérialise le pré-requis d'adhésion</td></tr>
+        <tr><td>level</td><td class="t">lot_id, code, display_order</td><td>Le palier ; l'ordre de remplissage suit <code>display_order</code></td></tr>
+        <tr><td>aisle</td><td class="t">level_id, code, beacon_major, map_polygon</td><td><code>beacon_major</code> lie l'allée à sa région iBeacon — une seule par allée</td></tr>
+        <tr><td>beacon</td><td class="t">aisle_id, uuid, major, minor, battery_at, status</td><td>Le suivi de pile est une exigence d'exploitation, pas un luxe</td></tr>
+        <tr><td>gate</td><td class="t">lot_id, kind, qr_secret, controller_url</td><td><code>qr_secret</code> signe le jeton du QR (HMAC) ; <code>kind</code> vaut entrée ou sortie</td></tr>
+        <tr><td>app_user</td><td class="t">oauth_provider, oauth_subject, email, stripe_customer_id, default_pm_id</td><td>Aucun mot de passe. Le client Stripe vit sur la plateforme, pas chez l'opérateur</td></tr>
+        <tr><td>vehicle</td><td class="t">user_id, plate, province, is_default</td><td>Plusieurs plaques par compte ; <code>is_default</code> sert au rapprochement ANPR</td></tr>
+        <tr><td>hold</td><td class="t">user_id, lot_id, spot_id, expires_at, status</td><td>Contrainte d'unicité sur <code>user_id</code> pour les holds actifs : un seul à la fois</td></tr>
+        <tr><td>event_log</td><td class="t">session_id, lot_id, kind, payload jsonb, occurred_at, purge_after</td><td><code>purge_after</code> calculé à l'écriture — la rétention est une donnée, pas une règle enfouie dans un script</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Deux index portent toute la performance.</b> Un index partiel sur <code>spot (aisle_id, state) WHERE state = 'AVAILABLE'</code> sert la requête d'assignation, qui s'exécute pendant qu'une voiture attend devant une barrière. Un index sur <code>session (lot_id, state) WHERE state IN ('ENTRY_CONFIRMED','PARKED_CONFIRMED','PARKED_UNCONFIRMED')</code> sert la recherche par plaque à la sortie.
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Machine à états — place</h2><span class="tag">spot.state</span></div>
+  <p class="lede">Six états. Trois transitions sont déclenchées par le temps, pas par un acteur : ce sont elles qui empêchent l'inventaire de se vider tout seul.</p>
+
+  <figure>
+    <div class="fig"><div class="fig-scroll">
+      <svg id="stSpot" viewBox="0 0 940 380" role="img" aria-label="Machine à états d'une place de stationnement.">
+        <defs>
+          <marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--line-strong)"/>
+          </marker>
+        </defs>
+
+        <g fill="none" stroke="var(--line-strong)" stroke-width="1.7" marker-end="url(#m1)">
+          <path d="M156,150 H214"/>
+          <path d="M338,150 H396"/>
+          <path d="M520,150 C556,150 556,86 592,86"/>
+          <path d="M520,150 C556,150 556,214 592,214"/>
+          <path d="M776,86 H846 V310 H86 V174"/>
+          <path d="M796,214 H846"/>
+        </g>
+        <g fill="none" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#m1)">
+          <path d="M266,174 V262 H110 V174"/>
+          <path d="M448,174 V286 H100 V174"/>
+        </g>
+
+        <g class="t-ev">
+          <text x="185" y="140" text-anchor="middle">hold</text>
+          <text x="367" y="132" text-anchor="middle">scan QR</text>
+          <text x="367" y="146" text-anchor="middle">borne</text>
+          <text x="561" y="76" text-anchor="middle">à pied</text>
+          <text x="561" y="90" text-anchor="middle">+ tap</text>
+          <text x="561" y="224" text-anchor="middle">à pied</text>
+          <text x="561" y="238" text-anchor="middle">sans tap</text>
+          <text x="466" y="302" text-anchor="middle">sortie du véhicule · plaque lue à la barrière</text>
+          <text x="196" y="256" text-anchor="middle">expiration 15 min</text>
+          <text x="272" y="302" text-anchor="middle">garde-fou 30 min · ou plaque jamais lue à l'entrée (2 min)</text>
+        </g>
+
+        <g>
+          <rect class="st-node" x="30" y="126" width="126" height="48" rx="4" fill="var(--store-soft)" stroke="var(--store)"/>
+          <text class="t-st" x="93" y="155" text-anchor="middle" fill="var(--store)">AVAILABLE</text>
+
+          <rect class="st-node" x="214" y="126" width="124" height="48" rx="4" fill="var(--held-soft)" stroke="var(--held)"/>
+          <text class="t-st" x="276" y="155" text-anchor="middle" fill="var(--held)">HELD</text>
+
+          <rect class="st-node" x="396" y="126" width="124" height="48" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text class="t-st" x="458" y="155" text-anchor="middle" fill="var(--accent)">ASSIGNED</text>
+
+          <rect class="st-node" x="592" y="62" width="184" height="48" rx="4" fill="var(--ext-soft)" stroke="var(--ext)"/>
+          <text class="t-st" x="684" y="91" text-anchor="middle" fill="var(--ext)">OCCUPIED</text>
+
+          <rect class="st-node" x="592" y="190" width="204" height="48" rx="4" fill="var(--warn-soft)" stroke="var(--warn)"/>
+          <text class="t-st" x="694" y="219" text-anchor="middle" fill="var(--warn)">OCCUPIED_UNKNOWN</text>
+
+          <rect class="st-node" x="592" y="300" width="204" height="44" rx="4" fill="var(--stop-soft)" stroke="var(--stop)" stroke-dasharray="5 4"/>
+          <text class="t-st" x="694" y="327" text-anchor="middle" fill="var(--stop)">OUT_OF_SERVICE</text>
+          <text class="t-ev" x="812" y="327">retiré par l'opérateur</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>Trait plein : transition provoquée par un acteur. Trait pointillé : transition provoquée par le temps. Une place sortant de OCCUPIED_UNKNOWN revient à AVAILABLE avec needs_check à vrai.</figcaption>
+    </div>
+  </figure>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Machine à états — session</h2><span class="tag">session.state</span></div>
+  <p class="lede">La session et la place évoluent en parallèle mais pas en miroir : la place peut changer d'état sans que la session bouge, et l'inverse est vrai aussi. Les tenir séparées est ce qui rend le cas « mauvaise place » représentable.</p>
+
+  <figure>
+    <div class="fig"><div class="fig-scroll">
+      <svg id="stSess" viewBox="0 0 1000 340" role="img" aria-label="Machine à états d'une session de stationnement.">
+        <g fill="none" stroke="var(--line-strong)" stroke-width="1.7" marker-end="url(#m1)">
+          <path d="M154,120 H210"/>
+          <path d="M376,120 C412,120 412,62 448,62"/>
+          <path d="M376,120 C412,120 412,178 448,178"/>
+          <path d="M672,62 H734"/>
+          <path d="M692,178 H734"/>
+          <path d="M878,86 V244 H100 V144" stroke-dasharray="5 4"/>
+        </g>
+        <g fill="none" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#m1)">
+          <path d="M92,144 V206 H196"/>
+        </g>
+
+        <g class="t-ev">
+          <text x="182" y="110" text-anchor="middle">plaque lue</text>
+          <text x="182" y="290" text-anchor="middle">aucune plaque lue en 2 min → pré-autorisation libérée</text>
+          <text x="415" y="52" text-anchor="middle">à pied + tap</text>
+          <text x="415" y="190" text-anchor="middle">à pied</text>
+          <text x="415" y="204" text-anchor="middle">sans tap</text>
+          <text x="703" y="52" text-anchor="middle">sortie</text>
+          <text x="713" y="168" text-anchor="middle">sortie</text>
+          <text x="489" y="236" text-anchor="middle">anonymisation après 90 jours</text>
+        </g>
+
+        <g>
+          <rect class="st-node" x="30" y="96" width="124" height="48" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text class="t-st" x="92" y="125" text-anchor="middle" fill="var(--accent)">CREATED</text>
+
+          <rect class="st-node" x="210" y="96" width="166" height="48" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text class="t-st" x="293" y="125" text-anchor="middle" fill="var(--accent)">ENTRY_CONFIRMED</text>
+
+          <rect class="st-node" x="448" y="38" width="224" height="48" rx="4" fill="var(--store-soft)" stroke="var(--store)"/>
+          <text class="t-st" x="560" y="67" text-anchor="middle" fill="var(--store)">PARKED_CONFIRMED</text>
+
+          <rect class="st-node" x="448" y="154" width="244" height="48" rx="4" fill="var(--warn-soft)" stroke="var(--warn)"/>
+          <text class="t-st" x="570" y="183" text-anchor="middle" fill="var(--warn)">PARKED_UNCONFIRMED</text>
+
+          <rect class="st-node" x="734" y="96" width="144" height="48" rx="4" fill="var(--ext-soft)" stroke="var(--ext)"/>
+          <text class="t-st" x="806" y="125" text-anchor="middle" fill="var(--ext)">CLOSED_PAID</text>
+
+          <rect class="st-node" x="196" y="182" width="140" height="46" rx="4" fill="var(--stop-soft)" stroke="var(--stop)"/>
+          <text class="t-st" x="266" y="210" text-anchor="middle" fill="var(--stop)">CANCELLED</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>CLOSED_PAID n'est pas terminal : la session est anonymisée après 90 jours, ses agrégats d'occupation survivant sous forme non identifiante.</figcaption>
+    </div>
+  </figure>
+
+  <div class="note warn">
+    <b>Le seul état où place et session divergent volontairement.</b> Quand l'utilisateur corrige son numéro de place, la session passe à <code>PARKED_CONFIRMED</code> avec <code>confirmed_spot_id</code> différent de <code>assigned_spot_id</code>. Côté places, <b>deux</b> lignes changent dans la même transaction : la place réelle passe à <code>OCCUPIED</code>, l'ancienne à <code>OCCUPIED_UNKNOWN</code>. Écrire ces deux mises à jour hors transaction laisserait une place fantôme à la moindre erreur réseau.
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Surface API</h2><span class="tag">4 publics · 3 modes d'authentification</span></div>
+  <p class="lede">Trois populations très différentes appellent l'API : l'app du conducteur (jeton utilisateur), le matériel de terrain (clé d'appareil), le tableau de bord opérateur (session opérateur). Une quatrième famille n'est appelée par personne — ce sont les tâches planifiées.</p>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>Application mobile — authentification par jeton utilisateur</caption>
+      <thead><tr><th>Endpoint</th><th>Effet</th></tr></thead>
+      <tbody>
+        <tr><td>POST /v1/auth/session</td><td>Échange un jeton OAuth Apple ou Google contre une session applicative</td></tr>
+        <tr><td>POST /v1/me/vehicles</td><td>Enregistre une plaque et sa province ; obligatoire avant la première entrée</td></tr>
+        <tr><td>POST /v1/me/payment-method</td><td>Crée un SetupIntent Stripe et attache la carte au client de la plateforme</td></tr>
+        <tr><td>GET /v1/lots</td><td>Parkings à proximité avec places libres par catégorie d'attribut</td></tr>
+        <tr><td>POST /v1/lots/{id}/holds</td><td>Bloque une place 15 minutes ; refuse si un hold est déjà actif ou si le quota du parking est atteint</td></tr>
+        <tr><td>DELETE /v1/holds/{id}</td><td>Libère le hold avant son expiration</td></tr>
+        <tr><td>POST /v1/entries</td><td>Consomme le jeton du QR de borne : assigne une place, crée le PaymentIntent, commande l'ouverture</td></tr>
+        <tr><td>GET /v1/sessions/current</td><td>Session en cours, place assignée, cible de guidage, allée attendue</td></tr>
+        <tr><td>POST /v1/sessions/{id}/parked</td><td>Confirme la place, ou la corrige en passant un <code>spot_id</code> différent</td></tr>
+        <tr><td>POST /v1/sessions/{id}/exit</td><td>Sortie par QR de repli quand la plaque n'a pas été lue</td></tr>
+        <tr><td>GET /v1/sessions/{id}/receipt</td><td>Durée, tarif appliqué, montant capturé</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>Matériel de terrain — authentification par clé d'appareil</caption>
+      <thead><tr><th>Endpoint</th><th>Effet</th></tr></thead>
+      <tbody>
+        <tr><td>POST /v1/gates/{id}/plate</td><td>Plaque lue. Sur une barrière d'entrée : confirme la session. Sur une barrière de sortie : identifie la session, capture le paiement, renvoie l'ordre d'ouverture</td></tr>
+        <tr><td>POST /v1/gates/{id}/heartbeat</td><td>Signal de vie du contrôleur ; une barrière muette doit être visible au tableau de bord</td></tr>
+        <tr><td>POST /v1/beacons/{id}/telemetry</td><td>Niveau de pile signalé par le personnel ou par un relevé périodique</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>Tableau de bord opérateur — authentification par session opérateur</caption>
+      <thead><tr><th>Endpoint</th><th>Effet</th></tr></thead>
+      <tbody>
+        <tr><td>POST /v1/operators/onboarding</td><td>Génère le lien d'onboarding Stripe Connect Express</td></tr>
+        <tr><td>PUT /v1/lots/{id}/pricing</td><td>Politique tarifaire ; refuse l'enregistrement si le plafond journalier est absent</td></tr>
+        <tr><td>PUT /v1/lots/{id}/map</td><td>Paliers, allées, places et attributs ; associe chaque allée à son <code>major</code> de balise</td></tr>
+        <tr><td>GET /v1/lots/{id}/occupancy</td><td>Occupation en direct par palier et par état</td></tr>
+        <tr><td>GET /v1/lots/{id}/spots?needs_check=true</td><td>Places à vérifier physiquement</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>Tâches planifiées — aucun appelant externe</caption>
+      <thead><tr><th>Tâche</th><th>Cadence</th><th>Effet</th></tr></thead>
+      <tbody>
+        <tr><td>expire_holds</td><td class="t">30 s</td><td>Hold dépassé : place remise à <code>AVAILABLE</code></td></tr>
+        <tr><td>cancel_unconfirmed_entries</td><td class="t">30 s</td><td>Aucune plaque lue 2 min après le scan : session <code>CANCELLED</code>, place libérée, pré-autorisation annulée</td></tr>
+        <tr><td>release_orphan_assignments</td><td class="t">5 min</td><td>Garde-fou 30 min contre le téléphone déchargé</td></tr>
+        <tr><td>purge_expired_events</td><td class="t">quotidienne</td><td>Suppression des lignes dont <code>purge_after</code> est dépassé, anonymisation des sessions</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Ce qui reste à produire</h2><span class="tag">Documents 3 à 5</span></div>
+  <ul class="todo">
+    <li><span class="n">03</span><div><b>Diagrammes de séquence</b> — quatre parcours où plusieurs systèmes se coordonnent dans un ordre qui compte : l'entrée (scan, assignation, pré-autorisation, lecture de plaque), la confirmation de place (réveil de l'app, CoreMotion, notification, correction), la sortie (plaque, capture, ouverture), et l'onboarding d'un opérateur. Ce sont les seuls endroits où l'ordre des appels est une décision de conception plutôt qu'un détail.</div></li>
+    <li><span class="n">04</span><div><b>Architecture applicative</b> — découpage en composants de l'API et de l'app mobile : modules, frontières, et surtout la ligne entre le code React Native et les modules natifs (balises, CoreMotion, service de premier plan Android). C'est là que le projet peut déraper.</div></li>
+    <li><span class="n">05</span><div><b>Déploiement et matériel</b> — l'infrastructure serveur, le réseau du garage, le contrôleur de barrière, le placement des balises et des caméras. Le plan physique de la démonstration en découle directement.</div></li>
+  </ul>
+</section>
+
+<footer>
+  <span>Palier · modèle de données et états</span>
+  <span>12 entités · 2 machines à états · 23 endpoints</span>
+  <span>Document 2 de 5</span>
+</footer>
+
+</div>

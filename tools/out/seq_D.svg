@@ -1,0 +1,50 @@
+<svg viewBox="0 0 1044 832" role="img" aria-label="Séquence d&#x27;onboarding d&#x27;un opérateur">
+<line class="ll" x1="130" y1="78" x2="130" y2="814"/>
+<line class="ll" x1="326" y1="78" x2="326" y2="814"/>
+<line class="ll" x1="522" y1="78" x2="522" y2="814"/>
+<line class="ll" x1="718" y1="78" x2="718" y2="814"/>
+<line class="ll" x1="914" y1="78" x2="914" y2="814"/>
+<path class="msg" d="M136,124 H320" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="115" text-anchor="middle">crée un parking</text>
+<path class="msg" d="M332,170 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="161" text-anchor="middle">POST /v1/operators/onboarding</text>
+<path class="msg" d="M528,216 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="207" text-anchor="middle">créer un compte Express</text>
+<path class="ret" d="M712,262 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="253" text-anchor="middle">acct_1Q...</text>
+<path class="msg" d="M528,308 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="299" text-anchor="middle">INSERT operator · kyc_status = pending</text>
+<path class="ret" d="M516,354 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="345" text-anchor="middle">lien d&#x27;onboarding hébergé</text>
+<path class="msg" d="M320,400 H136" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="391" text-anchor="middle">redirection vers Stripe</text>
+<path class="msg" d="M136,446 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="437" text-anchor="middle">vérification d&#x27;identité sur la page hébergée</text>
+<path class="msg" d="M712,492 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="483" text-anchor="middle">webhook account.updated</text>
+<path class="msg" d="M528,538 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="529" text-anchor="middle">kyc_status = vérified</text>
+<path class="msg" d="M136,584 H320" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="575" text-anchor="middle">saisit la politique tarifaire et le plan des places</text>
+<path class="msg" d="M332,630 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="621" text-anchor="middle">PUT /v1/lots/{id}/pricing · PUT /v1/lots/{id}/map</text>
+<path class="msg" d="M522,676 H576 V706 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="588" y="695">refuse si le plafond journalier est absent</text>
+<path class="msg" d="M528,752 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="743" text-anchor="middle">parking mis en ligne si wifi_vérified_at est renseigné</text>
+<rect class="p p-ext" x="44" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="130" y="48" text-anchor="middle">Opérateur</text>
+<text class="t-ps" x="130" y="65" text-anchor="middle"></text>
+<rect class="p p-app" x="240" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="326" y="48" text-anchor="middle">Tableau de bord</text>
+<text class="t-ps" x="326" y="65" text-anchor="middle">web</text>
+<rect class="p p-api" x="436" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="522" y="48" text-anchor="middle">API</text>
+<text class="t-ps" x="522" y="65" text-anchor="middle"></text>
+<rect class="p p-svc" x="632" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="718" y="48" text-anchor="middle">Stripe Connect</text>
+<text class="t-ps" x="718" y="65" text-anchor="middle"></text>
+<rect class="p p-db" x="828" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="914" y="48" text-anchor="middle">Base de données</text>
+<text class="t-ps" x="914" y="65" text-anchor="middle">Postgres</text>
+</svg>

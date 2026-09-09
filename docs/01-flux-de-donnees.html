@@ -1,0 +1,677 @@
+<title>Palier — Diagrammes de flux de données</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+  :root{
+    --ground:#EDEEEA; --surface:#F8F9F6; --surface-2:#E4E6E0;
+    --ink:#191C1A; --ink-2:#4B534D; --ink-3:#6E766F;
+    --line:#D2D6CE; --line-strong:#9BA298;
+    --accent:#1B4B8F; --accent-soft:#DFE7F3; --accent-line:#1B4B8F;
+    --store:#2E7D4F; --store-soft:#DFEEE6;
+    --ext:#5A6159; --ext-soft:#E7E9E3;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#121513; --surface:#1A1E1B; --surface-2:#242925;
+      --ink:#E7EAE4; --ink-2:#AEB6AE; --ink-3:#8B948C;
+      --line:#2C322D; --line-strong:#59615A;
+      --accent:#8CB4E8; --accent-soft:#1C2A3A; --accent-line:#8CB4E8;
+      --store:#63B487; --store-soft:#17281F;
+      --ext:#A7AFA6; --ext-soft:#22261F;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#121513; --surface:#1A1E1B; --surface-2:#242925;
+    --ink:#E7EAE4; --ink-2:#AEB6AE; --ink-3:#8B948C;
+    --line:#2C322D; --line-strong:#59615A;
+    --accent:#8CB4E8; --accent-soft:#1C2A3A; --accent-line:#8CB4E8;
+    --store:#63B487; --store-soft:#17281F;
+    --ext:#A7AFA6; --ext-soft:#22261F;
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--ground);color:var(--ink);
+    font-family:"Newsreader",Georgia,serif;font-size:1.02rem;line-height:1.6;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(18px,4vw,40px) 90px}
+
+  header.mast{padding:clamp(44px,8vw,88px) 0 0}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:.78rem;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-3)}
+  h1{font-family:"Archivo",system-ui,sans-serif;font-weight:700;letter-spacing:-.028em;
+    line-height:1;font-size:clamp(2.2rem,6vw,3rem);margin:.3em 0 .15em;text-wrap:balance}
+  .sub{color:var(--ink-2);max-width:62ch;margin:.4em 0 0;font-size:1.1rem}
+  .mast-rule{height:5px;background:var(--ink);margin:30px 0 0;border:0}
+  .mast-rule::after{content:"";display:block;height:2px;background:var(--ink);margin-top:4px}
+
+  section{margin-top:clamp(46px,7vw,74px)}
+  .sec-head{display:flex;align-items:baseline;gap:16px;border-bottom:2px solid var(--ink);
+    padding-bottom:9px;margin-bottom:24px;flex-wrap:wrap}
+  .sec-head h2{font-family:"Archivo",system-ui,sans-serif;font-weight:600;font-size:1.55rem;
+    letter-spacing:-.02em;margin:0}
+  .sec-head .tag{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:.78rem;
+    color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
+  .lede{max-width:70ch;color:var(--ink-2);margin:0 0 26px}
+
+  /* conventions */
+  .conv{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+  .conv-item{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    padding:14px 16px}
+  .conv-item svg{display:block;margin-bottom:10px}
+  .conv-item h4{font-family:"Archivo",sans-serif;font-size:.94rem;font-weight:600;margin:0 0 4px}
+  .conv-item p{margin:0;font-size:.9rem;color:var(--ink-2);line-height:1.5}
+
+  /* figures */
+  figure{margin:0}
+  .fig{background:var(--surface);border:1px solid var(--line);border-radius:3px;
+    padding:20px 8px 8px}
+  .fig-scroll{overflow-x:auto;overflow-y:hidden}
+  .fig-scroll svg{display:block;height:auto}
+  #ctx{min-width:900px;width:100%}
+  #lvl1{min-width:1180px;width:100%}
+  figcaption{font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--ink-3);
+    padding:12px 14px 4px;line-height:1.6}
+
+  /* svg primitives */
+  .s-ent{fill:var(--ext-soft);stroke:var(--ext);stroke-width:1.8}
+  .s-proc{fill:var(--accent-soft);stroke:var(--accent-line);stroke-width:2.2}
+  .s-store{fill:var(--store-soft);stroke:var(--store);stroke-width:1.8}
+  .s-storeline{stroke:var(--store);stroke-width:1.8}
+  .s-flow{fill:none;stroke:var(--line-strong);stroke-width:1.7;stroke-linejoin:round}
+  .s-tag{fill:var(--ground);stroke:var(--line-strong);stroke-width:1.2}
+  .t-ent{font-family:"Archivo",sans-serif;font-size:13.5px;font-weight:600;fill:var(--ink)}
+  .t-ent-s{font-family:"IBM Plex Mono",monospace;font-size:10.5px;fill:var(--ink-3)}
+  .t-num{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;fill:var(--accent)}
+  .t-proc{font-family:"Archivo",sans-serif;font-size:14.5px;font-weight:600;fill:var(--ink)}
+  .t-proc-s{font-family:"IBM Plex Mono",monospace;font-size:10.5px;fill:var(--ink-3)}
+  .t-sid{font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;fill:var(--store)}
+  .t-store{font-family:"Archivo",sans-serif;font-size:12.5px;font-weight:600;fill:var(--ink)}
+  .t-tag{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;fill:var(--ink-2)}
+  .t-flow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;fill:var(--ink-2)}
+
+  /* legend tables */
+  .tbl-scroll{overflow-x:auto;margin-top:22px}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:.93rem}
+  caption{text-align:left;font-family:"Archivo",sans-serif;font-weight:600;font-size:1.02rem;
+    padding:18px 0 8px;color:var(--ink)}
+  th{font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--ink-3);text-align:left;font-weight:500;
+    border-bottom:1.5px solid var(--ink);padding:0 12px 7px 0}
+  td{border-bottom:1px solid var(--line);padding:8px 12px 8px 0;vertical-align:top;
+    color:var(--ink-2)}
+  td:first-child{font-family:"IBM Plex Mono",monospace;font-size:.82rem;font-weight:600;
+    color:var(--ink-3);white-space:nowrap;width:44px}
+  td:nth-child(2){font-family:"IBM Plex Mono",monospace;font-size:.82rem;color:var(--ink);
+    white-space:nowrap}
+  tbody tr:hover td{background:var(--surface)}
+
+  .note{background:var(--surface);border-left:3px solid var(--accent);border-radius:0 3px 3px 0;
+    padding:14px 18px;margin-top:24px;color:var(--ink-2);font-size:.96rem;max-width:76ch}
+  .note b{color:var(--ink);font-weight:500}
+
+  footer{margin-top:70px;border-top:2px solid var(--ink);padding-top:16px;
+    font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--ink-3);
+    display:flex;flex-wrap:wrap;gap:6px 24px}
+
+  @media print{
+    body{background:#fff;color:#000}
+    .wrap{max-width:none;padding:0}
+    .fig{border:1px solid #999;break-inside:avoid}
+    section{break-inside:avoid-page}
+    footer{border-color:#000}
+  }
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow">Palier · Documentation de conception</div>
+  <h1>Diagrammes de flux de données</h1>
+  <p class="sub">Système d'allocation de places en stationnement intérieur multi-opérateurs. Diagramme de contexte et décomposition de niveau 1, notation Gane-Sarson.</p>
+  <hr class="mast-rule">
+</header>
+
+<section>
+  <div class="sec-head"><h2>Conventions de notation</h2><span class="tag">Gane-Sarson</span></div>
+  <div class="conv">
+    <div class="conv-item">
+      <svg width="140" height="46" viewBox="0 0 140 46" aria-hidden="true">
+        <rect class="s-ent" x="8" y="6" width="124" height="34" rx="1"/>
+      </svg>
+      <h4>Entité externe</h4>
+      <p>Acteur ou système hors des frontières de Palier : personne, matériel de terrain, service tiers.</p>
+    </div>
+    <div class="conv-item">
+      <svg width="140" height="46" viewBox="0 0 140 46" aria-hidden="true">
+        <rect class="s-proc" x="8" y="6" width="124" height="34" rx="9"/>
+      </svg>
+      <h4>Processus</h4>
+      <p>Transformation de données, numérotée. Le rectangle arrondi est la forme Gane-Sarson.</p>
+    </div>
+    <div class="conv-item">
+      <svg width="140" height="46" viewBox="0 0 140 46" aria-hidden="true">
+        <rect class="s-store" x="8" y="10" width="124" height="26" rx="1"/>
+        <line class="s-storeline" x1="38" y1="10" x2="38" y2="36"/>
+      </svg>
+      <h4>Dépôt de données</h4>
+      <p>Stockage persistant, identifié <span style="font-family:'IBM Plex Mono',monospace">D1</span> à <span style="font-family:'IBM Plex Mono',monospace">D6</span> dans la cellule de gauche.</p>
+    </div>
+    <div class="conv-item">
+      <svg width="140" height="46" viewBox="0 0 140 46" aria-hidden="true">
+        <rect class="s-store" x="8" y="10" width="124" height="26" rx="1"/>
+        <line class="s-storeline" x1="38" y1="10" x2="38" y2="36"/>
+        <line class="s-storeline" x1="44" y1="10" x2="44" y2="36"/>
+      </svg>
+      <h4>Dépôt répété</h4>
+      <p>Double trait : le même dépôt redessiné ailleurs pour éviter des croisements. Ce n'est pas un second dépôt.</p>
+    </div>
+    <div class="conv-item">
+      <svg width="140" height="46" viewBox="0 0 140 46" aria-hidden="true">
+        <defs><marker id="cm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--line-strong)"/></marker></defs>
+        <path class="s-flow" d="M14,23 H110" marker-end="url(#cm)"/>
+        <circle class="s-tag" cx="62" cy="23" r="10"/>
+        <text class="t-tag" x="62" y="26.5" text-anchor="middle">F9</text>
+      </svg>
+      <h4>Flux de données</h4>
+      <p>La pastille porte le numéro du flux ; sa désignation complète figure dans la légende sous chaque figure.</p>
+    </div>
+    <div class="conv-item">
+      <svg width="140" height="46" viewBox="0 0 140 46" aria-hidden="true">
+        <path class="s-flow" d="M18,23 H108" marker-end="url(#cm)" marker-start="url(#cm)"/>
+        <circle class="s-tag" cx="63" cy="23" r="10"/>
+        <text class="t-tag" x="63" y="26.5" text-anchor="middle">F3</text>
+      </svg>
+      <h4>Flux bidirectionnel</h4>
+      <p>Deux flux inverses entre les mêmes nœuds, regroupés sur un trait. La légende décrit chaque sens.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Figure 1 — Diagramme de contexte</h2><span class="tag">Niveau 0</span></div>
+  <p class="lede">Le système vu comme une boîte unique, entouré de tout ce qui l'alimente et de tout ce qu'il commande. Il fixe la frontière : ce qui n'apparaît pas ici n'appartient pas au système.</p>
+
+  <figure>
+    <div class="fig"><div class="fig-scroll">
+      <svg id="ctx" viewBox="0 0 1240 680" role="img" aria-label="Diagramme de contexte du système Palier avec ses neuf entités externes.">
+        <defs>
+          <marker id="a0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--line-strong)"/>
+          </marker>
+        </defs>
+
+        <!-- flows -->
+        <g class="s-flow" marker-end="url(#a0)" marker-start="url(#a0)">
+          <path d="M620,102 V310"/>
+        </g>
+        <g class="s-flow" marker-end="url(#a0)" marker-start="url(#a0)">
+          <path d="M215,102 V200 H500 V310"/>
+          <path d="M1025,102 V200 H740 V310"/>
+          <path d="M250,281 H380 V342 H450"/>
+          <path d="M790,342 H890 V281 H990"/>
+          <path d="M790,418 H990"/>
+          <path d="M790,430 V470 H890 V541 H990"/>
+        </g>
+        <g class="s-flow" marker-end="url(#a0)">
+          <path d="M250,411 H380 V400 H450"/>
+          <path d="M250,541 H380 V438 H450"/>
+        </g>
+
+        <!-- flow labels -->
+        <g class="t-flow">
+          <text x="638" y="180">recherche · scan QR · confirmation de place</text>
+          <text x="638" y="196">places assignées · guidage · reçus</text>
+          <text x="238" y="172">demande et jeton</text>
+          <text x="238" y="188">d'authentification</text>
+          <text x="1048" y="172" text-anchor="end">politiques tarifaires</text>
+          <text x="1048" y="188" text-anchor="end">occupation · compte</text>
+          <text x="266" y="252">identifiant de borne</text>
+          <text x="266" y="268">commande d'ouverture</text>
+          <text x="266" y="392">plaque lue à l'entrée</text>
+          <text x="266" y="580">UUID · allée · balise</text>
+          <text x="974" y="252" text-anchor="end">pré-autorisation · capture</text>
+          <text x="974" y="268" text-anchor="end">onboarding Connect</text>
+          <text x="974" y="392" text-anchor="end">plaque lue à la sortie</text>
+          <text x="974" y="408" text-anchor="end">commande d'ouverture</text>
+          <text x="974" y="580" text-anchor="end">notification de confirmation</text>
+        </g>
+
+        <!-- centre -->
+        <rect class="s-proc" x="450" y="310" width="340" height="140" rx="16"/>
+        <text class="t-num" x="620" y="352" text-anchor="middle">0</text>
+        <text class="t-proc" x="620" y="380" text-anchor="middle" font-size="17">Palier</text>
+        <text class="t-proc-s" x="620" y="402" text-anchor="middle">Allocation de places en</text>
+        <text class="t-proc-s" x="620" y="418" text-anchor="middle">stationnement intérieur</text>
+        <text class="t-proc-s" x="620" y="434" text-anchor="middle">multi-opérateurs</text>
+
+        <!-- entities -->
+        <g>
+          <rect class="s-ent" x="515" y="40" width="210" height="62" rx="1"/>
+          <text class="t-ent" x="620" y="70" text-anchor="middle">Conducteur</text>
+          <text class="t-ent-s" x="620" y="88" text-anchor="middle">application mobile</text>
+
+          <rect class="s-ent" x="110" y="40" width="210" height="62" rx="1"/>
+          <text class="t-ent" x="215" y="70" text-anchor="middle">Fournisseurs OAuth</text>
+          <text class="t-ent-s" x="215" y="88" text-anchor="middle">Apple · Google</text>
+
+          <rect class="s-ent" x="920" y="40" width="210" height="62" rx="1"/>
+          <text class="t-ent" x="1025" y="70" text-anchor="middle">Opérateur de parking</text>
+          <text class="t-ent-s" x="1025" y="88" text-anchor="middle">tableau de bord web</text>
+
+          <rect class="s-ent" x="40" y="250" width="210" height="62" rx="1"/>
+          <text class="t-ent" x="145" y="280" text-anchor="middle">Borne d'entrée</text>
+          <text class="t-ent-s" x="145" y="298" text-anchor="middle">QR · barrière</text>
+
+          <rect class="s-ent" x="40" y="380" width="210" height="62" rx="1"/>
+          <text class="t-ent" x="145" y="410" text-anchor="middle">Caméra d'entrée</text>
+          <text class="t-ent-s" x="145" y="428" text-anchor="middle">lecture de plaque</text>
+
+          <rect class="s-ent" x="40" y="510" width="210" height="62" rx="1"/>
+          <text class="t-ent" x="145" y="540" text-anchor="middle">Balises BLE</text>
+          <text class="t-ent-s" x="145" y="558" text-anchor="middle">une par allée</text>
+
+          <rect class="s-ent" x="990" y="250" width="210" height="62" rx="1"/>
+          <text class="t-ent" x="1095" y="280" text-anchor="middle">Stripe Connect</text>
+          <text class="t-ent-s" x="1095" y="298" text-anchor="middle">comptes Express</text>
+
+          <rect class="s-ent" x="990" y="380" width="210" height="62" rx="1"/>
+          <text class="t-ent" x="1095" y="410" text-anchor="middle">Barrière de sortie</text>
+          <text class="t-ent-s" x="1095" y="428" text-anchor="middle">caméra ANPR</text>
+
+          <rect class="s-ent" x="990" y="510" width="210" height="62" rx="1"/>
+          <text class="t-ent" x="1095" y="540" text-anchor="middle">Notifications push</text>
+          <text class="t-ent-s" x="1095" y="558" text-anchor="middle">APNs</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>Neuf entités externes. Le conducteur est le seul acteur humain du parcours ; l'opérateur n'intervient qu'en configuration.</figcaption>
+    </div>
+  </figure>
+</section>
+
+<section>
+  <div class="sec-head"><h2>Figure 2 — Décomposition</h2><span class="tag">Niveau 1 · 8 processus · 6 dépôts</span></div>
+  <p class="lede">Les processus sont empilés dans l'ordre du parcours réel, de l'inscription à la purge des données. Les entités externes sont à gauche, les dépôts à droite : chaque flux reste court et les croisements disparaissent.</p>
+
+  <figure>
+    <div class="fig"><div class="fig-scroll">
+      <svg id="lvl1" viewBox="0 0 1560 1290" role="img" aria-label="Diagramme de flux de données de niveau 1 : huit processus, six dépôts, neuf entités externes.">
+        <defs>
+          <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.6" markerHeight="6.6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--line-strong)"/>
+          </marker>
+        </defs>
+
+        <!-- ============ FLOWS ============ -->
+        <!-- conducteur rail -> processes (bidirectional) -->
+        <g class="s-flow" marker-end="url(#a1)" marker-start="url(#a1)">
+          <path d="M160,260 H470"/>
+          <path d="M160,330 H455 V380 H470"/>
+          <path d="M160,640 H455 V690 H470"/>
+          <path d="M160,800 H455 V840 H470"/>
+          <path d="M160,495 H455 V545 H470"/>
+        </g>
+        <!-- entity column -> processes -->
+        <g class="s-flow" marker-end="url(#a1)" marker-start="url(#a1)">
+          <path d="M440,110 H470"/>
+          <path d="M440,379 H470"/>
+          <path d="M440,860 H470"/>
+          <path d="M440,1010 H470"/>
+        </g>
+        <g class="s-flow" marker-end="url(#a1)">
+          <path d="M440,435 H470"/>
+          <path d="M440,545 H470"/>
+        </g>
+        <!-- 5.0 -> APNs (out) -->
+        <g class="s-flow" marker-end="url(#a1)">
+          <path d="M470,724 H440"/>
+        </g>
+
+        <!-- process chain -->
+        <g class="s-flow" marker-end="url(#a1)">
+          <path d="M660,158 V212"/>
+          <path d="M660,308 V362"/>
+          <path d="M660,458 V512"/>
+          <path d="M660,608 V662"/>
+          <path d="M660,758 V812"/>
+          <path d="M610,908 V930 H452 V1090 H610 V1112"/>
+        </g>
+
+        <!-- process -> store col1 -->
+        <g class="s-flow" marker-end="url(#a1)" marker-start="url(#a1)">
+          <path d="M850,110 H890"/>
+          <path d="M850,260 H890"/>
+          <path d="M850,410 H890"/>
+          <path d="M850,1010 H890"/>
+        </g>
+        <g class="s-flow" marker-end="url(#a1)">
+          <path d="M850,560 H890"/>
+          <path d="M850,710 H890"/>
+          <path d="M850,860 H890"/>
+          <path d="M850,1160 H890"/>
+        </g>
+
+        <!-- process -> store col2 (routed through row gaps) -->
+        <g class="s-flow" marker-end="url(#a1)">
+          <path d="M790,308 V322 H1245 V286"/>
+          <path d="M790,458 V472 H1245 V436"/>
+          <path d="M790,758 V772 H1245 V736"/>
+          <path d="M790,908 V922 H1245 V886"/>
+          <path d="M790,1208 V1222 H1245 V1186"/>
+        </g>
+        <g class="s-flow" marker-end="url(#a1)" marker-start="url(#a1)">
+          <path d="M790,1058 V1072 H1245 V1036"/>
+        </g>
+
+        <!-- process -> Stripe rail -->
+        <g class="s-flow" marker-end="url(#a1)" marker-start="url(#a1)">
+          <path d="M730,458 V500 H1400"/>
+          <path d="M730,908 V950 H1400"/>
+          <path d="M730,1058 V1085 H1400"/>
+        </g>
+
+        <!-- ============ FLOW TAGS ============ -->
+        <g>
+          <circle class="s-tag" cx="315" cy="260" r="11"/><text class="t-tag" x="315" y="263.5" text-anchor="middle">F1</text>
+          <circle class="s-tag" cx="300" cy="330" r="11"/><text class="t-tag" x="300" y="333.5" text-anchor="middle">F2</text>
+          <circle class="s-tag" cx="300" cy="640" r="11"/><text class="t-tag" x="300" y="643.5" text-anchor="middle">F3</text>
+          <circle class="s-tag" cx="300" cy="800" r="11"/><text class="t-tag" x="300" y="803.5" text-anchor="middle">F4</text>
+          <circle class="s-tag" cx="300" cy="495" r="11"/><text class="t-tag" x="300" y="498.5" text-anchor="middle">F5</text>
+
+          <circle class="s-tag" cx="455" cy="86" r="11"/><text class="t-tag" x="455" y="89.5" text-anchor="middle">F6</text>
+          <circle class="s-tag" cx="455" cy="355" r="11"/><text class="t-tag" x="455" y="358.5" text-anchor="middle">F7</text>
+          <circle class="s-tag" cx="455" cy="459" r="11"/><text class="t-tag" x="455" y="462.5" text-anchor="middle">F8</text>
+          <circle class="s-tag" cx="455" cy="521" r="11"/><text class="t-tag" x="455" y="524.5" text-anchor="middle">F9</text>
+          <circle class="s-tag" cx="455" cy="724" r="11"/><text class="t-tag" x="455" y="727.5" text-anchor="middle">F10</text>
+          <circle class="s-tag" cx="455" cy="884" r="11"/><text class="t-tag" x="455" y="887.5" text-anchor="middle">F11</text>
+          <circle class="s-tag" cx="455" cy="1034" r="11"/><text class="t-tag" x="455" y="1037.5" text-anchor="middle">F12</text>
+
+          <circle class="s-tag" cx="660" cy="185" r="11"/><text class="t-tag" x="660" y="188.5" text-anchor="middle">F13</text>
+          <circle class="s-tag" cx="660" cy="335" r="11"/><text class="t-tag" x="660" y="338.5" text-anchor="middle">F14</text>
+          <circle class="s-tag" cx="660" cy="485" r="11"/><text class="t-tag" x="660" y="488.5" text-anchor="middle">F15</text>
+          <circle class="s-tag" cx="660" cy="635" r="11"/><text class="t-tag" x="660" y="638.5" text-anchor="middle">F16</text>
+          <circle class="s-tag" cx="660" cy="785" r="11"/><text class="t-tag" x="660" y="788.5" text-anchor="middle">F17</text>
+          <circle class="s-tag" cx="530" cy="930" r="11"/><text class="t-tag" x="530" y="933.5" text-anchor="middle">F18</text>
+
+          <circle class="s-tag" cx="870" cy="110" r="11"/><text class="t-tag" x="870" y="113.5" text-anchor="middle">F19</text>
+          <circle class="s-tag" cx="870" cy="260" r="11"/><text class="t-tag" x="870" y="263.5" text-anchor="middle">F20</text>
+          <circle class="s-tag" cx="870" cy="410" r="11"/><text class="t-tag" x="870" y="413.5" text-anchor="middle">F21</text>
+          <circle class="s-tag" cx="870" cy="560" r="11"/><text class="t-tag" x="870" y="563.5" text-anchor="middle">F22</text>
+          <circle class="s-tag" cx="870" cy="710" r="11"/><text class="t-tag" x="870" y="713.5" text-anchor="middle">F23</text>
+          <circle class="s-tag" cx="870" cy="860" r="11"/><text class="t-tag" x="870" y="863.5" text-anchor="middle">F24</text>
+          <circle class="s-tag" cx="870" cy="1010" r="11"/><text class="t-tag" x="870" y="1013.5" text-anchor="middle">F25</text>
+          <circle class="s-tag" cx="870" cy="1160" r="11"/><text class="t-tag" x="870" y="1163.5" text-anchor="middle">F26</text>
+
+          <circle class="s-tag" cx="1020" cy="322" r="11"/><text class="t-tag" x="1020" y="325.5" text-anchor="middle">F27</text>
+          <circle class="s-tag" cx="1020" cy="472" r="11"/><text class="t-tag" x="1020" y="475.5" text-anchor="middle">F28</text>
+          <circle class="s-tag" cx="1020" cy="772" r="11"/><text class="t-tag" x="1020" y="775.5" text-anchor="middle">F29</text>
+          <circle class="s-tag" cx="1020" cy="922" r="11"/><text class="t-tag" x="1020" y="925.5" text-anchor="middle">F30</text>
+          <circle class="s-tag" cx="1020" cy="1072" r="11"/><text class="t-tag" x="1020" y="1075.5" text-anchor="middle">F31</text>
+          <circle class="s-tag" cx="1020" cy="1222" r="11"/><text class="t-tag" x="1020" y="1225.5" text-anchor="middle">F32</text>
+
+          <circle class="s-tag" cx="1330" cy="500" r="11"/><text class="t-tag" x="1330" y="503.5" text-anchor="middle">F33</text>
+          <circle class="s-tag" cx="1330" cy="950" r="11"/><text class="t-tag" x="1330" y="953.5" text-anchor="middle">F34</text>
+          <circle class="s-tag" cx="1330" cy="1085" r="11"/><text class="t-tag" x="1330" y="1088.5" text-anchor="middle">F35</text>
+        </g>
+
+        <!-- ============ CONDUCTEUR RAIL ============ -->
+        <rect class="s-ent" x="40" y="212" width="120" height="696" rx="1"/>
+        <text class="t-ent" transform="translate(88,560) rotate(-90)" text-anchor="middle">Conducteur</text>
+        <text class="t-ent-s" transform="translate(108,560) rotate(-90)" text-anchor="middle">application mobile iOS</text>
+
+        <!-- ============ ENTITY COLUMN ============ -->
+        <g>
+          <rect class="s-ent" x="190" y="82" width="250" height="56" rx="1"/>
+          <text class="t-ent" x="315" y="106" text-anchor="middle">Fournisseurs OAuth</text>
+          <text class="t-ent-s" x="315" y="124" text-anchor="middle">Apple · Google</text>
+
+          <rect class="s-ent" x="190" y="356" width="250" height="46" rx="1"/>
+          <text class="t-ent" x="315" y="376" text-anchor="middle">Borne d'entrée</text>
+          <text class="t-ent-s" x="315" y="392" text-anchor="middle">QR statique · barrière</text>
+
+          <rect class="s-ent" x="190" y="412" width="250" height="46" rx="1"/>
+          <text class="t-ent" x="315" y="432" text-anchor="middle">Caméra d'entrée</text>
+          <text class="t-ent-s" x="315" y="448" text-anchor="middle">plaque arrière, après la barrière</text>
+
+          <rect class="s-ent" x="190" y="532" width="250" height="56" rx="1"/>
+          <text class="t-ent" x="315" y="556" text-anchor="middle">Balises BLE</text>
+          <text class="t-ent-s" x="315" y="574" text-anchor="middle">une par allée</text>
+
+          <rect class="s-ent" x="190" y="696" width="250" height="56" rx="1"/>
+          <text class="t-ent" x="315" y="720" text-anchor="middle">Notifications push</text>
+          <text class="t-ent-s" x="315" y="738" text-anchor="middle">APNs</text>
+
+          <rect class="s-ent" x="190" y="832" width="250" height="56" rx="1"/>
+          <text class="t-ent" x="315" y="856" text-anchor="middle">Barrière de sortie</text>
+          <text class="t-ent-s" x="315" y="874" text-anchor="middle">caméra ANPR · QR de repli</text>
+
+          <rect class="s-ent" x="190" y="982" width="250" height="56" rx="1"/>
+          <text class="t-ent" x="315" y="1006" text-anchor="middle">Opérateur de parking</text>
+          <text class="t-ent-s" x="315" y="1024" text-anchor="middle">tableau de bord web</text>
+        </g>
+
+        <!-- ============ PROCESSES ============ -->
+        <g>
+          <rect class="s-proc" x="470" y="62" width="380" height="96" rx="12"/>
+          <text class="t-num" x="494" y="94">1.0</text>
+          <text class="t-proc" x="494" y="118">Inscrire et authentifier</text>
+          <text class="t-proc-s" x="494" y="138">plaque et carte obligatoires</text>
+
+          <rect class="s-proc" x="470" y="212" width="380" height="96" rx="12"/>
+          <text class="t-num" x="494" y="244">2.0</text>
+          <text class="t-proc" x="494" y="268">Publier la disponibilité</text>
+          <text class="t-proc-s" x="494" y="288">hold de 15 min · quota par parking</text>
+
+          <rect class="s-proc" x="470" y="362" width="380" height="96" rx="12"/>
+          <text class="t-num" x="494" y="394">3.0</text>
+          <text class="t-proc" x="494" y="418">Assigner et confirmer l'entrée</text>
+          <text class="t-proc-s" x="494" y="438">sélection atomique · pré-autorisation</text>
+
+          <rect class="s-proc" x="470" y="512" width="380" height="96" rx="12"/>
+          <text class="t-num" x="494" y="544">4.0</text>
+          <text class="t-proc" x="494" y="568">Guider vers la place</text>
+          <text class="t-proc-s" x="494" y="588">plan du palier · confirmation d'allée</text>
+
+          <rect class="s-proc" x="470" y="662" width="380" height="96" rx="12"/>
+          <text class="t-num" x="494" y="694">5.0</text>
+          <text class="t-proc" x="494" y="718">Confirmer l'occupation</text>
+          <text class="t-proc-s" x="494" y="738">détection « à pied » · tap ou silence</text>
+
+          <rect class="s-proc" x="470" y="812" width="380" height="96" rx="12"/>
+          <text class="t-num" x="494" y="844">6.0</text>
+          <text class="t-proc" x="494" y="868">Clôturer et facturer</text>
+          <text class="t-proc-s" x="494" y="888">plaque → capture → ouverture</text>
+
+          <rect class="s-proc" x="470" y="962" width="380" height="96" rx="12"/>
+          <text class="t-num" x="494" y="994">7.0</text>
+          <text class="t-proc" x="494" y="1018">Administrer un parking</text>
+          <text class="t-proc-s" x="494" y="1038">tarifs · plan des places · Connect</text>
+
+          <rect class="s-proc" x="470" y="1112" width="380" height="96" rx="12"/>
+          <text class="t-num" x="494" y="1144">8.0</text>
+          <text class="t-proc" x="494" y="1168">Purger et anonymiser</text>
+          <text class="t-proc-s" x="494" y="1188">rétention 90 jours · Loi 25</text>
+        </g>
+
+        <!-- ============ STORES ============ -->
+        <g>
+          <!-- col 1 -->
+          <rect class="s-store" x="890" y="84" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="934" y1="84" x2="934" y2="136"/>
+          <text class="t-sid" x="898" y="115">D1</text>
+          <text class="t-store" x="944" y="106">Utilisateurs</text>
+          <text class="t-proc-s" x="944" y="124">compte · plaque · client Stripe</text>
+
+          <rect class="s-store" x="890" y="234" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="934" y1="234" x2="934" y2="286"/>
+          <text class="t-sid" x="898" y="265">D2</text>
+          <text class="t-store" x="944" y="256">Parkings et tarifs</text>
+          <text class="t-proc-s" x="944" y="274">plafond journalier obligatoire</text>
+
+          <rect class="s-store" x="890" y="384" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="934" y1="384" x2="934" y2="436"/>
+          <text class="t-sid" x="898" y="415">D3</text>
+          <text class="t-store" x="944" y="406">Places</text>
+          <text class="t-proc-s" x="944" y="424">état · palier · allée · attributs</text>
+
+          <rect class="s-store" x="890" y="534" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="934" y1="534" x2="934" y2="586"/>
+          <line class="s-storeline" x1="940" y1="534" x2="940" y2="586"/>
+          <text class="t-sid" x="898" y="565">D5</text>
+          <text class="t-store" x="950" y="556">Journal d'événements</text>
+          <text class="t-proc-s" x="950" y="574">rappel</text>
+
+          <rect class="s-store" x="890" y="684" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="934" y1="684" x2="934" y2="736"/>
+          <line class="s-storeline" x1="940" y1="684" x2="940" y2="736"/>
+          <text class="t-sid" x="898" y="715">D3</text>
+          <text class="t-store" x="950" y="706">Places</text>
+          <text class="t-proc-s" x="950" y="724">rappel</text>
+
+          <rect class="s-store" x="890" y="834" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="934" y1="834" x2="934" y2="886"/>
+          <line class="s-storeline" x1="940" y1="834" x2="940" y2="886"/>
+          <text class="t-sid" x="898" y="865">D3</text>
+          <text class="t-store" x="950" y="856">Places</text>
+          <text class="t-proc-s" x="950" y="874">rappel</text>
+
+          <rect class="s-store" x="890" y="984" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="934" y1="984" x2="934" y2="1036"/>
+          <text class="t-sid" x="898" y="1015">D6</text>
+          <text class="t-store" x="944" y="1006">Opérateurs</text>
+          <text class="t-proc-s" x="944" y="1024">comptes Connect Express</text>
+
+          <rect class="s-store" x="890" y="1134" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="934" y1="1134" x2="934" y2="1186"/>
+          <text class="t-sid" x="898" y="1165">D5</text>
+          <text class="t-store" x="944" y="1156">Journal d'événements</text>
+          <text class="t-proc-s" x="944" y="1174">scans · mouvements · plaques</text>
+
+          <!-- col 2 -->
+          <rect class="s-store" x="1140" y="234" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="1184" y1="234" x2="1184" y2="286"/>
+          <line class="s-storeline" x1="1190" y1="234" x2="1190" y2="286"/>
+          <text class="t-sid" x="1148" y="265">D3</text>
+          <text class="t-store" x="1200" y="256">Places</text>
+          <text class="t-proc-s" x="1200" y="274">rappel</text>
+
+          <rect class="s-store" x="1140" y="384" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="1184" y1="384" x2="1184" y2="436"/>
+          <text class="t-sid" x="1148" y="415">D4</text>
+          <text class="t-store" x="1194" y="406">Sessions</text>
+          <text class="t-proc-s" x="1194" y="424">entrée · place · sortie · montant</text>
+
+          <rect class="s-store" x="1140" y="684" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="1184" y1="684" x2="1184" y2="736"/>
+          <line class="s-storeline" x1="1190" y1="684" x2="1190" y2="736"/>
+          <text class="t-sid" x="1148" y="715">D4</text>
+          <text class="t-store" x="1200" y="706">Sessions</text>
+          <text class="t-proc-s" x="1200" y="724">rappel</text>
+
+          <rect class="s-store" x="1140" y="834" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="1184" y1="834" x2="1184" y2="886"/>
+          <line class="s-storeline" x1="1190" y1="834" x2="1190" y2="886"/>
+          <text class="t-sid" x="1148" y="865">D4</text>
+          <text class="t-store" x="1200" y="856">Sessions</text>
+          <text class="t-proc-s" x="1200" y="874">rappel</text>
+
+          <rect class="s-store" x="1140" y="984" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="1184" y1="984" x2="1184" y2="1036"/>
+          <line class="s-storeline" x1="1190" y1="984" x2="1190" y2="1036"/>
+          <text class="t-sid" x="1148" y="1015">D2</text>
+          <text class="t-store" x="1200" y="1006">Parkings et tarifs</text>
+          <text class="t-proc-s" x="1200" y="1024">rappel</text>
+
+          <rect class="s-store" x="1140" y="1134" width="210" height="52" rx="1"/>
+          <line class="s-storeline" x1="1184" y1="1134" x2="1184" y2="1186"/>
+          <line class="s-storeline" x1="1190" y1="1134" x2="1190" y2="1186"/>
+          <text class="t-sid" x="1148" y="1165">D4</text>
+          <text class="t-store" x="1200" y="1156">Sessions</text>
+          <text class="t-proc-s" x="1200" y="1174">rappel</text>
+        </g>
+
+        <!-- ============ STRIPE RAIL ============ -->
+        <rect class="s-ent" x="1400" y="362" width="110" height="760" rx="1"/>
+        <text class="t-ent" transform="translate(1443,742) rotate(-90)" text-anchor="middle">Stripe Connect</text>
+        <text class="t-ent-s" transform="translate(1463,742) rotate(-90)" text-anchor="middle">comptes Express · charges destination</text>
+      </svg>
+    </div>
+    <figcaption>Le dépôt D3 (Places) et D4 (Sessions) sont répétés à plusieurs hauteurs — double trait — pour garder les flux courts. D5 reçoit en écriture depuis presque tous les processus ; seuls les deux accès structurants sont représentés.</figcaption>
+    </div>
+  </figure>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>Légende des flux — conducteur et entités externes</caption>
+      <thead><tr><th>N°</th><th>Trajet</th><th>Donnée qui circule</th></tr></thead>
+      <tbody>
+        <tr><td>F1</td><td>Conducteur ↔ 2.0</td><td>Position et type de véhicule ; en retour, liste des parkings avec places libres et confirmation de hold</td></tr>
+        <tr><td>F2</td><td>Conducteur ↔ 3.0</td><td>Jeton du QR de la borne ; en retour, numéro de place assignée (palier, allée, numéro)</td></tr>
+        <tr><td>F3</td><td>Conducteur ↔ 5.0</td><td>Confirmation ou correction du numéro de place ; en retour, accusé de prise en compte</td></tr>
+        <tr><td>F4</td><td>Conducteur ↔ 6.0</td><td>Scan du QR de repli si la plaque n'est pas lue ; en retour, reçu et montant facturé</td></tr>
+        <tr><td>F5</td><td>Conducteur ↔ 4.0</td><td>Position d'allée détectée ; en retour, plan du palier et indication de progression</td></tr>
+        <tr><td>F6</td><td>OAuth ↔ 1.0</td><td>Demande d'authentification ; en retour, jeton d'identité vérifié (Apple ou Google)</td></tr>
+        <tr><td>F7</td><td>Borne d'entrée ↔ 3.0</td><td>Identifiant de borne encodé dans le QR ; en retour, commande d'ouverture de la barrière</td></tr>
+        <tr><td>F8</td><td>Caméra d'entrée → 3.0</td><td>Plaque arrière lue après le passage de la barrière — confirme l'entrée effective du véhicule</td></tr>
+        <tr><td>F9</td><td>Balises BLE → 4.0</td><td>UUID, <span style="font-family:'IBM Plex Mono',monospace">major</span> (allée), <span style="font-family:'IBM Plex Mono',monospace">minor</span> (balise) et puissance reçue</td></tr>
+        <tr><td>F10</td><td>5.0 → APNs</td><td>Demande de notification « Confirmez votre place », déclenchée par la transition « à pied »</td></tr>
+        <tr><td>F11</td><td>Barrière de sortie ↔ 6.0</td><td>Plaque lue à la sortie ; en retour, commande d'ouverture après capture du paiement</td></tr>
+        <tr><td>F12</td><td>Opérateur ↔ 7.0</td><td>Politique tarifaire, plafond journalier, plan des places ; en retour, état d'occupation et statut du compte Connect</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>Légende des flux — enchaînement des processus</caption>
+      <thead><tr><th>N°</th><th>Trajet</th><th>Donnée qui circule</th></tr></thead>
+      <tbody>
+        <tr><td>F13</td><td>1.0 → 2.0</td><td>Utilisateur authentifié, plaque et moyen de paiement vérifiés</td></tr>
+        <tr><td>F14</td><td>2.0 → 3.0</td><td>Hold actif le cas échéant, sinon demande d'assignation directe</td></tr>
+        <tr><td>F15</td><td>3.0 → 4.0</td><td>Place assignée et cible de guidage (palier, allée)</td></tr>
+        <tr><td>F16</td><td>4.0 → 5.0</td><td>Allée atteinte — armement de la détection de stationnement</td></tr>
+        <tr><td>F17</td><td>5.0 → 6.0</td><td>Session avec place résolue : confirmée ou marquée non confirmée</td></tr>
+        <tr><td>F18</td><td>6.0 → 8.0</td><td>Session close et payée, éligible à la purge après 90 jours</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>Légende des flux — accès aux dépôts et aux services tiers</caption>
+      <thead><tr><th>N°</th><th>Trajet</th><th>Donnée qui circule</th></tr></thead>
+      <tbody>
+        <tr><td>F19</td><td>1.0 ↔ D1</td><td>Création et lecture du compte : identité, plaque, identifiant client Stripe</td></tr>
+        <tr><td>F20</td><td>2.0 ↔ D2</td><td>Lecture des politiques tarifaires et des parkings actifs</td></tr>
+        <tr><td>F21</td><td>3.0 ↔ D3</td><td>Sélection atomique d'une place libre et passage à l'état <span style="font-family:'IBM Plex Mono',monospace">ASSIGNED</span></td></tr>
+        <tr><td>F22</td><td>4.0 → D5</td><td>Journalisation des passages de balises</td></tr>
+        <tr><td>F23</td><td>5.0 → D3</td><td>Passage à <span style="font-family:'IBM Plex Mono',monospace">OCCUPIED</span> si confirmé, <span style="font-family:'IBM Plex Mono',monospace">OCCUPIED_UNKNOWN</span> en cas de silence</td></tr>
+        <tr><td>F24</td><td>6.0 → D3</td><td>Remise de la place à <span style="font-family:'IBM Plex Mono',monospace">AVAILABLE</span>, indicateur « à vérifier » le cas échéant</td></tr>
+        <tr><td>F25</td><td>7.0 ↔ D6</td><td>Opérateur et compte Connect Express associé</td></tr>
+        <tr><td>F26</td><td>8.0 → D5</td><td>Purge des événements de plus de 90 jours</td></tr>
+        <tr><td>F27</td><td>2.0 → D3</td><td>Lecture des places libres et écriture de l'état <span style="font-family:'IBM Plex Mono',monospace">HELD</span></td></tr>
+        <tr><td>F28</td><td>3.0 → D4</td><td>Création de la session à l'entrée, avec plaque attendue et place assignée</td></tr>
+        <tr><td>F29</td><td>5.0 → D4</td><td>Rattachement de la place réellement occupée à la session</td></tr>
+        <tr><td>F30</td><td>6.0 → D4</td><td>Clôture de la session : horodatage de sortie, durée, montant capturé</td></tr>
+        <tr><td>F31</td><td>7.0 ↔ D2</td><td>Écriture de la politique tarifaire et du plan des places du parking</td></tr>
+        <tr><td>F32</td><td>8.0 → D4</td><td>Anonymisation des sessions échues, conservation des agrégats d'occupation</td></tr>
+        <tr><td>F33</td><td>3.0 ↔ Stripe</td><td>Pré-autorisation du plafond journalier sur la carte enregistrée</td></tr>
+        <tr><td>F34</td><td>6.0 ↔ Stripe</td><td>Capture du montant dû sur la pré-autorisation existante</td></tr>
+        <tr><td>F35</td><td>7.0 ↔ Stripe</td><td>Onboarding du compte Express de l'opérateur et statut de vérification</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Points à vérifier au moment de l'implémentation.</b> Deux flux n'apparaissent pas sur la figure parce qu'ils sont déclenchés par le temps, non par un acteur : l'expiration d'un hold non utilisé après 15 minutes (retour de D3 à <span style="font-family:'IBM Plex Mono',monospace">AVAILABLE</span>), et l'annulation d'une assignation dont la plaque n'a jamais été lue à l'entrée après 2 minutes, qui libère aussi la pré-autorisation Stripe. Un DFD ne représente pas les déclencheurs temporels ; ils doivent figurer au diagramme d'états.
+  </div>
+</section>
+
+<footer>
+  <span>Palier · diagrammes de flux de données</span>
+  <span>Niveau 0 et niveau 1 · notation Gane-Sarson</span>
+  <span>35 flux · 8 processus · 6 dépôts · 9 entités externes</span>
+</footer>
+
+</div>

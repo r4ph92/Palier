@@ -1,0 +1,88 @@
+<svg viewBox="0 0 1180 800" role="img" aria-label="Diagramme de déploiement de Palier.">
+<rect class="zn" x="40" y="30" width="330" height="250" rx="5"/>
+<text class="t-zn" x="56" y="54">Appareils des usagers</text>
+<rect class="nd nd-cli" x="60" y="66" width="290" height="92" rx="3"/>
+<text class="t-nd" x="74" y="91">iPhone</text>
+<text class="t-nd-s" x="74" y="110">app React Native + module Swift</text>
+<text class="t-nd-s" x="74" y="125">BLE · CoreMotion · caméra QR</text>
+<text class="t-nd-s" x="74" y="140">file hors ligne locale</text>
+<rect class="nd nd-cli" x="60" y="174" width="290" height="88" rx="3"/>
+<text class="t-nd" x="74" y="199">Navigateur — opérateur</text>
+<text class="t-nd-s" x="74" y="218">tableau de bord web</text>
+<text class="t-nd-s" x="74" y="233">session opérateur</text>
+<rect class="zn" x="410" y="30" width="400" height="250" rx="5"/>
+<text class="t-zn" x="426" y="54">Nuage — plateforme</text>
+<rect class="nd nd-srv" x="430" y="66" width="360" height="92" rx="3"/>
+<text class="t-nd" x="444" y="91">API — conteneurs</text>
+<text class="t-nd-s" x="444" y="110">2 instances derrière un répartiteur</text>
+<text class="t-nd-s" x="444" y="125">adaptateurs · domaine · infrastructure</text>
+<text class="t-nd-s" x="444" y="140">TLS terminé au répartiteur</text>
+<rect class="nd nd-db" x="430" y="174" width="175" height="88" rx="3"/>
+<text class="t-nd" x="444" y="199">Postgres</text>
+<text class="t-nd-s" x="444" y="218">managé</text>
+<text class="t-nd-s" x="444" y="233">sauvegarde continue</text>
+<rect class="nd nd-srv" x="615" y="174" width="175" height="88" rx="3"/>
+<text class="t-nd" x="629" y="199">Planificateur</text>
+<text class="t-nd-s" x="629" y="218">4 tâches</text>
+<text class="t-nd-s" x="629" y="233">instance unique</text>
+<rect class="zn" x="850" y="30" width="290" height="250" rx="5"/>
+<text class="t-zn" x="866" y="54">Services tiers</text>
+<rect class="nd nd-svc" x="870" y="66" width="250" height="62" rx="3"/>
+<text class="t-nd" x="884" y="91">Stripe Connect</text>
+<text class="t-nd-s" x="884" y="110">comptes Express</text>
+<rect class="nd nd-svc" x="870" y="140" width="250" height="58" rx="3"/>
+<text class="t-nd" x="884" y="165">APNs</text>
+<text class="t-nd-s" x="884" y="184">notifications</text>
+<rect class="nd nd-svc" x="870" y="210" width="250" height="58" rx="3"/>
+<text class="t-nd" x="884" y="235">OAuth Apple · Google</text>
+<text class="t-nd-s" x="884" y="254">authentification</text>
+<rect class="zn zn-site" x="40" y="320" width="1100" height="300" rx="5"/>
+<text class="t-zn" x="56" y="344">Garage — équipement de terrain</text>
+<rect class="nd nd-hw" x="64" y="372" width="250" height="104" rx="3"/>
+<text class="t-nd" x="78" y="397">Borne d'entrée</text>
+<text class="t-nd-s" x="78" y="416">QR statique signé (HMAC)</text>
+<text class="t-nd-s" x="78" y="431">contrôleur Raspberry Pi</text>
+<text class="t-nd-s" x="78" y="446">relais de barrière</text>
+<rect class="nd nd-hw" x="334" y="372" width="250" height="104" rx="3"/>
+<text class="t-nd" x="348" y="397">Caméra d'entrée</text>
+<text class="t-nd-s" x="348" y="416">vise la plaque arrière</text>
+<text class="t-nd-s" x="348" y="431">posée après la barrière</text>
+<text class="t-nd-s" x="348" y="446">reconnaissance hébergée</text>
+<rect class="nd nd-hw" x="604" y="372" width="250" height="104" rx="3"/>
+<text class="t-nd" x="618" y="397">Barrière de sortie</text>
+<text class="t-nd-s" x="618" y="416">caméra ANPR</text>
+<text class="t-nd-s" x="618" y="431">QR de repli</text>
+<text class="t-nd-s" x="618" y="446">contrôleur + relais</text>
+<rect class="nd nd-hw" x="874" y="372" width="242" height="104" rx="3"/>
+<text class="t-nd" x="888" y="397">Balises BLE</text>
+<text class="t-nd-s" x="888" y="416">une par allée</text>
+<text class="t-nd-s" x="888" y="431">UUID unique · major = allée</text>
+<text class="t-nd-s" x="888" y="446">pile remontée à l'API</text>
+<rect class="nd nd-net" x="64" y="500" width="520" height="92" rx="3"/>
+<text class="t-nd" x="78" y="525">Réseau Wi-Fi du garage</text>
+<text class="t-nd-s" x="78" y="544">pré-requis d'adhésion à la charge de l'opérateur</text>
+<text class="t-nd-s" x="78" y="559">couverture exigée : paliers + les deux bornes</text>
+<text class="t-nd-s" x="78" y="574">matérialisé par parking_lot.wifi_verified_at</text>
+<rect class="nd nd-neg" x="604" y="500" width="512" height="92" rx="3"/>
+<text class="t-nd" x="618" y="525">Ce que le Wi-Fi ne fait pas</text>
+<text class="t-nd-s" x="618" y="544">iOS n'expose aucun scan Wi-Fi aux apps tierces</text>
+<text class="t-nd-s" x="618" y="559">le Wi-Fi RTT est Android seulement</text>
+<text class="t-nd-s" x="618" y="574">aucun rôle dans le positionnement</text>
+<g class="lnk">
+<path d="M350,112 H430" marker-end="url(#ar5)"/>
+<path d="M350,218 H430" marker-end="url(#ar5)"/>
+<path d="M790,112 H870" marker-end="url(#ar5)"/>
+<path d="M790,112 H830 V169 H870" marker-end="url(#ar5)"/>
+<path d="M700,262 V300 H700" marker-end="url(#ar5)"/>
+<path d="M190,262 V320" marker-end="url(#ar5)"/>
+<path d="M700,158 V174" marker-end="url(#ar5)"/>
+<path d="M314,424 H334" marker-end="url(#ar5)"/>
+<path d="M584,424 H604" marker-end="url(#ar5)"/>
+<path d="M854,424 H874" marker-end="url(#ar5)"/>
+<path d="M204,372 V300" marker-end="url(#ar5)"/>
+<path d="M459,372 V300" marker-end="url(#ar5)"/>
+<path d="M729,372 V300" marker-end="url(#ar5)"/>
+<path d="M995,372 V300" marker-end="url(#ar5)"/>
+</g>
+<text class="t-lnk" x="700" y="312">HTTPS · Wi-Fi du garage</text>
+</svg>

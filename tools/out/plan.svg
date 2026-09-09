@@ -1,0 +1,53 @@
+<svg viewBox="0 0 1100 560" role="img" aria-label="Plan physique du montage de démonstration.">
+<rect class="floor" x="40" y="60" width="1020" height="440" rx="4"/>
+<text class="t-zn" x="60" y="90">Palier de démonstration — deux allées, dix places</text>
+<text class="t-aisle" x="60" y="152">Allée A — major 1</text>
+<rect class="sp sp-a" x="60" y="168" width="104" height="72" rx="2"/>
+<text class="t-sp" x="112" y="198">A-1</text>
+<text class="t-sp-s" x="112" y="216">AVAILABLE</text>
+<rect class="sp sp-a" x="178" y="168" width="104" height="72" rx="2"/>
+<text class="t-sp" x="230" y="198">A-2</text>
+<text class="t-sp-s" x="230" y="216">AVAILABLE</text>
+<rect class="sp sp-s" x="296" y="168" width="104" height="72" rx="2"/>
+<text class="t-sp" x="348" y="198">A-3</text>
+<text class="t-sp-s" x="348" y="216">ASSIGNED</text>
+<rect class="sp sp-o" x="414" y="168" width="104" height="72" rx="2"/>
+<text class="t-sp" x="466" y="198">A-4</text>
+<text class="t-sp-s" x="466" y="216">OCCUPIED</text>
+<rect class="sp sp-a" x="532" y="168" width="104" height="72" rx="2"/>
+<text class="t-sp" x="584" y="198">A-5</text>
+<text class="t-sp-s" x="584" y="216">AVAILABLE</text>
+<circle class="bcn" cx="360" cy="140" r="11"/><text class="t-bcn" x="378" y="145">balise 1</text>
+<text class="t-aisle" x="60" y="312">Allée B — major 2</text>
+<rect class="sp sp-a" x="60" y="328" width="104" height="72" rx="2"/>
+<text class="t-sp" x="112" y="358">B-1</text>
+<text class="t-sp-s" x="112" y="376">AVAILABLE</text>
+<rect class="sp sp-u" x="178" y="328" width="104" height="72" rx="2"/>
+<text class="t-sp" x="230" y="358">B-2</text>
+<text class="t-sp-s" x="230" y="376">OCCUPIED_UNKNOWN</text>
+<rect class="sp sp-a" x="296" y="328" width="104" height="72" rx="2"/>
+<text class="t-sp" x="348" y="358">B-3</text>
+<text class="t-sp-s" x="348" y="376">AVAILABLE</text>
+<rect class="sp sp-a" x="414" y="328" width="104" height="72" rx="2"/>
+<text class="t-sp" x="466" y="358">B-4</text>
+<text class="t-sp-s" x="466" y="376">AVAILABLE</text>
+<rect class="sp sp-h" x="532" y="328" width="104" height="72" rx="2"/>
+<text class="t-sp" x="584" y="358">B-5</text>
+<text class="t-sp-s" x="584" y="376">HELD</text>
+<circle class="bcn" cx="360" cy="300" r="11"/><text class="t-bcn" x="378" y="305">balise 2</text>
+<rect class="nd nd-hw" x="700" y="130" width="330" height="116" rx="3"/>
+<text class="t-nd" x="714" y="155">Borne d'entrée simulée</text>
+<text class="t-nd-s" x="714" y="174">Raspberry Pi · relais · témoin vert</text>
+<text class="t-nd-s" x="714" y="189">affiche du QR signé</text>
+<text class="t-nd-s" x="714" y="204">webcam pour la preuve de concept ANPR</text>
+<rect class="nd nd-hw" x="700" y="274" width="330" height="116" rx="3"/>
+<text class="t-nd" x="714" y="299">Barrière de sortie simulée</text>
+<text class="t-nd-s" x="714" y="318">second relais · témoin</text>
+<text class="t-nd-s" x="714" y="333">n'ouvre qu'après capture Stripe</text>
+<text class="t-nd-s" x="714" y="348">QR de repli affiché</text>
+<path class="flow5" d="M700,188 H660 V148 H600" marker-end="url(#ar5)"/>
+<path class="flow5" d="M700,332 H660 V420 H600" marker-end="url(#ar5)"/>
+<text class="t-lnk" x="612" y="440">sortie</text>
+<text class="t-lnk" x="612" y="140">entrée</text>
+<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — le montage complet tient sur une table et deux murs.</text>
+</svg>
