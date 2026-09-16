@@ -19,6 +19,22 @@ numéro s'il s'est garé ailleurs.
 À la sortie, la caméra lit la plaque, le montant est capturé sur la
 pré-autorisation existante, puis la barrière ouvre. Aucun geste requis.
 
+## État actuel (version de remise)
+
+**Le document à remettre est `remise/Palier-dossier-de-conception.docx`.** Il a divergé
+des sources HTML de `docs/`, qui restent la version complète :
+
+- Section *Déploiement et matériel* retirée (diagramme de déploiement, montage de démo).
+- Annexe *Journal des décisions* retirée — `DECISIONS.md` reste la référence complète.
+- Prose resserrée d'environ 20 %, légendes intactes ; tableaux réduits de 38 à 24.
+- Mise en page : images plafonnées à 7 × 8 po, lignes de tableau insécables,
+  table des matières reconstruite (20 entrées, actualisée par Word à l'ouverture).
+
+Points ouverts :
+
+- Rendu jamais vérifié visuellement (pas de LibreOffice sur la machine) — à relire dans Word.
+- Trois décisions prises sans validation explicite, listées à la fin de `DECISIONS.md`.
+
 ## Documents
 
 | # | Document | Contenu |
