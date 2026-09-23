@@ -8,32 +8,39 @@ Projet de cours — dossier de conception complet, avant implémentation.
 Un conducteur voit la disponibilité des parkings avant de se déplacer et peut
 bloquer une place 15 minutes le temps du trajet. À l'entrée, il scanne un QR à la
 borne : le système lui assigne une place précise, pré-autorise le plafond
-journalier sur sa carte et ouvre la barrière. Une caméra placée après la barrière
-lit la plaque arrière et confirme l'entrée effective.
+journalier sur sa carte et ouvre la barrière. La boucle de la barrière confirme
+le passage et incrémente le compteur du parking.
 
 Des balises BLE — une par allée — confirment la zone pendant la descente. Quand
-le téléphone détecte la transition « en voiture → à pied », une notification
-demande la confirmation de la place en un tap ; l'utilisateur peut corriger le
-numéro s'il s'est garé ailleurs.
+le téléphone détecte la transition « en voiture → à pied » dans l'allée assignée,
+la place est présumée occupée sans aucun geste. L'utilisateur n'est sollicité que
+si l'allée détectée contredit l'assignation, ou s'il signale que sa place est prise.
 
-À la sortie, la caméra lit la plaque, le montant est capturé sur la
-pré-autorisation existante, puis la barrière ouvre. Aucun geste requis.
+À la sortie, le véhicule est identifié sans geste (balise de sortie vue par
+l'app, ou ANPR chez les opérateurs équipés), le montant est capturé sur la
+pré-autorisation, puis la barrière ouvre. Un tap dans l'app sert de repli.
+Le compteur de passages garantit le nombre de places libres affiché ; des
+capteurs par place, en option, garantissent lesquelles.
+
+Un usager sans l'app scanne le même QR avec l'appareil photo : une page web avec
+Apple Pay ou Google Pay pré-autorise le plafond, affiche la place, et le QR de
+sortie ferme la session. Ni billet, ni caméra, ni terminal de paiement.
 
 ## État actuel (version de remise)
 
-**Le document à remettre est `remise/Palier-dossier-de-conception.docx`.** Il a divergé
-des sources HTML de `docs/`, qui restent la version complète :
+**Le document à remettre est `remise/Palier-dossier-de-conception.pdf`** (17 pages,
+Letter). Il est généré à partir des sources HTML de `docs/` par
+`tools/build_remise.py` : les treize diagrammes sont repris tels quels, la prose est
+réécrite court, les tables de référence (flux, colonnes, endpoints, tâches) sont
+reprises des sources. Régénérer après toute modification de `docs/` :
 
-- Section *Déploiement et matériel* retirée (diagramme de déploiement, montage de démo).
-- Annexe *Journal des décisions* retirée — `DECISIONS.md` reste la référence complète.
-- Prose resserrée d'environ 20 %, légendes intactes ; tableaux réduits de 38 à 24.
-- Mise en page : images plafonnées à 7 × 8 po, lignes de tableau insécables,
-  table des matières reconstruite (20 entrées, actualisée par Word à l'ouverture).
+```
+cd tools && python3 build_remise.py
+```
 
-Points ouverts :
-
-- Rendu jamais vérifié visuellement (pas de LibreOffice sur la machine) — à relire dans Word.
-- Trois décisions prises sans validation explicite, listées à la fin de `DECISIONS.md`.
+Le rendu passe par Chrome en mode headless ; aucune autre dépendance.
+`remise/Palier-dossier-de-conception.docx` est l'ancienne version Word (tour 7),
+conservée pour mémoire, plus à jour.
 
 ## Documents
 
@@ -49,7 +56,7 @@ Points ouverts :
 Ouvrir un fichier directement dans un navigateur. Les pages s'adaptent au thème
 clair ou sombre et comportent une feuille de style d'impression.
 
-Les 32 décisions de conception qui ont produit ces documents sont consignées dans
+Les 49 décisions de conception qui ont produit ces documents sont consignées dans
 [`DECISIONS.md`](DECISIONS.md).
 
 ## Pile technique retenue
@@ -57,12 +64,12 @@ Les 32 décisions de conception qui ont produit ces documents sont consignées d
 | Couche | Choix |
 |--------|-------|
 | Application mobile | React Native (TypeScript) + modules natifs Swift ; MVP iOS seulement |
-| Positionnement | BLE, une balise par allée ; CoreMotion pour la détection de stationnement |
+| Positionnement | BLE, une région iBeacon par parking (`major`), une balise par allée (`minor`) ; CoreMotion pour la détection de stationnement, app maintenue vivante par la localisation en arrière-plan depuis le scan |
 | API | TypeScript, architecture en couches (adaptateurs / domaine / infrastructure) |
 | Base de données | Postgres — assignation atomique par `FOR UPDATE SKIP LOCKED` |
 | Paiement | Stripe Connect, comptes Express, charges destination, capture manuelle |
 | Authentification | OAuth Apple + Google, aucun mot de passe stocké |
-| Terrain | QR signés (HMAC) aux bornes, ANPR à la sortie, ouverture par contact sec ou API du contrôle d'accès existant |
+| Terrain | QR signés (HMAC) à l'entrée, boucles de barrière comme preuve de passage et compteur, identification à la sortie par ANPR, transpondeur ou balise BLE, ouverture par contact sec ou API du contrôle d'accès existant |
 
 ## Régénérer les diagrammes
 
@@ -92,8 +99,8 @@ remettrait en cause la conception elle-même.
 
 ## Reste ouvert
 
-Aucune décision de conception n'est en suspens. Trois points ont été tranchés
-sans validation explicite et méritent une relecture : le remplissage allée par
-allée plutôt que place par place, le garde-fou de 30 minutes sur les assignations
-orphelines, et l'implémentation du QR avant l'ANPR au prototype alors que le
-produit cible fait l'inverse.
+Aucune décision de conception n'est en suspens. Les tours 8 à 10 (Q33 à Q49) ont
+retiré les caméras du chemin critique, rendu la confirmation de place implicite,
+réglé le paiement et les balises, et ouvert le service aux usagers sans l'app par
+le même QR. Trois points restent tranchés sans validation explicite, listés à la
+fin de `DECISIONS.md`.

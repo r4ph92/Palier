@@ -37,9 +37,9 @@ def build(participants, messages, fragments=(), title=""):
 
     for i, m in enumerate(messages):
         if i in frag_starts:
-            y += 34
+            y += 50
         if i in seps:
-            y += 30
+            y += 42
         ys.append(y)
         y += SELF_H + STEP if m[3] == "self" else STEP
         if i in frag_ends:
@@ -60,7 +60,7 @@ def build(participants, messages, fragments=(), title=""):
     for frag in fragments:
         label, i0, i1, sp = frag[0], frag[1], frag[2], frag[3]
         guard = frag[4] if len(frag) > 4 else None
-        top = ys[i0] - 30
+        top = ys[i0] - 46
         bot = ys[i1] + (SELF_H if messages[i1][3] == "self" else 0) + 26
         a('<rect class="frm" x="%d" y="%d" width="%d" height="%d"/>' % (MARGIN - 16, top, width - 2 * (MARGIN - 16), bot - top))
         a('<path class="frm-tab" d="M%d,%d h58 l14,14 v10 h-72 z"/>' % (MARGIN - 16, top))
@@ -68,7 +68,7 @@ def build(participants, messages, fragments=(), title=""):
         if guard:
             a('<text class="t-frag-s" x="%d" y="%d">%s</text>' % (MARGIN + 62, top + 17, esc(guard)))
         for idx, lab in sp:
-            sy = ys[idx] - 22
+            sy = ys[idx] - 36
             a('<line class="frm-sep" x1="%d" y1="%d" x2="%d" y2="%d"/>' % (MARGIN - 16, sy, width - MARGIN + 16, sy))
             a('<text class="t-frag-s" x="%d" y="%d">%s</text>' % (MARGIN - 8, sy + 15, esc(lab)))
 

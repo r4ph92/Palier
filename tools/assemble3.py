@@ -128,7 +128,7 @@ b(u'''<header class="mast">
 </header>''')
 
 b(u'''<section>
-  <div class="sec-head"><h2>Séquence A — Entrée au parking</h2><span class="tag">7 participants · 17 messages</span></div>
+  <div class="sec-head"><h2>Séquence A — Entrée au parking</h2><span class="tag">7 participants · 18 messages</span></div>
   <p class="lede">Le parcours le plus contraint du système : quatre sous-systèmes doivent réussir dans un ordre précis pendant qu'une voiture attend devant une barrière, avec une file derrière elle.</p>
   <ul class="key">
     <li><i style="border-top:2px solid var(--ink-2)"></i> appel</li>
@@ -139,27 +139,45 @@ b(fig(rd('out/seq_A.svg'), u"L'assignation précède l'appel à Stripe, et la pr
 b(u'''<div class="note"><b>Trois contraintes d'ordre, et ce qui casse si on les inverse.</b>
   L'assignation vient <b>avant</b> Stripe : appeler Stripe pour un parking complet coûte une latence inutile et une pré-autorisation à annuler.
   La pré-autorisation vient <b>avant</b> l'ouverture : une carte refusée après l'ouverture de la barrière est irrattrapable, la voiture est déjà entrée.
-  La lecture de plaque vient <b>après</b> l'ouverture, et ce n'est pas un choix — la caméra vise la plaque arrière, donc elle ne voit le véhicule qu'une fois la barrière franchie.</div>''')
+  La preuve d'entrée vient <b>après</b> l'ouverture, par construction : c'est la fermeture de la boucle sous la lisse qui la donne. Aucune caméra n'intervient, la boucle détecte tout véhicule, plaque enneigée ou non. Le premier fragment montre les deux populations : l'app, ou un navigateur qui pré-autorise par Apple Pay sans compte. Les deux consomment le même jeton de borne.</div>''')
 b(u'''<div class="note warn"><b>Le fragment conditionnel porte tout le risque de cette séquence.</b>
-  La branche « aucune plaque lue après 2 min » n'est pas déclenchée par un acteur mais par la tâche <code>cancel_unconfirmed_entries</code>. Elle doit annuler <b>deux</b> choses : l'état de la place et la pré-autorisation Stripe. Oublier la seconde laisse un montant bloqué sur la carte d'un conducteur qui n'est jamais entré.</div>''')
+  La branche « aucun passage 60 s après l'ouverture » n'est pas déclenchée par un acteur mais par la tâche <code>cancel_unconfirmed_entries</code>. Elle couvre la barrière en panne et le conducteur qui recule — pas la plaque illisible, qui n'existe plus comme cas. Elle doit annuler <b>deux</b> choses : l'état de la place et la pré-autorisation Stripe. Oublier la seconde laisse un montant bloqué sur la carte d'un conducteur qui n'est jamais entré.</div>
+<div class="tbl-scroll"><table>
+  <caption>Budget temps d'une visite type, barrière et passage compris</caption>
+  <thead><tr><th>Étape</th><th>Stationnement classique</th><th>Palier</th></tr></thead>
+  <tbody>
+    <tr><td>Savoir avant de partir</td><td>Inconnu ; 10 à 20 % de risque d'un « complet » et d'un détour de 5 à 10 min</td><td>Connu dans l'app, le hold garantit la place</td></tr>
+    <tr><td>Barrière d'entrée</td><td>9 s : bouton, billet, barrière</td><td>10 s avec le scanner armé par la balise, 15 à 21 s téléphone dans le sac</td></tr>
+    <tr><td>Trouver une place</td><td>2 à 5 min à parcourir les paliers</td><td>1 à 1,5 min vers la place assignée</td></tr>
+    <tr><td>Retrouver la voiture</td><td>30 s à 2 min</td><td>L'app connaît la place</td></tr>
+    <tr><td>Payer</td><td>1 à 2 min à la caisse, ou 20 à 30 s à la voie</td><td>Aucun geste</td></tr>
+    <tr><td>Barrière de sortie</td><td>8 à 10 s billet en main, 20 à 30 s en payant à la voie</td><td>7 s sans geste, 12 à 18 s avec un scan</td></tr>
+    <tr><td>Total de friction</td><td>5 à 9 min</td><td>1,5 à 2,5 min</td></tr>
+  </tbody></table></div>
+<div class="note"><b>Le temps par usager n'est pas le risque, la capacité de la voie l'est.</b>
+  Une voie qui reçoit 300 véhicules à l'heure tourne à 75 % avec un cycle de 9 s et sature au-delà de 12 s. D'où le scanner armé par la balise d'entrée : déverrouillage et lancement de l'app se font en roulant vers la borne, il ne reste que viser et scanner. Le contrôleur horodate l'arrivée sur la boucle d'armement et la fermeture de la boucle : le prototype mesure lui-même ce tableau.</div>''')
 b(u'</section>')
 
 b(u'''<section>
-  <div class="sec-head"><h2>Séquence B — Confirmation de la place</h2><span class="tag">7 participants · 15 messages</span></div>
-  <p class="lede">Le mécanisme central du produit. Rien n'est déclenché par un minuteur : c'est la balise qui réveille l'app, et le capteur de mouvement qui décide du moment de la notification.</p>''')
-b(fig(rd('out/seq_B.svg'), u"Les trois branches du fragment correspondent aux trois issues réelles : confirmation, correction, silence."))
-b(u'''<div class="note"><b>La correction de place est la seule opération à deux écritures.</b>
-  Quand l'utilisateur saisit un autre numéro, deux lignes de <code>spot</code> changent d'état dans la même transaction : la place réelle passe à <code>OCCUPIED</code>, l'ancienne à <code>OCCUPIED_UNKNOWN</code>. Hors transaction, une coupure réseau entre les deux laisse une place fantôme, réservée pour personne et invisible à l'inventaire.</div>''')
-b(u'''<div class="note warn"><b>La branche « aucune réponse » n'a pas de message entrant.</b>
-  Elle se produit sans qu'aucun acteur n'agisse : le système écrit <code>PARKED_UNCONFIRMED</code> sur la seule foi du signal <em>walking</em>. C'est délibéré — attendre la confirmation pour écrire laisserait la place bloquée indéfiniment.</div>''')
+  <div class="sec-head"><h2>Séquence B — Confirmation de la place</h2><span class="tag">7 participants · 18 messages</span></div>
+  <p class="lede">Le mécanisme central du produit, et au cas nominal il ne demande rien à personne : le <em>ranging</em> des balises donne l'allée, le capteur de mouvement donne l'instant, l'app est vivante depuis le scan, et si l'allée est celle de la place assignée, la place est présumée occupée. L'usager n'est sollicité que lorsque les signaux se contredisent.</p>''')
+b(fig(rd('out/seq_B.svg'), u"Les trois branches du fragment : présomption silencieuse, allée contradictoire, place prise. Seules les deux dernières font apparaître l'usager."))
+b(u'''<div class="note"><b>Les deux branches d'exception sont des opérations à deux écritures.</b>
+  Quand l'allée détectée contredit l'assignation, la place assignée passe à <code>OCCUPIED_UNKNOWN</code> avant même que l'usager réponde, et la place qu'il désigne passe à <code>OCCUPIED</code> ensuite. Quand il signale une place prise, la place signalée passe à <code>OCCUPIED_UNKNOWN</code> et une nouvelle place à <code>ASSIGNED</code> dans la même transaction. Hors transaction, une coupure réseau entre les deux laisse une place fantôme, réservée pour personne et invisible à l'inventaire.</div>''')
+b(u'''<div class="note warn"><b>La présomption est une décision, pas une approximation.</b>
+  Le système écrit <code>PARKED_PRESUMED</code> et <code>OCCUPIED</code> sur la seule foi du signal <em>walking</em> dans la bonne allée. Le risque accepté : un usager qui change d'allée après la transition sans être détecté. Le compteur de passages borne l'erreur cumulée, et la tâche <code>reconcile_counts</code> la rend visible. L'alternative — demander un tap à chaque stationnement — coûtait un geste à tout le monde pour corriger une erreur rare.</div>''')
 b(u'</section>')
 
 b(u'''<section>
-  <div class="sec-head"><h2>Séquence C — Sortie et facturation</h2><span class="tag">7 participants · 13 messages</span></div>
-  <p class="lede">Le cas nominal ne comporte aucun geste de l'utilisateur : la plaque déclenche toute la chaîne. Le chemin de repli n'existe que pour les lectures ratées et les sessions marquées <code>plate_mismatch</code>.</p>''')
-b(fig(rd('out/seq_C.svg'), u"La capture du paiement précède l'ouverture de la barrière, sans exception."))
-b(u'''<div class="note"><b>Une seule règle non négociable ici : la barrière n'ouvre jamais avant que Stripe ait confirmé la capture.</b>
-  Ouvrir d'abord pour fluidifier le trafic transformerait chaque échec de capture en perte sèche, sans recours — le véhicule est parti. Le coût de cette règle est une latence de quelques centaines de millisecondes, absorbée par le temps que met le conducteur à avancer jusqu'à la barrière après la lecture de sa plaque.</div>''')
+  <div class="sec-head"><h2>Séquence C — Sortie et facturation</h2><span class="tag">6 participants · 17 messages</span></div>
+  <p class="lede">Trois façons d'identifier le véhicule qui sort, de la plus automatique à la moins, chacune ne servant que si la précédente échoue : lecture de plaque ou de transpondeur chez les opérateurs équipés, balise de sortie vue par l'app, scan du QR de sortie. Le scan vaut pour l'app comme pour la page web sans compte, retrouvée par son jeton. Les deux premières ne demandent aucun geste. Aucune ne dépend d'une caméra, et la boucle ferme la session dans tous les cas.</p>''')
+b(fig(rd('out/seq_C.svg'), u"Quelle que soit la branche d'identification, la suite est identique : capture, ouverture, boucle. Un téléphone déchargé tombe hors des trois branches — c'est le cas du ticket perdu, réglé par le personnel."))
+b(u'''<div class="note"><b>La règle non négociable : jamais d'ouverture sans autorisation valide — et elle est garantie à l'entrée.</b>
+  Le montant capturé est toujours couvert par le plafond pré-autorisé, et la session est plafonnée à 24 h, donc un refus de carte à la sortie n'existe pas. Si Stripe est injoignable à l'instant de la capture, la barrière ouvre quand même : les fonds sont bloqués, la tâche <code>retry_captures</code> rejoue la capture, le reçu part au succès. Le coût de cette règle est une latence de quelques centaines de millisecondes, absorbée par le temps que met le conducteur à avancer jusqu'à la barrière après son identification.</div>
+<div class="note warn"><b>L'ouverture par balise exige deux conditions, pas une.</b>
+  Une seule session active du parking doit avoir signalé la balise de sortie dans la dernière minute, <b>et</b> un véhicule doit être présent sur la boucle d'armement. La première évite d'ouvrir pour la voiture d'en face ; la seconde évite d'ouvrir pour un piéton qui passe devant la sortie avec l'app. Deux téléphones candidats → repli sur le scan, jamais un pari.</div>
+<div class="note"><b>La page web retrouve sa session sans rien demander.</b>
+  Le jeton est conservé trois fois dès l'entrée : cookie de 30 jours, passe Wallet portant le QR de sortie, lien par SMS ou courriel. Le numéro de place seul n'est jamais accepté : n'importe qui le lit au sol et ferait payer la session d'un autre. Les trois supports perdus, c'est le billet perdu : le personnel. Une session sans sortie après sept jours n'est jamais facturée d'office ; elle part en vérification.</div>''')
 b(u'</section>')
 
 b(u'''<section>
@@ -172,7 +190,7 @@ b(u'</section>')
 
 b(u'''<footer>
   <span>Palier · diagrammes de séquence</span>
-  <span>4 parcours · 59 messages</span>
+  <span>4 parcours · 67 messages</span>
   <span>Document 3 de 5</span>
 </footer>''')
 b(u'</div>')

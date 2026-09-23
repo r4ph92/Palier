@@ -1,23 +1,27 @@
 <svg viewBox="0 0 1180 760" role="img" aria-label="Architecture en couches de l'API Palier.">
 <rect class="bd" x="60" y="30" width="1080" height="138" rx="4"/>
 <text class="t-band" x="78" y="56">Adaptateurs HTTP</text>
-<text class="t-band-s" x="78" y="73">trois publics, trois modes d'authentification</text>
-<rect class="cmp" x="76" y="76" width="246" height="74" rx="3"/>
+<text class="t-band-s" x="78" y="73">quatre publics, quatre modes d'authentification</text>
+<rect class="cmp" x="76" y="76" width="192" height="88" rx="3"/>
 <text class="t-cmp" x="90" y="102">Routes mobile</text>
 <text class="t-cmp-s" x="90" y="121">jeton utilisateur</text>
-<text class="t-cmp-s" x="90" y="135">11 endpoints</text>
-<rect class="cmp" x="346" y="76" width="246" height="74" rx="3"/>
-<text class="t-cmp" x="360" y="102">Routes matériel</text>
-<text class="t-cmp-s" x="360" y="121">clé d'appareil</text>
-<text class="t-cmp-s" x="360" y="135">barrières, caméras, balises</text>
-<rect class="cmp" x="616" y="76" width="246" height="74" rx="3"/>
-<text class="t-cmp" x="630" y="102">Routes opérateur</text>
-<text class="t-cmp-s" x="630" y="121">session opérateur</text>
-<text class="t-cmp-s" x="630" y="135">tarifs, plan, occupation</text>
-<rect class="cmp" x="886" y="76" width="246" height="74" rx="3"/>
-<text class="t-cmp" x="900" y="102">Webhooks Stripe</text>
-<text class="t-cmp-s" x="900" y="121">signature vérifiée</text>
-<text class="t-cmp-s" x="900" y="135">account.updated, charge.*</text>
+<text class="t-cmp-s" x="90" y="135">13 endpoints</text>
+<rect class="cmp" x="288" y="76" width="192" height="88" rx="3"/>
+<text class="t-cmp" x="302" y="102">Routes web</text>
+<text class="t-cmp-s" x="302" y="121">jeton de session</text>
+<text class="t-cmp-s" x="302" y="135">sans compte · Checkout</text>
+<rect class="cmp" x="500" y="76" width="192" height="88" rx="3"/>
+<text class="t-cmp" x="514" y="102">Routes matériel</text>
+<text class="t-cmp-s" x="514" y="121">clé d'appareil</text>
+<text class="t-cmp-s" x="514" y="135">barrières, capteurs, balises</text>
+<rect class="cmp" x="712" y="76" width="192" height="88" rx="3"/>
+<text class="t-cmp" x="726" y="102">Routes opérateur</text>
+<text class="t-cmp-s" x="726" y="121">session opérateur</text>
+<text class="t-cmp-s" x="726" y="135">tarifs, plan, occupation</text>
+<rect class="cmp" x="924" y="76" width="192" height="88" rx="3"/>
+<text class="t-cmp" x="938" y="102">Webhooks Stripe</text>
+<text class="t-cmp-s" x="938" y="121">signature vérifiée</text>
+<text class="t-cmp-s" x="938" y="135">account.updated, charge.*</text>
 <rect class="bd" x="60" y="200" width="1080" height="152" rx="4"/>
 <text class="t-band" x="78" y="226">Domaine</text>
 <text class="t-band-s" x="78" y="243">toute la logique métier, sans dépendance à HTTP ni à Stripe</text>
@@ -28,7 +32,7 @@
 <rect class="cmp" x="288" y="250" width="192" height="88" rx="3"/>
 <text class="t-cmp" x="302" y="276">Sessions</text>
 <text class="t-cmp-s" x="302" y="295">machine à états</text>
-<text class="t-cmp-s" x="302" y="309">réconciliation plaque</text>
+<text class="t-cmp-s" x="302" y="309">présomption de place</text>
 <rect class="cmp" x="500" y="250" width="192" height="88" rx="3"/>
 <text class="t-cmp" x="514" y="276">Tarification</text>
 <text class="t-cmp-s" x="514" y="295">politique par parking</text>
@@ -39,7 +43,7 @@
 <text class="t-cmp-s" x="726" y="309">un seul par usager</text>
 <rect class="cmp" x="924" y="250" width="192" height="88" rx="3"/>
 <text class="t-cmp" x="938" y="276">Occupation</text>
-<text class="t-cmp-s" x="938" y="295">agrégats par palier</text>
+<text class="t-cmp-s" x="938" y="295">compteur de passages</text>
 <text class="t-cmp-s" x="938" y="309">places à vérifier</text>
 <rect class="bd" x="60" y="384" width="1080" height="152" rx="4"/>
 <text class="t-band" x="78" y="410">Infrastructure</text>
@@ -66,23 +70,31 @@
 <text class="t-cmp-s" x="938" y="493">de borne</text>
 <rect class="bd bd-warn" x="60" y="568" width="1080" height="152" rx="4"/>
 <text class="t-band" x="78" y="594">Planificateur</text>
-<text class="t-band-s" x="78" y="611">aucun appelant externe — les quatre transitions déclenchées par le temps</text>
-<rect class="cmp cmp-warn" x="76" y="618" width="246" height="88" rx="3"/>
+<text class="t-band-s" x="78" y="611">aucun appelant externe : les six transitions déclenchées par le temps</text>
+<rect class="cmp cmp-warn" x="76" y="618" width="160" height="88" rx="3"/>
 <text class="t-cmp" x="90" y="644">expire_holds</text>
 <text class="t-cmp-s" x="90" y="663">30 s</text>
 <text class="t-cmp-s" x="90" y="677">HELD → AVAILABLE</text>
-<rect class="cmp cmp-warn" x="346" y="618" width="246" height="88" rx="3"/>
-<text class="t-cmp" x="360" y="644">cancel_unconfirmed</text>
-<text class="t-cmp-s" x="360" y="663">30 s</text>
-<text class="t-cmp-s" x="360" y="677">session → CANCELLED</text>
-<rect class="cmp cmp-warn" x="616" y="618" width="246" height="88" rx="3"/>
-<text class="t-cmp" x="630" y="644">release_orphans</text>
-<text class="t-cmp-s" x="630" y="663">5 min</text>
-<text class="t-cmp-s" x="630" y="677">garde-fou 30 min</text>
-<rect class="cmp cmp-warn" x="886" y="618" width="246" height="88" rx="3"/>
-<text class="t-cmp" x="900" y="644">purge_events</text>
-<text class="t-cmp-s" x="900" y="663">quotidienne</text>
-<text class="t-cmp-s" x="900" y="677">rétention 90 jours</text>
+<rect class="cmp cmp-warn" x="252" y="618" width="160" height="88" rx="3"/>
+<text class="t-cmp" x="266" y="644">cancel_unconfirmed</text>
+<text class="t-cmp-s" x="266" y="663">30 s</text>
+<text class="t-cmp-s" x="266" y="677">aucun passage en 60 s</text>
+<rect class="cmp cmp-warn" x="428" y="618" width="160" height="88" rx="3"/>
+<text class="t-cmp" x="442" y="644">release_orphans</text>
+<text class="t-cmp-s" x="442" y="663">5 min</text>
+<text class="t-cmp-s" x="442" y="677">présume occupée</text>
+<rect class="cmp cmp-warn" x="604" y="618" width="160" height="88" rx="3"/>
+<text class="t-cmp" x="618" y="644">reconcile_counts</text>
+<text class="t-cmp-s" x="618" y="663">1 min</text>
+<text class="t-cmp-s" x="618" y="677">compteur vs places</text>
+<rect class="cmp cmp-warn" x="780" y="618" width="160" height="88" rx="3"/>
+<text class="t-cmp" x="794" y="644">flag_stale</text>
+<text class="t-cmp-s" x="794" y="663">quotidienne</text>
+<text class="t-cmp-s" x="794" y="677">7 jours sans sortie</text>
+<rect class="cmp cmp-warn" x="956" y="618" width="160" height="88" rx="3"/>
+<text class="t-cmp" x="970" y="644">purge_events</text>
+<text class="t-cmp-s" x="970" y="663">quotidienne</text>
+<text class="t-cmp-s" x="970" y="677">rétention 90 jours</text>
 <path class="dep" d="M34,60 V520" marker-end="url(#ar4)"/>
 <text class="t-dep" transform="translate(24,300) rotate(-90)" text-anchor="middle">sens des dépendances</text>
 <path class="dep dep-up" d="M1158,660 V360" marker-end="url(#ar4)"/>

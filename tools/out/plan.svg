@@ -1,7 +1,7 @@
 <svg viewBox="0 0 1100 560" role="img" aria-label="Plan physique du montage de démonstration.">
 <rect class="floor" x="40" y="60" width="1020" height="440" rx="4"/>
 <text class="t-zn" x="60" y="90">Palier de démonstration — deux allées, dix places</text>
-<text class="t-aisle" x="60" y="152">Allée A — major 1</text>
+<text class="t-aisle" x="60" y="152">Allée A — minor 1</text>
 <rect class="sp sp-a" x="60" y="168" width="104" height="72" rx="2"/>
 <text class="t-sp" x="112" y="198">A-1</text>
 <text class="t-sp-s" x="112" y="216">AVAILABLE</text>
@@ -18,7 +18,7 @@
 <text class="t-sp" x="584" y="198">A-5</text>
 <text class="t-sp-s" x="584" y="216">AVAILABLE</text>
 <circle class="bcn" cx="360" cy="140" r="11"/><text class="t-bcn" x="378" y="145">balise 1</text>
-<text class="t-aisle" x="60" y="312">Allée B — major 2</text>
+<text class="t-aisle" x="60" y="312">Allée B — minor 2</text>
 <rect class="sp sp-a" x="60" y="328" width="104" height="72" rx="2"/>
 <text class="t-sp" x="112" y="358">B-1</text>
 <text class="t-sp-s" x="112" y="376">AVAILABLE</text>
@@ -37,17 +37,18 @@
 <circle class="bcn" cx="360" cy="300" r="11"/><text class="t-bcn" x="378" y="305">balise 2</text>
 <rect class="nd nd-hw" x="700" y="130" width="330" height="116" rx="3"/>
 <text class="t-nd" x="714" y="155">Borne d'entrée</text>
-<text class="t-nd-s" x="714" y="174">QR signé imprimé, affiché au mur</text>
+<text class="t-nd-s" x="714" y="174">QR signé imprimé : app ou page web</text>
 <text class="t-nd-s" x="714" y="189">aucune barrière physique</text>
 <text class="t-nd-s" x="714" y="204">l'app affiche l'ouverture</text>
 <rect class="nd nd-hw" x="700" y="274" width="330" height="116" rx="3"/>
 <text class="t-nd" x="714" y="299">Borne de sortie</text>
-<text class="t-nd-s" x="714" y="318">QR signé imprimé</text>
+<text class="t-nd-s" x="714" y="318">balise de sortie · tap de repli</text>
 <text class="t-nd-s" x="714" y="333">capture Stripe en mode test</text>
 <text class="t-nd-s" x="714" y="348">l'app affiche le reçu et l'ouverture</text>
+<circle class="bcn" cx="680" cy="300" r="11"/><text class="t-bcn" x="612" y="305">balise 3</text>
 <path class="flow5" d="M700,188 H660 V148 H600" marker-end="url(#ar5)"/>
 <path class="flow5" d="M700,332 H660 V420 H600" marker-end="url(#ar5)"/>
 <text class="t-lnk" x="612" y="440">sortie</text>
 <text class="t-lnk" x="612" y="140">entrée</text>
-<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — seules les balises sont du matériel ; tout le reste est du logiciel.</text>
+<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — seules les trois balises sont du matériel ; les boucles sont simulées par un bouton de la console.</text>
 </svg>

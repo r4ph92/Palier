@@ -24,21 +24,22 @@ o = []
 W = 1180
 o.append('<svg viewBox="0 0 %d 760" role="img" aria-label="Architecture en couches de l\'API Palier.">' % W)
 
-o.append(band(60, 30, 1080, 138, "Adaptateurs HTTP", "trois publics, trois modes d'authentification"))
+o.append(band(60, 30, 1080, 138, "Adaptateurs HTTP", "quatre publics, quatre modes d'authentification"))
 o.append(boxes([
-    ("Routes mobile", ["jeton utilisateur", "11 endpoints"]),
-    ("Routes matériel", ["clé d'appareil", "barrières, caméras, balises"]),
+    ("Routes mobile", ["jeton utilisateur", "13 endpoints"]),
+    ("Routes web", ["jeton de session", "sans compte · Checkout"]),
+    ("Routes matériel", ["clé d'appareil", "barrières, capteurs, balises"]),
     ("Routes opérateur", ["session opérateur", "tarifs, plan, occupation"]),
     ("Webhooks Stripe", ["signature vérifiée", "account.updated, charge.*"]),
-], 76, 76, 246, 270))
+], 76, 76, 192, 212, 88))
 
 o.append(band(60, 200, 1080, 152, "Domaine", "toute la logique métier, sans dépendance à HTTP ni à Stripe"))
 o.append(boxes([
     ("Allocation", ["sélection atomique", "attributs puis palier"]),
-    ("Sessions", ["machine à états", "réconciliation plaque"]),
+    ("Sessions", ["machine à états", "présomption de place"]),
     ("Tarification", ["politique par parking", "plafond journalier"]),
     ("Holds", ["quota par parking", "un seul par usager"]),
-    ("Occupation", ["agrégats par palier", "places à vérifier"]),
+    ("Occupation", ["compteur de passages", "places à vérifier"]),
 ], 76, 250, 192, 212, 88))
 
 o.append(band(60, 384, 1080, 152, "Infrastructure", "un adaptateur par système externe, remplaçable en test"))
@@ -50,13 +51,15 @@ o.append(boxes([
     ("Signature HMAC", ["jetons de QR", "de borne"]),
 ], 76, 434, 192, 212, 88))
 
-o.append(band(60, 568, 1080, 152, "Planificateur", "aucun appelant externe — les quatre transitions déclenchées par le temps", "bd bd-warn"))
+o.append(band(60, 568, 1080, 152, "Planificateur", "aucun appelant externe : les six transitions déclenchées par le temps", "bd bd-warn"))
 o.append(boxes([
     ("expire_holds", ["30 s", "HELD → AVAILABLE"]),
-    ("cancel_unconfirmed", ["30 s", "session → CANCELLED"]),
-    ("release_orphans", ["5 min", "garde-fou 30 min"]),
+    ("cancel_unconfirmed", ["30 s", "aucun passage en 60 s"]),
+    ("release_orphans", ["5 min", "présume occupée"]),
+    ("reconcile_counts", ["1 min", "compteur vs places"]),
+    ("flag_stale", ["quotidienne", "7 jours sans sortie"]),
     ("purge_events", ["quotidienne", "rétention 90 jours"]),
-], 76, 618, 246, 270, 88, "cmp cmp-warn"))
+], 76, 618, 160, 176, 88, "cmp cmp-warn"))
 
 # dependency arrow
 o.append('<path class="dep" d="M34,60 V520" marker-end="url(#ar4)"/>')
@@ -83,24 +86,24 @@ m.append(boxes([
     ("Magasin d'état", ["session courante", "persistance locale"]),
     ("Client API", ["file hors ligne", "rejeu à la reconnexion"]),
     ("SDK Stripe RN", ["SetupIntent", "Apple / Google Pay"]),
-    ("Scanner QR", ["caméra", "borne d'entrée"]),
+    ("Scanner QR", ["armé par la balise", "de la voie d'entrée"]),
 ], 76, 246, 246, 270))
 
 m.append(band(60, 370, 1080, 178, "Pont natif — le contrat", "la seule frontière du projet où une erreur coûte cher", "bd bd-accent"))
 m.append('<rect class="cmp cmp-accent" x="76" y="416" width="516" height="116" rx="3"/>')
 m.append('<text class="t-cmp" x="92" y="442">Commandes  JS → natif</text>')
 for i, t in enumerate([
-    "startMonitoring(uuid, majors[])   — arme les régions d'allée",
+    "startMonitoring(uuid, major)      — arme la région du parking",
     "stopMonitoring()                  — à la fermeture de session",
-    "scheduleConfirmPrompt(spot)       — notification locale",
+    "keepAlive(until)                  — localisation en arrière-plan",
     "flushOfflineQueue()               — vidange à la reconnexion",
 ]):
     m.append('<text class="t-code" x="92" y="%d">%s</text>' % (462 + i * 17, t))
 m.append('<rect class="cmp cmp-accent" x="624" y="416" width="516" height="116" rx="3"/>')
 m.append('<text class="t-cmp" x="640" y="442">Événements  natif → JS</text>')
 for i, t in enumerate([
-    "onAisleEnter(major, ts)           — réveil en arrière-plan",
-    "onAisleExit(major, ts)",
+    "onAisleChanged(minor, ts)         — allée la plus proche (ranging)",
+    "onLotExit(ts)                     — sortie de la région du parking",
     "onParkedDetected(confidence, ts)  — automotive → walking",
     "onQueueFlushed(count)",
 ]):
@@ -108,7 +111,7 @@ for i, t in enumerate([
 
 m.append(band(60, 580, 528, 138, "Modules natifs iOS — Swift", "livrés au MVP"))
 m.append(boxes([
-    ("BeaconMonitor", ["CoreLocation", "≤ 20 régions"]),
+    ("BeaconMonitor", ["CoreLocation", "1 région · ranging"]),
     ("MotionWatcher", ["CoreMotion", "automotive → walking"]),
 ], 76, 626, 246, 258))
 

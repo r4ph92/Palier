@@ -51,23 +51,23 @@ a(u'''<header class="mast">
 </header>''')
 
 a(u'''<section>
-  <div class="sec-head"><h2>API — architecture en couches</h2><span class="tag">4 couches · 18 composants</span></div>
+  <div class="sec-head"><h2>API — architecture en couches</h2><span class="tag">4 couches · 21 composants</span></div>
   <p class="lede">Le domaine ne connaît ni HTTP ni Stripe : il reçoit des objets et rend des décisions. C'est ce qui rend la logique d'allocation testable sans base de données ni réseau, et c'est la seule partie du système qu'un correcteur peut lire d'un bout à l'autre.</p>
   <figure><div class="fig"><div class="fig-scroll">%s</div>
   <figcaption>Le planificateur est la seule couche qui remonte : il appelle le domaine sans passer par HTTP.</figcaption></div></figure>''' % rd('out/cmp_api.svg'))
 
 a(u'''<div class="note"><b>Pourquoi le planificateur est dessiné à part.</b>
-  Les quatre tâches ne sont pas des détails d'exploitation : ce sont les transitions déclenchées par le temps, et elles portent trois des règles métier les plus importantes du système — l'expiration d'un hold, l'annulation d'une entrée jamais confirmée, le garde-fou contre le téléphone déchargé. Les enfouir dans un <code>cron</code> les rendrait invisibles à la lecture du code.</div>''')
+  Les six tâches ne sont pas des détails d'exploitation : ce sont les transitions déclenchées par le temps, et elles portent quatre des règles métier les plus importantes du système — l'expiration d'un hold, l'annulation d'une entrée jamais passée, le garde-fou contre le téléphone déchargé, la réconciliation du compteur avec les places, la mise en vérification des sessions sans sortie. Les enfouir dans un <code>cron</code> les rendrait invisibles à la lecture du code.</div>''')
 
 a(u'''<div class="tbl-scroll"><table>
   <caption>Ce que chaque composant du domaine décide</caption>
   <thead><tr><th>Composant</th><th>Décision</th><th>Ce qu'il ne fait pas</th></tr></thead>
   <tbody>
     <tr><td>Allocation</td><td>Quelle place attribuer : filtre par attributs du véhicule, puis palier et allée selon la stratégie du parking</td><td>N'ouvre pas la barrière et n'appelle pas Stripe</td></tr>
-    <tr><td>Sessions</td><td>Transitions de la machine à états, réconciliation de la plaque lue avec le compte, correction de place</td><td>Ne calcule aucun montant</td></tr>
+    <tr><td>Sessions</td><td>Transitions de la machine à états, présomption de place à partir de l'allée détectée, rapprochement de l'identité lue à la sortie, réassignation sur « place prise »</td><td>Ne calcule aucun montant</td></tr>
     <tr><td>Tarification</td><td>Montant dû à partir de la durée et de la politique du parking ; valide la présence du plafond journalier</td><td>Ne parle jamais à Stripe</td></tr>
     <tr><td>Holds</td><td>Accorde ou refuse un hold selon le quota du parking et la règle « un seul par usager »</td><td>N'écrit pas directement dans <code>spot</code></td></tr>
-    <tr><td>Occupation</td><td>Agrégats par palier et par état, liste des places à vérifier</td><td>N'anonymise pas — c'est la tâche de purge</td></tr>
+    <tr><td>Occupation</td><td>Agrégats par palier et par état, compteur de passages, écart entre les deux et liste des places à vérifier</td><td>N'anonymise pas — c'est la tâche de purge</td></tr>
   </tbody></table></div>
 </section>''')
 
@@ -81,7 +81,7 @@ a(u'''<div class="note"><b>Le contrat du pont est le livrable le plus important 
   Quatre commandes descendent, quatre événements remontent. Tant que ces huit signatures ne changent pas, l'implémentation Android peut être écrite des mois plus tard sans toucher une ligne de TypeScript. Si elles sont improvisées au fil de l'implémentation iOS, elles porteront les hypothèses d'iOS — les régions iBeacon, la limite de vingt, le réveil d'app terminée — et Android devra être plaqué par-dessus.</div>''')
 
 a(u'''<div class="note warn"><b>Une asymétrie à assumer dès l'écriture du contrat.</b>
-  <code>onAisleEnter</code> arrive sur iOS par réveil du système, même app fermée. Sur Android, il arrivera d'un service de premier plan que l'app doit avoir démarré. Le contrat doit donc prévoir une commande explicite de démarrage du suivi — c'est le rôle de <code>startMonitoring</code> — plutôt que de supposer que le système réveille l'app tout seul.</div>''')
+  Sur iOS, l'app reste vivante entre le scan et la présomption grâce aux mises à jour de localisation en arrière-plan — c'est le rôle de <code>keepAlive</code>, qui exige la permission « Toujours ». Sur Android, le même effet vient d'un service de premier plan. Le contrat nomme la commande sans dire comment chaque plateforme l'honore ; c'est ce qui permet d'écrire Kotlin plus tard sans toucher au TypeScript.</div>''')
 
 a(u'''<div class="tbl-scroll"><table>
   <caption>Répartition du travail par surface</caption>

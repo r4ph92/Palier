@@ -16,9 +16,9 @@ def zone(x, y, w, h, label, cls="zn"):
 o = ['<svg viewBox="0 0 1180 664" role="img" aria-label="Diagramme de déploiement de Palier.">']
 
 o.append(zone(40, 30, 330, 250, "Appareils des usagers"))
-o.append(node(60, 66, 290, 92, "iPhone", ["app React Native + module Swift",
-                                          "BLE · CoreMotion · caméra QR",
-                                          "file hors ligne locale"], "nd nd-cli"))
+o.append(node(60, 66, 290, 92, "Téléphone de l'usager", ["app React Native + module Swift",
+                                          "ou page web : Apple Pay, passe Wallet",
+                                          "BLE · CoreMotion · scanner QR"], "nd nd-cli"))
 o.append(node(60, 174, 290, 88, "Navigateur — opérateur", ["tableau de bord web",
                                                             "session opérateur"], "nd nd-cli"))
 
@@ -27,7 +27,7 @@ o.append(node(430, 66, 360, 92, "API — conteneurs", ["2 instances derrière un
                                                      "adaptateurs · domaine · infrastructure",
                                                      "TLS terminé au répartiteur"], "nd nd-srv"))
 o.append(node(430, 174, 175, 88, "Postgres", ["managé", "sauvegarde continue"], "nd nd-db"))
-o.append(node(615, 174, 175, 88, "Planificateur", ["4 tâches", "instance unique"], "nd nd-srv"))
+o.append(node(615, 174, 175, 88, "Planificateur", ["6 tâches", "instance unique"], "nd nd-srv"))
 
 o.append(zone(850, 30, 290, 250, "Services tiers"))
 o.append(node(870, 66, 250, 62, "Stripe Connect", ["comptes Express"], "nd nd-svc"))
@@ -36,20 +36,20 @@ o.append(node(870, 210, 250, 58, "OAuth Apple · Google", ["authentification"], 
 
 o.append(zone(40, 320, 1100, 300, "Garage — équipement de terrain", "zn zn-site"))
 o.append(node(64, 372, 250, 104, "Borne d'entrée", ["QR statique signé (HMAC)",
-                                                    "contact sec ou API du système",
-                                                    "de contrôle d'accès existant"], "nd nd-hw"))
-o.append(node(334, 372, 250, 104, "Caméra d'entrée", ["vise la plaque arrière",
-                                                      "posée après la barrière",
-                                                      "reconnaissance hébergée"], "nd nd-hw"))
-o.append(node(604, 372, 250, 104, "Barrière de sortie", ["caméra ANPR",
-                                                         "QR de repli",
-                                                         "contact sec ou API existante"], "nd nd-hw"))
-o.append(node(874, 372, 242, 104, "Balises BLE", ["une par allée",
-                                                  "UUID unique · major = allée",
+                                                    "URL : app ou page web",
+                                                    "contact sec ou API existante"], "nd nd-hw"))
+o.append(node(334, 372, 250, 104, "Contrôleur de barrière", ["boucles d'armement et de fermeture",
+                                                             "module relais sur rail DIN",
+                                                             "connexion sortante vers l'API"], "nd nd-hw"))
+o.append(node(604, 372, 250, 104, "Barrière de sortie", ["balise de sortie · boucles",
+                                                         "QR de sortie · ANPR en option",
+                                                         "hors ligne : ouvre et compte"], "nd nd-hw"))
+o.append(node(874, 372, 242, 104, "Balises BLE", ["une par allée, une par sortie",
+                                                  "major = parking · minor = allée",
                                                   "pile remontée à l'API"], "nd nd-hw"))
-o.append(node(64, 500, 520, 92, "Pré-requis d'adhésion", ["Wi-Fi : paliers et les deux bornes",
-                                                           "barrière pilotable : contact sec ou API",
-                                                           "wifi_verified_at et gate.verified_at"], "nd nd-net"))
+o.append(node(64, 500, 520, 92, "Pré-requis d'adhésion", ["Wi-Fi aux paliers, cellulaire aux bornes",
+                                                           "barrière pilotable et boucles remontées",
+                                                           "wifi, cell et gate verified_at"], "nd nd-net"))
 o.append(node(604, 500, 512, 92, "Ce que le Wi-Fi ne fait pas", ["iOS n'expose aucun scan Wi-Fi aux apps tierces",
                                                                   "le Wi-Fi RTT est Android seulement",
                                                                   "aucun rôle dans le positionnement"], "nd nd-neg"))
@@ -78,7 +78,7 @@ p.append('<rect class="floor" x="40" y="60" width="1020" height="440" rx="4"/>')
 p.append('<text class="t-zn" x="60" y="90">Palier de démonstration — deux allées, dix places</text>')
 
 # aisle A
-p.append('<text class="t-aisle" x="60" y="152">Allée A — major 1</text>')
+p.append('<text class="t-aisle" x="60" y="152">Allée A — minor 1</text>')
 for i in range(5):
     x = 60 + i * 118
     st = ["AVAILABLE", "AVAILABLE", "ASSIGNED", "OCCUPIED", "AVAILABLE"][i]
@@ -88,7 +88,7 @@ for i in range(5):
     p.append('<text class="t-sp-s" x="%d" y="216">%s</text>' % (x + 52, st))
 p.append('<circle class="bcn" cx="360" cy="140" r="11"/><text class="t-bcn" x="378" y="145">balise 1</text>')
 
-p.append('<text class="t-aisle" x="60" y="312">Allée B — major 2</text>')
+p.append('<text class="t-aisle" x="60" y="312">Allée B — minor 2</text>')
 for i in range(5):
     x = 60 + i * 118
     st = ["AVAILABLE", "OCCUPIED_UNKNOWN", "AVAILABLE", "AVAILABLE", "HELD"][i]
@@ -98,17 +98,18 @@ for i in range(5):
     p.append('<text class="t-sp-s" x="%d" y="376">%s</text>' % (x + 52, st))
 p.append('<circle class="bcn" cx="360" cy="300" r="11"/><text class="t-bcn" x="378" y="305">balise 2</text>')
 
-p.append(node(700, 130, 330, 116, "Borne d'entrée", ["QR signé imprimé, affiché au mur",
+p.append(node(700, 130, 330, 116, "Borne d'entrée", ["QR signé imprimé : app ou page web",
                                                      "aucune barrière physique",
                                                      "l'app affiche l'ouverture"], "nd nd-hw"))
-p.append(node(700, 274, 330, 116, "Borne de sortie", ["QR signé imprimé",
+p.append(node(700, 274, 330, 116, "Borne de sortie", ["balise de sortie · tap de repli",
                                                        "capture Stripe en mode test",
                                                        "l'app affiche le reçu et l'ouverture"], "nd nd-hw"))
+p.append('<circle class="bcn" cx="680" cy="300" r="11"/><text class="t-bcn" x="612" y="305">balise 3</text>')
 p.append('<path class="flow5" d="M700,188 H660 V148 H600" marker-end="url(#ar5)"/>')
 p.append('<path class="flow5" d="M700,332 H660 V420 H600" marker-end="url(#ar5)"/>')
 p.append('<text class="t-lnk" x="612" y="440">sortie</text>')
 p.append('<text class="t-lnk" x="612" y="140">entrée</text>')
-p.append('<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — seules les balises sont du matériel ; tout le reste est du logiciel.</text>')
+p.append('<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — seules les trois balises sont du matériel ; les boucles sont simulées par un bouton de la console.</text>')
 p.append('</svg>')
 io.open('out/plan.svg','w',encoding='utf-8').write("\n".join(p))
 print('ok')

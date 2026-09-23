@@ -1,53 +1,59 @@
-<svg viewBox="0 0 1436 1082" role="img" aria-label="Séquence d&#x27;entrée">
-<line class="ll" x1="130" y1="78" x2="130" y2="1064"/>
-<line class="ll" x1="326" y1="78" x2="326" y2="1064"/>
-<line class="ll" x1="522" y1="78" x2="522" y2="1064"/>
-<line class="ll" x1="718" y1="78" x2="718" y2="1064"/>
-<line class="ll" x1="914" y1="78" x2="914" y2="1064"/>
-<line class="ll" x1="1110" y1="78" x2="1110" y2="1064"/>
-<line class="ll" x1="1306" y1="78" x2="1306" y2="1064"/>
-<rect class="frm" x="28" y="664" width="1380" height="346"/>
-<path class="frm-tab" d="M28,664 h58 l14,14 v10 h-72 z"/>
-<text class="t-frag" x="36" y="681">alt</text>
-<text class="t-frag-s" x="106" y="681">[ plaque lue et conforme ]</text>
-<line class="frm-sep" x1="28" y1="794" x2="1408" y2="794"/>
-<text class="t-frag-s" x="36" y="809">[ plaque lue mais différente du compte ]</text>
-<line class="frm-sep" x1="28" y1="916" x2="1408" y2="916"/>
-<text class="t-frag-s" x="36" y="931">[ aucune plaque lue après 2 min ]</text>
+<svg viewBox="0 0 1436 1236" role="img" aria-label="Séquence d&#x27;entrée">
+<line class="ll" x1="130" y1="78" x2="130" y2="1218"/>
+<line class="ll" x1="326" y1="78" x2="326" y2="1218"/>
+<line class="ll" x1="522" y1="78" x2="522" y2="1218"/>
+<line class="ll" x1="718" y1="78" x2="718" y2="1218"/>
+<line class="ll" x1="914" y1="78" x2="914" y2="1218"/>
+<line class="ll" x1="1110" y1="78" x2="1110" y2="1218"/>
+<line class="ll" x1="1306" y1="78" x2="1306" y2="1218"/>
+<rect class="frm" x="28" y="174" width="1380" height="252"/>
+<path class="frm-tab" d="M28,174 h58 l14,14 v10 h-72 z"/>
+<text class="t-frag" x="36" y="191">alt</text>
+<text class="t-frag-s" x="106" y="191">[ app ]</text>
+<line class="frm-sep" x1="28" y1="272" x2="1408" y2="272"/>
+<text class="t-frag-s" x="36" y="287">[ navigateur, sans compte ]</text>
+<rect class="frm" x="28" y="912" width="1380" height="252"/>
+<path class="frm-tab" d="M28,912 h58 l14,14 v10 h-72 z"/>
+<text class="t-frag" x="36" y="929">alt</text>
+<text class="t-frag-s" x="106" y="929">[ la boucle se ferme après l&#x27;ouverture ]</text>
+<line class="frm-sep" x1="28" y1="1056" x2="1408" y2="1056"/>
+<text class="t-frag-s" x="36" y="1071">[ aucun passage en 60 s ]</text>
 <path class="msg" d="M136,124 H320" marker-end="url(#sq)"/>
-<text class="t-msg" x="228" y="115" text-anchor="middle">scan du QR de la borne</text>
-<path class="msg" d="M332,170 H516" marker-end="url(#sq)"/>
-<text class="t-msg" x="424" y="161" text-anchor="middle">POST /v1/entries { gate_token }</text>
-<path class="msg" d="M522,216 H576 V246 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="588" y="235">vérifie la signature HMAC du jeton</text>
-<path class="msg" d="M528,292 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="283" text-anchor="middle">UPDATE spot ... FOR UPDATE SKIP LOCKED</text>
-<path class="ret" d="M712,338 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="329" text-anchor="middle">place 2-12 → ASSIGNED</text>
-<path class="msg" d="M528,384 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="718" y="375" text-anchor="middle">PaymentIntent · capture manuelle · plafond journalier</text>
-<path class="ret" d="M908,430 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="718" y="421" text-anchor="middle">requires_capture</text>
-<path class="msg" d="M528,476 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="467" text-anchor="middle">INSERT session → CREATED</text>
-<path class="msg" d="M528,522 H1104" marker-end="url(#sq)"/>
-<text class="t-msg" x="816" y="513" text-anchor="middle">ouvrir la barrière</text>
-<path class="ret" d="M516,568 H332" marker-end="url(#sq)"/>
-<text class="t-msg" x="424" y="559" text-anchor="middle">place 2-12 · palier 2 · allée B</text>
-<path class="msg" d="M320,614 H136" marker-end="url(#sq)"/>
-<text class="t-msg" x="228" y="605" text-anchor="middle">affiche la place · arme le suivi de balises</text>
-<path class="msg" d="M1300,694 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="914" y="685" text-anchor="middle">POST /v1/gates/{id}/plate { plaque }</text>
-<path class="msg" d="M528,740 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="731" text-anchor="middle">session → ENTRY_CONFIRMED</text>
-<path class="msg" d="M528,816 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="807" text-anchor="middle">plate_mismatch = true</text>
-<path class="ret" d="M516,862 H332" marker-end="url(#sq)"/>
-<text class="t-msg" x="424" y="853" text-anchor="middle">avertissement : la sortie devra passer par le QR</text>
-<path class="msg" d="M528,938 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="929" text-anchor="middle">session → CANCELLED · place → AVAILABLE</text>
-<path class="msg" d="M528,984 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="718" y="975" text-anchor="middle">annulation de la pré-autorisation</text>
+<text class="t-msg" x="228" y="115" text-anchor="middle">scan du QR de la borne · scanner armé par la balise</text>
+<path class="msg" d="M332,220 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="211" text-anchor="middle">POST /v1/entries { gate_token }</text>
+<path class="msg" d="M332,308 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="299" text-anchor="middle">Apple Pay · Checkout · carte enregistrée hors session</text>
+<path class="ret" d="M908,354 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="345" text-anchor="middle">client Stripe</text>
+<path class="msg" d="M332,400 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="391" text-anchor="middle">POST /v1/web/entries { gate_token, customer }</text>
+<path class="msg" d="M522,464 H576 V494 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="588" y="483">vérifie la signature HMAC du jeton</text>
+<path class="msg" d="M528,540 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="531" text-anchor="middle">UPDATE spot ... FOR UPDATE SKIP LOCKED</text>
+<path class="ret" d="M712,586 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="577" text-anchor="middle">place 2-12 → ASSIGNED</text>
+<path class="msg" d="M528,632 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="623" text-anchor="middle">PaymentIntent · capture manuelle · plafond journalier</text>
+<path class="ret" d="M908,678 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="669" text-anchor="middle">requires_capture</text>
+<path class="msg" d="M528,724 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="715" text-anchor="middle">INSERT session → CREATED</text>
+<path class="msg" d="M528,770 H1104" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="761" text-anchor="middle">ouvrir la barrière</text>
+<path class="ret" d="M516,816 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="807" text-anchor="middle">place 2-12 · palier 2 · allée B</text>
+<path class="msg" d="M320,862 H136" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="853" text-anchor="middle">affiche la place · arme le suivi de balises</text>
+<path class="msg" d="M1300,958 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="949" text-anchor="middle">POST /v1/gates/{id}/passage { armed_at, closed_at }</text>
+<path class="msg" d="M528,1004 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="995" text-anchor="middle">session → ENTRY_CONFIRMED · vehicle_count + 1</text>
+<path class="msg" d="M528,1092 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="1083" text-anchor="middle">session → CANCELLED · place → AVAILABLE</text>
+<path class="msg" d="M528,1138 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="1129" text-anchor="middle">annulation de la pré-autorisation</text>
 <rect class="p p-ext" x="44" y="26" width="172" height="52" rx="3"/>
 <text class="t-p" x="130" y="48" text-anchor="middle">Conducteur</text>
 <text class="t-ps" x="130" y="65" text-anchor="middle"></text>
@@ -67,6 +73,6 @@
 <text class="t-p" x="1110" y="48" text-anchor="middle">Contrôleur</text>
 <text class="t-ps" x="1110" y="65" text-anchor="middle">barrière d&#x27;entrée</text>
 <rect class="p p-ext" x="1220" y="26" width="172" height="52" rx="3"/>
-<text class="t-p" x="1306" y="48" text-anchor="middle">Caméra d&#x27;entrée</text>
-<text class="t-ps" x="1306" y="65" text-anchor="middle">ANPR</text>
+<text class="t-p" x="1306" y="48" text-anchor="middle">Boucle d&#x27;entrée</text>
+<text class="t-ps" x="1306" y="65" text-anchor="middle">contact du contrôleur</text>
 </svg>

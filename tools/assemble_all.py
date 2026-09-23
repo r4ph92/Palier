@@ -123,9 +123,9 @@ o.append(u"""<div class="cover">
   <p class="sub">Système d'allocation de places en stationnement intérieur, multi-opérateurs. Une place assignée à l'entrée, un guidage par balises, une facturation fermée à la sortie.</p>
   <hr>
   <div class="meta">
-    <span><b>30</b> décisions tranchées</span>
+    <span><b>49</b> décisions tranchées</span>
     <span><b>12</b> entités · <b>2</b> machines à états</span>
-    <span><b>23</b> endpoints</span>
+    <span><b>35</b> endpoints</span>
     <span><b>13</b> diagrammes</span>
     <span>Aucune ligne de code écrite</span>
   </div>

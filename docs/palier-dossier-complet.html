@@ -479,9 +479,9 @@
   <p class="sub">Système d'allocation de places en stationnement intérieur, multi-opérateurs. Une place assignée à l'entrée, un guidage par balises, une facturation fermée à la sortie.</p>
   <hr>
   <div class="meta">
-    <span><b>30</b> décisions tranchées</span>
+    <span><b>49</b> décisions tranchées</span>
     <span><b>12</b> entités · <b>2</b> machines à états</span>
-    <span><b>23</b> endpoints</span>
+    <span><b>35</b> endpoints</span>
     <span><b>13</b> diagrammes</span>
     <span>Aucune ligne de code écrite</span>
   </div>
@@ -600,11 +600,11 @@
           <text x="1048" y="188" text-anchor="end">occupation · compte</text>
           <text x="266" y="252">identifiant de borne</text>
           <text x="266" y="268">commande d'ouverture</text>
-          <text x="266" y="392">plaque lue à l'entrée</text>
+          <text x="266" y="392">passage détecté</text>
           <text x="266" y="580">UUID · allée · balise</text>
           <text x="974" y="252" text-anchor="end">pré-autorisation · capture</text>
           <text x="974" y="268" text-anchor="end">onboarding Connect</text>
-          <text x="974" y="392" text-anchor="end">plaque lue à la sortie</text>
+          <text x="974" y="392" text-anchor="end">identité et passage</text>
           <text x="974" y="408" text-anchor="end">commande d'ouverture</text>
           <text x="974" y="580" text-anchor="end">notification de confirmation</text>
         </g>
@@ -621,7 +621,7 @@
         <g>
           <rect class="s-ent" x="515" y="40" width="210" height="62" rx="1"/>
           <text class="t-ent" x="620" y="70" text-anchor="middle">Conducteur</text>
-          <text class="t-ent-s" x="620" y="88" text-anchor="middle">application mobile</text>
+          <text class="t-ent-s" x="620" y="88" text-anchor="middle">app ou page web</text>
 
           <rect class="s-ent" x="110" y="40" width="210" height="62" rx="1"/>
           <text class="t-ent" x="215" y="70" text-anchor="middle">Fournisseurs OAuth</text>
@@ -636,8 +636,8 @@
           <text class="t-ent-s" x="145" y="298" text-anchor="middle">QR · barrière</text>
 
           <rect class="s-ent" x="40" y="380" width="210" height="62" rx="1"/>
-          <text class="t-ent" x="145" y="410" text-anchor="middle">Caméra d'entrée</text>
-          <text class="t-ent-s" x="145" y="428" text-anchor="middle">lecture de plaque</text>
+          <text class="t-ent" x="145" y="410" text-anchor="middle">Boucle d'entrée</text>
+          <text class="t-ent-s" x="145" y="428" text-anchor="middle">passage du véhicule</text>
 
           <rect class="s-ent" x="40" y="510" width="210" height="62" rx="1"/>
           <text class="t-ent" x="145" y="540" text-anchor="middle">Balises BLE</text>
@@ -649,7 +649,7 @@
 
           <rect class="s-ent" x="990" y="380" width="210" height="62" rx="1"/>
           <text class="t-ent" x="1095" y="410" text-anchor="middle">Barrière de sortie</text>
-          <text class="t-ent-s" x="1095" y="428" text-anchor="middle">caméra ANPR</text>
+          <text class="t-ent-s" x="1095" y="428" text-anchor="middle">boucle · balise · QR de sortie</text>
 
           <rect class="s-ent" x="990" y="510" width="210" height="62" rx="1"/>
           <text class="t-ent" x="1095" y="540" text-anchor="middle">Notifications push</text>
@@ -790,7 +790,7 @@
         <!-- ============ CONDUCTEUR RAIL ============ -->
         <rect class="s-ent" x="40" y="212" width="120" height="696" rx="1"/>
         <text class="t-ent" transform="translate(88,560) rotate(-90)" text-anchor="middle">Conducteur</text>
-        <text class="t-ent-s" transform="translate(108,560) rotate(-90)" text-anchor="middle">application mobile iOS</text>
+        <text class="t-ent-s" transform="translate(108,560) rotate(-90)" text-anchor="middle">app iOS ou page web</text>
 
         <!-- ============ ENTITY COLUMN ============ -->
         <g>
@@ -803,8 +803,8 @@
           <text class="t-ent-s" x="315" y="392" text-anchor="middle">QR statique · barrière</text>
 
           <rect class="s-ent" x="190" y="412" width="250" height="46" rx="1"/>
-          <text class="t-ent" x="315" y="432" text-anchor="middle">Caméra d'entrée</text>
-          <text class="t-ent-s" x="315" y="448" text-anchor="middle">plaque arrière, après la barrière</text>
+          <text class="t-ent" x="315" y="432" text-anchor="middle">Boucle d'entrée</text>
+          <text class="t-ent-s" x="315" y="448" text-anchor="middle">fermée après l'ouverture</text>
 
           <rect class="s-ent" x="190" y="532" width="250" height="56" rx="1"/>
           <text class="t-ent" x="315" y="556" text-anchor="middle">Balises BLE</text>
@@ -816,7 +816,7 @@
 
           <rect class="s-ent" x="190" y="832" width="250" height="56" rx="1"/>
           <text class="t-ent" x="315" y="856" text-anchor="middle">Barrière de sortie</text>
-          <text class="t-ent-s" x="315" y="874" text-anchor="middle">caméra ANPR · QR de repli</text>
+          <text class="t-ent-s" x="315" y="874" text-anchor="middle">boucle · balise · QR de sortie</text>
 
           <rect class="s-ent" x="190" y="982" width="250" height="56" rx="1"/>
           <text class="t-ent" x="315" y="1006" text-anchor="middle">Opérateur de parking</text>
@@ -853,7 +853,7 @@
           <rect class="s-proc" x="470" y="812" width="380" height="96" rx="12"/>
           <text class="t-num" x="494" y="844">6.0</text>
           <text class="t-proc" x="494" y="868">Clôturer et facturer</text>
-          <text class="t-proc-s" x="494" y="888">plaque → capture → ouverture</text>
+          <text class="t-proc-s" x="494" y="888">identité → capture → ouverture</text>
 
           <rect class="s-proc" x="470" y="962" width="380" height="96" rx="12"/>
           <text class="t-num" x="494" y="994">7.0</text>
@@ -979,16 +979,16 @@
       <thead><tr><th>N°</th><th>Trajet</th><th>Donnée qui circule</th></tr></thead>
       <tbody>
         <tr><td>F1</td><td>Conducteur ↔ 2.0</td><td>Position et type de véhicule ; en retour, liste des parkings avec places libres et confirmation de hold</td></tr>
-        <tr><td>F2</td><td>Conducteur ↔ 3.0</td><td>Jeton du QR de la borne ; en retour, numéro de place assignée (palier, allée, numéro)</td></tr>
-        <tr><td>F3</td><td>Conducteur ↔ 5.0</td><td>Confirmation ou correction du numéro de place ; en retour, accusé de prise en compte</td></tr>
-        <tr><td>F4</td><td>Conducteur ↔ 6.0</td><td>Scan du QR de repli si la plaque n'est pas lue ; en retour, reçu et montant facturé</td></tr>
+        <tr><td>F2</td><td>Conducteur ↔ 3.0</td><td>Jeton du QR de la borne, par l'app ou par la page web avec Apple Pay ; en retour, numéro de place assignée (palier, allée, numéro)</td></tr>
+        <tr><td>F3</td><td>Conducteur ↔ 5.0</td><td>Réponse à la question « Où êtes-vous garé ? », ou signalement « place prise » ; en retour, la place retenue ou la nouvelle place assignée</td></tr>
+        <tr><td>F4</td><td>Conducteur ↔ 6.0</td><td>Signalement de la balise de sortie par l'app, ou scan du QR de sortie (app ou page web retrouvée par son jeton) ; en retour, reçu et montant facturé</td></tr>
         <tr><td>F5</td><td>Conducteur ↔ 4.0</td><td>Position d'allée détectée ; en retour, plan du palier et indication de progression</td></tr>
         <tr><td>F6</td><td>OAuth ↔ 1.0</td><td>Demande d'authentification ; en retour, jeton d'identité vérifié (Apple ou Google)</td></tr>
         <tr><td>F7</td><td>Borne d'entrée ↔ 3.0</td><td>Identifiant de borne encodé dans le QR ; en retour, commande d'ouverture de la barrière</td></tr>
-        <tr><td>F8</td><td>Caméra d'entrée → 3.0</td><td>Plaque arrière lue après le passage de la barrière — confirme l'entrée effective du véhicule</td></tr>
-        <tr><td>F9</td><td>Balises BLE → 4.0</td><td>UUID, <span style="font-family:'IBM Plex Mono',monospace">major</span> (allée), <span style="font-family:'IBM Plex Mono',monospace">minor</span> (balise) et puissance reçue</td></tr>
+        <tr><td>F8</td><td>Boucle d'entrée → 3.0</td><td>Fermeture de la boucle après la commande d'ouverture — confirme l'entrée effective du véhicule et incrémente le compteur du parking</td></tr>
+        <tr><td>F9</td><td>Balises BLE → 4.0</td><td>UUID, <span style="font-family:'IBM Plex Mono',monospace">major</span> (parking), <span style="font-family:'IBM Plex Mono',monospace">minor</span> (allée) et puissance reçue</td></tr>
         <tr><td>F10</td><td>5.0 → APNs</td><td>Demande de notification « Confirmez votre place », déclenchée par la transition « à pied »</td></tr>
-        <tr><td>F11</td><td>Barrière de sortie ↔ 6.0</td><td>Plaque lue à la sortie ; en retour, commande d'ouverture après capture du paiement</td></tr>
+        <tr><td>F11</td><td>Barrière de sortie ↔ 6.0</td><td>Identité du véhicule (plaque ou transpondeur chez les opérateurs équipés), présence sur la boucle d'armement, puis fermeture de la boucle ; en retour, commande d'ouverture après capture du paiement</td></tr>
         <tr><td>F12</td><td>Opérateur ↔ 7.0</td><td>Politique tarifaire, plafond journalier, plan des places ; en retour, état d'occupation et statut du compte Connect</td></tr>
       </tbody>
     </table>
@@ -1018,12 +1018,12 @@
         <tr><td>F20</td><td>2.0 ↔ D2</td><td>Lecture des politiques tarifaires et des parkings actifs</td></tr>
         <tr><td>F21</td><td>3.0 ↔ D3</td><td>Sélection atomique d'une place libre et passage à l'état <span style="font-family:'IBM Plex Mono',monospace">ASSIGNED</span></td></tr>
         <tr><td>F22</td><td>4.0 → D5</td><td>Journalisation des passages de balises</td></tr>
-        <tr><td>F23</td><td>5.0 → D3</td><td>Passage à <span style="font-family:'IBM Plex Mono',monospace">OCCUPIED</span> si confirmé, <span style="font-family:'IBM Plex Mono',monospace">OCCUPIED_UNKNOWN</span> en cas de silence</td></tr>
+        <tr><td>F23</td><td>5.0 → D3</td><td>Passage à <span style="font-family:'IBM Plex Mono',monospace">OCCUPIED</span> dès le signal « à pied » dans l'allée assignée (présomption), <span style="font-family:'IBM Plex Mono',monospace">OCCUPIED_UNKNOWN</span> si l'allée détectée diffère ou si la place est signalée prise</td></tr>
         <tr><td>F24</td><td>6.0 → D3</td><td>Remise de la place à <span style="font-family:'IBM Plex Mono',monospace">AVAILABLE</span>, indicateur « à vérifier » le cas échéant</td></tr>
         <tr><td>F25</td><td>7.0 ↔ D6</td><td>Opérateur et compte Connect Express associé</td></tr>
         <tr><td>F26</td><td>8.0 → D5</td><td>Purge des événements de plus de 90 jours</td></tr>
         <tr><td>F27</td><td>2.0 → D3</td><td>Lecture des places libres et écriture de l'état <span style="font-family:'IBM Plex Mono',monospace">HELD</span></td></tr>
-        <tr><td>F28</td><td>3.0 → D4</td><td>Création de la session à l'entrée, avec plaque attendue et place assignée</td></tr>
+        <tr><td>F28</td><td>3.0 → D4</td><td>Création de la session à l'entrée, avec véhicule attendu et place assignée</td></tr>
         <tr><td>F29</td><td>5.0 → D4</td><td>Rattachement de la place réellement occupée à la session</td></tr>
         <tr><td>F30</td><td>6.0 → D4</td><td>Clôture de la session : horodatage de sortie, durée, montant capturé</td></tr>
         <tr><td>F31</td><td>7.0 ↔ D2</td><td>Écriture de la politique tarifaire et du plan des places du parking</td></tr>
@@ -1036,7 +1036,7 @@
   </div>
 
   <div class="note">
-    <b>Points à vérifier au moment de l'implémentation.</b> Deux flux n'apparaissent pas sur la figure parce qu'ils sont déclenchés par le temps, non par un acteur : l'expiration d'un hold non utilisé après 15 minutes (retour de D3 à <span style="font-family:'IBM Plex Mono',monospace">AVAILABLE</span>), et l'annulation d'une assignation dont la plaque n'a jamais été lue à l'entrée après 2 minutes, qui libère aussi la pré-autorisation Stripe. Un DFD ne représente pas les déclencheurs temporels ; ils doivent figurer au diagramme d'états.
+    <b>Points à vérifier au moment de l'implémentation.</b> Deux flux n'apparaissent pas sur la figure parce qu'ils sont déclenchés par le temps, non par un acteur : l'expiration d'un hold non utilisé après 15 minutes (retour de D3 à <span style="font-family:'IBM Plex Mono',monospace">AVAILABLE</span>), et l'annulation d'une assignation dont le passage n'a jamais été détecté par la boucle 60 secondes après l'ouverture, qui libère aussi la pré-autorisation Stripe. Un DFD ne représente pas les déclencheurs temporels ; ils doivent figurer au diagramme d'états.
   </div>
 </section>
 
@@ -1139,7 +1139,7 @@
 
           <rect class="s-ent" x="60" y="370" width="220" height="48" rx="3"/>
           <text class="t-tbl" x="76" y="392">aisle</text>
-          <text class="t-sm" x="76" y="408">allée · major de balise</text>
+          <text class="t-sm" x="76" y="408">allée · minor de balise</text>
 
           <rect class="s-key" x="60" y="480" width="220" height="48" rx="3"/>
           <text class="t-tbl" x="76" y="502">spot</text>
@@ -1195,6 +1195,8 @@
         <tr><td>is_oversize</td><td class="t">bool</td><td>Gabarit large</td></tr>
         <tr><td>distance_to_exit</td><td class="t">int</td><td>Mètres jusqu'à la sortie piétonne ; critère de tri secondaire</td></tr>
         <tr><td>needs_check</td><td class="t">bool</td><td>Place sortie d'un <code>OCCUPIED_UNKNOWN</code> : réassignée en dernier recours</td></tr>
+        <tr><td>sensor_state</td><td class="t">enum null</td><td><code>FREE</code> · <code>OCCUPIED</code> — nul sans capteur. Fait autorité sur l'occupation quand le parking est en mode <code>SENSORS</code></td></tr>
+        <tr><td>sensor_at</td><td class="t">timestamptz null</td><td>Dernier relevé du capteur ; un capteur muet doit apparaître au tableau de bord</td></tr>
       </tbody>
     </table>
   </div>
@@ -1205,17 +1207,21 @@
       <thead><tr><th>Colonne</th><th>Type</th><th>Rôle</th></tr></thead>
       <tbody>
         <tr><td class="pk">id</td><td class="t">uuid PK</td><td>—</td></tr>
-        <tr><td class="fk">user_id · vehicle_id · lot_id</td><td class="t">uuid FK</td><td>Qui, avec quel véhicule, dans quel parking</td></tr>
+        <tr><td class="fk">user_id · vehicle_id · lot_id</td><td class="t">uuid FK, null pour le web</td><td>Qui, avec quel véhicule, dans quel parking ; nuls pour une session sans compte</td></tr>
+        <tr><td>identity_kind</td><td class="t">enum</td><td><code>ACCOUNT</code> (app) · <code>WEB</code> (page Stripe Checkout, Apple Pay ou Google Pay, sans compte)</td></tr>
+        <tr><td>web_token</td><td class="t">text null</td><td>Jeton de la session web, conservé trois fois dès l'entrée : cookie de 30 jours, passe Wallet, lien SMS ou courriel. Le numéro de place seul n'est jamais une preuve</td></tr>
+        <tr><td>stripe_customer_id</td><td class="t">text null</td><td>Client Stripe créé par le portefeuille pour une session web ; moyen de paiement enregistré pour usage hors session</td></tr>
         <tr><td class="fk">assigned_spot_id</td><td class="t">uuid FK</td><td>Place attribuée à l'entrée</td></tr>
         <tr><td class="fk">confirmed_spot_id</td><td class="t">uuid FK null</td><td>Place réellement occupée ; diffère si l'utilisateur a corrigé</td></tr>
-        <tr><td>state</td><td class="t">enum</td><td><code>CREATED</code> · <code>ENTRY_CONFIRMED</code> · <code>PARKED_CONFIRMED</code> · <code>PARKED_UNCONFIRMED</code> · <code>CLOSED_PAID</code> · <code>CANCELLED</code></td></tr>
-        <tr><td>entry_scan_at</td><td class="t">timestamptz</td><td>Scan du QR à la borne — début du compte à rebours de 2 minutes</td></tr>
-        <tr><td>entry_plate_at</td><td class="t">timestamptz null</td><td>Plaque lue après la barrière : preuve d'entrée effective</td></tr>
-        <tr><td>entry_plate_read</td><td class="t">text null</td><td>Plaque brute lue, conservée pour la réconciliation</td></tr>
-        <tr><td>plate_mismatch</td><td class="t">bool</td><td>La plaque lue diffère du compte : la sortie devra passer par le QR</td></tr>
-        <tr><td>walking_at</td><td class="t">timestamptz null</td><td>Transition CoreMotion — termine l'état <code>ASSIGNED</code> de la place</td></tr>
-        <tr><td>confirmed_at</td><td class="t">timestamptz null</td><td>Tap de l'utilisateur ; nul en cas de silence</td></tr>
-        <tr><td>exit_at</td><td class="t">timestamptz null</td><td>Plaque lue à la sortie ou QR de repli</td></tr>
+        <tr><td>state</td><td class="t">enum</td><td><code>CREATED</code> · <code>ENTRY_CONFIRMED</code> · <code>PARKED_CONFIRMED</code> · <code>PARKED_PRESUMED</code> · <code>CLOSED_PAID</code> · <code>CANCELLED</code></td></tr>
+        <tr><td>entry_scan_at</td><td class="t">timestamptz</td><td>Scan du QR à la borne — début de la fenêtre de 60 secondes avant annulation</td></tr>
+        <tr><td>entry_passage_at</td><td class="t">timestamptz null</td><td>Fermeture de la boucle d'entrée après l'ouverture : preuve d'entrée effective, quel que soit le temps</td></tr>
+        <tr><td>parked_evidence</td><td class="t">enum null</td><td><code>PRESUMED</code> (à pied dans l'allée assignée) · <code>CONFIRMED</code> (réponse de l'usager) · <code>SENSOR</code> (capteur de place) · <code>TIMEOUT</code> (garde-fou 30 min)</td></tr>
+        <tr><td>exit_id_method</td><td class="t">enum null</td><td>Comment le véhicule a été identifié à la sortie : <code>ANPR</code> · <code>RFID</code> · <code>BEACON</code> · <code>APP</code> · <code>STAFF</code> — la distribution de cette colonne dit si la sortie sans geste fonctionne</td></tr>
+        <tr><td>exit_passage_at</td><td class="t">timestamptz null</td><td>Fermeture de la boucle de sortie ; décrémente le compteur du parking</td></tr>
+        <tr><td>walking_at</td><td class="t">timestamptz null</td><td>Transition CoreMotion — termine l'état <code>ASSIGNED</code> de la place ; l'allée détectée à cet instant est comparée à l'allée assignée</td></tr>
+        <tr><td>confirmed_at</td><td class="t">timestamptz null</td><td>Réponse de l'utilisateur, seulement s'il a été sollicité ; nul au cas nominal</td></tr>
+        <tr><td>exit_at</td><td class="t">timestamptz null</td><td>Instant de l'identification à la sortie ; fin de la durée facturée</td></tr>
         <tr><td>payment_intent_id</td><td class="t">text</td><td>PaymentIntent Stripe en capture manuelle, créé à l'entrée</td></tr>
         <tr><td>authorized_cents</td><td class="t">int</td><td>Plafond journalier pré-autorisé</td></tr>
         <tr><td>captured_cents</td><td class="t">int null</td><td>Montant réellement capturé à la sortie</td></tr>
@@ -1229,13 +1235,13 @@
       <thead><tr><th>Table</th><th>Colonnes structurantes</th><th>Note de conception</th></tr></thead>
       <tbody>
         <tr><td>operator</td><td class="t">legal_name, stripe_account_id, kyc_status</td><td>Un compte Connect Express par opérateur ; <code>kyc_status</code> bloque la mise en ligne</td></tr>
-        <tr><td>parking_lot</td><td class="t">operator_id, name, geo, pricing_policy jsonb, daily_cap_cents, assignment_strategy, wifi_verified_at</td><td><code>daily_cap_cents</code> est <b>NOT NULL</b> : c'est le montant pré-autorisé. <code>wifi_verified_at</code> matérialise le pré-requis d'adhésion</td></tr>
+        <tr><td>parking_lot</td><td class="t">operator_id, name, geo, beacon_major, pricing_policy jsonb, daily_cap_cents, assignment_strategy, occupancy_source, capacity, vehicle_count, wifi_verified_at, cell_verified_at</td><td><code>beacon_major</code> est la région iBeacon du parking — une seule région surveillée à la fois, loin de la limite de vingt. <code>daily_cap_cents</code> est <b>NOT NULL</b> : c'est le montant pré-autorisé. <code>vehicle_count</code> est maintenu par les boucles à chaque passage — c'est la vérité du nombre de véhicules présents, abonnés compris. <code>occupancy_source</code> vaut <code>DECLARATIVE</code> ou <code>SENSORS</code>. <code>wifi_verified_at</code> et <code>cell_verified_at</code> matérialisent les pré-requis d'adhésion : Wi-Fi aux paliers, cellulaire aux deux bornes</td></tr>
         <tr><td>level</td><td class="t">lot_id, code, display_order</td><td>Le palier ; l'ordre de remplissage suit <code>display_order</code></td></tr>
-        <tr><td>aisle</td><td class="t">level_id, code, beacon_major, map_polygon</td><td><code>beacon_major</code> lie l'allée à sa région iBeacon — une seule par allée</td></tr>
+        <tr><td>aisle</td><td class="t">level_id, code, beacon_minor, map_polygon, is_exit_lane</td><td><code>beacon_minor</code> identifie l'allée dans la région du parking ; l'allée est résolue par <em>ranging</em>, pas par une région propre. La voie de sortie est une allée comme les autres, avec <code>is_exit_lane</code> à vrai et <code>minor</code> 0 : sa balise sert à identifier le véhicule qui sort</td></tr>
         <tr><td>beacon</td><td class="t">aisle_id, uuid, major, minor, battery_at, status</td><td>Le suivi de pile est une exigence d'exploitation, pas un luxe</td></tr>
-        <tr><td>gate</td><td class="t">lot_id, kind, qr_secret, integration_kind, endpoint, verified_at</td><td><code>qr_secret</code> signe le jeton du QR (HMAC) ; <code>kind</code> vaut entrée ou sortie. <code>integration_kind</code> distingue le contact sec de l'API du contrôle d'accès existant, et <code>verified_at</code> fait de la barrière un pré-requis d'adhésion au même titre que le Wi-Fi</td></tr>
+        <tr><td>gate</td><td class="t">lot_id, kind, qr_secret, integration_kind, endpoint, has_loops, exit_id_kind, verified_at</td><td><code>qr_secret</code> signe le jeton du QR (HMAC) ; <code>kind</code> vaut entrée ou sortie. <code>integration_kind</code> distingue le contact sec de l'API du contrôle d'accès existant. <code>has_loops</code> dit si le contrôleur remonte ses boucles — sans elles, ni preuve de passage ni compteur. <code>exit_id_kind</code> vaut <code>ANPR</code>, <code>RFID</code> ou <code>NONE</code> : l'identification sans geste est une option de l'opérateur, jamais une condition. <code>verified_at</code> fait de la barrière un pré-requis d'adhésion au même titre que le Wi-Fi</td></tr>
         <tr><td>app_user</td><td class="t">oauth_provider, oauth_subject, email, stripe_customer_id, default_pm_id</td><td>Aucun mot de passe. Le client Stripe vit sur la plateforme, pas chez l'opérateur</td></tr>
-        <tr><td>vehicle</td><td class="t">user_id, plate, province, is_default</td><td>Plusieurs plaques par compte ; <code>is_default</code> sert au rapprochement ANPR</td></tr>
+        <tr><td>vehicle</td><td class="t">user_id, plate, province, is_default, transponder_id</td><td>Plusieurs plaques par compte ; <code>is_default</code> et <code>transponder_id</code> servent au rapprochement chez les opérateurs équipés d'ANPR ou de lecteurs de transpondeurs</td></tr>
         <tr><td>hold</td><td class="t">user_id, lot_id, spot_id, expires_at, status</td><td>Contrainte d'unicité sur <code>user_id</code> pour les holds actifs : un seul à la fois</td></tr>
         <tr><td>event_log</td><td class="t">session_id, lot_id, kind, payload jsonb, occurred_at, purge_after</td><td><code>purge_after</code> calculé à l'écriture — la rétention est une donnée, pas une règle enfouie dans un script</td></tr>
       </tbody>
@@ -1243,13 +1249,13 @@
   </div>
 
   <div class="note">
-    <b>Deux index portent toute la performance.</b> Un index partiel sur <code>spot (aisle_id, state) WHERE state = 'AVAILABLE'</code> sert la requête d'assignation, qui s'exécute pendant qu'une voiture attend devant une barrière. Un index sur <code>session (lot_id, state) WHERE state IN ('ENTRY_CONFIRMED','PARKED_CONFIRMED','PARKED_UNCONFIRMED')</code> sert la recherche par plaque à la sortie.
+    <b>Deux index portent toute la performance.</b> Un index partiel sur <code>spot (aisle_id, state) WHERE state = 'AVAILABLE'</code> sert la requête d'assignation, qui s'exécute pendant qu'une voiture attend devant une barrière. Un index sur <code>session (lot_id, state) WHERE state IN ('ENTRY_CONFIRMED','PARKED_CONFIRMED','PARKED_UNCONFIRMED')</code> sert la recherche de la session à la sortie, par plaque, transpondeur ou balise.
   </div>
 </section>
 
 <section>
   <div class="sec-head"><h3>Machine à états — place</h3><span class="tag">spot.state</span></div>
-  <p class="lede">Six états. Trois transitions sont déclenchées par le temps, pas par un acteur : ce sont elles qui empêchent l'inventaire de se vider tout seul.</p>
+  <p class="lede">Six états. Trois transitions sont déclenchées par le temps, pas par un acteur. Au cas nominal, aucune transition n'exige un geste de l'usager : la place est présumée occupée dès qu'il marche dans l'allée assignée.</p>
 
   <figure>
     <div class="fig"><div class="fig-scroll">
@@ -1271,19 +1277,21 @@
         <g fill="none" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#m1)">
           <path d="M266,174 V262 H110 V174"/>
           <path d="M448,174 V286 H100 V174"/>
+          <path d="M458,126 V50 H650 V62"/>
         </g>
 
         <g class="t-ev">
           <text x="185" y="140" text-anchor="middle">hold</text>
           <text x="367" y="132" text-anchor="middle">scan QR</text>
           <text x="367" y="146" text-anchor="middle">borne</text>
-          <text x="561" y="76" text-anchor="middle">à pied</text>
-          <text x="561" y="90" text-anchor="middle">+ tap</text>
-          <text x="561" y="224" text-anchor="middle">à pied</text>
-          <text x="561" y="238" text-anchor="middle">sans tap</text>
-          <text x="466" y="302" text-anchor="middle">sortie du véhicule · plaque lue à la barrière</text>
+          <text x="536" y="76" text-anchor="middle">à pied dans</text>
+          <text x="536" y="90" text-anchor="middle">l'allée assignée</text>
+          <text x="540" y="40" text-anchor="middle">garde-fou 30 min · présumée occupée</text>
+          <text x="530" y="224" text-anchor="middle">allée différente</text>
+          <text x="530" y="238" text-anchor="middle">ou « place prise »</text>
+          <text x="478" y="302" text-anchor="middle">sortie · boucle fermée</text>
           <text x="196" y="256" text-anchor="middle">expiration 15 min</text>
-          <text x="272" y="302" text-anchor="middle">garde-fou 30 min · ou plaque jamais lue à l'entrée (2 min)</text>
+          <text x="200" y="302" text-anchor="middle">aucun passage en 60 s · pré-autorisation libérée</text>
         </g>
 
         <g>
@@ -1308,7 +1316,7 @@
         </g>
       </svg>
     </div>
-    <figcaption>Trait plein : transition provoquée par un acteur. Trait pointillé : transition provoquée par le temps. Une place sortant de OCCUPIED_UNKNOWN revient à AVAILABLE avec needs_check à vrai.</figcaption>
+    <figcaption>Trait plein : transition provoquée par un acteur ou un signal. Trait pointillé : transition provoquée par le temps. Le silence ne libère jamais une place : le garde-fou la présume occupée. Une place sortant de OCCUPIED_UNKNOWN revient à AVAILABLE avec needs_check à vrai.</figcaption>
     </div>
   </figure>
 </section>
@@ -1326,6 +1334,7 @@
           <path d="M376,120 C412,120 412,178 448,178"/>
           <path d="M672,62 H734"/>
           <path d="M692,178 H734"/>
+          <path d="M610,154 V86"/>
           <path d="M878,86 V244 H100 V144" stroke-dasharray="5 4"/>
         </g>
         <g fill="none" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#m1)">
@@ -1333,14 +1342,15 @@
         </g>
 
         <g class="t-ev">
-          <text x="182" y="110" text-anchor="middle">plaque lue</text>
-          <text x="182" y="290" text-anchor="middle">aucune plaque lue en 2 min → pré-autorisation libérée</text>
-          <text x="415" y="52" text-anchor="middle">à pied + tap</text>
-          <text x="415" y="190" text-anchor="middle">à pied</text>
-          <text x="415" y="204" text-anchor="middle">sans tap</text>
+          <text x="182" y="88" text-anchor="middle">boucle fermée</text>
+          <text x="182" y="290" text-anchor="middle">aucun passage en 60 s → pré-autorisation libérée</text>
+          <text x="415" y="52" text-anchor="middle">réponse de l'usager · capteur</text>
+          <text x="404" y="216" text-anchor="middle">à pied, bonne allée</text>
+          <text x="404" y="229" text-anchor="middle">ou garde-fou 30 min</text>
+          <text x="652" y="124" text-anchor="middle">réponse tardive</text>
           <text x="703" y="52" text-anchor="middle">sortie</text>
           <text x="713" y="168" text-anchor="middle">sortie</text>
-          <text x="489" y="236" text-anchor="middle">anonymisation après 90 jours</text>
+          <text x="640" y="236" text-anchor="middle">anonymisation après 90 jours</text>
         </g>
 
         <g>
@@ -1354,7 +1364,7 @@
           <text class="t-st" x="560" y="67" text-anchor="middle" fill="var(--store)">PARKED_CONFIRMED</text>
 
           <rect class="st-node" x="448" y="154" width="244" height="48" rx="4" fill="var(--warn-soft)" stroke="var(--warn)"/>
-          <text class="t-st" x="570" y="183" text-anchor="middle" fill="var(--warn)">PARKED_UNCONFIRMED</text>
+          <text class="t-st" x="570" y="183" text-anchor="middle" fill="var(--warn)">PARKED_PRESUMED</text>
 
           <rect class="st-node" x="734" y="96" width="144" height="48" rx="4" fill="var(--ext-soft)" stroke="var(--ext)"/>
           <text class="t-st" x="806" y="125" text-anchor="middle" fill="var(--ext)">CLOSED_PAID</text>
@@ -1369,12 +1379,12 @@
   </figure>
 
   <div class="note warn">
-    <b>Le seul état où place et session divergent volontairement.</b> Quand l'utilisateur corrige son numéro de place, la session passe à <code>PARKED_CONFIRMED</code> avec <code>confirmed_spot_id</code> différent de <code>assigned_spot_id</code>. Côté places, <b>deux</b> lignes changent dans la même transaction : la place réelle passe à <code>OCCUPIED</code>, l'ancienne à <code>OCCUPIED_UNKNOWN</code>. Écrire ces deux mises à jour hors transaction laisserait une place fantôme à la moindre erreur réseau.
+    <b>Le seul état où place et session divergent volontairement.</b> Quand l'utilisateur, interrogé parce que l'allée détectée n'était pas la sienne, indique un autre numéro de place, la session passe à <code>PARKED_CONFIRMED</code> avec <code>confirmed_spot_id</code> différent de <code>assigned_spot_id</code>. Côté places, <b>deux</b> lignes changent dans la même transaction : la place réelle passe à <code>OCCUPIED</code>, l'ancienne à <code>OCCUPIED_UNKNOWN</code>. Écrire ces deux mises à jour hors transaction laisserait une place fantôme à la moindre erreur réseau.
   </div>
 </section>
 
 <section>
-  <div class="sec-head"><h3>Surface API</h3><span class="tag">4 publics · 3 modes d'authentification</span></div>
+  <div class="sec-head"><h3>Surface API</h3><span class="tag">5 publics · 4 modes d'authentification</span></div>
   <p class="lede">Trois populations très différentes appellent l'API : l'app du conducteur (jeton utilisateur), le matériel de terrain (clé d'appareil), le tableau de bord opérateur (session opérateur). Une quatrième famille n'est appelée par personne — ce sont les tâches planifiées.</p>
 
   <div class="tbl-scroll">
@@ -1390,8 +1400,11 @@
         <tr><td>DELETE /v1/holds/{id}</td><td>Libère le hold avant son expiration</td></tr>
         <tr><td>POST /v1/entries</td><td>Consomme le jeton du QR de borne : assigne une place, crée le PaymentIntent, commande l'ouverture</td></tr>
         <tr><td>GET /v1/sessions/current</td><td>Session en cours, place assignée, cible de guidage, allée attendue</td></tr>
-        <tr><td>POST /v1/sessions/{id}/parked</td><td>Confirme la place, ou la corrige en passant un <code>spot_id</code> différent</td></tr>
-        <tr><td>POST /v1/sessions/{id}/exit</td><td>Sortie par QR de repli quand la plaque n'a pas été lue</td></tr>
+        <tr><td>POST /v1/sessions/{id}/walking</td><td>Transition « à pied » avec le <code>minor</code> de l'allée détectée par <em>ranging</em> ; allée conforme → place présumée occupée, sans autre geste</td></tr>
+        <tr><td>POST /v1/sessions/{id}/parked</td><td>Réponse à « Où êtes-vous garé ? » : confirme la place assignée ou en désigne une autre par <code>spot_id</code></td></tr>
+        <tr><td>POST /v1/sessions/{id}/spot-taken</td><td>La place assignée est prise : réassignation immédiate, dans la même allée si possible ; la place signalée passe à <code>OCCUPIED_UNKNOWN</code></td></tr>
+        <tr><td>POST /v1/sessions/{id}/at-exit</td><td>L'app voit la balise de la voie de sortie ; si elle est la seule candidate et qu'un véhicule est sur la boucle, l'API capture et ouvre sans geste</td></tr>
+        <tr><td>POST /v1/sessions/{id}/exit</td><td>Tap « Ouvrir » de repli quand le véhicule n'a pas été identifié sans geste</td></tr>
         <tr><td>GET /v1/sessions/{id}/receipt</td><td>Durée, tarif appliqué, montant capturé</td></tr>
       </tbody>
     </table>
@@ -1402,7 +1415,10 @@
       <caption>Matériel de terrain — authentification par clé d'appareil</caption>
       <thead><tr><th>Endpoint</th><th>Effet</th></tr></thead>
       <tbody>
-        <tr><td>POST /v1/gates/{id}/plate</td><td>Plaque lue. Sur une barrière d'entrée : confirme la session. Sur une barrière de sortie : identifie la session, capture le paiement, renvoie l'ordre d'ouverture</td></tr>
+        <tr><td>POST /v1/gates/{id}/passage</td><td>Boucle fermée après une ouverture, avec <code>armed_at</code> et <code>closed_at</code> pour le temps de présence. À l'entrée : session <code>ENTRY_CONFIRMED</code>, compteur +1. À la sortie : <code>exit_passage_at</code>, compteur −1. C'est la seule preuve de passage du système</td></tr>
+        <tr><td>POST /v1/gates/{id}/presence</td><td>Véhicule présent sur la boucle d'armement de la sortie ; condition de l'ouverture sans geste par balise</td></tr>
+        <tr><td>POST /v1/gates/{id}/identify</td><td>Plaque ou transpondeur lu à la sortie, chez les opérateurs équipés : identifie la session, capture le paiement, renvoie l'ordre d'ouverture</td></tr>
+        <tr><td>POST /v1/lots/{id}/sensors</td><td>Relevé groupé des capteurs de places, pour les parkings en mode <code>SENSORS</code></td></tr>
         <tr><td>POST /v1/gates/{id}/heartbeat</td><td>Signal de vie du contrôleur ; une barrière muette doit être visible au tableau de bord</td></tr>
         <tr><td>POST /v1/beacons/{id}/telemetry</td><td>Niveau de pile signalé par le personnel ou par un relevé périodique</td></tr>
       </tbody>
@@ -1416,9 +1432,22 @@
       <tbody>
         <tr><td>POST /v1/operators/onboarding</td><td>Génère le lien d'onboarding Stripe Connect Express</td></tr>
         <tr><td>PUT /v1/lots/{id}/pricing</td><td>Politique tarifaire ; refuse l'enregistrement si le plafond journalier est absent</td></tr>
-        <tr><td>PUT /v1/lots/{id}/map</td><td>Paliers, allées, places et attributs ; associe chaque allée à son <code>major</code> de balise</td></tr>
-        <tr><td>GET /v1/lots/{id}/occupancy</td><td>Occupation en direct par palier et par état</td></tr>
+        <tr><td>PUT /v1/lots/{id}/map</td><td>Paliers, allées, places et attributs ; associe chaque allée à son <code>minor</code> de balise</td></tr>
+        <tr><td>GET /v1/lots/{id}/occupancy</td><td>Occupation en direct par palier et par état, compteur de passages, et écart entre les deux</td></tr>
         <tr><td>GET /v1/lots/{id}/spots?needs_check=true</td><td>Places à vérifier physiquement</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="tbl-scroll">
+    <table>
+      <caption>Page web, usager sans compte — jeton de session</caption>
+      <thead><tr><th>Endpoint</th><th>Effet</th></tr></thead>
+      <tbody>
+        <tr><td>POST /v1/web/entries</td><td>Même jeton de borne que l'app, plus le client Stripe créé par Apple Pay ou Google Pay : assigne une place, crée le PaymentIntent, commande l'ouverture, renvoie le jeton de session</td></tr>
+        <tr><td>GET /v1/web/sessions/{token}</td><td>Place assignée, guidage, montant en cours ; c'est la page que le cookie, le passe Wallet et le lien SMS rouvrent</td></tr>
+        <tr><td>GET /v1/web/sessions/{token}/pass</td><td>Passe Wallet portant le QR de sortie</td></tr>
+        <tr><td>POST /v1/web/sessions/{token}/exit</td><td>QR de sortie scanné : capture sur la pré-autorisation, ouverture, reçu affiché et envoyé par courriel si connu</td></tr>
       </tbody>
     </table>
   </div>
@@ -1429,8 +1458,11 @@
       <thead><tr><th>Tâche</th><th>Cadence</th><th>Effet</th></tr></thead>
       <tbody>
         <tr><td>expire_holds</td><td class="t">30 s</td><td>Hold dépassé : place remise à <code>AVAILABLE</code></td></tr>
-        <tr><td>cancel_unconfirmed_entries</td><td class="t">30 s</td><td>Aucune plaque lue 2 min après le scan : session <code>CANCELLED</code>, place libérée, pré-autorisation annulée</td></tr>
-        <tr><td>release_orphan_assignments</td><td class="t">5 min</td><td>Garde-fou 30 min contre le téléphone déchargé</td></tr>
+        <tr><td>cancel_unconfirmed_entries</td><td class="t">30 s</td><td>Aucun passage 60 s après l'ouverture : session <code>CANCELLED</code>, place libérée, pré-autorisation annulée</td></tr>
+        <tr><td>release_orphan_assignments</td><td class="t">5 min</td><td>Garde-fou 30 min contre le téléphone déchargé : la place assignée est présumée occupée, jamais libérée</td></tr>
+        <tr><td>flag_stale_sessions</td><td class="t">quotidienne</td><td>Session sans sortie depuis sept jours : jamais facturée d'office, publiée au tableau de bord comme place à vérifier</td></tr>
+        <tr><td>retry_captures</td><td class="t">1 min</td><td>Captures non abouties parce que Stripe était injoignable à la sortie : rejouées jusqu'à succès, reçu envoyé à ce moment</td></tr>
+        <tr><td>reconcile_counts</td><td class="t">1 min</td><td>Compare le compteur de passages au nombre de places occupées ; l'écart est publié au tableau de bord comme nombre de places à vérifier</td></tr>
         <tr><td>purge_expired_events</td><td class="t">quotidienne</td><td>Suppression des lignes dont <code>purge_after</code> est dépassé, anonymisation des sessions</td></tr>
       </tbody>
     </table>
@@ -1440,9 +1472,9 @@
 <section>
   <div class="sec-head"><h3>Ce qui reste à produire</h3><span class="tag">Documents 3 à 5</span></div>
   <ul class="todo">
-    <li><span class="n">03</span><div><b>Diagrammes de séquence</b> — quatre parcours où plusieurs systèmes se coordonnent dans un ordre qui compte : l'entrée (scan, assignation, pré-autorisation, lecture de plaque), la confirmation de place (réveil de l'app, CoreMotion, notification, correction), la sortie (plaque, capture, ouverture), et l'onboarding d'un opérateur. Ce sont les seuls endroits où l'ordre des appels est une décision de conception plutôt qu'un détail.</div></li>
+    <li><span class="n">03</span><div><b>Diagrammes de séquence</b> — quatre parcours où plusieurs systèmes se coordonnent dans un ordre qui compte : l'entrée (scan, assignation, pré-autorisation, boucle), la confirmation de place (réveil de l'app, CoreMotion, présomption, correction), la sortie (identification, capture, ouverture), et l'onboarding d'un opérateur. Ce sont les seuls endroits où l'ordre des appels est une décision de conception plutôt qu'un détail.</div></li>
     <li><span class="n">04</span><div><b>Architecture applicative</b> — découpage en composants de l'API et de l'app mobile : modules, frontières, et surtout la ligne entre le code React Native et les modules natifs (balises, CoreMotion, service de premier plan Android). C'est là que le projet peut déraper.</div></li>
-    <li><span class="n">05</span><div><b>Déploiement et matériel</b> — l'infrastructure serveur, le réseau du garage, le contrôleur de barrière, le placement des balises et des caméras. Le plan physique de la démonstration en découle directement.</div></li>
+    <li><span class="n">05</span><div><b>Déploiement et matériel</b> — l'infrastructure serveur, le réseau du garage, le contrôleur de barrière, le placement des balises et des boucles. Le plan physique de la démonstration en découle directement.</div></li>
   </ul>
 </section>
 
@@ -1463,63 +1495,69 @@
 <div class="wrap">
 
 <section>
-  <div class="sec-head"><h3>Séquence A — Entrée au parking</h3><span class="tag">7 participants · 17 messages</span></div>
+  <div class="sec-head"><h3>Séquence A — Entrée au parking</h3><span class="tag">7 participants · 18 messages</span></div>
   <p class="lede">Le parcours le plus contraint du système : quatre sous-systèmes doivent réussir dans un ordre précis pendant qu'une voiture attend devant une barrière, avec une file derrière elle.</p>
   <ul class="key">
     <li><i style="border-top:2px solid var(--ink-2)"></i> appel</li>
     <li><i style="border-top:2px dashed var(--ink-3)"></i> retour</li>
     <li><span style="color:var(--warn)">▭</span> fragment conditionnel</li>
   </ul>
-<figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1436 1082" role="img" aria-label="Séquence d&#x27;entrée">
-<line class="ll" x1="130" y1="78" x2="130" y2="1064"/>
-<line class="ll" x1="326" y1="78" x2="326" y2="1064"/>
-<line class="ll" x1="522" y1="78" x2="522" y2="1064"/>
-<line class="ll" x1="718" y1="78" x2="718" y2="1064"/>
-<line class="ll" x1="914" y1="78" x2="914" y2="1064"/>
-<line class="ll" x1="1110" y1="78" x2="1110" y2="1064"/>
-<line class="ll" x1="1306" y1="78" x2="1306" y2="1064"/>
-<rect class="frm" x="28" y="664" width="1380" height="346"/>
-<path class="frm-tab" d="M28,664 h58 l14,14 v10 h-72 z"/>
-<text class="t-frag" x="36" y="681">alt</text>
-<text class="t-frag-s" x="106" y="681">[ plaque lue et conforme ]</text>
-<line class="frm-sep" x1="28" y1="794" x2="1408" y2="794"/>
-<text class="t-frag-s" x="36" y="809">[ plaque lue mais différente du compte ]</text>
-<line class="frm-sep" x1="28" y1="916" x2="1408" y2="916"/>
-<text class="t-frag-s" x="36" y="931">[ aucune plaque lue après 2 min ]</text>
+<figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1436 1236" role="img" aria-label="Séquence d&#x27;entrée">
+<line class="ll" x1="130" y1="78" x2="130" y2="1218"/>
+<line class="ll" x1="326" y1="78" x2="326" y2="1218"/>
+<line class="ll" x1="522" y1="78" x2="522" y2="1218"/>
+<line class="ll" x1="718" y1="78" x2="718" y2="1218"/>
+<line class="ll" x1="914" y1="78" x2="914" y2="1218"/>
+<line class="ll" x1="1110" y1="78" x2="1110" y2="1218"/>
+<line class="ll" x1="1306" y1="78" x2="1306" y2="1218"/>
+<rect class="frm" x="28" y="174" width="1380" height="252"/>
+<path class="frm-tab" d="M28,174 h58 l14,14 v10 h-72 z"/>
+<text class="t-frag" x="36" y="191">alt</text>
+<text class="t-frag-s" x="106" y="191">[ app ]</text>
+<line class="frm-sep" x1="28" y1="272" x2="1408" y2="272"/>
+<text class="t-frag-s" x="36" y="287">[ navigateur, sans compte ]</text>
+<rect class="frm" x="28" y="912" width="1380" height="252"/>
+<path class="frm-tab" d="M28,912 h58 l14,14 v10 h-72 z"/>
+<text class="t-frag" x="36" y="929">alt</text>
+<text class="t-frag-s" x="106" y="929">[ la boucle se ferme après l&#x27;ouverture ]</text>
+<line class="frm-sep" x1="28" y1="1056" x2="1408" y2="1056"/>
+<text class="t-frag-s" x="36" y="1071">[ aucun passage en 60 s ]</text>
 <path class="msg" d="M136,124 H320" marker-end="url(#sq)"/>
-<text class="t-msg" x="228" y="115" text-anchor="middle">scan du QR de la borne</text>
-<path class="msg" d="M332,170 H516" marker-end="url(#sq)"/>
-<text class="t-msg" x="424" y="161" text-anchor="middle">POST /v1/entries { gate_token }</text>
-<path class="msg" d="M522,216 H576 V246 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="588" y="235">vérifie la signature HMAC du jeton</text>
-<path class="msg" d="M528,292 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="283" text-anchor="middle">UPDATE spot ... FOR UPDATE SKIP LOCKED</text>
-<path class="ret" d="M712,338 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="329" text-anchor="middle">place 2-12 → ASSIGNED</text>
-<path class="msg" d="M528,384 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="718" y="375" text-anchor="middle">PaymentIntent · capture manuelle · plafond journalier</text>
-<path class="ret" d="M908,430 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="718" y="421" text-anchor="middle">requires_capture</text>
-<path class="msg" d="M528,476 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="467" text-anchor="middle">INSERT session → CREATED</text>
-<path class="msg" d="M528,522 H1104" marker-end="url(#sq)"/>
-<text class="t-msg" x="816" y="513" text-anchor="middle">ouvrir la barrière</text>
-<path class="ret" d="M516,568 H332" marker-end="url(#sq)"/>
-<text class="t-msg" x="424" y="559" text-anchor="middle">place 2-12 · palier 2 · allée B</text>
-<path class="msg" d="M320,614 H136" marker-end="url(#sq)"/>
-<text class="t-msg" x="228" y="605" text-anchor="middle">affiche la place · arme le suivi de balises</text>
-<path class="msg" d="M1300,694 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="914" y="685" text-anchor="middle">POST /v1/gates/{id}/plate { plaque }</text>
-<path class="msg" d="M528,740 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="731" text-anchor="middle">session → ENTRY_CONFIRMED</text>
-<path class="msg" d="M528,816 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="807" text-anchor="middle">plate_mismatch = true</text>
-<path class="ret" d="M516,862 H332" marker-end="url(#sq)"/>
-<text class="t-msg" x="424" y="853" text-anchor="middle">avertissement : la sortie devra passer par le QR</text>
-<path class="msg" d="M528,938 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="929" text-anchor="middle">session → CANCELLED · place → AVAILABLE</text>
-<path class="msg" d="M528,984 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="718" y="975" text-anchor="middle">annulation de la pré-autorisation</text>
+<text class="t-msg" x="228" y="115" text-anchor="middle">scan du QR de la borne · scanner armé par la balise</text>
+<path class="msg" d="M332,220 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="211" text-anchor="middle">POST /v1/entries { gate_token }</text>
+<path class="msg" d="M332,308 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="299" text-anchor="middle">Apple Pay · Checkout · carte enregistrée hors session</text>
+<path class="ret" d="M908,354 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="345" text-anchor="middle">client Stripe</text>
+<path class="msg" d="M332,400 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="391" text-anchor="middle">POST /v1/web/entries { gate_token, customer }</text>
+<path class="msg" d="M522,464 H576 V494 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="588" y="483">vérifie la signature HMAC du jeton</text>
+<path class="msg" d="M528,540 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="531" text-anchor="middle">UPDATE spot ... FOR UPDATE SKIP LOCKED</text>
+<path class="ret" d="M712,586 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="577" text-anchor="middle">place 2-12 → ASSIGNED</text>
+<path class="msg" d="M528,632 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="623" text-anchor="middle">PaymentIntent · capture manuelle · plafond journalier</text>
+<path class="ret" d="M908,678 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="669" text-anchor="middle">requires_capture</text>
+<path class="msg" d="M528,724 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="715" text-anchor="middle">INSERT session → CREATED</text>
+<path class="msg" d="M528,770 H1104" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="761" text-anchor="middle">ouvrir la barrière</text>
+<path class="ret" d="M516,816 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="807" text-anchor="middle">place 2-12 · palier 2 · allée B</text>
+<path class="msg" d="M320,862 H136" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="853" text-anchor="middle">affiche la place · arme le suivi de balises</text>
+<path class="msg" d="M1300,958 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="949" text-anchor="middle">POST /v1/gates/{id}/passage { armed_at, closed_at }</text>
+<path class="msg" d="M528,1004 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="995" text-anchor="middle">session → ENTRY_CONFIRMED · vehicle_count + 1</text>
+<path class="msg" d="M528,1092 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="1083" text-anchor="middle">session → CANCELLED · place → AVAILABLE</text>
+<path class="msg" d="M528,1138 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="718" y="1129" text-anchor="middle">annulation de la pré-autorisation</text>
 <rect class="p p-ext" x="44" y="26" width="172" height="52" rx="3"/>
 <text class="t-p" x="130" y="48" text-anchor="middle">Conducteur</text>
 <text class="t-ps" x="130" y="65" text-anchor="middle"></text>
@@ -1539,65 +1577,83 @@
 <text class="t-p" x="1110" y="48" text-anchor="middle">Contrôleur</text>
 <text class="t-ps" x="1110" y="65" text-anchor="middle">barrière d&#x27;entrée</text>
 <rect class="p p-ext" x="1220" y="26" width="172" height="52" rx="3"/>
-<text class="t-p" x="1306" y="48" text-anchor="middle">Caméra d&#x27;entrée</text>
-<text class="t-ps" x="1306" y="65" text-anchor="middle">ANPR</text>
+<text class="t-p" x="1306" y="48" text-anchor="middle">Boucle d&#x27;entrée</text>
+<text class="t-ps" x="1306" y="65" text-anchor="middle">contact du contrôleur</text>
 </svg></div><figcaption>L'assignation précède l'appel à Stripe, et la pré-autorisation précède l'ouverture de la barrière.</figcaption></div></figure>
 <div class="note"><b>Trois contraintes d'ordre, et ce qui casse si on les inverse.</b>
   L'assignation vient <b>avant</b> Stripe : appeler Stripe pour un parking complet coûte une latence inutile et une pré-autorisation à annuler.
   La pré-autorisation vient <b>avant</b> l'ouverture : une carte refusée après l'ouverture de la barrière est irrattrapable, la voiture est déjà entrée.
-  La lecture de plaque vient <b>après</b> l'ouverture, et ce n'est pas un choix — la caméra vise la plaque arrière, donc elle ne voit le véhicule qu'une fois la barrière franchie.</div>
+  La preuve d'entrée vient <b>après</b> l'ouverture, par construction : c'est la fermeture de la boucle sous la lisse qui la donne. Aucune caméra n'intervient, la boucle détecte tout véhicule, plaque enneigée ou non. Le premier fragment montre les deux populations : l'app, ou un navigateur qui pré-autorise par Apple Pay sans compte. Les deux consomment le même jeton de borne.</div>
 <div class="note warn"><b>Le fragment conditionnel porte tout le risque de cette séquence.</b>
-  La branche « aucune plaque lue après 2 min » n'est pas déclenchée par un acteur mais par la tâche <code>cancel_unconfirmed_entries</code>. Elle doit annuler <b>deux</b> choses : l'état de la place et la pré-autorisation Stripe. Oublier la seconde laisse un montant bloqué sur la carte d'un conducteur qui n'est jamais entré.</div>
+  La branche « aucun passage 60 s après l'ouverture » n'est pas déclenchée par un acteur mais par la tâche <code>cancel_unconfirmed_entries</code>. Elle couvre la barrière en panne et le conducteur qui recule — pas la plaque illisible, qui n'existe plus comme cas. Elle doit annuler <b>deux</b> choses : l'état de la place et la pré-autorisation Stripe. Oublier la seconde laisse un montant bloqué sur la carte d'un conducteur qui n'est jamais entré.</div>
+<div class="tbl-scroll"><table>
+  <caption>Budget temps d'une visite type, barrière et passage compris</caption>
+  <thead><tr><th>Étape</th><th>Stationnement classique</th><th>Palier</th></tr></thead>
+  <tbody>
+    <tr><td>Savoir avant de partir</td><td>Inconnu ; 10 à 20 % de risque d'un « complet » et d'un détour de 5 à 10 min</td><td>Connu dans l'app, le hold garantit la place</td></tr>
+    <tr><td>Barrière d'entrée</td><td>9 s : bouton, billet, barrière</td><td>10 s avec le scanner armé par la balise, 15 à 21 s téléphone dans le sac</td></tr>
+    <tr><td>Trouver une place</td><td>2 à 5 min à parcourir les paliers</td><td>1 à 1,5 min vers la place assignée</td></tr>
+    <tr><td>Retrouver la voiture</td><td>30 s à 2 min</td><td>L'app connaît la place</td></tr>
+    <tr><td>Payer</td><td>1 à 2 min à la caisse, ou 20 à 30 s à la voie</td><td>Aucun geste</td></tr>
+    <tr><td>Barrière de sortie</td><td>8 à 10 s billet en main, 20 à 30 s en payant à la voie</td><td>7 s sans geste, 12 à 18 s avec un scan</td></tr>
+    <tr><td>Total de friction</td><td>5 à 9 min</td><td>1,5 à 2,5 min</td></tr>
+  </tbody></table></div>
+<div class="note"><b>Le temps par usager n'est pas le risque, la capacité de la voie l'est.</b>
+  Une voie qui reçoit 300 véhicules à l'heure tourne à 75 % avec un cycle de 9 s et sature au-delà de 12 s. D'où le scanner armé par la balise d'entrée : déverrouillage et lancement de l'app se font en roulant vers la borne, il ne reste que viser et scanner. Le contrôleur horodate l'arrivée sur la boucle d'armement et la fermeture de la boucle : le prototype mesure lui-même ce tableau.</div>
 </section>
 <section>
-  <div class="sec-head"><h3>Séquence B — Confirmation de la place</h3><span class="tag">7 participants · 15 messages</span></div>
-  <p class="lede">Le mécanisme central du produit. Rien n'est déclenché par un minuteur : c'est la balise qui réveille l'app, et le capteur de mouvement qui décide du moment de la notification.</p>
-<figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1436 960" role="img" aria-label="Séquence de confirmation de place">
-<line class="ll" x1="130" y1="78" x2="130" y2="942"/>
-<line class="ll" x1="326" y1="78" x2="326" y2="942"/>
-<line class="ll" x1="522" y1="78" x2="522" y2="942"/>
-<line class="ll" x1="718" y1="78" x2="718" y2="942"/>
-<line class="ll" x1="914" y1="78" x2="914" y2="942"/>
-<line class="ll" x1="1110" y1="78" x2="1110" y2="942"/>
-<line class="ll" x1="1306" y1="78" x2="1306" y2="942"/>
-<rect class="frm" x="28" y="496" width="1380" height="392"/>
-<path class="frm-tab" d="M28,496 h58 l14,14 v10 h-72 z"/>
-<text class="t-frag" x="36" y="513">alt</text>
-<text class="t-frag-s" x="106" y="513">[ l&#x27;utilisateur confirme ]</text>
-<line class="frm-sep" x1="28" y1="672" x2="1408" y2="672"/>
-<text class="t-frag-s" x="36" y="687">[ l&#x27;utilisateur corrige le numéro ]</text>
-<line class="frm-sep" x1="28" y1="840" x2="1408" y2="840"/>
-<text class="t-frag-s" x="36" y="855">[ aucune réponse ]</text>
+  <div class="sec-head"><h3>Séquence B — Confirmation de la place</h3><span class="tag">7 participants · 18 messages</span></div>
+  <p class="lede">Le mécanisme central du produit, et au cas nominal il ne demande rien à personne : le <em>ranging</em> des balises donne l'allée, le capteur de mouvement donne l'instant, l'app est vivante depuis le scan, et si l'allée est celle de la place assignée, la place est présumée occupée. L'usager n'est sollicité que lorsque les signaux se contredisent.</p>
+<figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1436 1092" role="img" aria-label="Séquence de confirmation de place">
+<line class="ll" x1="130" y1="78" x2="130" y2="1074"/>
+<line class="ll" x1="326" y1="78" x2="326" y2="1074"/>
+<line class="ll" x1="522" y1="78" x2="522" y2="1074"/>
+<line class="ll" x1="718" y1="78" x2="718" y2="1074"/>
+<line class="ll" x1="914" y1="78" x2="914" y2="1074"/>
+<line class="ll" x1="1110" y1="78" x2="1110" y2="1074"/>
+<line class="ll" x1="1306" y1="78" x2="1306" y2="1074"/>
+<rect class="frm" x="28" y="358" width="1380" height="662"/>
+<path class="frm-tab" d="M28,358 h58 l14,14 v10 h-72 z"/>
+<text class="t-frag" x="36" y="375">alt</text>
+<text class="t-frag-s" x="106" y="375">[ allée détectée = allée assignée — cas nominal ]</text>
+<line class="frm-sep" x1="28" y1="548" x2="1408" y2="548"/>
+<text class="t-frag-s" x="36" y="563">[ l&#x27;allée détectée n&#x27;est pas l&#x27;allée assignée ]</text>
+<line class="frm-sep" x1="28" y1="866" x2="1408" y2="866"/>
+<text class="t-frag-s" x="36" y="881">[ la place assignée est prise ]</text>
 <path class="msg" d="M136,124 H320" marker-end="url(#sq)"/>
-<text class="t-msg" x="228" y="115" text-anchor="middle">entrée dans la région · major = allée B</text>
+<text class="t-msg" x="228" y="115" text-anchor="middle">ranging · allée B la plus proche (minor 2)</text>
 <path class="msg" d="M332,170 H516" marker-end="url(#sq)"/>
-<text class="t-msg" x="424" y="161" text-anchor="middle">réveil de l&#x27;app en arrière-plan</text>
+<text class="t-msg" x="424" y="161" text-anchor="middle">app déjà vivante : localisation en arrière-plan depuis le scan</text>
 <path class="msg" d="M516,216 H332" marker-end="url(#sq)"/>
 <text class="t-msg" x="424" y="207" text-anchor="middle">démarrer le suivi d&#x27;activité</text>
 <path class="ret" d="M332,262 H516" marker-end="url(#sq)"/>
 <text class="t-msg" x="424" y="253" text-anchor="middle">automotive → walking · confiance élevée</text>
 <path class="msg" d="M528,308 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="299" text-anchor="middle">POST /v1/sessions/{id}/walking</text>
-<path class="msg" d="M724,354 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="816" y="345" text-anchor="middle">walking_at = now()</text>
-<path class="msg" d="M724,400 H1104" marker-end="url(#sq)"/>
-<text class="t-msg" x="914" y="391" text-anchor="middle">« Confirmez la place 2-12 »</text>
-<path class="msg" d="M1116,446 H1300" marker-end="url(#sq)"/>
-<text class="t-msg" x="1208" y="437" text-anchor="middle">notification sur l&#x27;écran verrouillé</text>
-<path class="msg" d="M1300,526 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="914" y="517" text-anchor="middle">tap « Confirmer »</text>
-<path class="msg" d="M528,572 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="563" text-anchor="middle">POST /v1/sessions/{id}/parked { }</text>
-<path class="msg" d="M724,618 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="816" y="609" text-anchor="middle">session PARKED_CONFIRMED · 2-12 → OCCUPIED</text>
-<path class="msg" d="M1300,694 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="914" y="685" text-anchor="middle">saisit « 2-15 »</text>
-<path class="msg" d="M528,740 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="731" text-anchor="middle">POST /v1/sessions/{id}/parked { spot_id: 2-15 }</text>
-<path class="msg" d="M724,786 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="816" y="777" text-anchor="middle">TX : 2-15 → OCCUPIED · 2-12 → OCCUPIED_UNKNOWN</text>
-<path class="msg" d="M724,862 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="816" y="853" text-anchor="middle">session PARKED_UNCONFIRMED · 2-12 → OCCUPIED_UNKNOWN</text>
+<text class="t-msg" x="620" y="299" text-anchor="middle">POST /v1/sessions/{id}/walking { aisle_minor: 2 }</text>
+<path class="msg" d="M724,404 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="395" text-anchor="middle">walking_at = now() · session PARKED_PRESUMED · 2-12 → OCCUPIED</text>
+<path class="ret" d="M712,450 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="441" text-anchor="middle">rien à faire</text>
+<path class="msg" d="M724,496 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="487" text-anchor="middle">2-12 → OCCUPIED_UNKNOWN · needs_check</text>
+<path class="msg" d="M724,584 H1104" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="575" text-anchor="middle">« Où êtes-vous garé ? »</text>
+<path class="msg" d="M1116,630 H1300" marker-end="url(#sq)"/>
+<text class="t-msg" x="1208" y="621" text-anchor="middle">notification sur l&#x27;écran verrouillé</text>
+<path class="msg" d="M1300,676 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="667" text-anchor="middle">saisit « 3-04 »</text>
+<path class="msg" d="M528,722 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="713" text-anchor="middle">POST /v1/sessions/{id}/parked { spot_id: 3-04 }</text>
+<path class="msg" d="M724,768 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="759" text-anchor="middle">TX : 3-04 → OCCUPIED · session PARKED_CONFIRMED</text>
+<path class="msg" d="M1300,814 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="805" text-anchor="middle">tap « Place prise » avant de se garer</text>
+<path class="msg" d="M528,902 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="893" text-anchor="middle">POST /v1/sessions/{id}/spot-taken</text>
+<path class="msg" d="M724,948 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="939" text-anchor="middle">TX : 2-12 → OCCUPIED_UNKNOWN · 2-14 → ASSIGNED</text>
+<path class="ret" d="M712,994 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="985" text-anchor="middle">nouvelle place 2-14</text>
 <rect class="p p-ext" x="44" y="26" width="172" height="52" rx="3"/>
 <text class="t-p" x="130" y="48" text-anchor="middle">Balise BLE</text>
 <text class="t-ps" x="130" y="65" text-anchor="middle">allée B</text>
@@ -1619,56 +1675,67 @@
 <rect class="p p-ext" x="1220" y="26" width="172" height="52" rx="3"/>
 <text class="t-p" x="1306" y="48" text-anchor="middle">Conducteur</text>
 <text class="t-ps" x="1306" y="65" text-anchor="middle"></text>
-</svg></div><figcaption>Les trois branches du fragment correspondent aux trois issues réelles : confirmation, correction, silence.</figcaption></div></figure>
-<div class="note"><b>La correction de place est la seule opération à deux écritures.</b>
-  Quand l'utilisateur saisit un autre numéro, deux lignes de <code>spot</code> changent d'état dans la même transaction : la place réelle passe à <code>OCCUPIED</code>, l'ancienne à <code>OCCUPIED_UNKNOWN</code>. Hors transaction, une coupure réseau entre les deux laisse une place fantôme, réservée pour personne et invisible à l'inventaire.</div>
-<div class="note warn"><b>La branche « aucune réponse » n'a pas de message entrant.</b>
-  Elle se produit sans qu'aucun acteur n'agisse : le système écrit <code>PARKED_UNCONFIRMED</code> sur la seule foi du signal <em>walking</em>. C'est délibéré — attendre la confirmation pour écrire laisserait la place bloquée indéfiniment.</div>
+</svg></div><figcaption>Les trois branches du fragment : présomption silencieuse, allée contradictoire, place prise. Seules les deux dernières font apparaître l'usager.</figcaption></div></figure>
+<div class="note"><b>Les deux branches d'exception sont des opérations à deux écritures.</b>
+  Quand l'allée détectée contredit l'assignation, la place assignée passe à <code>OCCUPIED_UNKNOWN</code> avant même que l'usager réponde, et la place qu'il désigne passe à <code>OCCUPIED</code> ensuite. Quand il signale une place prise, la place signalée passe à <code>OCCUPIED_UNKNOWN</code> et une nouvelle place à <code>ASSIGNED</code> dans la même transaction. Hors transaction, une coupure réseau entre les deux laisse une place fantôme, réservée pour personne et invisible à l'inventaire.</div>
+<div class="note warn"><b>La présomption est une décision, pas une approximation.</b>
+  Le système écrit <code>PARKED_PRESUMED</code> et <code>OCCUPIED</code> sur la seule foi du signal <em>walking</em> dans la bonne allée. Le risque accepté : un usager qui change d'allée après la transition sans être détecté. Le compteur de passages borne l'erreur cumulée, et la tâche <code>reconcile_counts</code> la rend visible. L'alternative — demander un tap à chaque stationnement — coûtait un geste à tout le monde pour corriger une erreur rare.</div>
 </section>
 <section>
-  <div class="sec-head"><h3>Séquence C — Sortie et facturation</h3><span class="tag">7 participants · 13 messages</span></div>
-  <p class="lede">Le cas nominal ne comporte aucun geste de l'utilisateur : la plaque déclenche toute la chaîne. Le chemin de repli n'existe que pour les lectures ratées et les sessions marquées <code>plate_mismatch</code>.</p>
-<figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1436 868" role="img" aria-label="Séquence de sortie et de facturation">
-<line class="ll" x1="130" y1="78" x2="130" y2="850"/>
-<line class="ll" x1="326" y1="78" x2="326" y2="850"/>
-<line class="ll" x1="522" y1="78" x2="522" y2="850"/>
-<line class="ll" x1="718" y1="78" x2="718" y2="850"/>
-<line class="ll" x1="914" y1="78" x2="914" y2="850"/>
-<line class="ll" x1="1110" y1="78" x2="1110" y2="850"/>
-<line class="ll" x1="1306" y1="78" x2="1306" y2="850"/>
-<rect class="frm" x="28" y="618" width="1380" height="178"/>
-<path class="frm-tab" d="M28,618 h58 l14,14 v10 h-72 z"/>
-<text class="t-frag" x="36" y="635">alt</text>
-<text class="t-frag-s" x="106" y="635">[ repli : plaque illisible ou plate_mismatch ]</text>
+  <div class="sec-head"><h3>Séquence C — Sortie et facturation</h3><span class="tag">6 participants · 17 messages</span></div>
+  <p class="lede">Trois façons d'identifier le véhicule qui sort, de la plus automatique à la moins, chacune ne servant que si la précédente échoue : lecture de plaque ou de transpondeur chez les opérateurs équipés, balise de sortie vue par l'app, scan du QR de sortie. Le scan vaut pour l'app comme pour la page web sans compte, retrouvée par son jeton. Les deux premières ne demandent aucun geste. Aucune ne dépend d'une caméra, et la boucle ferme la session dans tous les cas.</p>
+<figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1240 1152" role="img" aria-label="Séquence de sortie et de facturation">
+<line class="ll" x1="130" y1="78" x2="130" y2="1134"/>
+<line class="ll" x1="326" y1="78" x2="326" y2="1134"/>
+<line class="ll" x1="522" y1="78" x2="522" y2="1134"/>
+<line class="ll" x1="718" y1="78" x2="718" y2="1134"/>
+<line class="ll" x1="914" y1="78" x2="914" y2="1134"/>
+<line class="ll" x1="1110" y1="78" x2="1110" y2="1134"/>
+<rect class="frm" x="28" y="174" width="1184" height="370"/>
+<path class="frm-tab" d="M28,174 h58 l14,14 v10 h-72 z"/>
+<text class="t-frag" x="36" y="191">alt</text>
+<text class="t-frag-s" x="106" y="191">[ opérateur équipé d&#x27;ANPR ou de transpondeurs ]</text>
+<line class="frm-sep" x1="28" y1="272" x2="1212" y2="272"/>
+<text class="t-frag-s" x="36" y="287">[ sinon : balise de sortie vue par une seule app ]</text>
+<line class="frm-sep" x1="28" y1="436" x2="1212" y2="436"/>
+<text class="t-frag-s" x="36" y="451">[ repli : QR de sortie, app ou page web retrouvée par son jeton ]</text>
 <path class="msg" d="M136,124 H320" marker-end="url(#sq)"/>
-<text class="t-msg" x="228" y="115" text-anchor="middle">POST /v1/gates/{id}/plate { plaque }</text>
-<path class="msg" d="M332,170 H516" marker-end="url(#sq)"/>
-<text class="t-msg" x="424" y="161" text-anchor="middle">session active pour cette plaque dans ce parking</text>
-<path class="ret" d="M516,216 H332" marker-end="url(#sq)"/>
-<text class="t-msg" x="424" y="207" text-anchor="middle">session #4A7 · entrée 18 h 02 · place 2-15</text>
-<path class="msg" d="M326,262 H380 V292 H332" marker-end="url(#sq)"/>
-<text class="t-msg" x="392" y="281">calcule la durée et le montant selon la politique</text>
-<path class="msg" d="M332,338 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="522" y="329" text-anchor="middle">capture sur la pré-autorisation existante</text>
-<path class="ret" d="M712,384 H332" marker-end="url(#sq)"/>
-<text class="t-msg" x="522" y="375" text-anchor="middle">succeeded · 9,75 $</text>
-<path class="msg" d="M332,430 H516" marker-end="url(#sq)"/>
-<text class="t-msg" x="424" y="421" text-anchor="middle">session CLOSED_PAID · place → AVAILABLE</text>
-<path class="msg" d="M332,476 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="467" text-anchor="middle">ouvrir la barrière</text>
-<path class="msg" d="M332,522 H1104" marker-end="url(#sq)"/>
-<text class="t-msg" x="718" y="513" text-anchor="middle">reçu</text>
-<path class="msg" d="M1116,568 H1300" marker-end="url(#sq)"/>
-<text class="t-msg" x="1208" y="559" text-anchor="middle">affiche le reçu et le détail du calcul</text>
-<path class="msg" d="M1300,648 H1116" marker-end="url(#sq)"/>
-<text class="t-msg" x="1208" y="639" text-anchor="middle">scanne le QR de la borne de sortie</text>
-<path class="msg" d="M1104,694 H332" marker-end="url(#sq)"/>
-<text class="t-msg" x="718" y="685" text-anchor="middle">POST /v1/sessions/{id}/exit { gate_token }</text>
-<path class="msg" d="M326,740 H380 V770 H332" marker-end="url(#sq)"/>
-<text class="t-msg" x="392" y="759">reprend au calcul du montant</text>
+<text class="t-msg" x="228" y="115" text-anchor="middle">POST /v1/gates/{id}/presence — véhicule sur la boucle d&#x27;armement</text>
+<path class="msg" d="M136,220 H320" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="211" text-anchor="middle">POST /v1/gates/{id}/identify { plaque ou transpondeur }</text>
+<path class="msg" d="M908,308 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="299" text-anchor="middle">POST /v1/sessions/{id}/at-exit — balise de sortie vue</text>
+<path class="msg" d="M326,354 H380 V384 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="392" y="373">une seule session candidate ? sinon repli</text>
+<path class="msg" d="M1104,472 H920" marker-end="url(#sq)"/>
+<text class="t-msg" x="1012" y="463" text-anchor="middle">scan du QR de sortie</text>
+<path class="msg" d="M908,518 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="509" text-anchor="middle">POST /v1/sessions/{id}/exit  ·  POST /v1/web/sessions/{token}/exit</text>
+<path class="msg" d="M332,582 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="573" text-anchor="middle">session active identifiée dans ce parking</text>
+<path class="ret" d="M516,628 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="619" text-anchor="middle">session #4A7 · entrée 18 h 02 · place 2-15</text>
+<path class="msg" d="M326,674 H380 V704 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="392" y="693">calcule la durée et le montant selon la politique</text>
+<path class="msg" d="M332,750 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="522" y="741" text-anchor="middle">capture sur la pré-autorisation existante</text>
+<path class="ret" d="M712,796 H332" marker-end="url(#sq)"/>
+<text class="t-msg" x="522" y="787" text-anchor="middle">succeeded · 9,75 $</text>
+<path class="msg" d="M332,842 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="833" text-anchor="middle">session CLOSED_PAID · place → AVAILABLE</text>
+<path class="msg" d="M320,888 H136" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="879" text-anchor="middle">ouvrir la barrière</text>
+<path class="msg" d="M136,934 H320" marker-end="url(#sq)"/>
+<text class="t-msg" x="228" y="925" text-anchor="middle">POST /v1/gates/{id}/passage — boucle fermée</text>
+<path class="msg" d="M332,980 H516" marker-end="url(#sq)"/>
+<text class="t-msg" x="424" y="971" text-anchor="middle">exit_passage_at · vehicle_count − 1</text>
+<path class="msg" d="M332,1026 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="1017" text-anchor="middle">reçu</text>
+<path class="msg" d="M920,1072 H1104" marker-end="url(#sq)"/>
+<text class="t-msg" x="1012" y="1063" text-anchor="middle">affiche le reçu et le détail du calcul</text>
 <rect class="p p-ext" x="44" y="26" width="172" height="52" rx="3"/>
-<text class="t-p" x="130" y="48" text-anchor="middle">Caméra de sortie</text>
-<text class="t-ps" x="130" y="65" text-anchor="middle">ANPR</text>
+<text class="t-p" x="130" y="48" text-anchor="middle">Contrôleur de sortie</text>
+<text class="t-ps" x="130" y="65" text-anchor="middle">boucles · QR de sortie</text>
 <rect class="p p-api" x="240" y="26" width="172" height="52" rx="3"/>
 <text class="t-p" x="326" y="48" text-anchor="middle">API</text>
 <text class="t-ps" x="326" y="65" text-anchor="middle"></text>
@@ -1678,18 +1745,19 @@
 <rect class="p p-svc" x="632" y="26" width="172" height="52" rx="3"/>
 <text class="t-p" x="718" y="48" text-anchor="middle">Stripe</text>
 <text class="t-ps" x="718" y="65" text-anchor="middle"></text>
-<rect class="p p-ext" x="828" y="26" width="172" height="52" rx="3"/>
-<text class="t-p" x="914" y="48" text-anchor="middle">Contrôleur</text>
-<text class="t-ps" x="914" y="65" text-anchor="middle">barrière de sortie</text>
-<rect class="p p-app" x="1024" y="26" width="172" height="52" rx="3"/>
-<text class="t-p" x="1110" y="48" text-anchor="middle">App mobile</text>
+<rect class="p p-app" x="828" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="914" y="48" text-anchor="middle">App ou page web</text>
+<text class="t-ps" x="914" y="65" text-anchor="middle"></text>
+<rect class="p p-ext" x="1024" y="26" width="172" height="52" rx="3"/>
+<text class="t-p" x="1110" y="48" text-anchor="middle">Conducteur</text>
 <text class="t-ps" x="1110" y="65" text-anchor="middle"></text>
-<rect class="p p-ext" x="1220" y="26" width="172" height="52" rx="3"/>
-<text class="t-p" x="1306" y="48" text-anchor="middle">Conducteur</text>
-<text class="t-ps" x="1306" y="65" text-anchor="middle"></text>
-</svg></div><figcaption>La capture du paiement précède l'ouverture de la barrière, sans exception.</figcaption></div></figure>
-<div class="note"><b>Une seule règle non négociable ici : la barrière n'ouvre jamais avant que Stripe ait confirmé la capture.</b>
-  Ouvrir d'abord pour fluidifier le trafic transformerait chaque échec de capture en perte sèche, sans recours — le véhicule est parti. Le coût de cette règle est une latence de quelques centaines de millisecondes, absorbée par le temps que met le conducteur à avancer jusqu'à la barrière après la lecture de sa plaque.</div>
+</svg></div><figcaption>Quelle que soit la branche d'identification, la suite est identique : capture, ouverture, boucle. Un téléphone déchargé tombe hors des trois branches — c'est le cas du ticket perdu, réglé par le personnel.</figcaption></div></figure>
+<div class="note"><b>La règle non négociable : jamais d'ouverture sans autorisation valide — et elle est garantie à l'entrée.</b>
+  Le montant capturé est toujours couvert par le plafond pré-autorisé, et la session est plafonnée à 24 h, donc un refus de carte à la sortie n'existe pas. Si Stripe est injoignable à l'instant de la capture, la barrière ouvre quand même : les fonds sont bloqués, la tâche <code>retry_captures</code> rejoue la capture, le reçu part au succès. Le coût de cette règle est une latence de quelques centaines de millisecondes, absorbée par le temps que met le conducteur à avancer jusqu'à la barrière après son identification.</div>
+<div class="note warn"><b>L'ouverture par balise exige deux conditions, pas une.</b>
+  Une seule session active du parking doit avoir signalé la balise de sortie dans la dernière minute, <b>et</b> un véhicule doit être présent sur la boucle d'armement. La première évite d'ouvrir pour la voiture d'en face ; la seconde évite d'ouvrir pour un piéton qui passe devant la sortie avec l'app. Deux téléphones candidats → repli sur le scan, jamais un pari.</div>
+<div class="note"><b>La page web retrouve sa session sans rien demander.</b>
+  Le jeton est conservé trois fois dès l'entrée : cookie de 30 jours, passe Wallet portant le QR de sortie, lien par SMS ou courriel. Le numéro de place seul n'est jamais accepté : n'importe qui le lit au sol et ferait payer la session d'un autre. Les trois supports perdus, c'est le billet perdu : le personnel. Une session sans sortie après sept jours n'est jamais facturée d'office ; elle part en vérification.</div>
 </section>
 <section>
   <div class="sec-head"><h3>Séquence D — Adhésion d'un opérateur</h3><span class="tag">5 participants · 14 messages</span></div>
@@ -1763,28 +1831,32 @@
 <div class="wrap">
 
 <section>
-  <div class="sec-head"><h3>API — architecture en couches</h3><span class="tag">4 couches · 18 composants</span></div>
+  <div class="sec-head"><h3>API — architecture en couches</h3><span class="tag">4 couches · 21 composants</span></div>
   <p class="lede">Le domaine ne connaît ni HTTP ni Stripe : il reçoit des objets et rend des décisions. C'est ce qui rend la logique d'allocation testable sans base de données ni réseau, et c'est la seule partie du système qu'un correcteur peut lire d'un bout à l'autre.</p>
   <figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1180 760" role="img" aria-label="Architecture en couches de l'API Palier.">
 <rect class="bd" x="60" y="30" width="1080" height="138" rx="4"/>
 <text class="t-band" x="78" y="56">Adaptateurs HTTP</text>
-<text class="t-band-s" x="78" y="73">trois publics, trois modes d'authentification</text>
-<rect class="cmp" x="76" y="76" width="246" height="74" rx="3"/>
+<text class="t-band-s" x="78" y="73">quatre publics, quatre modes d'authentification</text>
+<rect class="cmp" x="76" y="76" width="192" height="88" rx="3"/>
 <text class="t-cmp" x="90" y="102">Routes mobile</text>
 <text class="t-cmp-s" x="90" y="121">jeton utilisateur</text>
-<text class="t-cmp-s" x="90" y="135">11 endpoints</text>
-<rect class="cmp" x="346" y="76" width="246" height="74" rx="3"/>
-<text class="t-cmp" x="360" y="102">Routes matériel</text>
-<text class="t-cmp-s" x="360" y="121">clé d'appareil</text>
-<text class="t-cmp-s" x="360" y="135">barrières, caméras, balises</text>
-<rect class="cmp" x="616" y="76" width="246" height="74" rx="3"/>
-<text class="t-cmp" x="630" y="102">Routes opérateur</text>
-<text class="t-cmp-s" x="630" y="121">session opérateur</text>
-<text class="t-cmp-s" x="630" y="135">tarifs, plan, occupation</text>
-<rect class="cmp" x="886" y="76" width="246" height="74" rx="3"/>
-<text class="t-cmp" x="900" y="102">Webhooks Stripe</text>
-<text class="t-cmp-s" x="900" y="121">signature vérifiée</text>
-<text class="t-cmp-s" x="900" y="135">account.updated, charge.*</text>
+<text class="t-cmp-s" x="90" y="135">13 endpoints</text>
+<rect class="cmp" x="288" y="76" width="192" height="88" rx="3"/>
+<text class="t-cmp" x="302" y="102">Routes web</text>
+<text class="t-cmp-s" x="302" y="121">jeton de session</text>
+<text class="t-cmp-s" x="302" y="135">sans compte · Checkout</text>
+<rect class="cmp" x="500" y="76" width="192" height="88" rx="3"/>
+<text class="t-cmp" x="514" y="102">Routes matériel</text>
+<text class="t-cmp-s" x="514" y="121">clé d'appareil</text>
+<text class="t-cmp-s" x="514" y="135">barrières, capteurs, balises</text>
+<rect class="cmp" x="712" y="76" width="192" height="88" rx="3"/>
+<text class="t-cmp" x="726" y="102">Routes opérateur</text>
+<text class="t-cmp-s" x="726" y="121">session opérateur</text>
+<text class="t-cmp-s" x="726" y="135">tarifs, plan, occupation</text>
+<rect class="cmp" x="924" y="76" width="192" height="88" rx="3"/>
+<text class="t-cmp" x="938" y="102">Webhooks Stripe</text>
+<text class="t-cmp-s" x="938" y="121">signature vérifiée</text>
+<text class="t-cmp-s" x="938" y="135">account.updated, charge.*</text>
 <rect class="bd" x="60" y="200" width="1080" height="152" rx="4"/>
 <text class="t-band" x="78" y="226">Domaine</text>
 <text class="t-band-s" x="78" y="243">toute la logique métier, sans dépendance à HTTP ni à Stripe</text>
@@ -1795,7 +1867,7 @@
 <rect class="cmp" x="288" y="250" width="192" height="88" rx="3"/>
 <text class="t-cmp" x="302" y="276">Sessions</text>
 <text class="t-cmp-s" x="302" y="295">machine à états</text>
-<text class="t-cmp-s" x="302" y="309">réconciliation plaque</text>
+<text class="t-cmp-s" x="302" y="309">présomption de place</text>
 <rect class="cmp" x="500" y="250" width="192" height="88" rx="3"/>
 <text class="t-cmp" x="514" y="276">Tarification</text>
 <text class="t-cmp-s" x="514" y="295">politique par parking</text>
@@ -1806,7 +1878,7 @@
 <text class="t-cmp-s" x="726" y="309">un seul par usager</text>
 <rect class="cmp" x="924" y="250" width="192" height="88" rx="3"/>
 <text class="t-cmp" x="938" y="276">Occupation</text>
-<text class="t-cmp-s" x="938" y="295">agrégats par palier</text>
+<text class="t-cmp-s" x="938" y="295">compteur de passages</text>
 <text class="t-cmp-s" x="938" y="309">places à vérifier</text>
 <rect class="bd" x="60" y="384" width="1080" height="152" rx="4"/>
 <text class="t-band" x="78" y="410">Infrastructure</text>
@@ -1833,23 +1905,31 @@
 <text class="t-cmp-s" x="938" y="493">de borne</text>
 <rect class="bd bd-warn" x="60" y="568" width="1080" height="152" rx="4"/>
 <text class="t-band" x="78" y="594">Planificateur</text>
-<text class="t-band-s" x="78" y="611">aucun appelant externe — les quatre transitions déclenchées par le temps</text>
-<rect class="cmp cmp-warn" x="76" y="618" width="246" height="88" rx="3"/>
+<text class="t-band-s" x="78" y="611">aucun appelant externe : les six transitions déclenchées par le temps</text>
+<rect class="cmp cmp-warn" x="76" y="618" width="160" height="88" rx="3"/>
 <text class="t-cmp" x="90" y="644">expire_holds</text>
 <text class="t-cmp-s" x="90" y="663">30 s</text>
 <text class="t-cmp-s" x="90" y="677">HELD → AVAILABLE</text>
-<rect class="cmp cmp-warn" x="346" y="618" width="246" height="88" rx="3"/>
-<text class="t-cmp" x="360" y="644">cancel_unconfirmed</text>
-<text class="t-cmp-s" x="360" y="663">30 s</text>
-<text class="t-cmp-s" x="360" y="677">session → CANCELLED</text>
-<rect class="cmp cmp-warn" x="616" y="618" width="246" height="88" rx="3"/>
-<text class="t-cmp" x="630" y="644">release_orphans</text>
-<text class="t-cmp-s" x="630" y="663">5 min</text>
-<text class="t-cmp-s" x="630" y="677">garde-fou 30 min</text>
-<rect class="cmp cmp-warn" x="886" y="618" width="246" height="88" rx="3"/>
-<text class="t-cmp" x="900" y="644">purge_events</text>
-<text class="t-cmp-s" x="900" y="663">quotidienne</text>
-<text class="t-cmp-s" x="900" y="677">rétention 90 jours</text>
+<rect class="cmp cmp-warn" x="252" y="618" width="160" height="88" rx="3"/>
+<text class="t-cmp" x="266" y="644">cancel_unconfirmed</text>
+<text class="t-cmp-s" x="266" y="663">30 s</text>
+<text class="t-cmp-s" x="266" y="677">aucun passage en 60 s</text>
+<rect class="cmp cmp-warn" x="428" y="618" width="160" height="88" rx="3"/>
+<text class="t-cmp" x="442" y="644">release_orphans</text>
+<text class="t-cmp-s" x="442" y="663">5 min</text>
+<text class="t-cmp-s" x="442" y="677">présume occupée</text>
+<rect class="cmp cmp-warn" x="604" y="618" width="160" height="88" rx="3"/>
+<text class="t-cmp" x="618" y="644">reconcile_counts</text>
+<text class="t-cmp-s" x="618" y="663">1 min</text>
+<text class="t-cmp-s" x="618" y="677">compteur vs places</text>
+<rect class="cmp cmp-warn" x="780" y="618" width="160" height="88" rx="3"/>
+<text class="t-cmp" x="794" y="644">flag_stale</text>
+<text class="t-cmp-s" x="794" y="663">quotidienne</text>
+<text class="t-cmp-s" x="794" y="677">7 jours sans sortie</text>
+<rect class="cmp cmp-warn" x="956" y="618" width="160" height="88" rx="3"/>
+<text class="t-cmp" x="970" y="644">purge_events</text>
+<text class="t-cmp-s" x="970" y="663">quotidienne</text>
+<text class="t-cmp-s" x="970" y="677">rétention 90 jours</text>
 <path class="dep" d="M34,60 V520" marker-end="url(#ar4)"/>
 <text class="t-dep" transform="translate(24,300) rotate(-90)" text-anchor="middle">sens des dépendances</text>
 <path class="dep dep-up" d="M1158,660 V360" marker-end="url(#ar4)"/>
@@ -1857,16 +1937,16 @@
 </svg></div>
   <figcaption>Le planificateur est la seule couche qui remonte : il appelle le domaine sans passer par HTTP.</figcaption></div></figure>
 <div class="note"><b>Pourquoi le planificateur est dessiné à part.</b>
-  Les quatre tâches ne sont pas des détails d'exploitation : ce sont les transitions déclenchées par le temps, et elles portent trois des règles métier les plus importantes du système — l'expiration d'un hold, l'annulation d'une entrée jamais confirmée, le garde-fou contre le téléphone déchargé. Les enfouir dans un <code>cron</code> les rendrait invisibles à la lecture du code.</div>
+  Les six tâches ne sont pas des détails d'exploitation : ce sont les transitions déclenchées par le temps, et elles portent quatre des règles métier les plus importantes du système — l'expiration d'un hold, l'annulation d'une entrée jamais passée, le garde-fou contre le téléphone déchargé, la réconciliation du compteur avec les places, la mise en vérification des sessions sans sortie. Les enfouir dans un <code>cron</code> les rendrait invisibles à la lecture du code.</div>
 <div class="tbl-scroll"><table>
   <caption>Ce que chaque composant du domaine décide</caption>
   <thead><tr><th>Composant</th><th>Décision</th><th>Ce qu'il ne fait pas</th></tr></thead>
   <tbody>
     <tr><td>Allocation</td><td>Quelle place attribuer : filtre par attributs du véhicule, puis palier et allée selon la stratégie du parking</td><td>N'ouvre pas la barrière et n'appelle pas Stripe</td></tr>
-    <tr><td>Sessions</td><td>Transitions de la machine à états, réconciliation de la plaque lue avec le compte, correction de place</td><td>Ne calcule aucun montant</td></tr>
+    <tr><td>Sessions</td><td>Transitions de la machine à états, présomption de place à partir de l'allée détectée, rapprochement de l'identité lue à la sortie, réassignation sur « place prise »</td><td>Ne calcule aucun montant</td></tr>
     <tr><td>Tarification</td><td>Montant dû à partir de la durée et de la politique du parking ; valide la présence du plafond journalier</td><td>Ne parle jamais à Stripe</td></tr>
     <tr><td>Holds</td><td>Accorde ou refuse un hold selon le quota du parking et la règle « un seul par usager »</td><td>N'écrit pas directement dans <code>spot</code></td></tr>
-    <tr><td>Occupation</td><td>Agrégats par palier et par état, liste des places à vérifier</td><td>N'anonymise pas — c'est la tâche de purge</td></tr>
+    <tr><td>Occupation</td><td>Agrégats par palier et par état, compteur de passages, écart entre les deux et liste des places à vérifier</td><td>N'anonymise pas — c'est la tâche de purge</td></tr>
   </tbody></table></div>
 </section>
 <section>
@@ -1913,21 +1993,21 @@
 <text class="t-cmp-s" x="630" y="305">Apple / Google Pay</text>
 <rect class="cmp" x="886" y="246" width="246" height="74" rx="3"/>
 <text class="t-cmp" x="900" y="272">Scanner QR</text>
-<text class="t-cmp-s" x="900" y="291">caméra</text>
-<text class="t-cmp-s" x="900" y="305">borne d'entrée</text>
+<text class="t-cmp-s" x="900" y="291">armé par la balise</text>
+<text class="t-cmp-s" x="900" y="305">de la voie d'entrée</text>
 <rect class="bd bd-accent" x="60" y="370" width="1080" height="178" rx="4"/>
 <text class="t-band" x="78" y="396">Pont natif — le contrat</text>
 <text class="t-band-s" x="78" y="413">la seule frontière du projet où une erreur coûte cher</text>
 <rect class="cmp cmp-accent" x="76" y="416" width="516" height="116" rx="3"/>
 <text class="t-cmp" x="92" y="442">Commandes  JS → natif</text>
-<text class="t-code" x="92" y="462">startMonitoring(uuid, majors[])   — arme les régions d'allée</text>
+<text class="t-code" x="92" y="462">startMonitoring(uuid, major)      — arme la région du parking</text>
 <text class="t-code" x="92" y="479">stopMonitoring()                  — à la fermeture de session</text>
-<text class="t-code" x="92" y="496">scheduleConfirmPrompt(spot)       — notification locale</text>
+<text class="t-code" x="92" y="496">keepAlive(until)                  — localisation en arrière-plan</text>
 <text class="t-code" x="92" y="513">flushOfflineQueue()               — vidange à la reconnexion</text>
 <rect class="cmp cmp-accent" x="624" y="416" width="516" height="116" rx="3"/>
 <text class="t-cmp" x="640" y="442">Événements  natif → JS</text>
-<text class="t-code" x="640" y="462">onAisleEnter(major, ts)           — réveil en arrière-plan</text>
-<text class="t-code" x="640" y="479">onAisleExit(major, ts)</text>
+<text class="t-code" x="640" y="462">onAisleChanged(minor, ts)         — allée la plus proche (ranging)</text>
+<text class="t-code" x="640" y="479">onLotExit(ts)                     — sortie de la région du parking</text>
 <text class="t-code" x="640" y="496">onParkedDetected(confidence, ts)  — automotive → walking</text>
 <text class="t-code" x="640" y="513">onQueueFlushed(count)</text>
 <rect class="bd" x="60" y="580" width="528" height="138" rx="4"/>
@@ -1936,7 +2016,7 @@
 <rect class="cmp" x="76" y="626" width="246" height="74" rx="3"/>
 <text class="t-cmp" x="90" y="652">BeaconMonitor</text>
 <text class="t-cmp-s" x="90" y="671">CoreLocation</text>
-<text class="t-cmp-s" x="90" y="685">≤ 20 régions</text>
+<text class="t-cmp-s" x="90" y="685">1 région · ranging</text>
 <rect class="cmp" x="334" y="626" width="246" height="74" rx="3"/>
 <text class="t-cmp" x="348" y="652">MotionWatcher</text>
 <text class="t-cmp-s" x="348" y="671">CoreMotion</text>
@@ -1959,7 +2039,7 @@
 <div class="note"><b>Le contrat du pont est le livrable le plus important de cette page.</b>
   Quatre commandes descendent, quatre événements remontent. Tant que ces huit signatures ne changent pas, l'implémentation Android peut être écrite des mois plus tard sans toucher une ligne de TypeScript. Si elles sont improvisées au fil de l'implémentation iOS, elles porteront les hypothèses d'iOS — les régions iBeacon, la limite de vingt, le réveil d'app terminée — et Android devra être plaqué par-dessus.</div>
 <div class="note warn"><b>Une asymétrie à assumer dès l'écriture du contrat.</b>
-  <code>onAisleEnter</code> arrive sur iOS par réveil du système, même app fermée. Sur Android, il arrivera d'un service de premier plan que l'app doit avoir démarré. Le contrat doit donc prévoir une commande explicite de démarrage du suivi — c'est le rôle de <code>startMonitoring</code> — plutôt que de supposer que le système réveille l'app tout seul.</div>
+  Sur iOS, l'app reste vivante entre le scan et la présomption grâce aux mises à jour de localisation en arrière-plan — c'est le rôle de <code>keepAlive</code>, qui exige la permission « Toujours ». Sur Android, le même effet vient d'un service de premier plan. Le contrat nomme la commande sans dire comment chaque plateforme l'honore ; c'est ce qui permet d'écrire Kotlin plus tard sans toucher au TypeScript.</div>
 <div class="tbl-scroll"><table>
   <caption>Répartition du travail par surface</caption>
   <thead><tr><th>Surface</th><th>Technologie</th><th>Portée MVP</th></tr></thead>
@@ -1993,10 +2073,10 @@
 <rect class="zn" x="40" y="30" width="330" height="250" rx="5"/>
 <text class="t-zn" x="56" y="54">Appareils des usagers</text>
 <rect class="nd nd-cli" x="60" y="66" width="290" height="92" rx="3"/>
-<text class="t-nd" x="74" y="91">iPhone</text>
+<text class="t-nd" x="74" y="91">Téléphone de l'usager</text>
 <text class="t-nd-s" x="74" y="110">app React Native + module Swift</text>
-<text class="t-nd-s" x="74" y="125">BLE · CoreMotion · caméra QR</text>
-<text class="t-nd-s" x="74" y="140">file hors ligne locale</text>
+<text class="t-nd-s" x="74" y="125">ou page web : Apple Pay, passe Wallet</text>
+<text class="t-nd-s" x="74" y="140">BLE · CoreMotion · scanner QR</text>
 <rect class="nd nd-cli" x="60" y="174" width="290" height="88" rx="3"/>
 <text class="t-nd" x="74" y="199">Navigateur — opérateur</text>
 <text class="t-nd-s" x="74" y="218">tableau de bord web</text>
@@ -2014,7 +2094,7 @@
 <text class="t-nd-s" x="444" y="233">sauvegarde continue</text>
 <rect class="nd nd-srv" x="615" y="174" width="175" height="88" rx="3"/>
 <text class="t-nd" x="629" y="199">Planificateur</text>
-<text class="t-nd-s" x="629" y="218">4 tâches</text>
+<text class="t-nd-s" x="629" y="218">6 tâches</text>
 <text class="t-nd-s" x="629" y="233">instance unique</text>
 <rect class="zn" x="850" y="30" width="290" height="250" rx="5"/>
 <text class="t-zn" x="866" y="54">Services tiers</text>
@@ -2032,28 +2112,28 @@
 <rect class="nd nd-hw" x="64" y="372" width="250" height="104" rx="3"/>
 <text class="t-nd" x="78" y="397">Borne d'entrée</text>
 <text class="t-nd-s" x="78" y="416">QR statique signé (HMAC)</text>
-<text class="t-nd-s" x="78" y="431">contact sec ou API du système</text>
-<text class="t-nd-s" x="78" y="446">de contrôle d'accès existant</text>
+<text class="t-nd-s" x="78" y="431">URL : app ou page web</text>
+<text class="t-nd-s" x="78" y="446">contact sec ou API existante</text>
 <rect class="nd nd-hw" x="334" y="372" width="250" height="104" rx="3"/>
-<text class="t-nd" x="348" y="397">Caméra d'entrée</text>
-<text class="t-nd-s" x="348" y="416">vise la plaque arrière</text>
-<text class="t-nd-s" x="348" y="431">posée après la barrière</text>
-<text class="t-nd-s" x="348" y="446">reconnaissance hébergée</text>
+<text class="t-nd" x="348" y="397">Contrôleur de barrière</text>
+<text class="t-nd-s" x="348" y="416">boucles d'armement et de fermeture</text>
+<text class="t-nd-s" x="348" y="431">module relais sur rail DIN</text>
+<text class="t-nd-s" x="348" y="446">connexion sortante vers l'API</text>
 <rect class="nd nd-hw" x="604" y="372" width="250" height="104" rx="3"/>
 <text class="t-nd" x="618" y="397">Barrière de sortie</text>
-<text class="t-nd-s" x="618" y="416">caméra ANPR</text>
-<text class="t-nd-s" x="618" y="431">QR de repli</text>
-<text class="t-nd-s" x="618" y="446">contact sec ou API existante</text>
+<text class="t-nd-s" x="618" y="416">balise de sortie · boucles</text>
+<text class="t-nd-s" x="618" y="431">QR de sortie · ANPR en option</text>
+<text class="t-nd-s" x="618" y="446">hors ligne : ouvre et compte</text>
 <rect class="nd nd-hw" x="874" y="372" width="242" height="104" rx="3"/>
 <text class="t-nd" x="888" y="397">Balises BLE</text>
-<text class="t-nd-s" x="888" y="416">une par allée</text>
-<text class="t-nd-s" x="888" y="431">UUID unique · major = allée</text>
+<text class="t-nd-s" x="888" y="416">une par allée, une par sortie</text>
+<text class="t-nd-s" x="888" y="431">major = parking · minor = allée</text>
 <text class="t-nd-s" x="888" y="446">pile remontée à l'API</text>
 <rect class="nd nd-net" x="64" y="500" width="520" height="92" rx="3"/>
 <text class="t-nd" x="78" y="525">Pré-requis d'adhésion</text>
-<text class="t-nd-s" x="78" y="544">Wi-Fi : paliers et les deux bornes</text>
-<text class="t-nd-s" x="78" y="559">barrière pilotable : contact sec ou API</text>
-<text class="t-nd-s" x="78" y="574">wifi_verified_at et gate.verified_at</text>
+<text class="t-nd-s" x="78" y="544">Wi-Fi aux paliers, cellulaire aux bornes</text>
+<text class="t-nd-s" x="78" y="559">barrière pilotable et boucles remontées</text>
+<text class="t-nd-s" x="78" y="574">wifi, cell et gate verified_at</text>
 <rect class="nd nd-neg" x="604" y="500" width="512" height="92" rx="3"/>
 <text class="t-nd" x="618" y="525">Ce que le Wi-Fi ne fait pas</text>
 <text class="t-nd-s" x="618" y="544">iOS n'expose aucun scan Wi-Fi aux apps tierces</text>
@@ -2075,16 +2155,16 @@
 <div class="note"><b>Le planificateur tourne en instance unique.</b>
   Deux instances exécutant <code>expire_holds</code> en parallèle libéreraient deux fois la même place, ou pire, annuleraient une session valide pendant qu'une autre instance la confirme. Un verrou consultatif Postgres suffit à le garantir — et c'est plus simple à défendre qu'un système de files.</div>
 <div class="note warn"><b>Le garage porte les deux pré-requis d'adhésion, et c'est la seule zone où une panne est invisible depuis le nuage.</b>
-  Un parking rejoint le réseau à deux conditions : une couverture Wi-Fi aux paliers et aux deux bornes, et une barrière pilotable — par contact sec, universel sur les opérateurs industriels, ou par l'API de son système de contrôle d'accès quand il en expose une. Palier n'installe pas de barrières ; il commande celles qui sont déjà là.
+  Un parking rejoint le réseau à deux conditions : une couverture Wi-Fi aux paliers et aux deux bornes, et une barrière pilotable dont les boucles sont remontées — par contact sec, universel sur les opérateurs industriels, ou par l'API de son système de contrôle d'accès quand il en expose une. Palier n'installe pas de barrières ; il commande celles qui sont déjà là, et lit les boucles qu'elles ont déjà. Aucune caméra n'est exigée : la lecture de plaque ou de transpondeur est une option de confort de l'opérateur, jamais une condition. Troisième pré-requis : une couverture cellulaire mesurée aux deux bornes, parce que l'usager sans l'app ne rejoindra jamais le Wi-Fi du garage. Un contrôleur qui ne joint plus l'API refuse l'entrée et ouvre la sortie sans condition, en comptant localement.
   Une balise dont la pile est morte n'émet rien : aucune erreur, juste des confirmations qui n'arrivent plus. D'où le <code>heartbeat</code> des contrôleurs et la remontée du niveau de pile — sans eux, le premier symptôme d'une panne serait une plainte d'usager.</div>
 </section>
 <section>
-  <div class="sec-head"><h3>Montage de la démonstration</h3><span class="tag">2 allées · 10 places · 2 balises</span></div>
+  <div class="sec-head"><h3>Montage de la démonstration</h3><span class="tag">2 allées · 10 places · 3 balises</span></div>
   <p class="lede">Le prototype se démontre en environnement contrôlé. Les balises sont le seul matériel du montage : c'est le cœur technique, et une balise simulée ne prouverait rien du comportement en arrière-plan. Tout le reste — ouvertures de barrière comprises — se confirme dans l'application.</p>
   <figure><div class="fig"><div class="fig-scroll"><svg viewBox="0 0 1100 560" role="img" aria-label="Plan physique du montage de démonstration.">
 <rect class="floor" x="40" y="60" width="1020" height="440" rx="4"/>
 <text class="t-zn" x="60" y="90">Palier de démonstration — deux allées, dix places</text>
-<text class="t-aisle" x="60" y="152">Allée A — major 1</text>
+<text class="t-aisle" x="60" y="152">Allée A — minor 1</text>
 <rect class="sp sp-a" x="60" y="168" width="104" height="72" rx="2"/>
 <text class="t-sp" x="112" y="198">A-1</text>
 <text class="t-sp-s" x="112" y="216">AVAILABLE</text>
@@ -2101,7 +2181,7 @@
 <text class="t-sp" x="584" y="198">A-5</text>
 <text class="t-sp-s" x="584" y="216">AVAILABLE</text>
 <circle class="bcn" cx="360" cy="140" r="11"/><text class="t-bcn" x="378" y="145">balise 1</text>
-<text class="t-aisle" x="60" y="312">Allée B — major 2</text>
+<text class="t-aisle" x="60" y="312">Allée B — minor 2</text>
 <rect class="sp sp-a" x="60" y="328" width="104" height="72" rx="2"/>
 <text class="t-sp" x="112" y="358">B-1</text>
 <text class="t-sp-s" x="112" y="376">AVAILABLE</text>
@@ -2120,34 +2200,35 @@
 <circle class="bcn" cx="360" cy="300" r="11"/><text class="t-bcn" x="378" y="305">balise 2</text>
 <rect class="nd nd-hw" x="700" y="130" width="330" height="116" rx="3"/>
 <text class="t-nd" x="714" y="155">Borne d'entrée</text>
-<text class="t-nd-s" x="714" y="174">QR signé imprimé, affiché au mur</text>
+<text class="t-nd-s" x="714" y="174">QR signé imprimé : app ou page web</text>
 <text class="t-nd-s" x="714" y="189">aucune barrière physique</text>
 <text class="t-nd-s" x="714" y="204">l'app affiche l'ouverture</text>
 <rect class="nd nd-hw" x="700" y="274" width="330" height="116" rx="3"/>
 <text class="t-nd" x="714" y="299">Borne de sortie</text>
-<text class="t-nd-s" x="714" y="318">QR signé imprimé</text>
+<text class="t-nd-s" x="714" y="318">balise de sortie · tap de repli</text>
 <text class="t-nd-s" x="714" y="333">capture Stripe en mode test</text>
 <text class="t-nd-s" x="714" y="348">l'app affiche le reçu et l'ouverture</text>
+<circle class="bcn" cx="680" cy="300" r="11"/><text class="t-bcn" x="612" y="305">balise 3</text>
 <path class="flow5" d="M700,188 H660 V148 H600" marker-end="url(#ar5)"/>
 <path class="flow5" d="M700,332 H660 V420 H600" marker-end="url(#ar5)"/>
 <text class="t-lnk" x="612" y="440">sortie</text>
 <text class="t-lnk" x="612" y="140">entrée</text>
-<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — seules les balises sont du matériel ; tout le reste est du logiciel.</text>
+<text class="t-nd-s" x="60" y="470">États illustrés au moment de la capture — seules les trois balises sont du matériel ; les boucles sont simulées par un bouton de la console.</text>
 </svg></div>
   <figcaption>Dix places suffisent à montrer les six états, l'assignation par allée et le cas de la mauvaise place.</figcaption></div></figure>
 <div class="tbl-scroll"><table>
   <caption>Matériel de la démonstration</caption>
   <thead><tr><th>Élément</th><th>Quantité</th><th>Rôle dans la démonstration</th></tr></thead>
   <tbody>
-    <tr><td>Balises BLE</td><td class="num">2</td><td>Une par allée. Prouvent le réveil de l'app en arrière-plan et la confirmation de zone — le seul matériel non simulable</td></tr>
-        <tr><td>Webcam</td><td class="num">1</td><td>Preuve de concept de lecture de plaque sur image fixe, hors barrière</td></tr>
-    <tr><td>QR imprimés</td><td class="num">2</td><td>Bornes d'entrée et de sortie. Aucun QR aux places — c'était la décision de conception</td></tr>
+    <tr><td>Balises BLE</td><td class="num">3</td><td>Une par allée, une à la sortie, même <code>major</code>. Prouvent le <em>ranging</em> entre allées adjacentes, la survie de l'app trois minutes après le scan, la présomption de place et la sortie sans geste — le seul matériel non simulable</td></tr>
+    <tr><td>QR imprimé</td><td class="num">1</td><td>Borne d'entrée. Aucun QR aux places ni à la sortie — c'était la décision de conception</td></tr>
+    <tr><td>Console de démonstration</td><td class="num">1</td><td>Page web qui joue le contrôleur : boutons « boucle d'entrée fermée », « véhicule à la sortie », « boucle de sortie fermée », appelant l'API avec la clé d'appareil</td></tr>
     <tr><td>Matériel de barrière</td><td class="num">0</td><td>Aucun. Les ouvertures sont confirmées dans l'application ; la barrière ne prouve rien que le reste ne prouve déjà</td></tr>
     <tr><td>iPhone de test</td><td class="num">1</td><td>Démonstration au jury : arrière-plan plus prévisible qu'Android</td></tr>
     <tr><td>Étiquettes de places</td><td class="num">10</td><td>Numéros au sol ou au mur, sans marqueur scannable</td></tr>
   </tbody></table></div>
 <div class="note"><b>Ce que la démonstration ne montrera pas, et qu'il faut annoncer plutôt que laisser découvrir.</b>
-  L'ouverture physique d'une barrière : aucun matériel de barrière n'est monté, l'application affiche l'ouverture. La lecture de plaque en conditions réelles — plaque en mouvement, éclairage de garage — n'est pas reproductible sur une table. Le comportement Android non plus, puisque le module natif n'est pas livré au MVP. Les annoncer en ouverture vaut mieux que de se les faire signaler en question.</div>
+  L'ouverture physique d'une barrière et la fermeture réelle d'une boucle : aucun matériel de barrière n'est monté, l'application affiche l'ouverture et la console joue les boucles. Les capteurs par place, option d'opérateur, ne sont pas montés. Le comportement Android non plus, puisque le module natif n'est pas livré au MVP. Les annoncer en ouverture vaut mieux que de se les faire signaler en question.</div>
 </section>
 <section>
   <div class="sec-head"><h3>Ordre de construction</h3><span class="tag">Ce qui débloque quoi</span></div>
@@ -2158,7 +2239,7 @@
       <tr><td>1</td><td>Schéma Postgres et machines à états, avec les tests de transition</td><td>Tout le reste. C'est aussi le seul chantier entièrement testable sans matériel</td></tr>
       <tr><td>2</td><td>Domaine : allocation atomique, tarification, holds</td><td>La séquence d'entrée, et la démonstration de la non-collision sous charge</td></tr>
       <tr><td>3</td><td>API et adaptateurs, Stripe en mode test</td><td>Le parcours complet en appels HTTP, sans app ni matériel</td></tr>
-      <tr><td>4</td><td>Module natif iOS : balises et mouvement, avec le contrat du pont</td><td>Le mécanisme central — à faire tôt, c'est le risque technique du projet</td></tr>
+      <tr><td>4</td><td>Module natif iOS : survie après le scan, ranging, mouvement, avec le contrat du pont</td><td>Le mécanisme central — à faire tôt, c'est le risque technique du projet. Deux mesures à produire : trois minutes de survie écran éteint, et deux allées adjacentes distinguées</td></tr>
       <tr><td>5</td><td>Écrans React Native</td><td>La démonstration au jury</td></tr>
       <tr><td>6</td><td>Tableau de bord opérateur et adaptateur d'ouverture de barrière</td><td>Le récit complet, de l'adhésion d'un opérateur à la sortie du véhicule</td></tr>
     </tbody></table></div>

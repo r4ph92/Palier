@@ -230,11 +230,11 @@
           <text x="1048" y="188" text-anchor="end">occupation · compte</text>
           <text x="266" y="252">identifiant de borne</text>
           <text x="266" y="268">commande d'ouverture</text>
-          <text x="266" y="392">plaque lue à l'entrée</text>
+          <text x="266" y="392">passage détecté</text>
           <text x="266" y="580">UUID · allée · balise</text>
           <text x="974" y="252" text-anchor="end">pré-autorisation · capture</text>
           <text x="974" y="268" text-anchor="end">onboarding Connect</text>
-          <text x="974" y="392" text-anchor="end">plaque lue à la sortie</text>
+          <text x="974" y="392" text-anchor="end">identité et passage</text>
           <text x="974" y="408" text-anchor="end">commande d'ouverture</text>
           <text x="974" y="580" text-anchor="end">notification de confirmation</text>
         </g>
@@ -251,7 +251,7 @@
         <g>
           <rect class="s-ent" x="515" y="40" width="210" height="62" rx="1"/>
           <text class="t-ent" x="620" y="70" text-anchor="middle">Conducteur</text>
-          <text class="t-ent-s" x="620" y="88" text-anchor="middle">application mobile</text>
+          <text class="t-ent-s" x="620" y="88" text-anchor="middle">app ou page web</text>
 
           <rect class="s-ent" x="110" y="40" width="210" height="62" rx="1"/>
           <text class="t-ent" x="215" y="70" text-anchor="middle">Fournisseurs OAuth</text>
@@ -266,8 +266,8 @@
           <text class="t-ent-s" x="145" y="298" text-anchor="middle">QR · barrière</text>
 
           <rect class="s-ent" x="40" y="380" width="210" height="62" rx="1"/>
-          <text class="t-ent" x="145" y="410" text-anchor="middle">Caméra d'entrée</text>
-          <text class="t-ent-s" x="145" y="428" text-anchor="middle">lecture de plaque</text>
+          <text class="t-ent" x="145" y="410" text-anchor="middle">Boucle d'entrée</text>
+          <text class="t-ent-s" x="145" y="428" text-anchor="middle">passage du véhicule</text>
 
           <rect class="s-ent" x="40" y="510" width="210" height="62" rx="1"/>
           <text class="t-ent" x="145" y="540" text-anchor="middle">Balises BLE</text>
@@ -279,7 +279,7 @@
 
           <rect class="s-ent" x="990" y="380" width="210" height="62" rx="1"/>
           <text class="t-ent" x="1095" y="410" text-anchor="middle">Barrière de sortie</text>
-          <text class="t-ent-s" x="1095" y="428" text-anchor="middle">caméra ANPR</text>
+          <text class="t-ent-s" x="1095" y="428" text-anchor="middle">boucle · balise · QR de sortie</text>
 
           <rect class="s-ent" x="990" y="510" width="210" height="62" rx="1"/>
           <text class="t-ent" x="1095" y="540" text-anchor="middle">Notifications push</text>
@@ -420,7 +420,7 @@
         <!-- ============ CONDUCTEUR RAIL ============ -->
         <rect class="s-ent" x="40" y="212" width="120" height="696" rx="1"/>
         <text class="t-ent" transform="translate(88,560) rotate(-90)" text-anchor="middle">Conducteur</text>
-        <text class="t-ent-s" transform="translate(108,560) rotate(-90)" text-anchor="middle">application mobile iOS</text>
+        <text class="t-ent-s" transform="translate(108,560) rotate(-90)" text-anchor="middle">app iOS ou page web</text>
 
         <!-- ============ ENTITY COLUMN ============ -->
         <g>
@@ -433,8 +433,8 @@
           <text class="t-ent-s" x="315" y="392" text-anchor="middle">QR statique · barrière</text>
 
           <rect class="s-ent" x="190" y="412" width="250" height="46" rx="1"/>
-          <text class="t-ent" x="315" y="432" text-anchor="middle">Caméra d'entrée</text>
-          <text class="t-ent-s" x="315" y="448" text-anchor="middle">plaque arrière, après la barrière</text>
+          <text class="t-ent" x="315" y="432" text-anchor="middle">Boucle d'entrée</text>
+          <text class="t-ent-s" x="315" y="448" text-anchor="middle">fermée après l'ouverture</text>
 
           <rect class="s-ent" x="190" y="532" width="250" height="56" rx="1"/>
           <text class="t-ent" x="315" y="556" text-anchor="middle">Balises BLE</text>
@@ -446,7 +446,7 @@
 
           <rect class="s-ent" x="190" y="832" width="250" height="56" rx="1"/>
           <text class="t-ent" x="315" y="856" text-anchor="middle">Barrière de sortie</text>
-          <text class="t-ent-s" x="315" y="874" text-anchor="middle">caméra ANPR · QR de repli</text>
+          <text class="t-ent-s" x="315" y="874" text-anchor="middle">boucle · balise · QR de sortie</text>
 
           <rect class="s-ent" x="190" y="982" width="250" height="56" rx="1"/>
           <text class="t-ent" x="315" y="1006" text-anchor="middle">Opérateur de parking</text>
@@ -483,7 +483,7 @@
           <rect class="s-proc" x="470" y="812" width="380" height="96" rx="12"/>
           <text class="t-num" x="494" y="844">6.0</text>
           <text class="t-proc" x="494" y="868">Clôturer et facturer</text>
-          <text class="t-proc-s" x="494" y="888">plaque → capture → ouverture</text>
+          <text class="t-proc-s" x="494" y="888">identité → capture → ouverture</text>
 
           <rect class="s-proc" x="470" y="962" width="380" height="96" rx="12"/>
           <text class="t-num" x="494" y="994">7.0</text>
@@ -609,16 +609,16 @@
       <thead><tr><th>N°</th><th>Trajet</th><th>Donnée qui circule</th></tr></thead>
       <tbody>
         <tr><td>F1</td><td>Conducteur ↔ 2.0</td><td>Position et type de véhicule ; en retour, liste des parkings avec places libres et confirmation de hold</td></tr>
-        <tr><td>F2</td><td>Conducteur ↔ 3.0</td><td>Jeton du QR de la borne ; en retour, numéro de place assignée (palier, allée, numéro)</td></tr>
-        <tr><td>F3</td><td>Conducteur ↔ 5.0</td><td>Confirmation ou correction du numéro de place ; en retour, accusé de prise en compte</td></tr>
-        <tr><td>F4</td><td>Conducteur ↔ 6.0</td><td>Scan du QR de repli si la plaque n'est pas lue ; en retour, reçu et montant facturé</td></tr>
+        <tr><td>F2</td><td>Conducteur ↔ 3.0</td><td>Jeton du QR de la borne, par l'app ou par la page web avec Apple Pay ; en retour, numéro de place assignée (palier, allée, numéro)</td></tr>
+        <tr><td>F3</td><td>Conducteur ↔ 5.0</td><td>Réponse à la question « Où êtes-vous garé ? », ou signalement « place prise » ; en retour, la place retenue ou la nouvelle place assignée</td></tr>
+        <tr><td>F4</td><td>Conducteur ↔ 6.0</td><td>Signalement de la balise de sortie par l'app, ou scan du QR de sortie (app ou page web retrouvée par son jeton) ; en retour, reçu et montant facturé</td></tr>
         <tr><td>F5</td><td>Conducteur ↔ 4.0</td><td>Position d'allée détectée ; en retour, plan du palier et indication de progression</td></tr>
         <tr><td>F6</td><td>OAuth ↔ 1.0</td><td>Demande d'authentification ; en retour, jeton d'identité vérifié (Apple ou Google)</td></tr>
         <tr><td>F7</td><td>Borne d'entrée ↔ 3.0</td><td>Identifiant de borne encodé dans le QR ; en retour, commande d'ouverture de la barrière</td></tr>
-        <tr><td>F8</td><td>Caméra d'entrée → 3.0</td><td>Plaque arrière lue après le passage de la barrière — confirme l'entrée effective du véhicule</td></tr>
-        <tr><td>F9</td><td>Balises BLE → 4.0</td><td>UUID, <span style="font-family:'IBM Plex Mono',monospace">major</span> (allée), <span style="font-family:'IBM Plex Mono',monospace">minor</span> (balise) et puissance reçue</td></tr>
+        <tr><td>F8</td><td>Boucle d'entrée → 3.0</td><td>Fermeture de la boucle après la commande d'ouverture — confirme l'entrée effective du véhicule et incrémente le compteur du parking</td></tr>
+        <tr><td>F9</td><td>Balises BLE → 4.0</td><td>UUID, <span style="font-family:'IBM Plex Mono',monospace">major</span> (parking), <span style="font-family:'IBM Plex Mono',monospace">minor</span> (allée) et puissance reçue</td></tr>
         <tr><td>F10</td><td>5.0 → APNs</td><td>Demande de notification « Confirmez votre place », déclenchée par la transition « à pied »</td></tr>
-        <tr><td>F11</td><td>Barrière de sortie ↔ 6.0</td><td>Plaque lue à la sortie ; en retour, commande d'ouverture après capture du paiement</td></tr>
+        <tr><td>F11</td><td>Barrière de sortie ↔ 6.0</td><td>Identité du véhicule (plaque ou transpondeur chez les opérateurs équipés), présence sur la boucle d'armement, puis fermeture de la boucle ; en retour, commande d'ouverture après capture du paiement</td></tr>
         <tr><td>F12</td><td>Opérateur ↔ 7.0</td><td>Politique tarifaire, plafond journalier, plan des places ; en retour, état d'occupation et statut du compte Connect</td></tr>
       </tbody>
     </table>
@@ -648,12 +648,12 @@
         <tr><td>F20</td><td>2.0 ↔ D2</td><td>Lecture des politiques tarifaires et des parkings actifs</td></tr>
         <tr><td>F21</td><td>3.0 ↔ D3</td><td>Sélection atomique d'une place libre et passage à l'état <span style="font-family:'IBM Plex Mono',monospace">ASSIGNED</span></td></tr>
         <tr><td>F22</td><td>4.0 → D5</td><td>Journalisation des passages de balises</td></tr>
-        <tr><td>F23</td><td>5.0 → D3</td><td>Passage à <span style="font-family:'IBM Plex Mono',monospace">OCCUPIED</span> si confirmé, <span style="font-family:'IBM Plex Mono',monospace">OCCUPIED_UNKNOWN</span> en cas de silence</td></tr>
+        <tr><td>F23</td><td>5.0 → D3</td><td>Passage à <span style="font-family:'IBM Plex Mono',monospace">OCCUPIED</span> dès le signal « à pied » dans l'allée assignée (présomption), <span style="font-family:'IBM Plex Mono',monospace">OCCUPIED_UNKNOWN</span> si l'allée détectée diffère ou si la place est signalée prise</td></tr>
         <tr><td>F24</td><td>6.0 → D3</td><td>Remise de la place à <span style="font-family:'IBM Plex Mono',monospace">AVAILABLE</span>, indicateur « à vérifier » le cas échéant</td></tr>
         <tr><td>F25</td><td>7.0 ↔ D6</td><td>Opérateur et compte Connect Express associé</td></tr>
         <tr><td>F26</td><td>8.0 → D5</td><td>Purge des événements de plus de 90 jours</td></tr>
         <tr><td>F27</td><td>2.0 → D3</td><td>Lecture des places libres et écriture de l'état <span style="font-family:'IBM Plex Mono',monospace">HELD</span></td></tr>
-        <tr><td>F28</td><td>3.0 → D4</td><td>Création de la session à l'entrée, avec plaque attendue et place assignée</td></tr>
+        <tr><td>F28</td><td>3.0 → D4</td><td>Création de la session à l'entrée, avec véhicule attendu et place assignée</td></tr>
         <tr><td>F29</td><td>5.0 → D4</td><td>Rattachement de la place réellement occupée à la session</td></tr>
         <tr><td>F30</td><td>6.0 → D4</td><td>Clôture de la session : horodatage de sortie, durée, montant capturé</td></tr>
         <tr><td>F31</td><td>7.0 ↔ D2</td><td>Écriture de la politique tarifaire et du plan des places du parking</td></tr>
@@ -666,7 +666,7 @@
   </div>
 
   <div class="note">
-    <b>Points à vérifier au moment de l'implémentation.</b> Deux flux n'apparaissent pas sur la figure parce qu'ils sont déclenchés par le temps, non par un acteur : l'expiration d'un hold non utilisé après 15 minutes (retour de D3 à <span style="font-family:'IBM Plex Mono',monospace">AVAILABLE</span>), et l'annulation d'une assignation dont la plaque n'a jamais été lue à l'entrée après 2 minutes, qui libère aussi la pré-autorisation Stripe. Un DFD ne représente pas les déclencheurs temporels ; ils doivent figurer au diagramme d'états.
+    <b>Points à vérifier au moment de l'implémentation.</b> Deux flux n'apparaissent pas sur la figure parce qu'ils sont déclenchés par le temps, non par un acteur : l'expiration d'un hold non utilisé après 15 minutes (retour de D3 à <span style="font-family:'IBM Plex Mono',monospace">AVAILABLE</span>), et l'annulation d'une assignation dont le passage n'a jamais été détecté par la boucle 60 secondes après l'ouverture, qui libère aussi la pré-autorisation Stripe. Un DFD ne représente pas les déclencheurs temporels ; ils doivent figurer au diagramme d'états.
   </div>
 </section>
 

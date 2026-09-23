@@ -39,21 +39,21 @@
 <text class="t-cmp-s" x="630" y="305">Apple / Google Pay</text>
 <rect class="cmp" x="886" y="246" width="246" height="74" rx="3"/>
 <text class="t-cmp" x="900" y="272">Scanner QR</text>
-<text class="t-cmp-s" x="900" y="291">caméra</text>
-<text class="t-cmp-s" x="900" y="305">borne d'entrée</text>
+<text class="t-cmp-s" x="900" y="291">armé par la balise</text>
+<text class="t-cmp-s" x="900" y="305">de la voie d'entrée</text>
 <rect class="bd bd-accent" x="60" y="370" width="1080" height="178" rx="4"/>
 <text class="t-band" x="78" y="396">Pont natif — le contrat</text>
 <text class="t-band-s" x="78" y="413">la seule frontière du projet où une erreur coûte cher</text>
 <rect class="cmp cmp-accent" x="76" y="416" width="516" height="116" rx="3"/>
 <text class="t-cmp" x="92" y="442">Commandes  JS → natif</text>
-<text class="t-code" x="92" y="462">startMonitoring(uuid, majors[])   — arme les régions d'allée</text>
+<text class="t-code" x="92" y="462">startMonitoring(uuid, major)      — arme la région du parking</text>
 <text class="t-code" x="92" y="479">stopMonitoring()                  — à la fermeture de session</text>
-<text class="t-code" x="92" y="496">scheduleConfirmPrompt(spot)       — notification locale</text>
+<text class="t-code" x="92" y="496">keepAlive(until)                  — localisation en arrière-plan</text>
 <text class="t-code" x="92" y="513">flushOfflineQueue()               — vidange à la reconnexion</text>
 <rect class="cmp cmp-accent" x="624" y="416" width="516" height="116" rx="3"/>
 <text class="t-cmp" x="640" y="442">Événements  natif → JS</text>
-<text class="t-code" x="640" y="462">onAisleEnter(major, ts)           — réveil en arrière-plan</text>
-<text class="t-code" x="640" y="479">onAisleExit(major, ts)</text>
+<text class="t-code" x="640" y="462">onAisleChanged(minor, ts)         — allée la plus proche (ranging)</text>
+<text class="t-code" x="640" y="479">onLotExit(ts)                     — sortie de la région du parking</text>
 <text class="t-code" x="640" y="496">onParkedDetected(confidence, ts)  — automotive → walking</text>
 <text class="t-code" x="640" y="513">onQueueFlushed(count)</text>
 <rect class="bd" x="60" y="580" width="528" height="138" rx="4"/>
@@ -62,7 +62,7 @@
 <rect class="cmp" x="76" y="626" width="246" height="74" rx="3"/>
 <text class="t-cmp" x="90" y="652">BeaconMonitor</text>
 <text class="t-cmp-s" x="90" y="671">CoreLocation</text>
-<text class="t-cmp-s" x="90" y="685">≤ 20 régions</text>
+<text class="t-cmp-s" x="90" y="685">1 région · ranging</text>
 <rect class="cmp" x="334" y="626" width="246" height="74" rx="3"/>
 <text class="t-cmp" x="348" y="652">MotionWatcher</text>
 <text class="t-cmp-s" x="348" y="671">CoreMotion</text>

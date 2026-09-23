@@ -1,49 +1,53 @@
-<svg viewBox="0 0 1436 960" role="img" aria-label="Séquence de confirmation de place">
-<line class="ll" x1="130" y1="78" x2="130" y2="942"/>
-<line class="ll" x1="326" y1="78" x2="326" y2="942"/>
-<line class="ll" x1="522" y1="78" x2="522" y2="942"/>
-<line class="ll" x1="718" y1="78" x2="718" y2="942"/>
-<line class="ll" x1="914" y1="78" x2="914" y2="942"/>
-<line class="ll" x1="1110" y1="78" x2="1110" y2="942"/>
-<line class="ll" x1="1306" y1="78" x2="1306" y2="942"/>
-<rect class="frm" x="28" y="496" width="1380" height="392"/>
-<path class="frm-tab" d="M28,496 h58 l14,14 v10 h-72 z"/>
-<text class="t-frag" x="36" y="513">alt</text>
-<text class="t-frag-s" x="106" y="513">[ l&#x27;utilisateur confirme ]</text>
-<line class="frm-sep" x1="28" y1="672" x2="1408" y2="672"/>
-<text class="t-frag-s" x="36" y="687">[ l&#x27;utilisateur corrige le numéro ]</text>
-<line class="frm-sep" x1="28" y1="840" x2="1408" y2="840"/>
-<text class="t-frag-s" x="36" y="855">[ aucune réponse ]</text>
+<svg viewBox="0 0 1436 1092" role="img" aria-label="Séquence de confirmation de place">
+<line class="ll" x1="130" y1="78" x2="130" y2="1074"/>
+<line class="ll" x1="326" y1="78" x2="326" y2="1074"/>
+<line class="ll" x1="522" y1="78" x2="522" y2="1074"/>
+<line class="ll" x1="718" y1="78" x2="718" y2="1074"/>
+<line class="ll" x1="914" y1="78" x2="914" y2="1074"/>
+<line class="ll" x1="1110" y1="78" x2="1110" y2="1074"/>
+<line class="ll" x1="1306" y1="78" x2="1306" y2="1074"/>
+<rect class="frm" x="28" y="358" width="1380" height="662"/>
+<path class="frm-tab" d="M28,358 h58 l14,14 v10 h-72 z"/>
+<text class="t-frag" x="36" y="375">alt</text>
+<text class="t-frag-s" x="106" y="375">[ allée détectée = allée assignée — cas nominal ]</text>
+<line class="frm-sep" x1="28" y1="548" x2="1408" y2="548"/>
+<text class="t-frag-s" x="36" y="563">[ l&#x27;allée détectée n&#x27;est pas l&#x27;allée assignée ]</text>
+<line class="frm-sep" x1="28" y1="866" x2="1408" y2="866"/>
+<text class="t-frag-s" x="36" y="881">[ la place assignée est prise ]</text>
 <path class="msg" d="M136,124 H320" marker-end="url(#sq)"/>
-<text class="t-msg" x="228" y="115" text-anchor="middle">entrée dans la région · major = allée B</text>
+<text class="t-msg" x="228" y="115" text-anchor="middle">ranging · allée B la plus proche (minor 2)</text>
 <path class="msg" d="M332,170 H516" marker-end="url(#sq)"/>
-<text class="t-msg" x="424" y="161" text-anchor="middle">réveil de l&#x27;app en arrière-plan</text>
+<text class="t-msg" x="424" y="161" text-anchor="middle">app déjà vivante : localisation en arrière-plan depuis le scan</text>
 <path class="msg" d="M516,216 H332" marker-end="url(#sq)"/>
 <text class="t-msg" x="424" y="207" text-anchor="middle">démarrer le suivi d&#x27;activité</text>
 <path class="ret" d="M332,262 H516" marker-end="url(#sq)"/>
 <text class="t-msg" x="424" y="253" text-anchor="middle">automotive → walking · confiance élevée</text>
 <path class="msg" d="M528,308 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="299" text-anchor="middle">POST /v1/sessions/{id}/walking</text>
-<path class="msg" d="M724,354 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="816" y="345" text-anchor="middle">walking_at = now()</text>
-<path class="msg" d="M724,400 H1104" marker-end="url(#sq)"/>
-<text class="t-msg" x="914" y="391" text-anchor="middle">« Confirmez la place 2-12 »</text>
-<path class="msg" d="M1116,446 H1300" marker-end="url(#sq)"/>
-<text class="t-msg" x="1208" y="437" text-anchor="middle">notification sur l&#x27;écran verrouillé</text>
-<path class="msg" d="M1300,526 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="914" y="517" text-anchor="middle">tap « Confirmer »</text>
-<path class="msg" d="M528,572 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="563" text-anchor="middle">POST /v1/sessions/{id}/parked { }</text>
-<path class="msg" d="M724,618 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="816" y="609" text-anchor="middle">session PARKED_CONFIRMED · 2-12 → OCCUPIED</text>
-<path class="msg" d="M1300,694 H528" marker-end="url(#sq)"/>
-<text class="t-msg" x="914" y="685" text-anchor="middle">saisit « 2-15 »</text>
-<path class="msg" d="M528,740 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="731" text-anchor="middle">POST /v1/sessions/{id}/parked { spot_id: 2-15 }</text>
-<path class="msg" d="M724,786 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="816" y="777" text-anchor="middle">TX : 2-15 → OCCUPIED · 2-12 → OCCUPIED_UNKNOWN</text>
-<path class="msg" d="M724,862 H908" marker-end="url(#sq)"/>
-<text class="t-msg" x="816" y="853" text-anchor="middle">session PARKED_UNCONFIRMED · 2-12 → OCCUPIED_UNKNOWN</text>
+<text class="t-msg" x="620" y="299" text-anchor="middle">POST /v1/sessions/{id}/walking { aisle_minor: 2 }</text>
+<path class="msg" d="M724,404 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="395" text-anchor="middle">walking_at = now() · session PARKED_PRESUMED · 2-12 → OCCUPIED</text>
+<path class="ret" d="M712,450 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="441" text-anchor="middle">rien à faire</text>
+<path class="msg" d="M724,496 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="487" text-anchor="middle">2-12 → OCCUPIED_UNKNOWN · needs_check</text>
+<path class="msg" d="M724,584 H1104" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="575" text-anchor="middle">« Où êtes-vous garé ? »</text>
+<path class="msg" d="M1116,630 H1300" marker-end="url(#sq)"/>
+<text class="t-msg" x="1208" y="621" text-anchor="middle">notification sur l&#x27;écran verrouillé</text>
+<path class="msg" d="M1300,676 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="667" text-anchor="middle">saisit « 3-04 »</text>
+<path class="msg" d="M528,722 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="713" text-anchor="middle">POST /v1/sessions/{id}/parked { spot_id: 3-04 }</text>
+<path class="msg" d="M724,768 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="759" text-anchor="middle">TX : 3-04 → OCCUPIED · session PARKED_CONFIRMED</text>
+<path class="msg" d="M1300,814 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="914" y="805" text-anchor="middle">tap « Place prise » avant de se garer</text>
+<path class="msg" d="M528,902 H712" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="893" text-anchor="middle">POST /v1/sessions/{id}/spot-taken</text>
+<path class="msg" d="M724,948 H908" marker-end="url(#sq)"/>
+<text class="t-msg" x="816" y="939" text-anchor="middle">TX : 2-12 → OCCUPIED_UNKNOWN · 2-14 → ASSIGNED</text>
+<path class="ret" d="M712,994 H528" marker-end="url(#sq)"/>
+<text class="t-msg" x="620" y="985" text-anchor="middle">nouvelle place 2-14</text>
 <rect class="p p-ext" x="44" y="26" width="172" height="52" rx="3"/>
 <text class="t-p" x="130" y="48" text-anchor="middle">Balise BLE</text>
 <text class="t-ps" x="130" y="65" text-anchor="middle">allée B</text>
