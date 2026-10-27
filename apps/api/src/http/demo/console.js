@@ -1,8 +1,10 @@
-import { createGateApi, formatPassageTime, isLoopEnabled, pressLoop, translate, vehiclesInside } from './consoleLogic.js';
+import { formatPassageTime, translate, vehiclesInside } from './consoleText.js';
+import { createGateApi } from './gateApi.js';
+import { isLoopEnabled, pressLoop } from './loopPress.js';
 
-/** @typedef {import('./consoleLogic.js').Language} Language */
-/** @typedef {import('./consoleLogic.js').TextKey} TextKey */
-/** @typedef {import('./consoleLogic.js').PressOutcome} PressOutcome */
+/** @typedef {import('./consoleText.js').Language} Language */
+/** @typedef {import('./consoleText.js').TextKey} TextKey */
+/** @typedef {import('./loopPress.js').PressOutcome} PressOutcome */
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('@palier/shared-types').GateKind} GateKind */
 /** @typedef {import('@palier/shared-types').GatePassageResponse} GatePassageResponse */

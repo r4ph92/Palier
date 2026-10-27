@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createGateApi, pressLoop } from '../../src/http/demo/consoleLogic.js';
+import { createGateApi } from '../../src/http/demo/gateApi.js';
+import { pressLoop } from '../../src/http/demo/loopPress.js';
 
 const UNAUTHORIZED = 401;
 

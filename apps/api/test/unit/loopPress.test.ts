@@ -1,17 +1,7 @@
 import type { GateIdentity } from '@palier/shared-types';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  createGateApi,
-  formatPassageTime,
-  isLoopEnabled,
-  messageForStatus,
-  pressLoop,
-  translate,
-  translations,
-  vehiclesInside,
-  type ApiResponse,
-  type GateApi,
-} from '../../src/http/demo/consoleLogic.js';
+import type { ApiResponse, GateApi } from '../../src/http/demo/gateApi.js';
+import { isLoopEnabled, messageForStatus, pressLoop } from '../../src/http/demo/loopPress.js';
 
 const DEVICE_KEY = 'gkXGrHor9PJGFGYu4xrNZ5nMkid18rTHXBmuCuI63as';
 const pressedAt = new Date('2026-10-27T22:02:00Z');
@@ -24,50 +14,6 @@ function fakeApi(identity: ApiResponse, passage: ApiResponse = { status: 200, bo
     postPassage: vi.fn<GateApi['postPassage']>().mockResolvedValue(passage),
   };
 }
-
-describe('console translations', () => {
-  it('has the same keys in French and English', () => {
-    expect(Object.keys(translations.en).sort()).toEqual(Object.keys(translations.fr).sort());
-  });
-
-  it.each([
-    ['fr', 'loopENTRY', 'Boucle d’entrée fermée'],
-    ['fr', 'loopEXIT', 'Boucle de sortie fermée'],
-    ['fr', 'keyRefused', 'Clé d’appareil refusée'],
-    ['en', 'loopENTRY', 'Entry loop closed'],
-    ['en', 'loopEXIT', 'Exit loop closed'],
-    ['en', 'keyRefused', 'Device key refused'],
-  ] as const)('%s %s reads "%s"', (language, key, expected) => {
-    expect(translate(language, key)).toBe(expected);
-  });
-
-  it('fills the placeholders', () => {
-    expect(translate('fr', 'gateIdentity', { name: 'Entrée Démo', kind: 'Entrée', lot: 'Parking Démo' })).toBe(
-      'Entrée Démo · Entrée · Parking Démo',
-    );
-  });
-
-  it.each([
-    ['fr', 0, '0 véhicule dans le parking'],
-    ['fr', 1, '1 véhicule dans le parking'],
-    ['fr', 9, '9 véhicules dans le parking'],
-    ['en', 0, '0 vehicles in the lot'],
-    ['en', 1, '1 vehicle in the lot'],
-  ] as const)('%s with %i vehicles reads "%s"', (language, count, expected) => {
-    expect(vehiclesInside(count, language)).toBe(expected);
-  });
-});
-
-describe('formatPassageTime', () => {
-  it.each([
-    ['fr', new Date(2026, 9, 27, 18, 2), '18 h 02'],
-    ['en', new Date(2026, 9, 27, 18, 2), '6:02 PM'],
-    ['en', new Date(2026, 9, 27, 0, 5), '12:05 AM'],
-    ['en', new Date(2026, 9, 27, 12, 0), '12:00 PM'],
-  ] as const)('%s writes %s as %s', (language, moment, expected) => {
-    expect(formatPassageTime(moment, language)).toBe(expected);
-  });
-});
 
 describe('messageForStatus', () => {
   it.each([
@@ -156,40 +102,5 @@ describe('pressLoop', () => {
     const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: entreeDemo, pressedAt }, api);
 
     expect(outcome).toEqual({ kind: 'refused', identity: entreeDemo, messageKey: 'keyRefused' });
-  });
-});
-
-describe('createGateApi', () => {
-  it('sends the key as a Bearer header and the loop time as JSON', async () => {
-    const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(Response.json(recordedEntry));
-
-    const response = await createGateApi(fetchFunction).postPassage(DEVICE_KEY, 'gate-501', pressedAt.toISOString());
-
-    expect(response).toEqual({ status: 200, body: recordedEntry });
-    expect(fetchFunction).toHaveBeenCalledWith('/v1/gates/gate-501/passage', {
-      method: 'POST',
-      headers: { authorization: `Bearer ${DEVICE_KEY}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ closedAt: pressedAt.toISOString() }),
-      cache: 'no-store',
-      credentials: 'omit',
-    });
-  });
-
-  it('reports the status of a refusal', async () => {
-    const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
-
-    expect(await createGateApi(fetchFunction).fetchIdentity(DEVICE_KEY)).toEqual({ status: 401, body: null });
-  });
-
-  it('reports no body when a success answer is not JSON', async () => {
-    const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(new Response('<html>proxy</html>', { status: 200 }));
-
-    expect(await createGateApi(fetchFunction).fetchIdentity(DEVICE_KEY)).toEqual({ status: 200, body: null });
-  });
-
-  it('reports status 0 when the API cannot be reached', async () => {
-    const fetchFunction = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('Failed to fetch'));
-
-    expect(await createGateApi(fetchFunction).fetchIdentity(DEVICE_KEY)).toEqual({ status: 0, body: null });
   });
 });
