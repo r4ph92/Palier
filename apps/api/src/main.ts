@@ -5,10 +5,10 @@ import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/Pos
 
 const environment = readServerEnvironment(process.env);
 const connection = connectToDatabase(environment.databaseUrl);
-const server = buildServer(
-  { lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database) },
-  true,
-);
+const server = buildServer({
+  lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
+  logsRequests: true,
+});
 
 server.addHook('onClose', () => connection.close());
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

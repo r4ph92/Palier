@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type AccessibilityRole } from 'react-native';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
@@ -8,13 +8,14 @@ interface MessageStateProps {
   readonly message: string;
   readonly hint: string;
   readonly action?: ReactNode;
+  readonly messageRole?: AccessibilityRole;
 }
 
-export function MessageState({ message, hint, action }: MessageStateProps) {
+export function MessageState({ message, hint, action, messageRole = 'text' }: MessageStateProps) {
   const colors = useColors();
   return (
     <View style={styles.container}>
-      <Text accessibilityRole="alert" style={[typography.bodyStrong, { color: colors.ink }]}>
+      <Text accessibilityRole={messageRole} style={[typography.bodyStrong, { color: colors.ink }]}>
         {message}
       </Text>
       <Text style={[typography.body, { color: colors.muted }]}>{hint}</Text>

@@ -11,6 +11,7 @@ export function ErrorState({ onRetry }: ErrorStateProps) {
     <MessageState
       message={i18n.t('home.unreachable')}
       hint={i18n.t('home.unreachableHint')}
+      messageRole="alert"
       action={<PrimaryButton label={i18n.t('home.retry')} onPress={onRetry} />}
     />
   );
