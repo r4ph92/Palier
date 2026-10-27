@@ -68,9 +68,13 @@ npm install
 docker compose up -d --wait                  # bases palier et palier_test
 cp apps/api/.env.example apps/api/.env       # NODE_ENV=development, base locale
 npm run db:migrate
-npm run seed --workspace @palier/api         # Parking Démo (10 places) et Garage Roy
+npm run seed --workspace @palier/api         # Parking Démo (10 places), Garage Roy, barrières
 npm run start --workspace @palier/api        # http://127.0.0.1:3000/v1/lots
 ```
+
+Avec `DEMO_MODE=true` (valeur de `.env.example`), l'API sert aussi la console
+de démonstration des barrières sur http://localhost:3000/demo/console ; clés et
+scénarios dans [`docs/demo-console.md`](docs/demo-console.md).
 
 Dans un second terminal :
 
@@ -85,6 +89,8 @@ réouverture, toucher « Try again ».
 
 ### Scénarios de test manuels
 
+- **Passages aux barrières** : voir [`docs/demo-console.md`](docs/demo-console.md)
+  (entrée, sortie, « Complet », clé refusée, mauvaise barrière).
 - **Place hors service** : `npm run seed:spot-state --workspace @palier/api -- --lot "Parking Démo" --spot A-1 --state OUT_OF_SERVICE`,
   puis tirer la liste vers le bas : « 9 places libres ». Remettre la place avec
   `--state AVAILABLE`, ou tout réinitialiser avec `npm run seed --workspace @palier/api`.
