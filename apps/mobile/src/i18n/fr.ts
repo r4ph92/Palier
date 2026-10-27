@@ -12,6 +12,7 @@ export const fr = {
     unreachable: 'Impossible de joindre Palier.',
     unreachableHint: 'Vérifiez votre connexion, puis réessayez.',
     retry: 'Réessayer',
+    refresh: 'Actualiser',
   },
 };
 

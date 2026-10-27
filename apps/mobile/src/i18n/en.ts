@@ -14,5 +14,6 @@ export const en: Translations = {
     unreachable: 'Can’t reach Palier.',
     unreachableHint: 'Check your connection, then try again.',
     retry: 'Try again',
+    refresh: 'Refresh',
   },
 };

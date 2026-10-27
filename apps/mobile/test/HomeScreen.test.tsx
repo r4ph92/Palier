@@ -28,6 +28,15 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('Garage Roy')).not.toBeOnTheScreen();
   });
 
+  it('reloads the counts when Actualiser is pressed', async () => {
+    await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10), parkingDemoWith(9)));
+    await screen.findByText('10 places libres');
+
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Actualiser' }));
+
+    expect(await screen.findByText('9 places libres')).toBeOnTheScreen();
+  });
+
   it('says so when no lot is online', async () => {
     await renderHomeScreen(new FakeLotsClient([]));
 

@@ -8,5 +8,6 @@ export const typography = StyleSheet.create({
   count: { fontFamily: fontFamilies.mono, fontSize: 15, lineHeight: 20, fontVariant: ['tabular-nums'] },
   body: { fontFamily: fontFamilies.text, fontSize: 16, lineHeight: 22 },
   bodyStrong: { fontFamily: fontFamilies.textSemiBold, fontSize: 17, lineHeight: 22 },
+  textButton: { fontFamily: fontFamilies.textSemiBold, fontSize: 16, lineHeight: 20, textDecorationLine: 'underline' },
   button: { fontFamily: fontFamilies.textSemiBold, fontSize: 16, lineHeight: 20 },
 });
