@@ -1,4 +1,5 @@
 import { screen, userEvent } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { renderHomeScreen } from './renderHomeScreen';
 
@@ -43,6 +44,16 @@ describe('HomeScreen when the API is unreachable', () => {
     expect(await screen.findByText('Impossible de joindre Palier.')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeOnTheScreen();
     expect(screen.queryByText(/places? libres?/)).not.toBeOnTheScreen();
+  });
+
+  it('announces the error to VoiceOver', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    await renderHomeScreen(new FakeLotsClient('unreachable'));
+
+    await screen.findByText('Impossible de joindre Palier.');
+
+    expect(announce).toHaveBeenCalledWith('Impossible de joindre Palier.');
+    announce.mockRestore();
   });
 
   it('drops the stale counts when a refresh fails', async () => {
