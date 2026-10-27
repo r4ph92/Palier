@@ -14,6 +14,7 @@ const server = buildServer({
     ledger: new PostgresPassageLedger(connection.database),
     clock: () => new Date(),
   },
+  demoMode: environment.demoMode,
   logsRequests: true,
 });
 
