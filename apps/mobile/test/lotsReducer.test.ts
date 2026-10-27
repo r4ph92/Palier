@@ -1,6 +1,6 @@
 import { initialLotsModel, lotsReducer } from '../src/lots/lotsReducer';
 
-const loadedModel = lotsReducer(initialLotsModel, { type: 'settled', state: { status: 'loaded', lots: [] } });
+const loadedModel = lotsReducer(initialLotsModel, { type: 'settled', state: { status: 'loaded', lots: [], updatedAt: new Date() } });
 
 describe('lotsReducer', () => {
   it('keeps the current list visible while refreshing', () => {

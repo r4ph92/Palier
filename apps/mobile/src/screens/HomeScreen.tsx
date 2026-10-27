@@ -8,8 +8,9 @@ import { LoadingState } from '../components/LoadingState';
 import { LotRow } from '../components/LotRow';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
-import { i18n } from '../i18n/i18n';
-import { useLots, type LotsController } from '../lots/useLots';
+import { formatClockTime } from '../i18n/formatClockTime';
+import { currentLanguage, i18n } from '../i18n/i18n';
+import { useLots, type LotsController, type LotsState } from '../lots/useLots';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 
@@ -37,11 +38,18 @@ export function HomeScreen() {
 function HomeHeader({ controller }: { readonly controller: LotsController }) {
   return (
     <ScreenHeader
-      eyebrow={i18n.t('home.eyebrow')}
+      eyebrow={freshnessStamp(controller.state)}
       title={i18n.t('home.title')}
       action={<TextButton label={i18n.t('home.refresh')} onPress={controller.refresh} />}
     />
   );
+}
+
+function freshnessStamp(state: LotsState): string {
+  if (state.status !== 'loaded') {
+    return '';
+  }
+  return i18n.t('home.updatedAt', { time: formatClockTime(state.updatedAt, currentLanguage()) });
 }
 
 function HomeStateMessage({ controller }: { readonly controller: LotsController }) {

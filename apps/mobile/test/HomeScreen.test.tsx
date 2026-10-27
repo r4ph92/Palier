@@ -37,6 +37,37 @@ describe('HomeScreen', () => {
   });
 });
 
+describe('HomeScreen freshness stamp', () => {
+  afterEach(() => jest.useRealTimers());
+
+  it('shows when the counts were last updated, and moves it on each load', async () => {
+    jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 9, 27, 13, 25) });
+    await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10), parkingDemoWith(9)));
+    expect(await screen.findByText('Mis à jour à 13 h 25')).toBeOnTheScreen();
+
+    jest.setSystemTime(new Date(2026, 9, 27, 13, 40));
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    await user.press(screen.getByRole('button', { name: 'Actualiser' }));
+
+    expect(await screen.findByText('Mis à jour à 13 h 40')).toBeOnTheScreen();
+  });
+
+  it('shows no stamp while the API is unreachable', async () => {
+    await renderHomeScreen(new FakeLotsClient('unreachable'));
+
+    await screen.findByText('Impossible de joindre Palier.');
+
+    expect(screen.queryByText(/Mis à jour/)).not.toBeOnTheScreen();
+  });
+
+  it('writes the stamp in English on an English device', async () => {
+    jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 9, 27, 13, 25) });
+    await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)), 'en');
+
+    expect(await screen.findByText('Updated 1:25 PM')).toBeOnTheScreen();
+  });
+});
+
 describe('HomeScreen when the API is unreachable', () => {
   it('shows the error and a retry button without any count on open', async () => {
     await renderHomeScreen(new FakeLotsClient('unreachable'));

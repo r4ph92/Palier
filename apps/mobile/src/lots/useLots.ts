@@ -33,7 +33,8 @@ export function useLots(client: LotsClient): LotsController {
 
 async function fetchLotsState(client: LotsClient): Promise<LotsState> {
   try {
-    return { status: 'loaded', lots: await client.listLots() };
+    const lots = await client.listLots();
+    return { status: 'loaded', lots, updatedAt: new Date() };
   } catch {
     return { status: 'error' };
   }

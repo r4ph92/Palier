@@ -1,6 +1,6 @@
 export const fr = {
   home: {
-    eyebrow: 'Palier',
+    updatedAt: 'Mis à jour à %{time}',
     title: 'Stationnements',
     freeSpotsLabel: {
       one: 'place libre',

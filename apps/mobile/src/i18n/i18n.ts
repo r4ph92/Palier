@@ -20,3 +20,7 @@ export function deviceLanguage(): SupportedLanguage {
 export function applyLanguage(language: SupportedLanguage): void {
   i18n.locale = language;
 }
+
+export function currentLanguage(): SupportedLanguage {
+  return i18n.locale === 'en' ? 'en' : 'fr';
+}

@@ -2,7 +2,7 @@ import type { Translations } from './fr';
 
 export const en: Translations = {
   home: {
-    eyebrow: 'Palier',
+    updatedAt: 'Updated %{time}',
     title: 'Parking lots',
     freeSpotsLabel: {
       one: 'free spot',

@@ -2,7 +2,7 @@ import type { LotSummary } from '@palier/shared-types';
 
 export type LotsState =
   | { readonly status: 'loading' }
-  | { readonly status: 'loaded'; readonly lots: readonly LotSummary[] }
+  | { readonly status: 'loaded'; readonly lots: readonly LotSummary[]; readonly updatedAt: Date }
   | { readonly status: 'error' };
 
 export interface LotsModel {
