@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useColors } from '../theme/useColors';
+import { useIsLargeText } from '../theme/useIsLargeText';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
@@ -14,10 +15,11 @@ interface ScreenHeaderProps {
 
 export function ScreenHeader({ eyebrow, title, action }: ScreenHeaderProps) {
   const colors = useColors();
+  const layout = useIsLargeText() ? stackedStyles : sideBySideStyles;
   return (
     <View style={[styles.header, { borderBottomColor: colors.ink }]}>
-      <View style={styles.eyebrowRow}>
-        <Text style={[typography.eyebrow, styles.eyebrow, { color: colors.muted }]}>{eyebrow}</Text>
+      <View testID="header-eyebrow-row" style={layout.eyebrowRow}>
+        <Text style={[typography.eyebrow, layout.eyebrow, { color: colors.muted }]}>{eyebrow}</Text>
         {action}
       </View>
       <Text
@@ -31,9 +33,17 @@ export function ScreenHeader({ eyebrow, title, action }: ScreenHeaderProps) {
   );
 }
 
+const sideBySideStyles = StyleSheet.create({
+  eyebrowRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.medium },
+  eyebrow: { flexGrow: 1, flexBasis: '60%' },
+});
+
+const stackedStyles = StyleSheet.create({
+  eyebrowRow: { flexDirection: 'column', alignItems: 'flex-start' },
+  eyebrow: {},
+});
+
 const styles = StyleSheet.create({
-  eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.medium },
-  eyebrow: { flex: 1 },
   header: {
     gap: spacing.small,
     paddingTop: spacing.small,
