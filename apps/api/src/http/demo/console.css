@@ -178,14 +178,25 @@ button {
 .language-option {
   min-width: 44px;
   padding: 4px 8px;
+  border: none;
   background: transparent;
-  color: var(--ink);
+  color: var(--muted);
   font-size: 0.875rem;
+  text-decoration: underline;
 }
 
 .language-option[aria-pressed='true'] {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.language-option[aria-pressed='true']::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
   background: var(--ink);
-  color: var(--on-ink);
 }
 
 button:focus-visible,
