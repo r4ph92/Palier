@@ -8,6 +8,13 @@
       "when": 1793120408279,
       "tag": "0000_lot_inventory",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793126381395,
+      "tag": "0001_gates_and_passages",
+      "breakpoints": true
     }
   ]
 }
