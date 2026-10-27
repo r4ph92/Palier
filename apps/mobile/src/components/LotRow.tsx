@@ -13,15 +13,18 @@ export function LotRow({ lot }: LotRowProps) {
   const colors = useColors();
   return (
     <View accessible style={[styles.row, { borderBottomColor: colors.line }]}>
-      <Text style={[typography.lotName, { color: colors.ink }]}>{lot.name}</Text>
+      <Text style={[typography.lotName, styles.name, { color: colors.ink }]}>{lot.name}</Text>
       <FreeSpotCount count={lot.freeSpots} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  name: { flex: 1 },
   row: {
-    gap: spacing.extraSmall,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.medium,
     paddingVertical: spacing.medium,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },

@@ -2,9 +2,9 @@ export const fr = {
   home: {
     eyebrow: 'Palier',
     title: 'Stationnements',
-    freeSpots: {
-      one: '%{count} place libre',
-      other: '%{count} places libres',
+    freeSpotsLabel: {
+      one: 'place libre',
+      other: 'places libres',
     },
     loading: 'Chargement des stationnements',
     empty: 'Aucun stationnement en ligne.',

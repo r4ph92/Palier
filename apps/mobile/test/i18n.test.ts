@@ -25,15 +25,15 @@ describe('deviceLanguage', () => {
 
 describe('free spot plurals', () => {
   it.each([
-    ['fr', 0, '0 place libre'],
-    ['fr', 1, '1 place libre'],
-    ['fr', 10, '10 places libres'],
-    ['en', 0, '0 free spots'],
-    ['en', 1, '1 free spot'],
-    ['en', 10, '10 free spots'],
+    ['fr', 0, 'place libre'],
+    ['fr', 1, 'place libre'],
+    ['fr', 10, 'places libres'],
+    ['en', 0, 'free spots'],
+    ['en', 1, 'free spot'],
+    ['en', 10, 'free spots'],
   ] as const)('%s with %i reads "%s"', (language, count, expected) => {
     applyLanguage(language);
 
-    expect(i18n.t('home.freeSpots', { count })).toBe(expected);
+    expect(i18n.t('home.freeSpotsLabel', { count })).toBe(expected);
   });
 });

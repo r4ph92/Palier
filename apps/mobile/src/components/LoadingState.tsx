@@ -20,7 +20,13 @@ export function LoadingState() {
 }
 
 const styles = StyleSheet.create({
-  row: { gap: spacing.small, paddingVertical: spacing.medium, borderBottomWidth: StyleSheet.hairlineWidth },
-  name: { width: '55%', height: 20 },
-  count: { width: '35%', height: 16 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.medium,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  name: { width: '45%', height: 20 },
+  count: { width: '35%', height: 32 },
 });

@@ -16,12 +16,16 @@ export function FreeSpotCount({ count }: FreeSpotCountProps) {
   return (
     <View style={styles.row}>
       <View style={[styles.indicator, { backgroundColor: indicatorColor }]} />
-      <Text style={[typography.count, { color: colors.ink }]}>{i18n.t('home.freeSpots', { count })}</Text>
+      <Text style={styles.count}>
+        <Text style={[typography.countNumber, { color: colors.ink }]}>{count}</Text>
+        <Text style={[typography.countLabel, { color: colors.muted }]}> {i18n.t('home.freeSpotsLabel', { count })}</Text>
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.small },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.small, flexShrink: 0 },
   indicator: { width: INDICATOR_SIZE, height: INDICATOR_SIZE },
+  count: { textAlign: 'right' },
 });
