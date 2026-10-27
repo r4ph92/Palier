@@ -37,7 +37,7 @@ ligne par choix ; la raison suit le tiret.
 - Tables `gate`, `gate_device_key` et `gate_passage` (migration `0001`) ; clés hachées et passage en une seule instruction SQL : voir `docs/decisions/004`.
 - `gate.qr_secret` est nullable tant que les QR signés (#36) n'existent pas ; `integration_kind` gagne `SIMULATED` (D5). Entrée Roy est en `DRY_CONTACT`, non vérifiée.
 - Une barrière sans boucles (`has_loops = false`) refuse les passages (409) ; les trois barrières semées en ont.
-- Erreurs des routes de barrière : `{ statusCode, error, message }` avec `error` = code machine (`DEVICE_KEY_REFUSED`, `GATE_FORBIDDEN`, `GATE_WITHOUT_LOOPS`, `CLOSED_AT_IN_FUTURE`).
+- Erreurs des routes de barrière : `{ statusCode, error, message }` avec `error` = code machine (`DEVICE_KEY_REFUSED`, `GATE_FORBIDDEN`, `GATE_WITHOUT_LOOPS`, `CLOSED_AT_INVALID`, `CLOSED_AT_IN_FUTURE`).
 - `DEMO_MODE` (`true`/`false`, faux par défaut) n'est pas refusé sous `NODE_ENV=production` (D13 tel qu'écrit : une démo hébergée peut tourner ainsi) ; le serveur journalise un avertissement au démarrage.
 - Pas de limitation de débit sur les routes de barrière pour le prototype.
 

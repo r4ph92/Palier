@@ -5,6 +5,7 @@ import { handleServerError } from '../handleServerError.ts';
 const STATUS_BY_REASON: Record<PassageRefusalReason, number> = {
   GATE_FORBIDDEN: 403,
   GATE_WITHOUT_LOOPS: 409,
+  CLOSED_AT_INVALID: 400,
   CLOSED_AT_IN_FUTURE: 400,
 };
 

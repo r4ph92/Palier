@@ -99,6 +99,16 @@ describe('recordPassage', () => {
     expect(ledger.entries).toEqual([]);
   });
 
+  it.each([
+    ['an invalid date', new Date('2025-12-31T23:59:60Z')],
+    ['year 0000', new Date('0000-06-01T12:00:00Z')],
+  ])('refuses %s before the ledger runs', async (_case, closedAt) => {
+    const ledger = new FakePassageLedger(0);
+
+    await expect(recordPassage(entryAt(closedAt), { ledger, clock })).rejects.toMatchObject({ reason: 'CLOSED_AT_INVALID' });
+    expect(ledger.entries).toEqual([]);
+  });
+
   it('accepts a loop closed exactly 5 minutes ahead of the server clock', async () => {
     const ledger = new FakePassageLedger(0);
     const closedAt = new Date(now.getTime() + 5 * 60 * 1000);
