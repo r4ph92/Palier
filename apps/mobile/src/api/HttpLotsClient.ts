@@ -21,23 +21,37 @@ export class HttpLotsClient implements LotsClient {
     this.#timeoutMilliseconds = options.timeoutMilliseconds ?? DEFAULT_TIMEOUT_MILLISECONDS;
   }
 
-  async listLots(): Promise<LotListResponse> {
-    const response = await this.#get('/v1/lots');
-    if (!response.ok) {
-      throw new PalierUnreachableError(`HTTP ${response.status}`);
-    }
-    return parseLotList(await this.#readJson(response));
+  listLots(): Promise<LotListResponse> {
+    return this.#withinTimeout(async (signal) => {
+      const response = await this.#get('/v1/lots', signal);
+      if (!response.ok) {
+        throw new PalierUnreachableError(`HTTP ${response.status}`);
+      }
+      return parseLotList(await this.#readJson(response));
+    });
   }
 
-  async #get(path: string): Promise<Response> {
+  async #withinTimeout<Result>(request: (signal: AbortSignal) => Promise<Result>): Promise<Result> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.#timeoutMilliseconds);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<never>((_resolve, reject) => {
+      timeout = setTimeout(() => {
+        controller.abort();
+        reject(new PalierUnreachableError(`no complete answer within ${this.#timeoutMilliseconds} ms`));
+      }, this.#timeoutMilliseconds);
+    });
     try {
-      return await this.#fetchFunction(`${this.#baseUrl}${path}`, { signal: controller.signal });
-    } catch (error) {
-      throw new PalierUnreachableError(error instanceof Error ? error.message : 'network error');
+      return await Promise.race([request(controller.signal), timedOut]);
     } finally {
       clearTimeout(timeout);
+    }
+  }
+
+  async #get(path: string, signal: AbortSignal): Promise<Response> {
+    try {
+      return await this.#fetchFunction(`${this.#baseUrl}${path}`, { signal });
+    } catch (error) {
+      throw new PalierUnreachableError(error instanceof Error ? error.message : 'network error');
     }
   }
 
