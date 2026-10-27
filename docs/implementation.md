@@ -28,6 +28,8 @@ ligne par choix ; la raison suit le tiret.
 ## API
 
 - `GET /v1/lots` sans authentification pour l'instant (#29 ajoutera le jeton) ; réponse `[{ id, name, freeSpots }]` des parkings en ligne, triés par nom, filtrée par un schéma de réponse Fastify.
+- La liste est bornée à 50 parkings (`ONLINE_LOTS_LIMIT`) — sans distance ni pagination, une liste non bornée grossirait avec chaque opérateur ; #5 remplacera ce tri par la distance et revisitera la borne.
+- Toute erreur 5xx renvoie un corps générique (`Internal Server Error`) ; le détail (SQL compris) ne va qu'au journal du serveur.
 - Le nombre affiché passe par une seule fonction, `domain/occupancy/freeSpotCount` ; #11 y ajoutera `min(capacité − véhicules, places libres)` (Q35, D6).
 
 ## App

@@ -4,6 +4,8 @@ import type { LotAvailability } from '../../domain/occupancy/LotAvailability.ts'
 import type { Database } from './database.ts';
 import { parkingLot, spot } from './schema.ts';
 
+export const ONLINE_LOTS_LIMIT = 50;
+
 export class PostgresLotAvailabilityRepository implements LotAvailabilityRepository {
   readonly #database: Database;
 
@@ -24,6 +26,7 @@ export class PostgresLotAvailabilityRepository implements LotAvailabilityReposit
       .leftJoin(spot, eq(spot.lotId, parkingLot.id))
       .where(eq(parkingLot.isOnline, true))
       .groupBy(parkingLot.id)
-      .orderBy(asc(parkingLot.name));
+      .orderBy(asc(parkingLot.name))
+      .limit(ONLINE_LOTS_LIMIT);
   }
 }
