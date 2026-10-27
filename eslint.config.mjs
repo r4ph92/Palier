@@ -1,4 +1,5 @@
 import eslint from '@eslint/js';
+import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -17,6 +18,10 @@ export default tseslint.config(
       complexity: ['error', 10],
       'max-lines': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
     },
+  },
+  {
+    files: ['apps/mobile/**/*.{ts,tsx}'],
+    ...reactHooks.configs.flat['recommended-latest'],
   },
   {
     files: ['**/test/**', '**/*.test.ts', '**/*.test.tsx'],
