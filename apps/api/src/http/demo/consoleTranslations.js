@@ -26,6 +26,7 @@ export const translations = {
     gateForbidden: 'Accès refusé pour cette barrière',
     gateWithoutLoops: 'Cette barrière n’a pas de boucles.',
     passageFailed: 'Palier n’a pas enregistré le passage. Réessayez.',
+    passageUnconfirmed: 'Palier n’a pas confirmé le passage : le compte a peut-être changé.',
     unreachable: 'Impossible de joindre Palier.',
   },
   en: {
@@ -55,6 +56,7 @@ export const translations = {
     gateForbidden: 'Access denied for this gate',
     gateWithoutLoops: 'This gate has no loops.',
     passageFailed: 'Palier did not record the passage. Try again.',
+    passageUnconfirmed: 'Palier did not confirm the passage: the count may have changed.',
     unreachable: 'Can’t reach Palier.',
   },
 };

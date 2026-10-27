@@ -28,6 +28,7 @@ import { translations } from './consoleTranslations.js';
 export { translations };
 
 const OK = 200;
+const DEVICE_KEY_SHAPE = /^[A-Za-z0-9_-]{43}$/;
 const HOURS_PER_HALF_DAY = 12;
 const NO_BREAK_SPACE = ' ';
 
@@ -95,6 +96,9 @@ export function isLoopEnabled(loop, state) {
  * @returns {Promise<PressOutcome>}
  */
 export async function pressLoop(press, api) {
+  if (!DEVICE_KEY_SHAPE.test(press.deviceKey)) {
+    return { kind: 'refused', identity: null, messageKey: 'keyRefused' };
+  }
   const identityOrRefusal = press.identity ?? (await identify(press.deviceKey, api));
   if ('messageKey' in identityOrRefusal) {
     return identityOrRefusal;
@@ -104,10 +108,18 @@ export async function pressLoop(press, api) {
     return { kind: 'wrongLoop', identity };
   }
   const response = await api.postPassage(press.deviceKey, identity.id, press.pressedAt.toISOString());
-  if (response.status !== OK) {
-    return { kind: 'refused', identity, messageKey: messageForStatus(response.status) };
+  if (response.status !== OK || response.body === null) {
+    return { kind: 'refused', identity, messageKey: passageRefusal(response.status) };
   }
   return { kind: 'recorded', identity, passage: /** @type {GatePassageResponse} */ (response.body) };
+}
+
+/**
+ * @param {number} status
+ * @returns {TextKey}
+ */
+function passageRefusal(status) {
+  return status === OK ? 'passageUnconfirmed' : messageForStatus(status);
 }
 
 /**
@@ -117,7 +129,7 @@ export async function pressLoop(press, api) {
  */
 async function identify(deviceKey, api) {
   const response = await api.fetchIdentity(deviceKey);
-  if (response.status !== OK) {
+  if (response.status !== OK || response.body === null) {
     return { kind: 'refused', identity: null, messageKey: messageForStatus(response.status) };
   }
   return /** @type {GateIdentity} */ (response.body);
@@ -154,11 +166,21 @@ function authorization(deviceKey) {
  * @returns {Promise<ApiResponse>}
  */
 async function request(fetchFunction, url, init) {
-  try {
-    const response = await fetchFunction(url, { ...init, cache: 'no-store', credentials: 'omit' });
-    const body = response.ok ? await response.json() : null;
-    return { status: response.status, body };
-  } catch {
+  const response = await fetchFunction(url, { ...init, cache: 'no-store', credentials: 'omit' }).catch(() => null);
+  if (response === null) {
     return { status: 0, body: null };
+  }
+  return { status: response.status, body: response.ok ? await readJson(response) : null };
+}
+
+/**
+ * @param {Response} response
+ * @returns {Promise<unknown>}
+ */
+async function readJson(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
   }
 }

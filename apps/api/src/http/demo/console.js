@@ -108,10 +108,13 @@ async function onLoopPressed(loop) {
     return;
   }
   state.isSending = true;
-  const press = { loop, deviceKey: state.deviceKey, identity: state.identity, pressedAt: new Date() };
-  applyOutcome(await pressLoop(press, api));
-  state.isSending = false;
-  render();
+  try {
+    const press = { loop, deviceKey: state.deviceKey, identity: state.identity, pressedAt: new Date() };
+    applyOutcome(await pressLoop(press, api));
+  } finally {
+    state.isSending = false;
+    render();
+  }
 }
 
 deviceKeyInput.addEventListener('input', () => {

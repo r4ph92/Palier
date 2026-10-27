@@ -118,7 +118,7 @@ describe('pressLoop', () => {
   it('shows the refused key and posts nothing when the key is refused', async () => {
     const api = fakeApi({ status: 401, body: null });
 
-    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: 'wrong', identity: null, pressedAt }, api);
+    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: null, pressedAt }, api);
 
     expect(outcome).toEqual({ kind: 'refused', identity: null, messageKey: 'keyRefused' });
     expect(api.postPassage).not.toHaveBeenCalled();
@@ -131,6 +131,23 @@ describe('pressLoop', () => {
 
     expect(outcome).toEqual({ kind: 'wrongLoop', identity: entreeDemo });
     expect(api.postPassage).not.toHaveBeenCalled();
+  });
+
+  it('refuses a key that cannot be a device key without calling the API', async () => {
+    const api = fakeApi({ status: 200, body: entreeDemo });
+
+    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: 'too-short', identity: null, pressedAt }, api);
+
+    expect(outcome).toEqual({ kind: 'refused', identity: null, messageKey: 'keyRefused' });
+    expect(api.fetchIdentity).not.toHaveBeenCalled();
+  });
+
+  it('warns that the count may have changed when the passage answer cannot be read', async () => {
+    const api = fakeApi({ status: 200, body: entreeDemo }, { status: 200, body: null });
+
+    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: entreeDemo, pressedAt }, api);
+
+    expect(outcome).toEqual({ kind: 'refused', identity: entreeDemo, messageKey: 'passageUnconfirmed' });
   });
 
   it('shows the refused key when the key is revoked between identification and passage', async () => {
@@ -162,6 +179,12 @@ describe('createGateApi', () => {
     const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
 
     expect(await createGateApi(fetchFunction).fetchIdentity(DEVICE_KEY)).toEqual({ status: 401, body: null });
+  });
+
+  it('reports no body when a success answer is not JSON', async () => {
+    const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(new Response('<html>proxy</html>', { status: 200 }));
+
+    expect(await createGateApi(fetchFunction).fetchIdentity(DEVICE_KEY)).toEqual({ status: 200, body: null });
   });
 
   it('reports status 0 when the API cannot be reached', async () => {
