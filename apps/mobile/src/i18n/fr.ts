@@ -10,6 +10,8 @@ export const fr = {
       one: 'place libre',
       other: 'places libres',
     },
+    full: 'Complet',
+    fullAccessibilityLabel: 'Complet, 0 place libre',
     loading: 'Chargement des stationnements',
     empty: 'Aucun stationnement en ligne.',
     emptyHint: 'Tirez vers le bas pour actualiser.',

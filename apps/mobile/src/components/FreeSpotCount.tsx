@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
 import { useIsLargeText } from '../theme/useIsLargeText';
@@ -12,6 +12,15 @@ interface FreeSpotCountProps {
   readonly count: number;
 }
 
+interface CountTextProps {
+  readonly count: number;
+  readonly style: TextStyle;
+}
+
+interface FullTextProps {
+  readonly style: TextStyle;
+}
+
 export function FreeSpotCount({ count }: FreeSpotCountProps) {
   const colors = useColors();
   const indicatorColor = count > 0 ? colors.free : colors.danger;
@@ -19,14 +28,30 @@ export function FreeSpotCount({ count }: FreeSpotCountProps) {
   return (
     <View style={[styles.row, layout.row]}>
       <View style={[styles.indicator, { backgroundColor: indicatorColor }]} />
-      <Text style={layout.count}>
-        <Text style={[typography.countNumber, { color: colors.ink }]}>{count}</Text>
-        <Text style={[typography.countLabel, { color: colors.muted }]}>
-          {NO_BREAK_SPACE}
-          {i18n.t('home.freeSpotsLabel', { count })}
-        </Text>
-      </Text>
+      {count > 0 ? <CountText count={count} style={layout.count} /> : <FullText style={layout.count} />}
     </View>
+  );
+}
+
+function CountText({ count, style }: CountTextProps) {
+  const colors = useColors();
+  return (
+    <Text style={style}>
+      <Text style={[typography.countNumber, { color: colors.ink }]}>{count}</Text>
+      <Text style={[typography.countLabel, { color: colors.muted }]}>
+        {NO_BREAK_SPACE}
+        {i18n.t('home.freeSpotsLabel', { count })}
+      </Text>
+    </Text>
+  );
+}
+
+function FullText({ style }: FullTextProps) {
+  const colors = useColors();
+  return (
+    <Text style={[style, typography.countState, { color: colors.ink }]} accessibilityLabel={i18n.t('home.fullAccessibilityLabel')}>
+      {i18n.t('home.full')}
+    </Text>
   );
 }
 
