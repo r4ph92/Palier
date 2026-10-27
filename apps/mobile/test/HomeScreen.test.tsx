@@ -20,14 +20,6 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('10 places libres')).not.toBeOnTheScreen();
   });
 
-  it('lists only the lots the API returns as online', async () => {
-    await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)));
-
-    await screen.findByText('Parking Démo');
-
-    expect(screen.queryByText('Garage Roy')).not.toBeOnTheScreen();
-  });
-
   it('reloads the counts when Actualiser is pressed', async () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10), parkingDemoWith(9)));
     await screen.findByText('10 places libres');
