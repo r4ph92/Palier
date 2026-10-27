@@ -2,6 +2,7 @@ export interface ServerEnvironment {
   readonly databaseUrl: string;
   readonly host: string;
   readonly port: number;
+  readonly demoMode: boolean;
 }
 
 const DEFAULT_HOST = '127.0.0.1';
@@ -20,6 +21,7 @@ export function readServerEnvironment(variables: NodeJS.ProcessEnv): ServerEnvir
     databaseUrl: readDatabaseUrl(variables),
     host: variables['HOST'] ?? DEFAULT_HOST,
     port: readPort(variables['PORT']),
+    demoMode: readDemoMode(variables['DEMO_MODE']),
   };
 }
 
@@ -32,4 +34,14 @@ function readPort(rawPort: string | undefined): number {
     throw new Error(`PORT must be a positive integer, got "${rawPort}".`);
   }
   return port;
+}
+
+function readDemoMode(rawDemoMode: string | undefined): boolean {
+  if (rawDemoMode === undefined || rawDemoMode === 'false') {
+    return false;
+  }
+  if (rawDemoMode === 'true') {
+    return true;
+  }
+  throw new Error(`DEMO_MODE must be "true" or "false", got "${rawDemoMode}".`);
 }

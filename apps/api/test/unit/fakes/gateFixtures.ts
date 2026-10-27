@@ -3,10 +3,10 @@ import type { DeviceKeyRecord, GateDeviceKeyRepository } from '../../../src/doma
 import { hashDeviceKey } from '../../../src/domain/gates/hashDeviceKey.ts';
 import type { PassageEntry, PassageLedger, RecordedPassage } from '../../../src/domain/gates/PassageLedger.ts';
 
-export const ENTREE_DEMO_KEY = 'entree-demo-key-aaaaaaaaaaaaaaaaaaaaaaaaaaa';
-export const SORTIE_DEMO_KEY = 'sortie-demo-key-aaaaaaaaaaaaaaaaaaaaaaaaaaa';
-export const REVOKED_KEY = 'revoked-demo-key-aaaaaaaaaaaaaaaaaaaaaaaaaa';
-export const UNKNOWN_KEY = 'unknown-demo-key-aaaaaaaaaaaaaaaaaaaaaaaaaa';
+export const ENTREE_DEMO_KEY = 'entreeDemoKey000000000000000000000000000000';
+export const SORTIE_DEMO_KEY = 'sortieDemoKey000000000000000000000000000000';
+export const REVOKED_KEY = 'revokedDemoKey00000000000000000000000000000';
+export const UNKNOWN_KEY = 'unknownDemoKey00000000000000000000000000000';
 
 export const entreeDemo: AuthenticatedGate = {
   id: '00000000-0000-4000-8000-000000000501',

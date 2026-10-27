@@ -1,5 +1,6 @@
 import type { LotSummary } from '@palier/shared-types';
 import type { FromSchema } from 'json-schema-to-ts';
+import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
 
 export const lotListResponseSchema = {
   type: 'array',
@@ -16,7 +17,5 @@ export const lotListResponseSchema = {
 } as const;
 
 type SchemaLot = FromSchema<typeof lotListResponseSchema>[number];
-type MutuallyAssignable<Left, Right> = [Left] extends [Right] ? ([Right] extends [Left] ? true : false) : false;
-type AssertTrue<Condition extends true> = Condition;
 
 export type ResponseSchemaMatchesLotSummary = AssertTrue<MutuallyAssignable<SchemaLot, LotSummary>>;

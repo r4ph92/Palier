@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import type { LotAvailabilityRepository } from '../../src/domain/lots/LotAvailabilityRepository.ts';
 import type { LotAvailability } from '../../src/domain/occupancy/LotAvailability.ts';
 import { buildServer } from '../../src/http/buildServer.ts';
+import { serverDependencies } from './fakes/serverDependencies.ts';
 
 const parkingDemo: LotAvailability = {
   id: '00000000-0000-4000-8000-000000000201',
@@ -22,7 +23,7 @@ describe('GET /v1/lots', () => {
   afterEach(() => server.close());
 
   it('lists each online lot with its free spot count', async () => {
-    server = buildServer({ lotAvailabilityRepository: repositoryReturning([parkingDemo]) });
+    server = buildServer(serverDependencies({ lotAvailabilityRepository: repositoryReturning([parkingDemo]) }));
 
     const response = await server.inject({ method: 'GET', url: '/v1/lots' });
 
@@ -31,7 +32,7 @@ describe('GET /v1/lots', () => {
   });
 
   it('exposes only the id, name and free spot count', async () => {
-    server = buildServer({ lotAvailabilityRepository: repositoryReturning([parkingDemo]) });
+    server = buildServer(serverDependencies({ lotAvailabilityRepository: repositoryReturning([parkingDemo]) }));
 
     const response = await server.inject({ method: 'GET', url: '/v1/lots' });
 
@@ -39,7 +40,7 @@ describe('GET /v1/lots', () => {
   });
 
   it('returns an empty list when no lot is online', async () => {
-    server = buildServer({ lotAvailabilityRepository: repositoryReturning([]) });
+    server = buildServer(serverDependencies({ lotAvailabilityRepository: repositoryReturning([]) }));
 
     const response = await server.inject({ method: 'GET', url: '/v1/lots' });
 
@@ -47,7 +48,7 @@ describe('GET /v1/lots', () => {
   });
 
   it('answers 500 when the repository fails', async () => {
-    server = buildServer({ lotAvailabilityRepository: { findOnlineLots: () => Promise.reject(new Error('down')) } });
+    server = buildServer(serverDependencies({ lotAvailabilityRepository: { findOnlineLots: () => Promise.reject(new Error('down')) } }));
 
     const response = await server.inject({ method: 'GET', url: '/v1/lots' });
 
