@@ -8,3 +8,15 @@ tools/_scoped.css
 tools/_articles.html
 .claude/
 tools/out/remise.html
+
+# application
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+apps/mobile/.expo/
+apps/mobile/ios/
+apps/mobile/android/
+*.tsbuildinfo
