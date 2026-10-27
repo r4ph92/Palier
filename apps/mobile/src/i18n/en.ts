@@ -1,6 +1,10 @@
 import type { Translations } from './fr';
 
 export const en: Translations = {
+  app: {
+    crashed: 'Something unexpected went wrong.',
+    crashedHint: 'Close and reopen Palier.',
+  },
   home: {
     updatedAt: 'Updated %{time}',
     title: 'Parking lots',

@@ -1,4 +1,8 @@
 export const fr = {
+  app: {
+    crashed: 'Une erreur inattendue est survenue.',
+    crashedHint: 'Fermez puis rouvrez Palier.',
+  },
   home: {
     updatedAt: 'Mis à jour à %{time}',
     title: 'Stationnements',

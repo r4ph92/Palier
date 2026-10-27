@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HttpLotsClient } from './api/HttpLotsClient';
 import { LotsClientProvider } from './api/LotsClientContext';
+import { AppErrorBoundary } from './components/AppErrorBoundary';
 import { applyLanguage, deviceLanguage } from './i18n/i18n';
 import { HomeScreen } from './screens/HomeScreen';
 import { fontAssets } from './theme/fonts';
@@ -19,10 +20,12 @@ export function App() {
   }
   return (
     <SafeAreaProvider>
-      <LotsClientProvider client={lotsClient}>
-        <StatusBar style="auto" />
-        <HomeScreen />
-      </LotsClientProvider>
+      <StatusBar style="auto" />
+      <AppErrorBoundary>
+        <LotsClientProvider client={lotsClient}>
+          <HomeScreen />
+        </LotsClientProvider>
+      </AppErrorBoundary>
     </SafeAreaProvider>
   );
 }

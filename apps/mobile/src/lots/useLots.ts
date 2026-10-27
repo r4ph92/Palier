@@ -13,6 +13,7 @@ export interface LotsController {
 
 export function useLots(client: LotsClient): LotsController {
   const [model, dispatch] = useReducer(lotsReducer, initialLotsModel);
+  // An error rejected in an async callback bypasses error boundaries; throwing from a state updater re-raises it during render.
   const [, rethrowDuringRender] = useState<never>();
 
   useEffect(() => {
