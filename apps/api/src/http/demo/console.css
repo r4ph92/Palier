@@ -177,7 +177,7 @@ button:focus-visible,
   background: var(--free);
 }
 
-.message-error::before {
+.message.message-error:not(:empty)::before {
   background: var(--danger);
 }
 
