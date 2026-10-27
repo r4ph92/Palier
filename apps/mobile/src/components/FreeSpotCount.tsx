@@ -25,7 +25,7 @@ export function FreeSpotCount({ count }: FreeSpotCountProps) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.small, flexShrink: 0 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.small, flexShrink: 1 },
   indicator: { width: INDICATOR_SIZE, height: INDICATOR_SIZE },
   count: { textAlign: 'right' },
 });
