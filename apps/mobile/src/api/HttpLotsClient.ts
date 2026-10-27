@@ -1,5 +1,5 @@
 import type { LotListResponse } from '@palier/shared-types';
-import { PalierUnreachableError, type LotsClient } from './LotsClient';
+import { PalierStatusError, PalierUnreachableError, type LotsClient } from './LotsClient';
 import { parseLotList } from './parseLotList';
 
 const DEFAULT_TIMEOUT_MILLISECONDS = 8000;
@@ -25,7 +25,7 @@ export class HttpLotsClient implements LotsClient {
     return this.#withinTimeout(async (signal) => {
       const response = await this.#get('/v1/lots', signal);
       if (!response.ok) {
-        throw new PalierUnreachableError(`HTTP ${response.status}`);
+        throw new PalierStatusError(response.status);
       }
       return parseLotList(await this.#readJson(response));
     });
@@ -51,15 +51,15 @@ export class HttpLotsClient implements LotsClient {
     try {
       return await this.#fetchFunction(`${this.#baseUrl}${path}`, { signal });
     } catch (error) {
-      throw new PalierUnreachableError(error instanceof Error ? error.message : 'network error');
+      throw new PalierUnreachableError('network error', { cause: error });
     }
   }
 
   async #readJson(response: Response): Promise<unknown> {
     try {
       return await response.json();
-    } catch {
-      throw new PalierUnreachableError('response body is not JSON');
+    } catch (error) {
+      throw new PalierUnreachableError('response body is not JSON', { cause: error });
     }
   }
 }

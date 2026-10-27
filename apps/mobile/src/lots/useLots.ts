@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useReducer } from 'react';
-import type { LotsClient } from '../api/LotsClient';
+import { useCallback, useEffect, useReducer, useState } from 'react';
+import { PalierUnreachableError, type LotsClient } from '../api/LotsClient';
 import { initialLotsModel, lotsReducer, type LotsState } from './lotsReducer';
 
 export type { LotsState } from './lotsReducer';
@@ -13,14 +13,17 @@ export interface LotsController {
 
 export function useLots(client: LotsClient): LotsController {
   const [model, dispatch] = useReducer(lotsReducer, initialLotsModel);
+  const [, rethrowDuringRender] = useState<never>();
 
   useEffect(() => {
     let isLatestRequest = true;
-    void fetchLotsState(client).then((state) => {
-      if (isLatestRequest) {
-        dispatch({ type: 'settled', state });
-      }
-    });
+    fetchLotsState(client).then(
+      (state) => isLatestRequest && dispatch({ type: 'settled', state }),
+      (error: unknown) =>
+        rethrowDuringRender(() => {
+          throw error;
+        }),
+    );
     return () => {
       isLatestRequest = false;
     };
@@ -35,7 +38,10 @@ async function fetchLotsState(client: LotsClient): Promise<LotsState> {
   try {
     const lots = await client.listLots();
     return { status: 'loaded', lots, updatedAt: new Date() };
-  } catch {
-    return { status: 'error' };
+  } catch (error) {
+    if (error instanceof PalierUnreachableError) {
+      return { status: 'error' };
+    }
+    throw error;
   }
 }

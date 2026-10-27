@@ -5,8 +5,18 @@ export interface LotsClient {
 }
 
 export class PalierUnreachableError extends Error {
-  constructor(reason: string) {
-    super(`Palier API unreachable: ${reason}`);
+  constructor(reason: string, options?: ErrorOptions) {
+    super(`Palier API unreachable: ${reason}`, options);
     this.name = 'PalierUnreachableError';
+  }
+}
+
+export class PalierStatusError extends PalierUnreachableError {
+  readonly status: number;
+
+  constructor(status: number) {
+    super(`HTTP ${status}`);
+    this.name = 'PalierStatusError';
+    this.status = status;
   }
 }

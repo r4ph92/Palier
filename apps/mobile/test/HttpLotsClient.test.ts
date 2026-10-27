@@ -1,5 +1,5 @@
 import { HttpLotsClient } from '../src/api/HttpLotsClient';
-import { PalierUnreachableError } from '../src/api/LotsClient';
+import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 
 const BASE_URL = 'http://localhost:3000';
 const parkingDemo = { id: 'lot-1', name: 'Parking Démo', freeSpots: 10 };
@@ -21,14 +21,18 @@ describe('HttpLotsClient', () => {
     expect(fetchFunction).toHaveBeenCalledWith(`${BASE_URL}/v1/lots`, expect.anything());
   });
 
-  it('treats a network failure as unreachable', async () => {
-    const client = clientAnswering(Promise.reject(new TypeError('Network request failed')));
+  it('treats a network failure as unreachable and keeps its cause', async () => {
+    const networkFailure = new TypeError('Network request failed');
+    const client = clientAnswering(Promise.reject(networkFailure));
 
-    await expect(client.listLots()).rejects.toBeInstanceOf(PalierUnreachableError);
+    await expect(client.listLots()).rejects.toMatchObject({ name: 'PalierUnreachableError', cause: networkFailure });
   });
 
-  it('treats a non-2xx status as unreachable', async () => {
-    await expect(clientAnswering(jsonResponse({}, 503)).listLots()).rejects.toBeInstanceOf(PalierUnreachableError);
+  it('reports a non-2xx answer as a status error carrying the status', async () => {
+    const failure = clientAnswering(jsonResponse({}, 503)).listLots();
+
+    await expect(failure).rejects.toBeInstanceOf(PalierStatusError);
+    await expect(failure).rejects.toMatchObject({ status: 503 });
   });
 
   it('treats a body that is not JSON as unreachable', async () => {
