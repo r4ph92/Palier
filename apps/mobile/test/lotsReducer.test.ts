@@ -9,6 +9,12 @@ describe('lotsReducer', () => {
     expect(refreshing).toEqual({ state: loadedModel.state, isRefreshing: true, requestNumber: 1 });
   });
 
+  it('ignores a refresh while another one is in flight', () => {
+    const refreshing = lotsReducer(loadedModel, { type: 'refreshRequested' });
+
+    expect(lotsReducer(refreshing, { type: 'refreshRequested' })).toBe(refreshing);
+  });
+
   it('goes back to loading on retry', () => {
     const errorModel = lotsReducer(initialLotsModel, { type: 'settled', state: { status: 'error' } });
 

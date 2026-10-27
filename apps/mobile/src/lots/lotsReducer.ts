@@ -21,7 +21,7 @@ export const initialLotsModel: LotsModel = { state: { status: 'loading' }, isRef
 export function lotsReducer(model: LotsModel, action: LotsAction): LotsModel {
   switch (action.type) {
     case 'refreshRequested':
-      return { ...model, isRefreshing: true, requestNumber: model.requestNumber + 1 };
+      return model.isRefreshing ? model : { ...model, isRefreshing: true, requestNumber: model.requestNumber + 1 };
     case 'retryRequested':
       return { ...model, state: { status: 'loading' }, requestNumber: model.requestNumber + 1 };
     case 'settled':
