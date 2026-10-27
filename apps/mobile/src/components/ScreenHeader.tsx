@@ -3,6 +3,8 @@ import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
+const TITLE_MAX_FONT_SCALE = 1.4;
+
 interface ScreenHeaderProps {
   readonly eyebrow: string;
   readonly title: string;
@@ -13,7 +15,11 @@ export function ScreenHeader({ eyebrow, title }: ScreenHeaderProps) {
   return (
     <View style={[styles.header, { borderBottomColor: colors.ink }]}>
       <Text style={[typography.eyebrow, { color: colors.muted }]}>{eyebrow}</Text>
-      <Text accessibilityRole="header" style={[typography.title, { color: colors.ink }]}>
+      <Text
+        accessibilityRole="header"
+        maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
+        style={[typography.title, { color: colors.ink }]}
+      >
         {title}
       </Text>
     </View>
