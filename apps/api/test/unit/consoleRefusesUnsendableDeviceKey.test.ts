@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createGateApi } from '../../src/http/demo/gateApi.js';
 import { pressLoop } from '../../src/http/demo/loopPress.js';
 
@@ -19,6 +19,17 @@ describe('demo console with a wrong key the browser cannot put in a header', () 
 
     expect(outcome).toMatchObject({ kind: 'refused', messageKey: 'keyRefused' });
   });
+
+  it.each(['clé-🚗', `${'a'.repeat(42)}é`, `${'a'.repeat(42)}—`])(
+    'sends no network request at all for the unsendable key %s',
+    async (deviceKey) => {
+      const fetchFunction = vi.fn(fetchThatValidatesHeadersLikeABrowser());
+
+      await pressLoop({ loop: 'EXIT', deviceKey, identity: null, pressedAt: new Date() }, createGateApi(fetchFunction));
+
+      expect(fetchFunction).not.toHaveBeenCalled();
+    },
+  );
 
   it('still reaches the API for a wrong key made of plain characters', async () => {
     const api = createGateApi(fetchThatValidatesHeadersLikeABrowser());
