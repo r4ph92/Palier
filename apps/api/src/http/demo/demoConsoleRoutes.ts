@@ -4,7 +4,7 @@ import { DEMO_ASSETS, demoAssetUrl } from './demoAssets.ts';
 
 export const DEMO_SECURITY_HEADERS = {
   'content-security-policy':
-    "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+    "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'no-referrer',
   'cache-control': 'no-store',

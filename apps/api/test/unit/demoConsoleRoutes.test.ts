@@ -30,14 +30,35 @@ describe('demo console', () => {
     expect(response.statusCode).toBe(404);
   });
 
-  it('lets the page load scripts, styles and data only from itself', () => {
+  it('lets the page load scripts, styles, fonts and data only from itself', () => {
     expect(DEMO_SECURITY_HEADERS['content-security-policy']).toBe(
-      "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
     );
   });
 
-  it('serves the page and its scripts', () => {
-    expect(CONSOLE_ASSETS.map(([url]) => url)).toEqual(expect.arrayContaining(['/demo/console', '/demo/console.js']));
+  it('serves the page, its scripts and the fonts of the design direction', () => {
+    expect(CONSOLE_ASSETS.map(([url]) => url)).toEqual(
+      expect.arrayContaining([
+        '/demo/console',
+        '/demo/console.js',
+        '/demo/Archivo_400Regular.ttf',
+        '/demo/Archivo_600SemiBold.ttf',
+        '/demo/IBMPlexMono_400Regular.ttf',
+        '/demo/IBMPlexMono_500Medium.ttf',
+      ]),
+    );
+  });
+
+  it('declares in the stylesheet every font it serves', async () => {
+    server = buildServer(serverDependencies({ demoMode: true }));
+
+    const stylesheet = (await server.inject({ method: 'GET', url: '/demo/console.css' })).body;
+    const fontUrls = CONSOLE_ASSETS.filter(([, contentType]) => contentType === 'font/ttf').map(([url]) => url);
+
+    expect(fontUrls).toHaveLength(4);
+    for (const fontUrl of fontUrls) {
+      expect(stylesheet).toContain(`url('${fontUrl}')`);
+    }
   });
 
   it('has no inline script or style that the policy would block', async () => {

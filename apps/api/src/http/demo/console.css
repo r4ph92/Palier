@@ -1,3 +1,35 @@
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/demo/Archivo_400Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/demo/Archivo_600SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/demo/IBMPlexMono_400Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/demo/IBMPlexMono_500Medium.ttf') format('truetype');
+}
+
 :root {
   --canvas: #f8f9f6;
   --sunken: #e4e6e0;
