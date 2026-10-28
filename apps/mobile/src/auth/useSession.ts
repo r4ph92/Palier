@@ -1,4 +1,5 @@
-import type { DriverProfile } from '@palier/shared-types';
+import type { CurrentDriver } from '@palier/shared-types';
+import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { PalierUnauthorizedError, type AuthClient } from '../api/AuthClient';
 import { PalierUnreachableError } from '../api/LotsClient';
@@ -8,11 +9,12 @@ export type SessionState =
   | { readonly status: 'restoring' }
   | { readonly status: 'unreachable' }
   | { readonly status: 'signedOut' }
-  | { readonly status: 'signedIn'; readonly token: string; readonly driver: DriverProfile };
+  | { readonly status: 'signedIn'; readonly token: string; readonly driver: CurrentDriver };
 
 export interface SessionController {
   readonly state: SessionState;
   signIn(driverId: string): Promise<void>;
+  acceptNotice(): Promise<void>;
   signOut(): void;
   expire(): void;
   retry(): void;
@@ -34,14 +36,26 @@ export function useSession(authClient: AuthClient, tokenStore: TokenStore): Sess
     }
     expire();
   }, [authClient, state, expire]);
-  return { state, signIn, signOut, expire, retry };
+  const acceptNotice = useAcceptNotice(authClient, state, setState);
+  return { state, signIn, acceptNotice, signOut, expire, retry };
+}
+
+function useAcceptNotice(authClient: AuthClient, state: SessionState, setState: Dispatch<SetStateAction<SessionState>>) {
+  return useCallback(async () => {
+    if (state.status !== 'signedIn') {
+      return;
+    }
+    await authClient.acceptNotice(state.token, PRIVACY_NOTICE_VERSION);
+    setState({ ...state, driver: { ...state.driver, acceptedNoticeVersion: PRIVACY_NOTICE_VERSION } });
+  }, [authClient, state, setState]);
 }
 
 function useSignIn(authClient: AuthClient, tokenStore: TokenStore, setState: Dispatch<SetStateAction<SessionState>>) {
   return useCallback(
     async (driverId: string) => {
-      const { token, driver } = await authClient.signInAsTestDriver(driverId);
+      const { token } = await authClient.signInAsTestDriver(driverId);
       await tokenStore.save(token);
+      const driver = await authClient.fetchMe(token);
       setState({ status: 'signedIn', token, driver });
     },
     [authClient, tokenStore, setState],
