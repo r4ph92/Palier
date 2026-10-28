@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { julie, marc, FakeDriverRepository } from './fakeDriverRepository.ts';
 
@@ -27,7 +28,9 @@ describe('test sign-in when enabled', () => {
 
     const signIn = await server.inject({ method: 'POST', url: '/v1/test/sign-in', payload: { driverId: julie.id } });
     const { token, driver } = signIn.json<{ token: string; driver: object }>();
-    const lots = await server.inject({ method: 'GET', url: '/v1/lots', headers: { authorization: `Bearer ${token}` } });
+    const authorization = { authorization: `Bearer ${token}` };
+    await server.inject({ method: 'POST', url: '/v1/consent', headers: authorization, payload: { noticeVersion: PRIVACY_NOTICE_VERSION } });
+    const lots = await server.inject({ method: 'GET', url: '/v1/lots', headers: authorization });
 
     expect(signIn.statusCode).toBe(200);
     expect(driver).toEqual({ id: julie.id, firstName: 'Julie' });

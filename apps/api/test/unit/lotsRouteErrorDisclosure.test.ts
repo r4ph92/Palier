@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
-import { authorizationFor, FakeDriverRepository, julie } from './fakeDriverRepository.ts';
+import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie } from './fakeDriverRepository.ts';
 
 const DATABASE_ERROR_MESSAGE =
   'Failed query: select "parking_lot"."id" from "parking_lot" where "parking_lot"."is_online" = $1\nparams: true';
@@ -18,6 +18,7 @@ describe('GET /v1/lots when the database fails', () => {
       driverRepository,
     });
 
+    await acceptNoticeAs(driverRepository, julie);
     const headers = await authorizationFor(driverRepository, julie);
     const response = await server.inject({ method: 'GET', url: '/v1/lots', headers });
 

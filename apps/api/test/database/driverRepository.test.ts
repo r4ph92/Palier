@@ -52,4 +52,16 @@ describe('PostgresDriverRepository on the seeded database', () => {
   it('finds nobody for an unknown token hash', async () => {
     expect(await repository.findDriverBySessionToken('unknown')).toBeNull();
   });
+
+  it('has no accepted notice until Julie accepts one', async () => {
+    expect(await repository.findLatestNoticeVersion(JULIE_TREMBLAY_ID)).toBeNull();
+  });
+
+  it('reports the latest notice version she accepted, and accepting twice keeps one row', async () => {
+    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-01-01');
+    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-10-28');
+    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-10-28');
+
+    expect(await repository.findLatestNoticeVersion(JULIE_TREMBLAY_ID)).toBe('2026-10-28');
+  });
 });

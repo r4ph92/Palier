@@ -6,4 +6,6 @@ export interface DriverRepository {
   saveSessionToken(driverId: string, tokenHash: string): Promise<void>;
   findDriverBySessionToken(tokenHash: string): Promise<Driver | null>;
   revokeSessionToken(tokenHash: string): Promise<void>;
+  findLatestNoticeVersion(driverId: string): Promise<string | null>;
+  saveNoticeAcceptance(driverId: string, noticeVersion: string): Promise<void>;
 }
