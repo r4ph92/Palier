@@ -1,7 +1,8 @@
 # Palier
 
 Système d'allocation de places en stationnement intérieur, multi-opérateurs.
-Projet de cours — dossier de conception complet, avant implémentation.
+Projet de cours — dossier de conception complet ; l'implémentation a commencé
+(voir « Lancer en local »).
 
 ## Le système en une page
 
@@ -41,6 +42,94 @@ cd tools && python3 build_remise.py
 Le rendu passe par Chrome en mode headless ; aucune autre dépendance.
 `remise/Palier-dossier-de-conception.docx` est l'ancienne version Word (tour 7),
 conservée pour mémoire, plus à jour.
+
+## Lancer en local
+
+Monorepo npm : `apps/api` (API Fastify + Drizzle sur Postgres), `apps/mobile`
+(React Native avec Expo SDK 58, ouvert dans Expo Go sur le simulateur iOS) et
+`packages/shared-types` (types échangés entre l'API et l'app). Les choix
+d'implémentation sont dans [`docs/implementation.md`](docs/implementation.md),
+la direction visuelle de l'app dans [`docs/design.md`](docs/design.md).
+
+### Prérequis
+
+- **Node 24** (Expo 58 refuse Node 25). Avec Homebrew : `brew install node@24`,
+  puis dans chaque terminal `export PATH="/opt/homebrew/opt/node@24/bin:$PATH"`
+  (ou `nvm use`, le fichier `.nvmrc` indique 24).
+- **Docker** pour Postgres (port 5433, pour ne pas entrer en conflit avec un
+  Postgres local sur 5432).
+- **Xcode** avec un simulateur iPhone. Expo Go s'installe tout seul au premier
+  lancement ; ni CocoaPods ni build natif ne sont nécessaires pour l'instant.
+
+### Démarrer
+
+```
+npm install
+docker compose up -d --wait                  # bases palier et palier_test
+cp apps/api/.env.example apps/api/.env       # NODE_ENV=development, base locale
+npm run db:migrate
+npm run seed --workspace @palier/api         # Parking Démo, Garage Roy et les conducteurs de test
+npm run start --workspace @palier/api        # http://127.0.0.1:3000 (/v1/lots exige un jeton)
+```
+
+Dans un second terminal :
+
+```
+npm run ios --workspace @palier/mobile       # Metro + Expo Go dans le simulateur
+```
+
+Copier `apps/mobile/.env.example` en `apps/mobile/.env` : il garde l'API sur
+`http://localhost:3000` (`EXPO_PUBLIC_API_URL`) et active « Connexion de test »
+(`EXPO_PUBLIC_TEST_SIGN_IN=true`). Sans ce fichier, l'écran de connexion n'offre
+rien tant qu'Apple et Google (#30) ne sont pas là.
+
+Pour que le seed crée les clients Stripe de test des conducteurs (carte Visa 4242
+pour Julie et Marc), mettre une clé `sk_test_…` dans `STRIPE_SECRET_KEY` de
+`apps/api/.env` ; sans clé, le seed les crée sans Stripe.
+Si Expo Go affiche « UNIQUE constraint failed: updates.scope_key » à la
+réouverture, toucher « Try again ».
+
+### Scénarios de test manuels
+
+- **Connexion de test** : sur l'écran de connexion, toucher « Connexion de test »
+  puis « Julie Tremblay » : l'accueil dit « Bonjour Julie ». Elle reste connectée
+  après avoir tué et relancé l'app ; « Compte » > « Se déconnecter » ramène à la
+  connexion et révoque son jeton. Avec `NODE_ENV=production` dans `apps/api/.env`,
+  `curl -i http://127.0.0.1:3000/v1/test/drivers` répond 404.
+- **Place hors service** : `npm run seed:spot-state --workspace @palier/api -- --lot "Parking Démo" --spot A-1 --state OUT_OF_SERVICE`,
+  puis tirer la liste vers le bas : « 9 places libres ». Remettre la place avec
+  `--state AVAILABLE`, ou tout réinitialiser avec `npm run seed --workspace @palier/api`.
+- **API injoignable** : arrêter l'API (Ctrl+C dans son terminal, ou
+  `kill $(lsof -ti tcp:3000 -sTCP:LISTEN)`), puis ouvrir l'app ou tirer vers le
+  bas : « Impossible de joindre Palier. » et « Réessayer ». Relancer l'API puis
+  toucher « Réessayer ».
+- **Langue de l'appareil** : l'app suit la langue du simulateur (français par
+  défaut, anglais si l'appareil est en anglais).
+
+  ```
+  xcrun simctl spawn booted defaults write -g AppleLanguages '("en-CA")'
+  xcrun simctl spawn booted defaults write -g AppleLocale en_CA
+  xcrun simctl list devices booted              # noter l'UDID
+  xcrun simctl shutdown <UDID> && xcrun simctl boot <UDID>
+  xcrun simctl openurl booted exp://127.0.0.1:8081
+  ```
+
+  Pour revenir au français : `'("fr-CA")'` et `fr_CA`, puis redémarrer de même.
+
+Le seed et `seed:spot-state` refusent de tourner si `NODE_ENV` n'est pas
+`development` ou `test`, ou si la base n'est pas sur `localhost`/`127.0.0.1`.
+
+### Vérifications
+
+```
+npm run gate        # lint + typecheck + tests unitaires API (Vitest) + app (Jest)
+npm run test:db     # optionnel : test du dépôt Postgres sur palier_test (Docker requis)
+```
+
+`gate` ne touche ni base ni simulateur ; la CI (`.github/workflows/ci.yml`)
+exécute exactement les mêmes étapes. Après un changement du schéma
+(`apps/api/src/infrastructure/postgres/schema.ts`), générer la migration avec
+`npm run db:generate --workspace @palier/api`.
 
 ## Documents
 
