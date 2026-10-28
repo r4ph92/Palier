@@ -15,3 +15,11 @@ export interface SignInResponse {
   readonly token: string;
   readonly driver: DriverProfile;
 }
+
+export interface CurrentDriver extends DriverProfile {
+  readonly acceptedNoticeVersion: string | null;
+}
+
+export interface NoticeAcceptance {
+  readonly noticeVersion: string;
+}

@@ -5,5 +5,7 @@
     "moduleResolution": "Bundler",
     "verbatimModuleSyntax": true
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }
