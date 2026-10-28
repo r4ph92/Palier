@@ -119,6 +119,22 @@ describe('PalierApp sign-out', () => {
   });
 });
 
+describe('PalierApp when the profile cannot load after sign-in', () => {
+  it('does not keep the token, so the next launch does not restore a session the user never saw', async () => {
+    const authClient = new FakeAuthClient();
+    authClient.isReachable = false;
+    const tokenStore = new MemoryTokenStore();
+    await renderApp({ authClient, tokenStore });
+    const user = userEvent.setup();
+
+    await user.press(await screen.findByRole('button', { name: 'Connexion de test' }));
+    await user.press(await screen.findByRole('button', { name: 'Julie Tremblay' }));
+
+    expect(await screen.findByText('Impossible de joindre Palier.')).toBeOnTheScreen();
+    expect(tokenStore.token).toBeNull();
+  });
+});
+
 describe('PalierApp when the API is unreachable at launch', () => {
   it('offers to try again, then restores the session', async () => {
     const { authClient, tokenStore } = signedInJulie();

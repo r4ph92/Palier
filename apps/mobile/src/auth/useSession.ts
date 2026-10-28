@@ -53,7 +53,8 @@ function useAcceptNotice({ authClient, state, setState, expire }: AcceptNoticeDe
       return;
     }
     if (await acceptedOrRefused(authClient, state.token)) {
-      setState({ ...state, driver: { ...state.driver, acceptedNoticeVersion: PRIVACY_NOTICE_VERSION } });
+      const driver = await authClient.fetchMe(state.token);
+      setState({ ...state, driver });
     } else {
       expire();
     }
@@ -77,8 +78,8 @@ function useSignIn(authClient: AuthClient, tokenStore: TokenStore, setState: Dis
   return useCallback(
     async (driverId: string) => {
       const { token } = await authClient.signInAsTestDriver(driverId);
-      await tokenStore.save(token);
       const driver = await authClient.fetchMe(token);
+      await tokenStore.save(token);
       setState({ status: 'signedIn', token, driver });
     },
     [authClient, tokenStore, setState],
