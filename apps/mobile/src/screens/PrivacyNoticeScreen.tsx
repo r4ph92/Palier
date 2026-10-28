@@ -24,7 +24,11 @@ export function PrivacyNoticeScreen({ onAccept, onSignOut }: PrivacyNoticeScreen
   return (
     <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       {state.status === 'refused' ? <RefusedNotice onSignOut={onSignOut} /> : null}
-      {state.status === 'failed' ? <ErrorState onRetry={accept} /> : null}
+      {state.status === 'failed' ? (
+        <View style={styles.content}>
+          <ErrorState onRetry={accept} />
+        </View>
+      ) : null}
       {state.status === 'reading' ? <ReadingNotice onAccept={accept} onRefuse={refuse} /> : null}
     </SafeAreaView>
   );
