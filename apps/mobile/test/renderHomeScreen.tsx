@@ -15,7 +15,7 @@ export async function renderHomeScreen(client: LotsClient, language: SupportedLa
   return render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
       <LotsClientProvider client={client}>
-        <HomeScreen />
+        <HomeScreen firstName="Julie" />
       </LotsClientProvider>
     </SafeAreaProvider>,
   );

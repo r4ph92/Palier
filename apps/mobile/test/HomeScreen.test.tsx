@@ -4,6 +4,12 @@ import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { renderHomeScreen } from './renderHomeScreen';
 
 describe('HomeScreen', () => {
+  it('greets the signed-in driver by first name', async () => {
+    await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)));
+
+    expect(await screen.findByText('Bonjour Julie')).toBeOnTheScreen();
+  });
+
   it('lists Parking Démo with its 10 free spots', async () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)));
 
@@ -114,6 +120,7 @@ describe('HomeScreen in English', () => {
 
     expect(await screen.findByText('10 free spots')).toBeOnTheScreen();
     expect(screen.getByText('Parking lots')).toBeOnTheScreen();
+    expect(screen.getByText('Hello Julie')).toBeOnTheScreen();
   });
 
   it('shows the unreachable message in English', async () => {
