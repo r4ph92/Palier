@@ -1,5 +1,6 @@
 import type { Driver } from '../../src/domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../src/domain/drivers/DriverRepository.ts';
+import { hashSessionToken } from '../../src/domain/drivers/driverSessions.ts';
 
 export const julie: Driver = { id: '00000000-0000-4000-8000-000000000501', firstName: 'Julie', lastName: 'Tremblay' };
 export const marc: Driver = { id: '00000000-0000-4000-8000-000000000502', firstName: 'Marc', lastName: 'Gagnon' };
@@ -38,4 +39,9 @@ export class FakeDriverRepository implements DriverRepository {
     this.#activeTokens.delete(tokenHash);
     return Promise.resolve();
   }
+}
+
+export async function authorizationFor(repository: DriverRepository, driver: Driver, token = `${driver.firstName}-token`) {
+  await repository.saveSessionToken(driver.id, hashSessionToken(token));
+  return { authorization: `Bearer ${token}` };
 }
