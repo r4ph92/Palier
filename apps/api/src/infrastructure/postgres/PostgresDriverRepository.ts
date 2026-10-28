@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { Driver } from '../../domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
 import type { Database } from './database.ts';
@@ -53,10 +53,14 @@ export class PostgresDriverRepository implements DriverRepository {
     return consent?.noticeVersion ?? null;
   }
 
+  // Accepting an older version again makes it the latest, so the guard and /v1/me see the rollback.
   async saveNoticeAcceptance(driverId: string, noticeVersion: string): Promise<void> {
     await this.#database
       .insert(userConsent)
       .values({ userId: driverId, noticeVersion })
-      .onConflictDoNothing();
+      .onConflictDoUpdate({
+        target: [userConsent.userId, userConsent.noticeVersion],
+        set: { acceptedAt: sql`now()` },
+      });
   }
 }

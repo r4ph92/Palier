@@ -57,6 +57,14 @@ describe('PostgresDriverRepository on the seeded database', () => {
     expect(await repository.findLatestNoticeVersion(JULIE_TREMBLAY_ID)).toBeNull();
   });
 
+  it('reports an older notice version as the latest again when she accepts it after a newer one', async () => {
+    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-01-01');
+    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-10-28');
+    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-01-01');
+
+    expect(await repository.findLatestNoticeVersion(JULIE_TREMBLAY_ID)).toBe('2026-01-01');
+  });
+
   it('reports the latest notice version she accepted, and accepting twice keeps one row', async () => {
     await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-01-01');
     await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-10-28');
