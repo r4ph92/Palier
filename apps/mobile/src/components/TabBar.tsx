@@ -2,12 +2,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
-import { MINIMUM_TOUCH_TARGET } from '../theme/tokens';
+import { MINIMUM_TOUCH_TARGET, spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
 export type Tab = 'lots' | 'account';
 
 const TABS: readonly Tab[] = ['lots', 'account'];
+// Like the system tab bar, labels grow a little with Dynamic Type, then shrink to fit on one line.
+const TAB_LABEL_MAX_FONT_SCALE = 1.4;
 
 interface TabBarProps {
   readonly selected: Tab;
@@ -31,7 +33,12 @@ function TabButton({ tab, isSelected, onPress }: { readonly tab: Tab; readonly i
   const colors = useColors();
   return (
     <Pressable accessibilityRole="tab" accessibilityState={{ selected: isSelected }} onPress={onPress} style={styles.tab}>
-      <Text style={[typography.button, isSelected ? styles.selected : null, { color: isSelected ? colors.ink : colors.muted }]}>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        maxFontSizeMultiplier={TAB_LABEL_MAX_FONT_SCALE}
+        style={[typography.button, isSelected ? styles.selected : null, { color: isSelected ? colors.ink : colors.muted }]}
+      >
         {i18n.t(`tabs.${tab}`)}
       </Text>
     </Pressable>
@@ -41,6 +48,6 @@ function TabButton({ tab, isSelected, onPress }: { readonly tab: Tab; readonly i
 const styles = StyleSheet.create({
   bar: { borderTopWidth: 2 },
   row: { flexDirection: 'row' },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: MINIMUM_TOUCH_TARGET },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: MINIMUM_TOUCH_TARGET, paddingHorizontal: spacing.small },
   selected: { textDecorationLine: 'underline' },
 });
