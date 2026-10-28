@@ -99,6 +99,20 @@ describe('PalierApp privacy notice', () => {
     expect(screen.queryByText(/Pour stationner/)).not.toBeOnTheScreen();
   });
 
+  it('signs Julie out and shows sign-in when her token is revoked while the notice is open', async () => {
+    const { authClient, tokenStore } = driverWhoNeverAccepted();
+    await renderApp(authClient, tokenStore);
+    const user = userEvent.setup();
+    await screen.findByText('Vos renseignements');
+
+    authClient.validTokens.delete(JULIE_TOKEN);
+    await user.press(screen.getByRole('button', { name: "J'accepte" }));
+
+    expect(await screen.findByRole('button', { name: 'Connexion de test' })).toBeOnTheScreen();
+    expect(tokenStore.token).toBeNull();
+    expect(authClient.acceptedNotices).toEqual([]);
+  });
+
   it('offers to try again when the acceptance cannot reach Palier, then records it', async () => {
     const { authClient, tokenStore } = driverWhoNeverAccepted();
     authClient.acceptIsReachable = false;

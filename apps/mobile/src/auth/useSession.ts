@@ -36,18 +36,41 @@ export function useSession(authClient: AuthClient, tokenStore: TokenStore): Sess
     }
     expire();
   }, [authClient, state, expire]);
-  const acceptNotice = useAcceptNotice(authClient, state, setState);
+  const acceptNotice = useAcceptNotice({ authClient, state, setState, expire });
   return { state, signIn, acceptNotice, signOut, expire, retry };
 }
 
-function useAcceptNotice(authClient: AuthClient, state: SessionState, setState: Dispatch<SetStateAction<SessionState>>) {
+interface AcceptNoticeDependencies {
+  readonly authClient: AuthClient;
+  readonly state: SessionState;
+  readonly setState: Dispatch<SetStateAction<SessionState>>;
+  readonly expire: () => void;
+}
+
+function useAcceptNotice({ authClient, state, setState, expire }: AcceptNoticeDependencies) {
   return useCallback(async () => {
     if (state.status !== 'signedIn') {
       return;
     }
-    await authClient.acceptNotice(state.token, PRIVACY_NOTICE_VERSION);
-    setState({ ...state, driver: { ...state.driver, acceptedNoticeVersion: PRIVACY_NOTICE_VERSION } });
-  }, [authClient, state, setState]);
+    if (await acceptedOrRefused(authClient, state.token)) {
+      setState({ ...state, driver: { ...state.driver, acceptedNoticeVersion: PRIVACY_NOTICE_VERSION } });
+    } else {
+      expire();
+    }
+  }, [authClient, state, setState, expire]);
+}
+
+// A token revoked while the notice was open ends the session, as it does at launch.
+async function acceptedOrRefused(authClient: AuthClient, token: string): Promise<boolean> {
+  try {
+    await authClient.acceptNotice(token, PRIVACY_NOTICE_VERSION);
+    return true;
+  } catch (error) {
+    if (error instanceof PalierUnauthorizedError) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 function useSignIn(authClient: AuthClient, tokenStore: TokenStore, setState: Dispatch<SetStateAction<SessionState>>) {
