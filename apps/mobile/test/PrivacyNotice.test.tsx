@@ -95,8 +95,21 @@ describe('PalierApp privacy notice', () => {
     expect(await screen.findByText('Your information')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'I accept' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Decline' })).toBeOnTheScreen();
+    expect(screen.getByText(/We use this to find your spot/)).toBeOnTheScreen();
+    expect(screen.getByText(/kept 90 days after your visit/)).toBeOnTheScreen();
     expect(screen.queryByText('Vos renseignements')).not.toBeOnTheScreen();
     expect(screen.queryByText(/Pour stationner/)).not.toBeOnTheScreen();
+  });
+
+  it('reads the refusal message in English on an English device', async () => {
+    const { authClient, tokenStore } = driverWhoNeverAccepted();
+    await renderApp(authClient, tokenStore, 'en');
+    const user = userEvent.setup();
+
+    await user.press(await screen.findByRole('button', { name: 'Decline' }));
+
+    expect(await screen.findByText('Palier cannot be used without your consent.')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeOnTheScreen();
   });
 
   it('signs Julie out and shows sign-in when her token is revoked while the notice is open', async () => {
