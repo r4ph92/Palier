@@ -67,6 +67,23 @@ describe('driver routes', () => {
     expect(response.statusCode).toBe(401);
   });
 
+  it('POST /v1/consent answers 401, not 400, without a token even when the body is invalid', async () => {
+    startServer();
+
+    const response = await server.inject({ method: 'POST', url: '/v1/consent', payload: {} });
+
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('POST /v1/consent answers 400 for a signed-in driver with an invalid body', async () => {
+    startServer();
+    const headers = await authorizationFor(driverRepository, julie);
+
+    const response = await server.inject({ method: 'POST', url: '/v1/consent', headers, payload: {} });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   it('GET /v1/me answers 401 without a token', async () => {
     startServer();
 

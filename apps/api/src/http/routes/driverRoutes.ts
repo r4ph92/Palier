@@ -36,7 +36,8 @@ function registerMeRoute(server: FastifyInstance, repository: DriverRepository, 
 }
 
 function registerConsentRoute(server: FastifyInstance, repository: DriverRepository, preHandler: preHandlerAsyncHookHandler): void {
-  server.post<AcceptNoticeRequest>('/v1/consent', { preHandler, schema: { body: acceptNoticeBodySchema } }, async (request, reply) => {
+  // onRequest, not preHandler: body validation runs before preHandler, so an unauthenticated request must be refused first.
+  server.post<AcceptNoticeRequest>('/v1/consent', { onRequest: preHandler, schema: { body: acceptNoticeBodySchema } }, async (request, reply) => {
     if (request.body.noticeVersion !== PRIVACY_NOTICE_VERSION) {
       return reply.status(CONFLICT).send({
         statusCode: CONFLICT,
