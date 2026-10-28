@@ -134,4 +134,26 @@ export const spot = pgTable(
   ],
 );
 
+export const appUser = pgTable('app_user', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  stripeCustomerId: text('stripe_customer_id'),
+  defaultPmId: text('default_pm_id'),
+});
+
+export const userSessionToken = pgTable(
+  'user_session_token',
+  {
+    tokenHash: text('token_hash').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => appUser.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  },
+  (table) => [index('user_session_token_user_id_index').on(table.userId)],
+);
+
 export type SpotState = (typeof spotState.enumValues)[number];
