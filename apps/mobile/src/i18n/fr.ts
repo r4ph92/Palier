@@ -4,6 +4,7 @@ export const fr = {
     crashedHint: 'Fermez puis rouvrez Palier.',
   },
   home: {
+    greeting: 'Bonjour %{firstName}',
     updatedAt: 'Mis à jour à %{time}',
     title: 'Stationnements',
     freeSpotsLabel: {
@@ -17,6 +18,20 @@ export const fr = {
     unreachableHint: 'Vérifiez votre connexion, puis réessayez.',
     retry: 'Réessayer',
     refresh: 'Actualiser',
+  },
+  signIn: {
+    title: 'Connexion',
+    testSignIn: 'Connexion de test',
+    pickDriver: 'Choisissez un conducteur de démonstration.',
+    loadingDrivers: 'Chargement des conducteurs',
+  },
+  account: {
+    title: 'Compte',
+    signOut: 'Se déconnecter',
+  },
+  tabs: {
+    lots: 'Stationnements',
+    account: 'Compte',
   },
 };
 

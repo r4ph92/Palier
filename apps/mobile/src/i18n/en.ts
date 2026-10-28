@@ -6,6 +6,7 @@ export const en: Translations = {
     crashedHint: 'Close and reopen Palier.',
   },
   home: {
+    greeting: 'Hello %{firstName}',
     updatedAt: 'Updated %{time}',
     title: 'Parking lots',
     freeSpotsLabel: {
@@ -19,5 +20,19 @@ export const en: Translations = {
     unreachableHint: 'Check your connection, then try again.',
     retry: 'Try again',
     refresh: 'Refresh',
+  },
+  signIn: {
+    title: 'Sign in',
+    testSignIn: 'Test sign-in',
+    pickDriver: 'Pick a demo driver.',
+    loadingDrivers: 'Loading drivers',
+  },
+  account: {
+    title: 'Account',
+    signOut: 'Sign out',
+  },
+  tabs: {
+    lots: 'Parking lots',
+    account: 'Account',
   },
 };
