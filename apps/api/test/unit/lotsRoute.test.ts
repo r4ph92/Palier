@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import type { LotAvailabilityRepository } from '../../src/domain/lots/LotAvailabilityRepository.ts';
 import type { LotAvailability } from '../../src/domain/occupancy/LotAvailability.ts';
 import { buildServer } from '../../src/http/buildServer.ts';
-import { authorizationFor, FakeDriverRepository, julie } from './fakeDriverRepository.ts';
+import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie } from './fakeDriverRepository.ts';
 
 const parkingDemo: LotAvailability = {
   id: '00000000-0000-4000-8000-000000000201',
@@ -26,6 +26,7 @@ describe('GET /v1/lots', () => {
   async function listLotsAsJulie(lotAvailabilityRepository: LotAvailabilityRepository) {
     driverRepository = new FakeDriverRepository();
     server = buildServer({ lotAvailabilityRepository, driverRepository });
+    await acceptNoticeAs(driverRepository, julie);
     const headers = await authorizationFor(driverRepository, julie);
     return server.inject({ method: 'GET', url: '/v1/lots', headers });
   }

@@ -33,6 +33,19 @@ export const fr = {
     lots: 'Stationnements',
     account: 'Compte',
   },
+  notice: {
+    title: 'Vos renseignements',
+    intro: 'Pour stationner avec Palier, nous recueillons :',
+    plates: 'votre plaque d’immatriculation',
+    times: 'les heures d’entrée et de sortie',
+    spot: 'l’allée et la place détectées',
+    payment: 'la référence de paiement',
+    why: 'Ces renseignements servent à trouver votre place, à facturer le stationnement et à assurer la sécurité des lieux.',
+    retention: 'Les renseignements identifiants sont conservés 90 jours après votre visite, puis anonymisés.',
+    accept: "J'accepte",
+    refuse: 'Refuser',
+    refused: 'Palier ne peut pas être utilisée sans votre consentement.',
+  },
 };
 
 export type Translations = typeof fr;

@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import type { AuthClient } from './api/AuthClient';
 import type { LotsClient } from './api/LotsClient';
 import { LotsClientProvider } from './api/LotsClientContext';
@@ -10,6 +11,7 @@ import { ErrorState } from './components/ErrorState';
 import { TabBar, type Tab } from './components/TabBar';
 import { AccountScreen } from './screens/AccountScreen';
 import { HomeScreen } from './screens/HomeScreen';
+import { PrivacyNoticeScreen } from './screens/PrivacyNoticeScreen';
 import { SignInScreen } from './screens/SignInScreen';
 import { useColors } from './theme/useColors';
 import { spacing } from './theme/tokens';
@@ -45,8 +47,11 @@ interface SignedInAppProps {
 function SignedInApp({ signedIn, session, createLotsClient }: SignedInAppProps) {
   const [tab, setTab] = useState<Tab>('lots');
   const { token, driver } = signedIn;
-  const { expire, signOut } = session;
+  const { expire, signOut, acceptNotice } = session;
   const lotsClient = useMemo(() => createLotsClient(token, expire), [createLotsClient, token, expire]);
+  if (driver.acceptedNoticeVersion !== PRIVACY_NOTICE_VERSION) {
+    return <PrivacyNoticeScreen onAccept={acceptNotice} onSignOut={signOut} />;
+  }
   return (
     <View style={styles.app}>
       <LotsClientProvider client={lotsClient}>

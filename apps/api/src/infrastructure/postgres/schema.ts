@@ -156,4 +156,17 @@ export const userSessionToken = pgTable(
   (table) => [index('user_session_token_user_id_index').on(table.userId)],
 );
 
+export const userConsent = pgTable(
+  'user_consent',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => appUser.id),
+    noticeVersion: text('notice_version').notNull(),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique('user_consent_user_id_notice_version_unique').on(table.userId, table.noticeVersion)],
+);
+
 export type SpotState = (typeof spotState.enumValues)[number];

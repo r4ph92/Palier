@@ -1,4 +1,5 @@
-import type { DriverProfile, SignInResponse, TestDriverListResponse } from '@palier/shared-types';
+import type { CurrentDriver, DriverProfile, SignInResponse, TestDriverListResponse } from '@palier/shared-types';
+import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { PalierUnauthorizedError, type AuthClient } from '../src/api/AuthClient';
 import { PalierUnreachableError } from '../src/api/LotsClient';
 import type { TokenStore } from '../src/auth/TokenStore';
@@ -13,6 +14,9 @@ export class FakeAuthClient implements AuthClient {
   validTokens = new Set<string>();
   isReachable = true;
   driversListIsReachable = true;
+  acceptIsReachable = true;
+  acceptedNoticeVersion: string | null = PRIVACY_NOTICE_VERSION;
+  acceptedNotices: string[] = [];
   signedOutTokens: string[] = [];
 
   listTestDrivers(): Promise<TestDriverListResponse> {
@@ -25,11 +29,24 @@ export class FakeAuthClient implements AuthClient {
     return Promise.resolve({ token, driver: julie });
   }
 
-  fetchMe(token: string): Promise<DriverProfile> {
+  fetchMe(token: string): Promise<CurrentDriver> {
     if (!this.isReachable) {
       return Promise.reject(new PalierUnreachableError('fake'));
     }
-    return this.validTokens.has(token) ? Promise.resolve(julie) : Promise.reject(new PalierUnauthorizedError());
+    const driver = { ...julie, acceptedNoticeVersion: this.acceptedNoticeVersion };
+    return this.validTokens.has(token) ? Promise.resolve(driver) : Promise.reject(new PalierUnauthorizedError());
+  }
+
+  acceptNotice(token: string, noticeVersion: string): Promise<void> {
+    if (!this.acceptIsReachable) {
+      return Promise.reject(new PalierUnreachableError('fake'));
+    }
+    if (!this.validTokens.has(token)) {
+      return Promise.reject(new PalierUnauthorizedError());
+    }
+    this.acceptedNotices.push(noticeVersion);
+    this.acceptedNoticeVersion = noticeVersion;
+    return Promise.resolve();
   }
 
   signOut(token: string): Promise<void> {

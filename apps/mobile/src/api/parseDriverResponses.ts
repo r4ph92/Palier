@@ -1,4 +1,4 @@
-import type { DriverProfile, SignInResponse, TestDriver, TestDriverListResponse } from '@palier/shared-types';
+import type { CurrentDriver, DriverProfile, SignInResponse, TestDriver, TestDriverListResponse } from '@palier/shared-types';
 import { PalierUnreachableError } from './LotsClient';
 
 export function parseDriverProfile(body: unknown): DriverProfile {
@@ -6,6 +6,15 @@ export function parseDriverProfile(body: unknown): DriverProfile {
     throw new PalierUnreachableError('unexpected response body');
   }
   return body;
+}
+
+export function parseCurrentDriver(body: unknown): CurrentDriver {
+  const profile = parseDriverProfile(body);
+  const { acceptedNoticeVersion } = asRecord(body);
+  if (typeof acceptedNoticeVersion === 'string' || acceptedNoticeVersion === null) {
+    return { ...profile, acceptedNoticeVersion };
+  }
+  throw new PalierUnreachableError('unexpected response body');
 }
 
 export function parseSignInResponse(body: unknown): SignInResponse {

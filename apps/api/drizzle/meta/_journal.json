@@ -15,6 +15,13 @@
       "when": 1793218714766,
       "tag": "0001_app_user_and_session_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793225432180,
+      "tag": "0002_user_consent",
+      "breakpoints": true
     }
   ]
 }

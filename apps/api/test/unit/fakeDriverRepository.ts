@@ -1,6 +1,7 @@
 import type { Driver } from '../../src/domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../src/domain/drivers/DriverRepository.ts';
 import { hashSessionToken } from '../../src/domain/drivers/driverSessions.ts';
+import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 
 export const julie: Driver = { id: '00000000-0000-4000-8000-000000000501', firstName: 'Julie', lastName: 'Tremblay' };
 export const marc: Driver = { id: '00000000-0000-4000-8000-000000000502', firstName: 'Marc', lastName: 'Gagnon' };
@@ -8,6 +9,7 @@ export const marc: Driver = { id: '00000000-0000-4000-8000-000000000502', firstN
 export class FakeDriverRepository implements DriverRepository {
   readonly #drivers: readonly Driver[];
   readonly #activeTokens = new Map<string, string>();
+  readonly #noticeVersions = new Map<string, string>();
 
   constructor(drivers: readonly Driver[] = [julie, marc]) {
     this.#drivers = drivers;
@@ -39,6 +41,19 @@ export class FakeDriverRepository implements DriverRepository {
     this.#activeTokens.delete(tokenHash);
     return Promise.resolve();
   }
+
+  findLatestNoticeVersion(driverId: string): Promise<string | null> {
+    return Promise.resolve(this.#noticeVersions.get(driverId) ?? null);
+  }
+
+  saveNoticeAcceptance(driverId: string, noticeVersion: string): Promise<void> {
+    this.#noticeVersions.set(driverId, noticeVersion);
+    return Promise.resolve();
+  }
+}
+
+export async function acceptNoticeAs(repository: DriverRepository, driver: Driver, noticeVersion = PRIVACY_NOTICE_VERSION) {
+  await repository.saveNoticeAcceptance(driver.id, noticeVersion);
 }
 
 export async function authorizationFor(repository: DriverRepository, driver: Driver, token = `${driver.firstName}-token`) {

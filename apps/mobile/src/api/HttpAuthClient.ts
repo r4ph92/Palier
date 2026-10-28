@@ -1,7 +1,7 @@
-import type { DriverProfile, SignInResponse, TestDriverListResponse } from '@palier/shared-types';
+import type { CurrentDriver, SignInResponse, TestDriverListResponse } from '@palier/shared-types';
 import { PalierUnauthorizedError, type AuthClient } from './AuthClient';
 import { PalierStatusError, PalierUnreachableError } from './LotsClient';
-import { parseDriverProfile, parseSignInResponse, parseTestDrivers } from './parseDriverResponses';
+import { parseCurrentDriver, parseSignInResponse, parseTestDrivers } from './parseDriverResponses';
 
 const DEFAULT_TIMEOUT_MILLISECONDS = 8000;
 const UNAUTHORIZED = 401;
@@ -36,8 +36,16 @@ export class HttpAuthClient implements AuthClient {
     return parseSignInResponse(await this.#json(response));
   }
 
-  async fetchMe(token: string): Promise<DriverProfile> {
-    return parseDriverProfile(await this.#json(await this.#request('/v1/me', { method: 'GET', headers: bearer(token) })));
+  async fetchMe(token: string): Promise<CurrentDriver> {
+    return parseCurrentDriver(await this.#json(await this.#request('/v1/me', { method: 'GET', headers: bearer(token) })));
+  }
+
+  async acceptNotice(token: string, noticeVersion: string): Promise<void> {
+    await this.#request('/v1/consent', {
+      method: 'POST',
+      headers: { ...bearer(token), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ noticeVersion }),
+    });
   }
 
   async signOut(token: string): Promise<void> {

@@ -33,3 +33,17 @@ export const signInResponseSchema = {
   additionalProperties: false,
   properties: { token: { type: 'string' }, driver: driverProfileSchema },
 } as const;
+
+export const currentDriverSchema = {
+  type: 'object',
+  required: ['id', 'firstName', 'acceptedNoticeVersion'],
+  additionalProperties: false,
+  properties: { ...driverProfileProperties, acceptedNoticeVersion: { type: ['string', 'null'] } },
+} as const;
+
+export const acceptNoticeBodySchema = {
+  type: 'object',
+  required: ['noticeVersion'],
+  additionalProperties: false,
+  properties: { noticeVersion: { type: 'string', minLength: 1, maxLength: 64 } },
+} as const;

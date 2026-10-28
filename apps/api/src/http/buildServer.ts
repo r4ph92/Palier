@@ -14,7 +14,8 @@ export interface ServerDependencies {
 }
 
 export function buildServer(dependencies: ServerDependencies): FastifyInstance {
-  const server = Fastify({ logger: dependencies.logsRequests ?? false });
+  // Refuse a value of the wrong JSON type rather than converting it, so ["2026-10-28"] is not read as "2026-10-28".
+  const server = Fastify({ logger: dependencies.logsRequests ?? false, ajv: { customOptions: { coerceTypes: false } } });
   server.setErrorHandler(handleServerError);
   server.decorateRequest('driver', null);
   registerLotsRoutes(server, dependencies.lotAvailabilityRepository, dependencies.driverRepository);

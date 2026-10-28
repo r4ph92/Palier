@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
 import type { LotAvailabilityRepository } from '../../domain/lots/LotAvailabilityRepository.ts';
 import { listOnlineLots } from '../../domain/lots/listOnlineLots.ts';
+import { requireConsent } from '../requireConsent.ts';
 import { requireDriver } from '../requireDriver.ts';
 import { lotListResponseSchema } from '../schemas/lotListResponseSchema.ts';
 
@@ -13,7 +14,7 @@ export function registerLotsRoutes(
 ): void {
   server.get(
     '/v1/lots',
-    { preHandler: requireDriver(driverRepository), schema: { response: { 200: lotListResponseSchema } } },
+    { preHandler: [requireDriver(driverRepository), requireConsent(driverRepository)], schema: { response: { 200: lotListResponseSchema } } },
     async (): Promise<LotListResponse> => listOnlineLots(repository),
   );
 }

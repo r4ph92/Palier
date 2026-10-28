@@ -31,10 +31,29 @@ describe('HttpAuthClient', () => {
   });
 
   it('sends the token as a bearer token to read the profile', async () => {
-    const { client, fetchFunction } = clientRecording(() => jsonResponse(julie));
+    const { client, fetchFunction } = clientRecording(() => jsonResponse({ ...julie, acceptedNoticeVersion: null }));
 
-    await expect(client.fetchMe('julie-token')).resolves.toEqual(julie);
+    await expect(client.fetchMe('julie-token')).resolves.toEqual({ ...julie, acceptedNoticeVersion: null });
     expect(fetchFunction.mock.calls[0]?.[1]?.headers).toEqual({ Authorization: 'Bearer julie-token' });
+  });
+
+  it('posts the accepted notice version with the token', async () => {
+    const { client, fetchFunction } = clientRecording(() => Promise.resolve(new Response(null, { status: 204 })));
+
+    await client.acceptNotice('julie-token', '2026-10-28');
+
+    expect(fetchFunction.mock.calls[0]?.[0]).toBe(`${BASE_URL}/v1/consent`);
+    expect(fetchFunction.mock.calls[0]?.[1]).toMatchObject({
+      method: 'POST',
+      headers: { Authorization: 'Bearer julie-token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ noticeVersion: '2026-10-28' }),
+    });
+  });
+
+  it('treats a profile without the notice field as unreachable', async () => {
+    const { client } = clientRecording(() => jsonResponse(julie));
+
+    await expect(client.fetchMe('julie-token')).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 
   it('posts the token to sign out', async () => {

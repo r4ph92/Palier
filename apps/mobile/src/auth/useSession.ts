@@ -1,4 +1,5 @@
-import type { DriverProfile } from '@palier/shared-types';
+import type { CurrentDriver } from '@palier/shared-types';
+import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { PalierUnauthorizedError, type AuthClient } from '../api/AuthClient';
 import { PalierUnreachableError } from '../api/LotsClient';
@@ -8,11 +9,12 @@ export type SessionState =
   | { readonly status: 'restoring' }
   | { readonly status: 'unreachable' }
   | { readonly status: 'signedOut' }
-  | { readonly status: 'signedIn'; readonly token: string; readonly driver: DriverProfile };
+  | { readonly status: 'signedIn'; readonly token: string; readonly driver: CurrentDriver };
 
 export interface SessionController {
   readonly state: SessionState;
   signIn(driverId: string): Promise<void>;
+  acceptNotice(): Promise<void>;
   signOut(): void;
   expire(): void;
   retry(): void;
@@ -34,13 +36,49 @@ export function useSession(authClient: AuthClient, tokenStore: TokenStore): Sess
     }
     expire();
   }, [authClient, state, expire]);
-  return { state, signIn, signOut, expire, retry };
+  const acceptNotice = useAcceptNotice({ authClient, state, setState, expire });
+  return { state, signIn, acceptNotice, signOut, expire, retry };
+}
+
+interface AcceptNoticeDependencies {
+  readonly authClient: AuthClient;
+  readonly state: SessionState;
+  readonly setState: Dispatch<SetStateAction<SessionState>>;
+  readonly expire: () => void;
+}
+
+function useAcceptNotice({ authClient, state, setState, expire }: AcceptNoticeDependencies) {
+  return useCallback(async () => {
+    if (state.status !== 'signedIn') {
+      return;
+    }
+    if (await acceptedOrRefused(authClient, state.token)) {
+      const driver = await authClient.fetchMe(state.token);
+      setState({ ...state, driver });
+    } else {
+      expire();
+    }
+  }, [authClient, state, setState, expire]);
+}
+
+// A token revoked while the notice was open ends the session, as it does at launch.
+async function acceptedOrRefused(authClient: AuthClient, token: string): Promise<boolean> {
+  try {
+    await authClient.acceptNotice(token, PRIVACY_NOTICE_VERSION);
+    return true;
+  } catch (error) {
+    if (error instanceof PalierUnauthorizedError) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 function useSignIn(authClient: AuthClient, tokenStore: TokenStore, setState: Dispatch<SetStateAction<SessionState>>) {
   return useCallback(
     async (driverId: string) => {
-      const { token, driver } = await authClient.signInAsTestDriver(driverId);
+      const { token } = await authClient.signInAsTestDriver(driverId);
+      const driver = await authClient.fetchMe(token);
       await tokenStore.save(token);
       setState({ status: 'signedIn', token, driver });
     },

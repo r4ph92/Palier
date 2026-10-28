@@ -1,11 +1,17 @@
 {
   "name": "@palier/shared-types",
   "version": "0.0.0",
+  "type": "module",
   "private": true,
   "types": "./src/index.ts",
   "exports": {
     ".": {
-      "types": "./src/index.ts"
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./privacy": {
+      "types": "./src/privacy.ts",
+      "default": "./src/privacy.ts"
     }
   },
   "scripts": {
