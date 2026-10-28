@@ -56,4 +56,29 @@ describe('HttpLotsClient', () => {
 
     await expect(client.listLots()).rejects.toBeInstanceOf(PalierUnreachableError);
   });
+
+  it('sends the driver token as a bearer token', async () => {
+    const fetchFunction = jest.fn<Promise<Response>, [RequestInfo | URL, RequestInit?]>(() => jsonResponse([parkingDemo]));
+    const client = new HttpLotsClient({ baseUrl: BASE_URL, fetchFunction, token: 'julie-token' });
+
+    await client.listLots();
+
+    expect(fetchFunction.mock.calls[0]?.[1]?.headers).toEqual({ Authorization: 'Bearer julie-token' });
+  });
+
+  it('reports a 401 to onUnauthorized and still fails the request', async () => {
+    const onUnauthorized = jest.fn();
+    const client = new HttpLotsClient({ baseUrl: BASE_URL, fetchFunction: () => jsonResponse({}, 401), onUnauthorized });
+
+    await expect(client.listLots()).rejects.toMatchObject({ status: 401 });
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onUnauthorized for other failures', async () => {
+    const onUnauthorized = jest.fn();
+    const client = new HttpLotsClient({ baseUrl: BASE_URL, fetchFunction: () => jsonResponse({}, 503), onUnauthorized });
+
+    await expect(client.listLots()).rejects.toBeInstanceOf(PalierStatusError);
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
 });

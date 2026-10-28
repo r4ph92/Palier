@@ -3,27 +3,37 @@ import { PalierStatusError, PalierUnreachableError, type LotsClient } from './Lo
 import { parseLotList } from './parseLotList';
 
 const DEFAULT_TIMEOUT_MILLISECONDS = 8000;
+const UNAUTHORIZED = 401;
 
 export interface HttpLotsClientOptions {
   readonly baseUrl: string;
   readonly fetchFunction?: typeof fetch;
   readonly timeoutMilliseconds?: number;
+  readonly token?: string;
+  readonly onUnauthorized?: () => void;
 }
 
 export class HttpLotsClient implements LotsClient {
   readonly #baseUrl: string;
   readonly #fetchFunction: typeof fetch;
   readonly #timeoutMilliseconds: number;
+  readonly #headers: Record<string, string>;
+  readonly #onUnauthorized: () => void;
 
   constructor(options: HttpLotsClientOptions) {
     this.#baseUrl = options.baseUrl;
     this.#fetchFunction = options.fetchFunction ?? fetch;
     this.#timeoutMilliseconds = options.timeoutMilliseconds ?? DEFAULT_TIMEOUT_MILLISECONDS;
+    this.#headers = options.token === undefined ? {} : { Authorization: `Bearer ${options.token}` };
+    this.#onUnauthorized = options.onUnauthorized ?? (() => undefined);
   }
 
   listLots(): Promise<LotListResponse> {
     return this.#withinTimeout(async (signal) => {
       const response = await this.#get('/v1/lots', signal);
+      if (response.status === UNAUTHORIZED) {
+        this.#onUnauthorized();
+      }
       if (!response.ok) {
         throw new PalierStatusError(response.status);
       }
@@ -49,7 +59,7 @@ export class HttpLotsClient implements LotsClient {
 
   async #get(path: string, signal: AbortSignal): Promise<Response> {
     try {
-      return await this.#fetchFunction(`${this.#baseUrl}${path}`, { signal });
+      return await this.#fetchFunction(`${this.#baseUrl}${path}`, { signal, headers: this.#headers });
     } catch (error) {
       throw new PalierUnreachableError('network error', { cause: error });
     }
