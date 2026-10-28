@@ -45,5 +45,5 @@ export const acceptNoticeBodySchema = {
   type: 'object',
   required: ['noticeVersion'],
   additionalProperties: false,
-  properties: { noticeVersion: { type: 'string', minLength: 1 } },
+  properties: { noticeVersion: { type: 'string', minLength: 1, maxLength: 64 } },
 } as const;

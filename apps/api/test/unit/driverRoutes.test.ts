@@ -75,6 +75,28 @@ describe('driver routes', () => {
     expect(response.statusCode).toBe(401);
   });
 
+  it('POST /v1/consent answers 400 for a notice version of the wrong JSON type, without recording it', async () => {
+    startServer();
+    const headers = await authorizationFor(driverRepository, julie);
+
+    const asArray = await server.inject({ method: 'POST', url: '/v1/consent', headers, payload: { noticeVersion: [PRIVACY_NOTICE_VERSION] } });
+    const asNumber = await server.inject({ method: 'POST', url: '/v1/consent', headers, payload: { noticeVersion: 123 } });
+    const me = await server.inject({ method: 'GET', url: '/v1/me', headers });
+
+    expect(asArray.statusCode).toBe(400);
+    expect(asNumber.statusCode).toBe(400);
+    expect(me.json<{ acceptedNoticeVersion: string | null }>().acceptedNoticeVersion).toBeNull();
+  });
+
+  it('POST /v1/consent answers 400 for an overlong notice version', async () => {
+    startServer();
+    const headers = await authorizationFor(driverRepository, julie);
+
+    const response = await server.inject({ method: 'POST', url: '/v1/consent', headers, payload: { noticeVersion: 'x'.repeat(65) } });
+
+    expect(response.statusCode).toBe(400);
+  });
+
   it('POST /v1/consent answers 400 for a signed-in driver with an invalid body', async () => {
     startServer();
     const headers = await authorizationFor(driverRepository, julie);
