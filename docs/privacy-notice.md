@@ -10,9 +10,9 @@ Version en vigueur : `2026-10-28` (`PRIVACY_NOTICE_VERSION` dans `packages/share
 
 Pour stationner avec Palier, nous recueillons :
 
-- votre plaque d'immatriculation
-- les heures d'entrée et de sortie
-- l'allée et la place détectées
+- votre plaque d’immatriculation
+- les heures d’entrée et de sortie
+- l’allée et la place détectées
 - la référence de paiement
 
 Ces renseignements servent à trouver votre place, à facturer le stationnement et à assurer la sécurité des lieux.
