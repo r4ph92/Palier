@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie } from './fakeDriverRepository.ts';
+import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 
 const DATABASE_ERROR_MESSAGE =
   'Failed query: select "parking_lot"."id" from "parking_lot" where "parking_lot"."is_online" = $1\nparams: true';
@@ -14,6 +15,7 @@ describe('GET /v1/lots when the database fails', () => {
   it('does not reveal the internal error message to the client', async () => {
     const driverRepository = new FakeDriverRepository();
     server = buildServer({
+      vehicleRepository: new FakeVehicleRepository(),
       lotAvailabilityRepository: { findOnlineLots: () => Promise.reject(new Error(DATABASE_ERROR_MESSAGE)) },
       driverRepository,
     });

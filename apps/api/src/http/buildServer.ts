@@ -1,14 +1,17 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { DriverRepository } from '../domain/drivers/DriverRepository.ts';
 import type { LotAvailabilityRepository } from '../domain/lots/LotAvailabilityRepository.ts';
+import type { VehicleRepository } from '../domain/vehicles/VehicleRepository.ts';
 import { handleServerError } from './handleServerError.ts';
 import { registerDriverRoutes } from './routes/driverRoutes.ts';
 import { registerLotsRoutes } from './routes/lotsRoutes.ts';
+import { registerVehicleRoutes } from './routes/vehicleRoutes.ts';
 import { registerTestSignInRoutes } from './routes/testSignInRoutes.ts';
 
 export interface ServerDependencies {
   readonly lotAvailabilityRepository: LotAvailabilityRepository;
   readonly driverRepository: DriverRepository;
+  readonly vehicleRepository: VehicleRepository;
   readonly testSignInEnabled?: boolean;
   readonly logsRequests?: boolean;
 }
@@ -19,6 +22,7 @@ export function buildServer(dependencies: ServerDependencies): FastifyInstance {
   server.setErrorHandler(handleServerError);
   server.decorateRequest('driver', null);
   registerLotsRoutes(server, dependencies.lotAvailabilityRepository, dependencies.driverRepository);
+  registerVehicleRoutes(server, dependencies.vehicleRepository, dependencies.driverRepository);
   registerDriverRoutes(server, dependencies.driverRepository);
   if (dependencies.testSignInEnabled === true) {
     registerTestSignInRoutes(server, dependencies.driverRepository);

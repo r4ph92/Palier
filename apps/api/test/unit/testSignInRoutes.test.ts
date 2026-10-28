@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { julie, marc, FakeDriverRepository } from './fakeDriverRepository.ts';
+import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
 
@@ -12,7 +13,7 @@ describe('test sign-in when enabled', () => {
   afterEach(() => server.close());
 
   function startServer() {
-    server = buildServer({ lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository(), testSignInEnabled: true });
+    server = buildServer({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository(), testSignInEnabled: true });
   }
 
   it('lists the seeded drivers to pick from', async () => {
@@ -67,7 +68,7 @@ describe('test sign-in body', () => {
   afterEach(() => server.close());
 
   it('drops extra fields instead of using them', async () => {
-    server = buildServer({ lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository(), testSignInEnabled: true });
+    server = buildServer({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository(), testSignInEnabled: true });
 
     const response = await server.inject({
       method: 'POST',
@@ -85,7 +86,7 @@ describe('test sign-in when disabled', () => {
   afterEach(() => server.close());
 
   function startServer() {
-    server = buildServer({ lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository() });
+    server = buildServer({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository() });
   }
 
   it('GET /v1/test/drivers answers 404', async () => {
