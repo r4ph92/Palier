@@ -18,6 +18,7 @@ export interface SessionController {
   signOut(): void;
   expire(): void;
   retry(): void;
+  refreshDriver(token: string): void;
 }
 
 const SIGNED_OUT: SessionState = { status: 'signedOut' };
@@ -37,7 +38,8 @@ export function useSession(authClient: AuthClient, tokenStore: TokenStore): Sess
     expire();
   }, [authClient, state, expire]);
   const acceptNotice = useAcceptNotice({ authClient, state, setState, expire });
-  return { state, signIn, acceptNotice, signOut, expire, retry };
+  const refreshDriver = useRefreshDriver(authClient, setState);
+  return { state, signIn, acceptNotice, signOut, expire, retry, refreshDriver };
 }
 
 interface AcceptNoticeDependencies {
@@ -72,6 +74,21 @@ async function acceptedOrRefused(authClient: AuthClient, token: string): Promise
     }
     throw error;
   }
+}
+
+// Re-reads the driver record, so a privacy notice the API now requires is shown; a failed read leaves the screen as it is.
+function useRefreshDriver(authClient: AuthClient, setState: Dispatch<SetStateAction<SessionState>>) {
+  return useCallback(
+    (token: string) => {
+      authClient
+        .fetchMe(token)
+        .then((driver) =>
+          setState((current) => (current.status === 'signedIn' && current.token === token ? { ...current, driver } : current)),
+        )
+        .catch(() => undefined);
+    },
+    [authClient, setState],
+  );
 }
 
 function useSignIn(authClient: AuthClient, tokenStore: TokenStore, setState: Dispatch<SetStateAction<SessionState>>) {
