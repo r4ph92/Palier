@@ -11,6 +11,7 @@ import { useSession, type SessionController, type SessionState } from './auth/us
 import { ErrorState } from './components/ErrorState';
 import { TabBar, type Tab } from './components/TabBar';
 import { AccountScreen } from './screens/AccountScreen';
+import { AddVehicleScreen } from './screens/AddVehicleScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { PrivacyNoticeScreen } from './screens/PrivacyNoticeScreen';
 import { SignInScreen } from './screens/SignInScreen';
@@ -26,7 +27,7 @@ export interface PalierAppProps {
   readonly createVehicleClient: (token: string, onUnauthorized: () => void, onConsentRequired: () => void) => VehicleClient;
 }
 
-type AccountPage = 'account' | 'vehicles';
+type AccountPage = 'account' | 'vehicles' | 'addVehicle';
 
 export function PalierApp({ authClient, tokenStore, testSignInEnabled, createLotsClient, createVehicleClient }: PalierAppProps) {
   const session = useSession(authClient, tokenStore);
@@ -84,15 +85,34 @@ function SignedInTabs({ firstName, lotsClient, vehicleClient, onSignOut }: Signe
   return (
     <View style={styles.app}>
       <LotsClientProvider client={lotsClient}>
-        {tab === 'lots' ? <HomeScreen firstName={firstName} /> : null}
-        {tab === 'account' && accountPage === 'account' ? (
-          <AccountScreen firstName={firstName} onOpenVehicles={() => setAccountPage('vehicles')} onSignOut={onSignOut} />
-        ) : null}
-        {tab === 'account' && accountPage === 'vehicles' ? <VehiclesScreen firstName={firstName} client={vehicleClient} /> : null}
+        {tab === 'lots' ? (
+          <HomeScreen firstName={firstName} />
+        ) : (
+          <AccountTab firstName={firstName} page={accountPage} client={vehicleClient} onPageChange={setAccountPage} onSignOut={onSignOut} />
+        )}
       </LotsClientProvider>
       <TabBar selected={tab} onSelect={selectTab} />
     </View>
   );
+}
+
+interface AccountTabProps {
+  readonly firstName: string;
+  readonly page: AccountPage;
+  readonly client: VehicleClient;
+  readonly onPageChange: (page: AccountPage) => void;
+  readonly onSignOut: () => void;
+}
+
+function AccountTab({ firstName, page, client, onPageChange, onSignOut }: AccountTabProps) {
+  switch (page) {
+    case 'account':
+      return <AccountScreen firstName={firstName} onOpenVehicles={() => onPageChange('vehicles')} onSignOut={onSignOut} />;
+    case 'vehicles':
+      return <VehiclesScreen firstName={firstName} client={client} onAddVehicle={() => onPageChange('addVehicle')} />;
+    case 'addVehicle':
+      return <AddVehicleScreen client={client} onCancel={() => onPageChange('vehicles')} onSaved={() => onPageChange('vehicles')} />;
+  }
 }
 
 function StartupError({ onRetry }: { readonly onRetry: () => void }) {

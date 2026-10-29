@@ -5,6 +5,7 @@ import type { VehicleClient } from '../api/VehicleClient';
 import { ErrorState } from '../components/ErrorState';
 import { MessageState } from '../components/MessageState';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { TextButton } from '../components/TextButton';
 import { i18n } from '../i18n/i18n';
 import { useVehicles, type VehiclesController } from '../vehicles/useVehicles';
 import { useColors } from '../theme/useColors';
@@ -16,9 +17,10 @@ const NO_VEHICLES: readonly Vehicle[] = [];
 interface VehiclesScreenProps {
   readonly firstName: string;
   readonly client: VehicleClient;
+  readonly onAddVehicle: () => void;
 }
 
-export function VehiclesScreen({ firstName, client }: VehiclesScreenProps) {
+export function VehiclesScreen({ firstName, client, onAddVehicle }: VehiclesScreenProps) {
   const controller = useVehicles(client);
   const colors = useColors();
   return (
@@ -27,12 +29,22 @@ export function VehiclesScreen({ firstName, client }: VehiclesScreenProps) {
         data={controller.state.status === 'loaded' ? controller.state.vehicles : NO_VEHICLES}
         keyExtractor={(vehicle) => vehicle.id}
         renderItem={({ item, index }) => <VehicleRow vehicle={item} isDefault={index === 0} />}
-        ListHeaderComponent={<ScreenHeader eyebrow={firstName} title={i18n.t('vehicles.title')} />}
+        ListHeaderComponent={<VehiclesHeader firstName={firstName} onAddVehicle={onAddVehicle} />}
         ListEmptyComponent={<VehiclesStateMessage controller={controller} />}
         contentContainerStyle={styles.content}
         testID="vehicle-list"
       />
     </SafeAreaView>
+  );
+}
+
+function VehiclesHeader({ firstName, onAddVehicle }: { readonly firstName: string; readonly onAddVehicle: () => void }) {
+  return (
+    <ScreenHeader
+      eyebrow={firstName}
+      title={i18n.t('vehicles.title')}
+      action={<TextButton label={i18n.t('vehicles.add')} onPress={onAddVehicle} />}
+    />
   );
 }
 

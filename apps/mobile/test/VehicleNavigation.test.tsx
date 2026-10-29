@@ -45,4 +45,19 @@ describe('the vehicles page of the account tab', () => {
     expect(screen.queryByText('ABC 123 · QC')).not.toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Mes véhicules' })).toBeOnTheScreen();
   });
+
+  it('adds a vehicle from the list and comes back to it with the new plate', async () => {
+    await renderSignedInJulie(new FakeVehicleClient());
+    const user = userEvent.setup();
+
+    await user.press(await screen.findByRole('tab', { name: 'Compte' }));
+    await user.press(screen.getByRole('button', { name: 'Mes véhicules' }));
+    await user.press(await screen.findByRole('button', { name: 'Ajouter' }));
+    await user.type(screen.getByLabelText('Plaque'), 'abc 123');
+    await user.press(screen.getByRole('radio', { name: 'Québec' }));
+    await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(await screen.findByText('ABC 123 · QC')).toBeOnTheScreen();
+    expect(screen.getByText('Par défaut')).toBeOnTheScreen();
+  });
 });

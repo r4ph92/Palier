@@ -13,7 +13,7 @@ async function renderVehiclesScreen(client: FakeVehicleClient) {
   applyLanguage('fr');
   return render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <VehiclesScreen firstName="Julie" client={client} />
+      <VehiclesScreen firstName="Julie" client={client} onAddVehicle={jest.fn()} />
     </SafeAreaProvider>,
   );
 }
