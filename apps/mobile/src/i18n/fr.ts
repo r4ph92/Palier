@@ -28,6 +28,14 @@ export const fr = {
   account: {
     title: 'Compte',
     signOut: 'Se déconnecter',
+    vehicles: 'Mes véhicules',
+  },
+  vehicles: {
+    title: 'Véhicules',
+    loading: 'Chargement des véhicules',
+    empty: 'Aucun véhicule enregistré.',
+    emptyHint: 'Ajoutez la plaque de votre véhicule pour stationner.',
+    defaultBadge: 'Par défaut',
   },
   tabs: {
     lots: 'Stationnements',

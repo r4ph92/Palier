@@ -5,6 +5,7 @@ import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import type { AuthClient } from './api/AuthClient';
 import type { LotsClient } from './api/LotsClient';
 import { LotsClientProvider } from './api/LotsClientContext';
+import type { VehicleClient } from './api/VehicleClient';
 import type { TokenStore } from './auth/TokenStore';
 import { useSession, type SessionController, type SessionState } from './auth/useSession';
 import { ErrorState } from './components/ErrorState';
@@ -13,6 +14,7 @@ import { AccountScreen } from './screens/AccountScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { PrivacyNoticeScreen } from './screens/PrivacyNoticeScreen';
 import { SignInScreen } from './screens/SignInScreen';
+import { VehiclesScreen } from './screens/VehiclesScreen';
 import { useColors } from './theme/useColors';
 import { spacing } from './theme/tokens';
 
@@ -21,9 +23,12 @@ export interface PalierAppProps {
   readonly tokenStore: TokenStore;
   readonly testSignInEnabled: boolean;
   readonly createLotsClient: (token: string, onUnauthorized: () => void) => LotsClient;
+  readonly createVehicleClient: (token: string, onUnauthorized: () => void, onConsentRequired: () => void) => VehicleClient;
 }
 
-export function PalierApp({ authClient, tokenStore, testSignInEnabled, createLotsClient }: PalierAppProps) {
+type AccountPage = 'account' | 'vehicles';
+
+export function PalierApp({ authClient, tokenStore, testSignInEnabled, createLotsClient, createVehicleClient }: PalierAppProps) {
   const session = useSession(authClient, tokenStore);
   const { state } = session;
   switch (state.status) {
@@ -34,7 +39,7 @@ export function PalierApp({ authClient, tokenStore, testSignInEnabled, createLot
     case 'signedOut':
       return <SignInScreen testSignInEnabled={testSignInEnabled} authClient={authClient} onSignIn={session.signIn} />;
     case 'signedIn':
-      return <SignedInApp signedIn={state} session={session} createLotsClient={createLotsClient} />;
+      return <SignedInApp signedIn={state} session={session} createLotsClient={createLotsClient} createVehicleClient={createVehicleClient} />;
   }
 }
 
@@ -42,22 +47,50 @@ interface SignedInAppProps {
   readonly signedIn: Extract<SessionState, { status: 'signedIn' }>;
   readonly session: SessionController;
   readonly createLotsClient: PalierAppProps['createLotsClient'];
+  readonly createVehicleClient: PalierAppProps['createVehicleClient'];
 }
 
-function SignedInApp({ signedIn, session, createLotsClient }: SignedInAppProps) {
-  const [tab, setTab] = useState<Tab>('lots');
+function SignedInApp({ signedIn, session, createLotsClient, createVehicleClient }: SignedInAppProps) {
   const { token, driver } = signedIn;
-  const { expire, signOut, acceptNotice } = session;
+  const { expire, signOut, acceptNotice, refreshDriver } = session;
   const lotsClient = useMemo(() => createLotsClient(token, expire), [createLotsClient, token, expire]);
+  const vehicleClient = useMemo(
+    () => createVehicleClient(token, expire, () => refreshDriver(token)),
+    [createVehicleClient, token, expire, refreshDriver],
+  );
   if (driver.acceptedNoticeVersion !== PRIVACY_NOTICE_VERSION) {
     return <PrivacyNoticeScreen onAccept={acceptNotice} onSignOut={signOut} />;
   }
   return (
+    <SignedInTabs firstName={driver.firstName} lotsClient={lotsClient} vehicleClient={vehicleClient} onSignOut={signOut} />
+  );
+}
+
+interface SignedInTabsProps {
+  readonly firstName: string;
+  readonly lotsClient: LotsClient;
+  readonly vehicleClient: VehicleClient;
+  readonly onSignOut: () => void;
+}
+
+function SignedInTabs({ firstName, lotsClient, vehicleClient, onSignOut }: SignedInTabsProps) {
+  const [tab, setTab] = useState<Tab>('lots');
+  const [accountPage, setAccountPage] = useState<AccountPage>('account');
+  // Choosing a tab starts the account tab again at its first page, so Compte never reopens on Véhicules.
+  function selectTab(next: Tab) {
+    setTab(next);
+    setAccountPage('account');
+  }
+  return (
     <View style={styles.app}>
       <LotsClientProvider client={lotsClient}>
-        {tab === 'lots' ? <HomeScreen firstName={driver.firstName} /> : <AccountScreen firstName={driver.firstName} onSignOut={signOut} />}
+        {tab === 'lots' ? <HomeScreen firstName={firstName} /> : null}
+        {tab === 'account' && accountPage === 'account' ? (
+          <AccountScreen firstName={firstName} onOpenVehicles={() => setAccountPage('vehicles')} onSignOut={onSignOut} />
+        ) : null}
+        {tab === 'account' && accountPage === 'vehicles' ? <VehiclesScreen firstName={firstName} client={vehicleClient} /> : null}
       </LotsClientProvider>
-      <TabBar selected={tab} onSelect={setTab} />
+      <TabBar selected={tab} onSelect={selectTab} />
     </View>
   );
 }

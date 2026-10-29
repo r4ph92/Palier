@@ -8,15 +8,17 @@ import { spacing } from '../theme/tokens';
 
 interface AccountScreenProps {
   readonly firstName: string;
+  readonly onOpenVehicles: () => void;
   readonly onSignOut: () => void;
 }
 
-export function AccountScreen({ firstName, onSignOut }: AccountScreenProps) {
+export function AccountScreen({ firstName, onOpenVehicles, onSignOut }: AccountScreenProps) {
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <View style={styles.content}>
         <ScreenHeader eyebrow={firstName} title={i18n.t('account.title')} />
+        <PrimaryButton label={i18n.t('account.vehicles')} onPress={onOpenVehicles} />
         <PrimaryButton label={i18n.t('account.signOut')} onPress={onSignOut} />
       </View>
     </SafeAreaView>

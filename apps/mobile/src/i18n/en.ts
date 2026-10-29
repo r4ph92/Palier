@@ -30,6 +30,14 @@ export const en: Translations = {
   account: {
     title: 'Account',
     signOut: 'Sign out',
+    vehicles: 'My vehicles',
+  },
+  vehicles: {
+    title: 'Vehicles',
+    loading: 'Loading vehicles',
+    empty: 'No vehicle registered.',
+    emptyHint: 'Add your plate to park.',
+    defaultBadge: 'Default',
   },
   tabs: {
     lots: 'Parking lots',
