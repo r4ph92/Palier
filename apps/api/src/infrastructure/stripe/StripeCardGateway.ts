@@ -1,5 +1,5 @@
 import type Stripe from 'stripe';
-import type { CardGateway, CardPaymentMethod } from '../../domain/payments/CardGateway.ts';
+import { CardProviderUnavailableError, type CardGateway, type CardPaymentMethod } from '../../domain/payments/CardGateway.ts';
 import type { Driver } from '../../domain/drivers/Driver.ts';
 
 const RESOURCE_MISSING = 'resource_missing';
@@ -12,28 +12,29 @@ export class StripeCardGateway implements CardGateway {
   }
 
   async createCustomer(driver: Driver): Promise<string> {
-    const customer = await this.#stripe.customers.create({
-      name: `${driver.firstName} ${driver.lastName}`,
-      metadata: { driverId: driver.id },
+    return this.#stripeCall(async () => {
+      const customer = await this.#stripe.customers.create({
+        name: `${driver.firstName} ${driver.lastName}`,
+        metadata: { driverId: driver.id },
+      });
+      return customer.id;
     });
-    return customer.id;
   }
 
   async createSetupIntentClientSecret(customerId: string): Promise<string> {
-    const setupIntent = await this.#stripe.setupIntents.create({
-      customer: customerId,
-      usage: 'off_session',
+    return this.#stripeCall(async () => {
+      const setupIntent = await this.#stripe.setupIntents.create({ customer: customerId, usage: 'off_session' });
+      if (setupIntent.client_secret === null) {
+        throw new Error('Stripe returned a SetupIntent without a client secret.');
+      }
+      return setupIntent.client_secret;
     });
-    if (setupIntent.client_secret === null) {
-      throw new Error('Stripe returned a SetupIntent without a client secret.');
-    }
-    return setupIntent.client_secret;
   }
 
   async findCardPaymentMethod(paymentMethodId: string): Promise<CardPaymentMethod | null> {
-    try {
-      const paymentMethod = await this.#stripe.paymentMethods.retrieve(paymentMethodId);
-      if (paymentMethod.card === undefined) {
+    return this.#stripeCall(async () => {
+      const paymentMethod = await this.#retrievePaymentMethod(paymentMethodId);
+      if (paymentMethod === null || paymentMethod.card === undefined) {
         return null;
       }
       const customer = paymentMethod.customer;
@@ -42,11 +43,26 @@ export class StripeCardGateway implements CardGateway {
         brand: paymentMethod.card.brand,
         last4: paymentMethod.card.last4,
       };
+    });
+  }
+
+  async #retrievePaymentMethod(paymentMethodId: string): Promise<Stripe.PaymentMethod | null> {
+    try {
+      return await this.#stripe.paymentMethods.retrieve(paymentMethodId);
     } catch (error) {
       if (isResourceMissing(error)) {
         return null;
       }
       throw error;
+    }
+  }
+
+  // Any Stripe failure leaves here as the same fixed error, so the client never sees Stripe's text.
+  async #stripeCall<Result>(call: () => Promise<Result>): Promise<Result> {
+    try {
+      return await call();
+    } catch (error) {
+      throw new CardProviderUnavailableError({ cause: error });
     }
   }
 }

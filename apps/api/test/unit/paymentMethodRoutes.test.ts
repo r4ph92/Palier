@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { CardProviderUnavailableError } from '../../src/domain/payments/CardGateway.ts';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie, marc } from './fakeDriverRepository.ts';
@@ -120,6 +121,19 @@ describe('payment method routes', () => {
 
       expect(first.json<{ clientSecret: string }>().clientSecret).toBe(second.json<{ clientSecret: string }>().clientSecret);
       expect(await driverRepository.findStripeCustomerId(julie.id)).not.toBeNull();
+    });
+
+    it('answers 503 without Stripe’s own error text when Stripe refuses the request', async () => {
+      driverRepository = new FakeDriverRepository();
+      cardGateway = new FakeCardGateway();
+      vi.spyOn(cardGateway, 'createSetupIntentClientSecret').mockRejectedValue(new CardProviderUnavailableError());
+      server = buildServer({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository(), cardGateway });
+      const headers = await signedInWithNotice(julie);
+
+      const response = await server.inject({ method: 'POST', url: '/v1/me/setup-intent', headers });
+
+      expect(response.statusCode).toBe(503);
+      expect(response.body).not.toContain('stripe');
     });
 
     it('answers 503 when no card gateway is configured', async () => {

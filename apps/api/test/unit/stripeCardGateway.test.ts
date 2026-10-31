@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type Stripe from 'stripe';
+import { CardProviderUnavailableError } from '../../src/domain/payments/CardGateway.ts';
 import { StripeCardGateway } from '../../src/infrastructure/stripe/StripeCardGateway.ts';
 import { julie } from './fakeDriverRepository.ts';
 
@@ -35,10 +36,13 @@ describe('StripeCardGateway', () => {
     expect(await gateway.findCardPaymentMethod('pm_gone')).toBeNull();
   });
 
-  it('lets any other Stripe failure through', async () => {
-    const gateway = gatewayWith({ retrieve: () => Promise.reject(new Error('Stripe is down')) });
+  it('turns any other Stripe failure into the fixed unavailable error, without Stripe’s text', async () => {
+    const gateway = gatewayWith({ retrieve: () => Promise.reject(new Error('Rate limit exceeded: stripe.com/docs')) });
 
-    await expect(gateway.findCardPaymentMethod('pm_visa')).rejects.toThrow('Stripe is down');
+    const failure = gateway.findCardPaymentMethod('pm_visa');
+
+    await expect(failure).rejects.toBeInstanceOf(CardProviderUnavailableError);
+    await expect(failure).rejects.toMatchObject({ statusCode: 503, message: 'Card payments are unavailable right now.' });
   });
 
   it('creates the customer with the driver’s name and id, and never an email', async () => {
