@@ -7,6 +7,7 @@ import { MessageState } from '../components/MessageState';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
 import { i18n } from '../i18n/i18n';
+import { useIsLargeText } from '../theme/useIsLargeText';
 import { useVehicles, type VehiclesController } from '../vehicles/useVehicles';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -51,9 +52,10 @@ function VehiclesHeader({ firstName, onAddVehicle }: { readonly firstName: strin
 // The first vehicle is the default one. Choosing it is out of scope until several vehicles are managed.
 function VehicleRow({ vehicle, isDefault }: { readonly vehicle: Vehicle; readonly isDefault: boolean }) {
   const colors = useColors();
+  const layout = useIsLargeText() ? stackedStyles : sideBySideStyles;
   return (
-    <View accessible testID={`vehicle-row-${vehicle.id}`} style={[styles.row, { borderBottomColor: colors.line }]}>
-      <Text style={[typography.lotName, { color: colors.ink }]}>{`${vehicle.plate} · ${vehicle.province}`}</Text>
+    <View accessible testID={`vehicle-row-${vehicle.id}`} style={[styles.row, layout.row, { borderBottomColor: colors.line }]}>
+      <Text style={[typography.lotName, layout.plate, { color: colors.ink }]}>{`${vehicle.plate} · ${vehicle.province}`}</Text>
       {isDefault ? <Text style={[typography.bodyStrong, { color: colors.muted }]}>{i18n.t('vehicles.defaultBadge')}</Text> : null}
     </View>
   );
@@ -76,12 +78,15 @@ function VehiclesStateMessage({ controller }: { readonly controller: VehiclesCon
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { flexGrow: 1, paddingHorizontal: spacing.medium },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.medium,
-    paddingVertical: spacing.medium,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
+  row: { paddingVertical: spacing.medium, borderBottomWidth: StyleSheet.hairlineWidth },
+});
+
+const sideBySideStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.medium },
+  plate: { flexShrink: 1 },
+});
+
+const stackedStyles = StyleSheet.create({
+  row: { flexDirection: 'column', alignItems: 'flex-start', gap: spacing.extraSmall },
+  plate: {},
 });
