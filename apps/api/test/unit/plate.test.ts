@@ -20,6 +20,12 @@ describe('readPlate', () => {
     expect(readPlate('   ')).toBeNull();
   });
 
+  it('refuses a plate made only of hyphens and spaces', () => {
+    expect(readPlate('-')).toBeNull();
+    expect(readPlate('--')).toBeNull();
+    expect(readPlate(' - ')).toBeNull();
+  });
+
   it('refuses a plate longer than eight characters', () => {
     expect(readPlate('ABCD12345')).toBeNull();
   });

@@ -14,5 +14,7 @@ export function readPlate(input: string): PlateEntry | null {
     return null;
   }
   const plate = trimmed.toUpperCase();
-  return { plate, plateKey: plate.replace(/[ -]/g, '') };
+  const plateKey = plate.replace(/[ -]/g, '');
+  // A plate of only spaces and hyphens has no letter or digit to match on.
+  return plateKey === '' ? null : { plate, plateKey };
 }

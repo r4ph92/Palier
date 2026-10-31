@@ -119,7 +119,7 @@ describe('vehicle routes', () => {
     it('refuses an empty plate, a plate longer than eight characters, or a bad character, and saves nothing', async () => {
       const headers = await signInConsentedJulie();
 
-      for (const plate of ['', 'ABCD12345', 'AB_123']) {
+      for (const plate of ['', '-', 'ABCD12345', 'AB_123']) {
         const response = await server.inject({ method: 'POST', url: '/v1/vehicles', headers, payload: { plate, province: 'QC' } });
 
         expect(response.statusCode).toBe(400);
