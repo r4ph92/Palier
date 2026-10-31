@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CardField } from '@stripe/stripe-react-native';
 import type { SavedCard } from '@palier/shared-types';
@@ -22,11 +22,12 @@ export function PaymentMethodScreen({ client, onSaved, onBack }: PaymentMethodSc
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
-      <View style={styles.content}>
+      {/* A ScrollView keeps the card field and the save button reachable at the largest text sizes. */}
+      <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader eyebrow={i18n.t('account.title')} title={i18n.t('payment.title')} action={<TextButton label={i18n.t('payment.back')} onPress={onBack} />} />
         <Text style={[typography.body, { color: colors.muted }]}>{i18n.t('payment.intro')}</Text>
         <CardSaveForm client={client} onSaved={onSaved} />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
