@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 import type { SavedCard } from '@palier/shared-types';
 import type { Driver } from '../../domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
@@ -32,7 +32,13 @@ export class PostgresDriverRepository implements DriverRepository {
       .select(driverColumns)
       .from(userSessionToken)
       .innerJoin(appUser, eq(appUser.id, userSessionToken.userId))
-      .where(and(eq(userSessionToken.tokenHash, tokenHash), isNull(userSessionToken.revokedAt)))
+      .where(
+        and(
+          eq(userSessionToken.tokenHash, tokenHash),
+          isNull(userSessionToken.revokedAt),
+          gt(userSessionToken.expiresAt, sql`now()`),
+        ),
+      )
       .limit(1);
     return driver ?? null;
   }

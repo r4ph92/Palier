@@ -153,6 +153,7 @@ export const userSessionToken = pgTable(
       .notNull()
       .references(() => appUser.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull().default(sql`now() + interval '30 days'`),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
   },
   (table) => [index('user_session_token_user_id_index').on(table.userId)],

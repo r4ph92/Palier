@@ -36,6 +36,13 @@
       "when": 1793413040444,
       "tag": "0004_card_brand_and_last4",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793415991308,
+      "tag": "0005_session_expiry",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,8 @@
+import { eq } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { connectToDatabase } from '../../src/infrastructure/postgres/database.ts';
 import { PostgresDriverRepository } from '../../src/infrastructure/postgres/PostgresDriverRepository.ts';
+import { userSessionToken } from '../../src/infrastructure/postgres/schema.ts';
 import { runMigrations } from '../../src/migrate/runMigrations.ts';
 import { JULIE_TREMBLAY_ID, MARC_GAGNON_ID, NADIA_BOUCHARD_ID } from '../../src/seed/fixtures/drivers.ts';
 import { seedDatabase } from '../../src/seed/seedDatabase.ts';
@@ -91,5 +93,17 @@ describe('PostgresDriverRepository on the seeded database', () => {
 
     expect(await repository.findSavedCard(JULIE_TREMBLAY_ID)).toEqual({ brand: 'mastercard', last4: '4444' });
     expect(await repository.findSavedCard(MARC_GAGNON_ID)).toBeNull();
+  });
+
+  it('gives a new session token 30 days, and refuses one whose time has run out', async () => {
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'hash-fresh');
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'hash-expired');
+    await connection.database
+      .update(userSessionToken)
+      .set({ expiresAt: new Date(Date.now() - 1000) })
+      .where(eq(userSessionToken.tokenHash, 'hash-expired'));
+
+    expect(await repository.findDriverBySessionToken('hash-fresh')).toEqual(julie);
+    expect(await repository.findDriverBySessionToken('hash-expired')).toBeNull();
   });
 });
