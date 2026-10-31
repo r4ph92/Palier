@@ -1,7 +1,5 @@
 import type { DriverPersona } from './fixtures/drivers.ts';
 
-const TEST_KEY_PREFIX = 'sk_test_';
-
 export interface StripeIds {
   readonly stripeCustomerId: string;
   readonly defaultPmId: string | null;
@@ -25,17 +23,6 @@ export interface StripeTestApi {
     list(params: { customer: string; type: 'card'; limit: number }): Promise<StripeList>;
     attach(paymentMethod: string, params: { customer: string }): Promise<StripeObject>;
   };
-}
-
-export function stripeTestKey(variables: NodeJS.ProcessEnv): string | null {
-  const key = variables['STRIPE_SECRET_KEY'];
-  if (key === undefined || key === '') {
-    return null;
-  }
-  if (!key.startsWith(TEST_KEY_PREFIX)) {
-    throw new Error('Seeding refused: STRIPE_SECRET_KEY must be a Stripe test key (sk_test_…).');
-  }
-  return key;
 }
 
 export async function createStripeTestCustomers(

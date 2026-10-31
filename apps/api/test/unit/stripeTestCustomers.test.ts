@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { driverPersonas, type DriverPersona } from '../../src/seed/fixtures/drivers.ts';
-import { createStripeTestCustomers, stripeTestKey, type StripeTestApi } from '../../src/seed/stripeTestCustomers.ts';
+import { stripeTestKey } from '../../src/config/stripeTestKey.ts';
+import { createStripeTestCustomers, type StripeTestApi } from '../../src/seed/stripeTestCustomers.ts';
 
 class FakeStripe implements StripeTestApi {
   readonly customersByEmail = new Map<string, string>();
