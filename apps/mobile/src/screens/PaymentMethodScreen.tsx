@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CardField } from '@stripe/stripe-react-native';
 import type { SavedCard } from '@palier/shared-types';
@@ -54,6 +54,6 @@ function CardSaveForm({ client, onSaved }: Pick<PaymentMethodScreenProps, 'clien
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { gap: spacing.medium, paddingHorizontal: spacing.medium },
+  content: { flexGrow: 1, gap: spacing.medium, paddingHorizontal: spacing.medium },
   cardField: { width: '100%', height: 50 },
 });
