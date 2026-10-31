@@ -28,6 +28,22 @@ export const fr = {
   account: {
     title: 'Compte',
     signOut: 'Se déconnecter',
+    paymentMethod: 'Moyen de paiement',
+    cardLoading: 'Chargement de la carte',
+    cardNone: 'Aucune carte enregistrée.',
+    cardUnavailable: 'Carte indisponible pour le moment.',
+  },
+  payment: {
+    title: 'Moyen de paiement',
+    intro: 'Votre carte est enregistrée chez Stripe. Palier ne conserve que la marque et les quatre derniers chiffres.',
+    cardField: 'Renseignements de la carte',
+    save: 'Enregistrer la carte',
+    saving: 'Enregistrement…',
+    incomplete: 'Complétez les renseignements de la carte.',
+    declined: 'Carte refusée par l\'émetteur',
+    failed: 'Palier n’a pas pu enregistrer la carte.',
+    saved: 'Carte enregistrée.',
+    back: 'Retour',
   },
   tabs: {
     lots: 'Stationnements',

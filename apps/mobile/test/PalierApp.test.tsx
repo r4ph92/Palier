@@ -5,6 +5,7 @@ import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { PalierApp } from '../src/PalierApp';
 import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
+import { FakePaymentMethodClient } from './fakePaymentMethodClient';
 
 const SAFE_AREA_METRICS = {
   frame: { x: 0, y: 0, width: 393, height: 852 },
@@ -28,6 +29,7 @@ async function renderApp(options: AppOptions = {}) {
         tokenStore={options.tokenStore ?? new MemoryTokenStore()}
         testSignInEnabled
         createLotsClient={options.createLotsClient ?? (() => new FakeLotsClient(parkingDemoWith(10)))}
+        createPaymentMethodClient={() => new FakePaymentMethodClient()}
       />
     </SafeAreaProvider>,
   );

@@ -25,7 +25,10 @@
     "react-native-safe-area-context": "~5.10.1"
   },
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "setupFiles": [
+      "<rootDir>/test/jestSetup.ts"
+    ]
   },
   "devDependencies": {
     "@testing-library/react-native": "^14.1.0",

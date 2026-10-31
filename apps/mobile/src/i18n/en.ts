@@ -30,6 +30,22 @@ export const en: Translations = {
   account: {
     title: 'Account',
     signOut: 'Sign out',
+    paymentMethod: 'Payment method',
+    cardLoading: 'Loading card',
+    cardNone: 'No card saved.',
+    cardUnavailable: 'Card unavailable right now.',
+  },
+  payment: {
+    title: 'Payment method',
+    intro: 'Your card is saved with Stripe. Palier keeps only the brand and the last four digits.',
+    cardField: 'Card details',
+    save: 'Save card',
+    saving: 'Saving…',
+    incomplete: 'Complete the card details.',
+    declined: 'Card declined by the issuer',
+    failed: 'Palier could not save the card.',
+    saved: 'Card saved.',
+    back: 'Back',
   },
   tabs: {
     lots: 'Parking lots',
