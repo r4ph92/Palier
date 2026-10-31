@@ -169,4 +169,18 @@ export const userConsent = pgTable(
   (table) => [unique('user_consent_user_id_notice_version_unique').on(table.userId, table.noticeVersion)],
 );
 
+export const vehicle = pgTable(
+  'vehicle',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => appUser.id),
+    plate: text('plate').notNull(),
+    plateKey: text('plate_key').notNull(),
+    province: text('province').notNull(),
+  },
+  (table) => [unique('vehicle_user_id_plate_key_province_unique').on(table.userId, table.plateKey, table.province)],
+);
+
 export type SpotState = (typeof spotState.enumValues)[number];

@@ -3,7 +3,9 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HttpAuthClient } from './api/HttpAuthClient';
 import { HttpLotsClient } from './api/HttpLotsClient';
+import { HttpVehicleClient } from './api/HttpVehicleClient';
 import type { LotsClient } from './api/LotsClient';
+import type { VehicleClient } from './api/VehicleClient';
 import { secureTokenStore } from './auth/TokenStore';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
 import { applyLanguage, deviceLanguage } from './i18n/i18n';
@@ -22,6 +24,10 @@ function createLotsClient(token: string, onUnauthorized: () => void): LotsClient
   return new HttpLotsClient({ baseUrl: apiUrl, token, onUnauthorized });
 }
 
+function createVehicleClient(token: string, onUnauthorized: () => void, onConsentRequired: () => void): VehicleClient {
+  return new HttpVehicleClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired });
+}
+
 export function App() {
   const [fontsLoaded] = useFonts(fontAssets);
   if (!fontsLoaded) {
@@ -36,6 +42,7 @@ export function App() {
           tokenStore={secureTokenStore}
           testSignInEnabled={testSignInEnabled}
           createLotsClient={createLotsClient}
+          createVehicleClient={createVehicleClient}
         />
       </AppErrorBoundary>
     </SafeAreaProvider>
