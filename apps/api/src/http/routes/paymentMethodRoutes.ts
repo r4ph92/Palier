@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest, preHandlerAsyncHook
 import type { Driver } from '../../domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
 import type { CardGateway } from '../../domain/payments/CardGateway.ts';
+import { detachReplacedCard } from '../../domain/payments/detachReplacedCard.ts';
 import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
 import { requireConsent } from '../requireConsent.ts';
 import { requireDriver, signedInDriver } from '../requireDriver.ts';
@@ -91,8 +92,10 @@ async function saveCard(
   if (customerId === null || paymentMethod === null || paymentMethod.customerId !== customerId) {
     return notAttached(reply);
   }
+  const previousPaymentMethodId = await repository.findDefaultPaymentMethodId(driver.id);
   const card: SavedCard = { brand: paymentMethod.brand, last4: paymentMethod.last4 };
   await repository.saveSavedCard(driver.id, request.body.paymentMethodId, card);
+  await detachReplacedCard({ cardGateway, previousPaymentMethodId, currentPaymentMethodId: request.body.paymentMethodId, log: request.log });
   return card;
 }
 

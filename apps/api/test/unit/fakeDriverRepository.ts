@@ -74,6 +74,10 @@ export class FakeDriverRepository implements DriverRepository {
     return Promise.resolve();
   }
 
+  findDefaultPaymentMethodId(driverId: string): Promise<string | null> {
+    return Promise.resolve(this.#savedCards.get(driverId)?.paymentMethodId ?? null);
+  }
+
   savedPaymentMethodId(driverId: string): string | null {
     return this.#savedCards.get(driverId)?.paymentMethodId ?? null;
   }

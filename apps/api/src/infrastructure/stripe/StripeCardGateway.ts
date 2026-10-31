@@ -57,6 +57,10 @@ export class StripeCardGateway implements CardGateway {
     }
   }
 
+  async detachPaymentMethod(paymentMethodId: string): Promise<void> {
+    await this.#stripeCall(() => this.#stripe.paymentMethods.detach(paymentMethodId));
+  }
+
   // Any Stripe failure leaves here as the same fixed error, so the client never sees Stripe's text.
   async #stripeCall<Result>(call: () => Promise<Result>): Promise<Result> {
     try {

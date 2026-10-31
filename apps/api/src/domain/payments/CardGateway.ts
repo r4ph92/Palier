@@ -21,4 +21,5 @@ export interface CardGateway {
   createCustomer(driver: Driver): Promise<string>;
   createSetupIntentClientSecret(customerId: string): Promise<string>;
   findCardPaymentMethod(paymentMethodId: string): Promise<CardPaymentMethod | null>;
+  detachPaymentMethod(paymentMethodId: string): Promise<void>;
 }

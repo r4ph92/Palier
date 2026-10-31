@@ -13,5 +13,6 @@ export interface DriverRepository {
   // Stores the customer only if the driver has none yet, and returns the customer that is stored after the call.
   saveStripeCustomerIdIfMissing(driverId: string, stripeCustomerId: string): Promise<string>;
   findSavedCard(driverId: string): Promise<SavedCard | null>;
+  findDefaultPaymentMethodId(driverId: string): Promise<string | null>;
   saveSavedCard(driverId: string, paymentMethodId: string, card: SavedCard): Promise<void>;
 }

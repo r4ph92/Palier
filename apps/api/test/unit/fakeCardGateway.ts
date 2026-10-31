@@ -19,6 +19,13 @@ export class FakeCardGateway implements CardGateway {
     return Promise.resolve(this.#paymentMethods.get(paymentMethodId) ?? null);
   }
 
+  readonly detachedPaymentMethodIds: string[] = [];
+
+  detachPaymentMethod(paymentMethodId: string): Promise<void> {
+    this.detachedPaymentMethodIds.push(paymentMethodId);
+    return Promise.resolve();
+  }
+
   // Stands in for Stripe attaching a card to a customer when the app confirms its setup.
   attachCard(paymentMethodId: string, customerId: string, card: SavedCard): void {
     this.#paymentMethods.set(paymentMethodId, { customerId, ...card });

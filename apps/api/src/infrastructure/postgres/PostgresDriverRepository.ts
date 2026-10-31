@@ -98,6 +98,15 @@ export class PostgresDriverRepository implements DriverRepository {
     return driver?.brand && driver.last4 ? { brand: driver.brand, last4: driver.last4 } : null;
   }
 
+  async findDefaultPaymentMethodId(driverId: string): Promise<string | null> {
+    const [driver] = await this.#database
+      .select({ defaultPmId: appUser.defaultPmId })
+      .from(appUser)
+      .where(eq(appUser.id, driverId))
+      .limit(1);
+    return driver?.defaultPmId ?? null;
+  }
+
   async saveSavedCard(driverId: string, paymentMethodId: string, card: SavedCard): Promise<void> {
     await this.#database
       .update(appUser)
