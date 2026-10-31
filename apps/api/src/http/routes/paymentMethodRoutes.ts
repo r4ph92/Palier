@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest, preHandlerAsyncHook
 import type { Driver } from '../../domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
 import type { CardGateway } from '../../domain/payments/CardGateway.ts';
+import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
 import { requireConsent } from '../requireConsent.ts';
 import { requireDriver, signedInDriver } from '../requireDriver.ts';
 import {
@@ -14,6 +15,10 @@ import {
 
 const UNPROCESSABLE = 422;
 const SERVICE_UNAVAILABLE = 503;
+const TOO_MANY_REQUESTS = 429;
+// A driver may start at most five card setups in ten minutes, which bounds the Stripe calls one token can cause.
+const SETUP_LIMIT = 5;
+const SETUP_WINDOW_MILLISECONDS = 10 * 60 * 1000;
 
 interface SavePaymentMethodRoute {
   readonly Body: SavePaymentMethodRequest;
@@ -35,7 +40,7 @@ export function registerPaymentMethodRoutes(server: FastifyInstance, repository:
     guards: [requireDriver(repository), requireConsent(repository)],
   };
   registerReadCardRoute(context);
-  registerSetupIntentRoute(context);
+  registerSetupIntentRoute(context, createSetupLimiter(SETUP_LIMIT, SETUP_WINDOW_MILLISECONDS));
   registerSaveCardRoute(context);
 }
 
@@ -45,12 +50,19 @@ function registerReadCardRoute({ server, repository, guards }: CardRoutesContext
   });
 }
 
-function registerSetupIntentRoute({ server, repository, cardGateway, guards }: CardRoutesContext): void {
+function registerSetupIntentRoute(
+  { server, repository, cardGateway, guards }: CardRoutesContext,
+  limiter: SetupLimiter,
+): void {
   server.post('/v1/me/setup-intent', { onRequest: guards, schema: { response: { 200: setupIntentResponseSchema } } }, async (request, reply) => {
     if (cardGateway === undefined) {
       return unavailable(reply);
     }
-    const customerId = await stripeCustomerFor(repository, cardGateway, signedInDriver(request));
+    const driver = signedInDriver(request);
+    if (!limiter.allow(driver.id)) {
+      return tooManySetups(reply);
+    }
+    const customerId = await stripeCustomerFor(repository, cardGateway, driver);
     const clientSecret = await cardGateway.createSetupIntentClientSecret(customerId);
     return { clientSecret } satisfies SetupIntentResponse;
   });
@@ -91,6 +103,14 @@ async function stripeCustomerFor(repository: DriverRepository, cardGateway: Card
   }
   const customerId = await cardGateway.createCustomer(driver);
   return repository.saveStripeCustomerIdIfMissing(driver.id, customerId);
+}
+
+function tooManySetups(reply: FastifyReply) {
+  return reply.status(TOO_MANY_REQUESTS).send({
+    statusCode: TOO_MANY_REQUESTS,
+    error: 'TOO_MANY_SETUPS',
+    message: 'Too many card attempts. Try again in a few minutes.',
+  });
 }
 
 function notAttached(reply: FastifyReply) {

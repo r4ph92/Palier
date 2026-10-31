@@ -136,6 +136,22 @@ describe('payment method routes', () => {
       expect(response.body).not.toContain('stripe');
     });
 
+    it('answers 429 after five setups in ten minutes, and does not hold back another driver', async () => {
+      startServer();
+      const headers = await signedInWithNotice(julie);
+      const marcHeaders = await signedInWithNotice(marc);
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        expect((await server.inject({ method: 'POST', url: '/v1/me/setup-intent', headers })).statusCode).toBe(200);
+      }
+
+      const sixth = await server.inject({ method: 'POST', url: '/v1/me/setup-intent', headers });
+      const marcFirst = await server.inject({ method: 'POST', url: '/v1/me/setup-intent', headers: marcHeaders });
+
+      expect(sixth.statusCode).toBe(429);
+      expect(sixth.json<{ error: string }>().error).toBe('TOO_MANY_SETUPS');
+      expect(marcFirst.statusCode).toBe(200);
+    });
+
     it('answers 503 when no card gateway is configured', async () => {
       driverRepository = new FakeDriverRepository();
       server = buildServer({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() });
