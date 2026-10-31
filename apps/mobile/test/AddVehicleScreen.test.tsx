@@ -46,6 +46,18 @@ describe('AddVehicleScreen', () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 
+  it('clears the province message once Julie chooses a province', async () => {
+    await renderAddVehicleScreen(new FakeVehicleClient());
+    const user = userEvent.setup();
+
+    await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
+    expect(await screen.findByText('Choisissez une province')).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('radio', { name: 'Québec' }));
+
+    expect(screen.queryByText('Choisissez une province')).not.toBeOnTheScreen();
+  });
+
   it('shows "Plaque invalide" on the plate field when Palier refuses the plate', async () => {
     const client = new FakeVehicleClient();
     client.nextRejection = 'INVALID_PLATE';

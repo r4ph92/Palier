@@ -5,9 +5,9 @@ import { PalierConsentRequiredError, PalierRejectedError, type NewVehicleInput, 
 import { i18n } from '../i18n/i18n';
 
 export interface AddVehicleErrors {
-  readonly plate?: string;
-  readonly province?: string;
-  readonly form?: string;
+  readonly plate?: string | undefined;
+  readonly province?: string | undefined;
+  readonly form?: string | undefined;
 }
 
 export interface AddVehicleController {
@@ -23,6 +23,11 @@ export function useAddVehicle(client: VehicleClient, onSaved: () => void): AddVe
   const [plate, setPlate] = useState('');
   const [province, setProvince] = useState<string | null>(null);
   const [errors, setErrors] = useState<AddVehicleErrors>({});
+  // A province message is about the choice that was missing, so it goes once a province is chosen.
+  const chooseProvince = useCallback((code: string) => {
+    setProvince(code);
+    setErrors((previous) => ({ ...previous, province: undefined }));
+  }, []);
   const save = useCallback(async () => {
     if (province === null) {
       setErrors({ province: i18n.t('vehicles.invalidProvince') });
@@ -31,7 +36,7 @@ export function useAddVehicle(client: VehicleClient, onSaved: () => void): AddVe
     setErrors({});
     await submitVehicle(client, { plate, province }, { onSaved, setErrors });
   }, [client, plate, province, onSaved]);
-  return { plate, province, errors, setPlate, setProvince, save };
+  return { plate, province, errors, setPlate, setProvince: chooseProvince, save };
 }
 
 interface SubmitHandlers {
