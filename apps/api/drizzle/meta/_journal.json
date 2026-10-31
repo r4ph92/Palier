@@ -22,6 +22,13 @@
       "when": 1793225432180,
       "tag": "0002_user_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793413040444,
+      "tag": "0003_card_brand_and_last4",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import type { SavedCard } from '@palier/shared-types';
 import type { Driver } from '../../domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
 import type { Database } from './database.ts';
@@ -62,5 +63,34 @@ export class PostgresDriverRepository implements DriverRepository {
         target: [userConsent.userId, userConsent.noticeVersion],
         set: { acceptedAt: sql`now()` },
       });
+  }
+
+  async findStripeCustomerId(driverId: string): Promise<string | null> {
+    const [driver] = await this.#database
+      .select({ stripeCustomerId: appUser.stripeCustomerId })
+      .from(appUser)
+      .where(eq(appUser.id, driverId))
+      .limit(1);
+    return driver?.stripeCustomerId ?? null;
+  }
+
+  async saveStripeCustomerId(driverId: string, stripeCustomerId: string): Promise<void> {
+    await this.#database.update(appUser).set({ stripeCustomerId }).where(eq(appUser.id, driverId));
+  }
+
+  async findSavedCard(driverId: string): Promise<SavedCard | null> {
+    const [driver] = await this.#database
+      .select({ brand: appUser.cardBrand, last4: appUser.cardLast4 })
+      .from(appUser)
+      .where(eq(appUser.id, driverId))
+      .limit(1);
+    return driver?.brand && driver.last4 ? { brand: driver.brand, last4: driver.last4 } : null;
+  }
+
+  async saveSavedCard(driverId: string, paymentMethodId: string, card: SavedCard): Promise<void> {
+    await this.#database
+      .update(appUser)
+      .set({ defaultPmId: paymentMethodId, cardBrand: card.brand, cardLast4: card.last4 })
+      .where(eq(appUser.id, driverId));
   }
 }

@@ -141,6 +141,8 @@ export const appUser = pgTable('app_user', {
   lastName: text('last_name').notNull(),
   stripeCustomerId: text('stripe_customer_id'),
   defaultPmId: text('default_pm_id'),
+  cardBrand: text('card_brand'),
+  cardLast4: text('card_last4'),
 });
 
 export const userSessionToken = pgTable(

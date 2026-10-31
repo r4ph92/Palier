@@ -1,3 +1,4 @@
+import type { SavedCard } from '@palier/shared-types';
 import type { Driver } from '../../src/domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../src/domain/drivers/DriverRepository.ts';
 import { hashSessionToken } from '../../src/domain/drivers/driverSessions.ts';
@@ -10,6 +11,8 @@ export class FakeDriverRepository implements DriverRepository {
   readonly #drivers: readonly Driver[];
   readonly #activeTokens = new Map<string, string>();
   readonly #noticeVersions = new Map<string, string>();
+  readonly #stripeCustomerIds = new Map<string, string>();
+  readonly #savedCards = new Map<string, { paymentMethodId: string; card: SavedCard }>();
 
   constructor(drivers: readonly Driver[] = [julie, marc]) {
     this.#drivers = drivers;
@@ -49,6 +52,28 @@ export class FakeDriverRepository implements DriverRepository {
   saveNoticeAcceptance(driverId: string, noticeVersion: string): Promise<void> {
     this.#noticeVersions.set(driverId, noticeVersion);
     return Promise.resolve();
+  }
+
+  findStripeCustomerId(driverId: string): Promise<string | null> {
+    return Promise.resolve(this.#stripeCustomerIds.get(driverId) ?? null);
+  }
+
+  saveStripeCustomerId(driverId: string, stripeCustomerId: string): Promise<void> {
+    this.#stripeCustomerIds.set(driverId, stripeCustomerId);
+    return Promise.resolve();
+  }
+
+  findSavedCard(driverId: string): Promise<SavedCard | null> {
+    return Promise.resolve(this.#savedCards.get(driverId)?.card ?? null);
+  }
+
+  saveSavedCard(driverId: string, paymentMethodId: string, card: SavedCard): Promise<void> {
+    this.#savedCards.set(driverId, { paymentMethodId, card });
+    return Promise.resolve();
+  }
+
+  savedPaymentMethodId(driverId: string): string | null {
+    return this.#savedCards.get(driverId)?.paymentMethodId ?? null;
   }
 }
 

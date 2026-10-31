@@ -1,3 +1,4 @@
+import type { SavedCard } from '@palier/shared-types';
 import type { Driver } from './Driver.ts';
 
 export interface DriverRepository {
@@ -8,4 +9,8 @@ export interface DriverRepository {
   revokeSessionToken(tokenHash: string): Promise<void>;
   findLatestNoticeVersion(driverId: string): Promise<string | null>;
   saveNoticeAcceptance(driverId: string, noticeVersion: string): Promise<void>;
+  findStripeCustomerId(driverId: string): Promise<string | null>;
+  saveStripeCustomerId(driverId: string, stripeCustomerId: string): Promise<void>;
+  findSavedCard(driverId: string): Promise<SavedCard | null>;
+  saveSavedCard(driverId: string, paymentMethodId: string, card: SavedCard): Promise<void>;
 }
