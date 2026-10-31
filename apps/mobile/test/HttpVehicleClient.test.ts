@@ -22,7 +22,7 @@ function clientAnswering(response: Promise<Response>, callbacks: { onUnauthorize
 }
 
 describe('HttpVehicleClient', () => {
-  it('lists the vehicles of GET /v1/vehicles with the bearer token', async () => {
+  it('lists the vehicles of GET /v1/me/vehicles with the bearer token', async () => {
     const fetchFunction = jest.fn(() => jsonResponse([abc123]));
     const client = new HttpVehicleClient({
       baseUrl: BASE_URL,
@@ -34,7 +34,7 @@ describe('HttpVehicleClient', () => {
 
     await expect(client.listVehicles()).resolves.toEqual([abc123]);
     expect(fetchFunction).toHaveBeenCalledWith(
-      `${BASE_URL}/v1/vehicles`,
+      `${BASE_URL}/v1/me/vehicles`,
       expect.objectContaining({ method: 'GET', headers: { Authorization: `Bearer ${TOKEN}` } }),
     );
   });
@@ -51,7 +51,7 @@ describe('HttpVehicleClient', () => {
 
     await expect(client.addVehicle({ plate: 'abc 123', province: 'QC' })).resolves.toEqual(abc123);
     expect(fetchFunction).toHaveBeenCalledWith(
-      `${BASE_URL}/v1/vehicles`,
+      `${BASE_URL}/v1/me/vehicles`,
       expect.objectContaining({ method: 'POST', body: JSON.stringify({ plate: 'abc 123', province: 'QC' }) }),
     );
   });

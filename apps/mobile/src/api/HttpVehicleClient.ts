@@ -32,11 +32,11 @@ export class HttpVehicleClient implements VehicleClient {
   }
 
   async listVehicles(): Promise<VehicleListResponse> {
-    return parseVehicleList(await readJson(await this.#send('/v1/vehicles', { method: 'GET' })));
+    return parseVehicleList(await readJson(await this.#send('/v1/me/vehicles', { method: 'GET' })));
   }
 
   async addVehicle({ plate, province }: NewVehicleInput): Promise<Vehicle> {
-    const response = await this.#send('/v1/vehicles', {
+    const response = await this.#send('/v1/me/vehicles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ plate, province }),

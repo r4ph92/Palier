@@ -31,14 +31,14 @@ export function registerVehicleRoutes(server: FastifyInstance, repository: Vehic
 }
 
 function registerListRoute(server: FastifyInstance, repository: VehicleRepository, guards: preHandlerAsyncHookHandler[]): void {
-  server.get('/v1/vehicles', { onRequest: guards, schema: { response: { 200: vehicleListSchema } } }, (request): Promise<VehicleListResponse> => {
+  server.get('/v1/me/vehicles', { onRequest: guards, schema: { response: { 200: vehicleListSchema } } }, (request): Promise<VehicleListResponse> => {
     return repository.listVehicles(signedInDriver(request).id);
   });
 }
 
 function registerReadRoute(server: FastifyInstance, repository: VehicleRepository, guards: preHandlerAsyncHookHandler[]): void {
   server.get<VehicleParamsRequest>(
-    '/v1/vehicles/:id',
+    '/v1/me/vehicles/:id',
     { onRequest: guards, schema: { params: vehicleParamsSchema, response: { 200: vehicleSchema } } },
     async (request, reply) => {
       const vehicle = await repository.findVehicle(signedInDriver(request).id, request.params.id);
@@ -52,7 +52,7 @@ function registerReadRoute(server: FastifyInstance, repository: VehicleRepositor
 
 function registerAddRoute(server: FastifyInstance, repository: VehicleRepository, guards: preHandlerAsyncHookHandler[]): void {
   server.post<AddVehicleRequest>(
-    '/v1/vehicles',
+    '/v1/me/vehicles',
     { onRequest: guards, schema: { body: addVehicleBodySchema, response: { 201: vehicleSchema } } },
     async (request, reply) => {
       const plate = readPlate(request.body.plate);
