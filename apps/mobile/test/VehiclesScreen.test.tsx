@@ -26,6 +26,12 @@ describe('VehiclesScreen', () => {
     expect(screen.getByText('Par défaut')).toBeOnTheScreen();
   });
 
+  it('writes the default badge in sentence case, as the story words it', async () => {
+    await renderVehiclesScreen(new FakeVehicleClient([abc123]));
+
+    expect(await screen.findByText('Par défaut')).not.toHaveStyle({ textTransform: 'uppercase' });
+  });
+
   it('says no vehicle is registered when Julie has none', async () => {
     await renderVehiclesScreen(new FakeVehicleClient());
 

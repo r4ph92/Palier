@@ -54,7 +54,7 @@ function VehicleRow({ vehicle, isDefault }: { readonly vehicle: Vehicle; readonl
   return (
     <View accessible testID={`vehicle-row-${vehicle.id}`} style={[styles.row, { borderBottomColor: colors.line }]}>
       <Text style={[typography.lotName, { color: colors.ink }]}>{`${vehicle.plate} · ${vehicle.province}`}</Text>
-      {isDefault ? <Text style={[typography.eyebrow, { color: colors.muted }]}>{i18n.t('vehicles.defaultBadge')}</Text> : null}
+      {isDefault ? <Text style={[typography.bodyStrong, { color: colors.muted }]}>{i18n.t('vehicles.defaultBadge')}</Text> : null}
     </View>
   );
 }
