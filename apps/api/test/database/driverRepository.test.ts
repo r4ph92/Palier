@@ -22,6 +22,8 @@ describe('PostgresDriverRepository on the seeded database', () => {
     const drivers = await repository.listDrivers();
 
     expect(drivers.map((driver) => `${driver.firstName} ${driver.lastName}`)).toEqual([
+      'Amélie Lavoie',
+      'Éric Dufresne',
       'Julie Tremblay',
       'Marc Gagnon',
       'Nadia Bouchard',
