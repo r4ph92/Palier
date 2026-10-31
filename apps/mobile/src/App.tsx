@@ -21,7 +21,7 @@ const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? LOCAL_API_URL;
 const authClient = new HttpAuthClient({ baseUrl: apiUrl });
 // Set only in local and test builds; a production build leaves it out and shows no test sign-in.
 const testSignInEnabled = process.env.EXPO_PUBLIC_TEST_SIGN_IN === 'true';
-// A test-mode publishable key (pk_test_…) from the environment; never a live key.
+// The publishable key comes from the environment; use a test key (pk_test_…) in local and test builds.
 const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 applyLanguage(deviceLanguage());
 
