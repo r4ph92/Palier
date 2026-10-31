@@ -1,4 +1,5 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { PalierApp } from '../src/PalierApp';
@@ -110,6 +111,7 @@ describe('payment method on the account', () => {
 
     expect(await screen.findByText("Carte refusée par l'émetteur")).toBeTruthy();
     expect(paymentClient.savedPaymentMethodIds).toEqual([]);
+    expect(AccessibilityInfo.announceForAccessibility).toHaveBeenCalledWith("Carte refusée par l'émetteur");
   });
 
   it('confirms the card only once when the button is pressed again while saving', async () => {

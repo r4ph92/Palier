@@ -1,9 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { AccessibilityInfo } from 'react-native';
 import type { SavedCard } from '@palier/shared-types';
 import { useConfirmSetupIntent } from '@stripe/stripe-react-native';
 import type { PaymentMethodClient } from '../api/PaymentMethodClient';
+import { i18n } from '../i18n/i18n';
 
 export type SaveStatus = 'idle' | 'saving' | 'incomplete' | 'declined' | 'failed' | 'saved';
+
+// The status line appears without a focus change, so VoiceOver is told about it.
+function useAnnounceStatus(status: SaveStatus) {
+  useEffect(() => {
+    if (status !== 'idle' && status !== 'saving') {
+      AccessibilityInfo.announceForAccessibility(i18n.t(`payment.${status}`));
+    }
+  }, [status]);
+}
 
 type ConfirmSetupIntent = ReturnType<typeof useConfirmSetupIntent>['confirmSetupIntent'];
 
@@ -11,6 +22,7 @@ export function useCardSave(client: PaymentMethodClient, onSaved: (card: SavedCa
   const { confirmSetupIntent } = useConfirmSetupIntent();
   const [isComplete, setIsComplete] = useState(false);
   const [status, setStatus] = useState<SaveStatus>('idle');
+  useAnnounceStatus(status);
 
   async function save() {
     if (status === 'saving') {
