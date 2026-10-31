@@ -7,7 +7,7 @@ export function stripeTestKey(variables: NodeJS.ProcessEnv): string | null {
     return null;
   }
   if (!key.startsWith(TEST_KEY_PREFIX)) {
-    throw new Error('Seeding refused: STRIPE_SECRET_KEY must be a Stripe test key (sk_test_…).');
+    throw new Error('Stripe key refused: STRIPE_SECRET_KEY must be a Stripe test key (sk_test_…).');
   }
   return key;
 }

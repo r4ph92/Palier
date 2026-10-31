@@ -90,8 +90,7 @@ async function stripeCustomerFor(repository: DriverRepository, cardGateway: Card
     return existing;
   }
   const customerId = await cardGateway.createCustomer(driver);
-  await repository.saveStripeCustomerId(driver.id, customerId);
-  return customerId;
+  return repository.saveStripeCustomerIdIfMissing(driver.id, customerId);
 }
 
 function notAttached(reply: FastifyReply) {

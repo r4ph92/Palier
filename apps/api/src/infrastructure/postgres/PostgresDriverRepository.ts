@@ -74,8 +74,13 @@ export class PostgresDriverRepository implements DriverRepository {
     return driver?.stripeCustomerId ?? null;
   }
 
-  async saveStripeCustomerId(driverId: string, stripeCustomerId: string): Promise<void> {
-    await this.#database.update(appUser).set({ stripeCustomerId }).where(eq(appUser.id, driverId));
+  // One conditional UPDATE, so two concurrent setup intents for the same driver end up with one customer.
+  async saveStripeCustomerIdIfMissing(driverId: string, stripeCustomerId: string): Promise<string> {
+    await this.#database
+      .update(appUser)
+      .set({ stripeCustomerId })
+      .where(and(eq(appUser.id, driverId), isNull(appUser.stripeCustomerId)));
+    return (await this.findStripeCustomerId(driverId)) ?? stripeCustomerId;
   }
 
   async findSavedCard(driverId: string): Promise<SavedCard | null> {

@@ -1,0 +1,819 @@
+{
+  "id": "3ed32eeb-4082-455a-a689-6cb7a755b375",
+  "prevId": "300360cf-5e8f-4a4c-aacb-40689f1a3f78",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.aisle": {
+      "name": "aisle",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "level_id": {
+          "name": "level_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lot_id": {
+          "name": "lot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "beacon_minor": {
+          "name": "beacon_minor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "map_polygon": {
+          "name": "map_polygon",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_exit_lane": {
+          "name": "is_exit_lane",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "aisle_level_id_lot_id_index": {
+          "name": "aisle_level_id_lot_id_index",
+          "columns": [
+            {
+              "expression": "level_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lot_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "aisle_level_in_same_lot_fk": {
+          "name": "aisle_level_in_same_lot_fk",
+          "tableFrom": "aisle",
+          "tableTo": "level",
+          "columnsFrom": [
+            "level_id",
+            "lot_id"
+          ],
+          "columnsTo": [
+            "id",
+            "lot_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "aisle_level_id_code_unique": {
+          "name": "aisle_level_id_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "level_id",
+            "code"
+          ]
+        },
+        "aisle_id_lot_id_unique": {
+          "name": "aisle_id_lot_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "lot_id"
+          ]
+        },
+        "aisle_lot_id_beacon_minor_unique": {
+          "name": "aisle_lot_id_beacon_minor_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "lot_id",
+            "beacon_minor"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.app_user": {
+      "name": "app_user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stripe_customer_id": {
+          "name": "stripe_customer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "default_pm_id": {
+          "name": "default_pm_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "card_brand": {
+          "name": "card_brand",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "card_last4": {
+          "name": "card_last4",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "app_user_email_unique": {
+          "name": "app_user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.level": {
+      "name": "level",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "lot_id": {
+          "name": "lot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_order": {
+          "name": "display_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "level_lot_id_parking_lot_id_fk": {
+          "name": "level_lot_id_parking_lot_id_fk",
+          "tableFrom": "level",
+          "tableTo": "parking_lot",
+          "columnsFrom": [
+            "lot_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "level_lot_id_code_unique": {
+          "name": "level_lot_id_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "lot_id",
+            "code"
+          ]
+        },
+        "level_id_lot_id_unique": {
+          "name": "level_id_lot_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "lot_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.operator": {
+      "name": "operator",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "legal_name": {
+          "name": "legal_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stripe_account_id": {
+          "name": "stripe_account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kyc_status": {
+          "name": "kyc_status",
+          "type": "kyc_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'NOT_STARTED'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.parking_lot": {
+      "name": "parking_lot",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "operator_id": {
+          "name": "operator_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "numeric(9, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "numeric(9, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "beacon_major": {
+          "name": "beacon_major",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pricing_policy": {
+          "name": "pricing_policy",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "daily_cap_cents": {
+          "name": "daily_cap_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assignment_strategy": {
+          "name": "assignment_strategy",
+          "type": "assignment_strategy",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'AISLE_BY_AISLE'"
+        },
+        "occupancy_source": {
+          "name": "occupancy_source",
+          "type": "occupancy_source",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'DECLARATIVE'"
+        },
+        "capacity": {
+          "name": "capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vehicle_count": {
+          "name": "vehicle_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "is_online": {
+          "name": "is_online",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "wifi_verified_at": {
+          "name": "wifi_verified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cell_verified_at": {
+          "name": "cell_verified_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "parking_lot_operator_id_index": {
+          "name": "parking_lot_operator_id_index",
+          "columns": [
+            {
+              "expression": "operator_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "parking_lot_operator_id_operator_id_fk": {
+          "name": "parking_lot_operator_id_operator_id_fk",
+          "tableFrom": "parking_lot",
+          "tableTo": "operator",
+          "columnsFrom": [
+            "operator_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "parking_lot_beacon_major_unique": {
+          "name": "parking_lot_beacon_major_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "beacon_major"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "parking_lot_capacity_not_negative": {
+          "name": "parking_lot_capacity_not_negative",
+          "value": "\"parking_lot\".\"capacity\" >= 0"
+        },
+        "parking_lot_vehicle_count_not_negative": {
+          "name": "parking_lot_vehicle_count_not_negative",
+          "value": "\"parking_lot\".\"vehicle_count\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.spot": {
+      "name": "spot",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "aisle_id": {
+          "name": "aisle_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lot_id": {
+          "name": "lot_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "spot_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'AVAILABLE'"
+        },
+        "state_changed_at": {
+          "name": "state_changed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "is_ev": {
+          "name": "is_ev",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_accessible": {
+          "name": "is_accessible",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_oversize": {
+          "name": "is_oversize",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "distance_to_exit": {
+          "name": "distance_to_exit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "needs_check": {
+          "name": "needs_check",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "sensor_state": {
+          "name": "sensor_state",
+          "type": "sensor_state",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sensor_at": {
+          "name": "sensor_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "spot_aisle_id_lot_id_index": {
+          "name": "spot_aisle_id_lot_id_index",
+          "columns": [
+            {
+              "expression": "aisle_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lot_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "spot_available_by_aisle_index": {
+          "name": "spot_available_by_aisle_index",
+          "columns": [
+            {
+              "expression": "aisle_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"spot\".\"state\" = 'AVAILABLE'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "spot_aisle_in_same_lot_fk": {
+          "name": "spot_aisle_in_same_lot_fk",
+          "tableFrom": "spot",
+          "tableTo": "aisle",
+          "columnsFrom": [
+            "aisle_id",
+            "lot_id"
+          ],
+          "columnsTo": [
+            "id",
+            "lot_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "spot_lot_id_number_unique": {
+          "name": "spot_lot_id_number_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "lot_id",
+            "number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_consent": {
+      "name": "user_consent",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notice_version": {
+          "name": "notice_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accepted_at": {
+          "name": "accepted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_consent_user_id_app_user_id_fk": {
+          "name": "user_consent_user_id_app_user_id_fk",
+          "tableFrom": "user_consent",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_consent_user_id_notice_version_unique": {
+          "name": "user_consent_user_id_notice_version_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "notice_version"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_session_token": {
+      "name": "user_session_token",
+      "schema": "",
+      "columns": {
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "user_session_token_user_id_index": {
+          "name": "user_session_token_user_id_index",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "user_session_token_user_id_app_user_id_fk": {
+          "name": "user_session_token_user_id_app_user_id_fk",
+          "tableFrom": "user_session_token",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.assignment_strategy": {
+      "name": "assignment_strategy",
+      "schema": "public",
+      "values": [
+        "AISLE_BY_AISLE"
+      ]
+    },
+    "public.kyc_status": {
+      "name": "kyc_status",
+      "schema": "public",
+      "values": [
+        "NOT_STARTED",
+        "PENDING",
+        "VERIFIED"
+      ]
+    },
+    "public.occupancy_source": {
+      "name": "occupancy_source",
+      "schema": "public",
+      "values": [
+        "DECLARATIVE",
+        "SENSORS"
+      ]
+    },
+    "public.sensor_state": {
+      "name": "sensor_state",
+      "schema": "public",
+      "values": [
+        "FREE",
+        "OCCUPIED"
+      ]
+    },
+    "public.spot_state": {
+      "name": "spot_state",
+      "schema": "public",
+      "values": [
+        "AVAILABLE",
+        "HELD",
+        "ASSIGNED",
+        "OCCUPIED",
+        "OCCUPIED_UNKNOWN",
+        "OUT_OF_SERVICE"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

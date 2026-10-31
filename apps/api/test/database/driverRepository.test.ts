@@ -78,10 +78,11 @@ describe('PostgresDriverRepository on the seeded database', () => {
     expect(await repository.findSavedCard(NADIA_BOUCHARD_ID)).toBeNull();
   });
 
-  it('keeps the Stripe customer id she was given', async () => {
-    await repository.saveStripeCustomerId(JULIE_TREMBLAY_ID, 'cus_julie');
+  it('keeps the first Stripe customer id she was given, and returns it to a later save', async () => {
+    expect(await repository.saveStripeCustomerIdIfMissing(JULIE_TREMBLAY_ID, 'cus_first')).toBe('cus_first');
+    expect(await repository.saveStripeCustomerIdIfMissing(JULIE_TREMBLAY_ID, 'cus_second')).toBe('cus_first');
 
-    expect(await repository.findStripeCustomerId(JULIE_TREMBLAY_ID)).toBe('cus_julie');
+    expect(await repository.findStripeCustomerId(JULIE_TREMBLAY_ID)).toBe('cus_first');
   });
 
   it('replaces her saved card with the new brand, last four digits and payment method', async () => {

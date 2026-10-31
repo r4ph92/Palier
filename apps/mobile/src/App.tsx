@@ -5,8 +5,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HttpAuthClient } from './api/HttpAuthClient';
 import { HttpLotsClient } from './api/HttpLotsClient';
 import { HttpPaymentMethodClient } from './api/HttpPaymentMethodClient';
+import { HttpVehicleClient } from './api/HttpVehicleClient';
 import type { LotsClient } from './api/LotsClient';
 import type { PaymentMethodClient } from './api/PaymentMethodClient';
+import type { VehicleClient } from './api/VehicleClient';
 import { secureTokenStore } from './auth/TokenStore';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
 import { applyLanguage, deviceLanguage } from './i18n/i18n';
@@ -31,6 +33,10 @@ function createPaymentMethodClient(token: string, onUnauthorized: () => void): P
   return new HttpPaymentMethodClient({ baseUrl: apiUrl, token, onUnauthorized });
 }
 
+function createVehicleClient(token: string, onUnauthorized: () => void, onConsentRequired: () => void): VehicleClient {
+  return new HttpVehicleClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired });
+}
+
 const palierApp = (
   <StripeProvider publishableKey={stripePublishableKey}>
     <PalierApp
@@ -39,6 +45,7 @@ const palierApp = (
       testSignInEnabled={testSignInEnabled}
       createLotsClient={createLotsClient}
       createPaymentMethodClient={createPaymentMethodClient}
+      createVehicleClient={createVehicleClient}
     />
   </StripeProvider>
 );

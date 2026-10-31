@@ -5,6 +5,7 @@ import { PalierApp } from '../src/PalierApp';
 import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakePaymentMethodClient } from './fakePaymentMethodClient';
+import { FakeVehicleClient } from './fakeVehicleClient';
 
 const mockConfirmSetupIntent = jest.fn();
 const mockCardState = { complete: true };
@@ -44,6 +45,7 @@ async function renderSignedInApp(paymentClient: FakePaymentMethodClient, languag
         testSignInEnabled={false}
         createLotsClient={() => new FakeLotsClient(parkingDemoWith(10))}
         createPaymentMethodClient={() => paymentClient}
+        createVehicleClient={() => new FakeVehicleClient()}
       />
     </SafeAreaProvider>,
   );

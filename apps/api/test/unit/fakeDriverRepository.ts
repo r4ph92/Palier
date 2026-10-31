@@ -58,9 +58,11 @@ export class FakeDriverRepository implements DriverRepository {
     return Promise.resolve(this.#stripeCustomerIds.get(driverId) ?? null);
   }
 
-  saveStripeCustomerId(driverId: string, stripeCustomerId: string): Promise<void> {
-    this.#stripeCustomerIds.set(driverId, stripeCustomerId);
-    return Promise.resolve();
+  saveStripeCustomerIdIfMissing(driverId: string, stripeCustomerId: string): Promise<string> {
+    if (!this.#stripeCustomerIds.has(driverId)) {
+      this.#stripeCustomerIds.set(driverId, stripeCustomerId);
+    }
+    return Promise.resolve(this.#stripeCustomerIds.get(driverId) ?? stripeCustomerId);
   }
 
   findSavedCard(driverId: string): Promise<SavedCard | null> {

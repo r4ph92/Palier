@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie, marc } from './fakeDriverRepository.ts';
 import { FakeCardGateway } from './fakeCardGateway.ts';
+import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
 
@@ -16,7 +17,7 @@ describe('payment method routes', () => {
   function startServer() {
     driverRepository = new FakeDriverRepository();
     cardGateway = new FakeCardGateway();
-    server = buildServer({ lotAvailabilityRepository: noLots, driverRepository, cardGateway });
+    server = buildServer({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository(), cardGateway });
   }
 
   async function signedInWithNotice(driver: typeof julie) {
@@ -108,9 +109,22 @@ describe('payment method routes', () => {
       expect(cardGateway.createdCustomerDriverIds).toEqual([julie.id]);
     });
 
+    it('gives both of two simultaneous setups the same Stripe customer', async () => {
+      startServer();
+      const headers = await signedInWithNotice(julie);
+
+      const [first, second] = await Promise.all([
+        server.inject({ method: 'POST', url: '/v1/me/setup-intent', headers }),
+        server.inject({ method: 'POST', url: '/v1/me/setup-intent', headers }),
+      ]);
+
+      expect(first.json<{ clientSecret: string }>().clientSecret).toBe(second.json<{ clientSecret: string }>().clientSecret);
+      expect(await driverRepository.findStripeCustomerId(julie.id)).not.toBeNull();
+    });
+
     it('answers 503 when no card gateway is configured', async () => {
       driverRepository = new FakeDriverRepository();
-      server = buildServer({ lotAvailabilityRepository: noLots, driverRepository });
+      server = buildServer({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() });
       const headers = await signedInWithNotice(julie);
 
       const response = await server.inject({ method: 'POST', url: '/v1/me/setup-intent', headers });
@@ -198,7 +212,7 @@ describe('payment method routes', () => {
 
     it('answers 503 when no card gateway is configured', async () => {
       driverRepository = new FakeDriverRepository();
-      server = buildServer({ lotAvailabilityRepository: noLots, driverRepository });
+      server = buildServer({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() });
       const headers = await signedInWithNotice(julie);
 
       const response = await server.inject({ method: 'PUT', url: '/v1/me/payment-method', headers, payload: { paymentMethodId: 'pm_visa' } });

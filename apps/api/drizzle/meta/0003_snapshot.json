@@ -1,5 +1,5 @@
 {
-  "id": "3ed32eeb-4082-455a-a689-6cb7a755b375",
+  "id": "300360cf-5e8f-4a4c-aacb-40689f1a3f78",
   "prevId": "28492ba1-55e0-4dd5-8ae0-9d6318f0165a",
   "version": "7",
   "dialect": "postgresql",
@@ -161,18 +161,6 @@
         },
         "default_pm_id": {
           "name": "default_pm_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "card_brand": {
-          "name": "card_brand",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "card_last4": {
-          "name": "card_last4",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -755,6 +743,74 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.vehicle": {
+      "name": "vehicle",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plate": {
+          "name": "plate",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plate_key": {
+          "name": "plate_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "province": {
+          "name": "province",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "vehicle_user_id_app_user_id_fk": {
+          "name": "vehicle_user_id_app_user_id_fk",
+          "tableFrom": "vehicle",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "vehicle_user_id_plate_key_province_unique": {
+          "name": "vehicle_user_id_plate_key_province_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "plate_key",
+            "province"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
