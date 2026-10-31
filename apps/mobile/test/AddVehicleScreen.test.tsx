@@ -46,6 +46,12 @@ describe('AddVehicleScreen', () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 
+  it('caps the text size of the plate field so the plate stays visible', async () => {
+    await renderAddVehicleScreen(new FakeVehicleClient());
+
+    expect(screen.getByLabelText('Plaque')).toHaveProp('maxFontSizeMultiplier', 2);
+  });
+
   it('shows the plate in upper case as Julie types it', async () => {
     await renderAddVehicleScreen(new FakeVehicleClient());
 

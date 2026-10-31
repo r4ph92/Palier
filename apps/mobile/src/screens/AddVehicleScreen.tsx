@@ -11,6 +11,9 @@ import { useColors } from '../theme/useColors';
 import { MINIMUM_TOUCH_TARGET, spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
+// Past this scale the plate stops fitting its field; the cap keeps all eight characters visible.
+const PLATE_MAX_FONT_SCALE = 2;
+
 interface AddVehicleScreenProps {
   readonly client: VehicleClient;
   readonly onCancel: () => void;
@@ -44,6 +47,7 @@ function PlateField({ form }: { readonly form: AddVehicleController }) {
       <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('vehicles.plate')}</Text>
       <TextInput
         accessibilityLabel={i18n.t('vehicles.plate')}
+        maxFontSizeMultiplier={PLATE_MAX_FONT_SCALE}
         autoCapitalize="characters"
         autoCorrect={false}
         value={form.plate}
