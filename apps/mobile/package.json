@@ -13,6 +13,7 @@
     "@expo-google-fonts/archivo": "^0.4.2",
     "@expo-google-fonts/ibm-plex-mono": "^0.4.1",
     "@palier/shared-types": "*",
+    "@stripe/stripe-react-native": "^0.82.0",
     "expo": "~58.0.20",
     "expo-font": "~58.0.10",
     "expo-localization": "~58.0.5",
