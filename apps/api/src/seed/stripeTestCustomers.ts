@@ -3,10 +3,13 @@ import type { DriverPersona } from './fixtures/drivers.ts';
 export interface StripeIds {
   readonly stripeCustomerId: string;
   readonly defaultPmId: string | null;
+  readonly cardBrand: string | null;
+  readonly cardLast4: string | null;
 }
 
 interface StripeObject {
   readonly id: string;
+  readonly card?: { readonly brand: string; readonly last4: string };
 }
 
 interface StripeList {
@@ -41,14 +44,19 @@ async function stripeIdsFor(stripe: StripeTestApi, persona: DriverPersona): Prom
   const { email, firstName, lastName } = persona.user;
   const existing = (await stripe.customers.list({ email, limit: 1 })).data[0];
   const customer = existing ?? (await stripe.customers.create({ email, name: `${firstName} ${lastName}` }));
-  return { stripeCustomerId: customer.id, defaultPmId: await defaultCardId(stripe, customer.id, persona.testPaymentMethod) };
+  const card = await defaultCard(stripe, customer.id, persona.testPaymentMethod);
+  return {
+    stripeCustomerId: customer.id,
+    defaultPmId: card?.id ?? null,
+    cardBrand: card?.card?.brand ?? null,
+    cardLast4: card?.card?.last4 ?? null,
+  };
 }
 
-async function defaultCardId(stripe: StripeTestApi, customer: string, testPaymentMethod: string | null): Promise<string | null> {
+async function defaultCard(stripe: StripeTestApi, customer: string, testPaymentMethod: string | null): Promise<StripeObject | null> {
   if (testPaymentMethod === null) {
     return null;
   }
   const existing = (await stripe.paymentMethods.list({ customer, type: 'card', limit: 1 })).data[0];
-  const card = existing ?? (await stripe.paymentMethods.attach(testPaymentMethod, { customer }));
-  return card.id;
+  return existing ?? (await stripe.paymentMethods.attach(testPaymentMethod, { customer }));
 }

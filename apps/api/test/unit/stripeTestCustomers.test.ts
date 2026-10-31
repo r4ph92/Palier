@@ -5,12 +5,12 @@ import { createStripeTestCustomers, type StripeTestApi } from '../../src/seed/st
 
 class FakeStripe implements StripeTestApi {
   readonly customersByEmail = new Map<string, string>();
-  readonly cardsByCustomer = new Map<string, string>();
+  readonly cardsByCustomer = new Map<string, { id: string; card: { brand: string; last4: string } }>();
   createdCustomers = 0;
   attachedCards = 0;
 
   readonly customers = {
-    list: ({ email }: { email: string }) => Promise.resolve(listOf(this.customersByEmail.get(email))),
+    list: ({ email }: { email: string }) => Promise.resolve(listOf(customerWithId(this.customersByEmail.get(email)))),
     create: ({ email }: { email: string }) => {
       this.createdCustomers += 1;
       const id = `cus_${this.createdCustomers}`;
@@ -23,15 +23,19 @@ class FakeStripe implements StripeTestApi {
     list: ({ customer }: { customer: string }) => Promise.resolve(listOf(this.cardsByCustomer.get(customer))),
     attach: (_paymentMethod: string, { customer }: { customer: string }) => {
       this.attachedCards += 1;
-      const id = `pm_${this.attachedCards}`;
-      this.cardsByCustomer.set(customer, id);
-      return Promise.resolve({ id });
+      const card = { id: `pm_${this.attachedCards}`, card: { brand: 'visa', last4: '4242' } };
+      this.cardsByCustomer.set(customer, card);
+      return Promise.resolve(card);
     },
   };
 }
 
-function listOf(id: string | undefined) {
-  return { data: id === undefined ? [] : [{ id }] };
+function customerWithId(id: string | undefined) {
+  return id === undefined ? undefined : { id };
+}
+
+function listOf<T>(card: T | undefined) {
+  return { data: card === undefined ? [] : [card] };
 }
 
 const julie = driverPersonas[0] as DriverPersona;
@@ -58,7 +62,7 @@ describe('createStripeTestCustomers', () => {
 
     const ids = await createStripeTestCustomers(stripe, [julie]);
 
-    expect(ids.get(julie.user.email)).toEqual({ stripeCustomerId: 'cus_1', defaultPmId: 'pm_1' });
+    expect(ids.get(julie.user.email)).toEqual({ stripeCustomerId: 'cus_1', defaultPmId: 'pm_1', cardBrand: 'visa', cardLast4: '4242' });
   });
 
   it('creates a customer without a card for a persona that has none', async () => {
@@ -66,7 +70,7 @@ describe('createStripeTestCustomers', () => {
 
     const ids = await createStripeTestCustomers(stripe, [nadia]);
 
-    expect(ids.get(nadia.user.email)).toEqual({ stripeCustomerId: 'cus_1', defaultPmId: null });
+    expect(ids.get(nadia.user.email)).toEqual({ stripeCustomerId: 'cus_1', defaultPmId: null, cardBrand: null, cardLast4: null });
     expect(stripe.attachedCards).toBe(0);
   });
 
@@ -76,7 +80,7 @@ describe('createStripeTestCustomers', () => {
 
     const ids = await createStripeTestCustomers(stripe, [julie]);
 
-    expect(ids.get(julie.user.email)).toEqual({ stripeCustomerId: 'cus_1', defaultPmId: 'pm_1' });
+    expect(ids.get(julie.user.email)).toEqual({ stripeCustomerId: 'cus_1', defaultPmId: 'pm_1', cardBrand: 'visa', cardLast4: '4242' });
     expect(stripe.createdCustomers).toBe(1);
     expect(stripe.attachedCards).toBe(1);
   });
