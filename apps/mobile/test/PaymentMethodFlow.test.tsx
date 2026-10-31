@@ -112,6 +112,20 @@ describe('payment method on the account', () => {
     expect(paymentClient.savedPaymentMethodIds).toEqual([]);
   });
 
+  it('confirms the card only once when the button is pressed again while saving', async () => {
+    const paymentClient = new FakePaymentMethodClient(null);
+    mockConfirmSetupIntent.mockReturnValue(new Promise(() => undefined));
+    await renderSignedInApp(paymentClient);
+    const user = await openPaymentMethod();
+    const save = await screen.findByRole('button', { name: 'Enregistrer la carte' });
+
+    await user.press(save);
+    await user.press(save);
+
+    expect(await screen.findByRole('button', { name: 'Enregistrement…' })).toBeTruthy();
+    expect(mockConfirmSetupIntent).toHaveBeenCalledTimes(1);
+  });
+
   it('asks for complete card details and does not confirm an incomplete card', async () => {
     const paymentClient = new FakePaymentMethodClient(null);
     mockCardState.complete = false;

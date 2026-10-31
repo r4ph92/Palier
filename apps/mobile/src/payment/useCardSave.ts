@@ -13,6 +13,9 @@ export function useCardSave(client: PaymentMethodClient, onSaved: (card: SavedCa
   const [status, setStatus] = useState<SaveStatus>('idle');
 
   async function save() {
+    if (status === 'saving') {
+      return;
+    }
     if (!isComplete) {
       setStatus('incomplete');
       return;
