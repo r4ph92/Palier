@@ -1,4 +1,5 @@
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
+import type { SavedCard } from '@palier/shared-types';
 import type { Driver } from '../../domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
 import type { Database } from './database.ts';
@@ -31,7 +32,13 @@ export class PostgresDriverRepository implements DriverRepository {
       .select(driverColumns)
       .from(userSessionToken)
       .innerJoin(appUser, eq(appUser.id, userSessionToken.userId))
-      .where(and(eq(userSessionToken.tokenHash, tokenHash), isNull(userSessionToken.revokedAt)))
+      .where(
+        and(
+          eq(userSessionToken.tokenHash, tokenHash),
+          isNull(userSessionToken.revokedAt),
+          gt(userSessionToken.expiresAt, sql`now()`),
+        ),
+      )
       .limit(1);
     return driver ?? null;
   }
@@ -62,5 +69,48 @@ export class PostgresDriverRepository implements DriverRepository {
         target: [userConsent.userId, userConsent.noticeVersion],
         set: { acceptedAt: sql`now()` },
       });
+  }
+
+  async findStripeCustomerId(driverId: string): Promise<string | null> {
+    const [driver] = await this.#database
+      .select({ stripeCustomerId: appUser.stripeCustomerId })
+      .from(appUser)
+      .where(eq(appUser.id, driverId))
+      .limit(1);
+    return driver?.stripeCustomerId ?? null;
+  }
+
+  // One conditional UPDATE, so two concurrent setup intents for the same driver end up with one customer.
+  async saveStripeCustomerIdIfMissing(driverId: string, stripeCustomerId: string): Promise<string> {
+    await this.#database
+      .update(appUser)
+      .set({ stripeCustomerId })
+      .where(and(eq(appUser.id, driverId), isNull(appUser.stripeCustomerId)));
+    return (await this.findStripeCustomerId(driverId)) ?? stripeCustomerId;
+  }
+
+  async findSavedCard(driverId: string): Promise<SavedCard | null> {
+    const [driver] = await this.#database
+      .select({ brand: appUser.cardBrand, last4: appUser.cardLast4 })
+      .from(appUser)
+      .where(eq(appUser.id, driverId))
+      .limit(1);
+    return driver?.brand && driver.last4 ? { brand: driver.brand, last4: driver.last4 } : null;
+  }
+
+  async findDefaultPaymentMethodId(driverId: string): Promise<string | null> {
+    const [driver] = await this.#database
+      .select({ defaultPmId: appUser.defaultPmId })
+      .from(appUser)
+      .where(eq(appUser.id, driverId))
+      .limit(1);
+    return driver?.defaultPmId ?? null;
+  }
+
+  async saveSavedCard(driverId: string, paymentMethodId: string, card: SavedCard): Promise<void> {
+    await this.#database
+      .update(appUser)
+      .set({ defaultPmId: paymentMethodId, cardBrand: card.brand, cardLast4: card.last4 })
+      .where(eq(appUser.id, driverId));
   }
 }
