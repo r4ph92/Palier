@@ -6,8 +6,9 @@ describe('readPlate', () => {
     expect(readPlate(' abc 123 ')).toEqual({ plate: 'ABC 123', plateKey: 'ABC123' });
   });
 
-  it('keeps hyphens in the plate', () => {
-    expect(readPlate('ab-12')).toEqual({ plate: 'AB-12', plateKey: 'AB-12' });
+  it('keeps hyphens in the plate, and leaves them out of the match key', () => {
+    expect(readPlate('ab-12')).toEqual({ plate: 'AB-12', plateKey: 'AB12' });
+    expect(readPlate('ABC-9')?.plateKey).toBe(readPlate('ABC9')?.plateKey);
   });
 
   it('accepts a plate of exactly eight characters', () => {
@@ -21,6 +22,12 @@ describe('readPlate', () => {
 
   it('refuses a plate longer than eight characters', () => {
     expect(readPlate('ABCD12345')).toBeNull();
+  });
+
+  it('refuses non-ASCII letters rather than converting them when upper-casing', () => {
+    expect(readPlate('ſBC 123')).toBeNull();
+    expect(readPlate('ß1 2')).toBeNull();
+    expect(readPlate('ＡＢＣ１２３')).toBeNull();
   });
 
   it('refuses characters other than letters, digits, spaces and hyphens', () => {

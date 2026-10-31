@@ -1,16 +1,18 @@
 const MAX_PLATE_LENGTH = 8;
-const PLATE_PATTERN = /^[A-Z0-9 -]+$/;
+// Checked before upper-casing: toUpperCase() turns some non-ASCII letters into ASCII ones (ſ to S, ß to SS).
+const PLATE_PATTERN = /^[A-Za-z0-9 -]+$/;
 
 export interface PlateEntry {
   readonly plate: string;
   readonly plateKey: string;
 }
 
-// Shown upper-case as the driver typed it; matched without spaces, so "abc 123" and "ABC123" are the same plate.
+// Shown upper-case as the driver typed it; matched without spaces or hyphens, so "abc 123", "ABC123" and "ABC-123" are the same plate.
 export function readPlate(input: string): PlateEntry | null {
-  const plate = input.trim().toUpperCase();
-  if (plate.length > MAX_PLATE_LENGTH || !PLATE_PATTERN.test(plate)) {
+  const trimmed = input.trim();
+  if (trimmed.length > MAX_PLATE_LENGTH || !PLATE_PATTERN.test(trimmed)) {
     return null;
   }
-  return { plate, plateKey: plate.replaceAll(' ', '') };
+  const plate = trimmed.toUpperCase();
+  return { plate, plateKey: plate.replace(/[ -]/g, '') };
 }
