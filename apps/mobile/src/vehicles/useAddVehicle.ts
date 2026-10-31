@@ -20,7 +20,9 @@ export interface AddVehicleController {
 }
 
 export function useAddVehicle(client: VehicleClient, onSaved: () => void): AddVehicleController {
-  const [plate, setPlate] = useState('');
+  const [plate, setPlateValue] = useState('');
+  // Shown upper-case as it is typed, so the field matches the plate Palier stores.
+  const setPlate = useCallback((value: string) => setPlateValue(value.toUpperCase()), []);
   const [province, setProvince] = useState<string | null>(null);
   const [errors, setErrors] = useState<AddVehicleErrors>({});
   // A province message is about the choice that was missing, so it goes once a province is chosen.

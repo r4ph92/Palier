@@ -46,6 +46,14 @@ describe('AddVehicleScreen', () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 
+  it('shows the plate in upper case as Julie types it', async () => {
+    await renderAddVehicleScreen(new FakeVehicleClient());
+
+    await userEvent.setup().type(screen.getByLabelText('Plaque'), 'abc 1');
+
+    expect(screen.getByLabelText('Plaque')).toHaveDisplayValue('ABC 1');
+  });
+
   it('clears the province message once Julie chooses a province', async () => {
     await renderAddVehicleScreen(new FakeVehicleClient());
     const user = userEvent.setup();
