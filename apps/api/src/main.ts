@@ -7,20 +7,27 @@ import { PostgresDriverRepository } from './infrastructure/postgres/PostgresDriv
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
 import { StripeCardGateway } from './infrastructure/stripe/StripeCardGateway.ts';
 import { PostgresVehicleRepository } from './infrastructure/postgres/PostgresVehicleRepository.ts';
+import { purgeEndedSessionTokens } from './domain/drivers/driverSessions.ts';
+import { startSessionTokenPurge } from './scheduler/startSessionTokenPurge.ts';
 
 const environment = readServerEnvironment(process.env);
 const connection = connectToDatabase(environment.databaseUrl);
 const stripeKey = stripeTestKey(process.env);
+const driverRepository = new PostgresDriverRepository(connection.database);
 const server = buildServer({
   lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
-  driverRepository: new PostgresDriverRepository(connection.database),
+  driverRepository,
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   vehicleRepository: new PostgresVehicleRepository(connection.database),
   testSignInEnabled: environment.testSignInEnabled,
   logsRequests: true,
 });
 
-server.addHook('onClose', () => connection.close());
+const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(driverRepository, new Date()), server.log);
+server.addHook('onClose', async () => {
+  stopSessionTokenPurge();
+  await connection.close();
+});
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => void server.close());
 }
