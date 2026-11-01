@@ -20,6 +20,15 @@ describe('setup limiter', () => {
     expect(limiter.allow('b')).toBe(true);
   });
 
+  it('forgets an address whose attempts have all left the window', () => {
+    const limiter = createSetupLimiter(1, MINUTE);
+    limiter.allow('a');
+    vi.setSystemTime(new Date(Date.parse('2026-01-01T00:00:00Z') + MINUTE));
+    limiter.allow('b');
+
+    expect(limiter.trackedKeys).toBe(1);
+  });
+
   it('allows the key again once its attempts leave the window', () => {
     const limiter = createSetupLimiter(1, MINUTE);
     limiter.allow('a');
