@@ -11,19 +11,18 @@ import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
 interface AccountScreenProps {
-  readonly firstName: string;
   readonly cardState: CardState;
   readonly onOpenVehicles: () => void;
   readonly onOpenPaymentMethod: () => void;
   readonly onSignOut: () => void;
 }
 
-export function AccountScreen({ firstName, cardState, onOpenVehicles, onOpenPaymentMethod, onSignOut }: AccountScreenProps) {
+export function AccountScreen({ cardState, onOpenVehicles, onOpenPaymentMethod, onSignOut }: AccountScreenProps) {
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <View style={styles.content}>
-        <ScreenHeader eyebrow={firstName} title={i18n.t('account.title')} />
+        <ScreenHeader eyebrow={i18n.t('account.title')} title={i18n.t('account.title')} />
         <Text style={[typography.bodyStrong, { color: colors.ink }]}>{describeCard(cardState)}</Text>
         <PrimaryButton label={i18n.t('account.vehicles')} onPress={onOpenVehicles} />
         <PrimaryButton label={i18n.t('account.paymentMethod')} onPress={onOpenPaymentMethod} />

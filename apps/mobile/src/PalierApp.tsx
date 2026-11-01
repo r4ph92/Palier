@@ -125,7 +125,7 @@ function AccountTab({ firstName, page, clients, onPageChange, onSignOut }: Accou
   const { state: cardState, setCard } = usePaymentCard(clients.payment);
   switch (page) {
     case 'account':
-      return <AccountScreen firstName={firstName} cardState={cardState} onOpenVehicles={() => onPageChange('vehicles')} onOpenPaymentMethod={() => onPageChange('payment')} onSignOut={onSignOut} />;
+      return <AccountScreen cardState={cardState} onOpenVehicles={() => onPageChange('vehicles')} onOpenPaymentMethod={() => onPageChange('payment')} onSignOut={onSignOut} />;
     case 'vehicles':
       return <VehiclesScreen firstName={firstName} client={clients.vehicles} onAddVehicle={() => onPageChange('addVehicle')} />;
     case 'addVehicle':
