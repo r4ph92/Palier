@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull, notInArray, sql } from 'drizzle-orm';
 import type { SavedCard } from '@palier/shared-types';
 import type { Driver } from '../../domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
@@ -6,6 +6,14 @@ import type { Database } from './database.ts';
 import { appUser, userConsent, userSessionToken } from './schema.ts';
 
 const driverColumns = { id: appUser.id, firstName: appUser.firstName, lastName: appUser.lastName };
+
+function activeSessionTokensOf(driverId: string) {
+  return and(
+    eq(userSessionToken.userId, driverId),
+    isNull(userSessionToken.revokedAt),
+    gt(userSessionToken.expiresAt, sql`now()`),
+  );
+}
 
 export class PostgresDriverRepository implements DriverRepository {
   readonly #database: Database;
@@ -48,6 +56,19 @@ export class PostgresDriverRepository implements DriverRepository {
       .update(userSessionToken)
       .set({ revokedAt: new Date() })
       .where(and(eq(userSessionToken.tokenHash, tokenHash), isNull(userSessionToken.revokedAt)));
+  }
+
+  async revokeOldestSessionTokens(driverId: string, keep: number): Promise<void> {
+    const activeNewest = this.#database
+      .select({ tokenHash: userSessionToken.tokenHash })
+      .from(userSessionToken)
+      .where(activeSessionTokensOf(driverId))
+      .orderBy(desc(userSessionToken.createdAt))
+      .limit(keep);
+    await this.#database
+      .update(userSessionToken)
+      .set({ revokedAt: new Date() })
+      .where(and(activeSessionTokensOf(driverId), notInArray(userSessionToken.tokenHash, activeNewest)));
   }
 
   async findLatestNoticeVersion(driverId: string): Promise<string | null> {

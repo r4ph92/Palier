@@ -45,6 +45,15 @@ export class FakeDriverRepository implements DriverRepository {
     return Promise.resolve();
   }
 
+  revokeOldestSessionTokens(driverId: string, keep: number): Promise<void> {
+    // Map keeps insertion order, so the first entries of a driver are its oldest tokens.
+    const driverTokens = [...this.#activeTokens].filter(([, ownerId]) => ownerId === driverId).map(([tokenHash]) => tokenHash);
+    for (const tokenHash of driverTokens.slice(0, Math.max(0, driverTokens.length - keep))) {
+      this.#activeTokens.delete(tokenHash);
+    }
+    return Promise.resolve();
+  }
+
   findLatestNoticeVersion(driverId: string): Promise<string | null> {
     return Promise.resolve(this.#noticeVersions.get(driverId) ?? null);
   }

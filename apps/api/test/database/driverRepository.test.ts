@@ -53,6 +53,20 @@ describe('PostgresDriverRepository on the seeded database', () => {
     expect(await repository.findDriverBySessionToken('tablet')).toEqual(julie);
   });
 
+  it('revokes only her oldest sessions beyond the newest ones she keeps', async () => {
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'oldest');
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'middle');
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'newest');
+    await repository.saveSessionToken(MARC_GAGNON_ID, 'marc');
+
+    await repository.revokeOldestSessionTokens(JULIE_TREMBLAY_ID, 2);
+
+    expect(await repository.findDriverBySessionToken('oldest')).toBeNull();
+    expect(await repository.findDriverBySessionToken('middle')).toEqual(julie);
+    expect(await repository.findDriverBySessionToken('newest')).toEqual(julie);
+    expect(await repository.findDriverBySessionToken('marc')).toEqual({ id: MARC_GAGNON_ID, firstName: 'Marc', lastName: 'Gagnon' });
+  });
+
   it('finds nobody for an unknown token hash', async () => {
     expect(await repository.findDriverBySessionToken('unknown')).toBeNull();
   });

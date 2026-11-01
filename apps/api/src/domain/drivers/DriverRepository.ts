@@ -7,6 +7,8 @@ export interface DriverRepository {
   saveSessionToken(driverId: string, tokenHash: string): Promise<void>;
   findDriverBySessionToken(tokenHash: string): Promise<Driver | null>;
   revokeSessionToken(tokenHash: string): Promise<void>;
+  // Revokes every active token of the driver except the keep newest ones.
+  revokeOldestSessionTokens(driverId: string, keep: number): Promise<void>;
   findLatestNoticeVersion(driverId: string): Promise<string | null>;
   saveNoticeAcceptance(driverId: string, noticeVersion: string): Promise<void>;
   findStripeCustomerId(driverId: string): Promise<string | null>;
