@@ -1,11 +1,11 @@
 import type { TestDriverListResponse } from '@palier/shared-types';
 import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import type { AuthClient } from '../api/AuthClient';
 import { PalierStatusError, PalierUnreachableError } from '../api/LotsClient';
 import { ErrorState } from '../components/ErrorState';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { ScreenFrame } from '../components/ScreenFrame';
 import { ScreenHeader, TITLE_MAX_FONT_SCALE } from '../components/ScreenHeader';
 import { useAnnouncement } from '../components/useAnnouncement';
 import { i18n } from '../i18n/i18n';
@@ -28,14 +28,11 @@ type TestSignInState =
   | { readonly status: 'open'; readonly drivers: TestDriverListResponse; readonly driverGone: boolean };
 
 export function SignInScreen({ testSignInEnabled, authClient, onSignIn }: SignInScreenProps) {
-  const colors = useColors();
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.canvas }]}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <ScreenHeader eyebrow="Palier" title={i18n.t('signIn.title')} />
-        {testSignInEnabled ? <TestSignIn authClient={authClient} onSignIn={onSignIn} /> : null}
-      </ScrollView>
-    </SafeAreaView>
+    <ScreenFrame>
+      <ScreenHeader eyebrow="Palier" title={i18n.t('signIn.title')} />
+      {testSignInEnabled ? <TestSignIn authClient={authClient} onSignIn={onSignIn} /> : null}
+    </ScreenFrame>
   );
 }
 
@@ -123,8 +120,6 @@ function PickerIntro({ driverGone }: { readonly driverGone: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  content: { flexGrow: 1, gap: spacing.medium, paddingHorizontal: spacing.medium },
   loading: { alignSelf: 'flex-start', paddingVertical: spacing.large },
   picker: { gap: spacing.small },
 });

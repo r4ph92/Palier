@@ -1,4 +1,5 @@
 import type { SavedCard } from '@palier/shared-types';
+import { palierFetch } from './appUpdate';
 import { PalierStatusError, PalierUnreachableError } from './LotsClient';
 import type { PaymentMethodClient } from './PaymentMethodClient';
 import { parseClientSecret, parsePaymentCard, parseSavedCard } from './parsePaymentMethodResponses';
@@ -47,7 +48,7 @@ export class HttpPaymentMethodClient implements PaymentMethodClient {
   async #fetch(method: string, path: string, body: unknown): Promise<Response> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.#options.timeoutMilliseconds ?? DEFAULT_TIMEOUT_MILLISECONDS);
-    const fetchFunction = this.#options.fetchFunction ?? fetch;
+    const fetchFunction = this.#options.fetchFunction ?? palierFetch;
     try {
       return await fetchFunction(`${this.#options.baseUrl}${path}`, {
         method,

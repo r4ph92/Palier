@@ -2,7 +2,7 @@
 
 **Statut : à valider.** Le texte ci-dessous est un brouillon pour l'équipe ; la version finale doit être approuvée par le responsable de l'organisation avant la mise en production.
 
-Version en vigueur : `2026-10-28` (`PRIVACY_NOTICE_VERSION` dans `packages/shared-types/src/privacy.ts`). Changer la version oblige chaque conducteur à accepter à nouveau avant d'utiliser Palier.
+Version en vigueur : la version courante, celle de `PRIVACY_NOTICE_VERSION` dans `packages/shared-types/src/privacy.ts`. Changer la version oblige chaque conducteur à accepter à nouveau avant d'utiliser Palier.
 
 ## Texte affiché (FR)
 

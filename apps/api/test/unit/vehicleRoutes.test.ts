@@ -18,7 +18,7 @@ describe('vehicle routes', () => {
   function startServer() {
     driverRepository = new FakeDriverRepository();
     vehicleRepository = new FakeVehicleRepository();
-    server = buildServer({ vehicleRepository, lotAvailabilityRepository: noLots, driverRepository });
+    server = buildServer({ repositories: { vehicleRepository, lotAvailabilityRepository: noLots, driverRepository } });
   }
 
   describe('for a driver who has not accepted the privacy notice', () => {

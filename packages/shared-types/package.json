@@ -12,6 +12,10 @@
     "./privacy": {
       "types": "./src/privacy.ts",
       "default": "./src/privacy.ts"
+    },
+    "./appVersion": {
+      "types": "./src/appVersion.ts",
+      "default": "./src/appVersion.ts"
     }
   },
   "scripts": {

@@ -3,6 +3,11 @@ export const fr = {
     crashed: 'Une erreur inattendue est survenue.',
     crashedHint: 'Fermez puis rouvrez Palier.',
   },
+  update: {
+    title: 'Mise à jour requise',
+    message: 'Cette version de Palier n’est plus acceptée. Installez la dernière version pour continuer.',
+    action: 'Mettre à jour',
+  },
   home: {
     greeting: 'Bonjour %{firstName}',
     updatedAt: 'Mis à jour à %{time}',
@@ -82,7 +87,7 @@ export const fr = {
     payment: 'la référence de paiement',
     why: 'Ces renseignements servent à trouver votre place, à facturer le stationnement et à assurer la sécurité des lieux.',
     retention: 'Les renseignements identifiants sont conservés 90 jours après votre visite, puis anonymisés.',
-    accept: "J'accepte",
+    accept: "J’accepte",
     refuse: 'Refuser',
     refused: 'Palier ne peut pas être utilisée sans votre consentement.',
   },

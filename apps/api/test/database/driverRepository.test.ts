@@ -1,3 +1,4 @@
+import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { connectToDatabase } from '../../src/infrastructure/postgres/database.ts';
@@ -130,13 +131,17 @@ describe('PostgresDriverRepository on the seeded database', () => {
     expect(await repository.findDriverBySessionToken('unknown')).toBeNull();
   });
 
-  it('has no accepted notice until Julie accepts one', async () => {
-    expect(await repository.findLatestNoticeVersion(JULIE_TREMBLAY_ID)).toBeNull();
+  it('has no accepted notice for a driver the seed leaves without consent', async () => {
+    expect(await repository.findLatestNoticeVersion(NADIA_BOUCHARD_ID)).toBeNull();
+  });
+
+  it('has the seeded notice for a driver the seed gives consent', async () => {
+    expect(await repository.findLatestNoticeVersion(JULIE_TREMBLAY_ID)).toBe(PRIVACY_NOTICE_VERSION);
   });
 
   it('reports an older notice version as the latest again when she accepts it after a newer one', async () => {
     await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-01-01');
-    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-10-28');
+    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, PRIVACY_NOTICE_VERSION);
     await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-01-01');
 
     expect(await repository.findLatestNoticeVersion(JULIE_TREMBLAY_ID)).toBe('2026-01-01');
@@ -144,10 +149,18 @@ describe('PostgresDriverRepository on the seeded database', () => {
 
   it('reports the latest notice version she accepted, and accepting twice keeps one row', async () => {
     await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-01-01');
-    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-10-28');
-    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-10-28');
+    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, PRIVACY_NOTICE_VERSION);
+    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, PRIVACY_NOTICE_VERSION);
 
-    expect(await repository.findLatestNoticeVersion(JULIE_TREMBLAY_ID)).toBe('2026-10-28');
+    expect(await repository.findLatestNoticeVersion(JULIE_TREMBLAY_ID)).toBe(PRIVACY_NOTICE_VERSION);
+  });
+
+  it('has the latest notice only for the version she accepted last', async () => {
+    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, '2026-01-01');
+    await repository.saveNoticeAcceptance(JULIE_TREMBLAY_ID, PRIVACY_NOTICE_VERSION);
+
+    expect(await repository.hasLatestNoticeVersion(JULIE_TREMBLAY_ID, PRIVACY_NOTICE_VERSION)).toBe(true);
+    expect(await repository.hasLatestNoticeVersion(JULIE_TREMBLAY_ID, '2026-01-01')).toBe(false);
   });
 
   it('has no Stripe customer or saved card for a driver who never added one', async () => {

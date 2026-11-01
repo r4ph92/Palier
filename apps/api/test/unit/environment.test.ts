@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readServerEnvironment, readTestSignInEnabled } from '../../src/config/environment.ts';
+import { readMinimumAppVersion, readServerEnvironment, readTestSignInEnabled } from '../../src/config/environment.ts';
 
 const databaseUrl = 'postgres://palier:palier@localhost:5433/palier';
 
@@ -11,6 +11,14 @@ describe('readServerEnvironment', () => {
       port: 3000,
       testSignInEnabled: false,
     });
+  });
+
+  it('reads the minimum app version when it is set', () => {
+    expect(readServerEnvironment({ DATABASE_URL: databaseUrl, MINIMUM_APP_VERSION: '1.2.0' }).minimumAppVersion).toBe('1.2.0');
+  });
+
+  it('refuses a minimum app version that is not dotted numbers', () => {
+    expect(() => readMinimumAppVersion('latest')).toThrow(/MINIMUM_APP_VERSION must look like/);
   });
 
   it('refuses a port that is not a positive integer', () => {
