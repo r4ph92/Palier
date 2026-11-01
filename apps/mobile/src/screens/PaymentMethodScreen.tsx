@@ -13,6 +13,9 @@ import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
+// The card fields do not follow the text size: at large sizes their placeholders take the width the card number needs.
+const CARD_FONT_SIZE = 16;
+
 interface PaymentMethodScreenProps {
   readonly client: PaymentMethodClient;
   readonly onSaved: (card: SavedCard) => void;
@@ -43,7 +46,7 @@ function CardSaveForm({ client, onSaved }: Pick<PaymentMethodScreenProps, 'clien
         ref={cardRef}
         postalCodeEnabled={false}
         accessibilityLabel={i18n.t('payment.cardField')}
-        cardStyle={{ backgroundColor: colors.canvas, textColor: colors.ink, placeholderColor: colors.muted }}
+        cardStyle={{ backgroundColor: colors.canvas, textColor: colors.ink, placeholderColor: colors.muted, fontSize: CARD_FONT_SIZE }}
         style={styles.cardField}
         onCardChange={(details) => changeCard(details.complete)}
       />
