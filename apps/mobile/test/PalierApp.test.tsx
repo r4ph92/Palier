@@ -1,5 +1,6 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { palierFetch } from '../src/api/appUpdate';
 import { PalierStatusError, PalierUnreachableError, type LotsClient } from '../src/api/LotsClient';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { PalierApp } from '../src/PalierApp';
@@ -185,5 +186,17 @@ describe('PalierApp when the API is unreachable at launch', () => {
 
     expect(await screen.findByText('Bonjour Julie')).toBeOnTheScreen();
     expect(tokenStore.token).toBe(JULIE_TOKEN);
+  });
+
+  it('replaces the app with the update screen when the API answers 426', async () => {
+    const fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 426 }));
+    await renderApp();
+    expect(await screen.findByRole('button', { name: 'Connexion de test' })).toBeOnTheScreen();
+
+    await palierFetch('http://localhost:3000/v1/lots');
+
+    expect(await screen.findByRole('alert', { name: 'Mise à jour requise' })).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Connexion de test' })).not.toBeOnTheScreen();
+    fetchMock.mockRestore();
   });
 });

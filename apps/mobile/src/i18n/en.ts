@@ -5,6 +5,11 @@ export const en: Translations = {
     crashed: 'Something unexpected went wrong.',
     crashedHint: 'Close and reopen Palier.',
   },
+  update: {
+    title: 'Update required',
+    message: 'This version of Palier is no longer accepted. Install the latest version to continue.',
+    action: 'Update',
+  },
   home: {
     greeting: 'Hello %{firstName}',
     updatedAt: 'Updated %{time}',

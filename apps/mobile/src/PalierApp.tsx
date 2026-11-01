@@ -1,8 +1,9 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import type { AuthClient } from './api/AuthClient';
+import { onUpdateRequired, STORE_URL } from './api/appUpdate';
 import type { LotsClient } from './api/LotsClient';
 import { LotsClientProvider } from './api/LotsClientContext';
 import type { PaymentMethodClient } from './api/PaymentMethodClient';
@@ -13,6 +14,7 @@ import { ErrorState } from './components/ErrorState';
 import { TabBar, type Tab } from './components/TabBar';
 import { usePaymentCard } from './payment/usePaymentCard';
 import { AccountScreen } from './screens/AccountScreen';
+import { AppUpdateRequiredScreen } from './screens/AppUpdateRequiredScreen';
 import { AddVehicleScreen } from './screens/AddVehicleScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { PaymentMethodScreen } from './screens/PaymentMethodScreen';
@@ -34,8 +36,13 @@ export interface PalierAppProps {
 type AccountPage = 'account' | 'vehicles' | 'addVehicle' | 'payment';
 
 export function PalierApp(props: PalierAppProps) {
+  const [updateRequired, setUpdateRequired] = useState(false);
+  useEffect(() => onUpdateRequired(() => setUpdateRequired(true)), []);
   const session = useSession(props.authClient, props.tokenStore);
   const { state } = session;
+  if (updateRequired) {
+    return <AppUpdateRequiredScreen storeUrl={STORE_URL} />;
+  }
   switch (state.status) {
     case 'restoring':
       return <PlainScreen />;
