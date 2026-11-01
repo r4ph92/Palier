@@ -1,7 +1,7 @@
 import { and, asc, eq, ne } from 'drizzle-orm';
 import type { DeleteVehicleResult, NewVehicle, Vehicle, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Database } from './database.ts';
-import { vehicle } from './schema.ts';
+import { appUser, vehicle } from './schema.ts';
 
 const vehicleColumns = { id: vehicle.id, plate: vehicle.plate, province: vehicle.province, isDefault: vehicle.isDefault };
 type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
@@ -29,6 +29,7 @@ export class PostgresVehicleRepository implements VehicleRepository {
   // The first vehicle of a driver is the default one.
   saveVehicle(driverId: string, newVehicle: NewVehicle): Promise<Vehicle | null> {
     return this.#database.transaction(async (tx) => {
+      await lockDriver(tx, driverId);
       const [existing] = await tx.select({ id: vehicle.id }).from(vehicle).where(eq(vehicle.userId, driverId)).limit(1);
       const [saved] = await tx
         .insert(vehicle)
@@ -48,6 +49,7 @@ export class PostgresVehicleRepository implements VehicleRepository {
   // The old default is cleared first, so the one-default-per-driver index is never broken between the two writes.
   setDefaultVehicle(driverId: string, vehicleId: string): Promise<Vehicle | null> {
     return this.#database.transaction(async (tx) => {
+      await lockDriver(tx, driverId);
       const found = await findOwnedVehicle(tx, driverId, vehicleId);
       if (found === null) {
         return null;
@@ -60,6 +62,7 @@ export class PostgresVehicleRepository implements VehicleRepository {
 
   deleteVehicle(driverId: string, vehicleId: string): Promise<DeleteVehicleResult> {
     return this.#database.transaction(async (tx) => {
+      await lockDriver(tx, driverId);
       const found = await findOwnedVehicle(tx, driverId, vehicleId);
       if (found === null) {
         return 'not-found';
@@ -95,4 +98,9 @@ async function firstOtherVehicle(tx: Transaction, driverId: string, vehicleId: s
     .orderBy(asc(vehicle.plate))
     .limit(1);
   return other;
+}
+
+// Concurrent changes to one driver's vehicles run one after the other, so each sees the others' writes (the last vehicle, the one default).
+async function lockDriver(tx: Transaction, driverId: string): Promise<void> {
+  await tx.select({ id: appUser.id }).from(appUser).where(eq(appUser.id, driverId)).for('update');
 }
