@@ -28,13 +28,17 @@ export function registerTestSignInRoutes(server: FastifyInstance, repository: Dr
   server.post<TestSignInRequest>(
     '/v1/test/sign-in',
     { schema: { body: testSignInBodySchema, response: { 200: signInResponseSchema } } },
-    (request, reply) => signInAsTestDriver(repository, limiter, request, reply),
+    (request, reply) => signInAsTestDriver({ repository, limiter }, request, reply),
   );
 }
 
+interface SignInDependencies {
+  readonly repository: DriverRepository;
+  readonly limiter: SetupLimiter;
+}
+
 async function signInAsTestDriver(
-  repository: DriverRepository,
-  limiter: SetupLimiter,
+  { repository, limiter }: SignInDependencies,
   request: FastifyRequest<TestSignInRequest>,
   reply: FastifyReply,
 ): Promise<SignInResponse | FastifyReply> {
