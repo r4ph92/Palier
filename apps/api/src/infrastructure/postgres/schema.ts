@@ -6,6 +6,7 @@ import {
   index,
   integer,
   jsonb,
+  uniqueIndex,
   numeric,
   pgEnum,
   pgTable,
@@ -179,8 +180,14 @@ export const vehicle = pgTable(
     plate: text('plate').notNull(),
     plateKey: text('plate_key').notNull(),
     province: text('province').notNull(),
+    isDefault: boolean('is_default').notNull().default(false),
   },
-  (table) => [unique('vehicle_user_id_plate_key_province_unique').on(table.userId, table.plateKey, table.province)],
+  (table) => [
+    unique('vehicle_user_id_plate_key_province_unique').on(table.userId, table.plateKey, table.province),
+    uniqueIndex('vehicle_one_default_per_user_index')
+      .on(table.userId)
+      .where(sql`${table.isDefault}`),
+  ],
 );
 
 export type SpotState = (typeof spotState.enumValues)[number];
