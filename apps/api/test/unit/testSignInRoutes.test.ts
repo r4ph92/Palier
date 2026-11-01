@@ -62,6 +62,26 @@ describe('test sign-in when enabled', () => {
   });
 });
 
+describe('test sign-in rate limit', () => {
+  let server: FastifyInstance;
+
+  afterEach(() => server.close());
+
+  it('answers 429 with Retry-After and issues no token after ten sign-ins from one address', async () => {
+    const repository = new FakeDriverRepository();
+    server = buildServer({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: repository, testSignInEnabled: true });
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      await server.inject({ method: 'POST', url: '/v1/test/sign-in', payload: { driverId: julie.id } });
+    }
+
+    const response = await server.inject({ method: 'POST', url: '/v1/test/sign-in', payload: { driverId: julie.id } });
+
+    expect(response.statusCode).toBe(429);
+    expect(response.headers['retry-after']).toBe('60');
+    expect(repository.activeTokenHashes).toHaveLength(10);
+  });
+});
+
 describe('test sign-in body', () => {
   let server: FastifyInstance;
 
