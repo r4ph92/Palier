@@ -80,6 +80,19 @@ describe('test sign-in rate limit', () => {
     expect(response.headers['retry-after']).toBe('60');
     expect(repository.activeTokenHashes).toHaveLength(10);
   });
+
+  it('still signs in a driver from another address after one address is refused', async () => {
+    server = buildServer({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository(), testSignInEnabled: true });
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      await server.inject({ method: 'POST', url: '/v1/test/sign-in', payload: { driverId: julie.id }, remoteAddress: '10.0.0.1' });
+    }
+
+    const refused = await server.inject({ method: 'POST', url: '/v1/test/sign-in', payload: { driverId: julie.id }, remoteAddress: '10.0.0.1' });
+    const otherAddress = await server.inject({ method: 'POST', url: '/v1/test/sign-in', payload: { driverId: julie.id }, remoteAddress: '10.0.0.2' });
+
+    expect(refused.statusCode).toBe(429);
+    expect(otherAddress.statusCode).toBe(200);
+  });
 });
 
 describe('test sign-in body', () => {
