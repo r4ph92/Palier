@@ -7,6 +7,7 @@ import { PalierStatusError, PalierUnreachableError } from '../api/LotsClient';
 import { ErrorState } from '../components/ErrorState';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader, TITLE_MAX_FONT_SCALE } from '../components/ScreenHeader';
+import { useAnnouncement } from '../components/useAnnouncement';
 import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -109,6 +110,7 @@ function DriverPicker({
 
 function PickerIntro({ driverGone }: { readonly driverGone: boolean }) {
   const colors = useColors();
+  useAnnouncement(driverGone ? i18n.t('signIn.driverGone') : null);
   return (
     <>
       <Text accessibilityRole="header" maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE} style={[typography.bodyStrong, { color: colors.ink }]}>

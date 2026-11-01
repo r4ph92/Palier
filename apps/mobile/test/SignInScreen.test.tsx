@@ -1,3 +1,4 @@
+import { AccessibilityInfo } from 'react-native';
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PalierStatusError } from '../src/api/LotsClient';
@@ -69,6 +70,7 @@ describe('SignInScreen with test sign-in enabled', () => {
   it('says a driver removed by a reseed no longer exists, and lists the drivers again', async () => {
     const authClient = new FakeAuthClient();
     const listDrivers = jest.spyOn(authClient, 'listTestDrivers');
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
     const onSignIn = jest.fn(() => Promise.reject(new PalierStatusError(404)));
     await renderSignInScreen({ authClient, onSignIn });
     const user = userEvent.setup();
@@ -80,6 +82,8 @@ describe('SignInScreen with test sign-in enabled', () => {
     expect(screen.getByRole('button', { name: 'Marc Gagnon' })).toBeOnTheScreen();
     expect(screen.queryByText('Impossible de joindre Palier.')).not.toBeOnTheScreen();
     expect(listDrivers).toHaveBeenCalledTimes(2);
+    expect(announce).toHaveBeenCalledWith('Ce conducteur n’existe plus.');
+    announce.mockRestore();
   });
 
   it('caps the "Connexion de test" heading at the title size for large text', async () => {
