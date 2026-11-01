@@ -1,6 +1,7 @@
 import { Linking, StyleSheet, Text, View } from 'react-native';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenFrame } from '../components/ScreenFrame';
+import { TITLE_MAX_FONT_SCALE } from '../components/ScreenHeader';
 import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -16,7 +17,7 @@ export function AppUpdateRequiredScreen({ storeUrl }: AppUpdateRequiredScreenPro
   return (
     <ScreenFrame>
       <View style={styles.message}>
-        <Text accessibilityRole="alert" style={[typography.title, { color: colors.ink }]}>
+        <Text accessibilityRole="alert" maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE} style={[typography.title, { color: colors.ink }]}>
           {i18n.t('update.title')}
         </Text>
         <Text style={[typography.body, { color: colors.ink }]}>{i18n.t('update.message')}</Text>
