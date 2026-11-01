@@ -8,7 +8,7 @@ import { typography } from '../theme/typography';
 export const TITLE_MAX_FONT_SCALE = 1.4;
 
 interface ScreenHeaderProps {
-  readonly eyebrow: string;
+  readonly eyebrow?: string;
   readonly title: string;
   readonly action?: ReactNode;
 }
@@ -18,10 +18,14 @@ export function ScreenHeader({ eyebrow, title, action }: ScreenHeaderProps) {
   const layout = useIsLargeText() ? stackedStyles : sideBySideStyles;
   return (
     <View style={[styles.header, { borderBottomColor: colors.ink }]}>
-      <View testID="header-eyebrow-row" style={layout.eyebrowRow}>
-        <Text style={[typography.eyebrow, layout.eyebrow, { color: colors.muted }]}>{eyebrow}</Text>
-        {action}
-      </View>
+      {eyebrow === undefined && action === undefined ? null : (
+        <View testID="header-eyebrow-row" style={layout.eyebrowRow}>
+          {eyebrow === undefined ? null : (
+            <Text style={[typography.eyebrow, layout.eyebrow, { color: colors.muted }]}>{eyebrow}</Text>
+          )}
+          {action}
+        </View>
+      )}
       <Text
         accessibilityRole="header"
         maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}

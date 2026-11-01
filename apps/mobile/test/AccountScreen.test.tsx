@@ -13,7 +13,6 @@ async function renderAccountScreen(onSignOut: () => void) {
   return render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
       <AccountScreen
-        firstName="Julie"
         cardState={{ status: 'loaded', card: null }}
         onOpenVehicles={() => undefined}
         onOpenPaymentMethod={() => undefined}
@@ -22,6 +21,15 @@ async function renderAccountScreen(onSignOut: () => void) {
     </SafeAreaProvider>,
   );
 }
+
+describe('AccountScreen header', () => {
+  it('shows the title without an eyebrow', async () => {
+    await renderAccountScreen(() => undefined);
+
+    expect(screen.getByRole('header', { name: 'Compte' })).toBeOnTheScreen();
+    expect(screen.queryByTestId('header-eyebrow-row')).not.toBeOnTheScreen();
+  });
+});
 
 describe('AccountScreen sign-out', () => {
   it('reads "Déconnexion…" and stays busy until the sign-out finishes', async () => {
