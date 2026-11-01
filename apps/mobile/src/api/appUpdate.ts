@@ -12,7 +12,9 @@ let updateRequiredListener: (() => void) | null = null;
 export function onUpdateRequired(listener: () => void): () => void {
   updateRequiredListener = listener;
   return () => {
-    updateRequiredListener = null;
+    if (updateRequiredListener === listener) {
+      updateRequiredListener = null;
+    }
   };
 }
 
