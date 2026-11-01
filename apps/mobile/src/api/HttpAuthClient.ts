@@ -1,4 +1,5 @@
 import type { CurrentDriver, SignInResponse, TestDriverListResponse } from '@palier/shared-types';
+import { palierFetch } from './appUpdate';
 import { PalierUnauthorizedError, type AuthClient } from './AuthClient';
 import { PalierStatusError, PalierUnreachableError } from './LotsClient';
 import { parseCurrentDriver, parseSignInResponse, parseTestDrivers } from './parseDriverResponses';
@@ -19,7 +20,7 @@ export class HttpAuthClient implements AuthClient {
 
   constructor(options: HttpAuthClientOptions) {
     this.#baseUrl = options.baseUrl;
-    this.#fetchFunction = options.fetchFunction ?? fetch;
+    this.#fetchFunction = options.fetchFunction ?? palierFetch;
     this.#timeoutMilliseconds = options.timeoutMilliseconds ?? DEFAULT_TIMEOUT_MILLISECONDS;
   }
 

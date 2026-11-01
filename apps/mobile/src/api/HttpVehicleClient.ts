@@ -1,4 +1,5 @@
 import type { Vehicle, VehicleListResponse } from '@palier/shared-types';
+import { palierFetch } from './appUpdate';
 import { PalierUnauthorizedError } from './AuthClient';
 import { PalierConsentRequiredError, PalierRejectedError, type NewVehicleInput, type VehicleClient } from './VehicleClient';
 import { PalierStatusError, PalierUnreachableError } from './LotsClient';
@@ -27,7 +28,7 @@ export class HttpVehicleClient implements VehicleClient {
 
   constructor(options: HttpVehicleClientOptions) {
     this.#options = options;
-    this.#fetchFunction = options.fetchFunction ?? fetch;
+    this.#fetchFunction = options.fetchFunction ?? palierFetch;
     this.#timeoutMilliseconds = options.timeoutMilliseconds ?? DEFAULT_TIMEOUT_MILLISECONDS;
   }
 

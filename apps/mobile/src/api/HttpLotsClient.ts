@@ -1,4 +1,5 @@
 import type { LotListResponse } from '@palier/shared-types';
+import { palierFetch } from './appUpdate';
 import { PalierStatusError, PalierUnreachableError, type LotsClient } from './LotsClient';
 import { parseLotList } from './parseLotList';
 
@@ -22,7 +23,7 @@ export class HttpLotsClient implements LotsClient {
 
   constructor(options: HttpLotsClientOptions) {
     this.#baseUrl = options.baseUrl;
-    this.#fetchFunction = options.fetchFunction ?? fetch;
+    this.#fetchFunction = options.fetchFunction ?? palierFetch;
     this.#timeoutMilliseconds = options.timeoutMilliseconds ?? DEFAULT_TIMEOUT_MILLISECONDS;
     this.#headers = options.token === undefined ? {} : { Authorization: `Bearer ${options.token}` };
     this.#onUnauthorized = options.onUnauthorized ?? (() => undefined);
