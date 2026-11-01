@@ -71,7 +71,8 @@ describe('PalierApp privacy notice', () => {
 
     await user.press(await screen.findByRole('button', { name: 'Refuser' }));
 
-    expect(await screen.findByText('Palier ne peut pas être utilisée sans votre consentement.')).toBeOnTheScreen();
+    expect(await screen.findByRole('alert', { name: 'Palier ne peut pas être utilisée sans votre consentement.' })).toBeOnTheScreen();
+    expect(screen.queryByRole('header', { name: 'Vos renseignements' })).not.toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: "J'accepte" })).not.toBeOnTheScreen();
     expect(screen.queryByRole('tab')).not.toBeOnTheScreen();
 
