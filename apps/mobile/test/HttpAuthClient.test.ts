@@ -1,3 +1,4 @@
+import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { PalierUnauthorizedError } from '../src/api/AuthClient';
 import { HttpAuthClient } from '../src/api/HttpAuthClient';
 import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
@@ -40,13 +41,13 @@ describe('HttpAuthClient', () => {
   it('posts the accepted notice version with the token', async () => {
     const { client, fetchFunction } = clientRecording(() => Promise.resolve(new Response(null, { status: 204 })));
 
-    await client.acceptNotice('julie-token', '2026-10-28');
+    await client.acceptNotice('julie-token', PRIVACY_NOTICE_VERSION);
 
     expect(fetchFunction.mock.calls[0]?.[0]).toBe(`${BASE_URL}/v1/consent`);
     expect(fetchFunction.mock.calls[0]?.[1]).toMatchObject({
       method: 'POST',
       headers: { Authorization: 'Bearer julie-token', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ noticeVersion: '2026-10-28' }),
+      body: JSON.stringify({ noticeVersion: PRIVACY_NOTICE_VERSION }),
     });
   });
 
