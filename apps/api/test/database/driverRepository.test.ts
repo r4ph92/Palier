@@ -67,6 +67,29 @@ describe('PostgresDriverRepository on the seeded database', () => {
     expect(await repository.findDriverBySessionToken('marc')).toEqual({ id: MARC_GAGNON_ID, firstName: 'Marc', lastName: 'Gagnon' });
   });
 
+  it('purges the tokens that ended before the cutoff, and keeps the others', async () => {
+    const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'expired-long-ago');
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'revoked-long-ago');
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'revoked-today');
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'active');
+    await connection.database
+      .update(userSessionToken)
+      .set({ expiresAt: tenDaysAgo })
+      .where(eq(userSessionToken.tokenHash, 'expired-long-ago'));
+    await connection.database
+      .update(userSessionToken)
+      .set({ revokedAt: tenDaysAgo })
+      .where(eq(userSessionToken.tokenHash, 'revoked-long-ago'));
+    await repository.revokeSessionToken('revoked-today');
+
+    const purged = await repository.purgeEndedSessionTokens(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
+
+    const remaining = await connection.database.select({ tokenHash: userSessionToken.tokenHash }).from(userSessionToken);
+    expect(purged).toBe(2);
+    expect(remaining.map((row) => row.tokenHash).sort()).toEqual(['active', 'revoked-today']);
+  });
+
   it('finds nobody for an unknown token hash', async () => {
     expect(await repository.findDriverBySessionToken('unknown')).toBeNull();
   });

@@ -4,6 +4,7 @@ import type { DriverRepository } from './DriverRepository.ts';
 
 const TOKEN_BYTES = 32;
 const MAX_ACTIVE_TOKENS_PER_DRIVER = 10;
+const PURGE_RETENTION_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
 
 export interface SignedInDriver {
   readonly token: string;
@@ -29,6 +30,11 @@ export async function signInDriver(repository: DriverRepository, driverId: strin
 
 export function authenticateDriver(repository: DriverRepository, token: string): Promise<Driver | null> {
   return repository.findDriverBySessionToken(hashSessionToken(token));
+}
+
+// Tokens that ended more than seven days ago are no longer needed for any check.
+export function purgeEndedSessionTokens(repository: DriverRepository, now: Date): Promise<number> {
+  return repository.purgeEndedSessionTokens(new Date(now.getTime() - PURGE_RETENTION_MILLISECONDS));
 }
 
 export function signOutDriver(repository: DriverRepository, token: string): Promise<void> {
