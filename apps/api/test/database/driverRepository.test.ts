@@ -131,8 +131,12 @@ describe('PostgresDriverRepository on the seeded database', () => {
     expect(await repository.findDriverBySessionToken('unknown')).toBeNull();
   });
 
-  it('has no accepted notice until Julie accepts one', async () => {
-    expect(await repository.findLatestNoticeVersion(JULIE_TREMBLAY_ID)).toBeNull();
+  it('has no accepted notice for a driver the seed leaves without consent', async () => {
+    expect(await repository.findLatestNoticeVersion(NADIA_BOUCHARD_ID)).toBeNull();
+  });
+
+  it('has the seeded notice for a driver the seed gives consent', async () => {
+    expect(await repository.findLatestNoticeVersion(JULIE_TREMBLAY_ID)).toBe(PRIVACY_NOTICE_VERSION);
   });
 
   it('reports an older notice version as the latest again when she accepts it after a newer one', async () => {
