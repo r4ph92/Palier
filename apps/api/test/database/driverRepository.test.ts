@@ -1,7 +1,10 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { connectToDatabase } from '../../src/infrastructure/postgres/database.ts';
-import { PostgresDriverRepository } from '../../src/infrastructure/postgres/PostgresDriverRepository.ts';
+import {
+  PostgresDriverRepository,
+  SESSION_TOKEN_PURGE_LOCK,
+} from '../../src/infrastructure/postgres/PostgresDriverRepository.ts';
 import { userSessionToken } from '../../src/infrastructure/postgres/schema.ts';
 import { runMigrations } from '../../src/migrate/runMigrations.ts';
 import { JULIE_TREMBLAY_ID, MARC_GAGNON_ID, NADIA_BOUCHARD_ID } from '../../src/seed/fixtures/drivers.ts';
@@ -51,6 +54,76 @@ describe('PostgresDriverRepository on the seeded database', () => {
     await repository.revokeSessionToken('phone');
 
     expect(await repository.findDriverBySessionToken('tablet')).toEqual(julie);
+  });
+
+  it('revokes only her oldest sessions beyond the newest ones she keeps', async () => {
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'oldest');
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'middle');
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'newest');
+    await repository.saveSessionToken(MARC_GAGNON_ID, 'marc');
+
+    await repository.revokeOldestSessionTokens(JULIE_TREMBLAY_ID, 2);
+
+    expect(await repository.findDriverBySessionToken('oldest')).toBeNull();
+    expect(await repository.findDriverBySessionToken('middle')).toEqual(julie);
+    expect(await repository.findDriverBySessionToken('newest')).toEqual(julie);
+    expect(await repository.findDriverBySessionToken('marc')).toEqual({ id: MARC_GAGNON_ID, firstName: 'Marc', lastName: 'Gagnon' });
+  });
+
+  it('purges the tokens that ended before the cutoff, and keeps the others', async () => {
+    const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'expired-long-ago');
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'revoked-long-ago');
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'revoked-today');
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'active');
+    await connection.database
+      .update(userSessionToken)
+      .set({ expiresAt: tenDaysAgo })
+      .where(eq(userSessionToken.tokenHash, 'expired-long-ago'));
+    await connection.database
+      .update(userSessionToken)
+      .set({ revokedAt: tenDaysAgo })
+      .where(eq(userSessionToken.tokenHash, 'revoked-long-ago'));
+    await repository.revokeSessionToken('revoked-today');
+
+    const purged = await repository.purgeEndedSessionTokens(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
+
+    const remaining = await connection.database.select({ tokenHash: userSessionToken.tokenHash }).from(userSessionToken);
+    expect(purged).toBe(2);
+    expect(remaining.map((row) => row.tokenHash).sort()).toEqual(['active', 'revoked-today']);
+  });
+
+  it('purges nothing while another server holds the purge lock, and purges once it is released', async () => {
+    const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'ended-long-ago');
+    await connection.database
+      .update(userSessionToken)
+      .set({ expiresAt: tenDaysAgo })
+      .where(eq(userSessionToken.tokenHash, 'ended-long-ago'));
+    const otherServer = connectToDatabase(databaseUrl);
+
+    try {
+      await otherServer.database.transaction(async (transaction) => {
+        await transaction.execute(sql`select pg_advisory_xact_lock(${SESSION_TOKEN_PURGE_LOCK})`);
+
+        expect(await repository.purgeEndedSessionTokens(cutoff)).toBe(0);
+      });
+    } finally {
+      await otherServer.close();
+    }
+    expect(await repository.purgeEndedSessionTokens(cutoff)).toBe(1);
+  });
+
+  it('keeps a token that ended exactly at the cutoff', async () => {
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'ended-at-cutoff');
+    await connection.database
+      .update(userSessionToken)
+      .set({ revokedAt: cutoff })
+      .where(eq(userSessionToken.tokenHash, 'ended-at-cutoff'));
+
+    expect(await repository.purgeEndedSessionTokens(cutoff)).toBe(0);
   });
 
   it('finds nobody for an unknown token hash', async () => {

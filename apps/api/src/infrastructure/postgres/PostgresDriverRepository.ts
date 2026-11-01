@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull, lt, notInArray, or, sql } from 'drizzle-orm';
 import type { SavedCard } from '@palier/shared-types';
 import type { Driver } from '../../domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
@@ -6,6 +6,16 @@ import type { Database } from './database.ts';
 import { appUser, userConsent, userSessionToken } from './schema.ts';
 
 const driverColumns = { id: appUser.id, firstName: appUser.firstName, lastName: appUser.lastName };
+// Arbitrary key for the advisory lock, so that only one server purges tokens at a time.
+export const SESSION_TOKEN_PURGE_LOCK = 84;
+
+function activeSessionTokensOf(driverId: string) {
+  return and(
+    eq(userSessionToken.userId, driverId),
+    isNull(userSessionToken.revokedAt),
+    gt(userSessionToken.expiresAt, sql`now()`),
+  );
+}
 
 export class PostgresDriverRepository implements DriverRepository {
   readonly #database: Database;
@@ -48,6 +58,36 @@ export class PostgresDriverRepository implements DriverRepository {
       .update(userSessionToken)
       .set({ revokedAt: new Date() })
       .where(and(eq(userSessionToken.tokenHash, tokenHash), isNull(userSessionToken.revokedAt)));
+  }
+
+  async revokeOldestSessionTokens(driverId: string, keep: number): Promise<void> {
+    const activeNewest = this.#database
+      .select({ tokenHash: userSessionToken.tokenHash })
+      .from(userSessionToken)
+      .where(activeSessionTokensOf(driverId))
+      .orderBy(desc(userSessionToken.createdAt))
+      .limit(keep);
+    await this.#database
+      .update(userSessionToken)
+      .set({ revokedAt: new Date() })
+      .where(and(activeSessionTokensOf(driverId), notInArray(userSessionToken.tokenHash, activeNewest)));
+  }
+
+  // Returns 0 without deleting anything when another server holds the purge lock.
+  purgeEndedSessionTokens(endedBefore: Date): Promise<number> {
+    return this.#database.transaction(async (transaction) => {
+      const [lock] = await transaction.execute<{ locked: boolean }>(
+        sql`select pg_try_advisory_xact_lock(${SESSION_TOKEN_PURGE_LOCK}) as locked`,
+      );
+      if (!lock?.locked) {
+        return 0;
+      }
+      const purged = await transaction
+        .delete(userSessionToken)
+        .where(or(lt(userSessionToken.expiresAt, endedBefore), lt(userSessionToken.revokedAt, endedBefore)))
+        .returning({ tokenHash: userSessionToken.tokenHash });
+      return purged.length;
+    });
   }
 
   async findLatestNoticeVersion(driverId: string): Promise<string | null> {

@@ -7,9 +7,21 @@ import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 export const julie: Driver = { id: '00000000-0000-4000-8000-000000000501', firstName: 'Julie', lastName: 'Tremblay' };
 export const marc: Driver = { id: '00000000-0000-4000-8000-000000000502', firstName: 'Marc', lastName: 'Gagnon' };
 
+interface SessionToken {
+  readonly driverId: string;
+  readonly expiresAt: Date;
+  revokedAt: Date | null;
+}
+
+const SESSION_TOKEN_LIFETIME_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
+
+function isActive(token: SessionToken, now: Date): boolean {
+  return token.revokedAt === null && token.expiresAt > now;
+}
+
 export class FakeDriverRepository implements DriverRepository {
   readonly #drivers: readonly Driver[];
-  readonly #activeTokens = new Map<string, string>();
+  readonly #sessionTokens = new Map<string, SessionToken>();
   readonly #noticeVersions = new Map<string, string>();
   readonly #stripeCustomerIds = new Map<string, string>();
   readonly #savedCards = new Map<string, { paymentMethodId: string; card: SavedCard }>();
@@ -19,7 +31,8 @@ export class FakeDriverRepository implements DriverRepository {
   }
 
   get activeTokenHashes(): readonly string[] {
-    return [...this.#activeTokens.keys()];
+    const now = new Date();
+    return [...this.#sessionTokens].filter(([, token]) => isActive(token, now)).map(([tokenHash]) => tokenHash);
   }
 
   listDrivers(): Promise<readonly Driver[]> {
@@ -31,18 +44,44 @@ export class FakeDriverRepository implements DriverRepository {
   }
 
   saveSessionToken(driverId: string, tokenHash: string): Promise<void> {
-    this.#activeTokens.set(tokenHash, driverId);
+    const expiresAt = new Date(Date.now() + SESSION_TOKEN_LIFETIME_MILLISECONDS);
+    this.#sessionTokens.set(tokenHash, { driverId, expiresAt, revokedAt: null });
     return Promise.resolve();
   }
 
   findDriverBySessionToken(tokenHash: string): Promise<Driver | null> {
-    const driverId = this.#activeTokens.get(tokenHash);
-    return driverId === undefined ? Promise.resolve(null) : this.findDriver(driverId);
+    const token = this.#sessionTokens.get(tokenHash);
+    return token !== undefined && isActive(token, new Date()) ? this.findDriver(token.driverId) : Promise.resolve(null);
   }
 
   revokeSessionToken(tokenHash: string): Promise<void> {
-    this.#activeTokens.delete(tokenHash);
+    const token = this.#sessionTokens.get(tokenHash);
+    if (token !== undefined && token.revokedAt === null) {
+      token.revokedAt = new Date();
+    }
     return Promise.resolve();
+  }
+
+  revokeOldestSessionTokens(driverId: string, keep: number): Promise<void> {
+    // Map keeps insertion order, so the first entries of a driver are its oldest tokens.
+    const now = new Date();
+    const driverTokens = [...this.#sessionTokens].filter(([, token]) => token.driverId === driverId && isActive(token, now));
+    for (const [, token] of driverTokens.slice(0, Math.max(0, driverTokens.length - keep))) {
+      token.revokedAt = now;
+    }
+    return Promise.resolve();
+  }
+
+  purgeEndedSessionTokens(endedBefore: Date): Promise<number> {
+    let purged = 0;
+    for (const [tokenHash, token] of this.#sessionTokens) {
+      const revokedBefore = token.revokedAt !== null && token.revokedAt < endedBefore;
+      if (token.expiresAt < endedBefore || revokedBefore) {
+        this.#sessionTokens.delete(tokenHash);
+        purged += 1;
+      }
+    }
+    return Promise.resolve(purged);
   }
 
   findLatestNoticeVersion(driverId: string): Promise<string | null> {
