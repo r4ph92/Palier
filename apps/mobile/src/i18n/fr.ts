@@ -29,6 +29,7 @@ export const fr = {
   account: {
     title: 'Compte',
     signOut: 'Se déconnecter',
+    signingOut: 'Déconnexion…',
     paymentMethod: 'Moyen de paiement',
     cardLoading: 'Chargement de la carte',
     cardNone: 'Aucune carte enregistrée.',

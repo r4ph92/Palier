@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -26,9 +27,25 @@ export function AccountScreen({ firstName, cardState, onOpenVehicles, onOpenPaym
         <Text style={[typography.bodyStrong, { color: colors.ink }]}>{describeCard(cardState)}</Text>
         <PrimaryButton label={i18n.t('account.vehicles')} onPress={onOpenVehicles} />
         <PrimaryButton label={i18n.t('account.paymentMethod')} onPress={onOpenPaymentMethod} />
-        <PrimaryButton label={i18n.t('account.signOut')} onPress={onSignOut} />
+        <SignOutButton onSignOut={onSignOut} />
       </View>
     </SafeAreaView>
+  );
+}
+
+// Stays busy until the sign-out finishes, so a second tap cannot start another one.
+function SignOutButton({ onSignOut }: { readonly onSignOut: () => void }) {
+  const [signingOut, setSigningOut] = useState(false);
+  const signOut = () => {
+    setSigningOut(true);
+    void onSignOut();
+  };
+  return (
+    <PrimaryButton
+      label={i18n.t(signingOut ? 'account.signingOut' : 'account.signOut')}
+      busy={signingOut}
+      onPress={signOut}
+    />
   );
 }
 

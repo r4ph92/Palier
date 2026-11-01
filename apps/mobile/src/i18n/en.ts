@@ -31,6 +31,7 @@ export const en: Translations = {
   account: {
     title: 'Account',
     signOut: 'Sign out',
+    signingOut: 'Signing out…',
     paymentMethod: 'Payment method',
     cardLoading: 'Loading card',
     cardNone: 'No card saved.',

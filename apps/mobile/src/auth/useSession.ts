@@ -15,7 +15,7 @@ export interface SessionController {
   readonly state: SessionState;
   signIn(driverId: string): Promise<void>;
   acceptNotice(): Promise<void>;
-  signOut(): void;
+  signOut(): Promise<void>;
   expire(): void;
   retry(): void;
   refreshDriver(token: string): void;
@@ -30,10 +30,10 @@ export function useSession(authClient: AuthClient, tokenStore: TokenStore): Sess
     setState(SIGNED_OUT);
     void tokenStore.clear();
   }, [tokenStore, setState]);
-  const signOut = useCallback(() => {
+  const signOut = useCallback(async () => {
     if (state.status === 'signedIn') {
       // Best effort: the driver is signed out on the device even if the API cannot be reached.
-      authClient.signOut(state.token).catch(() => undefined);
+      await authClient.signOut(state.token).catch(() => undefined);
     }
     expire();
   }, [authClient, state, expire]);
