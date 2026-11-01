@@ -7,7 +7,7 @@ import { appUser, userConsent, userSessionToken } from './schema.ts';
 
 const driverColumns = { id: appUser.id, firstName: appUser.firstName, lastName: appUser.lastName };
 // Arbitrary key for the advisory lock, so that only one server purges tokens at a time.
-const SESSION_TOKEN_PURGE_LOCK = 84;
+export const SESSION_TOKEN_PURGE_LOCK = 84;
 
 function activeSessionTokensOf(driverId: string) {
   return and(

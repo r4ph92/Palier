@@ -1,7 +1,10 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { connectToDatabase } from '../../src/infrastructure/postgres/database.ts';
-import { PostgresDriverRepository } from '../../src/infrastructure/postgres/PostgresDriverRepository.ts';
+import {
+  PostgresDriverRepository,
+  SESSION_TOKEN_PURGE_LOCK,
+} from '../../src/infrastructure/postgres/PostgresDriverRepository.ts';
 import { userSessionToken } from '../../src/infrastructure/postgres/schema.ts';
 import { runMigrations } from '../../src/migrate/runMigrations.ts';
 import { JULIE_TREMBLAY_ID, MARC_GAGNON_ID, NADIA_BOUCHARD_ID } from '../../src/seed/fixtures/drivers.ts';
@@ -88,6 +91,28 @@ describe('PostgresDriverRepository on the seeded database', () => {
     const remaining = await connection.database.select({ tokenHash: userSessionToken.tokenHash }).from(userSessionToken);
     expect(purged).toBe(2);
     expect(remaining.map((row) => row.tokenHash).sort()).toEqual(['active', 'revoked-today']);
+  });
+
+  it('purges nothing while another server holds the purge lock, and purges once it is released', async () => {
+    const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'ended-long-ago');
+    await connection.database
+      .update(userSessionToken)
+      .set({ expiresAt: tenDaysAgo })
+      .where(eq(userSessionToken.tokenHash, 'ended-long-ago'));
+    const otherServer = connectToDatabase(databaseUrl);
+
+    try {
+      await otherServer.database.transaction(async (transaction) => {
+        await transaction.execute(sql`select pg_advisory_xact_lock(${SESSION_TOKEN_PURGE_LOCK})`);
+
+        expect(await repository.purgeEndedSessionTokens(cutoff)).toBe(0);
+      });
+    } finally {
+      await otherServer.close();
+    }
+    expect(await repository.purgeEndedSessionTokens(cutoff)).toBe(1);
   });
 
   it('finds nobody for an unknown token hash', async () => {
