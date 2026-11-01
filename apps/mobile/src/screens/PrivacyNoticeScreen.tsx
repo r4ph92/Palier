@@ -48,8 +48,18 @@ function ReadingNotice({
     <>
       <ScreenHeader eyebrow="Palier" title={i18n.t('notice.title')} />
       <NoticeText />
+      <NoticeActions failed={failed} onAccept={onAccept} onRefuse={onRefuse} />
+    </>
+  );
+}
+
+function NoticeActions({ failed, onAccept, onRefuse }: { readonly failed: boolean; readonly onAccept: () => void; readonly onRefuse: () => void }) {
+  return (
+    <>
       <PrimaryButton label={i18n.t('notice.accept')} onPress={onAccept} />
-      <TextButton label={i18n.t('notice.refuse')} onPress={onRefuse} />
+      <View style={styles.refuse}>
+        <TextButton label={i18n.t('notice.refuse')} onPress={onRefuse} />
+      </View>
       {failed ? <ErrorState onRetry={onAccept} /> : null}
     </>
   );
@@ -123,4 +133,5 @@ function useNoticeDecision(onAccept: () => Promise<void>) {
 const styles = StyleSheet.create({
   list: { gap: spacing.small },
   refused: { gap: spacing.small, paddingTop: spacing.small },
+  refuse: { alignItems: 'flex-start' },
 });
