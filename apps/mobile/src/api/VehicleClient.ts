@@ -8,6 +8,8 @@ export interface NewVehicleInput {
 export interface VehicleClient {
   listVehicles(): Promise<VehicleListResponse>;
   addVehicle(vehicle: NewVehicleInput): Promise<Vehicle>;
+  setDefaultVehicle(vehicleId: string): Promise<Vehicle>;
+  deleteVehicle(vehicleId: string): Promise<void>;
 }
 
 // The API refused the request with a reason the driver can fix, such as an invalid plate or a duplicate.

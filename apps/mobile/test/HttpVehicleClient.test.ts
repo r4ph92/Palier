@@ -5,7 +5,7 @@ import { PalierConsentRequiredError, PalierRejectedError } from '../src/api/Vehi
 
 const BASE_URL = 'http://localhost:3000';
 const TOKEN = 'julie-token';
-const abc123 = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC' };
+const abc123 = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC', isDefault: true };
 
 function jsonResponse(body: unknown, status = 200): Promise<Response> {
   return Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -95,6 +95,35 @@ describe('HttpVehicleClient', () => {
     const client = clientAnswering(Promise.reject(new TypeError('Network request failed')));
 
     await expect(client.listVehicles()).rejects.toBeInstanceOf(PalierUnreachableError);
+  });
+
+  it('makes a vehicle the default with POST /v1/me/vehicles/:id/default and returns it', async () => {
+    const chosen = { ...abc123, id: 'vehicle-2', isDefault: true };
+    const fetchFunction = jest.fn(() => jsonResponse(chosen));
+    const client = new HttpVehicleClient({ baseUrl: BASE_URL, token: TOKEN, onUnauthorized: () => undefined, onConsentRequired: () => undefined, fetchFunction });
+
+    await expect(client.setDefaultVehicle('vehicle-2')).resolves.toEqual(chosen);
+    expect(fetchFunction).toHaveBeenCalledWith(
+      `${BASE_URL}/v1/me/vehicles/vehicle-2/default`,
+      expect.objectContaining({ method: 'POST', headers: { Authorization: `Bearer ${TOKEN}` } }),
+    );
+  });
+
+  it('deletes a vehicle with DELETE /v1/me/vehicles/:id and resolves without a body', async () => {
+    const fetchFunction = jest.fn(() => Promise.resolve(new Response(null, { status: 204 })));
+    const client = new HttpVehicleClient({ baseUrl: BASE_URL, token: TOKEN, onUnauthorized: () => undefined, onConsentRequired: () => undefined, fetchFunction });
+
+    await expect(client.deleteVehicle('vehicle-1')).resolves.toBeUndefined();
+    expect(fetchFunction).toHaveBeenCalledWith(
+      `${BASE_URL}/v1/me/vehicles/vehicle-1`,
+      expect.objectContaining({ method: 'DELETE', headers: { Authorization: `Bearer ${TOKEN}` } }),
+    );
+  });
+
+  it('reports the last vehicle refusal with its reason', async () => {
+    const failure = clientAnswering(jsonResponse({ error: 'LAST_VEHICLE' }, 409)).deleteVehicle('vehicle-1');
+
+    await expect(failure).rejects.toMatchObject({ code: 'LAST_VEHICLE' });
   });
 
   it('treats a vehicle of the wrong shape as unreachable', async () => {

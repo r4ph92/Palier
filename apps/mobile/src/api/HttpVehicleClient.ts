@@ -44,6 +44,14 @@ export class HttpVehicleClient implements VehicleClient {
     return parseVehicle(await readJson(response));
   }
 
+  async setDefaultVehicle(vehicleId: string): Promise<Vehicle> {
+    return parseVehicle(await readJson(await this.#send(`/v1/me/vehicles/${vehicleId}/default`, { method: 'POST' })));
+  }
+
+  async deleteVehicle(vehicleId: string): Promise<void> {
+    await this.#send(`/v1/me/vehicles/${vehicleId}`, { method: 'DELETE' });
+  }
+
   async #send(path: string, init: RequestInit): Promise<Response> {
     const response = await this.#fetchWithinTimeout(`${this.#options.baseUrl}${path}`, {
       ...init,
