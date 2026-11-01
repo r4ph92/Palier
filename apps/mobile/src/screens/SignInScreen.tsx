@@ -120,6 +120,6 @@ function PickerIntro({ driverGone }: { readonly driverGone: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  loading:{ alignSelf: 'flex-start', paddingVertical: spacing.large },
+  loading: { alignSelf: 'flex-start', paddingVertical: spacing.large },
   picker: { gap: spacing.small },
 });
