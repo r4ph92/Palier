@@ -19,16 +19,10 @@ interface PrivacyNoticeScreenProps {
 type NoticeState = { readonly status: 'reading' } | { readonly status: 'refused' } | { readonly status: 'failed' };
 
 export function PrivacyNoticeScreen({ onAccept, onSignOut }: PrivacyNoticeScreenProps) {
-  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const { state, refuse, accept } = useNoticeDecision(onAccept);
-  // The error sits below the buttons, so the notice scrolls down to it when accepting fails.
-  useEffect(() => {
-    if (state.status === 'failed') {
-      scrollRef.current?.scrollToEnd();
-    }
-  }, [state.status]);
+  const { scrollRef, scrollToErrorWhenLaidOut } = useScrollToErrorWhenLaidOut(state.status === 'failed');
   return (
-    <ScreenFrame scrollRef={scrollRef}>
+    <ScreenFrame scrollRef={scrollRef} onContentSizeChange={scrollToErrorWhenLaidOut}>
       {state.status === 'refused' ? (
         <RefusedNotice onSignOut={onSignOut} />
       ) : (
@@ -80,13 +74,29 @@ function NoticeText() {
 function RefusedNotice({ onSignOut }: { readonly onSignOut: () => void }) {
   const colors = useColors();
   return (
-    <>
+    <View style={styles.refused}>
       <Text accessibilityRole="alert" style={[typography.body, { color: colors.ink }]}>
         {i18n.t('notice.refused')}
       </Text>
       <PrimaryButton label={i18n.t('account.signOut')} onPress={onSignOut} />
-    </>
+    </View>
   );
+}
+
+// The error sits below the buttons, so the notice scrolls down to it once that layout exists, not before.
+function useScrollToErrorWhenLaidOut(failed: boolean) {
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const pending = useRef(false);
+  useEffect(() => {
+    pending.current = failed;
+  }, [failed]);
+  const scrollToErrorWhenLaidOut = () => {
+    if (pending.current) {
+      pending.current = false;
+      scrollRef.current?.scrollToEnd();
+    }
+  };
+  return { scrollRef, scrollToErrorWhenLaidOut };
 }
 
 function useNoticeDecision(onAccept: () => Promise<void>) {
@@ -109,4 +119,5 @@ function useNoticeDecision(onAccept: () => Promise<void>) {
 
 const styles = StyleSheet.create({
   list: { gap: spacing.small },
+  refused: { gap: spacing.small, paddingTop: spacing.small },
 });

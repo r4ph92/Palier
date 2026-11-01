@@ -7,14 +7,15 @@ import { spacing } from '../theme/tokens';
 interface ScreenFrameProps {
   readonly children: ReactNode;
   readonly scrollRef?: RefObject<ComponentRef<typeof ScrollView> | null>;
+  readonly onContentSizeChange?: () => void;
 }
 
 // The scrolling frame shared by the screens that can outgrow a phone at large text sizes.
-export function ScreenFrame({ children, scrollRef }: ScreenFrameProps) {
+export function ScreenFrame({ children, scrollRef, onContentSizeChange }: ScreenFrameProps) {
   const colors = useColors();
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.canvas }]}>
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content} onContentSizeChange={onContentSizeChange}>
         {children}
       </ScrollView>
     </SafeAreaView>
