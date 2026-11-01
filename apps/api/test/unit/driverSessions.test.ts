@@ -99,6 +99,16 @@ describe('driver sessions', () => {
     expect(await purgeEndedSessionTokens(repository, new Date())).toBe(1);
   });
 
+  it('keeps a token that ended exactly seven days ago', async () => {
+    vi.useFakeTimers({ now: new Date('2026-01-01T00:00:00Z') });
+    const repository = new FakeDriverRepository();
+    const signedIn = await signInDriver(repository, julie.id);
+    await signOutDriver(repository, signedIn?.token ?? '');
+    vi.setSystemTime(new Date(Date.parse('2026-01-01T00:00:00Z') + 7 * DAY));
+
+    expect(await purgeEndedSessionTokens(repository, new Date())).toBe(0);
+  });
+
   it('keeps a token revoked less than seven days ago', async () => {
     vi.useFakeTimers({ now: new Date('2026-01-01T00:00:00Z') });
     const repository = new FakeDriverRepository();
