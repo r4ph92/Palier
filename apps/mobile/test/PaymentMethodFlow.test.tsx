@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { act, render, screen, userEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
@@ -9,13 +9,14 @@ import { FakePaymentMethodClient } from './fakePaymentMethodClient';
 import { FakeVehicleClient } from './fakeVehicleClient';
 
 const mockConfirmSetupIntent = jest.fn();
-const mockCardState = { complete: true };
+const mockCardState = { complete: true, onCardChange: undefined as ((details: { complete: boolean }) => void) | undefined };
 
 // The card field reports its completeness on mount; the confirmation answer is set per test.
 jest.mock('@stripe/stripe-react-native', () => {
   const { useEffect } = jest.requireActual('react');
   return {
     CardField: ({ onCardChange }: { onCardChange: (details: { complete: boolean }) => void }) => {
+      mockCardState.onCardChange = onCardChange;
       useEffect(() => onCardChange({ complete: mockCardState.complete }), [onCardChange]);
       return null;
     },
@@ -139,5 +140,18 @@ describe('payment method on the account', () => {
     expect(await screen.findByText('Complétez les renseignements de la carte.')).toBeTruthy();
     expect(mockConfirmSetupIntent).not.toHaveBeenCalled();
     expect(paymentClient.savedPaymentMethodIds).toEqual([]);
+  });
+
+  it('clears the complete-the-card message once the card is complete', async () => {
+    const paymentClient = new FakePaymentMethodClient(null);
+    mockCardState.complete = false;
+    await renderSignedInApp(paymentClient);
+    const user = await openPaymentMethod();
+    await user.press(await screen.findByRole('button', { name: 'Enregistrer la carte' }));
+    expect(await screen.findByText('Complétez les renseignements de la carte.')).toBeTruthy();
+
+    await act(async () => mockCardState.onCardChange?.({ complete: true }));
+
+    expect(screen.queryByText('Complétez les renseignements de la carte.')).toBeNull();
   });
 });

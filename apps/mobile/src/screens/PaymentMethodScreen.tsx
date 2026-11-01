@@ -1,3 +1,4 @@
+import { useEffect, useRef, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CardField } from '@stripe/stripe-react-native';
@@ -7,7 +8,7 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
 import { i18n } from '../i18n/i18n';
-import { useCardSave } from '../payment/useCardSave';
+import { useCardSave, type SaveStatus } from '../payment/useCardSave';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
@@ -34,22 +35,41 @@ export function PaymentMethodScreen({ client, onSaved, onBack }: PaymentMethodSc
 
 function CardSaveForm({ client, onSaved }: Pick<PaymentMethodScreenProps, 'client' | 'onSaved'>) {
   const colors = useColors();
-  const { status, save, setIsComplete } = useCardSave(client, onSaved);
+  const { status, save, changeCard } = useCardSave(client, onSaved);
+  const cardRef = useClearCardOnSave(status);
   return (
     <>
       <CardField
+        ref={cardRef}
         postalCodeEnabled={false}
         accessibilityLabel={i18n.t('payment.cardField')}
-        cardStyle={{ backgroundColor: colors.canvas, textColor: colors.ink }}
+        cardStyle={{ backgroundColor: colors.canvas, textColor: colors.ink, placeholderColor: colors.muted }}
         style={styles.cardField}
-        onCardChange={(details) => setIsComplete(details.complete)}
+        onCardChange={(details) => changeCard(details.complete)}
       />
       <PrimaryButton label={status === 'saving' ? i18n.t('payment.saving') : i18n.t('payment.save')} onPress={save} />
-      {status === 'idle' || status === 'saving' ? null : (
-        <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t(`payment.${status}`)}</Text>
-      )}
+      <SaveStatusLine status={status} />
     </>
   );
+}
+
+function SaveStatusLine({ status }: { readonly status: SaveStatus }) {
+  const colors = useColors();
+  if (status === 'idle' || status === 'saving') {
+    return null;
+  }
+  return <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t(`payment.${status}`)}</Text>;
+}
+
+// The card number and security code are cleared once the card is saved, so they do not stay on screen.
+function useClearCardOnSave(status: SaveStatus) {
+  const cardRef = useRef<ComponentRef<typeof CardField>>(null);
+  useEffect(() => {
+    if (status === 'saved') {
+      cardRef.current?.clear();
+    }
+  }, [status]);
+  return cardRef;
 }
 
 const styles = StyleSheet.create({

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 import type { SavedCard } from '@palier/shared-types';
 import { useConfirmSetupIntent } from '@stripe/stripe-react-native';
 import type { PaymentMethodClient } from '../api/PaymentMethodClient';
@@ -16,8 +16,8 @@ type ConfirmSetupIntent = ReturnType<typeof useConfirmSetupIntent>['confirmSetup
 
 export function useCardSave(client: PaymentMethodClient, onSaved: (card: SavedCard) => void) {
   const { confirmSetupIntent } = useConfirmSetupIntent();
-  const [isComplete, setIsComplete] = useState(false);
   const [status, setStatus] = useState<SaveStatus>('idle');
+  const { isComplete, changeCard } = useCardCompletion(setStatus);
   useAnnounceStatus(status);
 
   async function save() {
@@ -32,7 +32,19 @@ export function useCardSave(client: PaymentMethodClient, onSaved: (card: SavedCa
     setStatus(await saveNewCard(client, confirmSetupIntent, onSaved));
   }
 
-  return { status, save, setIsComplete };
+  return { status, save, changeCard };
+}
+
+// Completing the card clears the "complete the card details" message; a saved card keeps its status.
+function useCardCompletion(setStatus: Dispatch<SetStateAction<SaveStatus>>) {
+  const [isComplete, setIsComplete] = useState(false);
+  function changeCard(complete: boolean) {
+    setIsComplete(complete);
+    if (complete) {
+      setStatus((current) => (current === 'incomplete' ? 'idle' : current));
+    }
+  }
+  return { isComplete, changeCard };
 }
 
 // Stripe confirms the card with the app's setup intent; Palier then records only the brand and last four digits.
