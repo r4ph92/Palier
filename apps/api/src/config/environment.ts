@@ -3,11 +3,13 @@ export interface ServerEnvironment {
   readonly host: string;
   readonly port: number;
   readonly testSignInEnabled: boolean;
+  readonly minimumAppVersion: string | undefined;
 }
 
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 3000;
 const TEST_SIGN_IN_ENVIRONMENTS = new Set(['development', 'test']);
+const VERSION_PATTERN = /^\d+(\.\d+)*$/;
 
 export function readDatabaseUrl(variables: NodeJS.ProcessEnv): string {
   const databaseUrl = variables['DATABASE_URL'];
@@ -23,7 +25,19 @@ export function readServerEnvironment(variables: NodeJS.ProcessEnv): ServerEnvir
     host: variables['HOST'] ?? DEFAULT_HOST,
     port: readPort(variables['PORT']),
     testSignInEnabled: readTestSignInEnabled(variables),
+    minimumAppVersion: readMinimumAppVersion(variables['MINIMUM_APP_VERSION']),
   };
+}
+
+// Unset means every app version is accepted; set, it is the lowest app version the API still serves.
+export function readMinimumAppVersion(rawVersion: string | undefined): string | undefined {
+  if (rawVersion === undefined || rawVersion === '') {
+    return undefined;
+  }
+  if (!VERSION_PATTERN.test(rawVersion)) {
+    throw new Error(`MINIMUM_APP_VERSION must look like 1.2.0, got "${rawVersion}".`);
+  }
+  return rawVersion;
 }
 
 // Test sign-in exists only when NODE_ENV says local or test; anything else, unset included, is treated as production.

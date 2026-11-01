@@ -21,8 +21,11 @@ const server = buildServer({
     vehicleRepository: new PostgresVehicleRepository(connection.database),
   },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
-  testSignInEnabled: environment.testSignInEnabled,
-  logsRequests: true,
+  settings: {
+    testSignInEnabled: environment.testSignInEnabled,
+    logsRequests: true,
+    minimumAppVersion: environment.minimumAppVersion,
+  },
 });
 
 const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(driverRepository, new Date()), server.log);

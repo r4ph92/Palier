@@ -7,12 +7,12 @@ import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
 
 // The one place route tests build the real server over fake repositories.
-export function configureServer({ testSignInEnabled = false }: { readonly testSignInEnabled?: boolean } = {}) {
+export function configureServer({ testSignInEnabled = false, minimumAppVersion }: { readonly testSignInEnabled?: boolean; readonly minimumAppVersion?: string } = {}) {
   const driverRepository = new FakeDriverRepository();
   const server: FastifyInstance = buildServer({
     repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() },
     cardGateway: new FakeCardGateway(),
-    testSignInEnabled,
+    settings: { testSignInEnabled, minimumAppVersion },
   });
   return { server, driverRepository };
 }
