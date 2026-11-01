@@ -8,7 +8,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
 import { i18n } from '../i18n/i18n';
 import { useIsLargeText } from '../theme/useIsLargeText';
-import { useVehicles, type VehiclesController } from '../vehicles/useVehicles';
+import { useVehicles, type VehicleActionError, type VehiclesController } from '../vehicles/useVehicles';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
@@ -29,8 +29,8 @@ export function VehiclesScreen({ firstName, client, onAddVehicle }: VehiclesScre
       <FlatList
         data={controller.state.status === 'loaded' ? controller.state.vehicles : NO_VEHICLES}
         keyExtractor={(vehicle) => vehicle.id}
-        renderItem={({ item, index }) => <VehicleRow vehicle={item} isDefault={index === 0} />}
-        ListHeaderComponent={<VehiclesHeader firstName={firstName} onAddVehicle={onAddVehicle} />}
+        renderItem={({ item }) => <VehicleRow vehicle={item} controller={controller} />}
+        ListHeaderComponent={<VehiclesHeader firstName={firstName} onAddVehicle={onAddVehicle} actionError={controller.actionError} />}
         ListEmptyComponent={<VehiclesStateMessage controller={controller} />}
         contentContainerStyle={styles.content}
         testID="vehicle-list"
@@ -39,24 +39,54 @@ export function VehiclesScreen({ firstName, client, onAddVehicle }: VehiclesScre
   );
 }
 
-function VehiclesHeader({ firstName, onAddVehicle }: { readonly firstName: string; readonly onAddVehicle: () => void }) {
+function VehiclesHeader({
+  firstName,
+  onAddVehicle,
+  actionError,
+}: {
+  readonly firstName: string;
+  readonly onAddVehicle: () => void;
+  readonly actionError: VehicleActionError | null;
+}) {
   return (
-    <ScreenHeader
-      eyebrow={firstName}
-      title={i18n.t('vehicles.title')}
-      action={<TextButton label={i18n.t('vehicles.add')} onPress={onAddVehicle} />}
-    />
+    <>
+      <ScreenHeader
+        eyebrow={firstName}
+        title={i18n.t('vehicles.title')}
+        action={<TextButton label={i18n.t('vehicles.add')} onPress={onAddVehicle} />}
+      />
+      <VehicleActionMessage actionError={actionError} />
+    </>
   );
 }
 
-// The first vehicle is the default one. Choosing it is out of scope until several vehicles are managed.
-function VehicleRow({ vehicle, isDefault }: { readonly vehicle: Vehicle; readonly isDefault: boolean }) {
+function VehicleActionMessage({ actionError }: { readonly actionError: VehicleActionError | null }) {
+  const colors = useColors();
+  if (actionError === null) {
+    return null;
+  }
+  const message = actionError === 'last-vehicle' ? i18n.t('vehicles.keepOneVehicle') : i18n.t('vehicles.actionFailed');
+  return (
+    <Text accessibilityRole="alert" style={[typography.body, styles.actionError, { color: colors.ink }]}>
+      {message}
+    </Text>
+  );
+}
+
+function VehicleRow({ vehicle, controller }: { readonly vehicle: Vehicle; readonly controller: VehiclesController }) {
   const colors = useColors();
   const layout = useIsLargeText() ? stackedStyles : sideBySideStyles;
   return (
-    <View accessible testID={`vehicle-row-${vehicle.id}`} style={[styles.row, layout.row, { borderBottomColor: colors.line }]}>
+    <View testID={`vehicle-row-${vehicle.id}`} style={[styles.row, layout.row, { borderBottomColor: colors.line }]}>
       <Text style={[typography.lotName, layout.plate, { color: colors.ink }]}>{`${vehicle.plate} · ${vehicle.province}`}</Text>
-      {isDefault ? <Text style={[typography.bodyStrong, { color: colors.muted }]}>{i18n.t('vehicles.defaultBadge')}</Text> : null}
+      <View style={styles.actions}>
+        {vehicle.isDefault ? (
+          <Text style={[typography.bodyStrong, { color: colors.muted }]}>{i18n.t('vehicles.defaultBadge')}</Text>
+        ) : (
+          <TextButton label={i18n.t('vehicles.useAsDefault')} onPress={() => controller.chooseDefault(vehicle)} />
+        )}
+        <TextButton label={i18n.t('vehicles.delete')} onPress={() => controller.remove(vehicle)} />
+      </View>
     </View>
   );
 }
@@ -79,6 +109,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { flexGrow: 1, paddingHorizontal: spacing.medium },
   row: { paddingVertical: spacing.medium, borderBottomWidth: StyleSheet.hairlineWidth },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.medium },
+  actionError: { paddingBottom: spacing.medium },
 });
 
 const sideBySideStyles = StyleSheet.create({

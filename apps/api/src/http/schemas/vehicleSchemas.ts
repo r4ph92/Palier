@@ -1,8 +1,8 @@
 export const vehicleSchema = {
   type: 'object',
-  required: ['id', 'plate', 'province'],
+  required: ['id', 'plate', 'province', 'isDefault'],
   additionalProperties: false,
-  properties: { id: { type: 'string' }, plate: { type: 'string' }, province: { type: 'string' } },
+  properties: { id: { type: 'string' }, plate: { type: 'string' }, province: { type: 'string' }, isDefault: { type: 'boolean' } },
 } as const;
 
 export const vehicleListSchema = { type: 'array', items: vehicleSchema } as const;

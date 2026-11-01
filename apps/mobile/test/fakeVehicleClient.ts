@@ -1,8 +1,8 @@
 import type { Vehicle, VehicleListResponse } from '@palier/shared-types';
-import { PalierUnreachableError } from '../src/api/LotsClient';
+import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 import { PalierRejectedError, type NewVehicleInput, type VehicleClient } from '../src/api/VehicleClient';
 
-export const abc123: Vehicle = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC' };
+export const abc123: Vehicle = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC', isDefault: true };
 
 export class FakeVehicleClient implements VehicleClient {
   readonly #vehicles: Vehicle[];
@@ -28,8 +28,38 @@ export class FakeVehicleClient implements VehicleClient {
     if (this.nextRejection !== null) {
       return Promise.reject(new PalierRejectedError(this.nextRejection));
     }
-    const vehicle = { id: `vehicle-${this.#vehicles.length + 1}`, plate: plate.trim().toUpperCase(), province };
+    const vehicle = { id: `vehicle-${this.#vehicles.length + 1}`, plate: plate.trim().toUpperCase(), province, isDefault: this.#vehicles.length === 0 };
     this.#vehicles.push(vehicle);
     return Promise.resolve(vehicle);
+  }
+
+  setDefaultVehicle(vehicleId: string): Promise<Vehicle> {
+    if (!this.isReachable) {
+      return Promise.reject(new PalierUnreachableError('fake'));
+    }
+    this.#vehicles.forEach((vehicle, index) => {
+      this.#vehicles[index] = { ...vehicle, isDefault: vehicle.id === vehicleId };
+    });
+    const chosen = this.#vehicles.find((vehicle) => vehicle.id === vehicleId);
+    return chosen === undefined ? Promise.reject(new PalierStatusError(404)) : Promise.resolve(chosen);
+  }
+
+  deleteVehicle(vehicleId: string): Promise<void> {
+    if (!this.isReachable) {
+      return Promise.reject(new PalierUnreachableError('fake'));
+    }
+    if (this.#vehicles.length === 1) {
+      return Promise.reject(new PalierRejectedError('LAST_VEHICLE'));
+    }
+    const index = this.#vehicles.findIndex((vehicle) => vehicle.id === vehicleId);
+    if (index === -1) {
+      return Promise.reject(new PalierStatusError(404));
+    }
+    const [removed] = this.#vehicles.splice(index, 1);
+    const successor = this.#vehicles[0];
+    if (removed?.isDefault && successor !== undefined) {
+      this.#vehicles[0] = { ...successor, isDefault: true };
+    }
+    return Promise.resolve();
   }
 }

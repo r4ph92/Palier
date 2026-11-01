@@ -19,6 +19,6 @@ function isVehicle(candidate: unknown): candidate is Vehicle {
   if (typeof candidate !== 'object' || candidate === null) {
     return false;
   }
-  const { id, plate, province } = candidate as Record<string, unknown>;
-  return typeof id === 'string' && typeof plate === 'string' && typeof province === 'string';
+  const { id, plate, province, isDefault } = candidate as Record<string, unknown>;
+  return typeof id === 'string' && typeof plate === 'string' && typeof province === 'string' && typeof isDefault === 'boolean';
 }
