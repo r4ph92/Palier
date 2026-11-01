@@ -1,5 +1,7 @@
+import { AccessibilityInfo } from 'react-native';
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { PalierStatusError } from '../src/api/LotsClient';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { SignInScreen } from '../src/screens/SignInScreen';
 import { FakeAuthClient, julie } from './fakeAuth';
@@ -63,6 +65,33 @@ describe('SignInScreen with test sign-in enabled', () => {
     await user.press(screen.getByRole('button', { name: 'Réessayer' }));
 
     expect(await screen.findByRole('button', { name: 'Julie Tremblay' })).toBeOnTheScreen();
+  });
+
+  it('says a driver removed by a reseed no longer exists, and lists the drivers again', async () => {
+    const authClient = new FakeAuthClient();
+    const listDrivers = jest.spyOn(authClient, 'listTestDrivers');
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    const onSignIn = jest.fn(() => Promise.reject(new PalierStatusError(404)));
+    await renderSignInScreen({ authClient, onSignIn });
+    const user = userEvent.setup();
+
+    await user.press(screen.getByRole('button', { name: 'Connexion de test' }));
+    await user.press(await screen.findByRole('button', { name: 'Julie Tremblay' }));
+
+    expect(await screen.findByText('Ce conducteur n’existe plus.')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Marc Gagnon' })).toBeOnTheScreen();
+    expect(screen.queryByText('Impossible de joindre Palier.')).not.toBeOnTheScreen();
+    expect(listDrivers).toHaveBeenCalledTimes(2);
+    expect(announce).toHaveBeenCalledWith('Ce conducteur n’existe plus.');
+    announce.mockRestore();
+  });
+
+  it('caps the "Connexion de test" heading at the title size for large text', async () => {
+    await renderSignInScreen();
+
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Connexion de test' }));
+
+    expect(await screen.findByRole('header', { name: 'Connexion de test' })).toHaveProp('maxFontSizeMultiplier', 1.4);
   });
 
   it('reads "Test sign-in" on an English device', async () => {

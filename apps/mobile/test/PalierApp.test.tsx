@@ -1,6 +1,6 @@
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { PalierStatusError, type LotsClient } from '../src/api/LotsClient';
+import { PalierStatusError, PalierUnreachableError, type LotsClient } from '../src/api/LotsClient';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { PalierApp } from '../src/PalierApp';
 import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
@@ -111,6 +111,40 @@ describe('PalierApp sign-out', () => {
     expect(await screen.findByRole('button', { name: 'Connexion de test' })).toBeOnTheScreen();
     expect(tokenStore.token).toBeNull();
     expect(authClient.signedOutTokens).toEqual([JULIE_TOKEN]);
+  });
+
+  it('signs Julie out on the device when the API cannot be reached', async () => {
+    const { authClient, tokenStore } = signedInJulie();
+    authClient.signOut = () => Promise.reject(new PalierUnreachableError('offline'));
+    await renderApp({ authClient, tokenStore });
+    const user = userEvent.setup();
+    await screen.findByText('Bonjour Julie');
+
+    await user.press(screen.getByRole('tab', { name: 'Compte' }));
+    await user.press(await screen.findByRole('button', { name: 'Se déconnecter' }));
+
+    expect(await screen.findByRole('button', { name: 'Connexion de test' })).toBeOnTheScreen();
+    expect(tokenStore.token).toBeNull();
+  });
+
+  it('keeps Julie signed in, with the button busy, until the API answers the sign-out', async () => {
+    const { authClient, tokenStore } = signedInJulie();
+    let finishSignOut: () => void = () => undefined;
+    authClient.signOut = () => new Promise<void>((resolve) => (finishSignOut = resolve));
+    await renderApp({ authClient, tokenStore });
+    const user = userEvent.setup();
+    await screen.findByText('Bonjour Julie');
+
+    await user.press(screen.getByRole('tab', { name: 'Compte' }));
+    await user.press(await screen.findByRole('button', { name: 'Se déconnecter' }));
+
+    expect(await screen.findByRole('button', { name: 'Déconnexion…' })).toBeDisabled();
+    expect(tokenStore.token).toBe(JULIE_TOKEN);
+
+    finishSignOut();
+
+    expect(await screen.findByRole('button', { name: 'Connexion de test' })).toBeOnTheScreen();
+    expect(tokenStore.token).toBeNull();
   });
 
   it('reads "Sign out" on an English device', async () => {

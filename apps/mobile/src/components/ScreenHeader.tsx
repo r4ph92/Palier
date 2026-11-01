@@ -5,23 +5,19 @@ import { useIsLargeText } from '../theme/useIsLargeText';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
-const TITLE_MAX_FONT_SCALE = 1.4;
+export const TITLE_MAX_FONT_SCALE = 1.4;
 
 interface ScreenHeaderProps {
-  readonly eyebrow: string;
+  readonly eyebrow?: string;
   readonly title: string;
   readonly action?: ReactNode;
 }
 
 export function ScreenHeader({ eyebrow, title, action }: ScreenHeaderProps) {
   const colors = useColors();
-  const layout = useIsLargeText() ? stackedStyles : sideBySideStyles;
   return (
     <View style={[styles.header, { borderBottomColor: colors.ink }]}>
-      <View testID="header-eyebrow-row" style={layout.eyebrowRow}>
-        <Text style={[typography.eyebrow, layout.eyebrow, { color: colors.muted }]}>{eyebrow}</Text>
-        {action}
-      </View>
+      {eyebrow === undefined && action === undefined ? null : <EyebrowRow eyebrow={eyebrow} action={action} />}
       <Text
         accessibilityRole="header"
         maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
@@ -29,6 +25,17 @@ export function ScreenHeader({ eyebrow, title, action }: ScreenHeaderProps) {
       >
         {title}
       </Text>
+    </View>
+  );
+}
+
+function EyebrowRow({ eyebrow, action }: { readonly eyebrow: string | undefined; readonly action: ReactNode }) {
+  const colors = useColors();
+  const layout = useIsLargeText() ? stackedStyles : sideBySideStyles;
+  return (
+    <View testID="header-eyebrow-row" style={layout.eyebrowRow}>
+      {eyebrow === undefined ? null : <Text style={[typography.eyebrow, layout.eyebrow, { color: colors.muted }]}>{eyebrow}</Text>}
+      {action}
     </View>
   );
 }

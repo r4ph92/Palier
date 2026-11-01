@@ -1,8 +1,7 @@
-import { useEffect } from 'react';
-import { AccessibilityInfo } from 'react-native';
 import { i18n } from '../i18n/i18n';
 import { MessageState } from './MessageState';
 import { PrimaryButton } from './PrimaryButton';
+import { useAnnouncement } from './useAnnouncement';
 
 interface ErrorStateProps {
   readonly onRetry: () => void;
@@ -10,9 +9,7 @@ interface ErrorStateProps {
 
 export function ErrorState({ onRetry }: ErrorStateProps) {
   const message = i18n.t('home.unreachable');
-  useEffect(() => {
-    AccessibilityInfo.announceForAccessibility(message);
-  }, [message]);
+  useAnnouncement(message);
   return (
     <MessageState
       message={message}

@@ -9,13 +9,16 @@ const BUTTON_LABEL_MAX_FONT_SCALE = 2;
 interface PrimaryButtonProps {
   readonly label: string;
   readonly onPress: () => void;
+  readonly busy?: boolean;
 }
 
-export function PrimaryButton({ label, onPress }: PrimaryButtonProps) {
+export function PrimaryButton({ label, onPress, busy = false }: PrimaryButtonProps) {
   const colors = useColors();
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ busy, disabled: busy }}
+      disabled={busy}
       onPress={onPress}
       style={({ pressed }) => [styles.button, { backgroundColor: colors.ink, opacity: pressed ? 0.8 : 1 }]}
     >

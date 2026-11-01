@@ -24,10 +24,12 @@ export const fr = {
     testSignIn: 'Connexion de test',
     pickDriver: 'Choisissez un conducteur de démonstration.',
     loadingDrivers: 'Chargement des conducteurs',
+    driverGone: 'Ce conducteur n’existe plus.',
   },
   account: {
     title: 'Compte',
     signOut: 'Se déconnecter',
+    signingOut: 'Déconnexion…',
     paymentMethod: 'Moyen de paiement',
     cardLoading: 'Chargement de la carte',
     cardNone: 'Aucune carte enregistrée.',
