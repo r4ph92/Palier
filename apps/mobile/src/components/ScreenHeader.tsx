@@ -5,7 +5,7 @@ import { useIsLargeText } from '../theme/useIsLargeText';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
-const TITLE_MAX_FONT_SCALE = 1.4;
+export const TITLE_MAX_FONT_SCALE = 1.4;
 
 interface ScreenHeaderProps {
   readonly eyebrow: string;

@@ -26,6 +26,7 @@ export const en: Translations = {
     testSignIn: 'Test sign-in',
     pickDriver: 'Pick a demo driver.',
     loadingDrivers: 'Loading drivers',
+    driverGone: 'This driver no longer exists.',
   },
   account: {
     title: 'Account',

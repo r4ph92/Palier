@@ -24,6 +24,7 @@ export const fr = {
     testSignIn: 'Connexion de test',
     pickDriver: 'Choisissez un conducteur de démonstration.',
     loadingDrivers: 'Chargement des conducteurs',
+    driverGone: 'Ce conducteur n’existe plus.',
   },
   account: {
     title: 'Compte',
