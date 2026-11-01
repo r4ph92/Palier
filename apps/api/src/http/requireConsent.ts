@@ -8,8 +8,8 @@ const FORBIDDEN = 403;
 // Runs after requireDriver: a driver who has not accepted the current notice gets nothing from the route.
 export function requireConsent(repository: DriverRepository): preHandlerAsyncHookHandler {
   return async (request: FastifyRequest, reply: FastifyReply) => {
-    const acceptedVersion = await repository.findLatestNoticeVersion(signedInDriver(request).id);
-    if (acceptedVersion !== PRIVACY_NOTICE_VERSION) {
+    const accepted = await repository.hasLatestNoticeVersion(signedInDriver(request).id, PRIVACY_NOTICE_VERSION);
+    if (!accepted) {
       return reply
         .status(FORBIDDEN)
         .send({ statusCode: FORBIDDEN, error: 'CONSENT_REQUIRED', message: 'Accept the privacy notice first.' });

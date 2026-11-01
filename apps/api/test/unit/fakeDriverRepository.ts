@@ -88,6 +88,10 @@ export class FakeDriverRepository implements DriverRepository {
     return Promise.resolve(this.#noticeVersions.get(driverId) ?? null);
   }
 
+  hasLatestNoticeVersion(driverId: string, noticeVersion: string): Promise<boolean> {
+    return Promise.resolve(this.#noticeVersions.get(driverId) === noticeVersion);
+  }
+
   saveNoticeAcceptance(driverId: string, noticeVersion: string): Promise<void> {
     this.#noticeVersions.set(driverId, noticeVersion);
     return Promise.resolve();
