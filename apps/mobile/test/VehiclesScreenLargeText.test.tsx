@@ -33,4 +33,16 @@ describe.each([1, 1.35, 2.3, 3.1])('VehiclesScreen at text scale %d', (fontScale
     expect(screen.getByText('Par défaut')).toBeOnTheScreen();
     expect(screen.getByTestId(`vehicle-row-${abc123.id}`)).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
   });
+
+  it('keeps the use-as-default and delete actions on screen at every text size', async () => {
+    const def456 = { id: 'vehicle-2', plate: 'DEF 456', province: 'QC', isDefault: false };
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123, def456])} onAddVehicle={jest.fn()} />
+      </SafeAreaProvider>,
+    );
+
+    expect(await screen.findByRole('button', { name: 'Utiliser par défaut' })).toBeOnTheScreen();
+    expect(screen.getAllByRole('button', { name: 'Supprimer' })).toHaveLength(2);
+  });
 });

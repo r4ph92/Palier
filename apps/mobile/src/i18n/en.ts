@@ -48,6 +48,10 @@ export const en: Translations = {
     invalidProvince: 'Choose a province',
     duplicate: 'This vehicle is already registered.',
     saveFailed: 'Could not save. Check your connection, then try again.',
+    useAsDefault: 'Use as default',
+    delete: 'Delete',
+    keepOneVehicle: 'Keep at least one vehicle.',
+    actionFailed: 'Could not update your vehicles. Check your connection, then try again.',
   },
   tabs: {
     lots: 'Parking lots',

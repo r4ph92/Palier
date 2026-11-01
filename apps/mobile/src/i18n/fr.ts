@@ -46,6 +46,10 @@ export const fr = {
     invalidProvince: 'Choisissez une province',
     duplicate: 'Ce véhicule est déjà enregistré.',
     saveFailed: 'Enregistrement impossible. Vérifiez votre connexion, puis réessayez.',
+    useAsDefault: 'Utiliser par défaut',
+    delete: 'Supprimer',
+    keepOneVehicle: 'Gardez au moins un véhicule',
+    actionFailed: 'Mise à jour impossible. Vérifiez votre connexion, puis réessayez.',
   },
   tabs: {
     lots: 'Stationnements',
