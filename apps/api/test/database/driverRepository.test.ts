@@ -115,6 +115,17 @@ describe('PostgresDriverRepository on the seeded database', () => {
     expect(await repository.purgeEndedSessionTokens(cutoff)).toBe(1);
   });
 
+  it('keeps a token that ended exactly at the cutoff', async () => {
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    await repository.saveSessionToken(JULIE_TREMBLAY_ID, 'ended-at-cutoff');
+    await connection.database
+      .update(userSessionToken)
+      .set({ revokedAt: cutoff })
+      .where(eq(userSessionToken.tokenHash, 'ended-at-cutoff'));
+
+    expect(await repository.purgeEndedSessionTokens(cutoff)).toBe(0);
+  });
+
   it('finds nobody for an unknown token hash', async () => {
     expect(await repository.findDriverBySessionToken('unknown')).toBeNull();
   });
