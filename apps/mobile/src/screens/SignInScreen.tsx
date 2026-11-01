@@ -28,7 +28,6 @@ type TestSignInState =
   | { readonly status: 'open'; readonly drivers: TestDriverListResponse; readonly driverGone: boolean };
 
 export function SignInScreen({ testSignInEnabled, authClient, onSignIn }: SignInScreenProps) {
-  const colors = useColors();
   return (
     <ScreenFrame>
       <ScreenHeader eyebrow="Palier" title={i18n.t('signIn.title')} />
