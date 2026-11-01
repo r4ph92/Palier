@@ -16,6 +16,9 @@ interface PrivacyNoticeScreenProps {
   readonly onSignOut: () => void;
 }
 
+// Past twice the size, long words like « renseignements » break in the middle on a phone, so the notice text stops there.
+const NOTICE_TEXT_MAX_FONT_SCALE = 2;
+
 type NoticeState = { readonly status: 'reading' } | { readonly status: 'refused' } | { readonly status: 'failed' };
 
 export function PrivacyNoticeScreen({ onAccept, onSignOut }: PrivacyNoticeScreenProps) {
@@ -56,16 +59,16 @@ function NoticeText() {
   const colors = useColors();
   return (
     <>
-      <Text style={[typography.body, { color: colors.ink }]}>{i18n.t('notice.intro')}</Text>
+      <Text maxFontSizeMultiplier={NOTICE_TEXT_MAX_FONT_SCALE} style={[typography.body, { color: colors.ink }]}>{i18n.t('notice.intro')}</Text>
       <View style={styles.list}>
         {(['plates', 'times', 'spot', 'payment'] as const).map((item) => (
-          <Text key={item} style={[typography.body, { color: colors.ink }]}>
+          <Text key={item} maxFontSizeMultiplier={NOTICE_TEXT_MAX_FONT_SCALE} style={[typography.body, { color: colors.ink }]}>
             {`• ${i18n.t(`notice.${item}`)}`}
           </Text>
         ))}
       </View>
-      <Text style={[typography.body, { color: colors.muted }]}>{i18n.t('notice.why')}</Text>
-      <Text style={[typography.body, { color: colors.muted }]}>{i18n.t('notice.retention')}</Text>
+      <Text maxFontSizeMultiplier={NOTICE_TEXT_MAX_FONT_SCALE} style={[typography.body, { color: colors.muted }]}>{i18n.t('notice.why')}</Text>
+      <Text maxFontSizeMultiplier={NOTICE_TEXT_MAX_FONT_SCALE} style={[typography.body, { color: colors.muted }]}>{i18n.t('notice.retention')}</Text>
     </>
   );
 }

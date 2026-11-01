@@ -87,7 +87,7 @@ export const fr = {
     payment: 'la référence de paiement',
     why: 'Ces renseignements servent à trouver votre place, à facturer le stationnement et à assurer la sécurité des lieux.',
     retention: 'Les renseignements identifiants sont conservés 90 jours après votre visite, puis anonymisés.',
-    accept: "J'accepte",
+    accept: "J’accepte",
     refuse: 'Refuser',
     refused: 'Palier ne peut pas être utilisée sans votre consentement.',
   },
