@@ -1,8 +1,7 @@
-import { APP_VERSION_HEADER } from '@palier/shared-types/appVersion';
+import { APP_VERSION_HEADER, VERSION_PATTERN } from '@palier/shared-types/appVersion';
 import type { FastifyReply, FastifyRequest, onRequestAsyncHookHandler } from 'fastify';
 
 const UPDATE_REQUIRED = 426;
-const VERSION_PATTERN = /^\d+(\.\d+)*$/;
 
 // Runs before every route, so an app below the minimum gets the update answer whatever it asks for.
 export function requireMinimumAppVersion(minimumVersion: string): onRequestAsyncHookHandler {

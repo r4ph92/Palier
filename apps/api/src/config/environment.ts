@@ -1,3 +1,5 @@
+import { VERSION_PATTERN } from '@palier/shared-types/appVersion';
+
 export interface ServerEnvironment {
   readonly databaseUrl: string;
   readonly host: string;
@@ -9,7 +11,6 @@ export interface ServerEnvironment {
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 3000;
 const TEST_SIGN_IN_ENVIRONMENTS = new Set(['development', 'test']);
-const VERSION_PATTERN = /^\d+(\.\d+)*$/;
 
 export function readDatabaseUrl(variables: NodeJS.ProcessEnv): string {
   const databaseUrl = variables['DATABASE_URL'];
