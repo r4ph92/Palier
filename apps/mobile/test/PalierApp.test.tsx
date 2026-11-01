@@ -113,6 +113,26 @@ describe('PalierApp sign-out', () => {
     expect(authClient.signedOutTokens).toEqual([JULIE_TOKEN]);
   });
 
+  it('keeps Julie signed in, with the button busy, until the API answers the sign-out', async () => {
+    const { authClient, tokenStore } = signedInJulie();
+    let finishSignOut: () => void = () => undefined;
+    authClient.signOut = () => new Promise<void>((resolve) => (finishSignOut = resolve));
+    await renderApp({ authClient, tokenStore });
+    const user = userEvent.setup();
+    await screen.findByText('Bonjour Julie');
+
+    await user.press(screen.getByRole('tab', { name: 'Compte' }));
+    await user.press(await screen.findByRole('button', { name: 'Se déconnecter' }));
+
+    expect(await screen.findByRole('button', { name: 'Déconnexion…' })).toBeDisabled();
+    expect(tokenStore.token).toBe(JULIE_TOKEN);
+
+    finishSignOut();
+
+    expect(await screen.findByRole('button', { name: 'Connexion de test' })).toBeOnTheScreen();
+    expect(tokenStore.token).toBeNull();
+  });
+
   it('reads "Sign out" on an English device', async () => {
     await renderApp({ ...signedInJulie(), language: 'en' });
     await screen.findByText('Hello Julie');
