@@ -34,7 +34,7 @@ describe('requireConsent on a driver route', () => {
 
   it('refuses a driver who accepted an older notice version when a newer one is in force', async () => {
     const driverRepository = new FakeDriverRepository();
-    server = buildServer({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository });
+    server = buildServer({ repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository } });
     const headers = await authorizationFor(driverRepository, julie);
     await acceptNoticeAs(driverRepository, julie, OUTDATED_VERSION);
 
@@ -45,7 +45,7 @@ describe('requireConsent on a driver route', () => {
 
   it('lets a driver who accepted the current notice through', async () => {
     const driverRepository = new FakeDriverRepository();
-    server = buildServer({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository });
+    server = buildServer({ repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository } });
     const headers = await authorizationFor(driverRepository, julie);
     await acceptNoticeAs(driverRepository, julie, PRIVACY_NOTICE_VERSION);
 
@@ -56,7 +56,7 @@ describe('requireConsent on a driver route', () => {
 
   it('still answers 401, not 403, without a token', async () => {
     const driverRepository = new FakeDriverRepository();
-    server = buildServer({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository });
+    server = buildServer({ repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository } });
 
     const response = await server.inject({ method: 'GET', url: '/v1/lots' });
 

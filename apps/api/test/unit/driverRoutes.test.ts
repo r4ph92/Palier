@@ -15,7 +15,7 @@ describe('driver routes', () => {
 
   function startServer() {
     driverRepository = new FakeDriverRepository();
-    server = buildServer({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository });
+    server = buildServer({ repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository } });
   }
 
   it('GET /v1/me returns the signed-in driver’s id, first name and accepted notice version', async () => {

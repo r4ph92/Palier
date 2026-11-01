@@ -15,9 +15,11 @@ describe('GET /v1/lots when the database fails', () => {
   it('does not reveal the internal error message to the client', async () => {
     const driverRepository = new FakeDriverRepository();
     server = buildServer({
-      vehicleRepository: new FakeVehicleRepository(),
-      lotAvailabilityRepository: { findOnlineLots: () => Promise.reject(new Error(DATABASE_ERROR_MESSAGE)) },
-      driverRepository,
+      repositories: {
+        vehicleRepository: new FakeVehicleRepository(),
+        lotAvailabilityRepository: { findOnlineLots: () => Promise.reject(new Error(DATABASE_ERROR_MESSAGE)) },
+        driverRepository,
+      },
     });
 
     await acceptNoticeAs(driverRepository, julie);

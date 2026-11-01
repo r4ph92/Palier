@@ -18,7 +18,7 @@ describe('PUT /v1/me/payment-method: saving a card', () => {
   function startServer() {
     driverRepository = new FakeDriverRepository();
     cardGateway = new FakeCardGateway();
-    server = buildServer({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository(), cardGateway });
+    server = buildServer({ repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() }, cardGateway });
   }
 
   async function signedInWithNotice(driver: typeof julie) {
@@ -136,7 +136,7 @@ describe('PUT /v1/me/payment-method: saving a card', () => {
 
     it('answers 503 when no card gateway is configured', async () => {
       driverRepository = new FakeDriverRepository();
-      server = buildServer({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() });
+      server = buildServer({ repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() } });
       const headers = await signedInWithNotice(julie);
 
       const response = await server.inject({ method: 'PUT', url: '/v1/me/payment-method', headers, payload: { paymentMethodId: 'pm_visa' } });

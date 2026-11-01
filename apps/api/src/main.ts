@@ -15,10 +15,12 @@ const connection = connectToDatabase(environment.databaseUrl);
 const stripeKey = stripeTestKey(process.env);
 const driverRepository = new PostgresDriverRepository(connection.database);
 const server = buildServer({
-  lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
-  driverRepository,
+  repositories: {
+    lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
+    driverRepository,
+    vehicleRepository: new PostgresVehicleRepository(connection.database),
+  },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
-  vehicleRepository: new PostgresVehicleRepository(connection.database),
   testSignInEnabled: environment.testSignInEnabled,
   logsRequests: true,
 });
