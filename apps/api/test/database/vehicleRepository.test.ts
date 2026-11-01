@@ -47,4 +47,66 @@ describe('PostgresVehicleRepository on the seeded database', () => {
     expect(await repository.findVehicle(JULIE_TREMBLAY_ID, saved.id)).toEqual(saved);
     expect(await repository.findVehicle(MARC_GAGNON_ID, saved.id)).toBeNull();
   });
+
+  it('makes the first vehicle of a driver the default one, and not the next ones', async () => {
+    const first = await repository.saveVehicle(JULIE_TREMBLAY_ID, abc123);
+    const second = await repository.saveVehicle(JULIE_TREMBLAY_ID, { plate: 'DEF 456', plateKey: 'DEF456', province: 'QC' });
+
+    expect(first).toMatchObject({ isDefault: true });
+    expect(second).toMatchObject({ isDefault: false });
+  });
+
+  it('moves the default to the chosen vehicle, and only one vehicle stays default', async () => {
+    const first = await repository.saveVehicle(JULIE_TREMBLAY_ID, abc123);
+    const second = await repository.saveVehicle(JULIE_TREMBLAY_ID, { plate: 'DEF 456', plateKey: 'DEF456', province: 'QC' });
+    if (first === null || second === null) throw new Error('the vehicles should have been saved');
+
+    const chosen = await repository.setDefaultVehicle(JULIE_TREMBLAY_ID, second.id);
+
+    expect(chosen).toMatchObject({ id: second.id, isDefault: true });
+    expect(await repository.listVehicles(JULIE_TREMBLAY_ID)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: first.id, isDefault: false }), expect.objectContaining({ id: second.id, isDefault: true })]),
+    );
+  });
+
+  it('does not set a default on a vehicle of another driver', async () => {
+    const saved = await repository.saveVehicle(JULIE_TREMBLAY_ID, abc123);
+    if (saved === null) throw new Error('the vehicle should have been saved');
+
+    expect(await repository.setDefaultVehicle(MARC_GAGNON_ID, saved.id)).toBeNull();
+  });
+
+  it('deletes a vehicle that is not the default and keeps the default one', async () => {
+    const first = await repository.saveVehicle(JULIE_TREMBLAY_ID, abc123);
+    const second = await repository.saveVehicle(JULIE_TREMBLAY_ID, { plate: 'DEF 456', plateKey: 'DEF456', province: 'QC' });
+    if (first === null || second === null) throw new Error('the vehicles should have been saved');
+
+    expect(await repository.deleteVehicle(JULIE_TREMBLAY_ID, second.id)).toBe('deleted');
+    expect(await repository.listVehicles(JULIE_TREMBLAY_ID)).toEqual([expect.objectContaining({ id: first.id, isDefault: true })]);
+  });
+
+  it('promotes another vehicle when the default one is deleted', async () => {
+    const first = await repository.saveVehicle(JULIE_TREMBLAY_ID, abc123);
+    const second = await repository.saveVehicle(JULIE_TREMBLAY_ID, { plate: 'DEF 456', plateKey: 'DEF456', province: 'QC' });
+    if (first === null || second === null) throw new Error('the vehicles should have been saved');
+
+    expect(await repository.deleteVehicle(JULIE_TREMBLAY_ID, first.id)).toBe('deleted');
+    expect(await repository.listVehicles(JULIE_TREMBLAY_ID)).toEqual([expect.objectContaining({ id: second.id, isDefault: true })]);
+  });
+
+  it('refuses to delete the only vehicle of a driver, and keeps it', async () => {
+    const saved = await repository.saveVehicle(JULIE_TREMBLAY_ID, abc123);
+    if (saved === null) throw new Error('the vehicle should have been saved');
+
+    expect(await repository.deleteVehicle(JULIE_TREMBLAY_ID, saved.id)).toBe('last-vehicle');
+    expect(await repository.listVehicles(JULIE_TREMBLAY_ID)).toEqual([saved]);
+  });
+
+  it('reports not-found when deleting a vehicle of another driver, and deletes nothing', async () => {
+    const saved = await repository.saveVehicle(JULIE_TREMBLAY_ID, abc123);
+    if (saved === null) throw new Error('the vehicle should have been saved');
+
+    expect(await repository.deleteVehicle(MARC_GAGNON_ID, saved.id)).toBe('not-found');
+    expect(await repository.listVehicles(JULIE_TREMBLAY_ID)).toEqual([saved]);
+  });
 });

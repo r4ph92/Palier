@@ -12,6 +12,7 @@ const CREATED = 201;
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const CONFLICT = 409;
+const NO_CONTENT = 204;
 
 interface AddVehicleRequest {
   readonly Body: { readonly plate: string; readonly province: string };
@@ -28,6 +29,8 @@ export function registerVehicleRoutes(server: FastifyInstance, repository: Vehic
   registerListRoute(server, repository, guards);
   registerReadRoute(server, repository, guards);
   registerAddRoute(server, repository, guards);
+  registerSetDefaultRoute(server, repository, guards);
+  registerDeleteRoute(server, repository, guards);
 }
 
 function registerListRoute(server: FastifyInstance, repository: VehicleRepository, guards: preHandlerAsyncHookHandler[]): void {
@@ -69,4 +72,31 @@ function registerAddRoute(server: FastifyInstance, repository: VehicleRepository
       return reply.status(CREATED).send(saved);
     },
   );
+}
+
+function registerSetDefaultRoute(server: FastifyInstance, repository: VehicleRepository, guards: preHandlerAsyncHookHandler[]): void {
+  server.post<VehicleParamsRequest>(
+    '/v1/me/vehicles/:id/default',
+    { onRequest: guards, schema: { params: vehicleParamsSchema, response: { 200: vehicleSchema } } },
+    async (request, reply) => {
+      const vehicle = await repository.setDefaultVehicle(signedInDriver(request).id, request.params.id);
+      if (vehicle === null) {
+        return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'NOT_FOUND', message: 'No such vehicle.' });
+      }
+      return vehicle;
+    },
+  );
+}
+
+function registerDeleteRoute(server: FastifyInstance, repository: VehicleRepository, guards: preHandlerAsyncHookHandler[]): void {
+  server.delete<VehicleParamsRequest>('/v1/me/vehicles/:id', { onRequest: guards, schema: { params: vehicleParamsSchema } }, async (request, reply) => {
+    const result = await repository.deleteVehicle(signedInDriver(request).id, request.params.id);
+    if (result === 'not-found') {
+      return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'NOT_FOUND', message: 'No such vehicle.' });
+    }
+    if (result === 'last-vehicle') {
+      return reply.status(CONFLICT).send({ statusCode: CONFLICT, error: 'LAST_VEHICLE', message: 'You must keep at least one vehicle.' });
+    }
+    return reply.status(NO_CONTENT).send();
+  });
 }

@@ -149,5 +149,85 @@ describe('vehicle routes', () => {
 
       expect(response.statusCode).toBe(404);
     });
+
+    it('marks the first vehicle as default', async () => {
+      const headers = await signInConsentedJulie();
+
+      const response = await server.inject({ method: 'POST', url: '/v1/me/vehicles', headers, payload: abc123 });
+
+      expect(response.json()).toMatchObject({ isDefault: true });
+    });
+
+    describe('with two vehicles', () => {
+      async function addTwoVehicles() {
+        const headers = await signInConsentedJulie();
+        const first = await server.inject({ method: 'POST', url: '/v1/me/vehicles', headers, payload: abc123 });
+        const second = await server.inject({ method: 'POST', url: '/v1/me/vehicles', headers, payload: { plate: 'DEF 456', province: 'QC' } });
+        return { headers, defaultId: first.json<{ id: string }>().id, otherId: second.json<{ id: string }>().id };
+      }
+
+      it('sets another vehicle as default, and the previous default is no longer default', async () => {
+        const { headers, defaultId, otherId } = await addTwoVehicles();
+
+        const response = await server.inject({ method: 'POST', url: `/v1/me/vehicles/${otherId}/default`, headers });
+        const listed = await server.inject({ method: 'GET', url: '/v1/me/vehicles', headers });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.json()).toMatchObject({ id: otherId, isDefault: true });
+        expect(listed.json()).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: defaultId, isDefault: false }),
+            expect.objectContaining({ id: otherId, isDefault: true }),
+          ]),
+        );
+      });
+
+      it('deletes a vehicle that is not the default and removes it from the list', async () => {
+        const { headers, defaultId, otherId } = await addTwoVehicles();
+
+        const response = await server.inject({ method: 'DELETE', url: `/v1/me/vehicles/${otherId}`, headers });
+        const listed = await server.inject({ method: 'GET', url: '/v1/me/vehicles', headers });
+
+        expect(response.statusCode).toBe(204);
+        expect(listed.json()).toEqual([expect.objectContaining({ id: defaultId, isDefault: true })]);
+      });
+
+      it('promotes the remaining vehicle when the default one is deleted', async () => {
+        const { headers, defaultId, otherId } = await addTwoVehicles();
+
+        const response = await server.inject({ method: 'DELETE', url: `/v1/me/vehicles/${defaultId}`, headers });
+        const listed = await server.inject({ method: 'GET', url: '/v1/me/vehicles', headers });
+
+        expect(response.statusCode).toBe(204);
+        expect(listed.json()).toEqual([expect.objectContaining({ id: otherId, isDefault: true })]);
+      });
+    });
+
+    it('answers 409 LAST_VEHICLE when deleting the only vehicle, and deletes nothing', async () => {
+      const headers = await signInConsentedJulie();
+      const created = await server.inject({ method: 'POST', url: '/v1/me/vehicles', headers, payload: abc123 });
+      const { id } = created.json<{ id: string }>();
+
+      const response = await server.inject({ method: 'DELETE', url: `/v1/me/vehicles/${id}`, headers });
+
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toMatchObject({ error: 'LAST_VEHICLE' });
+      expect(vehicleRepository.savedCount).toBe(1);
+    });
+
+    it('answers 404 when another driver sets or deletes a vehicle by its id, and changes nothing', async () => {
+      const headers = await signInConsentedJulie();
+      const created = await server.inject({ method: 'POST', url: '/v1/me/vehicles', headers, payload: abc123 });
+      const { id } = created.json<{ id: string }>();
+      await acceptNoticeAs(driverRepository, marc, PRIVACY_NOTICE_VERSION);
+      const marcHeaders = await authorizationFor(driverRepository, marc);
+
+      const setDefault = await server.inject({ method: 'POST', url: `/v1/me/vehicles/${id}/default`, headers: marcHeaders });
+      const remove = await server.inject({ method: 'DELETE', url: `/v1/me/vehicles/${id}`, headers: marcHeaders });
+
+      expect(setDefault.statusCode).toBe(404);
+      expect(remove.statusCode).toBe(404);
+      expect(vehicleRepository.savedCount).toBe(1);
+    });
   });
 });
