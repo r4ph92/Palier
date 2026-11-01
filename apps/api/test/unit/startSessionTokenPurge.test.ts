@@ -16,14 +16,14 @@ describe('session token purge schedule', () => {
 
     expect(purge).toHaveBeenCalledTimes(1);
     expect(logger.info).toHaveBeenCalledWith({ purged: 2 }, 'Purged ended session tokens');
-    stop();
+    await stop();
   });
 
   it('stops purging once stopped', async () => {
     const purge = vi.fn(() => Promise.resolve(0));
     const stop = startSessionTokenPurge(purge, { info: vi.fn(), error: vi.fn() });
 
-    stop();
+    await stop();
     await vi.advanceTimersByTimeAsync(3 * HOUR);
 
     expect(purge).not.toHaveBeenCalled();
@@ -38,6 +38,6 @@ describe('session token purge schedule', () => {
 
     expect(logger.error).toHaveBeenCalledTimes(1);
     expect(logger.info).toHaveBeenCalledWith({ purged: 1 }, 'Purged ended session tokens');
-    stop();
+    await stop();
   });
 });

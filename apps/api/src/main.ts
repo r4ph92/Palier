@@ -25,7 +25,7 @@ const server = buildServer({
 
 const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(driverRepository, new Date()), server.log);
 server.addHook('onClose', async () => {
-  stopSessionTokenPurge();
+  await stopSessionTokenPurge();
   await connection.close();
 });
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
