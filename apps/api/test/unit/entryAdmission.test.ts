@@ -89,6 +89,26 @@ describe('entry admission', () => {
     expect(log.errors).toHaveLength(2);
   });
 
+  it('still cancels the hold and keeps the barrier error when the spot cannot be freed', async () => {
+    const { journal, sessions, payments, gateCommander, admission, log } = admissionWith();
+    gateCommander.fails = true;
+    sessions.cancelFails = true;
+
+    await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toThrow('gate_command insert failed');
+    expect(journal).toEqual(['open-session', 'authorize', 'attach-intent', 'open-gate', 'cancel-session', 'cancel-intent']);
+    expect(payments.cancelled).toEqual(['pi_session-1']);
+    expect(log.errors).toHaveLength(2);
+  });
+
+  it('keeps the card refusal when the spot cannot be freed', async () => {
+    const { sessions, payments, admission, log } = admissionWith();
+    payments.refusal = 'CARD_DECLINED';
+    sessions.cancelFails = true;
+
+    await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toMatchObject({ reason: 'CARD_DECLINED' });
+    expect(log.errors).toHaveLength(1);
+  });
+
   it('warns that the hold stays on the platform when the operator has no Stripe account', async () => {
     const { admission, log } = admissionWith();
     const demoEntry = { ...julieAtEntreeDemo, payment: { ...julieAtEntreeDemo.payment, destinationAccountId: null } };

@@ -55,6 +55,7 @@ const PARKING_DEMO_SPOTS = ['A-1', 'A-2', 'A-3', 'A-4', 'A-5', 'B-1', 'B-2', 'B-
 export class FakeParkingSessionRepository implements ParkingSessionRepository {
   readonly drafts: SessionDraft[] = [];
   readonly paymentIntents = new Map<string, string>();
+  cancelFails = false;
   readonly #freeSpots: string[];
   readonly #active = new Map<string, { driverId: string; spot: string }>();
   readonly #journal: Journal;
@@ -91,6 +92,9 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
 
   cancel(sessionId: string): Promise<void> {
     this.#journal.push('cancel-session');
+    if (this.cancelFails) {
+      return Promise.reject(new Error('parking_session update failed'));
+    }
     const session = this.#active.get(sessionId);
     if (session !== undefined) {
       this.#active.delete(sessionId);
