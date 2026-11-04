@@ -41,7 +41,6 @@ export interface ServerSettings {
   readonly demoMode?: boolean;
   readonly logsRequests?: boolean;
   readonly minimumAppVersion?: string | undefined;
-  // Defaults to true; main.ts turns it off in development, where the dashboard runs over plain http.
   readonly secureCookies?: boolean;
 }
 

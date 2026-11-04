@@ -1,6 +1,6 @@
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
 import type { FastifyRequest } from 'fastify';
-import { DashboardRefusedError } from '../../domain/dashboard/DashboardRefusedError.ts';
+import { DashboardHttpRefusal } from './DashboardHttpRefusal.ts';
 
 const READ_METHODS = new Set(['GET', 'HEAD']);
 
@@ -9,5 +9,5 @@ export async function requireDashboardWriteHeader(request: FastifyRequest): Prom
   if (READ_METHODS.has(request.method) || request.headers[DASHBOARD_CSRF_HEADER] === DASHBOARD_CSRF_VALUE) {
     return;
   }
-  throw new DashboardRefusedError('CSRF_HEADER_MISSING');
+  throw new DashboardHttpRefusal('CSRF_HEADER_MISSING');
 }

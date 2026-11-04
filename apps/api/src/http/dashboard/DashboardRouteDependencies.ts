@@ -5,6 +5,5 @@ export interface DashboardRouteDependencies {
   readonly access: SessionAccess;
   readonly operators: OperatorRepository;
   readonly testSignInEnabled: boolean;
-  // Off only in development, where the dashboard is served over plain http.
   readonly secureCookies: boolean;
 }

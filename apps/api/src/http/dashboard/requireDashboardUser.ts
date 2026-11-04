@@ -1,7 +1,7 @@
 import type { FastifyRequest, onRequestAsyncHookHandler } from 'fastify';
-import { DashboardRefusedError } from '../../domain/dashboard/DashboardRefusedError.ts';
 import { authenticateDashboardUser } from '../../domain/dashboard/dashboardSessions.ts';
 import type { SessionTokenRepository, SessionUser } from '../../domain/sessions/SessionTokenRepository.ts';
+import { DashboardHttpRefusal } from './DashboardHttpRefusal.ts';
 import { dashboardCookieToken } from './dashboardSessionCookie.ts';
 
 declare module 'fastify' {
@@ -16,7 +16,7 @@ export function requireDashboardUser(sessions: SessionTokenRepository): onReques
     const token = dashboardCookieToken(request);
     request.dashboardUser = token === null ? null : await authenticateDashboardUser(sessions, token);
     if (request.dashboardUser === null) {
-      throw new DashboardRefusedError('UNAUTHORIZED');
+      throw new DashboardHttpRefusal('UNAUTHORIZED');
     }
   };
 }

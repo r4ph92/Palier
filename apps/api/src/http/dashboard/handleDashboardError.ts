@@ -2,6 +2,7 @@ import type { DashboardErrorCode } from '@palier/shared-types';
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { DashboardRefusedError } from '../../domain/dashboard/DashboardRefusedError.ts';
 import { handleServerError } from '../handleServerError.ts';
+import { DashboardHttpRefusal } from './DashboardHttpRefusal.ts';
 
 const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
   UNAUTHORIZED: 401,
@@ -13,7 +14,7 @@ const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
 };
 
 export function handleDashboardError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {
-  if (!(error instanceof DashboardRefusedError)) {
+  if (!(error instanceof DashboardRefusedError || error instanceof DashboardHttpRefusal)) {
     return handleServerError(error, request, reply);
   }
   const statusCode = STATUS_BY_REASON[error.reason];
