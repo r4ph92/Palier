@@ -10,6 +10,17 @@ export interface StripeOnboarding {
   readonly start: () => Promise<void>;
 }
 
+// Null once the page is on its way to Stripe; otherwise the failure, and whether it ended the session.
+async function requestOnboarding(operatorId: string): Promise<{ readonly code: DisplayedErrorCode; readonly endedSession: boolean } | null> {
+  try {
+    redirectTo((await dashboardClient.startStripeOnboarding(operatorId)).url);
+    return null;
+  } catch (failure) {
+    const failed = asDashboardApiError(failure);
+    return { code: failed.code, endedSession: endsSession(failed) };
+  }
+}
+
 // On success the page is left for Stripe, so it stays busy; a failure or an ended session frees the button again.
 export function useStripeOnboarding(operatorId: string): StripeOnboarding {
   const refreshSession = useSessionRefresh();
@@ -21,13 +32,11 @@ export function useStripeOnboarding(operatorId: string): StripeOnboarding {
     }
     setError(null);
     setRedirecting(true);
-    try {
-      redirectTo((await dashboardClient.startStripeOnboarding(operatorId)).url);
-    } catch (failure) {
-      const failed = asDashboardApiError(failure);
+    const failure = await requestOnboarding(operatorId);
+    if (failure !== null) {
       setRedirecting(false);
-      setError(failed.code);
-      if (endsSession(failed)) {
+      setError(failure.code);
+      if (failure.endedSession) {
         await refreshSession();
       }
     }
