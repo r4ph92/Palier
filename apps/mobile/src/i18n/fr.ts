@@ -101,7 +101,7 @@ export const fr = {
       GATE_UNAVAILABLE: 'Cette borne n’est pas disponible',
       PREREQUISITES_MISSING: 'Ajoutez une plaque et une carte avant d’entrer',
       OPERATOR_NOT_PAYABLE: 'Ce parking n’accepte pas les paiements pour le moment',
-      LOT_FULL: 'Ce parking est complet',
+      LOT_FULL: 'Complet — la barrière reste fermée',
       ALREADY_INSIDE: 'Vous avez déjà une entrée en cours',
       CARD_DECLINED: 'Carte refusée',
       TOO_MANY_ENTRIES: 'Trop de tentatives, réessayez dans quelques minutes',
