@@ -45,7 +45,8 @@ describe('ScanScreen, when Palier cancels the entry nobody drove through', () =>
     expect(screen.queryByRole('alert')).not.toBeOnTheScreen();
   });
 
-  it('reads "Entry cancelled: no passage detected. Nothing charged." on an English device', async () => {
+  it('reads "Entry cancelled: no passage detected. Nothing charged." on an English device, and announces it', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
     const client = new FakeEntryClient();
     await scan({ language: 'en', client });
     await screen.findByText('Barrier open');
@@ -54,5 +55,18 @@ describe('ScanScreen, when Palier cancels the entry nobody drove through', () =>
     await advance(ENTRY_STATUS_POLL_MILLISECONDS);
 
     expect(screen.getByRole('alert')).toHaveTextContent('Entry cancelled: no passage detected. Nothing charged.');
+    expect(announce).toHaveBeenCalledWith('Entry cancelled: no passage detected. Nothing charged.');
+  });
+
+  it('moves VoiceOver to the cancellation when it replaces the open barrier', async () => {
+    const { client } = await scan();
+    await screen.findByText('Barrière ouverte');
+    const sendAccessibilityEvent = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent');
+    client.sessionState = 'CANCELLED';
+
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS);
+
+    const onTheAlert = expect.objectContaining({ props: expect.objectContaining({ accessibilityRole: 'alert' }) });
+    expect(sendAccessibilityEvent).toHaveBeenLastCalledWith(onTheAlert, 'focus');
   });
 });
