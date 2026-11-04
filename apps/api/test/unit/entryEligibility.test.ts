@@ -71,6 +71,7 @@ describe('entry eligibility', () => {
 
     expect(refusal).toMatchObject({ reason: 'LOT_NOT_IN_SERVICE' });
     expect((refusal as Error).cause).toBeInstanceOf(PricingPolicyInvalidError);
+    expect((refusal as Error).cause).toMatchObject({ lotId: entreeDemoGate.lot.id });
   });
 
   it.each([
