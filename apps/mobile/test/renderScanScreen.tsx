@@ -24,7 +24,7 @@ interface ScanHarnessProps {
 // The scan tab owns the entry; this stands in for it with Terminé going back to the form.
 function ScanHarness({ client, onAddPlate, onAddCard }: ScanHarnessProps) {
   const entry = useEntry(client);
-  return <ScanScreen entry={entry} hasNoSession={false} onDone={entry.startOver} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
+  return <ScanScreen entry={entry} onDone={entry.startOver} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
 }
 
 export async function openScanner({ client = new FakeEntryClient(), language = 'fr', onAddPlate = jest.fn(), onAddCard = jest.fn(), wrap = (screen) => screen }: Scan = {}) {

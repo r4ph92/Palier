@@ -6,6 +6,7 @@ import { MINIMUM_TOUCH_TARGET } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
 export type Tab = 'lots' | 'scan' | 'account';
+export type TabLabels = Partial<Record<Tab, string>>;
 
 const TABS: readonly Tab[] = ['lots', 'scan', 'account'];
 // Like the system tab bar, labels grow a little with Dynamic Type, then shrink to fit on one line.
@@ -16,25 +17,21 @@ const TAB_SIDE_PADDING = 0;
 interface TabBarProps {
   readonly selected: Tab;
   readonly onSelect: (tab: Tab) => void;
-  // The scan tab reads « Session » while the driver has one; it is still the same tab.
-  readonly hasCurrentSession?: boolean;
+  // A tab whose content changes name (the scan tab while a session is current) gives its label here; it is still the same tab.
+  readonly labels?: TabLabels;
 }
 
-export function TabBar({ selected, onSelect, hasCurrentSession = false }: TabBarProps) {
+export function TabBar({ selected, onSelect, labels = {} }: TabBarProps) {
   const colors = useColors();
   return (
     <SafeAreaView edges={['bottom']} style={[styles.bar, { backgroundColor: colors.canvas, borderTopColor: colors.ink }]}>
       <View accessibilityRole="tablist" style={styles.row}>
         {TABS.map((tab) => (
-          <TabButton key={tab} label={tabLabel(tab, hasCurrentSession)} isSelected={tab === selected} onPress={() => onSelect(tab)} />
+          <TabButton key={tab} label={labels[tab] ?? i18n.t(`tabs.${tab}`)} isSelected={tab === selected} onPress={() => onSelect(tab)} />
         ))}
       </View>
     </SafeAreaView>
   );
-}
-
-function tabLabel(tab: Tab, hasCurrentSession: boolean): string {
-  return i18n.t(tab === 'scan' && hasCurrentSession ? 'tabs.session' : `tabs.${tab}`);
 }
 
 function TabButton({ label, isSelected, onPress }: { readonly label: string; readonly isSelected: boolean; readonly onPress: () => void }) {

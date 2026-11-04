@@ -7,7 +7,7 @@ import { useCurrentParkingSession, type CurrentParkingSessionController } from '
 import { AccountTab } from './AccountTab';
 import type { DeveloperEntry } from './DeveloperEntry';
 import { HomeScreen } from './HomeScreen';
-import { ScanTab } from './ScanTab';
+import { ScanTab, scanTabLabels } from './ScanTab';
 
 interface SignedInTabsProps {
   readonly firstName: string;
@@ -26,7 +26,7 @@ export function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: 
       <LotsClientProvider client={clients.lots}>
         <TabContent {...content} />
       </LotsClientProvider>
-      <TabBar selected={tabs.tab} onSelect={tabs.selectTab} hasCurrentSession={currentSession.state.status === 'current'} />
+      <TabBar selected={tabs.tab} onSelect={tabs.selectTab} labels={scanTabLabels(currentSession.state)} />
     </View>
   );
 }

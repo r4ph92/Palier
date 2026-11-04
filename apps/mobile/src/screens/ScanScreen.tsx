@@ -1,4 +1,5 @@
 import type { AssignedSpot } from '@palier/shared-types';
+import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -19,14 +20,14 @@ const QR_INPUT_BEHAVIOUR = { autoCapitalize: 'none', autoCorrect: false, spellCh
 
 interface ScanScreenProps {
   readonly entry: EntryController;
-  // True only once Palier answered that the driver has no session; unknown while loading or unreachable.
-  readonly hasNoSession: boolean;
+  // Shown above the form: what the tab knows about a current session.
+  readonly notice?: ReactNode;
   readonly onDone: () => void;
   readonly onAddPlate: () => void;
   readonly onAddCard: () => void;
 }
 
-export function ScanScreen({ entry, hasNoSession, onDone, onAddPlate, onAddCard }: ScanScreenProps) {
+export function ScanScreen({ entry, notice, onDone, onAddPlate, onAddCard }: ScanScreenProps) {
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
@@ -36,7 +37,7 @@ export function ScanScreen({ entry, hasNoSession, onDone, onAddPlate, onAddCard 
           <EnteredSpot spot={entry.state.spot} isConfirmed={entry.state.isConfirmed} onDone={onDone} />
         ) : (
           <>
-            {hasNoSession ? <Text style={[typography.body, { color: colors.muted }]}>{i18n.t('session.none')}</Text> : null}
+            {notice}
             <ScanForm entry={entry} onAddPlate={onAddPlate} onAddCard={onAddCard} />
           </>
         )}
