@@ -88,6 +88,26 @@ describe('backdating a session in a test environment', () => {
   });
 
   it.each([
+    ['year 0001', '0001-01-01T00:00:00Z'],
+    ['the second before 1970', '1969-12-31T23:59:59Z'],
+  ])('refuses an entry in %s with 400 ENTERED_AT_TOO_EARLY', async (_case, enteredAt) => {
+    await julieInsideSinceEight();
+
+    const response = await server.inject({ method: 'PUT', url: backdateUrl, payload: { enteredAt } });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ error: 'ENTERED_AT_TOO_EARLY' });
+  });
+
+  it('accepts an entry at 1970-01-01 exactly', async () => {
+    await julieInsideSinceEight();
+
+    const response = await server.inject({ method: 'PUT', url: backdateUrl, payload: { enteredAt: '1970-01-01T00:00:00Z' } });
+
+    expect(response.statusCode).toBe(204);
+  });
+
+  it.each([
     ['an unknown session', `/v1/test/sessions/00000000-0000-4000-8000-000000000999/entered-at`],
     ['a cancelled session', backdateUrl],
   ])('answers 404 SESSION_NOT_FOUND for %s', async (_case, url) => {

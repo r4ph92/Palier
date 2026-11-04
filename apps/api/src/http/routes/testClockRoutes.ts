@@ -8,6 +8,7 @@ import { backdateParkingSessionSchema, testClockReadingSchema } from '../schemas
 const NO_CONTENT = 204;
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
+const EARLIEST_ENTRY = new Date(0);
 
 export interface TestClockRouteDependencies {
   readonly testClock: TestClock;
@@ -69,11 +70,28 @@ async function backdate(
   if (Number.isNaN(enteredAt.getTime())) {
     return refuseInstant(reply);
   }
-  if (enteredAt > testClock.now()) {
-    return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'ENTERED_AT_IN_FUTURE', message: 'enteredAt is later than the clock.' });
+  const refusal = backdateRefusal(enteredAt, testClock.now());
+  if (refusal !== null) {
+    return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, ...refusal });
   }
   if (!(await backdater.backdateEntry(request.params.sessionId, enteredAt))) {
     return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'SESSION_NOT_FOUND', message: 'No such session.' });
   }
   return reply.status(NO_CONTENT).send();
+}
+
+interface BackdateRefusal {
+  readonly error: 'ENTERED_AT_TOO_EARLY' | 'ENTERED_AT_IN_FUTURE';
+  readonly message: string;
+}
+
+// Before 1970 the database driver reads timestamps back wrong (year 0001 comes back as 2001).
+function backdateRefusal(enteredAt: Date, now: Date): BackdateRefusal | null {
+  if (enteredAt < EARLIEST_ENTRY) {
+    return { error: 'ENTERED_AT_TOO_EARLY', message: 'enteredAt is before 1970-01-01.' };
+  }
+  if (enteredAt > now) {
+    return { error: 'ENTERED_AT_IN_FUTURE', message: 'enteredAt is later than the clock.' };
+  }
+  return null;
 }
