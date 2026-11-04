@@ -10,7 +10,7 @@ describe('ScanScreen refusals', () => {
     ['GATE_UNAVAILABLE', 'Cette borne n’est pas disponible', 'This terminal is not available'],
     ['PREREQUISITES_MISSING', 'Ajoutez une plaque et une carte avant d’entrer', 'Add a plate and a card before entering'],
     ['OPERATOR_NOT_PAYABLE', 'Ce parking n’accepte pas les paiements pour le moment', 'This lot cannot take payments right now'],
-    ['LOT_FULL', 'Ce parking est complet', 'This lot is full'],
+    ['LOT_FULL', 'Complet — la barrière reste fermée', 'Full — the barrier stays closed'],
     ['ALREADY_INSIDE', 'Vous avez déjà une entrée en cours', 'You already have an entry in progress'],
     ['CARD_DECLINED', 'Carte refusée', 'Card declined'],
     ['TOO_MANY_ENTRIES', 'Trop de tentatives, réessayez dans quelques minutes', 'Too many attempts, try again in a few minutes'],

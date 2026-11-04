@@ -103,7 +103,7 @@ export const en: Translations = {
       GATE_UNAVAILABLE: 'This terminal is not available',
       PREREQUISITES_MISSING: 'Add a plate and a card before entering',
       OPERATOR_NOT_PAYABLE: 'This lot cannot take payments right now',
-      LOT_FULL: 'This lot is full',
+      LOT_FULL: 'Full — the barrier stays closed',
       ALREADY_INSIDE: 'You already have an entry in progress',
       CARD_DECLINED: 'Card declined',
       TOO_MANY_ENTRIES: 'Too many attempts, try again in a few minutes',
