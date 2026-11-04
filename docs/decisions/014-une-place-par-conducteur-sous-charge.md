@@ -1,0 +1,12 @@
+# 014 — Une place par conducteur sous charge
+
+**Contexte.** Vingt scans simultanés pour dix places donnaient des `LOT_FULL` en trop : chaque admission choisissait la même première place, la perdait au `SKIP LOCKED` et abandonnait après trois essais. Un double scan du même conducteur répondait `ALREADY_INSIDE` au second. Aucune voie n'a de clé Stripe pour mesurer la charge.
+
+**Décision.**
+- **Verrou du parking** : l'admission prend `parking_lot FOR NO KEY UPDATE` (`lockParkingLot`, partagé avec la tâche de #39), puis la session, puis la place, l'ordre de la boucle et de la tâche. Les admissions d'un parking passent une à une, quelques millisecondes chacune, Stripe hors transaction. La place reste prise par `FOR UPDATE SKIP LOCKED`, essayée tant qu'une place libre reste. Le verrou suppose READ COMMITTED : chaque instruction suivante voit ce que le détenteur précédent a validé ; en REPEATABLE READ l'instantané précéderait l'attente.
+- **Scan répété** : sous le verrou, `decideRepeatedScan` rend la même session et la même place (201, `barrierOpened: true`, sans autorisation ni commande) si le conducteur a une session `CREATED` au même parking, à la même borne, encore dans la fenêtre d'ouverture (`ENTRY_CONFIRMATION_WINDOW_SECONDS`, 60 s par défaut, même horloge et même expression que #39). Autre borne, autre parking, entrée confirmée ou hors fenêtre : `ALREADY_INSIDE`. Si le premier scan échoue ensuite chez Stripe, la session passe `CANCELLED` et le suivi de l'app le dit.
+- **`lock_timeout` de 3 s** : au-delà, `PAYMENTS_UNAVAILABLE` (503), seul refus réessayable que l'app sait déjà expliquer ; la cause `LotBusyError` est journalisée pour la distinguer d'une panne Stripe.
+- **`PAYMENTS_SIMULATION`** (`none`, `unreachable`, `success`) remplace `SIMULATE_STRIPE_UNREACHABLE` : simulations permises en `development` et `test` seulement, `success` refusé à côté d'une clé Stripe, l'ancien nom refusé au démarrage.
+- **Script de charge** `npm run load:entries` (`apps/api/src/load/`), hors du `gate` et de la CI comme les tests de base (décision 005) : vingt conducteurs de charge semés, résultats recoupés avec la base.
+
+**Conséquences.** Les intentions `pi_sim_` tiennent lieu des « autorisations non capturées » de Stripe, invisibles sans clé. Le délai de 3 s (AC2) n'est prouvé qu'en simulation ; avec Stripe, une autorisation prend jusqu'à ~6 s. Le SQL n'est prouvé que sur la base de la voie.
