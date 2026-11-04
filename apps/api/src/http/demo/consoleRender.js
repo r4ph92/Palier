@@ -10,6 +10,7 @@ import { isLoopEnabled } from './loopPress.js';
 /**
  * @typedef {object} ConsoleState
  * @property {Language} language
+ * @property {string} deviceKey
  * @property {GateIdentity | null} identity
  * @property {GatePassageResponse[]} passages
  * @property {readonly GateCommand[]} commands
