@@ -67,7 +67,7 @@ async function confirmOldestOpening(tx: Transaction, entry: PassageEntry, window
       from gate_command c
       join parking_session s on s.id = c.session_id
       where c.gate_id = ${entry.gate.id} and c.kind = 'OPEN' and s.state = 'CREATED'
-        and c.issued_at >= ${window.from.toISOString()}
+        and c.issued_at >= now() - (${window.withinMilliseconds}::int * interval '1 millisecond')
       order by c.issued_at, c.id
       limit 1
       for update of s

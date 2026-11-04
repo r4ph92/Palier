@@ -6,8 +6,10 @@ import { PassageRefusedError } from './PassageRefusedError.ts';
 
 const ALLOWED_CLOCK_DRIFT_MILLISECONDS = 5 * 60 * 1000;
 const FIRST_STORABLE_YEAR = 1;
-// Both ends of the comparison are server timestamps (command issue time, server clock), so console clock drift cannot matter.
+// Only the duration is passed: the ledger compares it with the database clock that stamped the command, so one clock decides.
 const OPENING_CONFIRMATION_WINDOW_MILLISECONDS = 60 * 1000;
+
+const OPENING_WINDOW: OpeningWindow = { withinMilliseconds: OPENING_CONFIRMATION_WINDOW_MILLISECONDS };
 
 const VEHICLE_COUNT_CHANGE: Record<GateKind, VehicleCountChange> = { ENTRY: 1, EXIT: -1 };
 
@@ -29,7 +31,7 @@ export async function recordPassage(
   ensurePassageAllowed(command, collaborators.clock());
   const { gate, closedAt } = command;
   const vehicleCountChange = VEHICLE_COUNT_CHANGE[gate.kind];
-  const confirmableOpenings = gate.kind === 'ENTRY' ? openingWindowAt(collaborators.clock()) : null;
+  const confirmableOpenings = gate.kind === 'ENTRY' ? OPENING_WINDOW : null;
   const { vehicleCount, confirmedSessionId } = await collaborators.ledger.recordPassage({
     gate,
     closedAt,
@@ -37,10 +39,6 @@ export async function recordPassage(
     confirmableOpenings,
   });
   return { gateId: gate.id, lotId: gate.lotId, kind: gate.kind, closedAt: closedAt.toISOString(), vehicleCount, confirmedSessionId };
-}
-
-function openingWindowAt(now: Date): OpeningWindow {
-  return { from: new Date(now.getTime() - OPENING_CONFIRMATION_WINDOW_MILLISECONDS) };
 }
 
 function ensurePassageAllowed(command: PassageCommand, now: Date): void {

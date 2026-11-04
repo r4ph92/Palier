@@ -8,9 +8,9 @@ boucle ne connaissait que le compteur de véhicules du parking.
 - Une fermeture de boucle à une barrière d'entrée confirme, dans la même transaction
   que le compteur, l'ouverture en attente la plus ancienne de cette barrière : la
   commande `OPEN` dont la session est encore `CREATED` et émise au plus 60 s avant
-  l'horloge du serveur (`issued_at >= horloge − 60 s`, sans borne supérieure). La fenêtre
-  compare deux horodatages du serveur : la dérive de l'horloge de la console ne joue
-  pas. `closedAt` reste l'heure de passage enregistrée et vaut `entry_confirmed_at`. La session passe à `ENTRY_CONFIRMED` avec `entry_confirmed_at`,
+  l'horloge de Postgres (`issued_at >= now() − 60 s`, sans borne supérieure). Le domaine
+  ne transmet que la durée ; Postgres, qui a aussi horodaté la commande, est la seule
+  horloge qui décide : la dérive de la console ne joue pas. `closedAt` reste l'heure de passage enregistrée et vaut `entry_confirmed_at`. La session passe à `ENTRY_CONFIRMED` avec `entry_confirmed_at`,
   et sa place de `ASSIGNED` à `OCCUPIED`. Le `UPDATE … FOR UPDATE OF s`
   attend le verrou de ligne `parking_lot` pris par le compteur (`countVehicle`, qui doit
   s'exécuter en premier) : il sérialise les fermetures d'un même parking, donc deux

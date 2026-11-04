@@ -53,7 +53,7 @@ describe('recordPassage', () => {
         gate: entreeDemo,
         closedAt: now,
         vehicleCountChange: 1,
-        confirmableOpenings: { from: new Date('2026-10-27T22:01:00Z') },
+        confirmableOpenings: { withinMilliseconds: 60_000 },
       },
     ]);
     expect(passage).toEqual({
@@ -66,13 +66,13 @@ describe('recordPassage', () => {
     });
   });
 
-  it('anchors the opening window on the server clock when the console clock runs ahead', async () => {
+  it('passes the window as a duration, whatever the console clock says', async () => {
     const ledger = new FakePassageLedger(0);
     const consoleAhead = new Date(now.getTime() + 3 * 60 * 1000);
 
     await recordPassage(entryAt(consoleAhead), { ledger, clock });
 
-    expect(ledger.entries[0]).toMatchObject({ closedAt: consoleAhead, confirmableOpenings: { from: new Date('2026-10-27T22:01:00Z') } });
+    expect(ledger.entries[0]).toMatchObject({ closedAt: consoleAhead, confirmableOpenings: { withinMilliseconds: 60_000 } });
   });
 
   it('counts one vehicle less at an exit gate', async () => {
