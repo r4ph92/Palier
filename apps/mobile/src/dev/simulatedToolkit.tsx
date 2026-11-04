@@ -1,6 +1,6 @@
 import type { PositioningCore } from '../positioning/PositioningCore';
 import type { DeveloperEntry } from '../screens/DeveloperEntry';
-import type { DeveloperTools } from './DeveloperToolkit';
+import type { DeveloperToolkit } from './DeveloperToolkit';
 import { commandActions, signalActions } from './panelActions';
 import { recordEvents } from './recordEvents';
 import { SignalJournal } from './SignalJournal';
@@ -19,4 +19,4 @@ function bind(core: PositioningCore): DeveloperEntry {
   };
 }
 
-export const developerTools: DeveloperTools = { module: simulator, bind };
+export const simulatedToolkit: DeveloperToolkit = { module: simulator, bind };
