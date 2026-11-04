@@ -16,6 +16,7 @@ export type { CurrentDriver, DriverProfile, SignInResponse, TestDriver, TestDriv
 export type {
   ActiveEntrySessionState,
   AssignedSpot,
+  EntryRefusalBody,
   EntryRefusalCode,
   EntryRequest,
   EntryResponse,

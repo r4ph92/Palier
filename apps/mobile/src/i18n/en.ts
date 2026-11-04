@@ -96,6 +96,8 @@ export const en: Translations = {
     unreachable: 'Can’t reach Palier',
     unreachableHint: 'Check your connection, then try again.',
     notResponding: 'Palier is not responding, try again in a moment',
+    cardDeclined: 'Your card declined the %{amount} authorization. Update your payment method.',
+    paymentMethod: 'Payment method',
     refusals: {
       QR_NOT_RECOGNIZED: 'QR not recognized',
       NOT_AN_ENTRY_GATE: 'This QR is not an entry terminal',
@@ -106,6 +108,7 @@ export const en: Translations = {
       LOT_FULL: 'Full — the barrier stays closed',
       ALREADY_INSIDE: 'You already have an entry in progress',
       CARD_DECLINED: 'Card declined',
+      PAYMENTS_UNAVAILABLE: 'Payment temporarily unavailable — the barrier stays closed',
       TOO_MANY_ENTRIES: 'Too many attempts, try again in a few minutes',
     },
   },

@@ -45,6 +45,14 @@ export type EntryRefusalCode =
   | 'PAYMENTS_UNAVAILABLE'
   | 'TOO_MANY_ENTRIES';
 
+export interface EntryRefusalBody {
+  readonly statusCode: number;
+  readonly error: EntryRefusalCode;
+  readonly message: string;
+  // CARD_DECLINED only: the hold the card refused, so the app can name the amount.
+  readonly authorizedCents?: number;
+}
+
 export type GateCommandKind = 'OPEN';
 
 export interface GateCommand {

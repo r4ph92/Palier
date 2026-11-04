@@ -44,12 +44,13 @@ export class AuthorizedRequester {
       this.#options.onUnauthorized();
       throw new PalierUnauthorizedError();
     }
-    if (response.status === FORBIDDEN && (await errorCode(response)) === CONSENT_REQUIRED) {
+    if (response.status === FORBIDDEN && (await errorBody(response)).error === CONSENT_REQUIRED) {
       this.#options.onConsentRequired();
       throw new PalierConsentRequiredError();
     }
     if (this.#rejectedStatuses.has(response.status)) {
-      throw new PalierRejectedError((await errorCode(response)) ?? String(response.status));
+      const { error, authorizedCents } = await errorBody(response);
+      throw new PalierRejectedError(error ?? String(response.status), authorizedCents);
     }
     if (!response.ok) {
       throw new PalierStatusError(response.status);
@@ -77,11 +78,23 @@ export async function readJson(response: Response): Promise<unknown> {
   }
 }
 
-async function errorCode(response: Response): Promise<string | undefined> {
+interface ErrorBody {
+  readonly error: string | undefined;
+  readonly authorizedCents: number | null;
+}
+
+async function errorBody(response: Response): Promise<ErrorBody> {
   try {
-    const { error } = (await response.json()) as { error?: unknown };
-    return typeof error === 'string' ? error : undefined;
+    const { error, authorizedCents } = (await response.json()) as { error?: unknown; authorizedCents?: unknown };
+    return {
+      error: typeof error === 'string' ? error : undefined,
+      authorizedCents: wholeCents(authorizedCents),
+    };
   } catch {
-    return undefined;
+    return { error: undefined, authorizedCents: null };
   }
+}
+
+function wholeCents(value: unknown): number | null {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
 }

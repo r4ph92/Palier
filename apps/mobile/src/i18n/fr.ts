@@ -94,6 +94,8 @@ export const fr = {
     unreachable: 'Impossible de joindre Palier',
     unreachableHint: 'Vérifiez votre connexion, puis réessayez.',
     notResponding: 'Palier ne répond pas, réessayez dans un instant',
+    cardDeclined: 'Votre carte a refusé l’autorisation de %{amount}. Mettez à jour votre moyen de paiement.',
+    paymentMethod: 'Moyen de paiement',
     refusals: {
       QR_NOT_RECOGNIZED: 'QR non reconnu',
       NOT_AN_ENTRY_GATE: 'Ce QR n’est pas une borne d’entrée',
@@ -104,6 +106,7 @@ export const fr = {
       LOT_FULL: 'Complet — la barrière reste fermée',
       ALREADY_INSIDE: 'Vous avez déjà une entrée en cours',
       CARD_DECLINED: 'Carte refusée',
+      PAYMENTS_UNAVAILABLE: 'Paiement momentanément indisponible — la barrière reste fermée',
       TOO_MANY_ENTRIES: 'Trop de tentatives, réessayez dans quelques minutes',
     },
   },
