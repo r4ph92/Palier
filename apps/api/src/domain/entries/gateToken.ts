@@ -5,6 +5,9 @@ const TOKEN_VERSION = 'palier1';
 // Version, gate id (a lower-case UUID) and a base64url HMAC-SHA256; anything else is refused before any lookup.
 const TOKEN_PATTERN = /^(palier1\.([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}))\.([A-Za-z0-9_-]{43})$/;
 
+// HMAC-SHA256 wants a key as long as its output; a shorter or empty secret would make the gate's tokens guessable.
+const MINIMUM_SECRET_BYTES = 32;
+
 export interface GateToken {
   readonly gateId: string;
   readonly signedPart: string;
@@ -12,8 +15,12 @@ export interface GateToken {
 }
 
 export function signGateToken(gateId: string, qrSecret: string): string {
+  const key = secretKeyOf(qrSecret);
+  if (key === null) {
+    throw new Error(`The QR secret must decode to at least ${MINIMUM_SECRET_BYTES} bytes.`);
+  }
   const signedPart = `${TOKEN_VERSION}.${gateId}`;
-  return `${signedPart}.${signatureOf(signedPart, qrSecret)}`;
+  return `${signedPart}.${signatureOf(signedPart, key)}`;
 }
 
 export function gateQrLink(gateId: string, qrSecret: string): string {
@@ -33,14 +40,20 @@ export function readGateToken(qrContent: string): GateToken | null {
 }
 
 export function isSignedWith(token: GateToken, qrSecret: string | null): boolean {
-  if (qrSecret === null) {
+  const key = qrSecret === null ? null : secretKeyOf(qrSecret);
+  if (key === null) {
     return false;
   }
   const received = Buffer.from(token.signature, 'utf8');
-  const expected = Buffer.from(signatureOf(token.signedPart, qrSecret), 'utf8');
+  const expected = Buffer.from(signatureOf(token.signedPart, key), 'utf8');
   return received.length === expected.length && timingSafeEqual(received, expected);
 }
 
-function signatureOf(signedPart: string, qrSecret: string): string {
-  return createHmac('sha256', Buffer.from(qrSecret, 'base64url')).update(signedPart, 'utf8').digest('base64url');
+function secretKeyOf(qrSecret: string): Buffer | null {
+  const key = Buffer.from(qrSecret, 'base64url');
+  return key.length >= MINIMUM_SECRET_BYTES ? key : null;
+}
+
+function signatureOf(signedPart: string, key: Buffer): string {
+  return createHmac('sha256', key).update(signedPart, 'utf8').digest('base64url');
 }

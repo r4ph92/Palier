@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { gateQrLink, isSignedWith, readGateToken, signGateToken } from '../../src/domain/entries/gateToken.ts';
 import { ENTREE_DEMO_SECRET, SORTIE_DEMO_SECRET } from './fakes/entryFakes.ts';
@@ -9,6 +10,12 @@ const token = signGateToken(entreeDemo.id, ENTREE_DEMO_SECRET);
 function verifies(qrContent: string, secret: string | null = ENTREE_DEMO_SECRET): boolean {
   const read = readGateToken(qrContent);
   return read !== null && isSignedWith(read, secret);
+}
+
+// Signs the way the token does, but accepts any key, as an attacker who guessed a short secret would.
+function signedWithoutKeyCheck(secret: string): string {
+  const signedPart = `palier1.${entreeDemo.id}`;
+  return `${signedPart}.${createHmac('sha256', Buffer.from(secret, 'base64url')).update(signedPart).digest('base64url')}`;
 }
 
 function alteredAt(position: number): string {
@@ -51,6 +58,15 @@ describe('gate QR token', () => {
 
   it('refuses every token for a gate without a QR secret', () => {
     expect(verifies(token, null)).toBe(false);
+  });
+
+  it.each([
+    ['empty', ''],
+    ['31 bytes long', ENTREE_DEMO_SECRET.slice(0, 42)],
+    ['not base64url', '!'.repeat(43)],
+  ])('refuses every token for a gate whose QR secret is %s', (_case, secret) => {
+    expect(verifies(signedWithoutKeyCheck(secret), secret)).toBe(false);
+    expect(() => signGateToken(entreeDemo.id, secret)).toThrow('at least 32 bytes');
   });
 
   it.each([
