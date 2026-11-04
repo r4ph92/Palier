@@ -35,7 +35,7 @@ function CheckFailedNotice({ progress, onRetry }: { readonly progress: ReadProgr
   return (
     <View style={styles.withAction}>
       <MutedLine text={message} />
-      <TextButton label={i18n.t('scan.retry')} onPress={onRetry} isBusy={progress.isReading} />
+      <TextButton label={i18n.t('scan.retry')} busyLabel={i18n.t('session.checking')} onPress={onRetry} isBusy={progress.isReading} />
     </View>
   );
 }

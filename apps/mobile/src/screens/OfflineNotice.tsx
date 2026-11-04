@@ -22,7 +22,7 @@ export function OfflineNotice({ progress, onRetry }: OfflineNoticeProps) {
       <StateMark color={colors.muted}>
         <Text style={[typography.bodyStrong, { color: colors.ink }]}>{message}</Text>
       </StateMark>
-      <TextButton label={i18n.t('scan.retry')} onPress={onRetry} isBusy={progress.isReading} />
+      <TextButton label={i18n.t('scan.retry')} busyLabel={i18n.t('session.checking')} onPress={onRetry} isBusy={progress.isReading} />
     </View>
   );
 }

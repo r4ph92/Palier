@@ -1,25 +1,43 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useColors } from '../theme/useColors';
 import { MINIMUM_TOUCH_TARGET } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
 interface TextButtonProps {
   readonly label: string;
+  readonly busyLabel?: string;
   readonly onPress: () => void;
   readonly isBusy?: boolean;
 }
 
-export function TextButton({ label, onPress, isBusy = false }: TextButtonProps) {
-  const colors = useColors();
+const BUSY_OPACITY = 0.6;
+
+export function TextButton({ label, busyLabel = label, onPress, isBusy = false }: TextButtonProps) {
+  const shownLabel = isBusy ? busyLabel : label;
+  const longerLabel = busyLabel.length > label.length ? busyLabel : label;
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={shownLabel}
       accessibilityState={{ busy: isBusy }}
+      disabled={isBusy}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, { opacity: pressed ? 0.6 : 1 }]}
+      style={({ pressed }) => [styles.button, { opacity: isBusy || pressed ? BUSY_OPACITY : 1 }]}
     >
-      <Text style={[typography.textButton, { color: colors.ink }]}>{label}</Text>
+      <ButtonLabel shown={shownLabel} longest={longerLabel} />
     </Pressable>
+  );
+}
+
+function ButtonLabel({ shown, longest }: { readonly shown: string; readonly longest: string }) {
+  const colors = useColors();
+  return (
+    <View>
+      <Text accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[typography.textButton, styles.widthKeeper]}>
+        {longest}
+      </Text>
+      <Text style={[typography.textButton, styles.shownLabel, { color: colors.ink }]}>{shown}</Text>
+    </View>
   );
 }
 
@@ -30,4 +48,6 @@ const styles = StyleSheet.create({
     minHeight: MINIMUM_TOUCH_TARGET,
     minWidth: MINIMUM_TOUCH_TARGET,
   },
+  widthKeeper: { opacity: 0 },
+  shownLabel: { position: 'absolute', right: 0 },
 });
