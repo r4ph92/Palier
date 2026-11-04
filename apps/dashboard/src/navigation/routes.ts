@@ -6,8 +6,20 @@ export function routeOf(pathname: string): Route {
   if (pathname === '/' || pathname === '') {
     return { page: 'home' };
   }
-  const lotMatch = LOT_PATH.exec(pathname);
-  return lotMatch?.[1] === undefined ? { page: 'notFound' } : { page: 'lot', lotId: decodeURIComponent(lotMatch[1]) };
+  const lotId = decodedSegment(LOT_PATH.exec(pathname)?.[1]);
+  return lotId === null ? { page: 'notFound' } : { page: 'lot', lotId };
+}
+
+// A typed or pasted address can hold a broken escape such as "%E0%A4%A", which decodeURIComponent refuses.
+function decodedSegment(segment: string | undefined): string | null {
+  if (segment === undefined) {
+    return null;
+  }
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return null;
+  }
 }
 
 export function lotPath(lotId: string): string {
