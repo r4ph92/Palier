@@ -83,7 +83,7 @@ function FieldError({ message }: { readonly message: string }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { flexGrow: 1, gap: spacing.medium, paddingHorizontal: spacing.medium },
+  content: { flexGrow: 1, gap: spacing.medium, paddingHorizontal: spacing.medium, paddingBottom: spacing.extraLarge },
   field: { gap: spacing.small },
   input: { minHeight: MINIMUM_TOUCH_TARGET, paddingHorizontal: spacing.medium, borderWidth: 2 },
 });

@@ -50,5 +50,5 @@ function SaveFailedMessage() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { flexGrow: 1, gap: spacing.medium, paddingHorizontal: spacing.medium },
+  content: { flexGrow: 1, gap: spacing.medium, paddingHorizontal: spacing.medium, paddingBottom: spacing.extraLarge },
 });
