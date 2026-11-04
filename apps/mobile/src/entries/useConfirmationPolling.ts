@@ -23,6 +23,8 @@ export function useConfirmationPolling(client: EntryClient, sessionId: string | 
   }, [client, sessionId, onConfirmed, onUnexpectedError]);
 }
 
+type PollHandlers = Handlers & { stop: () => void };
+
 interface Poll {
   isActive: boolean;
   isAsking: boolean;
@@ -40,7 +42,7 @@ function startPolling(client: EntryClient, sessionId: string, handlers: Handlers
   return stop;
 }
 
-async function tick(poll: Poll, ask: () => Promise<Outcome>, handlers: Handlers & { stop: () => void }): Promise<void> {
+async function tick(poll: Poll, ask: () => Promise<Outcome>, handlers: PollHandlers): Promise<void> {
   if (poll.isAsking) {
     return;
   }
@@ -55,7 +57,7 @@ async function tick(poll: Poll, ask: () => Promise<Outcome>, handlers: Handlers 
   }
 }
 
-function settle(poll: Poll, outcome: Outcome, handlers: Handlers & { stop: () => void }): void {
+function settle(poll: Poll, outcome: Outcome, handlers: PollHandlers): void {
   if (poll.isActive && outcome === 'confirmed') {
     handlers.onConfirmed();
   }
@@ -64,7 +66,7 @@ function settle(poll: Poll, outcome: Outcome, handlers: Handlers & { stop: () =>
   }
 }
 
-function stopAndReport(poll: Poll, error: unknown, handlers: Handlers & { stop: () => void }): void {
+function stopAndReport(poll: Poll, error: unknown, handlers: PollHandlers): void {
   const wasActive = poll.isActive;
   handlers.stop();
   if (wasActive) {
@@ -80,7 +82,7 @@ async function askOnce(client: EntryClient, sessionId: string): Promise<Outcome>
   }
 }
 
-// A status error is checked before the network error it extends: the API answered, so only a 4xx is final.
+// A status error is checked before the network error it extends: the API answered, so only a 4xx is final (status() has no refusal statuses, so a proxy 5xx stays a status error).
 function outcomeOfFailure(error: unknown): Outcome {
   if (error instanceof PalierUnauthorizedError || error instanceof PalierConsentRequiredError || error instanceof PalierRejectedError) {
     return 'refused';
