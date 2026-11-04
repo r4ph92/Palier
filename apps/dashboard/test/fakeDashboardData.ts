@@ -25,6 +25,8 @@ export interface FakeApiState {
   readonly requests: string[];
   // Answers by "METHOD /path" that replace the fake's own; a test deletes one to let the request succeed again.
   readonly answers: Map<string, FakeAnswer>;
+  // Every answer given so far, so a test can wait until the page has received them all.
+  readonly answered: Promise<Response>[];
 }
 
 const operatorsByUser = new Map<string, DashboardOperator>([[sophie.id, lavoie], [pierre.id, roy]]);

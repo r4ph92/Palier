@@ -1,12 +1,11 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { installFakeApi } from './fakeDashboardApi.ts';
+import { allAnswersReceived, installFakeApi } from './fakeDashboardApi.ts';
 import { renderDashboard } from './renderDashboard.tsx';
 
+// Without the flag or in production the section is left out while the page renders, so the page being shown is enough.
 async function signInPageShown() {
   await screen.findByRole('heading', { level: 1, name: 'Connexion' });
-  // Lets the lazy section and its request settle, so an absent section is really absent and not just late.
-  await new Promise((resolve) => setTimeout(resolve, 20));
 }
 
 describe('Connexion de test locks', () => {
@@ -39,9 +38,9 @@ describe('Connexion de test locks', () => {
   it('hides the section when the API answers not found', async () => {
     const api = installFakeApi({ testUsersListed: false });
     renderDashboard();
-    await signInPageShown();
+    await waitFor(() => expect(api.requests).toContain('GET /test/users'));
+    await allAnswersReceived(api);
 
-    expect(api.requests).toContain('GET /test/users');
     expect(screen.queryByText('Connexion de test')).toBeNull();
   });
 });
