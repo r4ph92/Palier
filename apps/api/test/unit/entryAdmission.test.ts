@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EligibleEntry } from '../../src/domain/entries/EntryEligibility.ts';
 import { EntryAdmission } from '../../src/domain/entries/EntryAdmission.ts';
+import { UnreachablePaymentAuthorizer } from '../../src/infrastructure/stripe/UnreachablePaymentAuthorizer.ts';
 import {
   FakeGateCommander,
   FakeParkingSessionRepository,
@@ -69,6 +70,18 @@ describe('entry admission', () => {
     expect(journal).toEqual(['open-session', 'authorize', 'cancel-session']);
     expect(sessions.freeSpots[0]).toBe('A-1');
     expect(log.warnings).toHaveLength(1);
+  });
+
+  it('frees the spot, closes the session and opens nothing when Stripe is unreachable', async () => {
+    const journal: Journal = [];
+    const sessions = new FakeParkingSessionRepository(journal);
+    const gateCommander = new FakeGateCommander(journal);
+    const admission = new EntryAdmission({ sessions, payments: new UnreachablePaymentAuthorizer(), gateCommander });
+
+    await expect(admission.admit(julieAtEntreeDemo, silentLog())).rejects.toMatchObject({ reason: 'PAYMENTS_UNAVAILABLE' });
+    expect(journal).toEqual(['open-session', 'cancel-session']);
+    expect(gateCommander.opened).toEqual([]);
+    expect(sessions.freeSpots[0]).toBe('A-1');
   });
 
   it('frees the spot, then cancels the hold when the barrier command fails', async () => {

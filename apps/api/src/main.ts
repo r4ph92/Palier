@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { readServerEnvironment } from './config/environment.ts';
+import { readServerEnvironment, readSimulateStripeUnreachable } from './config/environment.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { composeEntries } from './composeEntries.ts';
 import { buildServer } from './http/buildServer.ts';
@@ -20,6 +20,7 @@ import { startSessionTokenPurge } from './scheduler/startSessionTokenPurge.ts';
 const environment = readServerEnvironment(process.env);
 const connection = connectToDatabase(environment.databaseUrl);
 const stripeKey = stripeTestKey(process.env);
+const simulateStripeUnreachable = readSimulateStripeUnreachable(process.env);
 const driverRepository = new PostgresDriverRepository(connection.database);
 const vehicleRepository = new PostgresVehicleRepository(connection.database);
 const sessionTokenRepository = new PostgresSessionTokenRepository(connection.database);
@@ -43,6 +44,7 @@ const server = buildServer({
     database: connection.database,
     stripeKey,
     demoMode: environment.demoMode,
+    simulateStripeUnreachable,
     drivers: driverRepository,
     vehicles: vehicleRepository,
   }),
@@ -57,6 +59,9 @@ const server = buildServer({
 
 if (environment.demoMode) {
   server.log.warn('DEMO_MODE is on: the demo console is served at /demo/console. Never enable it in production.');
+}
+if (simulateStripeUnreachable) {
+  server.log.warn('SIMULATE_STRIPE_UNREACHABLE is on: every entry hold fails as if Stripe were down.');
 }
 
 const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(sessionTokenRepository, new Date()), server.log);
