@@ -99,6 +99,13 @@
       "when": 1793827328344,
       "tag": "0013_vehicle_needs",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793831215385,
+      "tag": "0014_hold_release_and_command_session_index",
+      "breakpoints": true
     }
   ]
 }
