@@ -66,7 +66,7 @@ describe('entry admission', () => {
     const { journal, sessions, payments, admission, log } = admissionWith();
     payments.refusal = 'CARD_DECLINED';
 
-    await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toMatchObject({ reason: 'CARD_DECLINED' });
+    await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toMatchObject({ reason: 'CARD_DECLINED', authorizedCents: 2500 });
     expect(journal).toEqual(['open-session', 'authorize', 'cancel-session']);
     expect(sessions.freeSpots[0]).toBe('A-1');
     expect(log.warnings).toHaveLength(1);

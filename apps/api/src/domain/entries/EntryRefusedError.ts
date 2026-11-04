@@ -14,12 +14,19 @@ const MESSAGES: Record<EntryRefusalCode, string> = {
   TOO_MANY_ENTRIES: 'Too many entry attempts. Try again in a few minutes.',
 };
 
+export interface EntryRefusalOptions extends ErrorOptions {
+  // CARD_DECLINED only: the hold the card refused.
+  readonly authorizedCents?: number;
+}
+
 export class EntryRefusedError extends Error {
   readonly reason: EntryRefusalCode;
+  readonly authorizedCents: number | undefined;
 
-  constructor(reason: EntryRefusalCode, options?: ErrorOptions) {
+  constructor(reason: EntryRefusalCode, options?: EntryRefusalOptions) {
     super(MESSAGES[reason], options);
     this.name = 'EntryRefusedError';
     this.reason = reason;
+    this.authorizedCents = options?.authorizedCents;
   }
 }

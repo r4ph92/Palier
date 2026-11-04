@@ -15,6 +15,7 @@ export type {
 export type { CurrentDriver, DriverProfile, SignInResponse, TestDriver, TestDriverListResponse } from './drivers.ts';
 export type {
   AssignedSpot,
+  EntryRefusalBody,
   EntryRefusalCode,
   EntryRequest,
   EntryResponse,
