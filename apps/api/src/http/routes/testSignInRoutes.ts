@@ -3,14 +3,10 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { signInDriver, type DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import { OPERATOR_PERSONA_IDS } from '../../seed/fixtures/operatorUsers.ts';
 import { signInResponseSchema, testDriverListSchema, testSignInBodySchema } from '../schemas/driverSchemas.ts';
-import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
+import type { SetupLimiter } from '../SetupLimiter.ts';
+import { createSignInLimiter, refuseTooManySignIns } from '../signInLimit.ts';
 
 const NOT_FOUND = 404;
-const TOO_MANY_REQUESTS = 429;
-// One address may sign in ten times a minute. Retry-After is the whole window, which is always enough to clear it.
-const SIGN_IN_LIMIT = 10;
-const SIGN_IN_WINDOW_MILLISECONDS = 60 * 1000;
-const RETRY_AFTER_SECONDS = 60;
 
 interface TestSignInRequest {
   readonly Body: { readonly driverId: string };
@@ -18,7 +14,7 @@ interface TestSignInRequest {
 
 // Registered only when test sign-in is enabled; otherwise these paths answer 404 like any unknown route.
 export function registerTestSignInRoutes(server: FastifyInstance, driverAccess: DriverAccess): void {
-  const limiter = createSetupLimiter(SIGN_IN_LIMIT, SIGN_IN_WINDOW_MILLISECONDS);
+  const limiter = createSignInLimiter();
   server.get(
     '/v1/test/drivers',
     { schema: { response: { 200: testDriverListSchema } } },
@@ -48,10 +44,7 @@ async function signInAsTestDriver(
   reply: FastifyReply,
 ): Promise<SignInResponse | FastifyReply> {
   if (!limiter.allow(request.ip)) {
-    return reply
-      .status(TOO_MANY_REQUESTS)
-      .header('Retry-After', RETRY_AFTER_SECONDS)
-      .send({ statusCode: TOO_MANY_REQUESTS, error: 'Too Many Requests', message: 'Too many sign-ins from this address.' });
+    return refuseTooManySignIns(reply);
   }
   const signedIn = await signInDriver(driverAccess, request.body.driverId);
   if (signedIn === null) {

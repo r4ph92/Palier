@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readMinimumAppVersion, readServerEnvironment, readTestSignInEnabled } from '../../src/config/environment.ts';
+import { readMinimumAppVersion, readSecureCookies, readServerEnvironment, readTestSignInEnabled } from '../../src/config/environment.ts';
 
 const databaseUrl = 'postgres://palier:palier@localhost:5433/palier';
 
@@ -11,6 +11,7 @@ describe('readServerEnvironment', () => {
       port: 3000,
       testSignInEnabled: false,
       demoMode: false,
+      secureCookies: true,
     });
   });
 
@@ -49,5 +50,19 @@ describe('readTestSignInEnabled', () => {
 
   it('disables test sign-in when NODE_ENV is not set', () => {
     expect(readTestSignInEnabled({})).toBe(false);
+  });
+});
+
+describe('readSecureCookies', () => {
+  it('sends cookies over plain http only in development', () => {
+    expect(readSecureCookies({ NODE_ENV: 'development' })).toBe(false);
+  });
+
+  it.each(['production', 'test', ''])('keeps cookies Secure when NODE_ENV is "%s"', (environment) => {
+    expect(readSecureCookies({ NODE_ENV: environment })).toBe(true);
+  });
+
+  it('keeps cookies Secure when NODE_ENV is not set', () => {
+    expect(readSecureCookies({})).toBe(true);
   });
 });

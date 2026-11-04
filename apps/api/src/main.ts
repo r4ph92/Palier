@@ -8,6 +8,7 @@ import { PostgresDriverRepository } from './infrastructure/postgres/PostgresDriv
 import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateCommandFeed.ts';
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
+import { PostgresOperatorRepository } from './infrastructure/postgres/PostgresOperatorRepository.ts';
 import { PostgresPassageLedger } from './infrastructure/postgres/PostgresPassageLedger.ts';
 import { PostgresSessionTokenRepository } from './infrastructure/postgres/PostgresSessionTokenRepository.ts';
 import { StripeCardGateway } from './infrastructure/stripe/StripeCardGateway.ts';
@@ -27,6 +28,7 @@ const server = buildServer({
     driverRepository,
     sessionTokenRepository,
     vehicleRepository,
+    operatorRepository: new PostgresOperatorRepository(connection.database),
   },
   gates: {
     deviceKeys: new PostgresGateDeviceKeyRepository(connection.database),
@@ -47,6 +49,7 @@ const server = buildServer({
     demoMode: environment.demoMode,
     logsRequests: true,
     minimumAppVersion: environment.minimumAppVersion,
+    secureCookies: environment.secureCookies,
   },
 });
 

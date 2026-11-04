@@ -1,3 +1,17 @@
+export type {
+  CreateOperatorRequest,
+  DashboardErrorBody,
+  DashboardErrorCode,
+  DashboardLot,
+  DashboardLotListResponse,
+  DashboardMeResponse,
+  DashboardOperator,
+  DashboardSignInResponse,
+  DashboardTestSignInRequest,
+  DashboardTestUserListResponse,
+  DashboardUser,
+  KycStatus,
+} from './dashboard.ts';
 export type { CurrentDriver, DriverProfile, SignInResponse, TestDriver, TestDriverListResponse } from './drivers.ts';
 export type {
   AssignedSpot,
