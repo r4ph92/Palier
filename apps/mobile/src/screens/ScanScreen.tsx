@@ -6,6 +6,7 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { StateMark } from '../components/StateMark';
 import { TextButton } from '../components/TextButton';
+import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
 import { useAnnouncement } from '../components/useAnnouncement';
 import { useEntry, type EntryController, type EntryState } from '../entries/useEntry';
 import { i18n } from '../i18n/i18n';
@@ -49,15 +50,18 @@ function spotPlace(spot: AssignedSpot): string {
   return i18n.t('scan.spotPlace', { level: spot.levelCode, aisle: spot.aisleCode });
 }
 
+// Spot and barrier are one stop for VoiceOver, focused as soon as they replace the form.
 function EnteredSpot({ spot, onDone }: { readonly spot: AssignedSpot; readonly onDone: () => void }) {
   const colors = useColors();
-  useAnnouncement(`${spotLabel(spot)}. ${i18n.t('scan.barrierOpen')}`);
+  const resultRef = useAccessibilityFocusOnMount();
   return (
     <View style={styles.section}>
-      <SpotLine spot={spot} />
-      <StateMark color={colors.free}>
-        <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('scan.barrierOpen')}</Text>
-      </StateMark>
+      <View ref={resultRef} accessible accessibilityLabel={`${spotLabel(spot)}. ${i18n.t('scan.barrierOpen')}`} style={styles.field}>
+        <SpotLine spot={spot} />
+        <StateMark color={colors.free}>
+          <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('scan.barrierOpen')}</Text>
+        </StateMark>
+      </View>
       <PrimaryButton label={i18n.t('scan.done')} onPress={onDone} />
     </View>
   );
@@ -112,7 +116,6 @@ function QrField({ entry }: { readonly entry: EntryController }) {
       <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('scan.qrLabel')}</Text>
       <TextInput
         accessibilityLabel={i18n.t('scan.qrLabel')}
-        accessibilityHint={i18n.t('scan.qrHint')}
         {...QR_INPUT_BEHAVIOUR}
         editable={entry.state.status !== 'submitting'}
         value={entry.qrContent}

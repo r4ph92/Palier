@@ -1,4 +1,5 @@
 import { getDefaultNormalizer, screen, userEvent } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import { applyLanguage } from '../src/i18n/i18n';
 import { spotLabel } from '../src/screens/ScanScreen';
 import { ENTREE_DEMO_QR, FakeEntryClient, spotA1 } from './fakeEntryClient';
@@ -41,6 +42,16 @@ describe('ScanScreen, entering Parking Démo', () => {
     expect(number.props.style.fontSize).toBeGreaterThan(32);
   });
 
+  it('moves VoiceOver to the spot and the open barrier as soon as they show', async () => {
+    const sendAccessibilityEvent = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent');
+    await scan();
+
+    const result = await screen.findByLabelText('Votre place\u00A0: A-1\u00A0· Palier\u00A0P1\u00A0· Allée\u00A0A. Barrière ouverte');
+
+    expect(sendAccessibilityEvent).toHaveBeenCalledWith(expect.anything(), 'focus');
+    expect(result).toBeOnTheScreen();
+  });
+
 
   it('goes back to an empty form with "Terminé"', async () => {
     const { user } = await scan();
@@ -64,6 +75,13 @@ describe('ScanScreen, entering Parking Démo', () => {
 });
 
 describe('ScanScreen before a QR is pasted', () => {
+  it('does not repeat the visible hint as a VoiceOver hint on the QR field', async () => {
+    await openScanner();
+
+    expect(screen.getByLabelText('Contenu du QR')).not.toHaveProp('accessibilityHint');
+    expect(screen.getByText('Collez le contenu du QR de la borne d’entrée.')).toBeOnTheScreen();
+  });
+
   it('keeps Scanner disabled while the field is empty or blank, and sends nothing', async () => {
     const client = await openScanner();
     const user = userEvent.setup();
