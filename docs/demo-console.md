@@ -82,6 +82,41 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
   `min(capacité − véhicules, places libres)`, plancher 0).
 - **Clé refusée** : une clé quelconque ou la clé révoquée : « Clé d'appareil
   refusée », le compteur ne bouge pas.
+- **Entrée annulée sans passage** (#39) : sans clé Stripe, l'entrée par l'app
+  répond 503 ; on crée donc la session de Julie et sa commande d'ouverture en SQL,
+  avec une `issued_at` reculée de `ago` secondes (base de la voie à adapter) :
+
+  ```
+  docker exec -i palier-postgres-1 psql -U palier -d palier -v ago=61 <<'SQL'
+  with chosen_spot as (
+    update spot set state = 'ASSIGNED', state_changed_at = now()
+    where id = (select id from spot where lot_id = '00000000-0000-4000-8000-000000000201'
+                and state = 'AVAILABLE' order by number limit 1)
+    returning id
+  ), session as (
+    insert into parking_session (user_id, vehicle_id, plate, lot_id, assigned_spot_id, entry_gate_id,
+      authorized_cents, pricing_increment_cents, pricing_increment_minutes, pricing_daily_cap_cents,
+      payment_intent_id, entry_scan_at)
+    select u.id, v.id, v.plate, '00000000-0000-4000-8000-000000000201', chosen_spot.id,
+      '00000000-0000-4000-8000-000000000701', 2500, 75, 15, 2500, 'pi_demo_julie', now() - make_interval(secs => :ago)
+    from app_user u join vehicle v on v.user_id = u.id, chosen_spot
+    where u.email = 'julie.tremblay@palier.test'
+    returning id
+  )
+  insert into gate_command (gate_id, lot_id, kind, session_id, issued_at)
+  select '00000000-0000-4000-8000-000000000701', '00000000-0000-4000-8000-000000000201', 'OPEN', id,
+    now() - make_interval(secs => :ago)
+  from session returning session_id;
+  SQL
+  ```
+
+  Ouverture reculée de 61 s : au passage suivant de la tâche (30 s
+  au plus), la session passe à `CANCELLED`, la place revient à `AVAILABLE` et
+  Parking Démo retrouve ses places libres ; l'API journalise
+  `cancelled an entry nobody drove through`. Ouverture reculée de 59 s puis
+  « Boucle d'entrée fermée » aussitôt : la session est confirmée et le reste. Un appui
+  sur « Boucle d'entrée fermée » après l'annulation ajoute 1 au compteur
+  et la session reste annulée.
 - **Mauvaise barrière** (la console poste toujours vers sa propre barrière, donc
   par curl) :
 
@@ -99,7 +134,7 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
 - `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>" }` :
   `{ gateId, lotId, kind, closedAt, vehicleCount, confirmedSessionId }`.
   `confirmedSessionId` est la session d'entrée que ce passage a confirmée (la plus
-  ancienne ouverture de cette barrière émise dans les 60 secondes avant la réception du passage, mesurées
+  ancienne ouverture de cette barrière émise dans les 60 secondes (`ENTRY_CONFIRMATION_WINDOW_SECONDS`) avant la réception du passage, mesurées
   sur l'horloge de Postgres seule : la dérive de la console n'y change rien), ou
   `null` s'il n'y en avait aucune ou à une sortie. Le sens et le parking
   viennent de la barrière, jamais du corps. `closedAt` à plus de 5 minutes dans

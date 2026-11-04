@@ -2,6 +2,7 @@ import type { GateIdentity, GatePassageRequest, GatePassageResponse } from '@pal
 import type { FastifyInstance } from 'fastify';
 import type { GateCommandCursor, GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
 import type { GateDeviceKeyRepository } from '../../domain/gates/GateDeviceKeyRepository.ts';
+import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import type { PassageLedger } from '../../domain/gates/PassageLedger.ts';
 import { recordPassage } from '../../domain/gates/recordPassage.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
@@ -21,6 +22,7 @@ export interface GateRouteDependencies {
   readonly ledger: PassageLedger;
   readonly clock: Clock;
   readonly commands: GateCommandFeed;
+  readonly openingWindow: OpeningWindow;
 }
 
 const BAD_REQUEST = 400;
@@ -64,7 +66,7 @@ function registerPassageRoute(scope: FastifyInstance, dependencies: GateRouteDep
       requestedGateId: request.params.id,
       closedAt: new Date(request.body.closedAt),
     };
-    return recordPassage(command, { ledger: dependencies.ledger, clock: dependencies.clock });
+    return recordPassage(command, { ledger: dependencies.ledger, clock: dependencies.clock, openingWindow: dependencies.openingWindow });
   });
 }
 

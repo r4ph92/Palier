@@ -7,9 +7,13 @@ export interface AuthorizationRequest {
   readonly destinationAccountId: string | null;
 }
 
+// released: nothing held any more; gone: missing or captured, never retried; failed: Stripe unreachable or erring, retried.
+export type HoldRelease = 'released' | 'gone' | 'failed';
+
 export interface PaymentAuthorizer {
   // Holds the amount on the card without capturing it and answers the payment intent id.
   // Throws EntryRefusedError CARD_DECLINED or PAYMENTS_UNAVAILABLE.
   authorize(request: AuthorizationRequest): Promise<string>;
-  cancel(paymentIntentId: string): Promise<void>;
+  // Never throws for a Stripe error: the outcome says whether to retry. Cancelling twice answers released.
+  cancel(paymentIntentId: string): Promise<HoldRelease>;
 }

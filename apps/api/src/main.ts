@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { readDashboardUrl, readServerEnvironment, readSimulateStripeUnreachable, readStripeWebhookSecret } from './config/environment.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { composeEntries } from './composeEntries.ts';
+import { composeEntryCancellation } from './composeEntryCancellation.ts';
 import { composeOperatorStripe } from './composeOperatorStripe.ts';
 import { buildServer } from './http/buildServer.ts';
 import { connectToDatabase } from './infrastructure/postgres/database.ts';
@@ -18,8 +19,10 @@ import { PostgresUserDirectory } from './infrastructure/postgres/PostgresUserDir
 import { StripeCardGateway } from './infrastructure/stripe/StripeCardGateway.ts';
 import { PostgresVehicleRepository } from './infrastructure/postgres/PostgresVehicleRepository.ts';
 import { systemClock } from './domain/time/Clock.ts';
+import { cancelUnconfirmedEntries, releasePendingHolds } from './domain/entries/unconfirmedEntryCancellation.ts';
 import { purgeEndedSessionTokens } from './domain/sessions/sessionTokens.ts';
 import { startSessionTokenPurge } from './scheduler/startSessionTokenPurge.ts';
+import { startUnconfirmedEntryCancellation } from './scheduler/startUnconfirmedEntryCancellation.ts';
 
 const environment = readServerEnvironment(process.env);
 const connection = connectToDatabase(environment.databaseUrl);
@@ -28,6 +31,15 @@ const simulateStripeUnreachable = readSimulateStripeUnreachable(process.env);
 const driverRepository = new PostgresDriverRepository(connection.database);
 const vehicleRepository = new PostgresVehicleRepository(connection.database);
 const sessionTokenRepository = new PostgresSessionTokenRepository(connection.database);
+const entries = composeEntries({
+  database: connection.database,
+  stripeKey,
+  demoMode: environment.demoMode,
+  simulateStripeUnreachable,
+  drivers: driverRepository,
+  vehicles: vehicleRepository,
+});
+const entryCancellation = composeEntryCancellation(environment.entryCancellation, connection.database, entries.payments);
 const server = buildServer({
   repositories: {
     lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
@@ -44,16 +56,10 @@ const server = buildServer({
     ledger: new PostgresPassageLedger(connection.database),
     clock: systemClock,
     commands: new PostgresGateCommandFeed(connection.database),
+    openingWindow: entryCancellation.openingWindow,
   },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
-  entries: composeEntries({
-    database: connection.database,
-    stripeKey,
-    demoMode: environment.demoMode,
-    simulateStripeUnreachable,
-    drivers: driverRepository,
-    vehicles: vehicleRepository,
-  }),
+  entries: entries.routes,
   operatorStripe: composeOperatorStripe({
     database: connection.database,
     stripeKey,
@@ -77,7 +83,17 @@ if (simulateStripeUnreachable) {
 }
 
 const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(sessionTokenRepository, systemClock()), server.log);
+// Every API instance may run it: the CREATED guard under the lot lock and Stripe's idempotent cancel make a second run harmless.
+const stopEntryCancellation = startUnconfirmedEntryCancellation(
+  {
+    cancel: () => cancelUnconfirmedEntries(entryCancellation.job, server.log),
+    release: () => releasePendingHolds(entryCancellation.job, server.log),
+  },
+  server.log,
+  entryCancellation.periodMilliseconds,
+);
 server.addHook('onClose', async () => {
+  await stopEntryCancellation();
   await stopSessionTokenPurge();
   await connection.close();
 });

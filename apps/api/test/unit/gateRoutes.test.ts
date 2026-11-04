@@ -12,7 +12,7 @@ import {
   sortieDemo,
   UNKNOWN_KEY,
 } from './fakes/gateFixtures.ts';
-import { NOW, serverDependencies } from './fakes/serverDependencies.ts';
+import { NOW, serverDependencies, SIXTY_SECOND_WINDOW } from './fakes/serverDependencies.ts';
 
 const REFUSED_KEY_BODY = { statusCode: 401, error: 'DEVICE_KEY_REFUSED', message: 'Device key refused.' };
 
@@ -22,7 +22,7 @@ describe('gate routes', () => {
 
   function startServer(vehicleCount = 0, deviceKeys = new FakeGateDeviceKeyRepository()): void {
     ledger = new FakePassageLedger(vehicleCount);
-    server = buildServer(serverDependencies({ gates: { deviceKeys, ledger, clock: () => NOW, commands: new FakeGateCommandFeed() } }));
+    server = buildServer(serverDependencies({ gates: { deviceKeys, ledger, clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW } }));
   }
 
   function postPassage(gateId: string, headers: Record<string, string>, payload: object = { closedAt: NOW.toISOString() }) {

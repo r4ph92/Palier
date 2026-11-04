@@ -1,10 +1,7 @@
 import type { AuthenticatedGate } from './AuthenticatedGate.ts';
+import type { OpeningWindow } from './OpeningWindow.ts';
 
 export type VehicleCountChange = 1 | -1;
-
-export interface OpeningWindow {
-  readonly withinMilliseconds: number;
-}
 
 export interface PassageEntry {
   readonly gate: AuthenticatedGate;

@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { LotsClientProvider } from '../api/LotsClientContext';
 import type { SignedInClients } from '../api/SignedInClients';
 import { TabBar } from '../components/TabBar';
+import { usePendingEntryWatch, type PendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { useTabs, type TabsController } from '../navigation/useTabs';
 import { useCurrentParkingSession, type CurrentParkingSessionController } from '../parkingSessions/useCurrentParkingSession';
 import { AccountTab } from './AccountTab';
@@ -20,7 +21,8 @@ interface SignedInTabsProps {
 export function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: SignedInTabsProps) {
   const tabs = useTabs();
   const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
-  const content = { firstName, clients, developerEntry, onSignOut, tabs, currentSession };
+  const pendingEntry = usePendingEntryWatch(clients.entry, currentSession.refresh);
+  const content = { firstName, clients, developerEntry, onSignOut, tabs, currentSession, pendingEntry };
   return (
     <View style={styles.app}>
       <LotsClientProvider client={clients.lots}>
@@ -34,9 +36,10 @@ export function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: 
 interface TabContentProps extends SignedInTabsProps {
   readonly tabs: TabsController;
   readonly currentSession: CurrentParkingSessionController;
+  readonly pendingEntry: PendingEntryWatch;
 }
 
-function TabContent({ firstName, clients, tabs, currentSession, developerEntry, onSignOut }: TabContentProps) {
+function TabContent({ firstName, clients, tabs, currentSession, pendingEntry, developerEntry, onSignOut }: TabContentProps) {
   switch (tabs.tab) {
     case 'lots':
       return <HomeScreen firstName={firstName} />;
@@ -45,6 +48,7 @@ function TabContent({ firstName, clients, tabs, currentSession, developerEntry, 
         <ScanTab
           entryClient={clients.entry}
           currentSession={currentSession}
+          pendingEntry={pendingEntry}
           onAddPlate={() => tabs.openAccountPage('vehicles')}
           onAddCard={() => tabs.openAccountPage('payment')}
         />

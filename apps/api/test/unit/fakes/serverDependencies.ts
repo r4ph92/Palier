@@ -9,9 +9,10 @@ import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
 import { FakeGateCommandFeed, FakeGateDeviceKeyRepository, FakePassageLedger } from './gateFixtures.ts';
 
 export const NOW = new Date('2026-10-27T22:02:00Z');
+export const SIXTY_SECOND_WINDOW = { withinMilliseconds: 60_000 };
 
 export function fakeGateDependencies(): GateRouteDependencies {
-  return { deviceKeys: new FakeGateDeviceKeyRepository(), ledger: new FakePassageLedger(), clock: () => NOW, commands: new FakeGateCommandFeed() };
+  return { deviceKeys: new FakeGateDeviceKeyRepository(), ledger: new FakePassageLedger(), clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW };
 }
 
 interface FakeRepositoryChoices {

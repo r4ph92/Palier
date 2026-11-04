@@ -15,6 +15,7 @@ import {
 
 const now = new Date('2026-10-27T22:02:00Z');
 const clock = () => now;
+const openingWindow = { withinMilliseconds: 60_000 };
 
 function entryAt(closedAt: Date): PassageCommand {
   return { gate: entreeDemo, requestedGateId: entreeDemo.id, closedAt };
@@ -46,7 +47,7 @@ describe('recordPassage', () => {
   it('counts one more vehicle at an entry gate', async () => {
     const ledger = new FakePassageLedger(0);
 
-    const passage = await recordPassage(entryAt(now), { ledger, clock });
+    const passage = await recordPassage(entryAt(now), { ledger, clock, openingWindow });
 
     expect(ledger.entries).toEqual([
       {
@@ -66,11 +67,20 @@ describe('recordPassage', () => {
     });
   });
 
+  it('passes the configured window to the ledger', async () => {
+    const ledger = new FakePassageLedger(0);
+    const fortyFiveSeconds = { withinMilliseconds: 45_000 };
+
+    await recordPassage(entryAt(now), { ledger, clock, openingWindow: fortyFiveSeconds });
+
+    expect(ledger.entries[0]?.confirmableOpenings).toBe(fortyFiveSeconds);
+  });
+
   it('passes the window as a duration, whatever the console clock says', async () => {
     const ledger = new FakePassageLedger(0);
     const consoleAhead = new Date(now.getTime() + 3 * 60 * 1000);
 
-    await recordPassage(entryAt(consoleAhead), { ledger, clock });
+    await recordPassage(entryAt(consoleAhead), { ledger, clock, openingWindow });
 
     expect(ledger.entries[0]).toMatchObject({ closedAt: consoleAhead, confirmableOpenings: { withinMilliseconds: 60_000 } });
   });
@@ -79,7 +89,7 @@ describe('recordPassage', () => {
     const ledger = new FakePassageLedger(1);
     const command = { gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now };
 
-    const passage = await recordPassage(command, { ledger, clock });
+    const passage = await recordPassage(command, { ledger, clock, openingWindow });
 
     expect(ledger.entries[0]?.vehicleCountChange).toBe(-1);
     expect(passage.vehicleCount).toBe(0);
@@ -89,14 +99,14 @@ describe('recordPassage', () => {
     const ledger = new FakePassageLedger(0);
     const command = { gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now };
 
-    expect((await recordPassage(command, { ledger, clock })).vehicleCount).toBe(0);
+    expect((await recordPassage(command, { ledger, clock, openingWindow })).vehicleCount).toBe(0);
   });
 
   it('refuses a passage for another gate than the key’s, without counting', async () => {
     const ledger = new FakePassageLedger(0);
     const command = { gate: entreeDemo, requestedGateId: sortieDemo.id, closedAt: now };
 
-    await expect(recordPassage(command, { ledger, clock })).rejects.toEqual(new PassageRefusedError('GATE_FORBIDDEN'));
+    await expect(recordPassage(command, { ledger, clock, openingWindow })).rejects.toEqual(new PassageRefusedError('GATE_FORBIDDEN'));
     expect(ledger.entries).toEqual([]);
   });
 
@@ -104,7 +114,7 @@ describe('recordPassage', () => {
     const ledger = new FakePassageLedger(1);
     ledger.pendingOpenings.push('session-waiting');
 
-    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now }, { ledger, clock });
+    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now }, { ledger, clock, openingWindow });
 
     expect(ledger.entries[0]?.confirmableOpenings).toBeNull();
     expect(passage.confirmedSessionId).toBeNull();
@@ -114,7 +124,7 @@ describe('recordPassage', () => {
     const ledger = new FakePassageLedger(0);
     ledger.pendingOpenings.push('session-julie', 'session-marc');
 
-    const passage = await recordPassage(entryAt(now), { ledger, clock });
+    const passage = await recordPassage(entryAt(now), { ledger, clock, openingWindow });
 
     expect(passage).toMatchObject({ vehicleCount: 1, confirmedSessionId: 'session-julie' });
   });
@@ -123,7 +133,7 @@ describe('recordPassage', () => {
     const ledger = new FakePassageLedger(0);
     const command = { ...entryAt(now), gate: { ...entreeDemo, hasLoops: false } };
 
-    await expect(recordPassage(command, { ledger, clock })).rejects.toMatchObject({ reason: 'GATE_WITHOUT_LOOPS' });
+    await expect(recordPassage(command, { ledger, clock, openingWindow })).rejects.toMatchObject({ reason: 'GATE_WITHOUT_LOOPS' });
     expect(ledger.entries).toEqual([]);
   });
 
@@ -131,7 +141,7 @@ describe('recordPassage', () => {
     const ledger = new FakePassageLedger(0);
     const closedAt = new Date(now.getTime() + 5 * 60 * 1000 + 1);
 
-    await expect(recordPassage(entryAt(closedAt), { ledger, clock })).rejects.toMatchObject({ reason: 'CLOSED_AT_IN_FUTURE' });
+    await expect(recordPassage(entryAt(closedAt), { ledger, clock, openingWindow })).rejects.toMatchObject({ reason: 'CLOSED_AT_IN_FUTURE' });
     expect(ledger.entries).toEqual([]);
   });
 
@@ -141,7 +151,7 @@ describe('recordPassage', () => {
   ])('refuses %s before the ledger runs', async (_case, closedAt) => {
     const ledger = new FakePassageLedger(0);
 
-    await expect(recordPassage(entryAt(closedAt), { ledger, clock })).rejects.toMatchObject({ reason: 'CLOSED_AT_INVALID' });
+    await expect(recordPassage(entryAt(closedAt), { ledger, clock, openingWindow })).rejects.toMatchObject({ reason: 'CLOSED_AT_INVALID' });
     expect(ledger.entries).toEqual([]);
   });
 
@@ -149,6 +159,6 @@ describe('recordPassage', () => {
     const ledger = new FakePassageLedger(0);
     const closedAt = new Date(now.getTime() + 5 * 60 * 1000);
 
-    expect((await recordPassage(entryAt(closedAt), { ledger, clock })).vehicleCount).toBe(1);
+    expect((await recordPassage(entryAt(closedAt), { ledger, clock, openingWindow })).vehicleCount).toBe(1);
   });
 });

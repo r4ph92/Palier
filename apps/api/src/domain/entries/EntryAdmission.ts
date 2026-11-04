@@ -3,7 +3,7 @@ import type { EligibleEntry } from './EntryEligibility.ts';
 import type { EntryLog } from './EntryLog.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import type { GateCommander } from './GateCommander.ts';
-import type { OpenedSession, ParkingSessionRepository } from './ParkingSessionRepository.ts';
+import type { HoldAttachment, OpenedSession, ParkingSessionRepository } from './ParkingSessionRepository.ts';
 import type { PaymentAuthorizer } from './PaymentAuthorizer.ts';
 
 export interface EntryAdmissionDependencies {
@@ -40,7 +40,11 @@ export class EntryAdmission {
     const run: EntryRun = { entry, payments, log };
     const session = await this.#openSession(entry);
     const paymentIntentId = await this.#authorize(run, session.id);
-    await this.#openBarrier(run, { sessionId: session.id, paymentIntentId });
+    const held: HeldSession = { sessionId: session.id, paymentIntentId };
+    if ((await this.#attachHold(run, held)) === 'cancelled') {
+      throw await this.#refuseCancelledEntry(run, held);
+    }
+    await this.#openBarrier(run, held);
     return { sessionId: session.id, spot: session.spot, barrierOpened: true };
   }
 
@@ -75,17 +79,36 @@ export class EntryAdmission {
     }
   }
 
-  async #openBarrier(run: EntryRun, { sessionId, paymentIntentId }: HeldSession): Promise<void> {
-    const { sessions, gateCommander } = this.#dependencies;
+  async #attachHold(run: EntryRun, held: HeldSession): Promise<HoldAttachment> {
     try {
-      await sessions.attachPaymentIntent(sessionId, paymentIntentId);
-      await gateCommander.open({ gateId: run.entry.gate.id, lotId: run.entry.gate.lotId, sessionId });
+      return await this.#dependencies.sessions.attachPaymentIntent(held.sessionId, held.paymentIntentId);
     } catch (error) {
-      run.log.error({ err: error, sessionId, paymentIntentId }, 'entry barrier command failed');
-      await this.#releaseSpot(sessionId, run.log);
-      await this.#releaseHold(run, paymentIntentId);
+      run.log.error({ err: error, ...held }, 'entry hold was not recorded');
+      await this.#undo(run, held);
       throw error;
     }
+  }
+
+  // An entry slower than the confirmation window was cancelled by the job: its spot is already free, the barrier stays shut.
+  async #refuseCancelledEntry(run: EntryRun, held: HeldSession): Promise<EntryRefusedError> {
+    run.log.warn(held, 'entry cancelled before its hold was recorded');
+    await this.#releaseHold(run, held.paymentIntentId);
+    return new EntryRefusedError('PAYMENTS_UNAVAILABLE');
+  }
+
+  async #openBarrier(run: EntryRun, held: HeldSession): Promise<void> {
+    try {
+      await this.#dependencies.gateCommander.open({ gateId: run.entry.gate.id, lotId: run.entry.gate.lotId, sessionId: held.sessionId });
+    } catch (error) {
+      run.log.error({ err: error, ...held }, 'entry barrier was not opened');
+      await this.#undo(run, held);
+      throw error;
+    }
+  }
+
+  async #undo(run: EntryRun, { sessionId, paymentIntentId }: HeldSession): Promise<void> {
+    await this.#releaseSpot(sessionId, run.log);
+    await this.#releaseHold(run, paymentIntentId);
   }
 
   // Each undo step only logs its own failure: the next step still runs and the driver gets the original error.
@@ -97,10 +120,13 @@ export class EntryAdmission {
     }
   }
 
-  // A hold Stripe would not cancel expires on its own, so it is only logged.
+  // The cancelled session keeps its hold marked for release: the job releases it again after an immediate release here (Stripe answers already canceled, harmless) and retries one that failed.
   async #releaseHold({ payments, log }: EntryRun, paymentIntentId: string): Promise<void> {
     try {
-      await payments.cancel(paymentIntentId);
+      const release = await payments.cancel(paymentIntentId);
+      if (release !== 'released') {
+        log.error({ paymentIntentId, release }, 'could not cancel the entry hold');
+      }
     } catch (error) {
       log.error({ err: error, paymentIntentId }, 'could not cancel the entry hold');
     }

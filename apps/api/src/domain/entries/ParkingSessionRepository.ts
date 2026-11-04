@@ -25,14 +25,18 @@ export interface SessionStatus {
   readonly entryConfirmedAt: Date | null;
 }
 
+// cancelled: the cancellation job got to the session before its hold was recorded.
+export type HoldAttachment = 'attached' | 'cancelled';
+
 export interface ParkingSessionRepository {
   // Assigns the lot's first free spot that fits the vehicle's needs and creates the session in one transaction;
   // null when no spot is free. Throws EntryRefusedError NO_SUITABLE_SPOT when spots are free but none fits.
   // Throws EntryRefusedError ALREADY_INSIDE when the driver already has an active session.
   openWithFirstFreeSpot(draft: SessionDraft): Promise<OpenedSession | null>;
-  attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<void>;
+  // Records the hold on a CREATED or CANCELLED session, marking it for release when cancelled; throws for any other state or an unknown id.
+  attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment>;
   // The driver's own session only; null for an unknown id or another driver's session.
   findForUser(sessionId: string, userId: string): Promise<SessionStatus | null>;
-  // Cancels the session and frees its spot in one transaction.
+  // Cancels a CREATED session and frees its spot in one transaction, marking its hold, if any, for release by the cancellation job.
   cancel(sessionId: string): Promise<void>;
 }

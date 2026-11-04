@@ -1,4 +1,5 @@
 import { VERSION_PATTERN } from '@palier/shared-types/appVersion';
+import { readEntryCancellationTiming, type EntryCancellationTiming } from './entryCancellationTiming.ts';
 
 export interface ServerEnvironment {
   readonly databaseUrl: string;
@@ -8,6 +9,7 @@ export interface ServerEnvironment {
   readonly minimumAppVersion: string | undefined;
   readonly demoMode: boolean;
   readonly secureCookies: boolean;
+  readonly entryCancellation: EntryCancellationTiming;
 }
 
 const DEFAULT_HOST = '127.0.0.1';
@@ -31,6 +33,7 @@ export function readServerEnvironment(variables: NodeJS.ProcessEnv): ServerEnvir
     minimumAppVersion: readMinimumAppVersion(variables['MINIMUM_APP_VERSION']),
     demoMode: readDemoMode(variables['DEMO_MODE']),
     secureCookies: readSecureCookies(variables),
+    entryCancellation: readEntryCancellationTiming(variables),
   };
 }
 

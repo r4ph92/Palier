@@ -1,14 +1,15 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import type { FreeSpot } from '../../domain/allocation/chooseSpot.ts';
 import { chooseSpotFor } from '../../domain/allocation/chooseSpotFor.ts';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
-import type { OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../domain/entries/ParkingSessionRepository.ts';
+import type { HoldAttachment, OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../domain/entries/ParkingSessionRepository.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import { isActiveSessionConflict } from './activeSessionConflict.ts';
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
+import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
-import { parkingSession, spot } from './schema.ts';
+import { parkingSession } from './schema.ts';
 
 const MAX_CLAIM_ATTEMPTS = 3;
 
@@ -63,8 +64,17 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
     }
   }
 
-  async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<void> {
-    await this.#database.update(parkingSession).set({ paymentIntentId }).where(eq(parkingSession.id, sessionId));
+  async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment> {
+    const rows = await this.#database.execute<{ state: EntrySessionState }>(sql`
+      update parking_session
+      set payment_intent_id = ${paymentIntentId}, hold_release_pending = (state = 'CANCELLED')
+      where id = ${sessionId} and state in ('CREATED', 'CANCELLED')
+      returning state`);
+    const state = rows[0]?.state;
+    if (state === undefined) {
+      throw new Error(`Session ${sessionId} is neither awaiting its hold nor cancelled: its hold was not recorded.`);
+    }
+    return state === 'CANCELLED' ? 'cancelled' : 'attached';
   }
 
   async findForUser(sessionId: string, userId: string): Promise<SessionStatus | null> {
@@ -80,20 +90,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   }
 
   async cancel(sessionId: string): Promise<void> {
-    await this.#database.transaction(async (tx) => {
-      const [cancelled] = await tx
-        .update(parkingSession)
-        .set({ state: 'CANCELLED', cancelledAt: sql`now()` })
-        .where(and(eq(parkingSession.id, sessionId), eq(parkingSession.state, 'CREATED')))
-        .returning({ spotId: parkingSession.assignedSpotId });
-      if (cancelled === undefined) {
-        return;
-      }
-      await tx
-        .update(spot)
-        .set({ state: 'AVAILABLE', stateChangedAt: sql`now()` })
-        .where(and(eq(spot.id, cancelled.spotId), eq(spot.state, 'ASSIGNED')));
-    });
+    await this.#database.transaction((tx) => cancelCreatedSession(tx, sessionId));
   }
 }
 

@@ -27,9 +27,16 @@ export interface EntryComposition {
   readonly vehicles: VehicleRepository;
 }
 
-export function composeEntries({ database, stripeKey, demoMode, simulateStripeUnreachable, drivers, vehicles }: EntryComposition): EntryRouteDependencies {
+export interface ComposedEntries {
+  readonly routes: EntryRouteDependencies;
+  // The same Stripe client serves the entry routes and the cancellation job.
+  readonly payments: PaymentAuthorizer | null;
+}
+
+export function composeEntries({ database, stripeKey, demoMode, simulateStripeUnreachable, drivers, vehicles }: EntryComposition): ComposedEntries {
   const sessions = new PostgresParkingSessionRepository(database);
-  return {
+  const payments = paymentAuthorizer(stripeKey, simulateStripeUnreachable);
+  const routes = {
     sessions,
     eligibility: new EntryEligibility({
       gates: new PostgresEntryGateRepository(database),
@@ -37,12 +44,9 @@ export function composeEntries({ database, stripeKey, demoMode, simulateStripeUn
       drivers,
       policy: { allowPlatformChargesWithoutOperatorAccount: demoMode },
     }),
-    admission: new EntryAdmission({
-      sessions,
-      payments: paymentAuthorizer(stripeKey, simulateStripeUnreachable),
-      gateCommander: new SimulatedGateCommander(database),
-    }),
+    admission: new EntryAdmission({ sessions, payments, gateCommander: new SimulatedGateCommander(database) }),
   };
+  return { routes, payments };
 }
 
 // Exported for its test: the switch must win over a real key.

@@ -156,13 +156,13 @@ describe('ScanScreen, confirming the entry', () => {
     expect(screen.getByText('caught: unexpected')).toBeOnTheScreen();
   });
 
-  it('stops asking after "Terminé"', async () => {
+  it('keeps asking after "Terminé", since Palier may still cancel the entry', async () => {
     const { client, user } = await scan();
     await user.press(await screen.findByRole('button', { name: 'Terminé' }));
 
     await advance(ENTRY_STATUS_POLL_MILLISECONDS * 5);
 
-    expect(client.statusRequests).toEqual([]);
+    expect(client.statusRequests).toHaveLength(5);
   });
 
   it('stops asking after two minutes', async () => {
@@ -175,18 +175,6 @@ describe('ScanScreen, confirming the entry', () => {
 
     expect(askedByTheLimit).toBe(ENTRY_STATUS_POLL_LIMIT_MILLISECONDS / ENTRY_STATUS_POLL_MILLISECONDS);
     expect(client.statusRequests).toHaveLength(askedByTheLimit);
-  });
-
-  it('stops asking when a cancelled session is reported', async () => {
-    const { client } = await scan();
-    await screen.findByText('Barrière ouverte');
-    client.sessionState = 'CANCELLED';
-    await advance(ENTRY_STATUS_POLL_MILLISECONDS);
-
-    await advance(ENTRY_STATUS_POLL_MILLISECONDS * 5);
-
-    expect(client.statusRequests).toHaveLength(1);
-    expect(screen.getByText('Barrière ouverte')).toBeOnTheScreen();
   });
 
   it('names the confirmation in the result VoiceOver reads, not the open barrier', async () => {

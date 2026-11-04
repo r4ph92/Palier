@@ -107,10 +107,48 @@ describe('entry admission', () => {
   it('keeps the barrier error and logs a hold Stripe would not cancel', async () => {
     const { payments, gateCommander, admission, log } = admissionWith();
     gateCommander.fails = true;
-    payments.cancelFails = true;
+    payments.release = 'failed';
 
     await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toThrow('gate_command insert failed');
     expect(log.errors).toHaveLength(2);
+  });
+
+  it('releases the hold and refuses without opening the barrier when the job cancelled the session meanwhile', async () => {
+    const { journal, sessions, payments, gateCommander, admission, log } = admissionWith();
+    payments.authorize = async (request) => {
+      sessions.cancelIfCreated(request.sessionId);
+      return `pi_${request.sessionId}`;
+    };
+
+    await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toMatchObject({ reason: 'PAYMENTS_UNAVAILABLE' });
+    expect(journal).toEqual(['open-session', 'attach-intent', 'cancel-intent']);
+    expect(gateCommander.opened).toEqual([]);
+    expect(payments.cancelled).toEqual([`pi_${fakeSessionId(1)}`]);
+    expect(log.warnings).toEqual([[{ sessionId: fakeSessionId(1), paymentIntentId: `pi_${fakeSessionId(1)}` }, 'entry cancelled before its hold was recorded']]);
+    expect(log.errors).toEqual([]);
+  });
+
+  it('undoes the entry and keeps the error when the hold cannot be recorded on a session neither created nor cancelled', async () => {
+    const { journal, sessions, payments, gateCommander, admission, log } = admissionWith();
+    payments.authorize = async (request) => {
+      sessions.confirmEntry(request.sessionId, new Date('2026-11-04T12:00:00Z'));
+      return `pi_${request.sessionId}`;
+    };
+
+    await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toThrow('parking_session hold not recorded');
+    expect(journal).toEqual(['open-session', 'attach-intent', 'cancel-session', 'cancel-intent']);
+    expect(gateCommander.opened).toEqual([]);
+    expect(payments.cancelled).toEqual([`pi_${fakeSessionId(1)}`]);
+    expect(log.errors).toHaveLength(1);
+  });
+
+  it.each(['failed', 'gone'] as const)('logs a hold release that answers %s', async (release) => {
+    const { payments, gateCommander, admission, log } = admissionWith();
+    gateCommander.fails = true;
+    payments.release = release;
+
+    await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toThrow('gate_command insert failed');
+    expect(log.errors[1]).toEqual([{ paymentIntentId: `pi_${fakeSessionId(1)}`, release }, 'could not cancel the entry hold']);
   });
 
   it('still cancels the hold and keeps the barrier error when the spot cannot be freed', async () => {
