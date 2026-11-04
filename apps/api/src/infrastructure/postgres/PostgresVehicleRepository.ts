@@ -13,6 +13,16 @@ const vehicleColumns = {
   isOversize: vehicle.isOversize,
 };
 
+// Each column is named, so a field added to the domain type is never written by accident.
+function needColumns(needs: VehicleNeeds) {
+  return { isElectric: needs.isElectric, hasAccessiblePermit: needs.hasAccessiblePermit, isOversize: needs.isOversize };
+}
+
+function newVehicleRow(driverId: string, newVehicle: NewVehicle, isDefault: boolean) {
+  const { plate, plateKey, province } = newVehicle;
+  return { userId: driverId, plate, plateKey, province, ...needColumns(newVehicle), isDefault };
+}
+
 export class PostgresVehicleRepository implements VehicleRepository {
   readonly #database: Database;
 
@@ -49,7 +59,7 @@ export class PostgresVehicleRepository implements VehicleRepository {
       const [existing] = await tx.select({ id: vehicle.id }).from(vehicle).where(eq(vehicle.userId, driverId)).limit(1);
       const [saved] = await tx
         .insert(vehicle)
-        .values({ userId: driverId, ...newVehicle, isDefault: existing === undefined })
+        .values(newVehicleRow(driverId, newVehicle, existing === undefined))
         .onConflictDoNothing({ target: [vehicle.userId, vehicle.plateKey, vehicle.province] })
         .returning(vehicleColumns);
       return saved ?? null;
@@ -59,7 +69,7 @@ export class PostgresVehicleRepository implements VehicleRepository {
   async updateVehicleNeeds(driverId: string, vehicleId: string, needs: VehicleNeeds): Promise<Vehicle | null> {
     const [updated] = await this.#database
       .update(vehicle)
-      .set({ isElectric: needs.isElectric, hasAccessiblePermit: needs.hasAccessiblePermit, isOversize: needs.isOversize })
+      .set(needColumns(needs))
       .where(and(eq(vehicle.id, vehicleId), eq(vehicle.userId, driverId)))
       .returning(vehicleColumns);
     return updated ?? null;
