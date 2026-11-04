@@ -5,10 +5,15 @@ import { spacing } from '../theme/tokens';
 
 const PLACEHOLDER_ROWS = [0, 1, 2];
 
-export function LoadingState() {
+interface LoadingStateProps {
+  // What VoiceOver says is loading; the lots by default.
+  readonly label?: string;
+}
+
+export function LoadingState({ label = i18n.t('home.loading') }: LoadingStateProps) {
   const colors = useColors();
   return (
-    <View accessible accessibilityLabel={i18n.t('home.loading')} accessibilityState={{ busy: true }}>
+    <View accessible accessibilityLabel={label} accessibilityState={{ busy: true }}>
       {PLACEHOLDER_ROWS.map((row) => (
         <View key={row} style={[styles.row, { borderBottomColor: colors.line }]}>
           <View style={[styles.name, { backgroundColor: colors.sunken }]} />

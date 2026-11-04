@@ -1,6 +1,7 @@
 import type { DriverRepository } from '../drivers/DriverRepository.ts';
+import { parsePricingPolicy, PricingPolicyInvalidError, type PricingPolicy } from '../pricing/PricingPolicy.ts';
 import type { VehicleRepository } from '../vehicles/VehicleRepository.ts';
-import type { EntryGate, EntryGateRepository } from './EntryGateRepository.ts';
+import type { EntryGate, EntryGateLot, EntryGateRepository } from './EntryGateRepository.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import { isSignedWith, readGateToken } from './gateToken.ts';
 
@@ -30,6 +31,7 @@ export interface EligibleEntry {
     readonly amountCents: number;
     readonly destinationAccountId: string | null;
   };
+  readonly pricing: PricingPolicy;
 }
 
 type DriverPrerequisites = Pick<EligibleEntry, 'vehicle'> & { readonly customerId: string; readonly paymentMethodId: string };
@@ -45,6 +47,7 @@ export class EntryEligibility {
   async check({ driverId, qrContent }: EntryAttempt): Promise<EligibleEntry> {
     const gate = await this.#recognizedGate(qrContent);
     this.#ensureGateAdmitsEntries(gate);
+    const pricing = lotPricing(gate.lot);
     const prerequisites = await this.#driverPrerequisites(driverId);
     return {
       driverId,
@@ -56,6 +59,7 @@ export class EntryEligibility {
         amountCents: gate.lot.dailyCapCents,
         destinationAccountId: gate.lot.operatorStripeAccountId,
       },
+      pricing,
     };
   }
 
@@ -99,5 +103,18 @@ export class EntryEligibility {
       throw new EntryRefusedError('PREREQUISITES_MISSING');
     }
     return { vehicle: { id: vehicle.id, plate: vehicle.plate }, customerId, paymentMethodId };
+  }
+}
+
+// A lot without a usable price cannot bill a session, so it is out of service until its operator fixes the policy.
+// The refusal keeps the parse error as its cause, so the route can log it.
+function lotPricing(lot: EntryGateLot): PricingPolicy {
+  try {
+    return parsePricingPolicy(lot.pricingPolicy, lot.dailyCapCents);
+  } catch (error) {
+    if (!(error instanceof PricingPolicyInvalidError)) {
+      throw error;
+    }
+    throw new EntryRefusedError('LOT_NOT_IN_SERVICE', { cause: new PricingPolicyInvalidError(lot.id, { cause: error }) });
   }
 }

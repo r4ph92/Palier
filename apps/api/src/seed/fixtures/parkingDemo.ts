@@ -1,5 +1,6 @@
 import type { aisle, level, parkingLot, spot } from '../../infrastructure/postgres/schema.ts';
 import { LAVOIE_OPERATOR_ID } from './operators.ts';
+import { SEEDED_PRICING_POLICY } from './pricing.ts';
 
 export const PARKING_DEMO_ID = '00000000-0000-4000-8000-000000000201';
 const LEVEL_P1_ID = '00000000-0000-4000-8000-000000000301';
@@ -25,7 +26,7 @@ export const parkingDemoLot: typeof parkingLot.$inferInsert = {
   operatorId: LAVOIE_OPERATOR_ID,
   name: 'Parking Démo',
   beaconMajor: 1,
-  pricingPolicy: { incrementCents: 75, incrementMinutes: 15, holdQuota: 3 },
+  pricingPolicy: SEEDED_PRICING_POLICY,
   dailyCapCents: 2500,
   capacity: 10,
   vehicleCount: 0,

@@ -1,12 +1,12 @@
 import { StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { i18n } from '../i18n/i18n';
+import { NO_BREAK_SPACE } from '../i18n/spaces';
 import { useColors } from '../theme/useColors';
 import { useIsLargeText } from '../theme/useIsLargeText';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
 const INDICATOR_SIZE = 8;
-const NO_BREAK_SPACE = '\u00A0';
 
 interface FreeSpotCountProps {
   readonly count: number;

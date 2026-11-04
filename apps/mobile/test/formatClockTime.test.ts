@@ -1,8 +1,5 @@
 import { formatClockTime } from '../src/i18n/formatClockTime';
-
-function withRegularSpaces(text: string): string {
-  return text.replace(/\u00A0/g, ' ');
-}
+import { asSeen } from './visibleText';
 
 const afternoon = new Date(2026, 9, 27, 13, 25);
 
@@ -19,7 +16,7 @@ describe('formatClockTime', () => {
     [new Date(2026, 9, 27, 0, 5), '0 h 05', '12:05 AM'],
     [new Date(2026, 9, 27, 12, 0), '12 h 00', '12:00 PM'],
   ])('handles %s at the day edges', (moment, french, english) => {
-    expect(withRegularSpaces(formatClockTime(moment, 'fr'))).toBe(french);
-    expect(withRegularSpaces(formatClockTime(moment, 'en'))).toBe(english);
+    expect(asSeen(formatClockTime(moment, 'fr'))).toBe(french);
+    expect(asSeen(formatClockTime(moment, 'en'))).toBe(english);
   });
 });

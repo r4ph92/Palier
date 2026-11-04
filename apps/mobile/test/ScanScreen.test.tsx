@@ -1,12 +1,10 @@
-import { getDefaultNormalizer, screen, userEvent } from '@testing-library/react-native';
+import { screen, userEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
-import { applyLanguage } from '../src/i18n/i18n';
-import { spotLabel } from '../src/screens/ScanScreen';
+import { applyLanguage, i18n } from '../src/i18n/i18n';
+import { spotLabel, WORD_JOINER } from '../src/components/SpotLine';
 import { ENTREE_DEMO_QR, FakeEntryClient, spotA1 } from './fakeEntryClient';
 import { openScanner, scan } from './renderScanScreen';
-
-// The spot number carries an invisible word joiner after its hyphen; the driver reads the same text without it.
-const visibleText = { normalizer: (text: string) => getDefaultNormalizer()(text.replaceAll('\u2060', '')) };
+import { visibleText } from './visibleText';
 
 describe('ScanScreen, entering Parking Démo', () => {
   it('shows Julie her spot and the open barrier in French', async () => {
@@ -30,13 +28,13 @@ describe('ScanScreen, entering Parking Démo', () => {
   ] as const)('in %s, breaks the spot line only after a « · », never inside « Palier P1 » or before a « · »', (language, label) => {
     applyLanguage(language);
 
-    expect(spotLabel(spotA1)).toBe(label);
+    expect(spotLabel(spotA1, i18n.t('scan.spotLead'))).toBe(label);
   });
 
   it('shows the spot number as the largest text, in mono with tabular figures, unbreakable at its hyphen', async () => {
     await scan();
 
-    const number = await screen.findByText('A-\u20601');
+    const number = await screen.findByText(`A-${WORD_JOINER}1`);
 
     expect(number).toHaveStyle({ fontFamily: 'IBMPlexMono_600SemiBold', fontVariant: ['tabular-nums'] });
     expect(number.props.style.fontSize).toBeGreaterThan(32);

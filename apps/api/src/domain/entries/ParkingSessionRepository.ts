@@ -1,4 +1,5 @@
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
+import type { PricingPolicy } from '../pricing/PricingPolicy.ts';
 
 export interface SessionDraft {
   readonly driverId: string;
@@ -7,6 +8,7 @@ export interface SessionDraft {
   readonly lotId: string;
   readonly entryGateId: string;
   readonly authorizedCents: number;
+  readonly pricing: PricingPolicy;
 }
 
 export interface OpenedSession {

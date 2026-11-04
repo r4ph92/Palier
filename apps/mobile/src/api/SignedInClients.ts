@@ -1,5 +1,6 @@
 import type { EntryClient } from './EntryClient';
 import type { LotsClient } from './LotsClient';
+import type { ParkingSessionClient } from './ParkingSessionClient';
 import type { PaymentMethodClient } from './PaymentMethodClient';
 import type { VehicleClient } from './VehicleClient';
 
@@ -16,6 +17,7 @@ export interface SignedInClients {
   readonly payment: PaymentMethodClient;
   readonly vehicles: VehicleClient;
   readonly entry: EntryClient;
+  readonly parkingSession: ParkingSessionClient;
 }
 
 export type CreateSignedInClients = (session: SignedInSession) => SignedInClients;
