@@ -71,6 +71,8 @@ describe('dashboard sign-in', () => {
 
     expect((await screen.findByRole('alert')).textContent).toBe('Une erreur est survenue. Réessayez dans un instant.');
     expect(document.activeElement).toBe(screen.getByRole('alert'));
+    expect(screen.getByRole('alert').closest('nav')).toBeNull();
+    expect(screen.getByRole('alert').closest('header')).not.toBeNull();
     expect(screen.getByRole('heading', { level: 1, name: 'Stationnements Lavoie inc.' })).toBeDefined();
 
     api.answers.delete('POST /sign-out');

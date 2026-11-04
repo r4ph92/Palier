@@ -7,11 +7,11 @@ export interface SignOutState {
   readonly signOut: () => void;
 }
 
-export function useSignOut(onSignOut: () => Promise<void>): SignOutState {
+export function useSignOut(onSignOut: (() => Promise<void>) | null): SignOutState {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<DisplayedErrorCode | null>(null);
   const signOut = () => {
-    if (pending) {
+    if (pending || onSignOut === null) {
       return;
     }
     setPending(true);

@@ -38,12 +38,20 @@ body {
 }
 
 .app-header {
+  padding-top: var(--space-medium);
+}
+
+.app-header-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-small);
-  padding-top: var(--space-medium);
+}
+
+.app-header .error-notice {
+  margin: var(--space-small) 0 0;
+  text-align: left;
 }
 
 .wordmark {
@@ -68,11 +76,6 @@ body {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-medium);
-}
-
-.app-actions .error-notice {
-  flex-basis: 100%;
-  margin: 0;
 }
 
 .page {
