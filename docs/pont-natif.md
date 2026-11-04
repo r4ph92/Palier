@@ -39,6 +39,8 @@ Le contrat nomme la commande sans dire comment la plateforme l'honore.
 
 En build de développement (`__DEV__`, Expo Go), **Compte > Développeur > Signaux simulés** remplace le module natif par `SimulatedPositioningModule` (`apps/mobile/src/dev/`). Chaque bouton émet l'événement correspondant par la même interface que le module natif ; les commandes envoyées par le cœur apparaissent dans le journal (100 entrées, la plus récente en haut).
 
-« Réseau coupé » et « Réseau rétabli » sont hors contrat natif : ils changent un drapeau de connectivité du module simulé (`setConnectivity`) que la gestion hors ligne (P34, #26) branchera.
+« Réseau coupé » et « Réseau rétabli » sont hors contrat natif : ils n'écrivent qu'une ligne dans le journal (`setConnectivity`) ; l'état de connectivité sera ajouté avec la gestion hors ligne (P34, #26).
+
+Les builds de production exécutent `NullPositioningModule` tant que les modules natifs iOS et Android (#19, #20) n'existent pas.
 
 Le module simulé n'est chargé que par `loadDeveloperTools.ts`, derrière un ternaire `__DEV__` que Metro évalue à la compilation : le build de production ne contient ni le panneau ni le module. Vérification : `npx expo export --platform ios` puis chercher `SimulatedSignalsPanel` dans la sortie (0 occurrence).
