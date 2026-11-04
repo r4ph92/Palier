@@ -85,6 +85,13 @@
       "when": 1793815200549,
       "tag": "0011_session_pricing_snapshot",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793821008752,
+      "tag": "0012_hold_release_and_command_session_index",
+      "breakpoints": true
     }
   ]
 }

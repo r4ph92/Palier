@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { check, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import { appUser, vehicle } from './driverSchema.ts';
@@ -33,6 +33,9 @@ export const parkingSession = pgTable(
     entryScanAt: timestamp('entry_scan_at', { withTimezone: true }).notNull().defaultNow(),
     entryConfirmedAt: timestamp('entry_confirmed_at', { withTimezone: true }),
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+    // Set with the cancellation when a card hold exists; cleared once Stripe confirms the release, so a failed release is retried.
+    holdReleasePending: boolean('hold_release_pending').notNull().default(false),
+    holdReleaseAttemptedAt: timestamp('hold_release_attempted_at', { withTimezone: true }),
   },
   (table) => [
     foreignKey({
@@ -51,6 +54,7 @@ export const parkingSession = pgTable(
     ),
     uniqueIndex('parking_session_one_active_per_user_index').on(table.userId).where(ACTIVE_SESSION),
     uniqueIndex('parking_session_one_active_per_spot_index').on(table.assignedSpotId).where(ACTIVE_SESSION),
+    index('parking_session_hold_release_pending_index').on(table.holdReleaseAttemptedAt).where(sql`${table.holdReleasePending}`),
   ],
 );
 
@@ -71,5 +75,6 @@ export const gateCommand = pgTable(
       foreignColumns: [gate.id, gate.lotId],
     }),
     index('gate_command_gate_id_issued_at_index').on(table.gateId, table.issuedAt, table.id),
+    index('gate_command_session_id_index').on(table.sessionId),
   ],
 );
