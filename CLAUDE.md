@@ -4,8 +4,8 @@ Allocation de places en stationnement intérieur, multi-opérateurs: le conducte
 
 ## Stack
 
-TypeScript 6 on Node 24 (`.nvmrc`), npm workspaces. API: Fastify 5, Drizzle ORM, postgres-js, Postgres 17 in Docker on port 5433.
-App: React Native with Expo SDK 58, iOS only, run in Expo Go. Tests: Vitest (API), Jest with `jest-expo` (app). Locales: fr default, en on an English device.
+TypeScript 6 on Node 24 (`.nvmrc`), npm workspaces. API: Fastify 5, Drizzle ORM, postgres-js, Postgres 17 in Docker on port 5433, Stripe for cards.
+App: React Native with Expo SDK 58, iOS only, run in Expo Go, `@stripe/stripe-react-native` for cards. Tests: Vitest (API), Jest with `jest-expo` (app). Locales: fr default, en on an English device.
 
 ## Commands
 
@@ -43,7 +43,7 @@ five drivers below plus Conducteur Test 01 to 20.
 
 `apps/api/src` is `http/` (routes, validator), `domain/` (rules and ports) and
 `infrastructure/postgres/` (schema, repositories), with `config/`, `migrate/` and `seed/` beside
-them. `apps/mobile/src` holds the screens plus `api/`, `privacy/` and `theme/`, and `packages/shared-types`
+them. `apps/mobile/src` holds `screens/` plus `api/`, `auth/`, `lots/`, `payment/`, `vehicles/` and `theme/`, and `packages/shared-types`
 carries what the two exchange. Layer map: `docs/04-architecture.html`. Choices taken while building:
 `docs/implementation.md`. Design record: `DECISIONS.md` and `docs/decisions/`.
 
@@ -54,5 +54,5 @@ Direction: provisional, defined in `docs/design.md`. Build within its tokens, in
 ## Project conventions
 
 - Product text is French first, English second. Docs and decisions are written in French.
-- Every new `/v1` route is added to `apps/api/test/unit/routeClassification.test.ts` as public, consent exempt or protected, or that test fails.
-- The privacy notice version lives in `apps/api/src/domain/consent/privacyNotice.ts` and `apps/mobile/src/privacy/noticeVersion.ts`, changed together.
+- Every new `/v1` route is listed in `apps/api/test/unit/routeClassification.ts` as `GATED` or `EXEMPT`, or `routeClassification.test.ts` fails.
+- The privacy notice version is one constant, `PRIVACY_NOTICE_VERSION` in `packages/shared-types/src/privacy.ts`; bumping it makes every driver accept the notice again.
