@@ -46,7 +46,7 @@ export class PostgresUnconfirmedEntryRepository implements UnconfirmedEntryRepos
     });
   }
 
-  // Skip locked: two API instances checking at once share the batch instead of releasing the same hold twice.
+  // Skip locked only spares waiting on a row another instance is claiming; a hold released twice is harmless, Stripe answers already canceled.
   async claimPendingReleases(limit: number): Promise<readonly PendingRelease[]> {
     const rows = await this.#database.execute<PendingReleaseRow>(sql`
       update parking_session

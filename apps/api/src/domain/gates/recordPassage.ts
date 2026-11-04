@@ -18,8 +18,7 @@ export interface PassageCommand {
 export interface PassageCollaborators {
   readonly ledger: PassageLedger;
   readonly clock: Clock;
-  // Only the duration is passed: the ledger compares it with the database clock that stamped the command, so one clock decides.
-  // The cancellation job is handed this same object, so a closure and a cancellation never disagree on the window.
+  // A duration judged by the database clock that stamped the command; the cancellation job gets the same object, so both agree.
   readonly openingWindow: OpeningWindow;
 }
 

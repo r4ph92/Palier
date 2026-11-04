@@ -7,8 +7,7 @@ export interface AuthorizationRequest {
   readonly destinationAccountId: string | null;
 }
 
-// released: Stripe holds nothing any more. gone: the intent cannot be cancelled (missing, captured), retrying is pointless.
-// failed: Stripe could not be reached or answered an error worth retrying.
+// released: nothing held any more; gone: missing or captured, never retried; failed: Stripe unreachable or erring, retried.
 export type HoldRelease = 'released' | 'gone' | 'failed';
 
 export interface PaymentAuthorizer {

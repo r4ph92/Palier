@@ -5,8 +5,7 @@ interface CancelledSessionRow extends Record<string, unknown> {
   readonly assigned_spot_id: string;
 }
 
-// The one cancellation path, for an entry rolled back and for one nobody drove through. A session already confirmed or
-// cancelled is left alone. A hold, if one was attached, is marked for the cancellation job to release.
+// The one path for a rollback and the job: a session no longer CREATED is left alone, an attached hold is marked for release.
 export async function cancelCreatedSession(tx: Transaction, sessionId: string): Promise<boolean> {
   const rows = await tx.execute<CancelledSessionRow>(sql`
     update parking_session

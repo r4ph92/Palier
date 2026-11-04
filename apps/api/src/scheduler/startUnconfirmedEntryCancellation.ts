@@ -33,8 +33,7 @@ interface Schedule {
   isStopped: boolean;
 }
 
-// Each period cancels expired entries, then releases holds. The two are guarded apart, so a release stuck on Stripe never
-// delays the next cancellation. The returned function stops the timer and waits for the cancellation in flight only.
+// Cancel and release are guarded apart, so a release stuck on Stripe never delays the next cancellation, nor the stop.
 export function startUnconfirmedEntryCancellation(
   tasks: CancellationTasks,
   logger: CancellationSchedulerLogger,
