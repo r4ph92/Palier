@@ -28,10 +28,10 @@ function SignOutButton({ onSignOut }: { readonly onSignOut: () => Promise<void> 
   const { pending, error, signOut } = useSignOut(onSignOut);
   return (
     <>
-      <button type="button" className="text-button" onClick={signOut} disabled={pending}>
+      <button type="button" className="text-button" onClick={signOut} aria-disabled={pending}>
         {pending ? text.app.signingOut : text.app.signOut}
       </button>
-      {error === null ? null : <ErrorNotice code={error} />}
+      {error === null ? null : <ErrorNotice code={error} takesFocus />}
     </>
   );
 }

@@ -45,6 +45,9 @@ export function useCreateOperatorForm(onCreated: () => Promise<void>): CreateOpe
   const [submitting, setSubmitting] = useState(false);
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (submitting) {
+      return;
+    }
     if (!isValidLegalName(legalName)) {
       setError('LEGAL_NAME_INVALID');
       return;

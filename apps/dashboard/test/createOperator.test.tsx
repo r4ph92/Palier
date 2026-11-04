@@ -60,6 +60,30 @@ describe('creating an operator', () => {
     expect(field.getAttribute('aria-invalid')).toBe('false');
   });
 
+  it('sends one request however often the button is pressed while it is on its way', async () => {
+    const api = installFakeApi({ signedInAs: nouvelOperateur, answers: { 'POST /operators': 'pending' } });
+    renderDashboard();
+    await userEvent.type(await screen.findByLabelText('Raison sociale'), 'Stationnements Exemple inc.');
+    const button = screen.getByRole('button', { name: 'Créer l’opérateur' });
+
+    await userEvent.click(button);
+    await userEvent.click(button);
+
+    expect(document.activeElement).toBe(button);
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+    expect(api.requests.filter((request) => request === 'POST /operators')).toHaveLength(1);
+  });
+
+  it('moves focus to the notice when the creation fails', async () => {
+    installFakeApi({ signedInAs: nouvelOperateur, answers: { 'POST /operators': { status: 500 } } });
+    renderDashboard();
+    await userEvent.type(await screen.findByLabelText('Raison sociale'), 'Stationnements Exemple inc.');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Créer l’opérateur' }));
+
+    expect(document.activeElement).toBe(await screen.findByRole('alert'));
+  });
+
   it('refuses a legal name of zero-width spaces without calling the API, by the rule the API applies', async () => {
     const api = installFakeApi({ signedInAs: nouvelOperateur });
     renderDashboard();

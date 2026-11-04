@@ -39,17 +39,32 @@ async function signInThenRefresh(userId: string, onSignedIn: () => Promise<void>
   }
 }
 
-function TestUserList({ users, onSignedIn }: { readonly users: readonly DashboardUser[] } & TestSignInSectionProps) {
+interface TestSignIn {
+  readonly pendingUserId: string | null;
+  readonly error: DisplayedErrorCode | null;
+  readonly signIn: (userId: string) => Promise<void>;
+}
+
+// One sign-in at a time: picks made while one is on its way are ignored, and the rows stay focusable.
+function useTestSignIn(onSignedIn: () => Promise<void>): TestSignIn {
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [error, setError] = useState<DisplayedErrorCode | null>(null);
   const signIn = async (userId: string) => {
+    if (pendingUserId !== null) {
+      return;
+    }
     setPendingUserId(userId);
     setError(await signInThenRefresh(userId, onSignedIn));
     setPendingUserId(null);
   };
+  return { pendingUserId, error, signIn };
+}
+
+function TestUserList({ users, onSignedIn }: { readonly users: readonly DashboardUser[] } & TestSignInSectionProps) {
+  const { pendingUserId, error, signIn } = useTestSignIn(onSignedIn);
   return (
     <>
-      {error === null ? null : <ErrorNotice code={error} />}
+      {error === null ? null : <ErrorNotice code={error} takesFocus />}
       <ul className="row-list">
         {users.map((user) => (
           <TestUserRow key={user.id} user={user} pendingUserId={pendingUserId} onPick={(userId) => void signIn(userId)} />
@@ -70,7 +85,7 @@ function TestUserRow({ user, pendingUserId, onPick }: TestUserRowProps) {
   const isPending = pendingUserId === user.id;
   return (
     <li className="row">
-      <button type="button" className="row-button" disabled={pendingUserId !== null} aria-busy={isPending} onClick={() => onPick(user.id)}>
+      <button type="button" className="row-button" aria-disabled={pendingUserId !== null} aria-busy={isPending} onClick={() => onPick(user.id)}>
         <span>{`${user.firstName} ${user.lastName}`}</span>
         {isPending ? <span className="muted">{text.signingIn}</span> : null}
       </button>

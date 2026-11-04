@@ -153,7 +153,8 @@ body {
   overflow-wrap: anywhere;
 }
 
-.row-button:disabled {
+.row-button[aria-disabled='true'],
+.text-button[aria-disabled='true'] {
   cursor: wait;
 }
 
@@ -257,7 +258,7 @@ body {
   cursor: pointer;
 }
 
-.primary-button:disabled {
+.primary-button[aria-disabled='true'] {
   cursor: wait;
   opacity: 0.7;
 }

@@ -11,6 +11,9 @@ export function useSignOut(onSignOut: () => Promise<void>): SignOutState {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<DisplayedErrorCode | null>(null);
   const signOut = () => {
+    if (pending) {
+      return;
+    }
     setPending(true);
     setError(null);
     onSignOut().catch((failure: unknown) => {

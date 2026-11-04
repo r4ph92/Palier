@@ -30,7 +30,7 @@ function CreateOperatorForm({ onCreated }: Pick<CreateOperatorPageProps, 'onCrea
   return (
     <form className="form" noValidate aria-busy={form.submitting} onSubmit={(event) => void form.submit(event)}>
       <LegalNameField value={form.legalName} onChange={form.setLegalName} error={form.error} />
-      <button type="submit" className="primary-button" disabled={form.submitting}>
+      <button type="submit" className="primary-button" aria-disabled={form.submitting}>
         {form.submitting ? text.createOperator.submitting : text.createOperator.submit}
       </button>
     </form>
@@ -58,7 +58,7 @@ function LegalNameField({ value, onChange, error }: LegalNameFieldProps) {
         aria-invalid={error !== null}
       />
       <p id="legal-name-hint" className="field-hint">{interpolate(text.createOperator.legalNameHint, LEGAL_NAME_LIMITS)}</p>
-      {error === null ? null : <ErrorNotice id="legal-name-error" code={error} />}
+      {error === null ? null : <ErrorNotice id="legal-name-error" code={error} takesFocus />}
     </>
   );
 }
