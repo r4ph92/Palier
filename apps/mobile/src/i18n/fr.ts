@@ -110,6 +110,7 @@ export const fr = {
   session: {
     eyebrow: 'Session en cours',
     none: 'Aucune session en cours',
+    checkFailed: 'Impossible de vérifier votre session en cours.',
     enteredLead: 'Entrée ',
     elapsedLead: 'Durée ',
     amountLead: 'Montant à ce jour\u00A0: ',

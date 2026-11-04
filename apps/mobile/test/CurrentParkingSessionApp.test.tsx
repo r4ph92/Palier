@@ -49,7 +49,7 @@ describe('the current session after a relaunch', () => {
     expect(screen.getByRole('tab', { name: 'Session' })).toBeOnTheScreen();
   });
 
-  it('shows neither the empty line nor a session while Palier cannot be reached', async () => {
+  it('says the session could not be checked while Palier cannot be reached, above the scan form', async () => {
     const parkingSession = new FakeParkingSessionClient(null);
     parkingSession.failure = new PalierUnreachableError('fake');
     await relaunchAsJulie(parkingSession);
@@ -57,8 +57,25 @@ describe('the current session after a relaunch', () => {
 
     await user.press(await screen.findByRole('tab', { name: 'Scanner' }));
 
+    expect(screen.getByText('Impossible de vérifier votre session en cours.')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toHaveStyle({ minHeight: 44 });
     expect(screen.queryByText('Aucune session en cours')).not.toBeOnTheScreen();
     expect(screen.getByLabelText('Contenu du QR')).toBeOnTheScreen();
+  });
+
+  it('reads the session again when Julie presses Réessayer once Palier is back', async () => {
+    const parkingSession = new FakeParkingSessionClient(null);
+    parkingSession.failure = new PalierUnreachableError('fake');
+    await relaunchAsJulie(parkingSession);
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole('tab', { name: 'Scanner' }));
+    parkingSession.failure = null;
+    parkingSession.session = julieAtParkingDemo();
+
+    await user.press(screen.getByRole('button', { name: 'Réessayer' }));
+
+    expect(await screen.findByText('Montant à ce jour : 9,75 $', visibleText)).toBeOnTheScreen();
+    expect(screen.queryByText('Impossible de vérifier votre session en cours.')).not.toBeOnTheScreen();
   });
 });
 

@@ -1,14 +1,12 @@
 import { useEffect } from 'react';
-import { Text } from 'react-native';
 import type { EntryClient } from '../api/EntryClient';
 import type { TabLabels } from '../components/TabBar';
 import { useEntry, type EntryState } from '../entries/useEntry';
 import { i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionController, CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
-import { useColors } from '../theme/useColors';
-import { typography } from '../theme/typography';
 import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
 import { ScanScreen } from './ScanScreen';
+import { SessionNotice } from './SessionNotice';
 
 interface ScanTabProps {
   readonly entryClient: EntryClient;
@@ -33,18 +31,9 @@ export function ScanTab({ entryClient, currentSession, onAddPlate, onAddCard }: 
       entry.startOver();
       refresh();
     };
-    return <ScanScreen entry={entry} notice={<SessionNotice state={state} />} onDone={onDone} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
+    return <ScanScreen entry={entry} notice={<SessionNotice state={state} onRetry={refresh} />} onDone={onDone} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
   }
   return <CurrentParkingSessionScreen session={state.session} readAt={state.readAt} />;
-}
-
-// Said only once Palier answered that the driver has no session; nothing while loading or unreachable.
-function SessionNotice({ state }: { readonly state: CurrentParkingSessionState }) {
-  const colors = useColors();
-  if (state.status !== 'none') {
-    return null;
-  }
-  return <Text style={[typography.body, { color: colors.muted }]}>{i18n.t('session.none')}</Text>;
 }
 
 function isEntryInProgress(state: EntryState): boolean {
