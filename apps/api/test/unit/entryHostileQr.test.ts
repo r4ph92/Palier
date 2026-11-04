@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { gateQrLink, signGateToken } from '../../src/domain/entries/gateToken.ts';
 import { configureServer } from './configureServer.ts';
-import { acceptNoticeAs, authorizationFor, julie } from './fakeDriverRepository.ts';
 import { ENTREE_DEMO_SECRET, entreeDemoGate } from './fakes/entryFakes.ts';
+import { readyDriver } from './fakes/readyDriver.ts';
 
 const token = signGateToken(entreeDemoGate.id, ENTREE_DEMO_SECRET);
 const entreeDemoQr = gateQrLink(entreeDemoGate.id, ENTREE_DEMO_SECRET);
@@ -16,11 +16,7 @@ describe('POST /v1/entries with hostile QR content', () => {
   async function startWithJulieReady() {
     const configured = configureServer();
     server = configured.server;
-    await acceptNoticeAs(configured.driverRepository, julie);
-    await configured.vehicleRepository.saveVehicle(julie.id, { plate: 'ABC 123', plateKey: 'ABC123', province: 'QC' });
-    await configured.driverRepository.saveStripeCustomerIdIfMissing(julie.id, 'cus_Julie');
-    await configured.driverRepository.saveSavedCard(julie.id, 'pm_Julie', { brand: 'visa', last4: '4242' });
-    const headers = await authorizationFor(configured.driverRepository, julie);
+    const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
     const enter = (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent } });
     return { ...configured, enter };
   }
