@@ -1,8 +1,9 @@
-import type { EntrySessionState, EntryStatusResponse } from '@palier/shared-types';
+import type { EntryStatusResponse } from '@palier/shared-types';
+import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import { PalierUnreachableError } from './LotsClient';
 import { isSpot } from './parseEntry';
 
-const SESSION_STATES: readonly unknown[] = ['CREATED', 'ENTRY_CONFIRMED', 'CANCELLED'] satisfies EntrySessionState[];
+const SESSION_STATES: readonly unknown[] = ENTRY_SESSION_STATES;
 
 export function parseEntryStatus(body: unknown): EntryStatusResponse {
   if (!isEntryStatus(body)) {

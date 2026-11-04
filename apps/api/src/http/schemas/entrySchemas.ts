@@ -1,4 +1,5 @@
 import type { EntryRequest, EntryResponse, EntryStatusResponse, GateCommand } from '@palier/shared-types';
+import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
 
@@ -36,7 +37,7 @@ export const entryStatusResponseSchema = {
   additionalProperties: false,
   properties: {
     sessionId: { type: 'string' },
-    state: { type: 'string', enum: ['CREATED', 'ENTRY_CONFIRMED', 'CANCELLED'] },
+    state: { type: 'string', enum: ENTRY_SESSION_STATES },
     spot: assignedSpotSchema,
     entryConfirmedAt: { type: ['string', 'null'] },
   },

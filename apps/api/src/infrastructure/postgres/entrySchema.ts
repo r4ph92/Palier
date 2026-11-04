@@ -1,10 +1,11 @@
 import { sql } from 'drizzle-orm';
 import { foreignKey, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import { appUser, vehicle } from './driverSchema.ts';
 import { gate } from './gateSchema.ts';
 import { parkingLot, spot } from './lotSchema.ts';
 
-export const parkingSessionState = pgEnum('parking_session_state', ['CREATED', 'ENTRY_CONFIRMED', 'CANCELLED']);
+export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION_STATES);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
 
 // Later stories add states (entered, exited…); each active one joins these index predicates, see docs/decisions/007.

@@ -15,7 +15,9 @@ export interface EntryResponse {
   readonly barrierOpened: true;
 }
 
-export type EntrySessionState = 'CREATED' | 'ENTRY_CONFIRMED' | 'CANCELLED';
+export const ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'CANCELLED'] as const;
+
+export type EntrySessionState = (typeof ENTRY_SESSION_STATES)[number];
 
 export interface EntryStatusResponse {
   readonly sessionId: string;
