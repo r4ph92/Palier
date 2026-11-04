@@ -15,11 +15,4 @@ export const DRIVER_PERSONA_IDS: readonly string[] = [AMELIE_LAVOIE_ID, ERIC_DUF
 export const OPERATOR_PERSONA_IDS: readonly string[] = [SOPHIE_LAVOIE_ID, PIERRE_ROY_ID, NOUVEL_OPERATEUR_ID];
 
 // The dashboard's test list: the operator personas, then the named drivers, so a tester can see a driver has no operator.
-export const DASHBOARD_TEST_USER_IDS: readonly string[] = [
-  ...OPERATOR_PERSONA_IDS,
-  JULIE_TREMBLAY_ID,
-  MARC_GAGNON_ID,
-  NADIA_BOUCHARD_ID,
-  AMELIE_LAVOIE_ID,
-  ERIC_DUFRESNE_ID,
-];
+export const DASHBOARD_TEST_USER_IDS: readonly string[] = [...OPERATOR_PERSONA_IDS, ...DRIVER_PERSONA_IDS];

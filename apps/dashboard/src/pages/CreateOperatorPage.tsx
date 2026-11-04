@@ -59,7 +59,7 @@ function LegalNameField({ value, onChange, error }: LegalNameFieldProps) {
         aria-invalid={error !== null}
       />
       <p id="legal-name-hint" className="field-hint">{interpolate(text.createOperator.legalNameHint, LEGAL_NAME_LIMITS)}</p>
-      {error === null ? null : <ErrorNotice id="legal-name-error" code={error} takesFocus />}
+      {error === null ? null : <ErrorNotice id="legal-name-error" code={error} values={LEGAL_NAME_LIMITS} takesFocus />}
     </>
   );
 }

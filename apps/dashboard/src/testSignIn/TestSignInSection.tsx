@@ -45,6 +45,7 @@ function useTestSignIn(onSignedIn: () => Promise<void>): TestSignIn {
       return;
     }
     setPendingUserId(userId);
+    setError(null);
     setError(await runThenRefresh(() => testSignInClient.signIn(userId), onSignedIn));
     setPendingUserId(null);
   };

@@ -16,38 +16,37 @@ export interface LoadedResource<T> {
 // A reload keeps a failed resource in place with isReloading set, so the failure block does not unmount under the user's focus.
 // Loads once per load function and again on reload; callers keep load stable with useCallback and remount with a key for another id.
 export function useResource<T>(load: () => Promise<T>): LoadedResource<T> {
-  const refreshSession = useSessionRefresh();
   const [resource, setResource] = useState<Resource<T>>({ status: 'loading' });
   const [attempt, setAttempt] = useState(0);
   const [isReloading, setIsReloading] = useState(false);
-  useEffect(() => {
-    let current = true;
-    load().then(
-      (value) => {
-        if (current) {
-          setResource({ status: 'ready', value });
-          setIsReloading(false);
-        }
-      },
-      (failure: unknown) => {
-        if (!current) {
-          return;
-        }
-        const error = asDashboardApiError(failure);
-        if (endsSession(error)) {
-          void refreshSession();
-        }
-        setResource({ status: 'failed', error });
-        setIsReloading(false);
-      },
-    );
-    return () => {
-      current = false;
-    };
-  }, [load, attempt, refreshSession]);
+  const settle = useCallback((settled: Resource<T>) => {
+    setResource(settled);
+    setIsReloading(false);
+  }, []);
+  useLoadAttempt(load, attempt, settle);
   const reload = useCallback(() => {
     setIsReloading(true);
     setAttempt((previous) => previous + 1);
   }, []);
   return { resource, reload, isReloading };
+}
+
+function useLoadAttempt<T>(load: () => Promise<T>, attempt: number, settle: (settled: Resource<T>) => void): void {
+  const refreshSession = useSessionRefresh();
+  useEffect(() => {
+    let current = true;
+    const onFailure = (failure: unknown) => {
+      const error = asDashboardApiError(failure);
+      if (current && endsSession(error)) {
+        void refreshSession();
+      }
+      if (current) {
+        settle({ status: 'failed', error });
+      }
+    };
+    load().then((value) => current && settle({ status: 'ready', value }), onFailure);
+    return () => {
+      current = false;
+    };
+  }, [load, attempt, refreshSession, settle]);
 }
