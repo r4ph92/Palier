@@ -10,8 +10,8 @@ const oversize: SpotGroup = (spot) => spot.isOversize;
 const standard: SpotGroup = (spot) => !spot.isEv && !spot.isAccessible && !spot.isOversize;
 
 // Electric and accessible spots go only to a vehicle with that need, even when the spot has another flag too,
-// and an oversize vehicle fits only an oversize spot.
-function fits(needs: VehicleNeeds, spot: FreeSpot): boolean {
+// and an oversize vehicle fits only an oversize spot. Exported for the load script, which counts the spots a vehicle fits.
+export function spotFits(needs: VehicleNeeds, spot: FreeSpot): boolean {
   return (!spot.isEv || needs.isElectric) && (!spot.isAccessible || needs.hasAccessiblePermit) && (!needs.isOversize || spot.isOversize);
 }
 
@@ -26,7 +26,7 @@ function spotGroupsFor(needs: VehicleNeeds): readonly SpotGroup[] {
 // The need comes before the level: chooseSpot orders the spots inside the first group that has one free.
 // Null when no spot is free; throws NO_SUITABLE_SPOT when spots are free but none fits the vehicle.
 export function chooseSpotFor(needs: VehicleNeeds, freeSpots: readonly FreeSpot[]): FreeSpot | null {
-  const fitting = freeSpots.filter((spot) => fits(needs, spot));
+  const fitting = freeSpots.filter((spot) => spotFits(needs, spot));
   for (const group of spotGroupsFor(needs)) {
     const chosen = chooseSpot(fitting.filter(group));
     if (chosen !== null) {
