@@ -1,6 +1,6 @@
 import type { GateCommand } from '@palier/shared-types';
 import type { AuthenticatedGate } from '../../../src/domain/gates/AuthenticatedGate.ts';
-import { GATE_COMMAND_PAGE_SIZE, type GateCommandFeed } from '../../../src/domain/gates/GateCommandFeed.ts';
+import { GATE_COMMAND_PAGE_SIZE, type GateCommandCursor, type GateCommandFeed } from '../../../src/domain/gates/GateCommandFeed.ts';
 import type { DeviceKeyRecord, GateDeviceKeyRepository } from '../../../src/domain/gates/GateDeviceKeyRepository.ts';
 import { hashDeviceKey } from '../../../src/domain/gates/hashDeviceKey.ts';
 import type { PassageEntry, PassageLedger, RecordedPassage } from '../../../src/domain/gates/PassageLedger.ts';
@@ -67,7 +67,7 @@ export class FakeGateCommandFeed implements GateCommandFeed {
     return this;
   }
 
-  listCommands(gateId: string, after: Date | null): Promise<readonly GateCommand[]> {
+  listCommands(gateId: string, after: GateCommandCursor | null): Promise<readonly GateCommand[]> {
     const ordered = this.#commands
       .filter((entry) => entry.gateId === gateId)
       .map((entry) => entry.command)
@@ -75,6 +75,11 @@ export class FakeGateCommandFeed implements GateCommandFeed {
     if (after === null) {
       return Promise.resolve(ordered.slice(-GATE_COMMAND_PAGE_SIZE));
     }
-    return Promise.resolve(ordered.filter((command) => new Date(command.issuedAt) > after).slice(0, GATE_COMMAND_PAGE_SIZE));
+    return Promise.resolve(ordered.filter((command) => isAfter(command, after)).slice(0, GATE_COMMAND_PAGE_SIZE));
   }
+}
+
+function isAfter(command: GateCommand, cursor: GateCommandCursor): boolean {
+  const issuedAt = new Date(command.issuedAt).getTime();
+  return issuedAt > cursor.issuedAt.getTime() || (issuedAt === cursor.issuedAt.getTime() && command.id > cursor.id);
 }

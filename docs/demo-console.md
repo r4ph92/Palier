@@ -100,9 +100,10 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
   `{ gateId, lotId, kind, closedAt, vehicleCount }`. Le sens et le parking
   viennent de la barrière, jamais du corps. `closedAt` à plus de 5 minutes dans
   le futur : 400.
-- `GET /v1/gates/me/commands?after=<ISO 8601>` : `[{ id, kind: "OPEN", issuedAt }]`
-  de la barrière de la clé, du plus ancien au plus récent, 50 au plus ;
-  strictement après `after`, ou les 50 dernières sans `after`. `after` illisible : 400.
+- `GET /v1/gates/me/commands?after=<ISO 8601>&afterId=<uuid>` : `[{ id, kind: "OPEN", issuedAt }]`
+  de la barrière de la clé, triées par `issuedAt` puis `id`, 50 au plus ;
+  strictement après le curseur `(after, afterId)` (la dernière commande lue), ou
+  les 50 dernières sans curseur. Curseur incomplet ou illisible : 400.
 - Authentification : `Authorization: Bearer <clé>` (32 octets en base64url,
   43 caractères). Toute clé absente, mal formée, inconnue ou révoquée reçoit le
   même 401 avec `WWW-Authenticate: Bearer`, avant toute lecture du corps.

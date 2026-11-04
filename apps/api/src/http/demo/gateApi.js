@@ -1,9 +1,10 @@
 /** @typedef {{ status: number, body: unknown }} ApiResponse */
+/** @typedef {{ issuedAt: string, id: string }} CommandCursor */
 /**
  * @typedef {object} GateApi
  * @property {(deviceKey: string) => Promise<ApiResponse>} fetchIdentity
  * @property {(deviceKey: string, gateId: string, closedAt: string) => Promise<ApiResponse>} postPassage
- * @property {(deviceKey: string, after: string | null) => Promise<ApiResponse>} fetchCommands
+ * @property {(deviceKey: string, after: CommandCursor | null) => Promise<ApiResponse>} fetchCommands
  */
 
 export const UNREACHABLE = 0;
@@ -27,11 +28,14 @@ export function createGateApi(fetchFunction) {
 }
 
 /**
- * @param {string | null} after
+ * @param {CommandCursor | null} after
  * @returns {string}
  */
 function commandsUrl(after) {
-  return after === null ? '/v1/gates/me/commands' : `/v1/gates/me/commands?after=${encodeURIComponent(after)}`;
+  if (after === null) {
+    return '/v1/gates/me/commands';
+  }
+  return `/v1/gates/me/commands?${new URLSearchParams({ after: after.issuedAt, afterId: after.id })}`;
 }
 
 /**

@@ -63,7 +63,7 @@ ligne par choix ; la raison suit le tiret.
 ## Console de démonstration
 
 - Fichiers statiques dans `apps/api/src/http/demo/`, listés dans une seule table (`demoAssets.ts`), lus au démarrage et servis seulement en mode démo, avec une CSP sans `unsafe-inline` (polices comprises, `font-src 'self'`), `nosniff`, `no-referrer` et `no-store`. Guide : `docs/demo-console.md`.
-- La logique est découpée par raison de changer : `consoleText.js` (textes, heures, pluriels), `gateApi.js` (client HTTP), `loopPress.js` (déroulé d'un appui), `commandFeed.js` (commandes interrogées chaque seconde, curseur = `issuedAt` de la dernière, dédoublonnées par id) et `consoleTranslations.js` (textes FR/EN) ; c'est du JavaScript avec types JSDoc, vérifié par `tsc` (`allowJs` + `checkJs`) et testé par Vitest ; aucun build pour le navigateur.
+- La logique est découpée par raison de changer : `consoleText.js` (textes, heures, pluriels), `gateApi.js` (client HTTP), `loopPress.js` (déroulé d'un appui), `commandFeed.js` (commandes interrogées chaque seconde, curseur = `issuedAt` et `id` de la dernière, comparés en ligne `(issued_at, id) > (…)` pour ne perdre aucune des commandes d'une même milliseconde, dédoublonnées par id) et `consoleTranslations.js` (textes FR/EN) ; c'est du JavaScript avec types JSDoc, vérifié par `tsc` (`allowJs` + `checkJs`) et testé par Vitest ; aucun build pour le navigateur.
 - Polices : Archivo 400/600 et IBM Plex Mono 400/500 servies par l'API depuis `@expo-google-fonts` (dépendances de `apps/api`), `font-display: swap`, CSP `font-src 'self'`.
 - Heures `18 h 02` / `6:02 PM` formatées à la main comme dans l'app (même règle, code dupliqué : l'app et la page ne partagent aucun module d'exécution).
 

@@ -2,17 +2,20 @@ import { DEVICE_KEY_SHAPE } from './loopPress.js';
 
 /** @typedef {import('@palier/shared-types').GateCommand} GateCommand */
 /** @typedef {Pick<import('./gateApi.js').GateApi, 'fetchCommands'>} CommandApi */
+/** @typedef {import('./gateApi.js').CommandCursor} CommandCursor */
 
 const OK = 200;
 // The barrier must look like it reacts to the scan: the console asks for new commands every second.
 export const COMMAND_POLL_MILLISECONDS = 1000;
 
 /**
+ * The last command shown; its id tells apart two commands of the same millisecond.
  * @param {readonly GateCommand[]} known
- * @returns {string | null}
+ * @returns {CommandCursor | null}
  */
 export function cursorOf(known) {
-  return known.at(-1)?.issuedAt ?? null;
+  const last = known.at(-1);
+  return last === undefined ? null : { issuedAt: last.issuedAt, id: last.id };
 }
 
 /**

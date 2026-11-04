@@ -16,7 +16,7 @@ function fakeApi(response: ApiResponse) {
 describe('cursorOf', () => {
   it('starts without a cursor, then follows the last command shown', () => {
     expect(cursorOf([])).toBeNull();
-    expect(cursorOf([first, sameMillisecondA])).toBe(sameMillisecondA.issuedAt);
+    expect(cursorOf([first, sameMillisecondA])).toEqual({ issuedAt: sameMillisecondA.issuedAt, id: sameMillisecondA.id });
   });
 });
 
@@ -35,7 +35,7 @@ describe('pollCommands', () => {
     const api = fakeApi({ status: 200, body: [sameMillisecondA] });
 
     expect(await pollCommands(api, DEVICE_KEY, [first])).toEqual([first, sameMillisecondA]);
-    expect(api.fetchCommands).toHaveBeenCalledWith(DEVICE_KEY, first.issuedAt);
+    expect(api.fetchCommands).toHaveBeenCalledWith(DEVICE_KEY, { issuedAt: first.issuedAt, id: first.id });
   });
 
   it('does not call the API until the key has the shape of a device key', async () => {

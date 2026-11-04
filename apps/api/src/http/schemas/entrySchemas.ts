@@ -39,7 +39,8 @@ export const gateCommandListSchema = { type: 'array', items: gateCommandSchema }
 
 export const gateCommandsQuerySchema = {
   type: 'object',
-  properties: { after: { type: 'string', format: 'date-time' } },
+  additionalProperties: false,
+  properties: { after: { type: 'string', format: 'date-time' }, afterId: { type: 'string', format: 'uuid' } },
 } as const;
 
 export type GateCommandsQuery = FromSchema<typeof gateCommandsQuerySchema>;

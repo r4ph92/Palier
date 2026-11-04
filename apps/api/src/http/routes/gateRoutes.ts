@@ -1,6 +1,6 @@
 import type { GateIdentity, GatePassageRequest, GatePassageResponse } from '@palier/shared-types';
 import type { FastifyInstance } from 'fastify';
-import type { GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
+import type { GateCommandCursor, GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
 import type { GateDeviceKeyRepository } from '../../domain/gates/GateDeviceKeyRepository.ts';
 import type { PassageLedger } from '../../domain/gates/PassageLedger.ts';
 import { recordPassage } from '../../domain/gates/recordPassage.ts';
@@ -68,14 +68,31 @@ function registerPassageRoute(scope: FastifyInstance, dependencies: GateRouteDep
   });
 }
 
-// The demo console polls this with the issuedAt of the last command it shows, so each poll brings only new ones.
+// The demo console polls this with the issuedAt and id of the last command it shows, so each poll brings only new ones.
 function registerCommandsRoute(scope: FastifyInstance, commands: GateCommandFeed): void {
   const schema = { querystring: gateCommandsQuerySchema, response: { 200: gateCommandListSchema } };
   scope.get<CommandsRoute>('/me/commands', { schema }, async (request, reply) => {
-    const after = request.query.after === undefined ? null : new Date(request.query.after);
-    if (after !== null && !(after.getUTCFullYear() >= FIRST_STORABLE_YEAR)) {
-      return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'AFTER_INVALID', message: 'after is not a date the server can read.' });
+    const after = cursorOf(request.query);
+    if (after === undefined) {
+      return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'AFTER_INVALID', message: 'after and afterId do not form a cursor the server can read.' });
     }
     return commands.listCommands(authenticatedGateOf(request).id, after);
   });
+}
+
+// Null asks for the latest commands; undefined is a cursor the route refuses.
+function cursorOf({ after, afterId }: GateCommandsQuery): GateCommandCursor | null | undefined {
+  if (after === undefined && afterId === undefined) {
+    return null;
+  }
+  if (after === undefined || afterId === undefined) {
+    return undefined;
+  }
+  const issuedAt = new Date(after);
+  return isStorableDate(issuedAt) ? { issuedAt, id: afterId } : undefined;
+}
+
+// Also false for an invalid date, whose year is NaN.
+function isStorableDate(date: Date): boolean {
+  return date.getUTCFullYear() >= FIRST_STORABLE_YEAR;
 }
