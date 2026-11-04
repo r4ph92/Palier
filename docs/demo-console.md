@@ -99,7 +99,8 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
 - `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>" }` :
   `{ gateId, lotId, kind, closedAt, vehicleCount, confirmedSessionId }`.
   `confirmedSessionId` est la session d'entrée que ce passage a confirmée (la plus
-  ancienne ouverture de cette barrière dans les 60 secondes avant `closedAt`), ou
+  ancienne ouverture de cette barrière émise dans les 60 secondes avant la réception du passage, mesurées
+  sur l'horloge du serveur : la dérive de la console n'y change rien), ou
   `null` s'il n'y en avait aucune ou à une sortie. Le sens et le parking
   viennent de la barrière, jamais du corps. `closedAt` à plus de 5 minutes dans
   le futur : 400.

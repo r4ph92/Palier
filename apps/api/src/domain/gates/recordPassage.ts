@@ -6,8 +6,8 @@ import { PassageRefusedError } from './PassageRefusedError.ts';
 
 const ALLOWED_CLOCK_DRIFT_MILLISECONDS = 5 * 60 * 1000;
 const FIRST_STORABLE_YEAR = 1;
-// An opening is confirmed by the loop closing up to a minute after it; the same drift as above covers a console clock that runs ahead.
-export const OPENING_CONFIRMATION_WINDOW_MILLISECONDS = 60 * 1000;
+// Both ends of the comparison are server timestamps (command issue time, server clock), so console clock drift cannot matter.
+const OPENING_CONFIRMATION_WINDOW_MILLISECONDS = 60 * 1000;
 
 const VEHICLE_COUNT_CHANGE: Record<GateKind, VehicleCountChange> = { ENTRY: 1, EXIT: -1 };
 
@@ -29,7 +29,7 @@ export async function recordPassage(
   ensurePassageAllowed(command, collaborators.clock());
   const { gate, closedAt } = command;
   const vehicleCountChange = VEHICLE_COUNT_CHANGE[gate.kind];
-  const confirmableOpenings = gate.kind === 'ENTRY' ? openingWindowAround(closedAt) : null;
+  const confirmableOpenings = gate.kind === 'ENTRY' ? openingWindowAt(collaborators.clock()) : null;
   const { vehicleCount, confirmedSessionId } = await collaborators.ledger.recordPassage({
     gate,
     closedAt,
@@ -39,11 +39,8 @@ export async function recordPassage(
   return { gateId: gate.id, lotId: gate.lotId, kind: gate.kind, closedAt: closedAt.toISOString(), vehicleCount, confirmedSessionId };
 }
 
-function openingWindowAround(closedAt: Date): OpeningWindow {
-  return {
-    from: new Date(closedAt.getTime() - OPENING_CONFIRMATION_WINDOW_MILLISECONDS),
-    to: new Date(closedAt.getTime() + ALLOWED_CLOCK_DRIFT_MILLISECONDS),
-  };
+function openingWindowAt(now: Date): OpeningWindow {
+  return { from: new Date(now.getTime() - OPENING_CONFIRMATION_WINDOW_MILLISECONDS) };
 }
 
 function ensurePassageAllowed(command: PassageCommand, now: Date): void {

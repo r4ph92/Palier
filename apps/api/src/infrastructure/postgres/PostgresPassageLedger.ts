@@ -57,7 +57,7 @@ async function confirmOpening(tx: Transaction, entry: PassageEntry): Promise<str
   return confirmed.id;
 }
 
-// The oldest opening wins; an opening another closure already holds is skipped, so two closures never confirm the same session.
+// The oldest opening wins; the parking_lot row lock taken by countVehicle serialises closures per lot, so it must run first.
 async function confirmOldestOpening(tx: Transaction, entry: PassageEntry, window: OpeningWindow): Promise<ConfirmedSessionRow | undefined> {
   const rows = await tx.execute<ConfirmedSessionRow>(sql`
     update parking_session
@@ -67,10 +67,10 @@ async function confirmOldestOpening(tx: Transaction, entry: PassageEntry, window
       from gate_command c
       join parking_session s on s.id = c.session_id
       where c.gate_id = ${entry.gate.id} and c.kind = 'OPEN' and s.state = 'CREATED'
-        and c.issued_at between ${window.from.toISOString()} and ${window.to.toISOString()}
+        and c.issued_at >= ${window.from.toISOString()}
       order by c.issued_at, c.id
       limit 1
-      for update of s skip locked
+      for update of s
     ) and state = 'CREATED'
     returning id, assigned_spot_id`);
   return rows[0];

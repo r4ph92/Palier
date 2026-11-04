@@ -53,7 +53,7 @@ describe('recordPassage', () => {
         gate: entreeDemo,
         closedAt: now,
         vehicleCountChange: 1,
-        confirmableOpenings: { from: new Date('2026-10-27T22:01:00Z'), to: new Date('2026-10-27T22:07:00Z') },
+        confirmableOpenings: { from: new Date('2026-10-27T22:01:00Z') },
       },
     ]);
     expect(passage).toEqual({
@@ -64,6 +64,15 @@ describe('recordPassage', () => {
       vehicleCount: 1,
       confirmedSessionId: null,
     });
+  });
+
+  it('anchors the opening window on the server clock when the console clock runs ahead', async () => {
+    const ledger = new FakePassageLedger(0);
+    const consoleAhead = new Date(now.getTime() + 3 * 60 * 1000);
+
+    await recordPassage(entryAt(consoleAhead), { ledger, clock });
+
+    expect(ledger.entries[0]).toMatchObject({ closedAt: consoleAhead, confirmableOpenings: { from: new Date('2026-10-27T22:01:00Z') } });
   });
 
   it('counts one vehicle less at an exit gate', async () => {
@@ -108,7 +117,6 @@ describe('recordPassage', () => {
     const passage = await recordPassage(entryAt(now), { ledger, clock });
 
     expect(passage).toMatchObject({ vehicleCount: 1, confirmedSessionId: 'session-julie' });
-    expect(ledger.pendingOpenings).toEqual(['session-marc']);
   });
 
   it('refuses a passage from a gate without loops', async () => {

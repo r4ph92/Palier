@@ -4,7 +4,6 @@ export type VehicleCountChange = 1 | -1;
 
 export interface OpeningWindow {
   readonly from: Date;
-  readonly to: Date;
 }
 
 export interface PassageEntry {
