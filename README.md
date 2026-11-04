@@ -46,7 +46,8 @@ conservée pour mémoire, plus à jour.
 ## Lancer en local
 
 Monorepo npm : `apps/api` (API Fastify + Drizzle sur Postgres), `apps/mobile`
-(React Native avec Expo SDK 58, ouvert dans Expo Go sur le simulateur iOS) et
+(React Native avec Expo SDK 58, ouvert dans Expo Go sur le simulateur iOS),
+`apps/dashboard` (tableau de bord opérateur, React + Vite) et
 `packages/shared-types` (types échangés entre l'API et l'app). Les choix
 d'implémentation sont dans [`docs/implementation.md`](docs/implementation.md),
 la direction visuelle de l'app dans [`docs/design.md`](docs/design.md), le contrat du pont natif
@@ -87,6 +88,17 @@ Copier `apps/mobile/.env.example` en `apps/mobile/.env` : il garde l'API sur
 `http://localhost:3000` (`EXPO_PUBLIC_API_URL`) et active « Connexion de test »
 (`EXPO_PUBLIC_TEST_SIGN_IN=true`). Sans ce fichier, l'écran de connexion n'offre
 rien tant qu'Apple et Google (#30) ne sont pas là.
+
+Tableau de bord opérateur, dans un autre terminal :
+
+```
+cp apps/dashboard/.env.example apps/dashboard/.env   # API_PORT=3000, VITE_TEST_SIGN_IN=true
+npm run dev --workspace @palier/dashboard            # http://localhost:5173
+```
+
+Vite relaie `/v1` vers l'API sur `API_PORT` (`docs/decisions/010`). « Connexion
+de test » propose Sophie Lavoie (Stationnements Lavoie inc.), Pierre Roy (Garages
+Roy), Nouvel Opérateur (sans opérateur) et les conducteurs du seed.
 
 Pour que le seed crée les clients Stripe de test des conducteurs (carte Visa 4242
 pour Julie et Marc), mettre une clé `sk_test_…` dans `STRIPE_SECRET_KEY` de
@@ -129,7 +141,7 @@ Le seed et `seed:spot-state` refusent de tourner si `NODE_ENV` n'est pas
 ### Vérifications
 
 ```
-npm run gate        # lint + typecheck + tests unitaires API (Vitest) + app (Jest)
+npm run gate        # lint + typecheck + tests unitaires API (Vitest) + app (Jest) + tableau de bord (Vitest)
 ```
 
 `gate` ne touche ni base ni simulateur ; la CI (`.github/workflows/ci.yml`)
