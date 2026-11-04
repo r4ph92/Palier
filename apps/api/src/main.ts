@@ -11,6 +11,7 @@ import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/Pos
 import { PostgresOperatorRepository } from './infrastructure/postgres/PostgresOperatorRepository.ts';
 import { PostgresPassageLedger } from './infrastructure/postgres/PostgresPassageLedger.ts';
 import { PostgresSessionTokenRepository } from './infrastructure/postgres/PostgresSessionTokenRepository.ts';
+import { PostgresUserDirectory } from './infrastructure/postgres/PostgresUserDirectory.ts';
 import { StripeCardGateway } from './infrastructure/stripe/StripeCardGateway.ts';
 import { PostgresVehicleRepository } from './infrastructure/postgres/PostgresVehicleRepository.ts';
 import { purgeEndedSessionTokens } from './domain/sessions/sessionTokens.ts';
@@ -27,6 +28,7 @@ const server = buildServer({
     lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
     driverRepository,
     sessionTokenRepository,
+    userDirectory: new PostgresUserDirectory(connection.database),
     vehicleRepository,
     operatorRepository: new PostgresOperatorRepository(connection.database),
   },

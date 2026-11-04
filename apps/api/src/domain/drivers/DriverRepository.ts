@@ -1,9 +1,6 @@
 import type { SavedCard } from '@palier/shared-types';
-import type { Driver } from './Driver.ts';
 
 export interface DriverRepository {
-  listDrivers(): Promise<readonly Driver[]>;
-  findDriver(driverId: string): Promise<Driver | null>;
   findLatestNoticeVersion(driverId: string): Promise<string | null>;
   // True when the latest notice the driver accepted is the given version, which is the consent rule the guards apply.
   hasLatestNoticeVersion(driverId: string, noticeVersion: string): Promise<boolean>;

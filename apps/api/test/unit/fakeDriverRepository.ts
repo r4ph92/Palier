@@ -1,6 +1,7 @@
 import type { SavedCard } from '@palier/shared-types';
 import type { Driver } from '../../src/domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../src/domain/drivers/DriverRepository.ts';
+import type { UserDirectory } from '../../src/domain/sessions/UserDirectory.ts';
 import { hashSessionToken } from '../../src/domain/sessions/sessionTokens.ts';
 import { FakeSessionTokenRepository } from './fakes/fakeSessionTokenRepository.ts';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
@@ -8,7 +9,8 @@ import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 export const julie: Driver = { id: '00000000-0000-4000-8000-000000000501', firstName: 'Julie', lastName: 'Tremblay' };
 export const marc: Driver = { id: '00000000-0000-4000-8000-000000000502', firstName: 'Marc', lastName: 'Gagnon' };
 
-export class FakeDriverRepository implements DriverRepository {
+// Drivers and the user directory read the same user rows, so one fake plays both.
+export class FakeDriverRepository implements DriverRepository, UserDirectory {
   readonly #drivers: readonly Driver[];
   // Session tokens join the same user rows, so the fake keeps them beside the drivers it knows.
   readonly sessions: FakeSessionTokenRepository;
@@ -21,12 +23,12 @@ export class FakeDriverRepository implements DriverRepository {
     this.sessions = new FakeSessionTokenRepository(drivers);
   }
 
-  listDrivers(): Promise<readonly Driver[]> {
-    return Promise.resolve(this.#drivers);
+  findUser(userId: string): Promise<Driver | null> {
+    return Promise.resolve(this.#drivers.find((driver) => driver.id === userId) ?? null);
   }
 
-  findDriver(driverId: string): Promise<Driver | null> {
-    return Promise.resolve(this.#drivers.find((driver) => driver.id === driverId) ?? null);
+  findUsers(userIds: readonly string[]): Promise<readonly Driver[]> {
+    return Promise.resolve(userIds.flatMap((userId) => this.#drivers.filter((driver) => driver.id === userId)));
   }
 
   findLatestNoticeVersion(driverId: string): Promise<string | null> {

@@ -27,7 +27,8 @@ export function fakeRepositories({
   lotAvailabilityRepository = { findOnlineLots: () => Promise.resolve([]) },
   operatorRepository = new FakeOperatorRepository(),
 }: FakeRepositoryChoices = {}): ServerDependencies['repositories'] {
-  return { lotAvailabilityRepository, driverRepository, sessionTokenRepository: driverRepository.sessions, vehicleRepository, operatorRepository };
+  const sessionTokenRepository = driverRepository.sessions;
+  return { lotAvailabilityRepository, driverRepository, sessionTokenRepository, userDirectory: driverRepository, vehicleRepository, operatorRepository };
 }
 
 export function serverDependencies(overrides: Partial<ServerDependencies> = {}): ServerDependencies {

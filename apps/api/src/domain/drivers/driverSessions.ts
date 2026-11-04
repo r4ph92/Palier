@@ -1,7 +1,7 @@
 import type { Driver } from './Driver.ts';
 import type { DriverRepository } from './DriverRepository.ts';
 import type { SessionTokenRepository } from '../sessions/SessionTokenRepository.ts';
-import { authenticateSessionToken, revokeSession, signInUser } from '../sessions/sessionTokens.ts';
+import { authenticateSessionToken, revokeSession, signInUser, type SessionAccess } from '../sessions/sessionTokens.ts';
 
 export interface DriverAccess {
   readonly drivers: DriverRepository;
@@ -13,8 +13,8 @@ export interface SignedInDriver {
   readonly driver: Driver;
 }
 
-export async function signInDriver({ drivers, sessions }: DriverAccess, driverId: string): Promise<SignedInDriver | null> {
-  const signedIn = await signInUser({ users: drivers, sessions }, driverId, 'APP');
+export async function signInDriver(access: SessionAccess, driverId: string): Promise<SignedInDriver | null> {
+  const signedIn = await signInUser(access, driverId, 'APP');
   return signedIn === null ? null : { token: signedIn.token, driver: signedIn.user };
 }
 

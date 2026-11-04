@@ -3,9 +3,9 @@ import { authenticateDriver, signInDriver, signOutDriver } from '../../src/domai
 import { hashSessionToken, purgeEndedSessionTokens } from '../../src/domain/sessions/sessionTokens.ts';
 import { FakeDriverRepository, julie, marc } from './fakeDriverRepository.ts';
 
-function fakeDriverAccess() {
-  const drivers = new FakeDriverRepository();
-  return { drivers, sessions: drivers.sessions };
+function fakeSessionAccess() {
+  const users = new FakeDriverRepository();
+  return { users, sessions: users.sessions };
 }
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -14,7 +14,7 @@ describe('driver sessions', () => {
   afterEach(() => vi.useRealTimers());
 
   it('signs Julie in with a fresh token that authenticates her', async () => {
-    const access = fakeDriverAccess();
+    const access = fakeSessionAccess();
 
     const signedIn = await signInDriver(access, julie.id);
 
@@ -23,7 +23,7 @@ describe('driver sessions', () => {
   });
 
   it('stores only the hash of the token', async () => {
-    const access = fakeDriverAccess();
+    const access = fakeSessionAccess();
 
     const signedIn = await signInDriver(access, julie.id);
 
@@ -32,7 +32,7 @@ describe('driver sessions', () => {
   });
 
   it('gives a different token on each sign-in', async () => {
-    const access = fakeDriverAccess();
+    const access = fakeSessionAccess();
 
     const first = await signInDriver(access, julie.id);
     const second = await signInDriver(access, julie.id);
@@ -41,11 +41,11 @@ describe('driver sessions', () => {
   });
 
   it('signs nobody in for an unknown driver', async () => {
-    expect(await signInDriver(fakeDriverAccess(), '00000000-0000-4000-8000-000000000599')).toBeNull();
+    expect(await signInDriver(fakeSessionAccess(), '00000000-0000-4000-8000-000000000599')).toBeNull();
   });
 
   it('ends her oldest session when she signs in an eleventh time', async () => {
-    const access = fakeDriverAccess();
+    const access = fakeSessionAccess();
     const tokens: string[] = [];
     for (let sign = 0; sign < 11; sign += 1) {
       tokens.push((await signInDriver(access, julie.id))?.token ?? '');
@@ -57,7 +57,7 @@ describe('driver sessions', () => {
   });
 
   it('does not end the sessions of another driver when Julie signs in past the limit', async () => {
-    const access = fakeDriverAccess();
+    const access = fakeSessionAccess();
     const marcToken = (await signInDriver(access, marc.id))?.token ?? '';
     for (let sign = 0; sign < 11; sign += 1) {
       await signInDriver(access, julie.id);
@@ -67,7 +67,7 @@ describe('driver sessions', () => {
   });
 
   it('refuses the token once Julie signs out', async () => {
-    const access = fakeDriverAccess();
+    const access = fakeSessionAccess();
     const signedIn = await signInDriver(access, julie.id);
     const token = signedIn?.token ?? '';
 
@@ -78,7 +78,7 @@ describe('driver sessions', () => {
 
   it('purges tokens that expired more than seven days ago and keeps the others', async () => {
     vi.useFakeTimers({ now: new Date('2026-01-01T00:00:00Z') });
-    const access = fakeDriverAccess();
+    const access = fakeSessionAccess();
     const stale = await signInDriver(access, julie.id);
     vi.setSystemTime(new Date('2026-01-20T00:00:00Z'));
     const recent = await signInDriver(access, julie.id);
@@ -91,7 +91,7 @@ describe('driver sessions', () => {
 
   it('purges tokens revoked more than seven days ago', async () => {
     vi.useFakeTimers({ now: new Date('2026-01-01T00:00:00Z') });
-    const access = fakeDriverAccess();
+    const access = fakeSessionAccess();
     const signedIn = await signInDriver(access, julie.id);
     await signOutDriver(access.sessions, signedIn?.token ?? '');
     vi.setSystemTime(new Date('2026-01-09T00:00:00Z'));
@@ -101,7 +101,7 @@ describe('driver sessions', () => {
 
   it('keeps a token that ended exactly seven days ago', async () => {
     vi.useFakeTimers({ now: new Date('2026-01-01T00:00:00Z') });
-    const access = fakeDriverAccess();
+    const access = fakeSessionAccess();
     const signedIn = await signInDriver(access, julie.id);
     await signOutDriver(access.sessions, signedIn?.token ?? '');
     vi.setSystemTime(new Date(Date.parse('2026-01-01T00:00:00Z') + 7 * DAY));
@@ -111,7 +111,7 @@ describe('driver sessions', () => {
 
   it('keeps a token revoked less than seven days ago', async () => {
     vi.useFakeTimers({ now: new Date('2026-01-01T00:00:00Z') });
-    const access = fakeDriverAccess();
+    const access = fakeSessionAccess();
     const signedIn = await signInDriver(access, julie.id);
     await signOutDriver(access.sessions, signedIn?.token ?? '');
     vi.setSystemTime(new Date(Date.parse('2026-01-01T00:00:00Z') + 6 * DAY));

@@ -5,6 +5,7 @@ import type { DriverAccess } from '../domain/drivers/driverSessions.ts';
 import type { CardGateway } from '../domain/payments/CardGateway.ts';
 import type { LotAvailabilityRepository } from '../domain/lots/LotAvailabilityRepository.ts';
 import type { SessionTokenRepository } from '../domain/sessions/SessionTokenRepository.ts';
+import type { UserDirectory } from '../domain/sessions/UserDirectory.ts';
 import type { VehicleRepository } from '../domain/vehicles/VehicleRepository.ts';
 import type { DashboardRouteDependencies } from './dashboard/DashboardRouteDependencies.ts';
 import { registerDashboardRoutes } from './dashboard/dashboardRoutes.ts';
@@ -24,6 +25,7 @@ export interface ServerDependencies {
     readonly lotAvailabilityRepository: LotAvailabilityRepository;
     readonly driverRepository: DriverRepository;
     readonly sessionTokenRepository: SessionTokenRepository;
+    readonly userDirectory: UserDirectory;
     readonly vehicleRepository: VehicleRepository;
     readonly operatorRepository: OperatorRepository;
   };
@@ -60,7 +62,7 @@ export function buildServer({ repositories, gates, cardGateway, entries, setting
 // The dashboard has its own scope, outside the app's: the minimum app version does not apply to a browser.
 function dashboardDependencies(repositories: ServerDependencies['repositories'], settings: ServerSettings): DashboardRouteDependencies {
   return {
-    access: { users: repositories.driverRepository, sessions: repositories.sessionTokenRepository },
+    access: { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository },
     operators: repositories.operatorRepository,
     testSignInEnabled: settings.testSignInEnabled === true,
     secureCookies: settings.secureCookies ?? true,
@@ -82,6 +84,6 @@ function registerAppRoutes(
   registerPaymentMethodRoutes(server, driverAccess, cardGateway);
   registerEntryRoutes(server, driverAccess, entries);
   if (settings.testSignInEnabled === true) {
-    registerTestSignInRoutes(server, driverAccess);
+    registerTestSignInRoutes(server, { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository });
   }
 }

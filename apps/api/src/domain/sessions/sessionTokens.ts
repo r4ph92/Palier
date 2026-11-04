@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
-import type { DriverRepository } from '../drivers/DriverRepository.ts';
 import type { SessionScope, SessionTokenRepository, SessionUser } from './SessionTokenRepository.ts';
+import type { UserDirectory } from './UserDirectory.ts';
 
 const TOKEN_BYTES = 32;
 const MAX_ACTIVE_TOKENS_PER_SCOPE = 10;
@@ -13,7 +13,7 @@ const TOKEN_LIFETIME_MILLISECONDS: Readonly<Record<SessionScope, number>> = {
 };
 
 export interface SessionAccess {
-  readonly users: DriverRepository;
+  readonly users: UserDirectory;
   readonly sessions: SessionTokenRepository;
 }
 
@@ -32,7 +32,7 @@ export function sessionLifetimeSeconds(scope: SessionScope): number {
 }
 
 export async function signInUser({ users, sessions }: SessionAccess, userId: string, scope: SessionScope): Promise<SignedInUser | null> {
-  const user = await users.findDriver(userId);
+  const user = await users.findUser(userId);
   if (user === null) {
     return null;
   }
