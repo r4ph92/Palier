@@ -28,7 +28,7 @@ describe('vehicle needs routes', () => {
     return authorizationFor(driverRepository, julie);
   }
 
-  it('refuses to edit the needs of a vehicle with 403', async () => {
+  it('refuses to edit the needs before the driver consents, with 403', async () => {
     startServer();
     const headers = await authorizationFor(driverRepository, julie);
 
