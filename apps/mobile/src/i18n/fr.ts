@@ -90,7 +90,7 @@ export const fr = {
     addPlate: 'Ajouter une plaque',
     addCard: 'Ajouter une carte',
     retry: 'Réessayer',
-    unreachable: 'Impossible de joindre Palier.',
+    unreachable: 'Impossible de joindre Palier',
     unreachableHint: 'Vérifiez votre connexion, puis réessayez.',
     notResponding: 'Palier ne répond pas, réessayez dans un instant',
     refusals: {

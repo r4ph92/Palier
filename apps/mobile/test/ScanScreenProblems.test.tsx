@@ -70,7 +70,7 @@ describe('ScanScreen when Palier cannot answer', () => {
     client.isReachable = false;
     const { user } = await scan({ client });
 
-    expect(await screen.findByText('Impossible de joindre Palier.')).toBeOnTheScreen();
+    expect(await screen.findByText('Impossible de joindre Palier')).toBeOnTheScreen();
     expect(screen.getByText('Vérifiez votre connexion, puis réessayez.')).toBeOnTheScreen();
     client.isReachable = true;
     await user.press(screen.getByRole('button', { name: 'Réessayer' }));

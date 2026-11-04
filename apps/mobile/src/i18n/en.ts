@@ -92,7 +92,7 @@ export const en: Translations = {
     addPlate: 'Add a plate',
     addCard: 'Add a card',
     retry: 'Try again',
-    unreachable: 'Can’t reach Palier.',
+    unreachable: 'Can’t reach Palier',
     unreachableHint: 'Check your connection, then try again.',
     notResponding: 'Palier is not responding, try again in a moment',
     refusals: {
