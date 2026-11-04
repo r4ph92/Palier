@@ -1,3 +1,4 @@
+import { assertNever } from '../assertNever.ts';
 import type { OpeningWindow } from '../gates/PassageLedger.ts';
 import type { HoldRelease, PaymentAuthorizer } from './PaymentAuthorizer.ts';
 import type { ExpiredEntry, PendingRelease, UnconfirmedEntryRepository } from './UnconfirmedEntryRepository.ts';
@@ -80,5 +81,7 @@ async function settleRelease({ entries, log }: HoldReleaseRun, hold: PendingRele
     case 'failed':
       log.warn(hold, 'Stripe did not release the card hold, retried at the next check');
       return;
+    default:
+      assertNever(release);
   }
 }
