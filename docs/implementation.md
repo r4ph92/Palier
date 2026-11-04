@@ -45,6 +45,7 @@ ligne par choix ; la raison suit le tiret.
 - Erreurs des routes de barrière : `{ statusCode, error, message }` avec `error` = code machine (`DEVICE_KEY_REFUSED`, `GATE_FORBIDDEN`, `GATE_WITHOUT_LOOPS`, `CLOSED_AT_INVALID`, `CLOSED_AT_IN_FUTURE`).
 - `DEMO_MODE` (`true`/`false`, faux par défaut) n'est pas refusé sous `NODE_ENV=production` (D13 tel qu'écrit : une démo hébergée peut tourner ainsi) ; le serveur journalise un avertissement au démarrage.
 - Pas de limitation de débit sur les routes de barrière pour le prototype.
+- Les routes de barrière et la console sont exemptées du consentement (`routeClassification.ts`) : un contrôleur signe avec une clé d'appareil, pas un jeton de conducteur. `MINIMUM_APP_VERSION` ne s'applique qu'aux routes de l'app, enregistrées dans leur propre portée Fastify ; un contrôleur n'envoie pas de version d'app.
 
 ## Console de démonstration
 

@@ -36,6 +36,19 @@ export function buildServer({ repositories, gates, cardGateway, settings = {} }:
   const server = Fastify({ logger: settings.logsRequests ?? false, ajv: { customOptions: { coerceTypes: false } } });
   server.setErrorHandler(handleServerError);
   server.decorateRequest('driver', null);
+  void server.register(async (appScope) => registerAppRoutes(appScope, { repositories, cardGateway, settings }));
+  registerGateRoutes(server, gates);
+  if (settings.demoMode === true) {
+    registerDemoConsoleRoutes(server);
+  }
+  return server;
+}
+
+// The app's routes share a scope so the minimum app version applies to the app, not to gate controllers or the console.
+function registerAppRoutes(
+  server: FastifyInstance,
+  { repositories, cardGateway, settings }: Omit<Required<ServerDependencies>, 'gates'>,
+): void {
   if (settings.minimumAppVersion !== undefined) {
     server.addHook('onRequest', requireMinimumAppVersion(settings.minimumAppVersion));
   }
@@ -43,12 +56,7 @@ export function buildServer({ repositories, gates, cardGateway, settings = {} }:
   registerVehicleRoutes(server, repositories.vehicleRepository, repositories.driverRepository);
   registerDriverRoutes(server, repositories.driverRepository);
   registerPaymentMethodRoutes(server, repositories.driverRepository, cardGateway);
-  registerGateRoutes(server, gates);
   if (settings.testSignInEnabled === true) {
     registerTestSignInRoutes(server, repositories.driverRepository);
   }
-  if (settings.demoMode === true) {
-    registerDemoConsoleRoutes(server);
-  }
-  return server;
 }
