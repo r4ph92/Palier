@@ -55,13 +55,17 @@ export interface DashboardSignInResponse {
   readonly user: DashboardUser;
 }
 
-export type DashboardErrorCode =
-  | 'UNAUTHORIZED'
-  | 'CSRF_HEADER_MISSING'
-  | 'LEGAL_NAME_INVALID'
-  | 'OPERATOR_EXISTS'
-  | 'NO_OPERATOR'
-  | 'LOT_NOT_FOUND';
+// The one list of codes: the type derives from it, and the dashboard checks an answer's code against it.
+export const DASHBOARD_ERROR_CODES = [
+  'UNAUTHORIZED',
+  'CSRF_HEADER_MISSING',
+  'LEGAL_NAME_INVALID',
+  'OPERATOR_EXISTS',
+  'NO_OPERATOR',
+  'LOT_NOT_FOUND',
+] as const;
+
+export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];
 
 export interface DashboardErrorBody {
   readonly statusCode: number;

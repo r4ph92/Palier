@@ -1,13 +1,9 @@
 import type { DashboardErrorCode } from '@palier/shared-types';
+import { DASHBOARD_ERROR_CODES } from '@palier/shared-types/dashboard';
 
-const KNOWN_CODES: ReadonlySet<string> = new Set<DashboardErrorCode>([
-  'UNAUTHORIZED',
-  'CSRF_HEADER_MISSING',
-  'LEGAL_NAME_INVALID',
-  'OPERATOR_EXISTS',
-  'NO_OPERATOR',
-  'LOT_NOT_FOUND',
-]);
+function isDashboardErrorCode(code: string | undefined): code is DashboardErrorCode {
+  return DASHBOARD_ERROR_CODES.some((known) => known === code);
+}
 
 export type DisplayedErrorCode = DashboardErrorCode | 'UNKNOWN';
 
@@ -20,7 +16,7 @@ export class DashboardApiError extends Error {
     super(`Dashboard API answered ${status} ${code ?? ''}`.trim());
     this.name = 'DashboardApiError';
     this.status = status;
-    this.code = code !== undefined && KNOWN_CODES.has(code) ? (code as DashboardErrorCode) : 'UNKNOWN';
+    this.code = isDashboardErrorCode(code) ? code : 'UNKNOWN';
   }
 }
 
