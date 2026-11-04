@@ -59,8 +59,8 @@ describe('the scan tab when Palier cancels an entry nobody drove through', () =>
   beforeEach(() => jest.useFakeTimers({ advanceTimers: true }));
   afterEach(() => jest.useRealTimers());
 
-  it.each(['fr', 'en'] as const)('shows the cancellation in place, announces it and names the tab Scanner again (%s)', async (language) => {
-    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+  it.each(['fr', 'en'] as const)('shows the cancellation in place, moves focus to it and names the tab Scanner again (%s)', async (language) => {
+    const sendAccessibilityEvent = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent');
     const { entryClient, parkingSession, text } = await julieEntersParkingDemo(language);
     entryClient.sessionState = 'CANCELLED';
     parkingSession.session = null;
@@ -68,7 +68,7 @@ describe('the scan tab when Palier cancels an entry nobody drove through', () =>
     await advance(ENTRY_STATUS_POLL_MILLISECONDS);
 
     expect(await screen.findByText(text.cancelled, visibleText)).toBeOnTheScreen();
-    expect(announce).toHaveBeenCalledWith(expect.stringMatching(/annulée|cancelled/));
+    expect(sendAccessibilityEvent).toHaveBeenCalledWith(expect.anything(), 'focus');
     expect(await screen.findByRole('tab', { name: text.scan, selected: true })).toBeOnTheScreen();
   });
 

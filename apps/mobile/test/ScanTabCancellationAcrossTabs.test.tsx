@@ -48,8 +48,7 @@ describe('an entry cancelled while the driver looks at another tab, without pres
     parkingSession.session = null;
 
     await advance(ENTRY_STATUS_POLL_MILLISECONDS * 3);
-    await user.press(screen.getByRole('tab', { name: /Session|Scanner|Scan/ }));
-    await advance(60_000);
+    await user.press(screen.getByRole('tab', { name: text.scan }));
 
     expect(await screen.findByText(text.cancelled, visibleText)).toBeOnTheScreen();
   });
@@ -64,5 +63,35 @@ describe('an entry cancelled while the driver looks at another tab, without pres
     await advance(ENTRY_STATUS_POLL_MILLISECONDS * 3);
 
     expect(await screen.findByText(text.cancelled, visibleText)).toBeOnTheScreen();
+  });
+  it('polls the entry once per tick however often the driver switches tabs', async () => {
+    const { entryClient, user, text } = await julieOpensEntreeDemo('fr');
+    const requestsBefore = entryClient.statusRequests.length;
+    for (let round = 0; round < 3; round += 1) {
+      await user.press(screen.getByRole('tab', { name: text.lots }));
+      await user.press(screen.getByRole('tab', { name: 'Session' }));
+    }
+    const ticks = 5;
+
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS * ticks);
+
+    expect(entryClient.statusRequests.length - requestsBefore).toBeLessThanOrEqual(ticks + 1);
+    expect(entryClient.statusRequests.length - requestsBefore).toBeGreaterThanOrEqual(ticks - 1);
+  });
+
+  it('shows the current session and no cancellation when the loop confirmed the entry while the driver was on another tab', async () => {
+    const { entryClient, parkingSession, user, text } = await julieOpensEntreeDemo('fr');
+    await user.press(screen.getByRole('tab', { name: text.lots }));
+    entryClient.sessionState = 'ENTRY_CONFIRMED';
+    parkingSession.session = julieAtParkingDemo({ state: 'ENTRY_CONFIRMED', elapsedMinutes: 1, amountCents: 75 });
+
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS * 3);
+    const requestsAfterConfirmation = entryClient.statusRequests.length;
+    await user.press(screen.getByRole('tab', { name: 'Session' }));
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS * 5);
+
+    expect(screen.getByText('Entrée confirmée', visibleText)).toBeOnTheScreen();
+    expect(screen.queryByText(text.cancelled, visibleText)).not.toBeOnTheScreen();
+    expect(entryClient.statusRequests.length).toBe(requestsAfterConfirmation);
   });
 });
