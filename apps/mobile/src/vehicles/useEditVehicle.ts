@@ -9,6 +9,7 @@ import { useVehicleNeeds } from './useVehicleNeeds';
 export interface EditVehicleController {
   readonly needs: VehicleNeeds;
   readonly hasFailed: boolean;
+  readonly isSaving: boolean;
   toggleNeed(need: VehicleNeed): void;
   save(): void;
 }
@@ -17,16 +18,19 @@ export function useEditVehicle(client: VehicleClient, vehicle: Vehicle, onSaved:
   const { isElectric, hasAccessiblePermit, isOversize } = vehicle;
   const { needs, toggleNeed } = useVehicleNeeds({ isElectric, hasAccessiblePermit, isOversize });
   const [hasFailed, setHasFailed] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const save = useCallback(async () => {
     setHasFailed(false);
+    setIsSaving(true);
     try {
       await client.updateVehicleNeeds(vehicle.id, needs);
       onSaved();
     } catch (error) {
+      setIsSaving(false);
       settleFailure(error, setHasFailed);
     }
   }, [client, vehicle.id, needs, onSaved]);
-  return { needs, hasFailed, toggleNeed, save };
+  return { needs, hasFailed, isSaving, toggleNeed, save };
 }
 
 // A refused session or a missing notice already moves the app off this screen, so nothing is shown here.

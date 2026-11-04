@@ -65,6 +65,20 @@ describe('EditVehicleScreen', () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 
+  it('marks the save button busy while the needs are saved, so a second tap sends nothing', async () => {
+    const client = new FakeVehicleClient([eva001]);
+    const update = jest.spyOn(client, 'updateVehicleNeeds').mockReturnValue(new Promise(() => {}));
+    await renderEditVehicleScreen(client);
+    const user = userEvent.setup();
+
+    await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
+    await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(update).toHaveBeenCalledTimes(1);
+
+    expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeBusy();
+  });
+
   it('reads in English when the device is English', async () => {
     await renderEditVehicleScreen(new FakeVehicleClient([eva001]), 'en');
 
