@@ -13,6 +13,7 @@ export const GATED = [
   'PUT /v1/me/payment-method',
   'POST /v1/me/setup-intent',
   'POST /v1/entries',
+  'GET /v1/entries/:sessionId',
 ];
 
 const DRIVER_EXEMPT = ['GET /v1/me', 'POST /v1/consent', 'POST /v1/sign-out', 'GET /v1/test/drivers', 'POST /v1/test/sign-in'];
@@ -25,14 +26,14 @@ const DEMO_CONSOLE_ROUTES = Object.keys(DEMO_ASSETS).map((fileName) => `GET ${de
 
 export const EXEMPT = [...DRIVER_EXEMPT, ...GATE_DEVICE_ROUTES, ...DEMO_CONSOLE_ROUTES];
 
-const SAMPLE_VEHICLE_ID = '00000000-0000-4000-8000-000000000999';
+const SAMPLE_UUID = '00000000-0000-4000-8000-000000000999';
 
 export function methodOf(route: string): string {
   return route.split(' ')[0] ?? '';
 }
 
 export function urlOf(route: string): string {
-  return (route.split(' ')[1] ?? '').replace(':id', SAMPLE_VEHICLE_ID);
+  return (route.split(' ')[1] ?? '').replace(':id', SAMPLE_UUID).replace(':sessionId', SAMPLE_UUID);
 }
 
 // Only JSON bodies carry an error code: some routes answer with no body, and the console serves HTML, CSS, scripts and fonts.

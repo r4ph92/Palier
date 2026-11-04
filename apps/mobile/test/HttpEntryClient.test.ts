@@ -84,4 +84,30 @@ describe('HttpEntryClient', () => {
 
     await expect(client.enter(ENTREE_DEMO_QR)).rejects.toBeInstanceOf(PalierUnreachableError);
   });
+
+  describe('status', () => {
+    const confirmed = { sessionId: 'session-1', state: 'ENTRY_CONFIRMED', spot: spotA1, entryConfirmedAt: '2026-10-27T22:02:00.000Z' };
+
+    it('gets the session with the bearer token and returns its state', async () => {
+      const { client, fetchFunction } = clientAnswering(jsonResponse(confirmed, 200));
+
+      await expect(client.status('session-1')).resolves.toEqual(confirmed);
+      expect(fetchFunction).toHaveBeenCalledWith(
+        `${BASE_URL}/v1/entries/session-1`,
+        expect.objectContaining({ method: 'GET', headers: { Authorization: `Bearer ${TOKEN}` } }),
+      );
+    });
+
+    it('reports an unrecognized state as an unexpected response', async () => {
+      const { client } = clientAnswering(jsonResponse({ ...confirmed, state: 'EXITED' }, 200));
+
+      await expect(client.status('session-1')).rejects.toBeInstanceOf(PalierUnreachableError);
+    });
+
+    it('reports a 404 as a status error', async () => {
+      const { client } = clientAnswering(jsonResponse({ statusCode: 404, error: 'SESSION_NOT_FOUND', message: 'No such entry.' }, 404));
+
+      await expect(client.status('session-1')).rejects.toEqual(new PalierStatusError(404));
+    });
+  });
 });

@@ -4,6 +4,8 @@ export type {
   EntryRefusalCode,
   EntryRequest,
   EntryResponse,
+  EntrySessionState,
+  EntryStatusResponse,
   GateCommand,
   GateCommandKind,
   GateCommandListResponse,

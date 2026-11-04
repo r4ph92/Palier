@@ -10,6 +10,7 @@ import {
   entreeRoyGate,
   SORTIE_DEMO_SECRET,
   sortieDemoGate,
+  fakeSessionId,
 } from './fakes/entryFakes.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 
@@ -34,7 +35,7 @@ describe('POST /v1/entries', () => {
     const response = await enter(entreeDemoQr);
 
     expect(response.statusCode).toBe(201);
-    expect(response.json()).toEqual({ sessionId: 'session-1', spot: { number: 'A-1', levelCode: 'P1', aisleCode: 'A' }, barrierOpened: true });
+    expect(response.json()).toEqual({ sessionId: fakeSessionId(1), spot: { number: 'A-1', levelCode: 'P1', aisleCode: 'A' }, barrierOpened: true });
     expect(entries.payments.authorized).toHaveLength(1);
     expect(entries.gateCommander.opened).toHaveLength(1);
   });
@@ -147,5 +148,77 @@ describe('POST /v1/entries', () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({ statusCode: 400, error: 'QR_NOT_RECOGNIZED', message: 'This QR is not a Palier terminal.' });
+  });
+});
+
+describe('GET /v1/entries/:sessionId', () => {
+  let server: FastifyInstance;
+
+  afterEach(() => server.close());
+
+  async function startWithJulieEntered() {
+    const configured = configureServer();
+    server = configured.server;
+    const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
+    await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr } });
+    const status = (sessionId: string, as = headers) => server.inject({ method: 'GET', url: `/v1/entries/${sessionId}`, headers: as });
+    return { ...configured, headers, status };
+  }
+
+  it('shows the barrier open and no confirmation until the loop closes', async () => {
+    const { status } = await startWithJulieEntered();
+
+    const response = await status(fakeSessionId(1));
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      sessionId: fakeSessionId(1),
+      state: 'CREATED',
+      spot: { number: 'A-1', levelCode: 'P1', aisleCode: 'A' },
+      entryConfirmedAt: null,
+    });
+  });
+
+  it('shows ENTRY_CONFIRMED with the passage time once the loop closed', async () => {
+    const { status, entries } = await startWithJulieEntered();
+    entries.sessions.confirmEntry(fakeSessionId(1), new Date('2026-10-27T22:02:00Z'));
+
+    const response = await status(fakeSessionId(1));
+
+    expect(response.json()).toMatchObject({ state: 'ENTRY_CONFIRMED', entryConfirmedAt: '2026-10-27T22:02:00.000Z' });
+  });
+
+  it("answers 404 SESSION_NOT_FOUND to Marc asking for Julie's session", async () => {
+    const { status, driverRepository, vehicleRepository } = await startWithJulieEntered();
+    const marcHeaders = await readyDriver(driverRepository, vehicleRepository, marc);
+
+    const response = await status(fakeSessionId(1), marcHeaders);
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toMatchObject({ error: 'SESSION_NOT_FOUND' });
+  });
+
+  it('answers 404 for a session that does not exist and 400 for an id that is not a UUID', async () => {
+    const { status } = await startWithJulieEntered();
+
+    expect((await status(fakeSessionId(99))).statusCode).toBe(404);
+    expect((await status('not-a-uuid')).statusCode).toBe(400);
+  });
+
+  it('refuses a request without a driver token', async () => {
+    const { status } = await startWithJulieEntered();
+
+    expect((await status(fakeSessionId(1), {} as never)).statusCode).toBe(401);
+  });
+
+  it("answers Marc the same 404 body for Julie's session as for an unknown one, so session ids cannot be probed", async () => {
+    const { status, driverRepository, vehicleRepository } = await startWithJulieEntered();
+    const marcHeaders = await readyDriver(driverRepository, vehicleRepository, marc);
+
+    const julies = await status(fakeSessionId(1), marcHeaders);
+    const unknown = await status(fakeSessionId(99), marcHeaders);
+
+    expect(julies.json()).toEqual({ statusCode: 404, error: 'SESSION_NOT_FOUND', message: 'No such entry.' });
+    expect(unknown.json()).toEqual(julies.json());
   });
 });
