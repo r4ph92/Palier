@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { gateQrLink, isSignedWith, readGateToken, signGateToken } from '../../src/domain/entries/gateToken.ts';
 import { ENTREE_DEMO_SECRET, SORTIE_DEMO_SECRET } from './fakes/entryFakes.ts';
-import { entreeDemo } from './fakes/gateFixtures.ts';
+import { entreeDemo, sortieDemo } from './fakes/gateFixtures.ts';
 
 const BASE64URL_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 const token = signGateToken(entreeDemo.id, ENTREE_DEMO_SECRET);
 
 function verifies(qrContent: string, secret: string | null = ENTREE_DEMO_SECRET): boolean {
   const read = readGateToken(qrContent);
-  return read !== null && read.gateId === entreeDemo.id && isSignedWith(read, secret);
+  return read !== null && isSignedWith(read, secret);
 }
 
 function alteredAt(position: number): string {
@@ -34,6 +34,15 @@ describe('gate QR token', () => {
 
   it.each([...token].map((_character, position) => position))('refuses the token altered at character %i', (position) => {
     expect(verifies(alteredAt(position))).toBe(false);
+  });
+
+  it.each([
+    ['Entrée Démo', ENTREE_DEMO_SECRET],
+    ['Sortie Démo', SORTIE_DEMO_SECRET],
+  ])('refuses the signature of Entrée Démo carried by the id of Sortie Démo, checked with the secret of %s', (_gate, secret) => {
+    const signature = token.slice(token.lastIndexOf('.') + 1);
+
+    expect(verifies(`palier1.${sortieDemo.id}.${signature}`, secret)).toBe(false);
   });
 
   it('refuses a token signed with another gate secret', () => {
