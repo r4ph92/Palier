@@ -18,7 +18,8 @@ export type CurrentParkingSessionState =
 
 export type CurrentParkingSessionReading = Extract<CurrentParkingSessionState, { readonly status: 'current' }>;
 
-// isReading: a read is in flight. missedReads: how many reads failed for lack of network, so a retry that fails again is still news.
+// isReading: a read is in flight. missedReads: how many reads the driver started with refresh() failed for lack of network,
+// so a retry that fails again is still news. The first read and the minute poll never count: the notice announces once on mount.
 export interface ReadProgress {
   readonly isReading: boolean;
   readonly missedReads: number;
@@ -56,17 +57,21 @@ export function useCurrentParkingSession(client: ParkingSessionClient, onFirstSe
   useEffect(() => {
     latestOnFirstSession.current = onFirstSession;
   });
-  const refresh = useCallback(() => void read(client, { tracker: tracker.current, setState, setProgress, onFirstSession: latestOnFirstSession }), [client]);
+  const readWith = useCallback(
+    (isRetry: boolean) => void read(client, { tracker: tracker.current, setState, setProgress, onFirstSession: latestOnFirstSession }, isRetry),
+    [client],
+  );
+  const refresh = useCallback(() => readWith(true), [readWith]);
   useEffect(() => {
-    refresh();
-    const timer = setInterval(refresh, SESSION_REFRESH_MILLISECONDS);
+    readWith(false);
+    const timer = setInterval(() => readWith(false), SESSION_REFRESH_MILLISECONDS);
     return () => clearInterval(timer);
-  }, [refresh]);
+  }, [readWith]);
   return { state, refresh, ...progress };
 }
 
 // Only the latest read lands, so a slow answer never replaces a newer one.
-async function read(client: ParkingSessionClient, { tracker, setState, setProgress, onFirstSession }: ReadContext): Promise<void> {
+async function read(client: ParkingSessionClient, { tracker, setState, setProgress, onFirstSession }: ReadContext, isRetry: boolean): Promise<void> {
   tracker.latest += 1;
   const readNumber = tracker.latest;
   setProgress((previous) => ({ ...previous, isReading: true }));
@@ -81,7 +86,7 @@ async function read(client: ParkingSessionClient, { tracker, setState, setProgre
     // Run inside the state update so an unexpected error is thrown during render and reaches the error boundary.
     setState((previous) => (readNumber === tracker.latest ? stateAfterFailure(previous, error) : previous));
     if (readNumber === tracker.latest) {
-      setProgress((previous) => ({ isReading: false, missedReads: previous.missedReads + (error instanceof PalierUnreachableError ? 1 : 0) }));
+      setProgress((previous) => ({ isReading: false, missedReads: previous.missedReads + (isRetry && error instanceof PalierUnreachableError ? 1 : 0) }));
     }
   }
 }

@@ -97,7 +97,10 @@ describe('the current session after a relaunch', () => {
 
 describe('the current session while signed in', () => {
   beforeEach(() => jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 10, 4, 21, 17) }));
-  afterEach(() => jest.useRealTimers());
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
 
   it('reads the amount again every minute', async () => {
     const parkingSession = new FakeParkingSessionClient(julieAtParkingDemo());
@@ -121,6 +124,19 @@ describe('the current session while signed in', () => {
     await advance(SESSION_REFRESH_MILLISECONDS);
 
     expect(announce).toHaveBeenCalledWith('Hors ligne, montant au dernier relevé');
+  });
+
+  it('announces the offline notice once when several background polls miss', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+    const parkingSession = new FakeParkingSessionClient(julieAtParkingDemo());
+    await relaunchAsJulie(parkingSession);
+    await screen.findByText('Mis à jour à 21 h 17', visibleText);
+    parkingSession.failure = new PalierUnreachableError('fake');
+
+    await advance(SESSION_REFRESH_MILLISECONDS * 3);
+
+    const offlineAnnouncements = announce.mock.calls.filter(([message]) => message === 'Hors ligne, montant au dernier relevé');
+    expect(offlineAnnouncements).toHaveLength(1);
   });
 
   it('keeps the session and the time of the last read when a refresh misses', async () => {
@@ -194,7 +210,7 @@ describe('announcing a session that cannot be checked', () => {
     parkingSession.holdsAnswer = true;
 
     await user.press(screen.getByRole('button', { name: 'Réessayer' }));
-    expect(screen.getByRole('button', { name: 'Réessayer', busy: true })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Vérification…', busy: true })).toBeDisabled();
     await act(async () => parkingSession.answer());
 
     expect(checkFailedAnnouncements()).toBe(2);
