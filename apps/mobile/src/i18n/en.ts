@@ -117,7 +117,6 @@ export const en: Translations = {
     amountLead: 'Amount so far: ',
     capLead: 'Daily cap: ',
     pending: 'Entry awaiting confirmation',
-    confirmed: 'Entry confirmed',
     updatedAt: 'Updated %{time}',
   },
   tabs: {

@@ -51,7 +51,7 @@ function SessionAmount({ session }: { readonly session: CurrentParkingSession })
 function SessionSpot({ session }: { readonly session: CurrentParkingSession }) {
   const colors = useColors();
   const isConfirmed = session.state === 'ENTRY_CONFIRMED';
-  const status = i18n.t(isConfirmed ? 'session.confirmed' : 'session.pending');
+  const status = i18n.t(isConfirmed ? 'scan.entryConfirmed' : 'session.pending');
   return <SpotWithState spot={session.spot} status={status} markColor={isConfirmed ? colors.free : colors.muted} />;
 }
 
