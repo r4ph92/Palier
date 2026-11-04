@@ -1,6 +1,7 @@
 import type { DashboardUser } from '@palier/shared-types';
 import { useState } from 'react';
-import { asDashboardApiError, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import { runThenRefresh } from '../api/runThenRefresh.ts';
 import { useResource } from '../api/useResource.ts';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { useLanguage } from '../i18n/LanguageContext.tsx';
@@ -14,7 +15,7 @@ interface TestSignInSectionProps {
 // Shows nothing until the API lists users, and nothing at all when it does not.
 export default function TestSignInSection({ onSignedIn }: TestSignInSectionProps) {
   const text = testSignInText[useLanguage().language];
-  const users = useResource(testSignInClient.users);
+  const users = useResource(testSignInClient.users).resource;
   if (users.status !== 'ready' || users.value.length === 0) {
     return null;
   }
@@ -27,16 +28,6 @@ export default function TestSignInSection({ onSignedIn }: TestSignInSectionProps
       <TestUserList users={users.value} onSignedIn={onSignedIn} />
     </section>
   );
-}
-
-async function signInThenRefresh(userId: string, onSignedIn: () => Promise<void>): Promise<DisplayedErrorCode | null> {
-  try {
-    await testSignInClient.signIn(userId);
-    await onSignedIn();
-    return null;
-  } catch (failure) {
-    return asDashboardApiError(failure).code;
-  }
 }
 
 interface TestSignIn {
@@ -54,7 +45,7 @@ function useTestSignIn(onSignedIn: () => Promise<void>): TestSignIn {
       return;
     }
     setPendingUserId(userId);
-    setError(await signInThenRefresh(userId, onSignedIn));
+    setError(await runThenRefresh(() => testSignInClient.signIn(userId), onSignedIn));
     setPendingUserId(null);
   };
   return { pendingUserId, error, signIn };

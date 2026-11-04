@@ -20,6 +20,13 @@ export class DashboardApiError extends Error {
   }
 }
 
+const UNAUTHORIZED = 401;
+
+// The session cookie expired or was revoked while the page was open.
+export function endsSession(error: DashboardApiError): boolean {
+  return error.status === UNAUTHORIZED;
+}
+
 export function asDashboardApiError(error: unknown): DashboardApiError {
   return error instanceof DashboardApiError ? error : new DashboardApiError(0, undefined);
 }

@@ -1,9 +1,7 @@
 import type { DashboardMeResponse } from '@palier/shared-types';
 import { useCallback, useEffect, useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
-import { asDashboardApiError } from '../api/DashboardApiError.ts';
-
-const UNAUTHORIZED = 401;
+import { asDashboardApiError, endsSession } from '../api/DashboardApiError.ts';
 
 export type Session =
   | { readonly status: 'loading' }
@@ -21,7 +19,7 @@ async function currentSession(): Promise<Session> {
   try {
     return { status: 'signedIn', me: await dashboardClient.me() };
   } catch (error) {
-    return asDashboardApiError(error).status === UNAUTHORIZED ? { status: 'signedOut' } : { status: 'unreachable' };
+    return endsSession(asDashboardApiError(error)) ? { status: 'signedOut' } : { status: 'unreachable' };
   }
 }
 

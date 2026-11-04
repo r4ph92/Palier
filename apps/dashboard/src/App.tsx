@@ -8,6 +8,7 @@ import { NotFoundPage } from './pages/NotFoundPage.tsx';
 import { OperatorHomePage } from './pages/OperatorHomePage.tsx';
 import { SignInPage } from './pages/SignInPage.tsx';
 import { UnreachablePage } from './pages/UnreachablePage.tsx';
+import { SessionRefreshContext } from './session/SessionRefreshContext.tsx';
 import { useDashboardSession, type Session } from './session/useDashboardSession.ts';
 
 export function App() {
@@ -26,7 +27,9 @@ function DashboardShell() {
     <>
       <AppHeader onSignOut={session.status === 'signedIn' ? signOut : null} />
       <main id="content" className="page">
-        <SessionContent session={session} refresh={refresh} />
+        <SessionRefreshContext.Provider value={refresh}>
+          <SessionContent session={session} refresh={refresh} />
+        </SessionRefreshContext.Provider>
       </main>
     </>
   );

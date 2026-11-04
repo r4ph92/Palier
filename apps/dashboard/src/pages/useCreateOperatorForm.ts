@@ -1,7 +1,8 @@
 import { isValidLegalName } from '@palier/shared-types/dashboard';
 import { useState, type FormEvent } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
-import { asDashboardApiError, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import { runThenRefresh } from '../api/runThenRefresh.ts';
 
 export interface CreateOperatorForm {
   readonly legalName: string;
@@ -11,14 +12,9 @@ export interface CreateOperatorForm {
   readonly submit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
 }
 
-async function createThenRefresh(legalName: string, onCreated: () => Promise<void>): Promise<DisplayedErrorCode | null> {
-  try {
-    await dashboardClient.createOperator(legalName);
-    await onCreated();
-    return null;
-  } catch (failure) {
-    return asDashboardApiError(failure).code;
-  }
+// OPERATOR_EXISTS means the operator was created elsewhere, in another tab say: reading the session shows it.
+function createThenRefresh(legalName: string, onCreated: () => Promise<void>): Promise<DisplayedErrorCode | null> {
+  return runThenRefresh(() => dashboardClient.createOperator(legalName), onCreated, ['OPERATOR_EXISTS']);
 }
 
 interface LegalNameField {

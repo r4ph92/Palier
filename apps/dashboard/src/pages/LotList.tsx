@@ -1,5 +1,6 @@
 import type { DashboardLot } from '@palier/shared-types';
 import { dashboardClient } from '../api/dashboardClient.ts';
+import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { useResource } from '../api/useResource.ts';
 import { AppLink } from '../components/AppLink.tsx';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
@@ -24,12 +25,12 @@ export function LotList() {
 
 function LotListContent() {
   const text = useText();
-  const lots = useResource(dashboardClient.lots);
+  const { resource: lots, reload } = useResource(dashboardClient.lots);
   if (lots.status === 'loading') {
     return <SkeletonRows count={LOADING_ROWS} label={text.home.lotsLoading} />;
   }
   if (lots.status === 'failed') {
-    return <ErrorNotice code={lots.error.code} />;
+    return <LotListFailure code={lots.error.code} onRetry={reload} />;
   }
   if (lots.value.length === 0) {
     return <p className="muted">{text.home.lotsEmpty}</p>;
@@ -40,6 +41,18 @@ function LotListContent() {
         <LotRow key={lot.id} lot={lot} />
       ))}
     </ul>
+  );
+}
+
+function LotListFailure({ code, onRetry }: { readonly code: DisplayedErrorCode; readonly onRetry: () => void }) {
+  const text = useText();
+  return (
+    <>
+      <ErrorNotice code={code} />
+      <button type="button" className="text-button" onClick={onRetry}>
+        {text.failure.retry}
+      </button>
+    </>
   );
 }
 

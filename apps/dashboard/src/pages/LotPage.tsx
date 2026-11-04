@@ -12,7 +12,7 @@ import { NotFoundPage } from './NotFoundPage.tsx';
 
 export function LotPage({ lotId }: { readonly lotId: string }) {
   const text = useText();
-  const lot = useResource(useCallback(() => dashboardClient.lot(lotId), [lotId]));
+  const lot = useResource(useCallback(() => dashboardClient.lot(lotId), [lotId])).resource;
   if (lot.status === 'loading') {
     return <p role="status" className="muted">{text.app.loading}</p>;
   }

@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { installFakeApi, julie, nouvelOperateur, parkingDemo } from './fakeDashboardApi.ts';
+import { installFakeApi, julie, lavoie, nouvelOperateur, parkingDemo } from './fakeDashboardApi.ts';
 import { renderDashboard } from './renderDashboard.tsx';
 
 describe('creating an operator', () => {
@@ -100,6 +100,17 @@ describe('creating an operator', () => {
     renderDashboard();
 
     expect(await screen.findByText('De 2 à 120 caractères, telle qu’inscrite au registre.')).toBeDefined();
+  });
+
+  it('shows the operator when it was created meanwhile, in another tab say', async () => {
+    const api = installFakeApi({ signedInAs: nouvelOperateur });
+    renderDashboard();
+    await userEvent.type(await screen.findByLabelText('Raison sociale'), 'Stationnements Exemple inc.');
+
+    api.me = { user: nouvelOperateur, operator: lavoie };
+    await userEvent.click(screen.getByRole('button', { name: 'Créer l’opérateur' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Stationnements Lavoie inc.' })).toBeDefined();
   });
 
   it('asks Julie to create an operator even at the address of Parking Démo, and shows her no operator data', async () => {
