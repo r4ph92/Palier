@@ -1,6 +1,6 @@
-import { act, render, screen, userEvent } from '@testing-library/react-native';
+import { act, render, screen, userEvent, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { simulatedToolkit } from '../src/dev/simulatedToolkit';
+import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import { applyLanguage } from '../src/i18n/i18n';
 import { PalierApp } from '../src/PalierApp';
 import { PositioningCore } from '../src/positioning/PositioningCore';
@@ -18,10 +18,14 @@ const AISLE_TWO_LINE = /^\d{1,2} h \d{2} min \d{2} s\s+Allée détectée : minor
 const START_MONITORING_LINE = /^\d{1,2} h \d{2} min \d{2} s\s+startMonitoring uuid=B9407F30 major=1$/;
 
 // Same wiring as App.tsx: the core owns the simulated module, the panel reads what reached the core.
-const positioningCore = new PositioningCore(simulatedToolkit.module);
-const developerEntry = simulatedToolkit.bind(positioningCore);
+function wireDeveloperTools() {
+  const toolkit = createSimulatedToolkit(() => Date.now());
+  const positioningCore = new PositioningCore(toolkit.module);
+  return { positioningCore, developerEntry: toolkit.bind(positioningCore) };
+}
 
 async function renderSignedInApp(language: 'fr' | 'en') {
+  const { positioningCore, developerEntry } = wireDeveloperTools();
   applyLanguage(language);
   const authClient = new FakeAuthClient();
   authClient.validTokens.add(JULIE_TOKEN);
@@ -38,7 +42,7 @@ async function renderSignedInApp(language: 'fr' | 'en') {
       />
     </SafeAreaProvider>,
   );
-  return userEvent.setup();
+  return { user: userEvent.setup(), positioningCore };
 }
 
 async function openPanel(user: ReturnType<typeof userEvent.setup>, accountTab: string) {
@@ -47,41 +51,44 @@ async function openPanel(user: ReturnType<typeof userEvent.setup>, accountTab: s
   return screen.findByTestId('SimulatedSignalsPanel');
 }
 
+function journal() {
+  return within(screen.getByTestId('Journal'));
+}
+
 describe('Simulated signals through the real developer tools', () => {
   afterEach(() => applyLanguage('fr'));
 
   it('logs "Allée détectée : minor 2" after Compte > Développeur > Allée 2', async () => {
-    const user = await renderSignedInApp('fr');
+    const { user } = await renderSignedInApp('fr');
     await openPanel(user, 'Compte');
 
     await user.press(screen.getByRole('button', { name: 'Allée 2' }));
 
-    expect(screen.getByText(AISLE_TWO_LINE)).toBeOnTheScreen();
+    expect(journal().getByText(AISLE_TWO_LINE)).toBeOnTheScreen();
   });
 
   it('logs a command the app core sends while the panel is open', async () => {
-    const user = await renderSignedInApp('fr');
+    const { user, positioningCore } = await renderSignedInApp('fr');
     await openPanel(user, 'Compte');
 
     await act(() => positioningCore.startMonitoring('B9407F30-F5F8-466E-AFF9-25556B57FE6D', 1));
 
-    expect(await screen.findByText(START_MONITORING_LINE)).toBeOnTheScreen();
+    expect(await within(await screen.findByTestId('Journal')).findByText(START_MONITORING_LINE)).toBeOnTheScreen();
   });
 
   it('keeps the log after leaving for Stationnements and reopening the panel', async () => {
-    const user = await renderSignedInApp('fr');
+    const { user } = await renderSignedInApp('fr');
     await openPanel(user, 'Compte');
     await user.press(screen.getByRole('button', { name: 'Allée 2' }));
-    const linesBefore = screen.getAllByText(AISLE_TWO_LINE).length;
 
     await user.press(screen.getByRole('tab', { name: 'Stationnements' }));
     await openPanel(user, 'Compte');
 
-    expect(screen.getAllByText(AISLE_TWO_LINE)).toHaveLength(linesBefore);
+    expect(journal().getAllByText(AISLE_TWO_LINE)).toHaveLength(1);
   });
 
   it('opens the panel from the English Account tab too', async () => {
-    const user = await renderSignedInApp('en');
+    const { user } = await renderSignedInApp('en');
 
     expect(await openPanel(user, 'Account')).toBeOnTheScreen();
   });
