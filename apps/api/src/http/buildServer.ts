@@ -22,7 +22,7 @@ export interface ServerDependencies {
   };
   readonly gates: GateRouteDependencies;
   readonly cardGateway?: CardGateway | undefined;
-  // Absent when Stripe is not configured: entries then answer 503 PAYMENTS_UNAVAILABLE.
+  // main.ts always passes it; tests of other routes leave it out, and entries then answer 503 PAYMENTS_UNAVAILABLE.
   readonly entries?: EntryRouteDependencies | undefined;
   readonly settings?: ServerSettings;
 }

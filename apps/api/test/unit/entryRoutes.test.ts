@@ -1,10 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { gateQrLink, signGateToken } from '../../src/domain/entries/gateToken.ts';
-import { buildServer } from '../../src/http/buildServer.ts';
 import { configureServer } from './configureServer.ts';
-import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie, marc } from './fakeDriverRepository.ts';
-import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
+import { acceptNoticeAs, authorizationFor, marc } from './fakeDriverRepository.ts';
 import {
   ENTREE_DEMO_SECRET,
   ENTREE_ROY_SECRET,
@@ -13,17 +11,9 @@ import {
   SORTIE_DEMO_SECRET,
   sortieDemoGate,
 } from './fakes/entryFakes.ts';
-import { serverDependencies } from './fakes/serverDependencies.ts';
+import { readyDriver } from './fakes/readyDriver.ts';
 
 const entreeDemoQr = gateQrLink(entreeDemoGate.id, ENTREE_DEMO_SECRET);
-
-async function readyDriver(drivers: FakeDriverRepository, vehicles: FakeVehicleRepository, driver = julie) {
-  await acceptNoticeAs(drivers, driver);
-  await vehicles.saveVehicle(driver.id, { plate: 'ABC 123', plateKey: 'ABC123', province: 'QC' });
-  await drivers.saveStripeCustomerIdIfMissing(driver.id, `cus_${driver.firstName}`);
-  await drivers.saveSavedCard(driver.id, `pm_${driver.firstName}`, { brand: 'visa', last4: '4242' });
-  return authorizationFor(drivers, driver);
-}
 
 describe('POST /v1/entries', () => {
   let server: FastifyInstance;
@@ -156,18 +146,5 @@ describe('POST /v1/entries', () => {
     const response = await server.inject({ method: 'POST', url: '/v1/entries', headers, payload });
 
     expect(response.statusCode).toBe(400);
-  });
-
-  it('answers 503 PAYMENTS_UNAVAILABLE when the server has no Stripe key', async () => {
-    const drivers = new FakeDriverRepository();
-    const vehicles = new FakeVehicleRepository();
-    const base = serverDependencies();
-    server = buildServer({ ...base, repositories: { ...base.repositories, driverRepository: drivers, vehicleRepository: vehicles } });
-    const headers = await readyDriver(drivers, vehicles);
-
-    const response = await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr } });
-
-    expect(response.statusCode).toBe(503);
-    expect(response.json()).toMatchObject({ error: 'PAYMENTS_UNAVAILABLE' });
   });
 });

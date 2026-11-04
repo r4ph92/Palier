@@ -16,14 +16,14 @@ const STRIPE_NETWORK_RETRIES = 1;
 
 export interface EntryComposition {
   readonly database: Database;
-  readonly stripeKey: string;
+  // Null without STRIPE_SECRET_KEY: QR refusals still answer, an eligible entry gets PAYMENTS_UNAVAILABLE.
+  readonly stripeKey: string | null;
   readonly demoMode: boolean;
   readonly drivers: DriverRepository;
   readonly vehicles: VehicleRepository;
 }
 
 export function composeEntries({ database, stripeKey, demoMode, drivers, vehicles }: EntryComposition): EntryRouteDependencies {
-  const stripe = new Stripe(stripeKey, { timeout: STRIPE_TIMEOUT_MILLISECONDS, maxNetworkRetries: STRIPE_NETWORK_RETRIES });
   return {
     eligibility: new EntryEligibility({
       gates: new PostgresEntryGateRepository(database),
@@ -33,8 +33,12 @@ export function composeEntries({ database, stripeKey, demoMode, drivers, vehicle
     }),
     admission: new EntryAdmission({
       sessions: new PostgresParkingSessionRepository(database),
-      payments: new StripePaymentAuthorizer(stripe),
+      payments: stripeKey === null ? null : paymentAuthorizer(stripeKey),
       gateCommander: new SimulatedGateCommander(database),
     }),
   };
+}
+
+function paymentAuthorizer(stripeKey: string): StripePaymentAuthorizer {
+  return new StripePaymentAuthorizer(new Stripe(stripeKey, { timeout: STRIPE_TIMEOUT_MILLISECONDS, maxNetworkRetries: STRIPE_NETWORK_RETRIES }));
 }

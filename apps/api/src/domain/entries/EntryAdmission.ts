@@ -10,7 +10,8 @@ export type EntryLog = Pick<FastifyBaseLogger, 'warn' | 'error'>;
 
 export interface EntryAdmissionDependencies {
   readonly sessions: ParkingSessionRepository;
-  readonly payments: PaymentAuthorizer;
+  // Null when the server has no Stripe key: the QR checks still answer, the entry stops before a spot is taken.
+  readonly payments: PaymentAuthorizer | null;
   readonly gateCommander: GateCommander;
 }
 
@@ -34,7 +35,11 @@ export class EntryAdmission {
   }
 
   async admit(entry: EligibleEntry, log: EntryLog): Promise<EntryResponse> {
-    const run: EntryRun = { entry, payments: this.#dependencies.payments, log };
+    const { payments } = this.#dependencies;
+    if (payments === null) {
+      throw new EntryRefusedError('PAYMENTS_UNAVAILABLE');
+    }
+    const run: EntryRun = { entry, payments, log };
     const session = await this.#openSession(entry);
     const paymentIntentId = await this.#authorize(run, session.id);
     await this.#openBarrier(run, { sessionId: session.id, paymentIntentId });

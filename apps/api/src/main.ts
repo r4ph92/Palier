@@ -32,16 +32,13 @@ const server = buildServer({
     commands: new PostgresGateCommandFeed(connection.database),
   },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
-  entries:
-    stripeKey === null
-      ? undefined
-      : composeEntries({
-          database: connection.database,
-          stripeKey,
-          demoMode: environment.demoMode,
-          drivers: driverRepository,
-          vehicles: vehicleRepository,
-        }),
+  entries: composeEntries({
+    database: connection.database,
+    stripeKey,
+    demoMode: environment.demoMode,
+    drivers: driverRepository,
+    vehicles: vehicleRepository,
+  }),
   settings: {
     testSignInEnabled: environment.testSignInEnabled,
     demoMode: environment.demoMode,

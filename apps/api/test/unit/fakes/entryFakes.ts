@@ -166,9 +166,10 @@ interface FakeEntriesOptions {
   readonly vehicles: FakeVehicleRepository;
   readonly policy?: EntryPolicy;
   readonly gates?: EntryGateRepository;
+  readonly hasPaymentAuthorizer?: boolean;
 }
 
-export function fakeEntries({ drivers, vehicles, policy, gates }: FakeEntriesOptions): FakeEntries {
+export function fakeEntries({ drivers, vehicles, policy, gates, hasPaymentAuthorizer = true }: FakeEntriesOptions): FakeEntries {
   const journal: Journal = [];
   const sessions = new FakeParkingSessionRepository(journal);
   const payments = new FakePaymentAuthorizer(journal);
@@ -179,7 +180,7 @@ export function fakeEntries({ drivers, vehicles, policy, gates }: FakeEntriesOpt
     drivers,
     policy: policy ?? { allowPlatformChargesWithoutOperatorAccount: false },
   });
-  const admission = new EntryAdmission({ sessions, payments, gateCommander });
+  const admission = new EntryAdmission({ sessions, payments: hasPaymentAuthorizer ? payments : null, gateCommander });
   return { journal, sessions, payments, gateCommander, dependencies: { eligibility, admission } };
 }
 
