@@ -81,6 +81,11 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* The title takes focus only so screen readers announce the new page; it is not a control, so it shows no ring. */
+.page-title:focus {
+  outline: none;
+}
+
 .lead {
   margin: 0 0 var(--space-large);
   max-width: 60ch;

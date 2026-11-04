@@ -10,7 +10,6 @@ export const fr = {
   language: {
     switchTo: 'English',
     switchToCode: 'en',
-    switchLabel: 'Afficher le tableau de bord en anglais',
   },
   signIn: {
     eyebrow: 'Tableau de bord',

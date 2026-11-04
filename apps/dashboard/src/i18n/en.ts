@@ -12,7 +12,6 @@ export const en: Dictionary = {
   language: {
     switchTo: 'Français',
     switchToCode: 'fr',
-    switchLabel: 'Show the dashboard in French',
   },
   signIn: {
     eyebrow: 'Dashboard',

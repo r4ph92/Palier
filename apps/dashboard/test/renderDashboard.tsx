@@ -8,9 +8,8 @@ interface RenderOptions {
 }
 
 export function renderDashboard({ path = '/', testSignInFlag = true }: RenderOptions = {}) {
-  if (testSignInFlag) {
-    vi.stubEnv('VITE_TEST_SIGN_IN', 'true');
-  }
+  // Set either way, so a developer's apps/dashboard/.env never decides the outcome.
+  vi.stubEnv('VITE_TEST_SIGN_IN', testSignInFlag ? 'true' : '');
   window.history.replaceState(null, '', path);
   return render(<App />);
 }

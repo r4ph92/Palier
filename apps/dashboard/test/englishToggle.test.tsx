@@ -32,7 +32,7 @@ describe('English toggle', () => {
     installFakeApi(signedInAs === undefined ? {} : { signedInAs });
     renderDashboard(path === undefined ? {} : { path });
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Afficher le tableau de bord en anglais' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'English' }));
     await screen.findByRole('heading', { name: englishHeading });
     await screen.findByText(/English|Français/);
 
@@ -44,7 +44,7 @@ describe('English toggle', () => {
   it('shows the legal name error in English', async () => {
     installFakeApi({ signedInAs: nouvelOperateur });
     renderDashboard();
-    await userEvent.click(await screen.findByRole('button', { name: 'Afficher le tableau de bord en anglais' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'English' }));
 
     await userEvent.click(await screen.findByRole('button', { name: 'Create the operator' }));
 
@@ -55,7 +55,7 @@ describe('English toggle', () => {
   it('keeps English after a reload', async () => {
     installFakeApi();
     const first = renderDashboard();
-    await userEvent.click(await screen.findByRole('button', { name: 'Afficher le tableau de bord en anglais' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'English' }));
     first.unmount();
 
     renderDashboard();
