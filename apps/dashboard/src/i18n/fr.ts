@@ -9,7 +9,6 @@ export const fr = {
   },
   language: {
     switchTo: 'English',
-    switchToCode: 'en',
   },
   signIn: {
     eyebrow: 'Tableau de bord',

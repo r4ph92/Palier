@@ -9,16 +9,27 @@ import { DashboardApiError } from './DashboardApiError.ts';
 
 const BASE_PATH = '/v1/dashboard';
 const NO_CONTENT = 204;
+const JSON_TYPE = 'application/json';
+
+interface DashboardRequest {
+  readonly method: 'GET' | 'POST';
+  readonly body?: object;
+}
+
+const READ: DashboardRequest = { method: 'GET' };
 
 // The session travels in an HttpOnly cookie the page never sees; writes add the header the API demands against CSRF.
-export async function dashboardRequest<T>(path: string, body?: object): Promise<T> {
-  const init: RequestInit = { credentials: 'same-origin', headers: { accept: 'application/json' } };
-  if (body !== undefined) {
-    init.method = 'POST';
-    init.headers = { accept: 'application/json', 'content-type': 'application/json', [DASHBOARD_CSRF_HEADER]: DASHBOARD_CSRF_VALUE };
-    init.body = JSON.stringify(body);
+function requestInit({ method, body }: DashboardRequest): RequestInit {
+  if (method === 'GET') {
+    return { method, credentials: 'same-origin', headers: { accept: JSON_TYPE } };
   }
-  const response = await fetch(`${BASE_PATH}${path}`, init);
+  const contentType = body === undefined ? {} : { 'content-type': JSON_TYPE };
+  const headers = { accept: JSON_TYPE, [DASHBOARD_CSRF_HEADER]: DASHBOARD_CSRF_VALUE, ...contentType };
+  return { method, credentials: 'same-origin', headers, body: body === undefined ? null : JSON.stringify(body) };
+}
+
+export async function dashboardRequest<T>(path: string, request: DashboardRequest = READ): Promise<T> {
+  const response = await fetch(`${BASE_PATH}${path}`, requestInit(request));
   if (!response.ok) {
     throw new DashboardApiError(response.status, await errorCodeOf(response));
   }
@@ -35,8 +46,8 @@ async function errorCodeOf(response: Response): Promise<string | undefined> {
 
 export const dashboardClient = {
   me: () => dashboardRequest<DashboardMeResponse>('/me'),
-  signOut: () => dashboardRequest<undefined>('/sign-out', {}),
-  createOperator: (legalName: string) => dashboardRequest<DashboardOperator>('/operators', { legalName }),
+  signOut: () => dashboardRequest<undefined>('/sign-out', { method: 'POST' }),
+  createOperator: (legalName: string) => dashboardRequest<DashboardOperator>('/operators', { method: 'POST', body: { legalName } }),
   lots: () => dashboardRequest<DashboardLotListResponse>('/lots'),
   lot: (lotId: string) => dashboardRequest<DashboardLot>(`/lots/${encodeURIComponent(lotId)}`),
 };

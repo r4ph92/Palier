@@ -5,7 +5,7 @@ import { useResource } from '../api/useResource.ts';
 import { AppLink } from '../components/AppLink.tsx';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { SkeletonRows } from '../components/SkeletonRows.tsx';
-import { StateMark } from '../components/StateMark.tsx';
+import { LotStateMark } from '../components/LotStateMark.tsx';
 import { useText } from '../i18n/LanguageContext.tsx';
 import { lotPath } from '../navigation/routes.ts';
 
@@ -57,12 +57,11 @@ function LotListFailure({ code, onRetry }: { readonly code: DisplayedErrorCode; 
 }
 
 function LotRow({ lot }: { readonly lot: DashboardLot }) {
-  const text = useText();
   return (
     <li className="row">
       <AppLink href={lotPath(lot.id)} className="row-link">
         <span className="row-name">{lot.name}</span>
-        <StateMark tone={lot.isOnline ? 'free' : 'muted'} label={lot.isOnline ? text.lot.online : text.lot.offline} />
+        <LotStateMark isOnline={lot.isOnline} />
       </AppLink>
     </li>
   );

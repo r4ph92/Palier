@@ -5,7 +5,7 @@ import { useResource } from '../api/useResource.ts';
 import { AppLink } from '../components/AppLink.tsx';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
-import { StateMark } from '../components/StateMark.tsx';
+import { LotStateMark } from '../components/LotStateMark.tsx';
 import { useText } from '../i18n/LanguageContext.tsx';
 import { HOME_PATH } from '../navigation/routes.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
@@ -28,7 +28,7 @@ function LotDetails({ lot }: { readonly lot: DashboardLot }) {
     <>
       <PageHeader eyebrow={text.lot.eyebrow} title={lot.name} />
       <p className="lead">
-        <StateMark tone={lot.isOnline ? 'free' : 'muted'} label={lot.isOnline ? text.lot.online : text.lot.offline} />
+        <LotStateMark isOnline={lot.isOnline} />
       </p>
       <AppLink href={HOME_PATH} className="text-link">
         {text.lot.back}

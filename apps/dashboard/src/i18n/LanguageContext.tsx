@@ -6,6 +6,7 @@ export type Language = 'fr' | 'en';
 
 const STORAGE_KEY = 'palier.language';
 const DICTIONARIES: Readonly<Record<Language, Dictionary>> = { fr, en };
+export const OTHER_LANGUAGE: Readonly<Record<Language, Language>> = { fr: 'en', en: 'fr' };
 
 interface LanguageState {
   readonly language: Language;
