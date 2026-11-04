@@ -123,7 +123,6 @@ Le seed et `seed:spot-state` refusent de tourner si `NODE_ENV` n'est pas
 
 ```
 npm run gate        # lint + typecheck + tests unitaires API (Vitest) + app (Jest)
-npm run test:db     # optionnel : test du dépôt Postgres sur palier_test (Docker requis)
 ```
 
 `gate` ne touche ni base ni simulateur ; la CI (`.github/workflows/ci.yml`)

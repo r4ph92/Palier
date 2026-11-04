@@ -10,7 +10,7 @@ ligne par choix ; la raison suit le tiret.
 - **Couches** : `http/` (routes), `domain/` (règles, ports), `infrastructure/postgres/` (schéma, dépôts), comme dans `docs/04`.
 - **App : Expo SDK 58**, configuration dans `app.config.ts`, dossiers `ios/` et `android/` générés et ignorés par git ; Expo Go suffit tant qu'aucun module natif n'existe. Le module balises (P03) passera à `expo-dev-client`.
 - **Node 24** (`.nvmrc`, `engines`) — Expo 58 refuse Node 25.
-- **Tests** : Vitest pour l'API, Jest (`jest-expo`) et Testing Library pour l'app. `npm run gate` n'exécute que des tests unitaires ; `npm run test:db` (optionnel, hors CI) vérifie le dépôt Postgres et les contraintes sur `palier_test`.
+- **Tests** : Vitest pour l'API, Jest (`jest-expo`) et Testing Library pour l'app. `npm run gate` n'exécute que des tests unitaires. Le projet n'a aucun test de base de données, d'intégration ou de navigateur (voir `docs/decisions/005-tests-unitaires-uniquement.md`).
 - **Postgres 17 dans Docker sur le port 5433**, base de test créée par `docker/postgres/init`.
 - **React épinglé par `overrides`** à la version d'Expo — sinon npm installe deux copies de React dans le monorepo et les tests plantent.
 
