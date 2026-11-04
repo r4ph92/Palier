@@ -18,9 +18,18 @@ const STATUS_BY_REASON: Record<EntryRefusalCode, number> = {
 };
 
 export function handleEntryError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {
-  if (!(error instanceof EntryRefusedError)) {
+  const refusal = refusalOf(error);
+  if (refusal === undefined) {
     return handleServerError(error, request, reply);
   }
-  const statusCode = STATUS_BY_REASON[error.reason];
-  return reply.status(statusCode).send({ statusCode, error: error.reason, message: error.message });
+  const statusCode = STATUS_BY_REASON[refusal.reason];
+  return reply.status(statusCode).send({ statusCode, error: refusal.reason, message: refusal.message });
+}
+
+// A body the schema refuses carries no readable QR, so for the driver it is the same unrecognized QR.
+function refusalOf(error: FastifyError): EntryRefusedError | undefined {
+  if (error instanceof EntryRefusedError) {
+    return error;
+  }
+  return error.validation === undefined ? undefined : new EntryRefusedError('QR_NOT_RECOGNIZED');
 }

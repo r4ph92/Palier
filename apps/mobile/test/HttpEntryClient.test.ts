@@ -52,12 +52,6 @@ describe('HttpEntryClient', () => {
     await expect(client.enter(ENTREE_DEMO_QR)).rejects.toEqual(new PalierRejectedError(code));
   });
 
-  it('reports a QR content the API schema refuses as an unrecognized QR', async () => {
-    const { client } = clientAnswering(jsonResponse({ statusCode: 400, error: 'FST_ERR_VALIDATION', message: 'body/qrContent too long' }, 400));
-
-    await expect(client.enter(ENTREE_DEMO_QR)).rejects.toEqual(new PalierRejectedError('QR_NOT_RECOGNIZED'));
-  });
-
   it('reports a 500 as a status error, not a refusal', async () => {
     const { client } = clientAnswering(jsonResponse({ statusCode: 500, error: 'Internal Server Error' }, 500));
 

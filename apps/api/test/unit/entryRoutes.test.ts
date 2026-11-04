@@ -140,11 +140,12 @@ describe('POST /v1/entries', () => {
     ['a QR content over 512 characters', { qrContent: 'x'.repeat(513) }],
     ['no QR content', {}],
     ['a QR content that is not text', { qrContent: 42 }],
-  ])('refuses %s with 400', async (_case, payload) => {
+  ])('refuses %s as an unrecognized QR', async (_case, payload) => {
     const { headers } = await startWithJulieReady();
 
     const response = await server.inject({ method: 'POST', url: '/v1/entries', headers, payload });
 
     expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({ statusCode: 400, error: 'QR_NOT_RECOGNIZED', message: 'This QR is not a Palier terminal.' });
   });
 });
