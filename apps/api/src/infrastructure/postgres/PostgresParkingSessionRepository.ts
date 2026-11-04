@@ -1,8 +1,10 @@
 import { and, eq, sql } from 'drizzle-orm';
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
-import { chooseSpot, type FreeSpot } from '../../domain/allocation/chooseSpot.ts';
+import type { FreeSpot } from '../../domain/allocation/chooseSpot.ts';
+import { chooseSpotFor } from '../../domain/allocation/chooseSpotFor.ts';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import type { OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../domain/entries/ParkingSessionRepository.ts';
+import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import { isActiveSessionConflict } from './activeSessionConflict.ts';
 import type { Database, Transaction } from './database.ts';
 import { parkingSession, spot } from './schema.ts';
@@ -48,7 +50,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   async openWithFirstFreeSpot(draft: SessionDraft): Promise<OpenedSession | null> {
     try {
       return await this.#database.transaction(async (tx) => {
-        const assigned = await assignFirstFreeSpot(tx, draft.lotId);
+        const assigned = await assignFirstFreeSpot(tx, draft.lotId, draft.needs);
         return assigned === undefined ? null : insertSession(tx, draft, assigned);
       });
     } catch (error) {
@@ -100,14 +102,17 @@ interface FreeSpotRow extends Record<string, unknown> {
   readonly aisle_code: string;
   readonly distance_to_exit: number;
   readonly needs_check: boolean;
+  readonly is_ev: boolean;
+  readonly is_accessible: boolean;
+  readonly is_oversize: boolean;
 }
 
-// The domain picks the spot (chooseSpot); only that spot row is then locked, and a spot another entry
+// The domain picks the spot (chooseSpotFor); only that spot row is then locked, and a spot another entry
 // holds is skipped rather than waited on (docs/03). A spot lost that way is left out of the next pick.
-async function assignFirstFreeSpot(tx: Transaction, lotId: string): Promise<AssignedSpotRow | undefined> {
+async function assignFirstFreeSpot(tx: Transaction, lotId: string, needs: VehicleNeeds): Promise<AssignedSpotRow | undefined> {
   const lost = new Set<string>();
   for (let attempt = 0; attempt < MAX_CLAIM_ATTEMPTS; attempt++) {
-    const chosen = chooseSpot((await readFreeSpots(tx, lotId)).filter((free) => !lost.has(free.id)));
+    const chosen = chooseSpotFor(needs, (await readFreeSpots(tx, lotId)).filter((free) => !lost.has(free.id)));
     if (chosen === null) {
       return undefined;
     }
@@ -122,7 +127,8 @@ async function assignFirstFreeSpot(tx: Transaction, lotId: string): Promise<Assi
 
 async function readFreeSpots(tx: Transaction, lotId: string): Promise<FreeSpot[]> {
   const rows = await tx.execute<FreeSpotRow>(sql`
-    select s.id, s.number, l.display_order as level_order, a.code as aisle_code, s.distance_to_exit, s.needs_check
+    select s.id, s.number, l.display_order as level_order, a.code as aisle_code, s.distance_to_exit, s.needs_check,
+      s.is_ev, s.is_accessible, s.is_oversize
     from spot s
     join aisle a on a.id = s.aisle_id
     join level l on l.id = a.level_id
@@ -134,6 +140,9 @@ async function readFreeSpots(tx: Transaction, lotId: string): Promise<FreeSpot[]
     aisleCode: row.aisle_code,
     distanceToExit: row.distance_to_exit,
     needsCheck: row.needs_check,
+    isEv: row.is_ev,
+    isAccessible: row.is_accessible,
+    isOversize: row.is_oversize,
   }));
 }
 

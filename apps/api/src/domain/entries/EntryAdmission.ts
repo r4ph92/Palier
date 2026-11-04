@@ -49,6 +49,7 @@ export class EntryAdmission {
       driverId: entry.driverId,
       vehicleId: entry.vehicle.id,
       plate: entry.vehicle.plate,
+      needs: entry.vehicle.needs,
       lotId: entry.gate.lotId,
       entryGateId: entry.gate.id,
       authorizedCents: entry.payment.amountCents,

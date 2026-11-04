@@ -5,6 +5,7 @@ import type { EntryGate } from '../../src/domain/entries/EntryGateRepository.ts'
 import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { PricingPolicyInvalidError } from '../../src/domain/pricing/PricingPolicy.ts';
 import { FakeDriverRepository, julie } from './fakeDriverRepository.ts';
+import type { VehicleNeeds } from '../../src/domain/vehicles/VehicleRepository.ts';
 import { FakeVehicleRepository, standardNeeds } from './fakeVehicleRepository.ts';
 import {
   ENTREE_DEMO_SECRET,
@@ -25,13 +26,14 @@ interface Setup {
   readonly policy?: EntryPolicy;
   readonly plate?: boolean;
   readonly card?: boolean;
+  readonly needs?: VehicleNeeds;
 }
 
-async function eligibilityFor({ gates, policy = STRICT, plate = true, card = true }: Setup = {}) {
+async function eligibilityFor({ gates, policy = STRICT, plate = true, card = true, needs = standardNeeds }: Setup = {}) {
   const drivers = new FakeDriverRepository();
   const vehicles = new FakeVehicleRepository();
   if (plate) {
-    await vehicles.saveVehicle(julie.id, { plate: 'ABC 123', plateKey: 'ABC123', province: 'QC', ...standardNeeds });
+    await vehicles.saveVehicle(julie.id, { plate: 'ABC 123', plateKey: 'ABC123', province: 'QC', ...needs });
   }
   if (card) {
     await drivers.saveStripeCustomerIdIfMissing(julie.id, 'cus_julie');
@@ -54,7 +56,7 @@ describe('entry eligibility', () => {
     expect(eligible).toEqual({
       driverId: julie.id,
       gate: { id: entreeDemoGate.id, lotId: entreeDemoGate.lot.id },
-      vehicle: { id: expect.any(String), plate: 'ABC 123' },
+      vehicle: { id: expect.any(String), plate: 'ABC 123', needs: standardNeeds },
       payment: { customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },
       pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 },
     });
@@ -80,6 +82,15 @@ describe('entry eligibility', () => {
     ['text that is no token', 'bonjour'],
   ])('refuses %s as QR_NOT_RECOGNIZED', async (_case, qrContent) => {
     expect(await refusalOf(await eligibilityFor(), qrContent)).toBe('QR_NOT_RECOGNIZED');
+  });
+
+  it('carries the needs declared on the default vehicle to the admission', async () => {
+    const needs = { isElectric: true, hasAccessiblePermit: true, isOversize: false };
+    const eligibility = await eligibilityFor({ needs });
+
+    const eligible = await eligibility.check({ driverId: julie.id, qrContent: entreeDemoQr });
+
+    expect(eligible.vehicle.needs).toEqual(needs);
   });
 
   it('refuses a gate without QR secret as QR_NOT_RECOGNIZED', async () => {

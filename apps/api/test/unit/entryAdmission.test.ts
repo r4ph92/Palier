@@ -17,7 +17,7 @@ import { julie } from './fakeDriverRepository.ts';
 const julieAtEntreeDemo: EligibleEntry = {
   driverId: julie.id,
   gate: { id: entreeDemo.id, lotId: entreeDemo.lotId },
-  vehicle: { id: 'vehicle-julie', plate: 'ABC 123' },
+  vehicle: { id: 'vehicle-julie', plate: 'ABC 123', needs: { isElectric: false, hasAccessiblePermit: false, isOversize: false } },
   payment: { customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },
   pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 },
 };
@@ -47,7 +47,7 @@ describe('entry admission', () => {
     await admission.admit(julieAtEntreeDemo, log);
 
     expect(sessions.drafts).toEqual([
-      { driverId: julie.id, vehicleId: 'vehicle-julie', plate: 'ABC 123', lotId: entreeDemo.lotId, entryGateId: entreeDemo.id, authorizedCents: 2500, pricing: julieAtEntreeDemo.pricing },
+      { driverId: julie.id, vehicleId: 'vehicle-julie', plate: 'ABC 123', needs: julieAtEntreeDemo.vehicle.needs, lotId: entreeDemo.lotId, entryGateId: entreeDemo.id, authorizedCents: 2500, pricing: julieAtEntreeDemo.pricing },
     ]);
     expect(payments.authorized).toEqual([
       { sessionId: fakeSessionId(1), customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },
@@ -61,6 +61,15 @@ describe('entry admission', () => {
 
     await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toMatchObject({ reason: 'LOT_FULL' });
     expect(journal).toEqual(['open-session']);
+  });
+
+  it('refuses NO_SUITABLE_SPOT without touching the card or the barrier when no free spot fits the vehicle', async () => {
+    const { journal, sessions, payments, admission, log } = admissionWith();
+    sessions.noSuitableSpot = true;
+
+    await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toMatchObject({ reason: 'NO_SUITABLE_SPOT' });
+    expect(journal).toEqual(['open-session']);
+    expect(payments.authorized).toEqual([]);
   });
 
   it('frees the spot and opens nothing when the card is declined', async () => {

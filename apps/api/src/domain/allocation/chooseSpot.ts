@@ -5,6 +5,9 @@ export interface FreeSpot {
   readonly aisleCode: string;
   readonly distanceToExit: number;
   readonly needsCheck: boolean;
+  readonly isEv: boolean;
+  readonly isAccessible: boolean;
+  readonly isOversize: boolean;
 }
 
 // First level with a free spot, then its aisle with the most free spots (lower code on a tie),
