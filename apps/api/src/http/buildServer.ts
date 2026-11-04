@@ -7,7 +7,7 @@ import type { LotAvailabilityRepository } from '../domain/lots/LotAvailabilityRe
 import type { CurrentParkingSessionQuery } from '../domain/parkingSessions/ActiveParkingSession.ts';
 import type { ParkingSessionBackdater } from '../domain/parkingSessions/ParkingSessionBackdater.ts';
 import type { SessionTokenRepository } from '../domain/sessions/SessionTokenRepository.ts';
-import type { Clock } from '../domain/time/Clock.ts';
+import { systemClock } from '../domain/time/Clock.ts';
 import { createTestClock, type TestClock } from '../domain/time/TestClock.ts';
 import type { UserDirectory } from '../domain/sessions/UserDirectory.ts';
 import type { VehicleRepository } from '../domain/vehicles/VehicleRepository.ts';
@@ -90,7 +90,7 @@ function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway,
   registerDriverRoutes(server, driverAccess);
   registerPaymentMethodRoutes(server, driverAccess, cardGateway);
   registerEntryRoutes(server, driverAccess, entries);
-  registerCurrentParkingSessionRoute(server, driverAccess, { sessions: repositories.currentParkingSessions, clock: testTools?.testClock.now ?? realTime });
+  registerCurrentParkingSessionRoute(server, driverAccess, { sessions: repositories.currentParkingSessions, clock: testTools?.testClock.now ?? systemClock });
   if (testTools !== null) {
     registerTestSignInRoutes(server, { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository });
     registerTestClockRoutes(server, testTools);
@@ -98,8 +98,6 @@ function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway,
 }
 
 type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock'> & Pick<ServerDependencies, 'testClock'>;
-
-const realTime: Clock = () => new Date();
 
 // Test sign-in is the one switch for every test-only tool: without it the session is priced in real time and nothing moves it.
 function testToolsFor(

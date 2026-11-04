@@ -16,6 +16,7 @@ import { PostgresSessionTokenRepository } from './infrastructure/postgres/Postgr
 import { PostgresUserDirectory } from './infrastructure/postgres/PostgresUserDirectory.ts';
 import { StripeCardGateway } from './infrastructure/stripe/StripeCardGateway.ts';
 import { PostgresVehicleRepository } from './infrastructure/postgres/PostgresVehicleRepository.ts';
+import { systemClock } from './domain/time/Clock.ts';
 import { purgeEndedSessionTokens } from './domain/sessions/sessionTokens.ts';
 import { startSessionTokenPurge } from './scheduler/startSessionTokenPurge.ts';
 
@@ -39,7 +40,7 @@ const server = buildServer({
   gates: {
     deviceKeys: new PostgresGateDeviceKeyRepository(connection.database),
     ledger: new PostgresPassageLedger(connection.database),
-    clock: () => new Date(),
+    clock: systemClock,
     commands: new PostgresGateCommandFeed(connection.database),
   },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
@@ -63,7 +64,7 @@ if (environment.demoMode) {
   server.log.warn('DEMO_MODE is on: the demo console is served at /demo/console. Never enable it in production.');
 }
 
-const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(sessionTokenRepository, new Date()), server.log);
+const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(sessionTokenRepository, systemClock()), server.log);
 server.addHook('onClose', async () => {
   await stopSessionTokenPurge();
   await connection.close();
