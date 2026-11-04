@@ -20,6 +20,10 @@ export default tseslint.config(
     },
   },
   {
+    files: ['apps/api/src/http/demo/**/*.js'],
+    languageOptions: { globals: { ...globals.browser } },
+  },
+  {
     files: ['apps/mobile/**/*.{ts,tsx}'],
     ...reactHooks.configs.flat['recommended-latest'],
   },

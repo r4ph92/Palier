@@ -3,16 +3,24 @@ import { buildServer } from '../../src/http/buildServer.ts';
 import { FakeCardGateway } from './fakeCardGateway.ts';
 import { FakeDriverRepository } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
+import { fakeGateDependencies } from './fakes/serverDependencies.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
 
+interface ServerOptions {
+  readonly testSignInEnabled?: boolean;
+  readonly demoMode?: boolean;
+  readonly minimumAppVersion?: string;
+}
+
 // The one place route tests build the real server over fake repositories.
-export function configureServer({ testSignInEnabled = false, minimumAppVersion }: { readonly testSignInEnabled?: boolean; readonly minimumAppVersion?: string } = {}) {
+export function configureServer({ testSignInEnabled = false, demoMode = false, minimumAppVersion }: ServerOptions = {}) {
   const driverRepository = new FakeDriverRepository();
   const server: FastifyInstance = buildServer({
+    gates: fakeGateDependencies(),
     repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() },
     cardGateway: new FakeCardGateway(),
-    settings: { testSignInEnabled, minimumAppVersion },
+    settings: { testSignInEnabled, demoMode, minimumAppVersion },
   });
   return { server, driverRepository };
 }

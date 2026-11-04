@@ -4,6 +4,7 @@ import { buildServer } from '../../src/http/buildServer.ts';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
+import { fakeGateDependencies } from './fakes/serverDependencies.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
 
@@ -15,7 +16,7 @@ describe('driver routes', () => {
 
   function startServer() {
     driverRepository = new FakeDriverRepository();
-    server = buildServer({ repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository } });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository } });
   }
 
   it('GET /v1/me returns the signed-in driver’s id, first name and accepted notice version', async () => {

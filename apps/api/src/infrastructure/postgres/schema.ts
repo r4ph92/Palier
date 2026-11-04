@@ -6,7 +6,6 @@ import {
   index,
   integer,
   jsonb,
-  uniqueIndex,
   numeric,
   pgEnum,
   pgTable,
@@ -15,6 +14,9 @@ import {
   unique,
   uuid,
 } from 'drizzle-orm/pg-core';
+
+// Drivers and their vehicles live beside, so this one file stays the schema drizzle-kit reads.
+export * from './driverSchema.ts';
 
 export const kycStatus = pgEnum('kyc_status', ['NOT_STARTED', 'PENDING', 'VERIFIED']);
 export const assignmentStrategy = pgEnum('assignment_strategy', ['AISLE_BY_AISLE']);
@@ -28,6 +30,9 @@ export const spotState = pgEnum('spot_state', [
   'OUT_OF_SERVICE',
 ]);
 export const sensorState = pgEnum('sensor_state', ['FREE', 'OCCUPIED']);
+export const gateKind = pgEnum('gate_kind', ['ENTRY', 'EXIT']);
+export const gateIntegrationKind = pgEnum('gate_integration_kind', ['DRY_CONTACT', 'ACCESS_CONTROL_API', 'SIMULATED']);
+export const exitIdKind = pgEnum('exit_id_kind', ['ANPR', 'RFID', 'NONE']);
 
 export const operator = pgTable('operator', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -135,61 +140,58 @@ export const spot = pgTable(
   ],
 );
 
-export const appUser = pgTable('app_user', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: text('email').notNull().unique(),
-  firstName: text('first_name').notNull(),
-  lastName: text('last_name').notNull(),
-  stripeCustomerId: text('stripe_customer_id'),
-  defaultPmId: text('default_pm_id'),
-  cardBrand: text('card_brand'),
-  cardLast4: text('card_last4'),
-});
-
-export const userSessionToken = pgTable(
-  'user_session_token',
-  {
-    tokenHash: text('token_hash').primaryKey(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => appUser.id),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull().default(sql`now() + interval '30 days'`),
-    revokedAt: timestamp('revoked_at', { withTimezone: true }),
-  },
-  (table) => [index('user_session_token_user_id_index').on(table.userId)],
-);
-
-export const userConsent = pgTable(
-  'user_consent',
+export const gate = pgTable(
+  'gate',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id')
+    lotId: uuid('lot_id')
       .notNull()
-      .references(() => appUser.id),
-    noticeVersion: text('notice_version').notNull(),
-    acceptedAt: timestamp('accepted_at', { withTimezone: true }).notNull().defaultNow(),
-  },
-  (table) => [unique('user_consent_user_id_notice_version_unique').on(table.userId, table.noticeVersion)],
-);
-
-export const vehicle = pgTable(
-  'vehicle',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => appUser.id),
-    plate: text('plate').notNull(),
-    plateKey: text('plate_key').notNull(),
-    province: text('province').notNull(),
-    isDefault: boolean('is_default').notNull().default(false),
+      .references(() => parkingLot.id),
+    name: text('name').notNull(),
+    kind: gateKind('kind').notNull(),
+    integrationKind: gateIntegrationKind('integration_kind').notNull(),
+    endpoint: text('endpoint'),
+    hasLoops: boolean('has_loops').notNull().default(false),
+    exitIdKind: exitIdKind('exit_id_kind').notNull().default('NONE'),
+    qrSecret: text('qr_secret'),
+    verifiedAt: timestamp('verified_at', { withTimezone: true }),
   },
   (table) => [
-    unique('vehicle_user_id_plate_key_province_unique').on(table.userId, table.plateKey, table.province),
-    uniqueIndex('vehicle_one_default_per_user_index')
-      .on(table.userId)
-      .where(sql`${table.isDefault}`),
+    unique('gate_lot_id_name_unique').on(table.lotId, table.name),
+    unique('gate_id_lot_id_unique').on(table.id, table.lotId),
+  ],
+);
+
+export const gateDeviceKey = pgTable(
+  'gate_device_key',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    gateId: uuid('gate_id')
+      .notNull()
+      .references(() => gate.id),
+    keyHash: text('key_hash').notNull().unique(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  },
+  (table) => [index('gate_device_key_gate_id_index').on(table.gateId)],
+);
+
+export const gatePassage = pgTable(
+  'gate_passage',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    gateId: uuid('gate_id').notNull(),
+    lotId: uuid('lot_id').notNull(),
+    closedAt: timestamp('closed_at', { withTimezone: true }).notNull(),
+    recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      name: 'gate_passage_gate_in_same_lot_fk',
+      columns: [table.gateId, table.lotId],
+      foreignColumns: [gate.id, gate.lotId],
+    }),
+    index('gate_passage_gate_id_recorded_at_index').on(table.gateId, table.recordedAt),
   ],
 );
 

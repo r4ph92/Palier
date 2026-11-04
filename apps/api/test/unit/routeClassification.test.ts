@@ -14,13 +14,13 @@ describe('route classification', () => {
   });
 
   it('lists every route the server registers, once, as gated or exempt', async () => {
-    server = configureServer({ testSignInEnabled: true }).server;
+    server = configureServer({ testSignInEnabled: true, demoMode: true }).server;
 
     expect((await registeredRoutes(server)).sort()).toEqual([...GATED, ...EXEMPT].sort());
   });
 
   it.each(EXEMPT)('%s does not check consent for a driver who has not accepted the notice', async (route) => {
-    const { server: exemptServer, driverRepository } = configureServer({ testSignInEnabled: true });
+    const { server: exemptServer, driverRepository } = configureServer({ testSignInEnabled: true, demoMode: true });
     server = exemptServer;
     const headers = await authorizationFor(driverRepository, julie);
 

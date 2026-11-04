@@ -14,7 +14,7 @@ try {
   }
   const stripeIds = stripeKey === null ? undefined : await createStripeTestCustomers(new Stripe(stripeKey), driverPersonas);
   await seedDatabase(connection.database, stripeIds);
-  console.log('Seeded Parking Démo, Garage Roy and the driver personas.');
+  console.log('Seeded Parking Démo, Garage Roy, their gates and the driver personas.');
 } finally {
   await connection.close();
 }

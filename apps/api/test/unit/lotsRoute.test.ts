@@ -5,6 +5,7 @@ import type { LotAvailability } from '../../src/domain/occupancy/LotAvailability
 import { buildServer } from '../../src/http/buildServer.ts';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
+import { fakeGateDependencies } from './fakes/serverDependencies.ts';
 
 const parkingDemo: LotAvailability = {
   id: '00000000-0000-4000-8000-000000000201',
@@ -26,7 +27,7 @@ describe('GET /v1/lots', () => {
 
   async function listLotsAsJulie(lotAvailabilityRepository: LotAvailabilityRepository) {
     driverRepository = new FakeDriverRepository();
-    server = buildServer({ repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository, driverRepository } });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository, driverRepository } });
     await acceptNoticeAs(driverRepository, julie);
     const headers = await authorizationFor(driverRepository, julie);
     return server.inject({ method: 'GET', url: '/v1/lots', headers });
@@ -64,7 +65,7 @@ describe('GET /v1/lots without a valid driver token', () => {
   afterEach(() => server.close());
 
   function listLotsWith(headers: Record<string, string>) {
-    server = buildServer({ repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: repositoryReturning([parkingDemo]), driverRepository: new FakeDriverRepository() } });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: repositoryReturning([parkingDemo]), driverRepository: new FakeDriverRepository() } });
     return server.inject({ method: 'GET', url: '/v1/lots', headers });
   }
 

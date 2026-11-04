@@ -68,9 +68,13 @@ npm install
 docker compose up -d --wait                  # bases palier et palier_test
 cp apps/api/.env.example apps/api/.env       # NODE_ENV=development, base locale
 npm run db:migrate
-npm run seed --workspace @palier/api         # Parking Démo, Garage Roy et les conducteurs de test
+npm run seed --workspace @palier/api         # Parking Démo, Garage Roy, barrières et conducteurs de test
 npm run start --workspace @palier/api        # http://127.0.0.1:3000 (/v1/lots exige un jeton)
 ```
+
+Avec `DEMO_MODE=true` (valeur de `.env.example`), l'API sert aussi la console
+de démonstration des barrières sur http://localhost:3000/demo/console ; clés et
+scénarios dans [`docs/demo-console.md`](docs/demo-console.md).
 
 Dans un second terminal :
 
@@ -91,6 +95,8 @@ réouverture, toucher « Try again ».
 
 ### Scénarios de test manuels
 
+- **Passages aux barrières** : voir [`docs/demo-console.md`](docs/demo-console.md)
+  (entrée, sortie, « Complet », clé refusée, mauvaise barrière).
 - **Connexion de test** : sur l'écran de connexion, toucher « Connexion de test »
   puis « Julie Tremblay » : l'accueil dit « Bonjour Julie ». Elle reste connectée
   après avoir tué et relancé l'app ; « Compte » > « Se déconnecter » ramène à la
@@ -123,7 +129,6 @@ Le seed et `seed:spot-state` refusent de tourner si `NODE_ENV` n'est pas
 
 ```
 npm run gate        # lint + typecheck + tests unitaires API (Vitest) + app (Jest)
-npm run test:db     # optionnel : test du dépôt Postgres sur palier_test (Docker requis)
 ```
 
 `gate` ne touche ni base ni simulateur ; la CI (`.github/workflows/ci.yml`)

@@ -2,6 +2,7 @@ import { APP_VERSION_HEADER } from '@palier/shared-types/appVersion';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { configureServer } from './configureServer.ts';
+import { ENTREE_DEMO_KEY } from './fakes/gateFixtures.ts';
 
 const MINIMUM = '1.2.0';
 const UPDATE_REQUIRED = 426;
@@ -51,5 +52,21 @@ describe('minimum app version', () => {
     const response = await server.inject({ method: 'GET', url: '/v1/lots' });
 
     expect(response.statusCode).toBe(UNAUTHORIZED);
+  });
+
+  it('does not ask a gate controller for an app version', async () => {
+    server = configureServer({ minimumAppVersion: MINIMUM }).server;
+
+    const response = await server.inject({ method: 'GET', url: '/v1/gates/me', headers: { authorization: `Bearer ${ENTREE_DEMO_KEY}` } });
+
+    expect(response.statusCode).toBe(200);
+  });
+
+  it('does not ask the demo console for an app version', async () => {
+    server = configureServer({ minimumAppVersion: MINIMUM, demoMode: true }).server;
+
+    const response = await server.inject({ method: 'GET', url: '/demo/console' });
+
+    expect(response.statusCode).toBe(200);
   });
 });

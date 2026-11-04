@@ -10,7 +10,7 @@ ligne par choix ; la raison suit le tiret.
 - **Couches** : `http/` (routes), `domain/` (règles, ports), `infrastructure/postgres/` (schéma, dépôts), comme dans `docs/04`.
 - **App : Expo SDK 58**, configuration dans `app.config.ts`, dossiers `ios/` et `android/` générés et ignorés par git ; Expo Go suffit tant qu'aucun module natif n'existe. Le module balises (P03) passera à `expo-dev-client`.
 - **Node 24** (`.nvmrc`, `engines`) — Expo 58 refuse Node 25.
-- **Tests** : Vitest pour l'API, Jest (`jest-expo`) et Testing Library pour l'app. `npm run gate` n'exécute que des tests unitaires ; `npm run test:db` (optionnel, hors CI) vérifie le dépôt Postgres et les contraintes sur `palier_test`.
+- **Tests** : Vitest pour l'API, Jest (`jest-expo`) et Testing Library pour l'app. `npm run gate` n'exécute que des tests unitaires. Le projet n'a aucun test de base de données, d'intégration ou de navigateur (voir `docs/decisions/005-tests-unitaires-uniquement.md`).
 - **Postgres 17 dans Docker sur le port 5433**, base de test créée par `docker/postgres/init`.
 - **React épinglé par `overrides`** à la version d'Expo — sinon npm installe deux copies de React dans le monorepo et les tests plantent.
 
@@ -35,12 +35,30 @@ ligne par choix ; la raison suit le tiret.
 - `GET /v1/me` renvoie `{ id, firstName }` du conducteur connecté ; `POST /v1/sign-out` révoque le jeton (204).
 - `GET /v1/test/drivers` et `POST /v1/test/sign-in { driverId }` n'existent qu'avec `NODE_ENV` à `development` ou `test` ; ailleurs, 404. Un `driverId` qui n'est pas un UUID donne 400 ; les champs en trop sont retirés par Fastify avant le handler.
 - Toute erreur 5xx renvoie un corps générique (`Internal Server Error`) ; le détail (SQL compris) ne va qu'au journal du serveur.
-- Le nombre affiché passe par une seule fonction, `domain/occupancy/freeSpotCount` ; #11 y ajoutera `min(capacité − véhicules, places libres)` (Q35, D6).
+- Le nombre affiché passe par une seule fonction, `domain/occupancy/freeSpotCount` : `max(0, min(capacité − véhicules, places libres))` (Q35, D6).
+
+## Barrières et passages (#11)
+
+- Tables `gate`, `gate_device_key` et `gate_passage` (migration `0007`) ; clés hachées et passage en une seule instruction SQL : voir `docs/decisions/006`.
+- `gate.qr_secret` est nullable tant que les QR signés (#36) n'existent pas ; `integration_kind` gagne `SIMULATED` (D5). Entrée Roy est en `DRY_CONTACT`, non vérifiée.
+- Une barrière sans boucles (`has_loops = false`) refuse les passages (409) ; les trois barrières semées en ont.
+- Erreurs des routes de barrière : `{ statusCode, error, message }` avec `error` = code machine (`DEVICE_KEY_REFUSED`, `GATE_FORBIDDEN`, `GATE_WITHOUT_LOOPS`, `CLOSED_AT_INVALID`, `CLOSED_AT_IN_FUTURE`).
+- `DEMO_MODE` (`true`/`false`, faux par défaut) n'est pas refusé sous `NODE_ENV=production` (D13 tel qu'écrit : une démo hébergée peut tourner ainsi) ; le serveur journalise un avertissement au démarrage.
+- Pas de limitation de débit sur les routes de barrière pour le prototype.
+- Les routes de barrière et la console sont exemptées du consentement (`routeClassification.ts`) : un contrôleur signe avec une clé d'appareil, pas un jeton de conducteur. `MINIMUM_APP_VERSION` ne s'applique qu'aux routes de l'app, enregistrées dans leur propre portée Fastify ; un contrôleur n'envoie pas de version d'app.
+
+## Console de démonstration
+
+- Fichiers statiques dans `apps/api/src/http/demo/`, listés dans une seule table (`demoAssets.ts`), lus au démarrage et servis seulement en mode démo, avec une CSP sans `unsafe-inline` (polices comprises, `font-src 'self'`), `nosniff`, `no-referrer` et `no-store`. Guide : `docs/demo-console.md`.
+- La logique est découpée par raison de changer : `consoleText.js` (textes, heures, pluriels), `gateApi.js` (client HTTP), `loopPress.js` (déroulé d'un appui) et `consoleTranslations.js` (textes FR/EN) ; c'est du JavaScript avec types JSDoc, vérifié par `tsc` (`allowJs` + `checkJs`) et testé par Vitest ; aucun build pour le navigateur.
+- Polices : Archivo 400/600 et IBM Plex Mono 400/500 servies par l'API depuis `@expo-google-fonts` (dépendances de `apps/api`), `font-display: swap`, CSP `font-src 'self'`.
+- Heures `18 h 02` / `6:02 PM` formatées à la main comme dans l'app (même règle, code dupliqué : l'app et la page ne partagent aucun module d'exécution).
 
 ## App
 
 - Langue : celle de l'appareil au lancement ; anglais si l'appareil est en anglais, sinon français. Pluriel français : 0 et 1 au singulier.
 - Erreur réseau, statut non 2xx, corps illisible ou délai de 8 s : tous affichent « Impossible de joindre Palier. » ; un rafraîchissement raté retire les chiffres affichés plutôt que de laisser des comptes périmés. Un statut non 2xx lève `PalierStatusError` (sous-type de `PalierUnreachableError`, avec le statut) ; toute autre erreur n'est pas déguisée en « injoignable » et remonte au rendu.
+- À 0 place libre, la ligne affiche « Complet » / « Full » après le carré `danger` ; VoiceOver lit « Complet, 0 place libre ».
 - L'en-tête affiche l'heure de la dernière lecture réussie (« Mis à jour à 13 h 25 », « Updated 1:25 PM ») selon la convention d'heure du backlog, formatée à la main parce que l'Intl de Hermes sur iOS rend « 13:25 » en fr-CA ; un bouton « Actualiser » double le geste de tirer vers le bas.
 - Le jeton vit dans le trousseau iOS (`expo-secure-store`). Au lancement, l'app le relit et appelle `GET /v1/me` : 200 ouvre l'accueil, 401 efface le jeton et montre la connexion, API injoignable montre « Impossible de joindre Palier. » avec « Réessayer ».
 - Un 401 sur la liste des parkings efface le jeton et ramène à l'écran de connexion. « Se déconnecter » efface le jeton tout de suite et révoque côté serveur au mieux (sans attendre le réseau).

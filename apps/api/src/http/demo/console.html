@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Console de démonstration — Palier</title>
+    <link rel="stylesheet" href="/demo/console.css">
+    <script type="module" src="/demo/console.js"></script>
+  </head>
+  <body>
+    <header class="masthead">
+      <p class="eyebrow" data-text="eyebrow">Palier · mode démo</p>
+      <div class="language" role="group" aria-labelledby="language-label">
+        <span id="language-label" class="visually-hidden" data-text="languageLabel">Langue</span>
+        <button type="button" class="language-option" data-language="fr" lang="fr" aria-pressed="true">Français</button>
+        <button type="button" class="language-option" data-language="en" lang="en" aria-pressed="false">English</button>
+      </div>
+    </header>
+    <main>
+      <h1 data-text="title">Console de barrière</h1>
+      <p class="intro" data-text="intro">Cette page joue le contrôleur d’une barrière et ses boucles.</p>
+
+      <section class="block" aria-labelledby="gate-heading">
+        <h2 id="gate-heading" class="eyebrow" data-text="gateHeading">Barrière</h2>
+        <label class="field-label" for="device-key" data-text="deviceKeyLabel">Clé d’appareil</label>
+        <input id="device-key" class="field" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="device-key-hint">
+        <p id="device-key-hint" class="hint" data-text="deviceKeyHint">Les clés de démonstration sont dans docs/demo-console.md.</p>
+        <p id="gate-identity" class="identity">Barrière identifiée au premier appui.</p>
+      </section>
+
+      <section class="block" aria-labelledby="loops-heading">
+        <h2 id="loops-heading" class="eyebrow" data-text="loopsHeading">Boucles</h2>
+        <div class="loops">
+          <button type="button" class="loop-button" data-loop="ENTRY" data-text="loopENTRY" disabled>Boucle d’entrée fermée</button>
+          <button type="button" class="loop-button" data-loop="EXIT" data-text="loopEXIT" disabled>Boucle de sortie fermée</button>
+        </div>
+        <p id="message" class="message" role="status"></p>
+      </section>
+
+      <section class="block" aria-labelledby="passages-heading">
+        <h2 id="passages-heading" class="eyebrow" data-text="passagesHeading">Passages</h2>
+        <p id="no-passage" class="hint" data-text="noPassage">Aucun passage pour l’instant.</p>
+        <ul id="passages" class="passages"></ul>
+      </section>
+    </main>
+  </body>
+</html>

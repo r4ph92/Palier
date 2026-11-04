@@ -18,6 +18,8 @@ export const en: Translations = {
       one: 'free spot',
       other: 'free spots',
     },
+    full: 'Full',
+    fullAccessibilityLabel: 'Full, 0 free spots',
     loading: 'Loading parking lots',
     empty: 'No parking lot online.',
     emptyHint: 'Pull down to refresh.',

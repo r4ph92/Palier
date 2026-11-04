@@ -50,6 +50,13 @@
       "when": 1793504292623,
       "tag": "0006_vehicle_default",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793780229202,
+      "tag": "0007_gates_and_passages",
+      "breakpoints": true
     }
   ]
 }

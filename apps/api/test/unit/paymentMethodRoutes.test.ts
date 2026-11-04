@@ -5,6 +5,7 @@ import { buildServer } from '../../src/http/buildServer.ts';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie, marc } from './fakeDriverRepository.ts';
 import { FakeCardGateway } from './fakeCardGateway.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
+import { fakeGateDependencies } from './fakes/serverDependencies.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
 
@@ -18,7 +19,7 @@ describe('payment method routes', () => {
   function startServer() {
     driverRepository = new FakeDriverRepository();
     cardGateway = new FakeCardGateway();
-    server = buildServer({ repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() }, cardGateway });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() }, cardGateway });
   }
 
   async function signedInWithNotice(driver: typeof julie) {
@@ -127,7 +128,7 @@ describe('payment method routes', () => {
       driverRepository = new FakeDriverRepository();
       cardGateway = new FakeCardGateway();
       vi.spyOn(cardGateway, 'createSetupIntentClientSecret').mockRejectedValue(new CardProviderUnavailableError());
-      server = buildServer({ repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() }, cardGateway });
+      server = buildServer({ gates: fakeGateDependencies(), repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() }, cardGateway });
       const headers = await signedInWithNotice(julie);
 
       const response = await server.inject({ method: 'POST', url: '/v1/me/setup-intent', headers });
@@ -154,7 +155,7 @@ describe('payment method routes', () => {
 
     it('answers 503 when no card gateway is configured', async () => {
       driverRepository = new FakeDriverRepository();
-      server = buildServer({ repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() } });
+      server = buildServer({ gates: fakeGateDependencies(), repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() } });
       const headers = await signedInWithNotice(julie);
 
       const response = await server.inject({ method: 'POST', url: '/v1/me/setup-intent', headers });

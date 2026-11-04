@@ -6,6 +6,8 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true,
+    "allowJs": true,
+    "checkJs": true,
     "types": ["node"]
   },
   "include": ["src", "test", "*.config.ts"]
