@@ -1,10 +1,9 @@
 import { and, asc, eq, ne } from 'drizzle-orm';
 import type { DeleteVehicleResult, NewVehicle, Vehicle, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
-import type { Database } from './database.ts';
+import type { Database, Transaction } from './database.ts';
 import { appUser, vehicle } from './schema.ts';
 
 const vehicleColumns = { id: vehicle.id, plate: vehicle.plate, province: vehicle.province, isDefault: vehicle.isDefault };
-type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 
 export class PostgresVehicleRepository implements VehicleRepository {
   readonly #database: Database;

@@ -1,5 +1,5 @@
 import { eq, sql } from 'drizzle-orm';
-import type { Database } from '../infrastructure/postgres/database.ts';
+import type { Database, Transaction } from '../infrastructure/postgres/database.ts';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import {
   aisle,
@@ -20,8 +20,6 @@ import { LAVOIE_OPERATOR_ID, operatorFixtures } from './fixtures/operators.ts';
 import { parkingDemoAisles, parkingDemoLevels, parkingDemoLot, parkingDemoSpots } from './fixtures/parkingDemo.ts';
 import { vehicleFixtures } from './fixtures/vehicles.ts';
 import type { StripeIds } from './stripeTestCustomers.ts';
-
-type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 
 export interface SeedStripeIds {
   readonly drivers?: ReadonlyMap<string, StripeIds> | undefined;

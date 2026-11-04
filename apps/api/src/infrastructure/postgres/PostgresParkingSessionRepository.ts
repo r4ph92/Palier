@@ -2,10 +2,8 @@ import { and, eq, sql } from 'drizzle-orm';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import type { OpenedSession, ParkingSessionRepository, SessionDraft } from '../../domain/entries/ParkingSessionRepository.ts';
 import { isActiveSessionConflict } from './activeSessionConflict.ts';
-import type { Database } from './database.ts';
+import type { Database, Transaction } from './database.ts';
 import { parkingSession, spot } from './schema.ts';
-
-type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 
 interface AssignedSpotRow extends Record<string, unknown> {
   readonly id: string;
