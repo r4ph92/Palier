@@ -1,4 +1,5 @@
 import { formatPassageTime, translate, vehiclesInside } from './consoleText.js';
+import { COMMAND_POLL_MILLISECONDS, pollCommands } from './commandFeed.js';
 import { createGateApi } from './gateApi.js';
 import { isLoopEnabled, pressLoop } from './loopPress.js';
 
@@ -8,6 +9,7 @@ import { isLoopEnabled, pressLoop } from './loopPress.js';
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('@palier/shared-types').GateKind} GateKind */
 /** @typedef {import('@palier/shared-types').GatePassageResponse} GatePassageResponse */
+/** @typedef {import('@palier/shared-types').GateCommand} GateCommand */
 
 const api = createGateApi(window.fetch.bind(window));
 
@@ -16,6 +18,8 @@ const state = {
   deviceKey: '',
   /** @type {GateIdentity | null} */ identity: null,
   /** @type {GatePassageResponse[]} */ passages: [],
+  /** @type {readonly GateCommand[]} */ commands: [],
+  isPolling: false,
   /** @type {{ key: TextKey, isError: boolean } | null} */ message: null,
   isSending: false,
 };
@@ -43,6 +47,7 @@ function render() {
   renderIdentity();
   renderLoops();
   renderMessage();
+  renderCommands();
   renderPassages();
 }
 
@@ -93,6 +98,37 @@ function renderPassages() {
   elementById('passages').replaceChildren(...items);
 }
 
+function renderCommands() {
+  elementById('no-command').hidden = state.commands.length > 0;
+  const items = [...state.commands].reverse().map((command) => {
+    const item = document.createElement('li');
+    item.textContent = translate(state.language, 'commandLine', {
+      command: translate(state.language, 'commandOPEN'),
+      time: formatPassageTime(new Date(command.issuedAt), state.language),
+    });
+    return item;
+  });
+  elementById('commands').replaceChildren(...items);
+}
+
+// An answer for a key the field no longer holds is dropped, so one gate's commands never show under another.
+async function refreshCommands() {
+  if (state.isPolling) {
+    return;
+  }
+  state.isPolling = true;
+  const deviceKey = state.deviceKey;
+  try {
+    const commands = await pollCommands(api, deviceKey, state.commands);
+    if (deviceKey === state.deviceKey && commands !== state.commands) {
+      state.commands = commands;
+      renderCommands();
+    }
+  } finally {
+    state.isPolling = false;
+  }
+}
+
 /** @param {PressOutcome} outcome */
 function applyOutcome(outcome) {
   state.identity = outcome.identity;
@@ -123,6 +159,7 @@ deviceKeyInput.addEventListener('input', () => {
   state.deviceKey = deviceKeyInput.value.trim();
   state.identity = null;
   state.message = null;
+  state.commands = [];
   render();
 });
 
@@ -138,3 +175,4 @@ for (const button of languageButtons) {
 }
 
 render();
+setInterval(() => void refreshCommands(), COMMAND_POLL_MILLISECONDS);

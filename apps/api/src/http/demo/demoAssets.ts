@@ -23,6 +23,7 @@ export const DEMO_ASSETS: Readonly<Record<string, DemoAsset>> = {
   [CONSOLE_PAGE]: { contentType: 'text/html; charset=utf-8', location: besideThisFile(CONSOLE_PAGE) },
   'console.css': { contentType: 'text/css; charset=utf-8', location: besideThisFile('console.css') },
   'console.js': { contentType: JAVASCRIPT, location: besideThisFile('console.js') },
+  'commandFeed.js': { contentType: JAVASCRIPT, location: besideThisFile('commandFeed.js') },
   'consoleText.js': { contentType: JAVASCRIPT, location: besideThisFile('consoleText.js') },
   'consoleTranslations.js': { contentType: JAVASCRIPT, location: besideThisFile('consoleTranslations.js') },
   'gateApi.js': { contentType: JAVASCRIPT, location: besideThisFile('gateApi.js') },

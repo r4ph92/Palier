@@ -38,4 +38,24 @@ describe('createGateApi', () => {
 
     expect(await createGateApi(fetchFunction).fetchIdentity(DEVICE_KEY)).toEqual({ status: 0, body: null });
   });
+
+  it('asks for the gate commands after a cursor, with the key as a Bearer header', async () => {
+    const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(Response.json([]));
+
+    await createGateApi(fetchFunction).fetchCommands(DEVICE_KEY, '2026-10-27T22:02:00.000Z');
+
+    expect(fetchFunction).toHaveBeenCalledWith('/v1/gates/me/commands?after=2026-10-27T22%3A02%3A00.000Z', {
+      headers: { authorization: `Bearer ${DEVICE_KEY}` },
+      cache: 'no-store',
+      credentials: 'omit',
+    });
+  });
+
+  it('asks for the latest gate commands without a cursor', async () => {
+    const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(Response.json([]));
+
+    await createGateApi(fetchFunction).fetchCommands(DEVICE_KEY, null);
+
+    expect(fetchFunction.mock.calls[0]?.[0]).toBe('/v1/gates/me/commands');
+  });
 });

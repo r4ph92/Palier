@@ -3,6 +3,7 @@
  * @typedef {object} GateApi
  * @property {(deviceKey: string) => Promise<ApiResponse>} fetchIdentity
  * @property {(deviceKey: string, gateId: string, closedAt: string) => Promise<ApiResponse>} postPassage
+ * @property {(deviceKey: string, after: string | null) => Promise<ApiResponse>} fetchCommands
  */
 
 export const UNREACHABLE = 0;
@@ -20,7 +21,17 @@ export function createGateApi(fetchFunction) {
         headers: { ...authorization(deviceKey), 'content-type': 'application/json' },
         body: JSON.stringify({ closedAt }),
       }),
+    fetchCommands: (deviceKey, after) =>
+      request(fetchFunction, commandsUrl(after), { headers: authorization(deviceKey) }),
   };
+}
+
+/**
+ * @param {string | null} after
+ * @returns {string}
+ */
+function commandsUrl(after) {
+  return after === null ? '/v1/gates/me/commands' : `/v1/gates/me/commands?after=${encodeURIComponent(after)}`;
 }
 
 /**
