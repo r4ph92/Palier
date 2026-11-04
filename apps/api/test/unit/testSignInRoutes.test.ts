@@ -27,6 +27,16 @@ describe('test sign-in when enabled', () => {
     expect(response.json()).toEqual([julie]);
   });
 
+  it('answers 404 to an app sign-in as an operator persona and issues no token', async () => {
+    const driverRepository = new FakeDriverRepository([julie, sophie]);
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ driverRepository }), settings: { testSignInEnabled: true } });
+
+    const response = await server.inject({ method: 'POST', url: '/v1/test/sign-in', payload: { driverId: sophie.id } });
+
+    expect(response.statusCode).toBe(404);
+    expect(driverRepository.sessions.activeTokenHashes).toEqual([]);
+  });
+
   it('lists the seeded drivers to pick from', async () => {
     startServer();
 

@@ -42,7 +42,8 @@ async function signInAsTestDriver(
   if (!limiter.allow(request.ip)) {
     return refuseTooManySignIns(reply);
   }
-  const signedIn = await signInDriver(access, request.body.driverId);
+  // Only the listed drivers: an operator persona signs in to the dashboard, never to the app.
+  const signedIn = DRIVER_PERSONA_IDS.includes(request.body.driverId) ? await signInDriver(access, request.body.driverId) : null;
   if (signedIn === null) {
     return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'Not Found', message: 'No such test driver.' });
   }
