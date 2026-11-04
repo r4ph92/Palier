@@ -13,14 +13,16 @@ type Outcome = 'confirmed' | 'cancelled' | 'waiting' | 'refused';
 
 interface Handlers {
   onConfirmed: () => void;
+  onCancelled: () => void;
   onUnexpectedError: (error: unknown) => void;
 }
 
+// Pass stable handlers: a new function restarts the polling and its two-minute limit.
 export function useConfirmationPolling(client: EntryClient, sessionId: string | null, handlers: Handlers): void {
-  const { onConfirmed, onUnexpectedError } = handlers;
+  const { onConfirmed, onCancelled, onUnexpectedError } = handlers;
   useEffect(() => {
-    return sessionId === null ? undefined : startPolling(client, sessionId, { onConfirmed, onUnexpectedError });
-  }, [client, sessionId, onConfirmed, onUnexpectedError]);
+    return sessionId === null ? undefined : startPolling(client, sessionId, { onConfirmed, onCancelled, onUnexpectedError });
+  }, [client, sessionId, onConfirmed, onCancelled, onUnexpectedError]);
 }
 
 type PollHandlers = Handlers & { stop: () => void };
@@ -60,6 +62,9 @@ async function tick(poll: Poll, ask: () => Promise<Outcome>, handlers: PollHandl
 function settle(poll: Poll, outcome: Outcome, handlers: PollHandlers): void {
   if (poll.isActive && outcome === 'confirmed') {
     handlers.onConfirmed();
+  }
+  if (poll.isActive && outcome === 'cancelled') {
+    handlers.onCancelled();
   }
   if (outcome !== 'waiting' || poll.count >= MAXIMUM_POLLS) {
     handlers.stop();

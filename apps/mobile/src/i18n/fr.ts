@@ -87,6 +87,7 @@ export const fr = {
     spotPlace: '\u00A0· Palier\u00A0%{level}\u00A0· Allée\u00A0%{aisle}',
     barrierOpen: 'Barrière ouverte',
     entryConfirmed: 'Entrée confirmée',
+    entryCancelled: 'Entrée annulée\u00A0: aucun passage détecté. Aucun montant retenu.',
     done: 'Terminé',
     addPlate: 'Ajouter une plaque',
     addCard: 'Ajouter une carte',

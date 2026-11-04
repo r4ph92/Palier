@@ -26,6 +26,8 @@ export type EntryState =
   | { readonly status: 'idle' }
   | { readonly status: 'submitting' }
   | { readonly status: 'entered'; readonly sessionId: string; readonly spot: AssignedSpot; readonly isConfirmed: boolean }
+  // Nobody drove through within the confirmation window: Palier freed the spot and released the hold.
+  | { readonly status: 'cancelled'; readonly sessionId: string }
   | { readonly status: 'refused'; readonly refusal: EntryRefusal }
   | { readonly status: 'notResponding' }
   | { readonly status: 'unreachable' };
@@ -54,18 +56,23 @@ export function useEntry(client: EntryClient): EntryController {
     setState(IDLE);
   }, []);
   const confirm = useCallback(() => setState(withEntryConfirmed), []);
+  const cancel = useCallback(() => setState(withEntryCancelled), []);
   // Thrown inside the state update, like in enter(), so an unexpected error reaches the error boundary.
   const failConfirmation = useCallback((error: unknown) => setState(() => { throw error; }), []);
-  useConfirmationPolling(client, unconfirmedSessionId(state), { onConfirmed: confirm, onUnexpectedError: failConfirmation });
+  useConfirmationPolling(client, unconfirmedSessionId(state), { onConfirmed: confirm, onCancelled: cancel, onUnexpectedError: failConfirmation });
   return { state, qrContent, setQrContent, submit, startOver };
 }
 
-function unconfirmedSessionId(state: EntryState): string | null {
+export function unconfirmedSessionId(state: EntryState): string | null {
   return state.status === 'entered' && !state.isConfirmed ? state.sessionId : null;
 }
 
 function withEntryConfirmed(state: EntryState): EntryState {
   return state.status === 'entered' ? { ...state, isConfirmed: true } : state;
+}
+
+function withEntryCancelled(state: EntryState): EntryState {
+  return state.status === 'entered' ? { status: 'cancelled', sessionId: state.sessionId } : state;
 }
 
 async function enter(client: EntryClient, qrContent: string, setState: Dispatch<SetStateAction<EntryState>>): Promise<void> {

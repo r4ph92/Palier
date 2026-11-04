@@ -8,6 +8,7 @@ import { PalierStatusError } from '../src/api/LotsClient';
 import { PalierConsentRequiredError } from '../src/api/VehicleClient';
 import { FakeEntryClient, spotA1 } from './fakeEntryClient';
 import { scan } from './renderScanScreen';
+import { visibleText } from './visibleText';
 
 class CaughtErrorBoundary extends Component<{ readonly children: ReactNode }, { readonly caught?: Error }> {
   override state: { readonly caught?: Error } = {};
@@ -186,7 +187,36 @@ describe('ScanScreen, confirming the entry', () => {
     await advance(ENTRY_STATUS_POLL_MILLISECONDS * 5);
 
     expect(client.statusRequests).toHaveLength(1);
-    expect(screen.getByText('Barrière ouverte')).toBeOnTheScreen();
+  });
+
+  it('replaces the open barrier with the cancellation as an announced alert, and keeps the form usable', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    const { client, user } = await scan();
+    await screen.findByText('Barrière ouverte');
+    client.sessionState = 'CANCELLED';
+
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS);
+
+    const message = 'Entrée annulée : aucun passage détecté. Aucun montant retenu.';
+    expect(screen.getByRole('alert')).toHaveTextContent(message, visibleText);
+    expect(announce).toHaveBeenCalledWith('Entrée annulée\u00A0: aucun passage détecté. Aucun montant retenu.');
+    expect(screen.queryByText('Barrière ouverte')).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Terminé' })).not.toBeOnTheScreen();
+    client.sessionState = 'CREATED';
+    await user.press(screen.getByRole('button', { name: 'Scanner' }));
+    expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();
+    expect(screen.queryByRole('alert')).not.toBeOnTheScreen();
+  });
+
+  it('reads "Entry cancelled: no passage detected. Nothing charged." on an English device', async () => {
+    const client = new FakeEntryClient();
+    await scan({ language: 'en', client });
+    await screen.findByText('Barrier open');
+    client.sessionState = 'CANCELLED';
+
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Entry cancelled: no passage detected. Nothing charged.');
   });
 
   it('names the confirmation in the result VoiceOver reads, not the open barrier', async () => {

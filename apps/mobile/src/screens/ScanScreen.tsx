@@ -172,6 +172,8 @@ function problemMessage(state: EntryState): string | null {
       return i18n.t('scan.notResponding');
     case 'unreachable':
       return i18n.t('scan.unreachable');
+    case 'cancelled':
+      return i18n.t('scan.entryCancelled');
     default:
       return null;
   }

@@ -89,6 +89,7 @@ export const en: Translations = {
     spotPlace: '\u00A0· Level\u00A0%{level}\u00A0· Aisle\u00A0%{aisle}',
     barrierOpen: 'Barrier open',
     entryConfirmed: 'Entry confirmed',
+    entryCancelled: 'Entry cancelled: no passage detected. Nothing charged.',
     done: 'Done',
     addPlate: 'Add a plate',
     addCard: 'Add a card',
