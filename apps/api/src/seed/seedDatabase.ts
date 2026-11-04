@@ -8,6 +8,7 @@ import {
   gateDeviceKey,
   level,
   operator,
+  operatorMember,
   parkingLot,
   spot,
   userConsent,
@@ -16,8 +17,10 @@ import {
 import { driverPersonas } from './fixtures/drivers.ts';
 import { garageRoyLot } from './fixtures/garageRoy.ts';
 import { gateDeviceKeyFixtures, gateFixtures } from './fixtures/gates.ts';
+import { operatorMemberFixtures, operatorUserFixtures } from './fixtures/operatorUsers.ts';
 import { LAVOIE_OPERATOR_ID, operatorFixtures } from './fixtures/operators.ts';
 import { parkingDemoAisles, parkingDemoLevels, parkingDemoLot, parkingDemoSpots } from './fixtures/parkingDemo.ts';
+import { parkingTestPaliersLot } from './fixtures/parkingTestPaliers.ts';
 import { vehicleFixtures } from './fixtures/vehicles.ts';
 import type { StripeIds } from './stripeTestCustomers.ts';
 
@@ -30,10 +33,11 @@ export interface SeedStripeIds {
 export async function seedDatabase(database: Database, stripeIds: SeedStripeIds = {}): Promise<void> {
   await database.transaction(async (transaction) => {
     await transaction.execute(
-      sql`truncate table gate_command, parking_session, gate_passage, gate_device_key, gate, vehicle, user_consent, user_session_token, app_user, spot, aisle, level, parking_lot, operator cascade`,
+      sql`truncate table gate_command, parking_session, gate_passage, gate_device_key, gate, vehicle, user_consent, user_session_token, operator_member, app_user, spot, aisle, level, parking_lot, operator cascade`,
     );
     await insertLots(transaction, stripeIds.demoOperatorAccountId ?? null);
     await insertDrivers(transaction, stripeIds.drivers ?? new Map());
+    await insertOperatorUsers(transaction);
   });
 }
 
@@ -42,7 +46,7 @@ async function insertLots(transaction: Transaction, demoOperatorAccountId: strin
   if (demoOperatorAccountId !== null) {
     await transaction.update(operator).set({ stripeAccountId: demoOperatorAccountId }).where(eq(operator.id, LAVOIE_OPERATOR_ID));
   }
-  await transaction.insert(parkingLot).values([parkingDemoLot, garageRoyLot]);
+  await transaction.insert(parkingLot).values([parkingDemoLot, garageRoyLot, parkingTestPaliersLot]);
   await transaction.insert(level).values(parkingDemoLevels);
   await transaction.insert(aisle).values(parkingDemoAisles);
   await transaction.insert(spot).values(parkingDemoSpots);
@@ -58,4 +62,9 @@ async function insertDrivers(transaction: Transaction, stripeIds: ReadonlyMap<st
     acceptedNotice && user.id !== undefined ? [{ userId: user.id, noticeVersion: PRIVACY_NOTICE_VERSION }] : [],
   );
   await transaction.insert(userConsent).values(consents);
+}
+
+async function insertOperatorUsers(transaction: Transaction): Promise<void> {
+  await transaction.insert(appUser).values(operatorUserFixtures);
+  await transaction.insert(operatorMember).values(operatorMemberFixtures);
 }

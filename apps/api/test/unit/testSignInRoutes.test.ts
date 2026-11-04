@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { julie, marc, FakeDriverRepository } from './fakeDriverRepository.ts';
+import { sophie } from './fakes/dashboardFixtures.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
 
@@ -16,6 +17,15 @@ describe('test sign-in when enabled', () => {
   function startServer() {
     server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository() }), settings: { testSignInEnabled: true } });
   }
+
+  it('never offers an operator persona in the app test list', async () => {
+    const driverRepository = new FakeDriverRepository([julie, sophie]);
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ driverRepository }), settings: { testSignInEnabled: true } });
+
+    const response = await server.inject({ method: 'GET', url: '/v1/test/drivers' });
+
+    expect(response.json()).toEqual([julie]);
+  });
 
   it('lists the seeded drivers to pick from', async () => {
     startServer();

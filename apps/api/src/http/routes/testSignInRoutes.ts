@@ -1,6 +1,7 @@
 import type { SignInResponse, TestDriverListResponse } from '@palier/shared-types';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { signInDriver, type DriverAccess } from '../../domain/drivers/driverSessions.ts';
+import { OPERATOR_PERSONA_IDS } from '../../seed/fixtures/operatorUsers.ts';
 import { signInResponseSchema, testDriverListSchema, testSignInBodySchema } from '../schemas/driverSchemas.ts';
 import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
 
@@ -21,7 +22,7 @@ export function registerTestSignInRoutes(server: FastifyInstance, driverAccess: 
   server.get(
     '/v1/test/drivers',
     { schema: { response: { 200: testDriverListSchema } } },
-    (): Promise<TestDriverListResponse> => driverAccess.drivers.listDrivers(),
+    (): Promise<TestDriverListResponse> => listTestDrivers(driverAccess),
   );
 
   server.post<TestSignInRequest>(
@@ -29,6 +30,11 @@ export function registerTestSignInRoutes(server: FastifyInstance, driverAccess: 
     { schema: { body: testSignInBodySchema, response: { 200: signInResponseSchema } } },
     (request, reply) => signInAsTestDriver({ driverAccess, limiter }, request, reply),
   );
+}
+
+// Operator personas sign in to the dashboard only, so the app's test list never offers them.
+async function listTestDrivers({ drivers }: DriverAccess): Promise<TestDriverListResponse> {
+  return (await drivers.listDrivers()).filter((driver) => !OPERATOR_PERSONA_IDS.includes(driver.id));
 }
 
 interface SignInDependencies {
