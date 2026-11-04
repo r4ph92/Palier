@@ -65,6 +65,7 @@ describe('CurrentParkingSessionScreen', () => {
     await showSession();
 
     expect(screen.getByText('Mis à jour à 21 h 17', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('21 h 17', visibleText)).toHaveStyle({ fontFamily: 'IBMPlexMono_500Medium', fontVariant: ['tabular-nums'] });
   });
 
   it('says nothing about the network while the last read worked', async () => {

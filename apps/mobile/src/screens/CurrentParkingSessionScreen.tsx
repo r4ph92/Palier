@@ -35,9 +35,20 @@ export function CurrentParkingSessionScreen({ reading, onRetry }: CurrentParking
           <FigureRow lead={i18n.t('session.enteredLead')} value={formatClockTime(new Date(session.enteredAt), language)} />
           <FigureRow lead={i18n.t('session.elapsedLead')} value={formatElapsed(session.elapsedMinutes, language)} />
         </View>
-        <Text style={[typography.body, { color: colors.muted }]}>{i18n.t('session.updatedAt', { time: formatClockTime(readAt, language) })}</Text>
+        <UpdatedAt readAt={readAt} />
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+// The time is a figure like the others, in mono (gesture 3), inside a muted sentence.
+function UpdatedAt({ readAt }: { readonly readAt: Date }) {
+  const colors = useColors();
+  return (
+    <Text style={[typography.body, { color: colors.muted }]}>
+      {i18n.t('session.updatedAtLead')}
+      <Text style={typography.figure}>{formatClockTime(readAt, currentLanguage())}</Text>
+    </Text>
   );
 }
 
