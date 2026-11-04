@@ -8,6 +8,7 @@ import { LotList } from './LotList.tsx';
 const KYC_TONES: Readonly<Record<KycStatus, StateTone>> = {
   NOT_STARTED: 'danger',
   PENDING: 'muted',
+  ACTION_REQUIRED: 'danger',
   VERIFIED: 'free',
 };
 

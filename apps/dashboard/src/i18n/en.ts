@@ -35,7 +35,8 @@ export const en: Dictionary = {
   },
   kycStatus: {
     NOT_STARTED: 'Not started',
-    PENDING: 'Pending',
+    PENDING: 'Verification in progress',
+    ACTION_REQUIRED: 'Action required',
     VERIFIED: 'Verified',
   },
   lot: {

@@ -24,7 +24,7 @@ export const dashboardOperatorSchema = {
   properties: {
     id: { type: 'string' },
     legalName: { type: 'string' },
-    kycStatus: { type: 'string', enum: ['NOT_STARTED', 'PENDING', 'VERIFIED'] },
+    kycStatus: { type: 'string', enum: ['NOT_STARTED', 'PENDING', 'ACTION_REQUIRED', 'VERIFIED'] },
   },
 } as const;
 

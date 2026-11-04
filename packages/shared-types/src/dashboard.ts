@@ -27,7 +27,7 @@ export function isValidLegalName(legalName: string): boolean {
   );
 }
 
-export type KycStatus = 'NOT_STARTED' | 'PENDING' | 'VERIFIED';
+export type KycStatus = 'NOT_STARTED' | 'PENDING' | 'ACTION_REQUIRED' | 'VERIFIED';
 
 export interface DashboardUser {
   readonly id: string;

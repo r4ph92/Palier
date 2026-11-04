@@ -33,7 +33,8 @@ export const fr = {
   },
   kycStatus: {
     NOT_STARTED: 'Non commencé',
-    PENDING: 'En attente',
+    PENDING: 'Vérification en cours',
+    ACTION_REQUIRED: 'Action requise',
     VERIFIED: 'Vérifié',
   },
   lot: {
