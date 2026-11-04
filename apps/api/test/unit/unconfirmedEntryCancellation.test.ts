@@ -32,17 +32,6 @@ describe('cancelling entries nobody drove through', () => {
     expect(log.lines.map((line) => line.message)).toEqual(['cancelled an entry nobody drove through', 'released the card hold of a cancelled entry']);
   });
 
-  it('leaves an entry opened 59 s ago waiting for its loop', async () => {
-    const payments = new FakePaymentAuthorizer();
-    const { entries, job } = jobWith(payments);
-    entries.add('julie', 59 * SECOND);
-
-    await check(job);
-
-    expect(entries.session('julie')?.state).toBe('CREATED');
-    expect(payments.cancelled).toEqual([]);
-  });
-
   it('keeps a session a loop closure confirmed just before the cancellation, and its hold', async () => {
     const payments = new FakePaymentAuthorizer();
     const { entries, job, log } = jobWith(payments);

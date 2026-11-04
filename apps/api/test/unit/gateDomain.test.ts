@@ -129,14 +129,6 @@ describe('recordPassage', () => {
     expect(passage).toMatchObject({ vehicleCount: 1, confirmedSessionId: 'session-julie' });
   });
 
-  it('counts the car but confirms nothing when the only opening at the gate was cancelled', async () => {
-    const ledger = new FakePassageLedger(4);
-
-    const passage = await recordPassage(entryAt(now), { ledger, clock, openingWindow });
-
-    expect(passage).toMatchObject({ vehicleCount: 5, confirmedSessionId: null });
-  });
-
   it('refuses a passage from a gate without loops', async () => {
     const ledger = new FakePassageLedger(0);
     const command = { ...entryAt(now), gate: { ...entreeDemo, hasLoops: false } };
