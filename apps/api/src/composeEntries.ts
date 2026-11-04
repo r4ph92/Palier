@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import type { DriverRepository } from './domain/drivers/DriverRepository.ts';
 import { EntryAdmission } from './domain/entries/EntryAdmission.ts';
 import { EntryEligibility } from './domain/entries/EntryEligibility.ts';
+import type { PaymentAuthorizer } from './domain/entries/PaymentAuthorizer.ts';
 import type { VehicleRepository } from './domain/vehicles/VehicleRepository.ts';
 import type { EntryRouteDependencies } from './http/routes/entryRoutes.ts';
 import type { Database } from './infrastructure/postgres/database.ts';
@@ -23,9 +24,16 @@ export interface EntryComposition {
   readonly vehicles: VehicleRepository;
 }
 
-export function composeEntries({ database, stripeKey, demoMode, drivers, vehicles }: EntryComposition): EntryRouteDependencies {
+export interface ComposedEntries {
+  readonly routes: EntryRouteDependencies;
+  // The same Stripe client serves the entry routes and the cancellation job.
+  readonly payments: PaymentAuthorizer | null;
+}
+
+export function composeEntries({ database, stripeKey, demoMode, drivers, vehicles }: EntryComposition): ComposedEntries {
   const sessions = new PostgresParkingSessionRepository(database);
-  return {
+  const payments = stripeKey === null ? null : paymentAuthorizer(stripeKey);
+  const routes = {
     sessions,
     eligibility: new EntryEligibility({
       gates: new PostgresEntryGateRepository(database),
@@ -33,12 +41,9 @@ export function composeEntries({ database, stripeKey, demoMode, drivers, vehicle
       drivers,
       policy: { allowPlatformChargesWithoutOperatorAccount: demoMode },
     }),
-    admission: new EntryAdmission({
-      sessions,
-      payments: stripeKey === null ? null : paymentAuthorizer(stripeKey),
-      gateCommander: new SimulatedGateCommander(database),
-    }),
+    admission: new EntryAdmission({ sessions, payments, gateCommander: new SimulatedGateCommander(database) }),
   };
+  return { routes, payments };
 }
 
 function paymentAuthorizer(stripeKey: string): StripePaymentAuthorizer {
