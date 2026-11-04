@@ -33,7 +33,7 @@ export function ScanScreen({ client, onAddPlate, onAddCard }: ScanScreenProps) {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ScreenHeader eyebrow={i18n.t('scan.eyebrow')} title={i18n.t('scan.title')} />
         {entry.state.status === 'entered' ? (
-          <EnteredSpot spot={entry.state.spot} onDone={entry.startOver} />
+          <EnteredSpot spot={entry.state.spot} isConfirmed={entry.state.isConfirmed} onDone={entry.startOver} />
         ) : (
           <ScanForm entry={entry} onAddPlate={onAddPlate} onAddCard={onAddCard} />
         )}
@@ -51,15 +51,24 @@ function spotPlace(spot: AssignedSpot): string {
 }
 
 // Spot and barrier are one stop for VoiceOver, focused as soon as they replace the form.
-function EnteredSpot({ spot, onDone }: { readonly spot: AssignedSpot; readonly onDone: () => void }) {
+// The barrier line gives way to the confirmation in place once the entry loop proves the car passed.
+interface EnteredSpotProps {
+  readonly spot: AssignedSpot;
+  readonly isConfirmed: boolean;
+  readonly onDone: () => void;
+}
+
+function EnteredSpot({ spot, isConfirmed, onDone }: EnteredSpotProps) {
   const colors = useColors();
   const resultRef = useAccessibilityFocusOnMount();
+  const status = i18n.t(isConfirmed ? 'scan.entryConfirmed' : 'scan.barrierOpen');
+  useAnnouncement(isConfirmed ? status : null);
   return (
     <View style={styles.section}>
-      <View ref={resultRef} accessible accessibilityLabel={`${spotLabel(spot)}. ${i18n.t('scan.barrierOpen')}`} style={styles.field}>
+      <View ref={resultRef} accessible accessibilityLabel={`${spotLabel(spot)}. ${status}`} style={styles.field}>
         <SpotLine spot={spot} />
         <StateMark color={colors.free}>
-          <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('scan.barrierOpen')}</Text>
+          <Text style={[typography.bodyStrong, { color: colors.ink }]}>{status}</Text>
         </StateMark>
       </View>
       <PrimaryButton label={i18n.t('scan.done')} onPress={onDone} />

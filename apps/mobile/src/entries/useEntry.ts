@@ -4,6 +4,7 @@ import { PalierUnauthorizedError } from '../api/AuthClient';
 import type { EntryClient } from '../api/EntryClient';
 import { PalierStatusError, PalierUnreachableError } from '../api/LotsClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
+import { useConfirmationPolling } from './useConfirmationPolling';
 
 // Refusals with a message of their own; PAYMENTS_UNAVAILABLE and any unknown code read as "Palier is not responding".
 export const ENTRY_REFUSALS = [
@@ -24,7 +25,7 @@ export type EntryRefusal = (typeof ENTRY_REFUSALS)[number];
 export type EntryState =
   | { readonly status: 'idle' }
   | { readonly status: 'submitting' }
-  | { readonly status: 'entered'; readonly spot: AssignedSpot }
+  | { readonly status: 'entered'; readonly sessionId: string; readonly spot: AssignedSpot; readonly isConfirmed: boolean }
   | { readonly status: 'refused'; readonly refusal: EntryRefusal }
   | { readonly status: 'notResponding' }
   | { readonly status: 'unreachable' };
@@ -52,14 +53,24 @@ export function useEntry(client: EntryClient): EntryController {
     setQrContent('');
     setState(IDLE);
   }, []);
+  const confirm = useCallback(() => setState(confirmed), []);
+  useConfirmationPolling(client, unconfirmedSessionId(state), confirm);
   return { state, qrContent, setQrContent, submit, startOver };
+}
+
+function unconfirmedSessionId(state: EntryState): string | null {
+  return state.status === 'entered' && !state.isConfirmed ? state.sessionId : null;
+}
+
+function confirmed(state: EntryState): EntryState {
+  return state.status === 'entered' ? { ...state, isConfirmed: true } : state;
 }
 
 async function enter(client: EntryClient, qrContent: string, setState: Dispatch<SetStateAction<EntryState>>): Promise<void> {
   setState({ status: 'submitting' });
   try {
     const entry = await client.enter(qrContent);
-    setState({ status: 'entered', spot: entry.spot });
+    setState({ status: 'entered', sessionId: entry.sessionId, spot: entry.spot, isConfirmed: false });
   } catch (error) {
     // Run inside the state update so an unexpected error is thrown during render and reaches the error boundary.
     setState(() => stateAfterFailure(error));

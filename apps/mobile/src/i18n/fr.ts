@@ -86,6 +86,7 @@ export const fr = {
     spotLead: 'Votre place\u00A0: ',
     spotPlace: '\u00A0· Palier\u00A0%{level}\u00A0· Allée\u00A0%{aisle}',
     barrierOpen: 'Barrière ouverte',
+    entryConfirmed: 'Entrée confirmée',
     done: 'Terminé',
     addPlate: 'Ajouter une plaque',
     addCard: 'Ajouter une carte',
