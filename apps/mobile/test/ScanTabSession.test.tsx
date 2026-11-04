@@ -1,9 +1,8 @@
-import { getDefaultNormalizer, screen, userEvent } from '@testing-library/react-native';
+import { screen, userEvent } from '@testing-library/react-native';
 import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
-
-const visibleText = { normalizer: (text: string) => getDefaultNormalizer()(text.replaceAll('⁠', '')) };
+import { visibleText } from './visibleText';
 
 async function scanAtEntreeDemo(parkingSession: FakeParkingSessionClient) {
   await renderPalierApp({ ...signedInJulie(), testSignInEnabled: false, clients: () => ({ entry: new FakeEntryClient(), parkingSession }) });

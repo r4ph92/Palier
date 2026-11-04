@@ -1,8 +1,5 @@
 import { formatMoney } from '../src/i18n/formatMoney';
-
-function withRegularSpaces(text: string): string {
-  return text.replace(/[\u00A0\u202F]/g, ' ');
-}
+import { asSeen } from './visibleText';
 
 describe('formatMoney', () => {
   it.each([
@@ -12,7 +9,7 @@ describe('formatMoney', () => {
     [5, '0,05 $', '$0.05'],
     [123456, '1 234,56 $', '$1,234.56'],
   ])('writes %i cents as %s and %s', (cents, french, english) => {
-    expect(withRegularSpaces(formatMoney(cents, 'fr'))).toBe(french);
+    expect(asSeen(formatMoney(cents, 'fr'))).toBe(french);
     expect(formatMoney(cents, 'en')).toBe(english);
   });
 

@@ -1,8 +1,5 @@
 import { formatElapsed } from '../src/i18n/formatElapsed';
-
-function withRegularSpaces(text: string): string {
-  return text.replace(/\u00A0/g, ' ');
-}
+import { asSeen } from './visibleText';
 
 describe('formatElapsed', () => {
   it.each([
@@ -12,7 +9,7 @@ describe('formatElapsed', () => {
     [14, '14 min', '14 min'],
     [0, '0 min', '0 min'],
   ])('writes %i minutes as %s and %s', (minutes, french, english) => {
-    expect(withRegularSpaces(formatElapsed(minutes, 'fr'))).toBe(french);
-    expect(withRegularSpaces(formatElapsed(minutes, 'en'))).toBe(english);
+    expect(asSeen(formatElapsed(minutes, 'fr'))).toBe(french);
+    expect(asSeen(formatElapsed(minutes, 'en'))).toBe(english);
   });
 });

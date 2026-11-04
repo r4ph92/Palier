@@ -1,13 +1,12 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
-import { getDefaultNormalizer, render, screen } from '@testing-library/react-native';
+import { render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { CurrentParkingSessionScreen } from '../src/screens/CurrentParkingSessionScreen';
 import { julieAtParkingDemo } from './fakeParkingSessionClient';
 import { IPHONE_MINI_METRICS } from './renderPalierApp';
+import { visibleText } from './visibleText';
 
-// No-break spaces read as spaces, and the spot number's invisible word joiner is dropped.
-const visibleText = { normalizer: (text: string) => getDefaultNormalizer()(text.replaceAll('⁠', '')) };
 const readAt = new Date(2026, 10, 4, 21, 17);
 
 async function showSession(session: CurrentParkingSession = julieAtParkingDemo(), language: SupportedLanguage = 'fr') {

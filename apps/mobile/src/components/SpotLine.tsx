@@ -5,7 +5,7 @@ import { useColors } from '../theme/useColors';
 import { typography } from '../theme/typography';
 
 // After the hyphen of a spot number, so « A-1 » never splits across two lines; it is invisible and not spoken.
-const WORD_JOINER = '⁠';
+export const WORD_JOINER = '\u2060';
 
 export function spotLabel(spot: AssignedSpot, lead = ''): string {
   return `${lead}${spot.number}${spotPlace(spot)}`;

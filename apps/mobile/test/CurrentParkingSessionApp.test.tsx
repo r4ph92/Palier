@@ -1,10 +1,9 @@
-import { act, getDefaultNormalizer, screen, userEvent } from '@testing-library/react-native';
+import { act, screen, userEvent } from '@testing-library/react-native';
 import { PalierUnreachableError } from '../src/api/LotsClient';
 import { SESSION_REFRESH_MILLISECONDS } from '../src/parkingSessions/useCurrentParkingSession';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
-
-const visibleText = { normalizer: (text: string) => getDefaultNormalizer()(text.replaceAll('⁠', '')) };
+import { visibleText } from './visibleText';
 
 async function relaunchAsJulie(parkingSession: FakeParkingSessionClient) {
   await renderPalierApp({ ...signedInJulie(), testSignInEnabled: false, clients: () => ({ parkingSession }) });
