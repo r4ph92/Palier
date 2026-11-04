@@ -13,9 +13,11 @@ const ENTRY_REFUSAL_STATUSES = new Set([BAD_REQUEST, PAYMENT_REQUIRED, CONFLICT,
 
 export class HttpEntryClient implements EntryClient {
   readonly #requester: AuthorizedRequester;
+  readonly #statusRequester: AuthorizedRequester;
 
   constructor(options: AuthorizedClientOptions) {
     this.#requester = new AuthorizedRequester(options, ENTRY_REFUSAL_STATUSES);
+    this.#statusRequester = new AuthorizedRequester(options, new Set());
   }
 
   async enter(qrContent: string): Promise<EntryResponse> {
@@ -28,7 +30,7 @@ export class HttpEntryClient implements EntryClient {
   }
 
   async status(sessionId: string): Promise<EntryStatusResponse> {
-    const response = await this.#requester.send(`/v1/entries/${encodeURIComponent(sessionId)}`, { method: 'GET' });
+    const response = await this.#statusRequester.send(`/v1/entries/${encodeURIComponent(sessionId)}`, { method: 'GET' });
     return parseEntryStatus(await readJson(response));
   }
 }
