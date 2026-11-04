@@ -54,7 +54,7 @@ export const parkingSession = pgTable(
     ),
     uniqueIndex('parking_session_one_active_per_user_index').on(table.userId).where(ACTIVE_SESSION),
     uniqueIndex('parking_session_one_active_per_spot_index').on(table.assignedSpotId).where(ACTIVE_SESSION),
-    index('parking_session_hold_release_pending_index').on(table.holdReleaseAttemptedAt).where(sql`${table.holdReleasePending}`),
+    index('parking_session_hold_release_pending_index').on(table.holdReleaseAttemptedAt.asc().nullsFirst(), table.id).where(sql`${table.holdReleasePending}`),
   ],
 );
 

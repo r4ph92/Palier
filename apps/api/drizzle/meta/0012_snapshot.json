@@ -1432,6 +1432,12 @@
               "expression": "hold_release_attempted_at",
               "isExpression": false,
               "asc": true,
+              "nulls": "first"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
               "nulls": "last"
             }
           ],
