@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
-import type { OpeningWindow, PassageEntry, PassageLedger, RecordedPassage } from '../../domain/gates/PassageLedger.ts';
+import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
+import type { PassageEntry, PassageLedger, RecordedPassage } from '../../domain/gates/PassageLedger.ts';
 import type { Database, Transaction } from './database.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
 

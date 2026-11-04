@@ -1,7 +1,7 @@
 import type { EntryCancellationTiming } from './config/entryCancellationTiming.ts';
 import type { PaymentAuthorizer } from './domain/entries/PaymentAuthorizer.ts';
 import type { CancellationJob } from './domain/entries/unconfirmedEntryCancellation.ts';
-import type { OpeningWindow } from './domain/gates/PassageLedger.ts';
+import type { OpeningWindow } from './domain/gates/OpeningWindow.ts';
 import type { Database } from './infrastructure/postgres/database.ts';
 import { PostgresUnconfirmedEntryRepository } from './infrastructure/postgres/PostgresUnconfirmedEntryRepository.ts';
 

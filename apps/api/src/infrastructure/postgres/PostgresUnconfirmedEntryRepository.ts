@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { ExpiredEntry, PendingRelease, UnconfirmedEntryRepository } from '../../domain/entries/UnconfirmedEntryRepository.ts';
-import type { OpeningWindow } from '../../domain/gates/PassageLedger.ts';
+import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database } from './database.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';

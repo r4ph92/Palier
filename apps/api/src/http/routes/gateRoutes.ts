@@ -2,7 +2,8 @@ import type { GateIdentity, GatePassageRequest, GatePassageResponse } from '@pal
 import type { FastifyInstance } from 'fastify';
 import type { GateCommandCursor, GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
 import type { GateDeviceKeyRepository } from '../../domain/gates/GateDeviceKeyRepository.ts';
-import type { OpeningWindow, PassageLedger } from '../../domain/gates/PassageLedger.ts';
+import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
+import type { PassageLedger } from '../../domain/gates/PassageLedger.ts';
 import { recordPassage } from '../../domain/gates/recordPassage.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 import { authenticatedGateOf, createGateDeviceAuthentication } from '../gates/gateDeviceAuthentication.ts';

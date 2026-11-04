@@ -1,5 +1,5 @@
 import { assertNever } from '../assertNever.ts';
-import type { OpeningWindow } from '../gates/PassageLedger.ts';
+import type { OpeningWindow } from '../gates/OpeningWindow.ts';
 import type { HoldRelease, PaymentAuthorizer } from './PaymentAuthorizer.ts';
 import type { ExpiredEntry, PendingRelease, UnconfirmedEntryRepository } from './UnconfirmedEntryRepository.ts';
 

@@ -1,7 +1,8 @@
 import type { GateKind, GatePassageResponse } from '@palier/shared-types';
 import type { Clock } from '../time/Clock.ts';
 import type { AuthenticatedGate } from './AuthenticatedGate.ts';
-import type { OpeningWindow, PassageLedger, VehicleCountChange } from './PassageLedger.ts';
+import type { OpeningWindow } from './OpeningWindow.ts';
+import type { PassageLedger, VehicleCountChange } from './PassageLedger.ts';
 import { PassageRefusedError } from './PassageRefusedError.ts';
 
 const ALLOWED_CLOCK_DRIFT_MILLISECONDS = 5 * 60 * 1000;

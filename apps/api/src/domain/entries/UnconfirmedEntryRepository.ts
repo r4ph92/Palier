@@ -1,4 +1,4 @@
-import type { OpeningWindow } from '../gates/PassageLedger.ts';
+import type { OpeningWindow } from '../gates/OpeningWindow.ts';
 
 export interface ExpiredEntry {
   readonly sessionId: string;

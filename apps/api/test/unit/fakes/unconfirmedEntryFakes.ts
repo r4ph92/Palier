@@ -1,7 +1,7 @@
 import type { EntrySessionState } from '@palier/shared-types';
 import type { CancellationLog } from '../../../src/domain/entries/unconfirmedEntryCancellation.ts';
 import type { ExpiredEntry, PendingRelease, UnconfirmedEntryRepository } from '../../../src/domain/entries/UnconfirmedEntryRepository.ts';
-import type { OpeningWindow } from '../../../src/domain/gates/PassageLedger.ts';
+import type { OpeningWindow } from '../../../src/domain/gates/OpeningWindow.ts';
 
 export interface FakeEntrySession {
   readonly sessionId: string;
