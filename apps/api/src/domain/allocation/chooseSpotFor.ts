@@ -8,23 +8,27 @@ const accessible: SpotGroup = (spot) => spot.isAccessible;
 const electric: SpotGroup = (spot) => spot.isEv;
 const oversize: SpotGroup = (spot) => spot.isOversize;
 const standard: SpotGroup = (spot) => !spot.isEv && !spot.isAccessible && !spot.isOversize;
-// Oversize spots are kept for large vehicles while standard ones remain.
-const oversizeOnly: SpotGroup = (spot) => spot.isOversize && !spot.isEv && !spot.isAccessible;
 
-// The groups a vehicle may take, the right spot first. An oversize vehicle fits only an oversize spot,
-// and electric or accessible spots are never given to a vehicle that does not need them.
+// Electric and accessible spots go only to a vehicle with that need, even when the spot has another flag too,
+// and an oversize vehicle fits only an oversize spot.
+function fits(needs: VehicleNeeds, spot: FreeSpot): boolean {
+  return (!spot.isEv || needs.isElectric) && (!spot.isAccessible || needs.hasAccessiblePermit) && (!needs.isOversize || spot.isOversize);
+}
+
+// The groups a vehicle tries, the right spot first. Oversize spots are kept for large vehicles while standard ones remain.
 function spotGroupsFor(needs: VehicleNeeds): readonly SpotGroup[] {
   if (needs.isOversize) {
     return [oversize];
   }
-  return [...(needs.hasAccessiblePermit ? [accessible] : []), ...(needs.isElectric ? [electric] : []), standard, oversizeOnly];
+  return [...(needs.hasAccessiblePermit ? [accessible] : []), ...(needs.isElectric ? [electric] : []), standard, oversize];
 }
 
 // The need comes before the level: chooseSpot orders the spots inside the first group that has one free.
 // Null when no spot is free; throws NO_SUITABLE_SPOT when spots are free but none fits the vehicle.
 export function chooseSpotFor(needs: VehicleNeeds, freeSpots: readonly FreeSpot[]): FreeSpot | null {
+  const fitting = freeSpots.filter((spot) => fits(needs, spot));
   for (const group of spotGroupsFor(needs)) {
-    const chosen = chooseSpot(freeSpots.filter(group));
+    const chosen = chooseSpot(fitting.filter(group));
     if (chosen !== null) {
       return chosen;
     }

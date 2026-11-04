@@ -89,6 +89,23 @@ describe('chooseSpotFor', () => {
     expect(refusalOf(largeVehicle, [A1, B1, A5, B5])).toMatchObject({ reason: 'NO_SUITABLE_SPOT' });
   });
 
+  it('keeps a spot that is both electric and accessible from an electric driver without a permit', () => {
+    const electricCar = { ...standardCar, isElectric: true };
+    const electricAndAccessible = spot('C-1', { isEv: true, isAccessible: true });
+
+    expect(chooseSpotFor(electricCar, [electricAndAccessible, A1])?.number).toBe('A-1');
+    expect(refusalOf(electricCar, [electricAndAccessible])).toMatchObject({ reason: 'NO_SUITABLE_SPOT' });
+    expect(chooseSpotFor(amelie, [electricAndAccessible, A1])?.number).toBe('C-1');
+  });
+
+  it('keeps an oversize spot that is also accessible from an oversize vehicle without a permit', () => {
+    const oversizeAndAccessible = spot('C-2', { isOversize: true, isAccessible: true });
+
+    expect(chooseSpotFor(largeVehicle, [oversizeAndAccessible, B4])?.number).toBe('B-4');
+    expect(refusalOf(largeVehicle, [oversizeAndAccessible])).toMatchObject({ reason: 'NO_SUITABLE_SPOT' });
+    expect(chooseSpotFor({ ...largeVehicle, hasAccessiblePermit: true }, [oversizeAndAccessible])?.number).toBe('C-2');
+  });
+
   it('returns null, not a refusal, when no spot is free at all', () => {
     expect(chooseSpotFor(amelie, [])).toBeNull();
   });
