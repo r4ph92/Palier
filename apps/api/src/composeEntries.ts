@@ -45,7 +45,8 @@ export function composeEntries({ database, stripeKey, demoMode, simulateStripeUn
   };
 }
 
-function paymentAuthorizer(stripeKey: string | null, simulateStripeUnreachable: boolean): PaymentAuthorizer | null {
+// Exported for its test: the switch must win over a real key.
+export function paymentAuthorizer(stripeKey: string | null, simulateStripeUnreachable: boolean): PaymentAuthorizer | null {
   if (simulateStripeUnreachable) {
     return new UnreachablePaymentAuthorizer();
   }
