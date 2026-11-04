@@ -6,6 +6,7 @@ import type {
   DashboardSignInResponse,
   DashboardTestSignInRequest,
   DashboardUser,
+  StripeOnboardingLink,
 } from '@palier/shared-types';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
@@ -68,12 +69,20 @@ export const createOperatorBodySchema = {
   properties: { legalName: { type: 'string', maxLength: 1000 } },
 } as const;
 
+export const stripeOnboardingLinkSchema = {
+  type: 'object',
+  required: ['url'],
+  additionalProperties: false,
+  properties: { url: { type: 'string' } },
+} as const;
+
 export const lotIdParametersSchema = {
   type: 'object',
   required: ['id'],
   properties: { id: { type: 'string', format: 'uuid' } },
 } as const;
 
+export type StripeOnboardingLinkSchemaMatches = AssertTrue<MutuallyAssignable<FromSchema<typeof stripeOnboardingLinkSchema>, StripeOnboardingLink>>;
 export type UserSchemaMatches = AssertTrue<MutuallyAssignable<FromSchema<typeof dashboardUserSchema>, DashboardUser>>;
 export type OperatorSchemaMatches = AssertTrue<MutuallyAssignable<FromSchema<typeof dashboardOperatorSchema>, DashboardOperator>>;
 export type MeSchemaMatches = AssertTrue<MutuallyAssignable<FromSchema<typeof dashboardMeSchema>, DashboardMeResponse>>;

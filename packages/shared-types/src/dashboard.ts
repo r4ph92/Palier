@@ -41,6 +41,10 @@ export interface DashboardOperator {
   readonly kycStatus: KycStatus;
 }
 
+export interface StripeOnboardingLink {
+  readonly url: string;
+}
+
 export interface DashboardMeResponse {
   readonly user: DashboardUser;
   readonly operator: DashboardOperator | null;

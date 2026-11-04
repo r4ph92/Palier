@@ -1,4 +1,7 @@
 import type { KycStatus } from '@palier/shared-types';
+import Stripe from 'stripe';
+import type { OperatorStripeDependencies } from '../../../src/http/buildServer.ts';
+import { StripeAccountWebhookReader } from '../../../src/infrastructure/stripe/StripeAccountWebhookReader.ts';
 import { OperatorStripeUnavailableError, type OperatorStripeAccounts, type OperatorStripeGateway } from '../../../src/domain/dashboard/OperatorStripe.ts';
 import type { FakeOperatorRepository } from './fakeOperatorRepository.ts';
 
@@ -64,4 +67,19 @@ export class FakeOperatorStripeAccounts implements OperatorStripeAccounts {
   connect(operatorId: string, accountId: string): void {
     this.#accountByOperator.set(operatorId, accountId);
   }
+}
+
+export const WEBHOOK_SECRET = 'whsec_test_secret_for_unit_tests';
+// A real Stripe client that is never called: the signature check runs offline.
+export const offlineStripe = new Stripe('sk_test_unit_tests_never_call_stripe');
+
+export function fakeOperatorStripe(operators: FakeOperatorRepository) {
+  const accounts = new FakeOperatorStripeAccounts(operators);
+  const gateway = new FakeOperatorStripeGateway();
+  const dependencies: OperatorStripeDependencies = {
+    accounts,
+    gateway,
+    webhookReader: new StripeAccountWebhookReader(offlineStripe, WEBHOOK_SECRET),
+  };
+  return { accounts, gateway, dependencies };
 }
