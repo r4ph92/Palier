@@ -47,21 +47,28 @@ async function tick(poll: Poll, ask: () => Promise<Outcome>, handlers: Handlers 
   poll.isAsking = true;
   poll.count += 1;
   try {
-    const outcome = await ask();
-    if (poll.isActive && outcome === 'confirmed') {
-      handlers.onConfirmed();
-    }
-    if (outcome !== 'waiting' || poll.count >= MAXIMUM_POLLS) {
-      handlers.stop();
-    }
+    settle(poll, await ask(), handlers);
   } catch (error) {
-    const wasActive = poll.isActive;
-    handlers.stop();
-    if (wasActive) {
-      handlers.onUnexpectedError(error);
-    }
+    stopAndReport(poll, error, handlers);
   } finally {
     poll.isAsking = false;
+  }
+}
+
+function settle(poll: Poll, outcome: Outcome, handlers: Handlers & { stop: () => void }): void {
+  if (poll.isActive && outcome === 'confirmed') {
+    handlers.onConfirmed();
+  }
+  if (outcome !== 'waiting' || poll.count >= MAXIMUM_POLLS) {
+    handlers.stop();
+  }
+}
+
+function stopAndReport(poll: Poll, error: unknown, handlers: Handlers & { stop: () => void }): void {
+  const wasActive = poll.isActive;
+  handlers.stop();
+  if (wasActive) {
+    handlers.onUnexpectedError(error);
   }
 }
 
