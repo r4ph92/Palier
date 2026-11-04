@@ -1,0 +1,93 @@
+.row-list {
+  list-style: none;
+  margin: var(--space-medium) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  border-bottom: 1px solid var(--line);
+}
+
+.row-button,
+.row-link {
+  display: flex;
+  width: 100%;
+  min-height: var(--touch-target);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-medium);
+  padding: var(--space-small) 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.row-button:hover .row-name,
+.row-button:hover > span:first-child,
+.row-link:hover .row-name {
+  text-decoration: underline;
+}
+
+.row-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.skeleton-row {
+  height: var(--touch-target);
+  background: var(--sunken);
+}
+
+.row-button[aria-disabled='true'] {
+  cursor: wait;
+}
+
+.state-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-small);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.state-mark-square {
+  width: 8px;
+  height: 8px;
+  flex: none;
+}
+
+.state-mark-free {
+  background: var(--free);
+}
+
+.state-mark-danger {
+  background: var(--danger);
+}
+
+.state-mark-muted {
+  background: var(--muted);
+}
+
+.facts {
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-small);
+  padding: var(--space-small) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.fact-value {
+  margin: 0;
+}

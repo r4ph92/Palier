@@ -3,7 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App.tsx';
 import './theme/fonts.css';
 import './theme/tokens.css';
-import './theme/base.css';
+import './theme/layout.css';
+import './theme/lists.css';
+import './theme/forms.css';
 
 const root = document.getElementById('root');
 if (root === null) {
