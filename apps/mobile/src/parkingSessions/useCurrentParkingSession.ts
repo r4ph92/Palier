@@ -1,5 +1,5 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
-import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
 import { PalierUnauthorizedError } from '../api/AuthClient';
 import { PalierUnreachableError } from '../api/LotsClient';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
@@ -28,7 +28,7 @@ interface ReadTracker {
 interface ReadContext {
   readonly tracker: ReadTracker;
   readonly setState: Dispatch<SetStateAction<CurrentParkingSessionState>>;
-  readonly onFirstSession: () => void;
+  readonly onFirstSession: RefObject<() => void>;
 }
 
 const LOADING: CurrentParkingSessionState = { status: 'loading' };
@@ -36,11 +36,16 @@ const NONE: CurrentParkingSessionState = { status: 'none' };
 const UNKNOWN: CurrentParkingSessionState = { status: 'unknown' };
 
 // Lives as long as the driver is signed in: read at sign-in or relaunch, then every minute.
-// onFirstSession runs once, when Palier first answers with a session.
+// onFirstSession runs once, when Palier first answers with a session. It is kept in a ref, so a caller passing
+// a new function on each render never restarts the reads.
 export function useCurrentParkingSession(client: ParkingSessionClient, onFirstSession: () => void): CurrentParkingSessionController {
   const [state, setState] = useState<CurrentParkingSessionState>(LOADING);
   const tracker = useRef<ReadTracker>({ latest: 0, hasAnswered: false });
-  const refresh = useCallback(() => void read(client, { tracker: tracker.current, setState, onFirstSession }), [client, onFirstSession]);
+  const latestOnFirstSession = useRef(onFirstSession);
+  useEffect(() => {
+    latestOnFirstSession.current = onFirstSession;
+  });
+  const refresh = useCallback(() => void read(client, { tracker: tracker.current, setState, onFirstSession: latestOnFirstSession }), [client]);
   useEffect(() => {
     refresh();
     const timer = setInterval(refresh, SESSION_REFRESH_MILLISECONDS);
@@ -57,7 +62,7 @@ async function read(client: ParkingSessionClient, { tracker, setState, onFirstSe
     const session = await client.current();
     if (readNumber === tracker.latest) {
       setState(session === null ? NONE : { status: 'current', session, readAt: new Date() });
-      announceFirstAnswer(tracker, session, onFirstSession);
+      announceFirstAnswer(tracker, session, onFirstSession.current);
     }
   } catch (error) {
     // Run inside the state update so an unexpected error is thrown during render and reaches the error boundary.
