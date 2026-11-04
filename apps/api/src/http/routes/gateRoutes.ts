@@ -72,24 +72,25 @@ function registerPassageRoute(scope: FastifyInstance, dependencies: GateRouteDep
 function registerCommandsRoute(scope: FastifyInstance, commands: GateCommandFeed): void {
   const schema = { querystring: gateCommandsQuerySchema, response: { 200: gateCommandListSchema } };
   scope.get<CommandsRoute>('/me/commands', { schema }, async (request, reply) => {
-    const after = cursorOf(request.query);
-    if (after === undefined) {
+    const cursor = cursorOf(request.query);
+    if (cursor.kind === 'invalid') {
       return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'AFTER_INVALID', message: 'after and afterId do not form a cursor the server can read.' });
     }
-    return commands.listCommands(authenticatedGateOf(request).id, after);
+    return commands.listCommands(authenticatedGateOf(request).id, cursor.kind === 'after' ? cursor.after : null);
   });
 }
 
-// Null asks for the latest commands; undefined is a cursor the route refuses.
-function cursorOf({ after, afterId }: GateCommandsQuery): GateCommandCursor | null | undefined {
+type CommandsCursor = { readonly kind: 'latest' } | { readonly kind: 'invalid' } | { readonly kind: 'after'; readonly after: GateCommandCursor };
+
+function cursorOf({ after, afterId }: GateCommandsQuery): CommandsCursor {
   if (after === undefined && afterId === undefined) {
-    return null;
+    return { kind: 'latest' };
   }
   if (after === undefined || afterId === undefined) {
-    return undefined;
+    return { kind: 'invalid' };
   }
   const issuedAt = new Date(after);
-  return isStorableDate(issuedAt) ? { issuedAt, id: afterId } : undefined;
+  return isStorableDate(issuedAt) ? { kind: 'after', after: { issuedAt, id: afterId } } : { kind: 'invalid' };
 }
 
 // Also false for an invalid date, whose year is NaN.
