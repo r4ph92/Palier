@@ -1,5 +1,5 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react';
-import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
@@ -11,6 +11,8 @@ import type { PanelAction } from './panelActions';
 import type { LogEntry, SignalJournal } from './SignalJournal';
 
 const MAX_FONT_SCALE = 2;
+const NEWEST_SLOT_LINES = 2;
+const LOG_LINE_HEIGHT = typography.countLabel.lineHeight;
 
 interface SimulatedSignalsPanelProps {
   readonly journal: SignalJournal;
@@ -25,9 +27,10 @@ export function SimulatedSignalsPanel({ journal, signals, commands, onBack }: Si
     <SafeAreaView testID="SimulatedSignalsPanel" edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader eyebrow="Développeur" title="Signaux simulés" action={<TextButton label="Retour" onPress={onBack} />} />
-        <EventLog journal={journal} />
+        <NewestEntry journal={journal} />
         <ActionGroup title="Signaux" actions={signals} />
         <ActionGroup title="Commandes" actions={commands} />
+        <EventLog journal={journal} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -63,12 +66,37 @@ function ActionGroup({ title, actions }: { readonly title: string; readonly acti
   );
 }
 
+function useEntries(journal: SignalJournal): readonly LogEntry[] {
+  return useSyncExternalStore(journal.subscribe, journal.snapshot);
+}
+
+// A fixed slot under the header: the rows below never move when an entry arrives.
+function NewestEntry({ journal }: { readonly journal: SignalJournal }) {
+  const colors = useColors();
+  const { fontScale } = useWindowDimensions();
+  const newest = useEntries(journal)[0];
+  useAnnounceNewest(newest);
+  const slotHeight = LOG_LINE_HEIGHT * NEWEST_SLOT_LINES * Math.min(Math.max(fontScale, 1), MAX_FONT_SCALE);
+  return (
+    <View testID="NewestEntry" style={{ minHeight: slotHeight }}>
+      {newest === undefined ? null : (
+        <Text
+          numberOfLines={NEWEST_SLOT_LINES}
+          maxFontSizeMultiplier={MAX_FONT_SCALE}
+          style={[typography.countLabel, { color: colors.ink }]}
+        >
+          {formatEntry(newest)}
+        </Text>
+      )}
+    </View>
+  );
+}
+
 function EventLog({ journal }: { readonly journal: SignalJournal }) {
   const colors = useColors();
-  const entries = useSyncExternalStore(journal.subscribe, journal.snapshot);
-  useAnnounceNewest(entries[0]);
+  const entries = useEntries(journal);
   return (
-    <View>
+    <View testID="Journal">
       <GroupLabel title="Journal" />
       {entries.length === 0 ? (
         <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[typography.body, styles.emptyLog, { color: colors.muted }]}>
@@ -82,11 +110,15 @@ function EventLog({ journal }: { readonly journal: SignalJournal }) {
   );
 }
 
+function formatEntry(entry: LogEntry): string {
+  return `${formatLogTime(entry.at)}  ${entry.text}`;
+}
+
 function LogLine({ entry }: { readonly entry: LogEntry }) {
   const colors = useColors();
   return (
     <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[typography.countLabel, styles.logLine, { color: colors.ink, borderBottomColor: colors.line }]}>
-      {`${formatLogTime(entry.at)}  ${entry.text}`}
+      {formatEntry(entry)}
     </Text>
   );
 }

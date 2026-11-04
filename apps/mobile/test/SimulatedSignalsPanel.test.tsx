@@ -1,5 +1,5 @@
 import { AccessibilityInfo } from 'react-native';
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { render, screen, userEvent, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import { PositioningCore } from '../src/positioning/PositioningCore';
@@ -27,7 +27,25 @@ describe('SimulatedSignalsPanel signals', () => {
 
     await user.press(screen.getByRole('button', { name: 'Allée 2' }));
 
-    expect(screen.getByText('18 h 02 min 05 s  Allée détectée : minor 2')).toBeOnTheScreen();
+    expect(within(screen.getByTestId('Journal')).getByText('18 h 02 min 05 s  Allée détectée : minor 2')).toBeOnTheScreen();
+  });
+
+  it('shows only the newest entry under the header, in a two-line slot', async () => {
+    const user = await renderPanel();
+
+    await user.press(screen.getByRole('button', { name: 'Allée 1' }));
+    await user.press(screen.getByRole('button', { name: 'Allée 2' }));
+
+    const slot = within(screen.getByTestId('NewestEntry'));
+    expect(slot.getByText('18 h 02 min 05 s  Allée détectée : minor 2')).toHaveProp('numberOfLines', 2);
+    expect(slot.queryByText(/minor 1/)).not.toBeOnTheScreen();
+  });
+
+  it('places the Journal after the Commandes group', async () => {
+    await renderPanel();
+
+    const headers = screen.getAllByRole('header').map((node) => String(node.props.children));
+    expect(headers.slice(-3)).toEqual(['Signaux', 'Commandes', 'Journal']);
   });
 
   it.each([
@@ -42,7 +60,7 @@ describe('SimulatedSignalsPanel signals', () => {
 
     await user.press(screen.getByRole('button', { name: button }));
 
-    expect(screen.getByText(`18 h 02 min 05 s  ${line}`)).toBeOnTheScreen();
+    expect(within(screen.getByTestId('Journal')).getByText(`18 h 02 min 05 s  ${line}`)).toBeOnTheScreen();
   });
 
   it('shows the empty log first and goes back on "Retour"', async () => {
@@ -67,7 +85,15 @@ describe('SimulatedSignalsPanel commands', () => {
 
     await user.press(screen.getByRole('button', { name: button }));
 
-    expect(screen.getByText(`18 h 02 min 05 s  ${line}`)).toBeOnTheScreen();
+    expect(within(screen.getByTestId('Journal')).getByText(`18 h 02 min 05 s  ${line}`)).toBeOnTheScreen();
+  });
+
+  it('also logs the empty queue flush the flushOfflineQueue row ends with', async () => {
+    const user = await renderPanel();
+
+    await user.press(screen.getByRole('button', { name: 'flushOfflineQueue' }));
+
+    expect(within(screen.getByTestId('Journal')).getByText('18 h 02 min 05 s  File vidée : 0 élément(s)')).toBeOnTheScreen();
   });
 });
 
