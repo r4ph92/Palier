@@ -5,17 +5,17 @@ import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessi
 describe('useCurrentParkingSession', () => {
   it('reads once and announces the first session once, though each render passes a new inline callback', async () => {
     const client = new FakeParkingSessionClient(julieAtParkingDemo());
-    let firstSessions = 0;
-    const { rerender } = await renderHook(({ round }: { readonly round: number }) =>
+    const announcedDuringRender: number[] = [];
+    const { rerender } = await renderHook(({ renderNumber }: { readonly renderNumber: number }) =>
       useCurrentParkingSession(client, () => {
-        firstSessions += round >= 0 ? 1 : 0;
-      }), { initialProps: { round: 0 } });
+        announcedDuringRender.push(renderNumber);
+      }), { initialProps: { renderNumber: 0 } });
 
-    await rerender({ round: 1 });
-    await rerender({ round: 2 });
+    await rerender({ renderNumber: 1 });
+    await rerender({ renderNumber: 2 });
     await act(async () => undefined);
 
     expect(client.requests).toBe(1);
-    expect(firstSessions).toBe(1);
+    expect(announcedDuringRender).toEqual([0]);
   });
 });
