@@ -4,14 +4,27 @@ export const DASHBOARD_CSRF_VALUE = 'palier-dashboard';
 
 export const LEGAL_NAME_LENGTH = { minimum: 2, maximum: 120 } as const;
 
-// Control and format characters (NUL, zero-width spaces, bidi overrides) are invisible, and Postgres refuses NUL in text.
-const INVISIBLE_CHARACTER = /[\p{Cc}\p{Cf}]/u;
+// Control, format and line-separator characters (NUL, zero-width spaces, bidi overrides, U+2028) are invisible, and Postgres refuses NUL in text.
+const INVISIBLE_CHARACTER = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
+
+// Letters in Unicode that draw nothing: the Hangul fillers and the Braille blank.
+const BLANK_LETTER = /[\u3164\u115F\u1160\uFFA0\u2800]/u;
+
+const LETTER_OR_DIGIT = /[\p{L}\p{N}]/u;
 
 // Counted in code points after trimming, so an emoji is one character, the way a person counts it.
+// A lone surrogate is refused because Postgres would store it as U+FFFD, a name nobody typed.
 export function isValidLegalName(legalName: string): boolean {
   const trimmedName = legalName.trim();
   const length = [...trimmedName].length;
-  return !INVISIBLE_CHARACTER.test(trimmedName) && length >= LEGAL_NAME_LENGTH.minimum && length <= LEGAL_NAME_LENGTH.maximum;
+  return (
+    length >= LEGAL_NAME_LENGTH.minimum &&
+    length <= LEGAL_NAME_LENGTH.maximum &&
+    trimmedName.isWellFormed() &&
+    !INVISIBLE_CHARACTER.test(trimmedName) &&
+    !BLANK_LETTER.test(trimmedName) &&
+    LETTER_OR_DIGIT.test(trimmedName)
+  );
 }
 
 export type KycStatus = 'NOT_STARTED' | 'PENDING' | 'VERIFIED';

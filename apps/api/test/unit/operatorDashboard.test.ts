@@ -12,7 +12,7 @@ describe('creating an operator', () => {
   it.each([
     ['two characters', 'AB'],
     ['120 characters', 'x'.repeat(120)],
-    ['120 emoji, counted one character each', '😀'.repeat(120)],
+    ['an initial and 119 emoji, counted one character each', 'A' + '😀'.repeat(119)],
     ['accents and Hebrew letters', 'Stationnements שלום inc.'],
   ])('accepts a legal name of %s', async (_case, legalName) => {
     expect((await create(legalName)).legalName).toBe(legalName);
