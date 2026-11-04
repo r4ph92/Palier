@@ -69,5 +69,5 @@ function describeCard(cardState: CardState): string {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { gap: spacing.medium, paddingHorizontal: spacing.medium },
+  content: { gap: spacing.medium, paddingHorizontal: spacing.medium, paddingBottom: spacing.large },
 });
