@@ -2,3 +2,4 @@
 export * from './driverSchema.ts';
 export * from './lotSchema.ts';
 export * from './gateSchema.ts';
+export * from './entrySchema.ts';

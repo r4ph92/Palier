@@ -57,6 +57,13 @@
       "when": 1793780229202,
       "tag": "0007_gates_and_passages",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793781489692,
+      "tag": "0008_parking_session_and_gate_command",
+      "breakpoints": true
     }
   ]
 }

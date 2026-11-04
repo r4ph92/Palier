@@ -113,6 +113,7 @@ export const spot = pgTable(
       foreignColumns: [aisle.id, aisle.lotId],
     }),
     unique('spot_lot_id_number_unique').on(table.lotId, table.number),
+    unique('spot_id_lot_id_unique').on(table.id, table.lotId),
     index('spot_aisle_id_lot_id_index').on(table.aisleId, table.lotId),
     index('spot_available_by_aisle_index')
       .on(table.aisleId, table.state)
