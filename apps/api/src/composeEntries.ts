@@ -3,6 +3,7 @@ import type { DriverRepository } from './domain/drivers/DriverRepository.ts';
 import { EntryAdmission } from './domain/entries/EntryAdmission.ts';
 import { EntryEligibility } from './domain/entries/EntryEligibility.ts';
 import type { PaymentAuthorizer } from './domain/entries/PaymentAuthorizer.ts';
+import type { OpeningWindow } from './domain/gates/OpeningWindow.ts';
 import type { VehicleRepository } from './domain/vehicles/VehicleRepository.ts';
 import type { EntryRouteDependencies } from './http/routes/entryRoutes.ts';
 import type { Database } from './infrastructure/postgres/database.ts';
@@ -25,6 +26,8 @@ export interface EntryComposition {
   readonly simulateStripeUnreachable: boolean;
   readonly drivers: DriverRepository;
   readonly vehicles: VehicleRepository;
+  // A repeated scan replays the entry only while it is inside this window (decideRepeatedScan).
+  readonly openingWindow: OpeningWindow;
 }
 
 export interface ComposedEntries {
@@ -33,8 +36,8 @@ export interface ComposedEntries {
   readonly payments: PaymentAuthorizer | null;
 }
 
-export function composeEntries({ database, stripeKey, demoMode, simulateStripeUnreachable, drivers, vehicles }: EntryComposition): ComposedEntries {
-  const sessions = new PostgresParkingSessionRepository(database);
+export function composeEntries({ database, stripeKey, demoMode, simulateStripeUnreachable, drivers, vehicles, openingWindow }: EntryComposition): ComposedEntries {
+  const sessions = new PostgresParkingSessionRepository(database, openingWindow);
   const payments = paymentAuthorizer(stripeKey, simulateStripeUnreachable);
   const routes = {
     sessions,

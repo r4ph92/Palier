@@ -109,9 +109,21 @@ describe('POST /v1/entries', () => {
     });
   });
 
-  it('answers 409 ALREADY_INSIDE to a second scan while the first entry is active', async () => {
-    const { enter } = await startWithJulieReady();
+  it('answers a second scan of the same gate with the same entry and spot, holding the card once', async () => {
+    const { enter, entries } = await startWithJulieReady();
+    const first = await enter(entreeDemoQr);
+
+    const second = await enter(entreeDemoQr);
+
+    expect(second.statusCode).toBe(201);
+    expect(second.json()).toEqual(first.json());
+    expect(entries.payments.authorized).toHaveLength(1);
+  });
+
+  it('answers 409 ALREADY_INSIDE to a scan once the first entry is confirmed', async () => {
+    const { enter, entries } = await startWithJulieReady();
     await enter(entreeDemoQr);
+    entries.sessions.confirmEntry(fakeSessionId(1), new Date('2026-11-04T12:00:00Z'));
 
     const second = await enter(entreeDemoQr);
 

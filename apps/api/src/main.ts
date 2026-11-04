@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import { readDashboardUrl, readServerEnvironment, readSimulateStripeUnreachable, readStripeWebhookSecret } from './config/environment.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { composeEntries } from './composeEntries.ts';
-import { composeEntryCancellation } from './composeEntryCancellation.ts';
+import { composeEntryCancellation, openingWindowOf } from './composeEntryCancellation.ts';
 import { composeOperatorStripe } from './composeOperatorStripe.ts';
 import { buildServer } from './http/buildServer.ts';
 import { connectToDatabase } from './infrastructure/postgres/database.ts';
@@ -31,6 +31,7 @@ const simulateStripeUnreachable = readSimulateStripeUnreachable(process.env);
 const driverRepository = new PostgresDriverRepository(connection.database);
 const vehicleRepository = new PostgresVehicleRepository(connection.database);
 const sessionTokenRepository = new PostgresSessionTokenRepository(connection.database);
+const openingWindow = openingWindowOf(environment.entryCancellation);
 const entries = composeEntries({
   database: connection.database,
   stripeKey,
@@ -38,8 +39,13 @@ const entries = composeEntries({
   simulateStripeUnreachable,
   drivers: driverRepository,
   vehicles: vehicleRepository,
+  openingWindow,
 });
-const entryCancellation = composeEntryCancellation(environment.entryCancellation, connection.database, entries.payments);
+const entryCancellation = composeEntryCancellation(
+  { openingWindow, cancellationPeriodSeconds: environment.entryCancellation.cancellationPeriodSeconds },
+  connection.database,
+  entries.payments,
+);
 const server = buildServer({
   repositories: {
     lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),

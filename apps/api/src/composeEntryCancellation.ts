@@ -8,21 +8,30 @@ import { PostgresUnconfirmedEntryRepository } from './infrastructure/postgres/Po
 const SECOND_MILLISECONDS = 1000;
 
 export interface EntryCancellationComposition {
-  // Given to the gate routes too: a loop closure and the job judge the window from this one object.
+  // Given to the gate routes too.
   readonly openingWindow: OpeningWindow;
   readonly job: CancellationJob;
   readonly periodMilliseconds: number;
 }
 
+export interface CancellationSchedule {
+  readonly openingWindow: OpeningWindow;
+  readonly cancellationPeriodSeconds: number;
+}
+
+// Built once, before the entries and the job: an entry replay, a loop closure and the job judge the window from this one object.
+export function openingWindowOf(timing: EntryCancellationTiming): OpeningWindow {
+  return { withinMilliseconds: timing.confirmationWindowSeconds * SECOND_MILLISECONDS };
+}
+
 export function composeEntryCancellation(
-  timing: EntryCancellationTiming,
+  { openingWindow, cancellationPeriodSeconds }: CancellationSchedule,
   database: Database,
   payments: PaymentAuthorizer | null,
 ): EntryCancellationComposition {
-  const openingWindow: OpeningWindow = { withinMilliseconds: timing.confirmationWindowSeconds * SECOND_MILLISECONDS };
   return {
     openingWindow,
     job: { entries: new PostgresUnconfirmedEntryRepository(database), payments, openingWindow },
-    periodMilliseconds: timing.cancellationPeriodSeconds * SECOND_MILLISECONDS,
+    periodMilliseconds: cancellationPeriodSeconds * SECOND_MILLISECONDS,
   };
 }

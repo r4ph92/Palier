@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EligibleEntry } from '../../src/domain/entries/EntryEligibility.ts';
 import { EntryAdmission } from '../../src/domain/entries/EntryAdmission.ts';
+import { EntryRefusedError } from '../../src/domain/entries/EntryRefusedError.ts';
 import { UnreachablePaymentAuthorizer } from '../../src/infrastructure/stripe/UnreachablePaymentAuthorizer.ts';
 import {
   FakeGateCommander,
@@ -169,6 +170,51 @@ describe('entry admission', () => {
 
     await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toMatchObject({ reason: 'CARD_DECLINED' });
     expect(log.errors).toHaveLength(1);
+  });
+
+  it('hands a second scan of the same gate the same entry and spot, with one card hold and one barrier opening', async () => {
+    const { journal, payments, gateCommander, admission, log } = admissionWith();
+
+    const first = await admission.admit(julieAtEntreeDemo, log);
+    const second = await admission.admit(julieAtEntreeDemo, log);
+
+    expect(second).toEqual(first);
+    expect(payments.authorized).toHaveLength(1);
+    expect(gateCommander.opened).toHaveLength(1);
+    expect(journal).toEqual(['open-session', 'authorize', 'attach-intent', 'open-gate', 'open-session']);
+  });
+
+  it('replays while the first scan still waits on Stripe, and the session ends CANCELLED when that hold then fails', async () => {
+    const { sessions, payments, admission, log } = admissionWith();
+    let replay: Promise<unknown> = Promise.resolve();
+    payments.authorize = (request) => {
+      payments.authorized.push(request);
+      replay = admission.admit(julieAtEntreeDemo, log);
+      return Promise.reject(new EntryRefusedError('CARD_DECLINED'));
+    };
+
+    await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toMatchObject({ reason: 'CARD_DECLINED' });
+
+    await expect(replay).resolves.toMatchObject({ sessionId: fakeSessionId(1), barrierOpened: true });
+    expect(payments.authorized).toHaveLength(1);
+    expect((await sessions.findForUser(fakeSessionId(1), julie.id))?.state).toBe('CANCELLED');
+  });
+
+  it('refuses ALREADY_INSIDE, without a new hold, once the loop confirmed the first entry', async () => {
+    const { sessions, payments, admission, log } = admissionWith();
+    await admission.admit(julieAtEntreeDemo, log);
+    sessions.confirmEntry(fakeSessionId(1), new Date('2026-11-04T12:00:00Z'));
+
+    await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toMatchObject({ reason: 'ALREADY_INSIDE' });
+    expect(payments.authorized).toHaveLength(1);
+  });
+
+  it('refuses ALREADY_INSIDE once the first entry is past its opening window', async () => {
+    const { sessions, admission, log } = admissionWith();
+    await admission.admit(julieAtEntreeDemo, log);
+    sessions.closeOpeningWindow(fakeSessionId(1));
+
+    await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toMatchObject({ reason: 'ALREADY_INSIDE' });
   });
 
   it('warns that the hold stays on the platform when the operator has no Stripe account', async () => {

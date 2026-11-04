@@ -3,7 +3,7 @@ import type { EligibleEntry } from './EntryEligibility.ts';
 import type { EntryLog } from './EntryLog.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import type { GateCommander } from './GateCommander.ts';
-import type { HoldAttachment, OpenedSession, ParkingSessionRepository } from './ParkingSessionRepository.ts';
+import type { HoldAttachment, OpenedSession, ParkingSessionRepository, SessionOpening } from './ParkingSessionRepository.ts';
 import type { PaymentAuthorizer } from './PaymentAuthorizer.ts';
 
 export interface EntryAdmissionDependencies {
@@ -37,19 +37,25 @@ export class EntryAdmission {
     if (payments === null) {
       throw new EntryRefusedError('PAYMENTS_UNAVAILABLE');
     }
-    const run: EntryRun = { entry, payments, log };
-    const session = await this.#openSession(entry);
-    const paymentIntentId = await this.#authorize(run, session.id);
-    const held: HeldSession = { sessionId: session.id, paymentIntentId };
+    const { kind, session } = await this.#openSession(entry);
+    // A replay hands back the first scan's session: that scan holds the card and opens the barrier.
+    if (kind === 'opened') {
+      await this.#holdAndOpen({ entry, payments, log }, session.id);
+    }
+    return admitted(session);
+  }
+
+  async #holdAndOpen(run: EntryRun, sessionId: string): Promise<void> {
+    const paymentIntentId = await this.#authorize(run, sessionId);
+    const held: HeldSession = { sessionId, paymentIntentId };
     if ((await this.#attachHold(run, held)) === 'cancelled') {
       throw await this.#refuseCancelledEntry(run, held);
     }
     await this.#openBarrier(run, held);
-    return { sessionId: session.id, spot: session.spot, barrierOpened: true };
   }
 
-  async #openSession(entry: EligibleEntry): Promise<OpenedSession> {
-    const session = await this.#dependencies.sessions.openWithFirstFreeSpot({
+  async #openSession(entry: EligibleEntry): Promise<SessionOpening> {
+    const opening = await this.#dependencies.sessions.openWithFirstFreeSpot({
       driverId: entry.driverId,
       vehicleId: entry.vehicle.id,
       plate: entry.vehicle.plate,
@@ -59,10 +65,10 @@ export class EntryAdmission {
       authorizedCents: entry.payment.amountCents,
       pricing: entry.pricing,
     });
-    if (session === null) {
+    if (opening === null) {
       throw new EntryRefusedError('LOT_FULL');
     }
-    return session;
+    return opening;
   }
 
   async #authorize({ entry, payments, log }: EntryRun, sessionId: string): Promise<string> {
@@ -131,6 +137,10 @@ export class EntryAdmission {
       log.error({ err: error, paymentIntentId }, 'could not cancel the entry hold');
     }
   }
+}
+
+function admitted(session: OpenedSession): EntryResponse {
+  return { sessionId: session.id, spot: session.spot, barrierOpened: true };
 }
 
 // A declined card names the amount it refused, so the driver knows what the card must cover.

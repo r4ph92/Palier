@@ -1,8 +1,17 @@
 import { sql } from 'drizzle-orm';
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
-import type { HoldAttachment, OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../domain/entries/ParkingSessionRepository.ts';
-import { ACTIVE_SESSION } from './activeSessionStates.ts';
+import { decideRepeatedScan } from '../../domain/entries/decideRepeatedScan.ts';
+import type {
+  HoldAttachment,
+  OpenedSession,
+  ParkingSessionRepository,
+  SessionDraft,
+  SessionOpening,
+  SessionStatus,
+} from '../../domain/entries/ParkingSessionRepository.ts';
+import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
+import { findActiveSessionFacts } from './activeSessionFacts.ts';
 import { admissionRefusalOf } from './admissionRefusal.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
@@ -37,23 +46,36 @@ function statusOf(row: SessionStatusRow): SessionStatus {
 
 export class PostgresParkingSessionRepository implements ParkingSessionRepository {
   readonly #database: Database;
+  readonly #openingWindow: OpeningWindow;
 
-  constructor(database: Database) {
+  constructor(database: Database, openingWindow: OpeningWindow) {
     this.#database = database;
+    this.#openingWindow = openingWindow;
   }
 
-  async openWithFirstFreeSpot(draft: SessionDraft): Promise<OpenedSession | null> {
+  // Every statement after the lock runs on tx, so a second scan of the same lot waits and then reads the first one's session.
+  async openWithFirstFreeSpot(draft: SessionDraft): Promise<SessionOpening | null> {
     try {
       return await this.#database.transaction(async (tx) => {
         await tx.execute(LIMIT_LOCK_WAIT);
         await lockParkingLot(tx, draft.lotId);
-        await refuseWhenInside(tx, draft.driverId);
-        const assigned = await assignFirstFreeSpot(tx, draft.lotId, draft.needs);
-        return assigned === undefined ? null : insertSession(tx, draft, assigned);
+        return await this.#openUnderLotLock(tx, draft);
       });
     } catch (error) {
       throw admissionRefusalOf(error, draft.lotId);
     }
+  }
+
+  async #openUnderLotLock(tx: Transaction, draft: SessionDraft): Promise<SessionOpening | null> {
+    const decision = decideRepeatedScan(await findActiveSessionFacts(tx, draft.driverId, this.#openingWindow), draft);
+    if (decision.kind === 'refuse') {
+      throw new EntryRefusedError('ALREADY_INSIDE');
+    }
+    if (decision.kind === 'replay') {
+      return { kind: 'replayed', session: decision.session };
+    }
+    const assigned = await assignFirstFreeSpot(tx, draft.lotId, draft.needs);
+    return assigned === undefined ? null : { kind: 'opened', session: await insertSession(tx, draft, assigned) };
   }
 
   async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment> {
@@ -83,15 +105,6 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 
   async cancel(sessionId: string): Promise<void> {
     await this.#database.transaction((tx) => cancelCreatedSession(tx, sessionId));
-  }
-}
-
-// A driver already inside hears ALREADY_INSIDE, not LOT_FULL or NO_SUITABLE_SPOT. Two entries at once still meet the
-// one-active-per-user index when the session is inserted.
-async function refuseWhenInside(tx: Transaction, driverId: string): Promise<void> {
-  const rows = await tx.execute(sql`select 1 from parking_session where user_id = ${driverId} and ${ACTIVE_SESSION} limit 1`);
-  if (rows.length > 0) {
-    throw new EntryRefusedError('ALREADY_INSIDE');
   }
 }
 
