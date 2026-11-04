@@ -14,6 +14,7 @@ const STATUS_BY_REASON: Record<EntryRefusalCode, number> = {
   ALREADY_INSIDE: 409,
   CARD_DECLINED: 402,
   PAYMENTS_UNAVAILABLE: 503,
+  TOO_MANY_ENTRIES: 429,
 };
 
 export function handleEntryError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {

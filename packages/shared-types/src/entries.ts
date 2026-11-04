@@ -25,7 +25,8 @@ export type EntryRefusalCode =
   | 'LOT_FULL'
   | 'ALREADY_INSIDE'
   | 'CARD_DECLINED'
-  | 'PAYMENTS_UNAVAILABLE';
+  | 'PAYMENTS_UNAVAILABLE'
+  | 'TOO_MANY_ENTRIES';
 
 export type GateCommandKind = 'OPEN';
 

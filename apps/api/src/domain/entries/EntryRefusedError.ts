@@ -11,6 +11,7 @@ const MESSAGES: Record<EntryRefusalCode, string> = {
   ALREADY_INSIDE: 'You already have an entry in progress.',
   CARD_DECLINED: 'The card was declined.',
   PAYMENTS_UNAVAILABLE: 'Card payments are unavailable right now.',
+  TOO_MANY_ENTRIES: 'Too many entry attempts. Try again in a few minutes.',
 };
 
 export class EntryRefusedError extends Error {

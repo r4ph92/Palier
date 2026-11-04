@@ -11,7 +11,6 @@ import { requireDriver, signedInDriver } from '../requireDriver.ts';
 import { entryRequestSchema, entryResponseSchema } from '../schemas/entrySchemas.ts';
 
 const CREATED = 201;
-const TOO_MANY_REQUESTS = 429;
 // Same window as card setups: it bounds the card holds one driver token can ask Stripe for.
 const ENTRY_LIMIT = 5;
 const ENTRY_WINDOW_MILLISECONDS = 10 * 60 * 1000;
@@ -52,11 +51,7 @@ async function enter(request: FastifyRequest<EnterRoute>, reply: FastifyReply, {
   const driver = signedInDriver(request);
   const eligible = await entries.eligibility.check({ driverId: driver.id, qrContent: request.body.qrContent });
   if (!limiter.allow(driver.id)) {
-    return reply.status(TOO_MANY_REQUESTS).send({
-      statusCode: TOO_MANY_REQUESTS,
-      error: 'TOO_MANY_ENTRIES',
-      message: 'Too many entry attempts. Try again in a few minutes.',
-    });
+    throw new EntryRefusedError('TOO_MANY_ENTRIES');
   }
   const admitted: EntryResponse = await entries.admission.admit(eligible, request.log);
   return reply.status(CREATED).send(admitted);

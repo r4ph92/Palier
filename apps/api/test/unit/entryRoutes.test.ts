@@ -124,7 +124,7 @@ describe('POST /v1/entries', () => {
     const sixth = await enter(entreeDemoQr);
 
     expect(sixth.statusCode).toBe(429);
-    expect(sixth.json()).toMatchObject({ error: 'TOO_MANY_ENTRIES' });
+    expect(sixth.json()).toEqual({ statusCode: 429, error: 'TOO_MANY_ENTRIES', message: 'Too many entry attempts. Try again in a few minutes.' });
   });
 
   it('does not count refused QRs against the limit', async () => {
