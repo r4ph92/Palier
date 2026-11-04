@@ -1,8 +1,11 @@
 import type { AssignedSpot } from '@palier/shared-types';
-import { Text } from 'react-native';
+import type { Ref } from 'react';
+import { StyleSheet, Text, View, type HostInstance } from 'react-native';
 import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
+import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
+import { StateMark } from './StateMark';
 
 // After the hyphen of a spot number, so « A-1 » never splits across two lines; it is invisible and not spoken.
 export const WORD_JOINER = '\u2060';
@@ -31,3 +34,26 @@ export function SpotLine({ spot, lead = '' }: SpotLineProps) {
     </Text>
   );
 }
+
+interface SpotWithStateProps extends SpotLineProps {
+  readonly status: string;
+  readonly markColor: string;
+  readonly ref?: Ref<HostInstance>;
+}
+
+// Spot and its state are one stop for VoiceOver, on the scan screen and on the session screen alike.
+export function SpotWithState({ spot, lead = '', status, markColor, ref }: SpotWithStateProps) {
+  const colors = useColors();
+  return (
+    <View ref={ref} accessible accessibilityLabel={`${spotLabel(spot, lead)}. ${status}`} style={styles.group}>
+      <SpotLine spot={spot} lead={lead} />
+      <StateMark color={markColor}>
+        <Text style={[typography.bodyStrong, { color: colors.ink }]}>{status}</Text>
+      </StateMark>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  group: { gap: spacing.small },
+});

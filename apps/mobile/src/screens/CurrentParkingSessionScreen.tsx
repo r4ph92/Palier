@@ -2,8 +2,7 @@ import type { CurrentParkingSession } from '@palier/shared-types';
 import { ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { SpotLine, spotLabel } from '../components/SpotLine';
-import { StateMark } from '../components/StateMark';
+import { SpotWithState } from '../components/SpotLine';
 import { formatClockTime } from '../i18n/formatClockTime';
 import { formatElapsed } from '../i18n/formatElapsed';
 import { formatMoney } from '../i18n/formatMoney';
@@ -49,19 +48,11 @@ function SessionAmount({ session }: { readonly session: CurrentParkingSession })
   );
 }
 
-// Spot and entry state are one stop for VoiceOver, like the entered spot on the scan screen.
 function SessionSpot({ session }: { readonly session: CurrentParkingSession }) {
   const colors = useColors();
   const isConfirmed = session.state === 'ENTRY_CONFIRMED';
   const status = i18n.t(isConfirmed ? 'session.confirmed' : 'session.pending');
-  return (
-    <View accessible accessibilityLabel={`${spotLabel(session.spot)}. ${status}`} style={styles.group}>
-      <SpotLine spot={session.spot} />
-      <StateMark color={isConfirmed ? colors.free : colors.muted}>
-        <Text style={[typography.bodyStrong, { color: colors.ink }]}>{status}</Text>
-      </StateMark>
-    </View>
-  );
+  return <SpotWithState spot={session.spot} status={status} markColor={isConfirmed ? colors.free : colors.muted} />;
 }
 
 interface FigureProps {

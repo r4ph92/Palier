@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { SpotLine, spotLabel } from '../components/SpotLine';
+import { SpotWithState } from '../components/SpotLine';
 import { StateMark } from '../components/StateMark';
 import { TextButton } from '../components/TextButton';
 import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
@@ -60,12 +60,7 @@ function EnteredSpot({ spot, isConfirmed, onDone }: EnteredSpotProps) {
   useAnnouncement(isConfirmed ? status : null);
   return (
     <View style={styles.section}>
-      <View ref={resultRef} accessible accessibilityLabel={`${spotLabel(spot, i18n.t('scan.spotLead'))}. ${status}`} style={styles.field}>
-        <SpotLine spot={spot} lead={i18n.t('scan.spotLead')} />
-        <StateMark color={colors.free}>
-          <Text style={[typography.bodyStrong, { color: colors.ink }]}>{status}</Text>
-        </StateMark>
-      </View>
+      <SpotWithState ref={resultRef} spot={spot} lead={i18n.t('scan.spotLead')} status={status} markColor={colors.free} />
       <PrimaryButton label={i18n.t('scan.done')} onPress={onDone} />
     </View>
   );
