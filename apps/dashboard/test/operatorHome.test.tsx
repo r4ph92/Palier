@@ -32,6 +32,42 @@ describe('operator home when the lots fail', () => {
   });
 });
 
+describe('retrying the lots', () => {
+  it('keeps the failure and a disabled Réessayer on screen while the lots load again', async () => {
+    const api = installFakeApi({ signedInAs: sophie, answers: { 'GET /lots': { status: 500 } } });
+    renderDashboard();
+    await screen.findByRole('alert');
+
+    api.answers.set('GET /lots', 'pending');
+    await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
+
+    expect(screen.getByRole('alert')).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Réessayer' }).getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('moves focus to the Stationnements heading when the lots come back', async () => {
+    const api = installFakeApi({ signedInAs: sophie, answers: { 'GET /lots': { status: 500 } } });
+    renderDashboard();
+    await screen.findByRole('alert');
+
+    api.answers.delete('GET /lots');
+    await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
+
+    await screen.findByRole('link', { name: /Parking Démo/ });
+    expect(document.activeElement).toBe(screen.getByRole('heading', { level: 2, name: 'Stationnements' }));
+  });
+
+  it('moves focus to the error when the second attempt fails too', async () => {
+    installFakeApi({ signedInAs: sophie, answers: { 'GET /lots': { status: 500 } } });
+    renderDashboard();
+    await screen.findByRole('alert');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
+
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('alert')));
+  });
+});
+
 describe('a session that ends while the dashboard is open', () => {
   it('returns Sophie to the sign-in page when a lot answers 401', async () => {
     const api = installFakeApi({ signedInAs: sophie });
