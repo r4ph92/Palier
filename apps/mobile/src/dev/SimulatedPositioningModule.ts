@@ -1,8 +1,7 @@
 import type { ParkedConfidence, PositioningListener, PositioningModule } from '../positioning/PositioningModule';
 import { describeCommand, describeConnectivity } from './describeSignal';
+import type { Connectivity } from './Connectivity';
 import type { SignalJournal } from './SignalJournal';
-
-export type Connectivity = 'online' | 'offline';
 
 export class SimulatedPositioningModule implements PositioningModule {
   private readonly journal: SignalJournal;
