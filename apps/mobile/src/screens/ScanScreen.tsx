@@ -50,14 +50,14 @@ function spotPlace(spot: AssignedSpot): string {
   return i18n.t('scan.spotPlace', { level: spot.levelCode, aisle: spot.aisleCode });
 }
 
-// Spot and barrier are one stop for VoiceOver, focused as soon as they replace the form.
-// The barrier line gives way to the confirmation in place once the entry loop proves the car passed.
 interface EnteredSpotProps {
   readonly spot: AssignedSpot;
   readonly isConfirmed: boolean;
   readonly onDone: () => void;
 }
 
+// Spot and barrier are one stop for VoiceOver, focused as soon as they replace the form.
+// The barrier line gives way to the confirmation in place once the entry loop proves the car passed.
 function EnteredSpot({ spot, isConfirmed, onDone }: EnteredSpotProps) {
   const colors = useColors();
   const resultRef = useAccessibilityFocusOnMount();

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import type { EntrySessionState } from '@palier/shared-types';
 import type { EntryClient } from '../api/EntryClient';
 import { PalierStatusError, PalierUnreachableError } from '../api/LotsClient';
 
@@ -8,8 +9,6 @@ const MAXIMUM_POLLS = ENTRY_STATUS_POLL_LIMIT_MILLISECONDS / ENTRY_STATUS_POLL_M
 
 type Outcome = 'confirmed' | 'cancelled' | 'waiting' | 'refused';
 
-// Asks for the session until the entry loop confirms it, the session is cancelled, or two minutes pass.
-// A null sessionId polls nothing.
 export function useConfirmationPolling(client: EntryClient, sessionId: string | null, onConfirmed: () => void): void {
   useEffect(() => {
     return sessionId === null ? undefined : startPolling(client, sessionId, onConfirmed);
@@ -22,7 +21,7 @@ interface Poll {
   count: number;
 }
 
-// Returns the function that stops it. A request still in flight never overlaps the next tick.
+// A request still in flight never overlaps the next tick.
 function startPolling(client: EntryClient, sessionId: string, onConfirmed: () => void): () => void {
   const poll: Poll = { isActive: true, isAsking: false, count: 0 };
   const stop = () => {
@@ -63,9 +62,13 @@ async function askOnce(client: EntryClient, sessionId: string): Promise<Outcome>
   }
 }
 
-function outcomeOf(state: string): Outcome {
-  if (state === 'ENTRY_CONFIRMED') {
-    return 'confirmed';
+function outcomeOf(state: EntrySessionState): Outcome {
+  switch (state) {
+    case 'ENTRY_CONFIRMED':
+      return 'confirmed';
+    case 'CANCELLED':
+      return 'cancelled';
+    case 'CREATED':
+      return 'waiting';
   }
-  return state === 'CANCELLED' ? 'cancelled' : 'waiting';
 }
