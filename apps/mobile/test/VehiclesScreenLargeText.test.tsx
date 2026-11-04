@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { applyLanguage } from '../src/i18n/i18n';
 import { VehiclesScreen } from '../src/screens/VehiclesScreen';
-import { abc123, FakeVehicleClient } from './fakeVehicleClient';
+import { abc123, FakeVehicleClient, standardNeeds } from './fakeVehicleClient';
 
 const mockWindow = { width: 402, height: 874, scale: 3, fontScale: 1 };
 
@@ -22,23 +22,24 @@ describe.each([1, 1.35, 2.3, 3.1])('VehiclesScreen at text scale %d', (fontScale
     applyLanguage('fr');
   });
 
-  it('keeps the plate and the default badge on screen, stacked only at large text sizes', async () => {
+  it('keeps the plate and the default badge on screen, with the actions wrapping under the plate', async () => {
     await render(
       <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-        <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123])} onAddVehicle={jest.fn()} />
+        <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123])} onAddVehicle={jest.fn()} onEditVehicle={jest.fn()} />
       </SafeAreaProvider>,
     );
 
     expect(await screen.findByText('ABC 123 · QC')).toBeOnTheScreen();
     expect(screen.getByText('Par défaut')).toBeOnTheScreen();
-    expect(screen.getByTestId(`vehicle-row-${abc123.id}`)).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
+    expect(screen.getByTestId(`vehicle-row-${abc123.id}`)).not.toHaveStyle({ flexDirection: 'row' });
+    expect(screen.getByTestId(`vehicle-actions-${abc123.id}`)).toHaveStyle({ flexWrap: 'wrap' });
   });
 
   it('keeps the use-as-default and delete actions on screen at every text size', async () => {
-    const def456 = { id: 'vehicle-2', plate: 'DEF 456', province: 'QC', isDefault: false };
+    const def456 = { id: 'vehicle-2', plate: 'DEF 456', province: 'QC', isDefault: false, ...standardNeeds };
     await render(
       <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-        <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123, def456])} onAddVehicle={jest.fn()} />
+        <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123, def456])} onAddVehicle={jest.fn()} onEditVehicle={jest.fn()} />
       </SafeAreaProvider>,
     );
 

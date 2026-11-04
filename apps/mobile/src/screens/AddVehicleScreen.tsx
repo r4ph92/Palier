@@ -5,6 +5,7 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { ProvincePicker } from '../components/ProvincePicker';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
+import { VehicleNeedsFields } from '../components/VehicleNeedsFields';
 import { i18n } from '../i18n/i18n';
 import { useAddVehicle, type AddVehicleController } from '../vehicles/useAddVehicle';
 import { useColors } from '../theme/useColors';
@@ -33,6 +34,7 @@ export function AddVehicleScreen({ client, onCancel, onSaved }: AddVehicleScreen
         />
         <PlateField form={form} />
         <ProvinceField form={form} />
+        <VehicleNeedsFields needs={form.needs} onToggle={form.toggleNeed} />
         {form.errors.form ? <FieldError message={form.errors.form} /> : null}
         <PrimaryButton label={i18n.t('vehicles.save')} onPress={form.save} />
       </ScrollView>
@@ -81,7 +83,7 @@ function FieldError({ message }: { readonly message: string }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { flexGrow: 1, gap: spacing.medium, paddingHorizontal: spacing.medium },
+  content: { flexGrow: 1, gap: spacing.medium, paddingHorizontal: spacing.medium, paddingBottom: spacing.extraLarge },
   field: { gap: spacing.small },
   input: { minHeight: MINIMUM_TOUCH_TARGET, paddingHorizontal: spacing.medium, borderWidth: 2 },
 });

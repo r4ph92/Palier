@@ -1,9 +1,27 @@
 import { and, asc, eq, ne } from 'drizzle-orm';
-import type { DeleteVehicleResult, NewVehicle, Vehicle, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
+import type { DeleteVehicleResult, NewVehicle, Vehicle, VehicleNeeds, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Database, Transaction } from './database.ts';
 import { appUser, vehicle } from './schema.ts';
 
-const vehicleColumns = { id: vehicle.id, plate: vehicle.plate, province: vehicle.province, isDefault: vehicle.isDefault };
+const vehicleColumns = {
+  id: vehicle.id,
+  plate: vehicle.plate,
+  province: vehicle.province,
+  isDefault: vehicle.isDefault,
+  isElectric: vehicle.isElectric,
+  hasAccessiblePermit: vehicle.hasAccessiblePermit,
+  isOversize: vehicle.isOversize,
+};
+
+// Each column is named, so a field added to the domain type is never written by accident.
+function needColumns(needs: VehicleNeeds) {
+  return { isElectric: needs.isElectric, hasAccessiblePermit: needs.hasAccessiblePermit, isOversize: needs.isOversize };
+}
+
+function newVehicleRow(driverId: string, newVehicle: NewVehicle, isDefault: boolean) {
+  const { plate, plateKey, province } = newVehicle;
+  return { userId: driverId, plate, plateKey, province, ...needColumns(newVehicle), isDefault };
+}
 
 export class PostgresVehicleRepository implements VehicleRepository {
   readonly #database: Database;
@@ -41,17 +59,20 @@ export class PostgresVehicleRepository implements VehicleRepository {
       const [existing] = await tx.select({ id: vehicle.id }).from(vehicle).where(eq(vehicle.userId, driverId)).limit(1);
       const [saved] = await tx
         .insert(vehicle)
-        .values({
-          userId: driverId,
-          plate: newVehicle.plate,
-          plateKey: newVehicle.plateKey,
-          province: newVehicle.province,
-          isDefault: existing === undefined,
-        })
+        .values(newVehicleRow(driverId, newVehicle, existing === undefined))
         .onConflictDoNothing({ target: [vehicle.userId, vehicle.plateKey, vehicle.province] })
         .returning(vehicleColumns);
       return saved ?? null;
     });
+  }
+
+  async updateVehicleNeeds(driverId: string, vehicleId: string, needs: VehicleNeeds): Promise<Vehicle | null> {
+    const [updated] = await this.#database
+      .update(vehicle)
+      .set(needColumns(needs))
+      .where(and(eq(vehicle.id, vehicleId), eq(vehicle.userId, driverId)))
+      .returning(vehicleColumns);
+    return updated ?? null;
   }
 
   // The old default is cleared first, so the one-default-per-driver index is never broken between the two writes.

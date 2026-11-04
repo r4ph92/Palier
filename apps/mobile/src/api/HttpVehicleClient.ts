@@ -1,4 +1,4 @@
-import type { Vehicle, VehicleListResponse } from '@palier/shared-types';
+import type { Vehicle, VehicleListResponse, VehicleNeeds } from '@palier/shared-types';
 import { AuthorizedRequester, readJson, type AuthorizedClientOptions } from './authorizedRequest';
 import type { NewVehicleInput, VehicleClient } from './VehicleClient';
 import { parseVehicle, parseVehicleList } from './parseVehicles';
@@ -19,11 +19,20 @@ export class HttpVehicleClient implements VehicleClient {
     return parseVehicleList(await readJson(await this.#requester.send('/v1/me/vehicles', { method: 'GET' })));
   }
 
-  async addVehicle({ plate, province }: NewVehicleInput): Promise<Vehicle> {
+  async addVehicle({ plate, province, isElectric, hasAccessiblePermit, isOversize }: NewVehicleInput): Promise<Vehicle> {
     const response = await this.#requester.send('/v1/me/vehicles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plate, province }),
+      body: JSON.stringify({ plate, province, isElectric, hasAccessiblePermit, isOversize }),
+    });
+    return parseVehicle(await readJson(response));
+  }
+
+  async updateVehicleNeeds(vehicleId: string, { isElectric, hasAccessiblePermit, isOversize }: VehicleNeeds): Promise<Vehicle> {
+    const response = await this.#requester.send(`/v1/me/vehicles/${vehicleId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isElectric, hasAccessiblePermit, isOversize }),
     });
     return parseVehicle(await readJson(response));
   }

@@ -3,10 +3,10 @@ import type { FastifyInstance, preHandlerAsyncHookHandler } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import { readPlate } from '../../domain/vehicles/plate.ts';
 import { isProvinceCode } from '../../domain/vehicles/provinces.ts';
-import type { VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
+import type { VehicleNeeds, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
-import { addVehicleBodySchema, vehicleListSchema, vehicleParamsSchema, vehicleSchema } from '../schemas/vehicleSchemas.ts';
+import { addVehicleBodySchema, vehicleListSchema, vehicleNeedsBodySchema, vehicleParamsSchema, vehicleSchema } from '../schemas/vehicleSchemas.ts';
 
 const CREATED = 201;
 const BAD_REQUEST = 400;
@@ -15,7 +15,13 @@ const CONFLICT = 409;
 const NO_CONTENT = 204;
 
 interface AddVehicleRequest {
-  readonly Body: { readonly plate: string; readonly province: string };
+  // A need left out is not declared.
+  readonly Body: { readonly plate: string; readonly province: string } & Partial<VehicleNeeds>;
+}
+
+interface UpdateNeedsRequest {
+  readonly Params: { readonly id: string };
+  readonly Body: VehicleNeeds;
 }
 
 interface VehicleParamsRequest {
@@ -29,6 +35,7 @@ export function registerVehicleRoutes(server: FastifyInstance, repository: Vehic
   registerListRoute(server, repository, guards);
   registerReadRoute(server, repository, guards);
   registerAddRoute(server, repository, guards);
+  registerUpdateNeedsRoute(server, repository, guards);
   registerSetDefaultRoute(server, repository, guards);
   registerDeleteRoute(server, repository, guards);
 }
@@ -65,11 +72,35 @@ function registerAddRoute(server: FastifyInstance, repository: VehicleRepository
       if (!isProvinceCode(request.body.province)) {
         return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'INVALID_PROVINCE', message: 'Choose a province.' });
       }
-      const saved: Vehicle | null = await repository.saveVehicle(signedInDriver(request).id, { ...plate, province: request.body.province });
+      const saved: Vehicle | null = await repository.saveVehicle(signedInDriver(request).id, { ...plate, ...declaredVehicle(request.body) });
       if (saved === null) {
         return reply.status(CONFLICT).send({ statusCode: CONFLICT, error: 'VEHICLE_ALREADY_REGISTERED', message: 'This vehicle is already registered.' });
       }
       return reply.status(CREATED).send(saved);
+    },
+  );
+}
+
+function declaredVehicle(body: AddVehicleRequest['Body']): VehicleNeeds & { readonly province: string } {
+  return {
+    province: body.province,
+    isElectric: body.isElectric ?? false,
+    hasAccessiblePermit: body.hasAccessiblePermit ?? false,
+    isOversize: body.isOversize ?? false,
+  };
+}
+
+function registerUpdateNeedsRoute(server: FastifyInstance, repository: VehicleRepository, guards: preHandlerAsyncHookHandler[]): void {
+  server.patch<UpdateNeedsRequest>(
+    '/v1/me/vehicles/:id',
+    { onRequest: guards, schema: { params: vehicleParamsSchema, body: vehicleNeedsBodySchema, response: { 200: vehicleSchema } } },
+    async (request, reply) => {
+      const { isElectric, hasAccessiblePermit, isOversize } = request.body;
+      const vehicle = await repository.updateVehicleNeeds(signedInDriver(request).id, request.params.id, { isElectric, hasAccessiblePermit, isOversize });
+      if (vehicle === null) {
+        return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'NOT_FOUND', message: 'No such vehicle.' });
+      }
+      return vehicle;
     },
   );
 }

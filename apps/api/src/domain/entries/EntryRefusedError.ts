@@ -8,6 +8,7 @@ const MESSAGES: Record<EntryRefusalCode, string> = {
   OPERATOR_NOT_PAYABLE: 'This lot cannot take payments right now.',
   PREREQUISITES_MISSING: 'Add a plate and a card before entering.',
   LOT_FULL: 'This lot is full.',
+  NO_SUITABLE_SPOT: 'No free spot fits this vehicle.',
   ALREADY_INSIDE: 'You already have an entry in progress.',
   CARD_DECLINED: 'The card was declined.',
   PAYMENTS_UNAVAILABLE: 'Card payments are unavailable right now.',

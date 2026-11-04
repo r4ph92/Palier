@@ -86,6 +86,18 @@ describe('POST /v1/entries', () => {
     expect(entries.journal).not.toContain('open-gate');
   });
 
+  it('answers 409 NO_SUITABLE_SPOT, holds nothing and opens nothing when no free spot fits the vehicle', async () => {
+    const { enter, entries } = await startWithJulieReady();
+    entries.sessions.noSuitableSpot = true;
+
+    const response = await enter(entreeDemoQr);
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ statusCode: 409, error: 'NO_SUITABLE_SPOT', message: 'No free spot fits this vehicle.' });
+    expect(entries.journal).not.toContain('authorize');
+    expect(entries.journal).not.toContain('open-gate');
+  });
+
   it('answers 503 PAYMENTS_UNAVAILABLE when Stripe cannot be reached', async () => {
     const { enter, entries } = await startWithJulieReady();
     entries.payments.refusal = 'PAYMENTS_UNAVAILABLE';

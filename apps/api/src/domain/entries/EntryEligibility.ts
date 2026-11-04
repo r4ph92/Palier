@@ -1,6 +1,6 @@
 import type { DriverRepository } from '../drivers/DriverRepository.ts';
 import { parsePricingPolicy, PricingPolicyInvalidError, type PricingPolicy } from '../pricing/PricingPolicy.ts';
-import type { VehicleRepository } from '../vehicles/VehicleRepository.ts';
+import type { VehicleNeeds, VehicleRepository } from '../vehicles/VehicleRepository.ts';
 import type { EntryGate, EntryGateLot, EntryGateRepository } from './EntryGateRepository.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import { isSignedWith, readGateToken } from './gateToken.ts';
@@ -24,7 +24,7 @@ export interface EntryAttempt {
 export interface EligibleEntry {
   readonly driverId: string;
   readonly gate: { readonly id: string; readonly lotId: string };
-  readonly vehicle: { readonly id: string; readonly plate: string };
+  readonly vehicle: { readonly id: string; readonly plate: string; readonly needs: VehicleNeeds };
   readonly payment: {
     readonly customerId: string;
     readonly paymentMethodId: string;
@@ -102,7 +102,8 @@ export class EntryEligibility {
     if (vehicle === null || customerId === null || paymentMethodId === null) {
       throw new EntryRefusedError('PREREQUISITES_MISSING');
     }
-    return { vehicle: { id: vehicle.id, plate: vehicle.plate }, customerId, paymentMethodId };
+    const { isElectric, hasAccessiblePermit, isOversize } = vehicle;
+    return { vehicle: { id: vehicle.id, plate: vehicle.plate, needs: { isElectric, hasAccessiblePermit, isOversize } }, customerId, paymentMethodId };
   }
 }
 

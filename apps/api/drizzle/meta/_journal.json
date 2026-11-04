@@ -92,6 +92,13 @@
       "when": 1793822074151,
       "tag": "0012_operator_kyc_action_required",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793827328344,
+      "tag": "0013_vehicle_needs",
+      "breakpoints": true
     }
   ]
 }
