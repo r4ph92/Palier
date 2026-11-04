@@ -4,6 +4,8 @@ import { buildServer } from '../../src/http/buildServer.ts';
 import { FakeCardGateway } from './fakeCardGateway.ts';
 import { FakeDriverRepository } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
+import { FakeOperatorRepository } from './fakes/fakeOperatorRepository.ts';
+import { fakeOperatorStripe } from './fakes/fakeOperatorStripe.ts';
 import { FakeCurrentParkingSessions } from './fakes/fakeCurrentParkingSessions.ts';
 import { fakeEntries } from './fakes/entryFakes.ts';
 import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
@@ -23,9 +25,11 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
   const entries = fakeEntries({ drivers: driverRepository, vehicles: vehicleRepository });
   const parkingSessions = new FakeCurrentParkingSessions();
   const testClock = createTestClock();
+  const operatorRepository = new FakeOperatorRepository();
   const server: FastifyInstance = buildServer({
     gates: fakeGateDependencies(),
-    repositories: fakeRepositories({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository, parkingSessions }),
+    repositories: fakeRepositories({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository, operatorRepository, parkingSessions }),
+    operatorStripe: fakeOperatorStripe(operatorRepository).dependencies,
     cardGateway: new FakeCardGateway(),
     entries: entries.dependencies,
     testClock,

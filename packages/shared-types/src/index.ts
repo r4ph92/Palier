@@ -11,6 +11,7 @@ export type {
   DashboardTestUserListResponse,
   DashboardUser,
   KycStatus,
+  StripeOnboardingLink,
 } from './dashboard.ts';
 export type { CurrentDriver, DriverProfile, SignInResponse, TestDriver, TestDriverListResponse } from './drivers.ts';
 export type {

@@ -100,6 +100,11 @@ Vite relaie `/v1` vers l'API sur `API_PORT` (`docs/decisions/010`). « Connexion
 de test » propose Sophie Lavoie (Stationnements Lavoie inc.), Pierre Roy (Garages
 Roy), Nouvel Opérateur (sans opérateur) et les conducteurs du seed.
 
+Pour connecter un compte Stripe Express depuis le tableau de bord (#63), mettre
+aussi `STRIPE_WEBHOOK_SECRET` dans `apps/api/.env` : lancer
+`stripe listen --forward-to localhost:3000/v1/stripe/webhook` et copier le
+`whsec_…` affiché (`docs/decisions/012`). Mode test seulement.
+
 Pour que le seed crée les clients Stripe de test des conducteurs (carte Visa 4242
 pour Julie et Marc), mettre une clé `sk_test_…` dans `STRIPE_SECRET_KEY` de
 `apps/api/.env` ; sans clé, le seed les crée sans Stripe.
