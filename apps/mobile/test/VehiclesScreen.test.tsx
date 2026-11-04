@@ -15,7 +15,7 @@ async function renderVehiclesScreen(client: FakeVehicleClient, language: 'fr' | 
   applyLanguage(language);
   return render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <VehiclesScreen firstName="Julie" client={client} onAddVehicle={jest.fn()} />
+      <VehiclesScreen firstName="Julie" client={client} onAddVehicle={jest.fn()} onEditVehicle={jest.fn()} />
     </SafeAreaProvider>,
   );
 }
@@ -26,6 +26,28 @@ describe('VehiclesScreen', () => {
 
     expect(await screen.findByText('ABC 123 · QC')).toBeOnTheScreen();
     expect(screen.getByText('Par défaut')).toBeOnTheScreen();
+  });
+
+  it('shows the needs declared on a vehicle, and none on a standard one', async () => {
+    const eva001 = { ...def456, plate: 'EVA 001', isElectric: true, hasAccessiblePermit: true };
+    await renderVehiclesScreen(new FakeVehicleClient([abc123, eva001]));
+
+    expect(await screen.findByText('Véhicule électrique · Vignette pour personnes handicapées')).toBeOnTheScreen();
+    expect(within(screen.getByTestId(`vehicle-row-${abc123.id}`)).queryByText(/Véhicule électrique|Gabarit large/)).not.toBeOnTheScreen();
+  });
+
+  it('opens the edit page of the vehicle Julie chooses', async () => {
+    const onEditVehicle = jest.fn();
+    applyLanguage('fr');
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123])} onAddVehicle={jest.fn()} onEditVehicle={onEditVehicle} />
+      </SafeAreaProvider>,
+    );
+
+    await userEvent.setup().press(await screen.findByRole('button', { name: 'Modifier' }));
+
+    expect(onEditVehicle).toHaveBeenCalledWith(abc123);
   });
 
   it('writes the default badge in sentence case, as the story words it', async () => {

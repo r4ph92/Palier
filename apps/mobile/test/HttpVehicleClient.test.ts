@@ -5,6 +5,7 @@ import { PalierConsentRequiredError, PalierRejectedError } from '../src/api/Vehi
 
 const BASE_URL = 'http://localhost:3000';
 const TOKEN = 'julie-token';
+const noNeeds = { isElectric: false, hasAccessiblePermit: false, isOversize: false };
 const abc123 = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC', isDefault: true, isElectric: false, hasAccessiblePermit: false, isOversize: false };
 
 function jsonResponse(body: unknown, status = 200): Promise<Response> {
@@ -56,22 +57,40 @@ describe('HttpVehicleClient', () => {
       fetchFunction,
     });
 
-    await expect(client.addVehicle({ plate: 'abc 123', province: 'QC' })).resolves.toEqual(abc123);
+    await expect(client.addVehicle({ plate: 'abc 123', province: 'QC', ...noNeeds })).resolves.toEqual(abc123);
     expect(fetchFunction).toHaveBeenCalledWith(
       `${BASE_URL}/v1/me/vehicles`,
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ plate: 'abc 123', province: 'QC' }) }),
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ plate: 'abc 123', province: 'QC', ...noNeeds }) }),
+    );
+  });
+
+  it('patches only the needs of a vehicle and returns the saved vehicle', async () => {
+    const needs = { isElectric: true, hasAccessiblePermit: true, isOversize: false };
+    const fetchFunction = jest.fn(() => jsonResponse({ ...abc123, ...needs }));
+    const client = new HttpVehicleClient({
+      baseUrl: BASE_URL,
+      token: TOKEN,
+      onUnauthorized: () => undefined,
+      onConsentRequired: () => undefined,
+      fetchFunction,
+    });
+
+    await expect(client.updateVehicleNeeds(abc123.id, { ...abc123, ...needs })).resolves.toEqual({ ...abc123, ...needs });
+    expect(fetchFunction).toHaveBeenCalledWith(
+      `${BASE_URL}/v1/me/vehicles/${abc123.id}`,
+      expect.objectContaining({ method: 'PATCH', body: JSON.stringify(needs) }),
     );
   });
 
   it('reports a refused plate with the API reason', async () => {
-    const failure = clientAnswering(jsonResponse({ error: 'INVALID_PLATE' }, 400)).addVehicle({ plate: '', province: 'QC' });
+    const failure = clientAnswering(jsonResponse({ error: 'INVALID_PLATE' }, 400)).addVehicle({ plate: '', province: 'QC', ...noNeeds });
 
     await expect(failure).rejects.toBeInstanceOf(PalierRejectedError);
     await expect(failure).rejects.toMatchObject({ code: 'INVALID_PLATE' });
   });
 
   it('reports a duplicate vehicle with its reason', async () => {
-    const failure = clientAnswering(jsonResponse({ error: 'VEHICLE_ALREADY_REGISTERED' }, 409)).addVehicle({ plate: 'ABC123', province: 'QC' });
+    const failure = clientAnswering(jsonResponse({ error: 'VEHICLE_ALREADY_REGISTERED' }, 409)).addVehicle({ plate: 'ABC123', province: 'QC', ...noNeeds });
 
     await expect(failure).rejects.toMatchObject({ code: 'VEHICLE_ALREADY_REGISTERED' });
   });
@@ -136,6 +155,6 @@ describe('HttpVehicleClient', () => {
   it('treats a vehicle of the wrong shape as unreachable', async () => {
     const client = clientAnswering(jsonResponse({ id: 'vehicle-1', plate: 'ABC 123' }, 201));
 
-    await expect(client.addVehicle({ plate: 'ABC 123', province: 'QC' })).rejects.toBeInstanceOf(PalierUnreachableError);
+    await expect(client.addVehicle({ plate: 'ABC 123', province: 'QC', ...noNeeds })).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 });

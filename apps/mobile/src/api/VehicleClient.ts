@@ -1,6 +1,6 @@
-import type { Vehicle, VehicleListResponse } from '@palier/shared-types';
+import type { Vehicle, VehicleListResponse, VehicleNeeds } from '@palier/shared-types';
 
-export interface NewVehicleInput {
+export interface NewVehicleInput extends VehicleNeeds {
   readonly plate: string;
   readonly province: string;
 }
@@ -8,6 +8,7 @@ export interface NewVehicleInput {
 export interface VehicleClient {
   listVehicles(): Promise<VehicleListResponse>;
   addVehicle(vehicle: NewVehicleInput): Promise<Vehicle>;
+  updateVehicleNeeds(vehicleId: string, needs: VehicleNeeds): Promise<Vehicle>;
   setDefaultVehicle(vehicleId: string): Promise<Vehicle>;
   deleteVehicle(vehicleId: string): Promise<void>;
 }

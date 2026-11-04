@@ -1,8 +1,11 @@
+import type { VehicleNeeds } from '@palier/shared-types';
 import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
 import { PalierUnauthorizedError } from '../api/AuthClient';
 import { PalierUnreachableError } from '../api/LotsClient';
 import { PalierConsentRequiredError, PalierRejectedError, type NewVehicleInput, type VehicleClient } from '../api/VehicleClient';
 import { i18n } from '../i18n/i18n';
+import { NO_NEEDS, type VehicleNeed } from './vehicleNeeds';
+import { useVehicleNeeds } from './useVehicleNeeds';
 
 export interface AddVehicleErrors {
   readonly plate?: string | undefined;
@@ -13,9 +16,11 @@ export interface AddVehicleErrors {
 export interface AddVehicleController {
   readonly plate: string;
   readonly province: string | null;
+  readonly needs: VehicleNeeds;
   readonly errors: AddVehicleErrors;
   setPlate(plate: string): void;
   setProvince(province: string): void;
+  toggleNeed(need: VehicleNeed): void;
   save(): void;
 }
 
@@ -24,6 +29,7 @@ export function useAddVehicle(client: VehicleClient, onSaved: () => void): AddVe
   // Shown upper-case as it is typed, so the field matches the plate Palier stores.
   const setPlate = useCallback((value: string) => setPlateValue(value.toUpperCase()), []);
   const [province, setProvince] = useState<string | null>(null);
+  const { needs, toggleNeed } = useVehicleNeeds(NO_NEEDS);
   const [errors, setErrors] = useState<AddVehicleErrors>({});
   // A province message is about the choice that was missing, so it goes once a province is chosen.
   const chooseProvince = useCallback((code: string) => {
@@ -36,9 +42,9 @@ export function useAddVehicle(client: VehicleClient, onSaved: () => void): AddVe
       return;
     }
     setErrors({});
-    await submitVehicle(client, { plate, province }, { onSaved, setErrors });
-  }, [client, plate, province, onSaved]);
-  return { plate, province, errors, setPlate, setProvince: chooseProvince, save };
+    await submitVehicle(client, { plate, province, ...needs }, { onSaved, setErrors });
+  }, [client, plate, province, needs, onSaved]);
+  return { plate, province, needs, errors, setPlate, setProvince: chooseProvince, toggleNeed, save };
 }
 
 interface SubmitHandlers {

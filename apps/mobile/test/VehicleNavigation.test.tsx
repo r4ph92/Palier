@@ -37,4 +37,18 @@ describe('the vehicles page of the account tab', () => {
     expect(await screen.findByText('ABC 123 · QC')).toBeOnTheScreen();
     expect(screen.getByText('Par défaut')).toBeOnTheScreen();
   });
+
+  it('edits the needs of a vehicle and comes back to the list showing them', async () => {
+    await renderSignedInJulie(new FakeVehicleClient([abc123]));
+    const user = userEvent.setup();
+
+    await user.press(await screen.findByRole('tab', { name: 'Compte' }));
+    await user.press(screen.getByRole('button', { name: 'Mes véhicules' }));
+    await user.press(await screen.findByRole('button', { name: 'Modifier' }));
+    await user.press(screen.getByRole('checkbox', { name: 'Gabarit large' }));
+    await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(await screen.findByText('Gabarit large')).toBeOnTheScreen();
+    expect(screen.getByText('ABC 123 · QC')).toBeOnTheScreen();
+  });
 });

@@ -8,6 +8,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
 import { i18n } from '../i18n/i18n';
 import { useIsLargeText } from '../theme/useIsLargeText';
+import { declaredNeeds } from '../vehicles/vehicleNeeds';
 import { useVehicles, type VehicleActionError, type VehiclesController } from '../vehicles/useVehicles';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -19,9 +20,10 @@ interface VehiclesScreenProps {
   readonly firstName: string;
   readonly client: VehicleClient;
   readonly onAddVehicle: () => void;
+  readonly onEditVehicle: (vehicle: Vehicle) => void;
 }
 
-export function VehiclesScreen({ firstName, client, onAddVehicle }: VehiclesScreenProps) {
+export function VehiclesScreen({ firstName, client, onAddVehicle, onEditVehicle }: VehiclesScreenProps) {
   const controller = useVehicles(client);
   const colors = useColors();
   return (
@@ -29,7 +31,7 @@ export function VehiclesScreen({ firstName, client, onAddVehicle }: VehiclesScre
       <FlatList
         data={controller.state.status === 'loaded' ? controller.state.vehicles : NO_VEHICLES}
         keyExtractor={(vehicle) => vehicle.id}
-        renderItem={({ item }) => <VehicleRow vehicle={item} controller={controller} />}
+        renderItem={({ item }) => <VehicleRow vehicle={item} controller={controller} onEdit={() => onEditVehicle(item)} />}
         ListHeaderComponent={<VehiclesHeader firstName={firstName} onAddVehicle={onAddVehicle} actionError={controller.actionError} />}
         ListEmptyComponent={<VehiclesStateMessage controller={controller} />}
         contentContainerStyle={styles.content}
@@ -73,13 +75,22 @@ function VehicleActionMessage({ actionError }: { readonly actionError: VehicleAc
   );
 }
 
-function VehicleRow({ vehicle, controller }: { readonly vehicle: Vehicle; readonly controller: VehiclesController }) {
+interface VehicleRowProps {
+  readonly vehicle: Vehicle;
+  readonly controller: VehiclesController;
+  readonly onEdit: () => void;
+}
+
+function VehicleRow({ vehicle, controller, onEdit }: VehicleRowProps) {
   const colors = useColors();
   const layout = useIsLargeText() ? stackedStyles : sideBySideStyles;
   return (
     <View testID={`vehicle-row-${vehicle.id}`} style={[styles.row, layout.row, { borderBottomColor: colors.line }]}>
-      <Text style={[typography.lotName, layout.plate, { color: colors.ink }]}>{`${vehicle.plate} · ${vehicle.province}`}</Text>
+      <View style={layout.plate}>
+        <VehicleLabel vehicle={vehicle} />
+      </View>
       <View style={styles.actions}>
+        <TextButton label={i18n.t('vehicles.edit')} onPress={onEdit} />
         {vehicle.isDefault ? (
           <Text style={[typography.bodyStrong, { color: colors.muted }]}>{i18n.t('vehicles.defaultBadge')}</Text>
         ) : (
@@ -88,6 +99,17 @@ function VehicleRow({ vehicle, controller }: { readonly vehicle: Vehicle; readon
         <TextButton label={i18n.t('vehicles.delete')} onPress={() => controller.remove(vehicle)} />
       </View>
     </View>
+  );
+}
+
+function VehicleLabel({ vehicle }: { readonly vehicle: Vehicle }) {
+  const colors = useColors();
+  const needs = declaredNeeds(vehicle);
+  return (
+    <>
+      <Text style={[typography.lotName, { color: colors.ink }]}>{`${vehicle.plate} · ${vehicle.province}`}</Text>
+      {needs.length > 0 ? <Text style={[typography.body, { color: colors.muted }]}>{needs.join(' · ')}</Text> : null}
+    </>
   );
 }
 

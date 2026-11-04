@@ -33,6 +33,33 @@ describe('AddVehicleScreen', () => {
     expect(onSaved).toHaveBeenCalledTimes(1);
   });
 
+  it('saves the needs Julie ticks with the vehicle, and none when she ticks none', async () => {
+    const client = new FakeVehicleClient();
+    await renderAddVehicleScreen(client);
+    const user = userEvent.setup();
+
+    expect(screen.getByRole('checkbox', { name: 'Véhicule électrique' })).not.toBeChecked();
+    await user.type(screen.getByLabelText('Plaque'), 'EVA 001');
+    await user.press(screen.getByRole('radio', { name: 'Québec' }));
+    await user.press(screen.getByRole('checkbox', { name: 'Véhicule électrique' }));
+    await user.press(screen.getByRole('checkbox', { name: 'Vignette pour personnes handicapées' }));
+    await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(client.savedVehicles).toEqual([expect.objectContaining({ plate: 'EVA 001', isElectric: true, hasAccessiblePermit: true, isOversize: false })]);
+  });
+
+  it('unticks a need pressed twice', async () => {
+    await renderAddVehicleScreen(new FakeVehicleClient());
+    const user = userEvent.setup();
+    const oversize = screen.getByRole('checkbox', { name: 'Gabarit large' });
+
+    await user.press(oversize);
+    expect(oversize).toBeChecked();
+    await user.press(oversize);
+
+    expect(oversize).not.toBeChecked();
+  });
+
   it('asks for a province and saves nothing when none is chosen', async () => {
     const client = new FakeVehicleClient();
     const onSaved = await renderAddVehicleScreen(client);
@@ -120,5 +147,8 @@ describe('AddVehicleScreen', () => {
     expect(screen.getByLabelText('Plate')).toBeOnTheScreen();
     expect(screen.getByText('Province or state')).toBeOnTheScreen();
     expect(screen.getByRole('radio', { name: 'Quebec' })).toBeOnTheScreen();
+    expect(screen.getByRole('checkbox', { name: 'Electric vehicle' })).toBeOnTheScreen();
+    expect(screen.getByRole('checkbox', { name: 'Accessible parking permit' })).toBeOnTheScreen();
+    expect(screen.getByRole('checkbox', { name: 'Oversize' })).toBeOnTheScreen();
   });
 });

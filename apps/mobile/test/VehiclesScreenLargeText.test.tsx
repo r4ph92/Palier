@@ -25,7 +25,7 @@ describe.each([1, 1.35, 2.3, 3.1])('VehiclesScreen at text scale %d', (fontScale
   it('keeps the plate and the default badge on screen, stacked only at large text sizes', async () => {
     await render(
       <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-        <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123])} onAddVehicle={jest.fn()} />
+        <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123])} onAddVehicle={jest.fn()} onEditVehicle={jest.fn()} />
       </SafeAreaProvider>,
     );
 
@@ -38,7 +38,7 @@ describe.each([1, 1.35, 2.3, 3.1])('VehiclesScreen at text scale %d', (fontScale
     const def456 = { id: 'vehicle-2', plate: 'DEF 456', province: 'QC', isDefault: false, ...standardNeeds };
     await render(
       <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-        <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123, def456])} onAddVehicle={jest.fn()} />
+        <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123, def456])} onAddVehicle={jest.fn()} onEditVehicle={jest.fn()} />
       </SafeAreaProvider>,
     );
 
