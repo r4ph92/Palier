@@ -1,19 +1,33 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import { useText } from '../i18n/LanguageContext.tsx';
+import { useHasUserActed } from '../navigation/PageFocusContext.tsx';
 
 interface PageHeaderProps {
   readonly eyebrow: string;
   readonly title: string;
 }
 
-// Each page names itself in the tab and takes focus on its title, so a screen reader hears the page change.
-export function PageHeader({ eyebrow, title }: PageHeaderProps) {
-  const text = useText();
-  const titleRef = useRef<HTMLHeadingElement>(null);
+function useDocumentTitle(title: string): void {
+  const appName = useText().app.name;
   useEffect(() => {
-    document.title = `${title} · ${text.app.name}`;
-  }, [title, text.app.name]);
-  useEffect(() => titleRef.current?.focus(), []);
+    document.title = `${title} · ${appName}`;
+  }, [title, appName]);
+}
+
+// After a page change the title takes focus, so a screen reader hears the change; the page the browser loaded keeps focus where it is.
+function useTitleFocusAfterPageChange(titleRef: RefObject<HTMLHeadingElement | null>): void {
+  const hasUserActed = useHasUserActed();
+  useEffect(() => {
+    if (hasUserActed()) {
+      titleRef.current?.focus();
+    }
+  }, [hasUserActed, titleRef]);
+}
+
+export function PageHeader({ eyebrow, title }: PageHeaderProps) {
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  useDocumentTitle(title);
+  useTitleFocusAfterPageChange(titleRef);
   return (
     <header className="page-header">
       <p className="eyebrow">{eyebrow}</p>

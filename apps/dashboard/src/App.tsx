@@ -1,8 +1,10 @@
 import type { DashboardMeResponse } from '@palier/shared-types';
 import { AppHeader } from './components/AppHeader.tsx';
-import { LanguageProvider, useText } from './i18n/LanguageContext.tsx';
+import { LanguageProvider } from './i18n/LanguageContext.tsx';
 import { NavigationProvider, useNavigation } from './navigation/NavigationContext.tsx';
+import { PageFocusProvider } from './navigation/PageFocusContext.tsx';
 import { CreateOperatorPage } from './pages/CreateOperatorPage.tsx';
+import { LoadingPage } from './pages/LoadingPage.tsx';
 import { LotPage } from './pages/LotPage.tsx';
 import { NotFoundPage } from './pages/NotFoundPage.tsx';
 import { OperatorHomePage } from './pages/OperatorHomePage.tsx';
@@ -15,7 +17,9 @@ export function App() {
   return (
     <LanguageProvider>
       <NavigationProvider>
-        <DashboardShell />
+        <PageFocusProvider>
+          <DashboardShell />
+        </PageFocusProvider>
       </NavigationProvider>
     </LanguageProvider>
   );
@@ -41,10 +45,9 @@ interface SessionContentProps {
 }
 
 function SessionContent({ session, refresh }: SessionContentProps) {
-  const text = useText();
   switch (session.status) {
     case 'loading':
-      return <p role="status" className="muted">{text.app.loading}</p>;
+      return <LoadingPage />;
     case 'signedOut':
       return <SignInPage onSignedIn={refresh} />;
     case 'unreachable':

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import { en } from './en.ts';
 import { fr, type Dictionary } from './fr.ts';
 
@@ -35,8 +35,10 @@ function storeLanguage(language: Language): void {
 
 export function LanguageProvider({ children }: { readonly children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(storedLanguage);
-  useEffect(() => {
+  // A layout effect runs before the pages' effects, so a page's own document title replaces this one.
+  useLayoutEffect(() => {
     document.documentElement.lang = language;
+    document.title = DICTIONARIES[language].app.name;
     storeLanguage(language);
   }, [language]);
   const state = useMemo(() => ({ language, text: DICTIONARIES[language], setLanguage: setLanguageState }), [language]);
