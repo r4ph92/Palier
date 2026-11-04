@@ -6,7 +6,7 @@
     "verbatimModuleSyntax": true,
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "types": ["vite/client"]
   },
   "include": ["src", "test", "vite.config.ts"]
