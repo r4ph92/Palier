@@ -1,5 +1,5 @@
 {
-  "id": "5035431d-d303-4505-ba95-f3b60e8bb75a",
+  "id": "2b584bd2-4215-4a83-ba5a-32acd9c08b47",
   "prevId": "68f04a46-f696-4530-9d63-8bea7ba3e171",
   "version": "7",
   "dialect": "postgresql",
@@ -151,14 +151,6 @@
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
-        },
-        "scope": {
-          "name": "scope",
-          "type": "session_scope",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'APP'"
         },
         "created_at": {
           "name": "created_at",
@@ -1333,6 +1325,12 @@
           "notNull": true,
           "default": "now()"
         },
+        "entry_confirmed_at": {
+          "name": "entry_confirmed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "cancelled_at": {
           "name": "cancelled_at",
           "type": "timestamp with time zone",
@@ -1352,7 +1350,7 @@
             }
           ],
           "isUnique": true,
-          "where": "state in ('CREATED')",
+          "where": "state in ('CREATED', 'ENTRY_CONFIRMED')",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1368,7 +1366,7 @@
             }
           ],
           "isUnique": true,
-          "where": "state in ('CREATED')",
+          "where": "state in ('CREATED', 'ENTRY_CONFIRMED')",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1450,92 +1448,9 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
-    },
-    "public.operator_member": {
-      "name": "operator_member",
-      "schema": "",
-      "columns": {
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "operator_id": {
-          "name": "operator_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "operator_member_operator_id_index": {
-          "name": "operator_member_operator_id_index",
-          "columns": [
-            {
-              "expression": "operator_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "operator_member_user_id_app_user_id_fk": {
-          "name": "operator_member_user_id_app_user_id_fk",
-          "tableFrom": "operator_member",
-          "tableTo": "app_user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "operator_member_operator_id_operator_id_fk": {
-          "name": "operator_member_operator_id_operator_id_fk",
-          "tableFrom": "operator_member",
-          "tableTo": "operator",
-          "columnsFrom": [
-            "operator_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
     }
   },
   "enums": {
-    "public.session_scope": {
-      "name": "session_scope",
-      "schema": "public",
-      "values": [
-        "APP",
-        "DASHBOARD"
-      ]
-    },
     "public.assignment_strategy": {
       "name": "assignment_strategy",
       "schema": "public",
@@ -1618,6 +1533,7 @@
       "schema": "public",
       "values": [
         "CREATED",
+        "ENTRY_CONFIRMED",
         "CANCELLED"
       ]
     }

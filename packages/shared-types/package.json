@@ -17,6 +17,10 @@
       "types": "./src/appVersion.ts",
       "default": "./src/appVersion.ts"
     },
+    "./entries": {
+      "types": "./src/entries.ts",
+      "default": "./src/entries.ts"
+    },
     "./entryLink": {
       "types": "./src/entryLink.ts",
       "default": "./src/entryLink.ts"

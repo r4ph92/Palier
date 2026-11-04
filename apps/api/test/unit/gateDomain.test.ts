@@ -48,14 +48,31 @@ describe('recordPassage', () => {
 
     const passage = await recordPassage(entryAt(now), { ledger, clock });
 
-    expect(ledger.entries).toEqual([{ gate: entreeDemo, closedAt: now, vehicleCountChange: 1 }]);
+    expect(ledger.entries).toEqual([
+      {
+        gate: entreeDemo,
+        closedAt: now,
+        vehicleCountChange: 1,
+        confirmableOpenings: { withinMilliseconds: 60_000 },
+      },
+    ]);
     expect(passage).toEqual({
       gateId: entreeDemo.id,
       lotId: entreeDemo.lotId,
       kind: 'ENTRY',
       closedAt: '2026-10-27T22:02:00.000Z',
       vehicleCount: 1,
+      confirmedSessionId: null,
     });
+  });
+
+  it('passes the window as a duration, whatever the console clock says', async () => {
+    const ledger = new FakePassageLedger(0);
+    const consoleAhead = new Date(now.getTime() + 3 * 60 * 1000);
+
+    await recordPassage(entryAt(consoleAhead), { ledger, clock });
+
+    expect(ledger.entries[0]).toMatchObject({ closedAt: consoleAhead, confirmableOpenings: { withinMilliseconds: 60_000 } });
   });
 
   it('counts one vehicle less at an exit gate', async () => {
@@ -81,6 +98,25 @@ describe('recordPassage', () => {
 
     await expect(recordPassage(command, { ledger, clock })).rejects.toEqual(new PassageRefusedError('GATE_FORBIDDEN'));
     expect(ledger.entries).toEqual([]);
+  });
+
+  it('confirms nothing at an exit gate', async () => {
+    const ledger = new FakePassageLedger(1);
+    ledger.pendingOpenings.push('session-waiting');
+
+    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now }, { ledger, clock });
+
+    expect(ledger.entries[0]?.confirmableOpenings).toBeNull();
+    expect(passage.confirmedSessionId).toBeNull();
+  });
+
+  it('answers the session the ledger confirmed at an entry gate', async () => {
+    const ledger = new FakePassageLedger(0);
+    ledger.pendingOpenings.push('session-julie', 'session-marc');
+
+    const passage = await recordPassage(entryAt(now), { ledger, clock });
+
+    expect(passage).toMatchObject({ vehicleCount: 1, confirmedSessionId: 'session-julie' });
   });
 
   it('refuses a passage from a gate without loops', async () => {

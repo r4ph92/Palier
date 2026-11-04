@@ -68,8 +68,8 @@
     {
       "idx": 9,
       "version": "7",
-      "when": 1793808628464,
-      "tag": "0009_dashboard_sessions_and_membership",
+      "when": 1793808131629,
+      "tag": "0009_entry_confirmed",
       "breakpoints": true
     }
   ]

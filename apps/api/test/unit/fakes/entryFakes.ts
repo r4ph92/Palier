@@ -1,10 +1,10 @@
-import type { EntryRefusalCode } from '@palier/shared-types';
+import type { EntryRefusalCode, EntrySessionState } from '@palier/shared-types';
 import { EntryAdmission, type EntryLog } from '../../../src/domain/entries/EntryAdmission.ts';
 import { EntryEligibility, type EntryPolicy } from '../../../src/domain/entries/EntryEligibility.ts';
 import type { EntryGate, EntryGateRepository } from '../../../src/domain/entries/EntryGateRepository.ts';
 import { EntryRefusedError } from '../../../src/domain/entries/EntryRefusedError.ts';
 import type { GateCommander, OpenCommand } from '../../../src/domain/entries/GateCommander.ts';
-import type { OpenedSession, ParkingSessionRepository, SessionDraft } from '../../../src/domain/entries/ParkingSessionRepository.ts';
+import type { OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../../src/domain/entries/ParkingSessionRepository.ts';
 import type { AuthorizationRequest, PaymentAuthorizer } from '../../../src/domain/entries/PaymentAuthorizer.ts';
 import type { EntryRouteDependencies } from '../../../src/http/routes/entryRoutes.ts';
 import type { FakeDriverRepository } from '../fakeDriverRepository.ts';
@@ -52,12 +52,23 @@ export type Journal = string[];
 // Mirrors the SQL order: aisle A before B, then the spot number.
 const PARKING_DEMO_SPOTS = ['A-1', 'A-2', 'A-3', 'A-4', 'A-5', 'B-1', 'B-2', 'B-3', 'B-4', 'B-5'];
 
+export function fakeSessionId(sequence: number): string {
+  return `00000000-0000-4000-8000-${String(900 + sequence).padStart(12, '0')}`;
+}
+
+interface FakeSession {
+  readonly driverId: string;
+  readonly spot: string;
+  state: EntrySessionState;
+  entryConfirmedAt: Date | null;
+}
+
 export class FakeParkingSessionRepository implements ParkingSessionRepository {
   readonly drafts: SessionDraft[] = [];
   readonly paymentIntents = new Map<string, string>();
   cancelFails = false;
   readonly #freeSpots: string[];
-  readonly #active = new Map<string, { driverId: string; spot: string }>();
+  readonly #sessions = new Map<string, FakeSession>();
   readonly #journal: Journal;
 
   constructor(journal: Journal = [], freeSpots: readonly string[] = PARKING_DEMO_SPOTS) {
@@ -71,15 +82,15 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
 
   openWithFirstFreeSpot(draft: SessionDraft): Promise<OpenedSession | null> {
     this.#journal.push('open-session');
-    if ([...this.#active.values()].some((session) => session.driverId === draft.driverId)) {
+    if ([...this.#sessions.values()].some((session) => session.state !== 'CANCELLED' && session.driverId === draft.driverId)) {
       return Promise.reject(new EntryRefusedError('ALREADY_INSIDE'));
     }
     const spot = this.#freeSpots.shift();
     if (spot === undefined) {
       return Promise.resolve(null);
     }
-    const id = `session-${this.drafts.push(draft)}`;
-    this.#active.set(id, { driverId: draft.driverId, spot });
+    const id = fakeSessionId(this.drafts.push(draft));
+    this.#sessions.set(id, { driverId: draft.driverId, spot, state: 'CREATED', entryConfirmedAt: null });
     const [aisleCode = ''] = spot.split('-');
     return Promise.resolve({ id, spot: { number: spot, levelCode: 'P1', aisleCode } });
   }
@@ -95,12 +106,30 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     if (this.cancelFails) {
       return Promise.reject(new Error('parking_session update failed'));
     }
-    const session = this.#active.get(sessionId);
+    const session = this.#sessions.get(sessionId);
     if (session !== undefined) {
-      this.#active.delete(sessionId);
+      session.state = 'CANCELLED';
       this.#freeSpots.unshift(session.spot);
     }
     return Promise.resolve();
+  }
+
+  findForUser(sessionId: string, userId: string): Promise<SessionStatus | null> {
+    const session = this.#sessions.get(sessionId);
+    if (session === undefined || session.driverId !== userId) {
+      return Promise.resolve(null);
+    }
+    const [aisleCode = ''] = session.spot.split('-');
+    const spot = { number: session.spot, levelCode: 'P1', aisleCode };
+    return Promise.resolve({ id: sessionId, state: session.state, spot, entryConfirmedAt: session.entryConfirmedAt });
+  }
+
+  confirmEntry(sessionId: string, confirmedAt: Date): void {
+    const session = this.#sessions.get(sessionId);
+    if (session !== undefined) {
+      session.state = 'ENTRY_CONFIRMED';
+      session.entryConfirmedAt = confirmedAt;
+    }
   }
 }
 
@@ -181,7 +210,7 @@ export function fakeEntries({ drivers, vehicles, policy, gates, hasPaymentAuthor
     policy: policy ?? { allowPlatformChargesWithoutOperatorAccount: false },
   });
   const admission = new EntryAdmission({ sessions, payments: hasPaymentAuthorizer ? payments : null, gateCommander });
-  return { journal, sessions, payments, gateCommander, dependencies: { eligibility, admission } };
+  return { journal, sessions, payments, gateCommander, dependencies: { eligibility, admission, sessions } };
 }
 
 export function silentLog(): EntryLog & { readonly warnings: unknown[]; readonly errors: unknown[] } {

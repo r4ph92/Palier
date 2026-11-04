@@ -97,7 +97,11 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
 
 - `GET /v1/gates/me` : `{ id, name, kind, lotName }` de la barrière de la clé.
 - `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>" }` :
-  `{ gateId, lotId, kind, closedAt, vehicleCount }`. Le sens et le parking
+  `{ gateId, lotId, kind, closedAt, vehicleCount, confirmedSessionId }`.
+  `confirmedSessionId` est la session d'entrée que ce passage a confirmée (la plus
+  ancienne ouverture de cette barrière émise dans les 60 secondes avant la réception du passage, mesurées
+  sur l'horloge de Postgres seule : la dérive de la console n'y change rien), ou
+  `null` s'il n'y en avait aucune ou à une sortie. Le sens et le parking
   viennent de la barrière, jamais du corps. `closedAt` à plus de 5 minutes dans
   le futur : 400.
 - `GET /v1/gates/me/commands?after=<ISO 8601>&afterId=<uuid>` : `[{ id, kind: "OPEN", issuedAt }]`

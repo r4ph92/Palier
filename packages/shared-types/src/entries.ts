@@ -15,6 +15,18 @@ export interface EntryResponse {
   readonly barrierOpened: true;
 }
 
+export const ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'CANCELLED'] as const;
+
+export type EntrySessionState = (typeof ENTRY_SESSION_STATES)[number];
+
+export interface EntryStatusResponse {
+  readonly sessionId: string;
+  readonly state: EntrySessionState;
+  readonly spot: AssignedSpot;
+  // When the entry loop proved the car passed; null until then.
+  readonly entryConfirmedAt: string | null;
+}
+
 export type EntryRefusalCode =
   | 'QR_NOT_RECOGNIZED'
   | 'NOT_AN_ENTRY_GATE'

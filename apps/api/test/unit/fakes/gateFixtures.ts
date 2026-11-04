@@ -45,6 +45,8 @@ export class FakeGateDeviceKeyRepository implements GateDeviceKeyRepository {
 
 export class FakePassageLedger implements PassageLedger {
   readonly entries: PassageEntry[] = [];
+  // Sessions whose opening waits at the entry gate, oldest first: one closure confirms the first.
+  readonly pendingOpenings: string[] = [];
   vehicleCount: number;
 
   constructor(vehicleCount = 0) {
@@ -54,7 +56,8 @@ export class FakePassageLedger implements PassageLedger {
   recordPassage(entry: PassageEntry): Promise<RecordedPassage> {
     this.entries.push(entry);
     this.vehicleCount = Math.max(this.vehicleCount + entry.vehicleCountChange, 0);
-    return Promise.resolve({ vehicleCount: this.vehicleCount });
+    const confirmedSessionId = entry.confirmableOpenings === null ? null : (this.pendingOpenings.shift() ?? null);
+    return Promise.resolve({ vehicleCount: this.vehicleCount, confirmedSessionId });
   }
 }
 
