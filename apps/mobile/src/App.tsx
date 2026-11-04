@@ -12,7 +12,10 @@ import type { VehicleClient } from './api/VehicleClient';
 import { secureTokenStore } from './auth/TokenStore';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
 import { applyLanguage, deviceLanguage } from './i18n/i18n';
+import { developerTools } from './dev/loadDeveloperTools';
 import { PalierApp } from './PalierApp';
+import { NullPositioningModule } from './positioning/NullPositioningModule';
+import { PositioningCore } from './positioning/PositioningCore';
 import { fontAssets } from './theme/fonts';
 
 const LOCAL_API_URL = 'http://localhost:3000';
@@ -37,6 +40,9 @@ function createVehicleClient(token: string, onUnauthorized: () => void, onConsen
   return new HttpVehicleClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired });
 }
 
+const positioningCore = new PositioningCore(developerTools?.module ?? new NullPositioningModule());
+const developerEntry = developerTools?.bind(positioningCore);
+
 const palierApp = (
   <StripeProvider publishableKey={stripePublishableKey}>
     <PalierApp
@@ -46,6 +52,7 @@ const palierApp = (
       createLotsClient={createLotsClient}
       createPaymentMethodClient={createPaymentMethodClient}
       createVehicleClient={createVehicleClient}
+      developerEntry={developerEntry}
     />
   </StripeProvider>
 );

@@ -8,7 +8,7 @@ const SAFE_AREA_METRICS = {
   insets: { top: 59, left: 0, right: 0, bottom: 34 },
 };
 
-async function renderAccountScreen(onSignOut: () => void) {
+async function renderAccountScreen(onSignOut: () => void, developerLink?: { label: string; onOpen: () => void }) {
   applyLanguage('fr');
   return render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
@@ -17,6 +17,7 @@ async function renderAccountScreen(onSignOut: () => void) {
         onOpenVehicles={() => undefined}
         onOpenPaymentMethod={() => undefined}
         onSignOut={onSignOut}
+        {...(developerLink === undefined ? {} : { developerLink })}
       />
     </SafeAreaProvider>,
   );
@@ -42,5 +43,22 @@ describe('AccountScreen sign-out', () => {
 
     expect(screen.getByRole('button', { name: 'Déconnexion…' })).toBeDisabled();
     expect(onSignOut).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('AccountScreen developer link', () => {
+  it('shows no Développeur button unless a link is given', async () => {
+    await renderAccountScreen(() => undefined);
+
+    expect(screen.queryByRole('button', { name: 'Développeur' })).not.toBeOnTheScreen();
+  });
+
+  it('opens the developer panel from the Développeur button', async () => {
+    const onOpen = jest.fn();
+    await renderAccountScreen(() => undefined, { label: 'Développeur', onOpen });
+
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Développeur' }));
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
   });
 });
