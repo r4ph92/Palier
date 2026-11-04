@@ -1,4 +1,5 @@
 import type { ParkedConfidence } from '../positioning/PositioningModule';
+import type { Connectivity } from './SimulatedPositioningModule';
 import { formatLogTime } from './formatLogTime';
 
 const UUID_PREFIX_LENGTH = 8;
@@ -17,3 +18,7 @@ export const describeEvent = {
   parkedDetected: (confidence: ParkedConfidence): string => `Stationné détecté : confiance ${CONFIDENCE_LABELS[confidence]}`,
   queueFlushed: (count: number): string => `File vidée : ${count} élément(s)`,
 };
+
+export function describeConnectivity(connectivity: Connectivity): string {
+  return connectivity === 'offline' ? 'Réseau coupé' : 'Réseau rétabli';
+}

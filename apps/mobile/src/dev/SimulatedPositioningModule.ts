@@ -1,5 +1,5 @@
 import type { ParkedConfidence, PositioningListener, PositioningModule } from '../positioning/PositioningModule';
-import { describeCommand } from './describeSignal';
+import { describeCommand, describeConnectivity } from './describeSignal';
 import type { SignalJournal } from './SignalJournal';
 
 export type Connectivity = 'online' | 'offline';
@@ -8,7 +8,6 @@ export class SimulatedPositioningModule implements PositioningModule {
   private readonly journal: SignalJournal;
   private readonly now: () => number;
   private listener: PositioningListener | null = null;
-  private connectivity: Connectivity = 'online';
 
   constructor(journal: SignalJournal, now: () => number) {
     this.journal = journal;
@@ -48,11 +47,6 @@ export class SimulatedPositioningModule implements PositioningModule {
   }
 
   setConnectivity(connectivity: Connectivity): void {
-    this.connectivity = connectivity;
-    this.journal.append(connectivity === 'offline' ? 'Réseau coupé' : 'Réseau rétabli');
-  }
-
-  isOnline(): boolean {
-    return this.connectivity === 'online';
+    this.journal.append(describeConnectivity(connectivity));
   }
 }

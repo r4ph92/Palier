@@ -1,4 +1,5 @@
 import type { PositioningCore } from '../positioning/PositioningCore';
+import { describeConnectivity } from './describeSignal';
 import type { SimulatedPositioningModule } from './SimulatedPositioningModule';
 
 export interface PanelAction {
@@ -17,8 +18,8 @@ export function signalActions(simulator: SimulatedPositioningModule): readonly P
     { label: 'Voie de sortie (minor 0)', run: () => simulator.enterAisle(0) },
     { label: 'Sortie de la région du parking', run: () => simulator.exitLot() },
     { label: 'Stationné (à pied, confiance élevée)', run: () => simulator.detectParked('high') },
-    { label: 'Réseau coupé', run: () => simulator.setConnectivity('offline') },
-    { label: 'Réseau rétabli', run: () => simulator.setConnectivity('online') },
+    { label: describeConnectivity('offline'), run: () => simulator.setConnectivity('offline') },
+    { label: describeConnectivity('online'), run: () => simulator.setConnectivity('online') },
   ];
 }
 
