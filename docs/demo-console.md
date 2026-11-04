@@ -58,7 +58,7 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
   par curl) :
 
   ```
-  curl -i -X POST http://localhost:3000/v1/gates/00000000-0000-4000-8000-000000000502/passage \
+  curl -i -X POST http://localhost:3000/v1/gates/00000000-0000-4000-8000-000000000702/passage \
     -H 'authorization: Bearer gkXGrHor9PJGFGYu4xrNZ5nMkid18rTHXBmuCuI63as' \
     -H 'content-type: application/json' -d '{"closedAt":"2026-10-27T22:02:00Z"}'
   ```

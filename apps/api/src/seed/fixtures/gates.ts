@@ -3,9 +3,9 @@ import type { gate, gateDeviceKey } from '../../infrastructure/postgres/schema.t
 import { GARAGE_ROY_ID } from './garageRoy.ts';
 import { PARKING_DEMO_ID } from './parkingDemo.ts';
 
-export const ENTREE_DEMO_ID = '00000000-0000-4000-8000-000000000501';
-export const SORTIE_DEMO_ID = '00000000-0000-4000-8000-000000000502';
-export const ENTREE_ROY_ID = '00000000-0000-4000-8000-000000000503';
+export const ENTREE_DEMO_ID = '00000000-0000-4000-8000-000000000701';
+export const SORTIE_DEMO_ID = '00000000-0000-4000-8000-000000000702';
+export const ENTREE_ROY_ID = '00000000-0000-4000-8000-000000000703';
 
 export const ENTREE_DEMO_DEVICE_KEY = 'gkXGrHor9PJGFGYu4xrNZ5nMkid18rTHXBmuCuI63as';
 export const SORTIE_DEMO_DEVICE_KEY = 'Vlsp0SpmrjrASkf5BViukfAHhaqATVEuKnksWh1tcOw';

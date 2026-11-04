@@ -9,7 +9,7 @@ export const REVOKED_KEY = 'revokedDemoKey00000000000000000000000000000';
 export const UNKNOWN_KEY = 'unknownDemoKey00000000000000000000000000000';
 
 export const entreeDemo: AuthenticatedGate = {
-  id: '00000000-0000-4000-8000-000000000501',
+  id: '00000000-0000-4000-8000-000000000701',
   lotId: '00000000-0000-4000-8000-000000000201',
   lotName: 'Parking Démo',
   name: 'Entrée Démo',
@@ -19,7 +19,7 @@ export const entreeDemo: AuthenticatedGate = {
 
 export const sortieDemo: AuthenticatedGate = {
   ...entreeDemo,
-  id: '00000000-0000-4000-8000-000000000502',
+  id: '00000000-0000-4000-8000-000000000702',
   name: 'Sortie Démo',
   kind: 'EXIT',
 };
