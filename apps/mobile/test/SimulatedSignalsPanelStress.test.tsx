@@ -1,4 +1,4 @@
-import { act, render, screen, userEvent } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import { PositioningCore } from '../src/positioning/PositioningCore';
@@ -28,7 +28,7 @@ async function renderPanel() {
 }
 
 function logLines(): string[] {
-  return screen
+  return within(screen.getByTestId('Journal'))
     .queryAllByText(LOG_LINE)
     .map((node) => String(node.props.children));
 }
@@ -38,8 +38,9 @@ describe('SimulatedSignalsPanel under load', () => {
     const { user } = await renderPanel();
     const button = screen.getByRole('button', { name: 'Allée 1' });
 
-    for (let press = 0; press < 20; press += 1) {
-      await user.press(button);
+    await user.press(button);
+    for (let press = 1; press < 20; press += 1) {
+      await fireEvent.press(button);
     }
 
     expect(logLines().filter((line) => line.endsWith('Allée détectée : minor 1'))).toHaveLength(20);
