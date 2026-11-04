@@ -53,6 +53,32 @@ describe('ScanScreen refusals', () => {
     expect(onAddCard).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    ['fr', 'Votre carte a refusé l’autorisation de 25,00\u00A0$. Mettez à jour votre moyen de paiement.'],
+    ['en', 'Your card declined the $25.00 authorization. Update your payment method.'],
+  ] as const)('names the refused amount when the card is declined, in %s', async (language, message) => {
+    const client = new FakeEntryClient();
+    client.nextRejection = 'CARD_DECLINED';
+    client.nextRejectionCents = 2500;
+    await scan({ client, language });
+
+    expect(await screen.findByText(message)).toBeOnTheScreen();
+    expect(screen.queryByText(/A-1/)).not.toBeOnTheScreen();
+  });
+
+  it('opens the payment method from a declined card', async () => {
+    const client = new FakeEntryClient();
+    client.nextRejection = 'CARD_DECLINED';
+    client.nextRejectionCents = 2500;
+    const onAddCard = jest.fn();
+    const { user } = await scan({ client, onAddCard });
+
+    await user.press(await screen.findByRole('button', { name: 'Moyen de paiement' }));
+
+    expect(onAddCard).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Ajouter une plaque' })).not.toBeOnTheScreen();
+  });
+
   it('shows no prerequisite buttons for another refusal', async () => {
     const client = new FakeEntryClient();
     client.nextRejection = 'NOT_AN_ENTRY_GATE';

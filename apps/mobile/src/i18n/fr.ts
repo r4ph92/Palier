@@ -94,6 +94,8 @@ export const fr = {
     unreachable: 'Impossible de joindre Palier',
     unreachableHint: 'Vérifiez votre connexion, puis réessayez.',
     notResponding: 'Palier ne répond pas, réessayez dans un instant',
+    cardDeclined: 'Votre carte a refusé l’autorisation de %{amount}. Mettez à jour votre moyen de paiement.',
+    paymentMethod: 'Moyen de paiement',
     refusals: {
       QR_NOT_RECOGNIZED: 'QR non reconnu',
       NOT_AN_ENTRY_GATE: 'Ce QR n’est pas une borne d’entrée',
