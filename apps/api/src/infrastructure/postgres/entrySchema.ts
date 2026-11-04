@@ -1,15 +1,13 @@
 import { sql } from 'drizzle-orm';
-import { foreignKey, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { check, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
+import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import { appUser, vehicle } from './driverSchema.ts';
 import { gate } from './gateSchema.ts';
 import { parkingLot, spot } from './lotSchema.ts';
 
 export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION_STATES);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
-
-// Later stories add states (entered, exited…); each active one joins these index predicates, see docs/decisions/007.
-const ACTIVE_SESSION = sql`state in ('CREATED', 'ENTRY_CONFIRMED')`;
 
 export const parkingSession = pgTable(
   'parking_session',
@@ -28,6 +26,10 @@ export const parkingSession = pgTable(
     state: parkingSessionState('state').notNull().default('CREATED'),
     paymentIntentId: text('payment_intent_id'),
     authorizedCents: integer('authorized_cents').notNull(),
+    // The lot's pricing at entry (D1): a later change to the lot never reprices a session already inside.
+    pricingIncrementCents: integer('pricing_increment_cents').notNull(),
+    pricingIncrementMinutes: integer('pricing_increment_minutes').notNull(),
+    pricingDailyCapCents: integer('pricing_daily_cap_cents').notNull(),
     entryScanAt: timestamp('entry_scan_at', { withTimezone: true }).notNull().defaultNow(),
     entryConfirmedAt: timestamp('entry_confirmed_at', { withTimezone: true }),
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
@@ -43,6 +45,10 @@ export const parkingSession = pgTable(
       columns: [table.assignedSpotId, table.lotId],
       foreignColumns: [spot.id, spot.lotId],
     }),
+    check(
+      'parking_session_pricing_positive',
+      sql`${table.pricingIncrementCents} > 0 and ${table.pricingIncrementMinutes} > 0 and ${table.pricingDailyCapCents} > 0`,
+    ),
     uniqueIndex('parking_session_one_active_per_user_index').on(table.userId).where(ACTIVE_SESSION),
     uniqueIndex('parking_session_one_active_per_spot_index').on(table.assignedSpotId).where(ACTIVE_SESSION),
   ],

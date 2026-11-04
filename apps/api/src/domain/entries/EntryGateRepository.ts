@@ -6,6 +6,8 @@ export interface EntryGateLot {
   readonly id: string;
   readonly isOnline: boolean;
   readonly dailyCapCents: number;
+  // The lot's jsonb policy as stored, read by parsePricingPolicy.
+  readonly pricingPolicy: unknown;
   readonly operatorStripeAccountId: string | null;
 }
 

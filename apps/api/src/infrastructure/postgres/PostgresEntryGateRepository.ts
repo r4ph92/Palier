@@ -12,6 +12,7 @@ const entryGateColumns = {
     id: parkingLot.id,
     isOnline: parkingLot.isOnline,
     dailyCapCents: parkingLot.dailyCapCents,
+    pricingPolicy: parkingLot.pricingPolicy,
     operatorStripeAccountId: operator.stripeAccountId,
   },
 };

@@ -78,6 +78,13 @@
       "when": 1793812113297,
       "tag": "0010_dashboard_sessions_and_membership",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793815200549,
+      "tag": "0011_session_pricing_snapshot",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,8 @@
 import type { DriverRepository } from '../drivers/DriverRepository.ts';
+import { parsePricingPolicy, PricingPolicyInvalidError, type PricingPolicy } from '../pricing/PricingPolicy.ts';
 import type { VehicleRepository } from '../vehicles/VehicleRepository.ts';
-import type { EntryGate, EntryGateRepository } from './EntryGateRepository.ts';
+import type { EntryGate, EntryGateLot, EntryGateRepository } from './EntryGateRepository.ts';
+import type { EntryLog } from './EntryLog.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import { isSignedWith, readGateToken } from './gateToken.ts';
 
@@ -30,6 +32,7 @@ export interface EligibleEntry {
     readonly amountCents: number;
     readonly destinationAccountId: string | null;
   };
+  readonly pricing: PricingPolicy;
 }
 
 type DriverPrerequisites = Pick<EligibleEntry, 'vehicle'> & { readonly customerId: string; readonly paymentMethodId: string };
@@ -42,9 +45,10 @@ export class EntryEligibility {
     this.#dependencies = dependencies;
   }
 
-  async check({ driverId, qrContent }: EntryAttempt): Promise<EligibleEntry> {
+  async check({ driverId, qrContent }: EntryAttempt, log: EntryLog): Promise<EligibleEntry> {
     const gate = await this.#recognizedGate(qrContent);
     this.#ensureGateAdmitsEntries(gate);
+    const pricing = lotPricing(gate.lot, log);
     const prerequisites = await this.#driverPrerequisites(driverId);
     return {
       driverId,
@@ -56,6 +60,7 @@ export class EntryEligibility {
         amountCents: gate.lot.dailyCapCents,
         destinationAccountId: gate.lot.operatorStripeAccountId,
       },
+      pricing,
     };
   }
 
@@ -95,5 +100,18 @@ export class EntryEligibility {
       throw new EntryRefusedError('PREREQUISITES_MISSING');
     }
     return { vehicle: { id: vehicle.id, plate: vehicle.plate }, customerId, paymentMethodId };
+  }
+}
+
+// A lot without a usable price cannot bill a session, so it is out of service until its operator fixes the policy.
+function lotPricing(lot: EntryGateLot, log: EntryLog): PricingPolicy {
+  try {
+    return parsePricingPolicy(lot.pricingPolicy, lot.dailyCapCents);
+  } catch (error) {
+    if (!(error instanceof PricingPolicyInvalidError)) {
+      throw error;
+    }
+    log.warn({ lotId: lot.id }, 'entry refused: the lot has no usable pricing policy');
+    throw new EntryRefusedError('LOT_NOT_IN_SERVICE', { cause: error });
   }
 }

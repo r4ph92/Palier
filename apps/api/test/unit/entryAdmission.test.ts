@@ -18,6 +18,7 @@ const julieAtEntreeDemo: EligibleEntry = {
   gate: { id: entreeDemo.id, lotId: entreeDemo.lotId },
   vehicle: { id: 'vehicle-julie', plate: 'ABC 123' },
   payment: { customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },
+  pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 },
 };
 
 function admissionWith(freeSpots?: readonly string[]) {
@@ -39,13 +40,13 @@ describe('entry admission', () => {
     expect(journal).toEqual(['open-session', 'authorize', 'attach-intent', 'open-gate']);
   });
 
-  it('creates the session from the eligible entry and holds the cap toward the operator', async () => {
+  it('creates the session with the lot pricing in force at entry and holds the cap toward the operator', async () => {
     const { sessions, payments, gateCommander, admission, log } = admissionWith();
 
     await admission.admit(julieAtEntreeDemo, log);
 
     expect(sessions.drafts).toEqual([
-      { driverId: julie.id, vehicleId: 'vehicle-julie', plate: 'ABC 123', lotId: entreeDemo.lotId, entryGateId: entreeDemo.id, authorizedCents: 2500 },
+      { driverId: julie.id, vehicleId: 'vehicle-julie', plate: 'ABC 123', lotId: entreeDemo.lotId, entryGateId: entreeDemo.id, authorizedCents: 2500, pricing: julieAtEntreeDemo.pricing },
     ]);
     expect(payments.authorized).toEqual([
       { sessionId: fakeSessionId(1), customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },

@@ -12,6 +12,7 @@ import {
   entreeRoyGate,
   FakeEntryGateRepository,
   LAVOIE_ACCOUNT,
+  silentLog,
   SORTIE_DEMO_SECRET,
   sortieDemoGate,
 } from './fakes/entryFakes.ts';
@@ -40,7 +41,7 @@ async function eligibilityFor({ gates, policy = STRICT, plate = true, card = tru
 }
 
 async function refusalOf(eligibility: EntryEligibility, qrContent: string): Promise<EntryRefusalCode | undefined> {
-  const error: unknown = await eligibility.check({ driverId: julie.id, qrContent }).catch((caught: unknown) => caught);
+  const error: unknown = await eligibility.check({ driverId: julie.id, qrContent }, silentLog()).catch((caught: unknown) => caught);
   return error instanceof Error && 'reason' in error ? (error.reason as EntryRefusalCode) : undefined;
 }
 
@@ -48,14 +49,29 @@ describe('entry eligibility', () => {
   it('answers what the admission needs for Julie at Entrée Démo', async () => {
     const eligibility = await eligibilityFor();
 
-    const eligible = await eligibility.check({ driverId: julie.id, qrContent: entreeDemoQr });
+    const eligible = await eligibility.check({ driverId: julie.id, qrContent: entreeDemoQr }, silentLog());
 
     expect(eligible).toEqual({
       driverId: julie.id,
       gate: { id: entreeDemoGate.id, lotId: entreeDemoGate.lot.id },
       vehicle: { id: expect.any(String), plate: 'ABC 123' },
       payment: { customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },
+      pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 },
     });
+  });
+
+  it.each([
+    ['no pricing policy', null],
+    ['a policy without an increment length', { incrementCents: 75 }],
+  ])('refuses a lot with %s as LOT_NOT_IN_SERVICE and logs a warning', async (_case, pricingPolicy) => {
+    const unpriced = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, pricingPolicy } };
+    const eligibility = await eligibilityFor({ gates: [unpriced] });
+    const log = silentLog();
+
+    const refusal: unknown = await eligibility.check({ driverId: julie.id, qrContent: entreeDemoQr }, log).catch((caught: unknown) => caught);
+
+    expect(refusal).toMatchObject({ reason: 'LOT_NOT_IN_SERVICE' });
+    expect(log.warnings).toHaveLength(1);
   });
 
   it.each([
@@ -96,7 +112,7 @@ describe('entry eligibility', () => {
     const unpayable = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, operatorStripeAccountId: null } };
     const policy = { allowPlatformChargesWithoutOperatorAccount: true };
 
-    const eligible = await (await eligibilityFor({ gates: [unpayable], policy })).check({ driverId: julie.id, qrContent: entreeDemoQr });
+    const eligible = await (await eligibilityFor({ gates: [unpayable], policy })).check({ driverId: julie.id, qrContent: entreeDemoQr }, silentLog());
 
     expect(eligible.payment.destinationAccountId).toBeNull();
   });
