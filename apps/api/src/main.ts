@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
-import { readDashboardUrl, readServerEnvironment, readSimulateStripeUnreachable, readStripeWebhookSecret } from './config/environment.ts';
+import { readDashboardUrl, readServerEnvironment, readStripeWebhookSecret } from './config/environment.ts';
+import { readPaymentsSimulation } from './config/paymentsSimulation.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { composeEntries } from './composeEntries.ts';
 import { composeEntryCancellation, openingWindowOf } from './composeEntryCancellation.ts';
@@ -27,7 +28,7 @@ import { startUnconfirmedEntryCancellation } from './scheduler/startUnconfirmedE
 const environment = readServerEnvironment(process.env);
 const connection = connectToDatabase(environment.databaseUrl);
 const stripeKey = stripeTestKey(process.env);
-const simulateStripeUnreachable = readSimulateStripeUnreachable(process.env);
+const paymentsSimulation = readPaymentsSimulation(process.env);
 const driverRepository = new PostgresDriverRepository(connection.database);
 const vehicleRepository = new PostgresVehicleRepository(connection.database);
 const sessionTokenRepository = new PostgresSessionTokenRepository(connection.database);
@@ -36,7 +37,7 @@ const entries = composeEntries({
   database: connection.database,
   stripeKey,
   demoMode: environment.demoMode,
-  simulateStripeUnreachable,
+  paymentsSimulation,
   drivers: driverRepository,
   vehicles: vehicleRepository,
   openingWindow,
@@ -84,8 +85,11 @@ const server = buildServer({
 if (environment.demoMode) {
   server.log.warn('DEMO_MODE is on: the demo console is served at /demo/console. Never enable it in production.');
 }
-if (simulateStripeUnreachable) {
-  server.log.warn('SIMULATE_STRIPE_UNREACHABLE is on: every entry hold fails as if Stripe were down.');
+if (paymentsSimulation === 'unreachable') {
+  server.log.warn('PAYMENTS_SIMULATION=unreachable: every entry hold fails as if Stripe were down.');
+}
+if (paymentsSimulation === 'success') {
+  server.log.warn('PAYMENTS_SIMULATION=success: every entry hold succeeds without calling Stripe (pi_sim_ intents).');
 }
 
 const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(sessionTokenRepository, systemClock()), server.log);

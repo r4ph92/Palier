@@ -1,20 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { paymentAuthorizer } from '../../src/composeEntries.ts';
+import { SimulatedPaymentAuthorizer } from '../../src/infrastructure/stripe/SimulatedPaymentAuthorizer.ts';
 import { StripePaymentAuthorizer } from '../../src/infrastructure/stripe/StripePaymentAuthorizer.ts';
 import { UnreachablePaymentAuthorizer } from '../../src/infrastructure/stripe/UnreachablePaymentAuthorizer.ts';
 
 const testKey = 'sk_test_palier';
 
 describe('paymentAuthorizer', () => {
-  it.each([testKey, null])('simulates Stripe unreachable when the switch is on, with key %s', (stripeKey) => {
-    expect(paymentAuthorizer(stripeKey, true)).toBeInstanceOf(UnreachablePaymentAuthorizer);
+  it.each([testKey, null])('simulates Stripe unreachable when asked, with key %s', (stripeKey) => {
+    expect(paymentAuthorizer(stripeKey, 'unreachable')).toBeInstanceOf(UnreachablePaymentAuthorizer);
   });
 
-  it('calls Stripe when the switch is off and a key is set', () => {
-    expect(paymentAuthorizer(testKey, false)).toBeInstanceOf(StripePaymentAuthorizer);
+  it('simulates successful holds when asked on a lane without a key', () => {
+    expect(paymentAuthorizer(null, 'success')).toBeInstanceOf(SimulatedPaymentAuthorizer);
   });
 
-  it('has no authorizer when the switch is off and no key is set', () => {
-    expect(paymentAuthorizer(null, false)).toBeNull();
+  it('calls Stripe when nothing is simulated and a key is set', () => {
+    expect(paymentAuthorizer(testKey, 'none')).toBeInstanceOf(StripePaymentAuthorizer);
+  });
+
+  it('has no authorizer when nothing is simulated and no key is set', () => {
+    expect(paymentAuthorizer(null, 'none')).toBeNull();
   });
 });
