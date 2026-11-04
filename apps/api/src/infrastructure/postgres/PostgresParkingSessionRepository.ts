@@ -1,10 +1,13 @@
 import { and, eq, sql } from 'drizzle-orm';
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
+import { chooseSpot, type FreeSpot } from '../../domain/allocation/chooseSpot.ts';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import type { OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../domain/entries/ParkingSessionRepository.ts';
 import { isActiveSessionConflict } from './activeSessionConflict.ts';
 import type { Database, Transaction } from './database.ts';
 import { parkingSession, spot } from './schema.ts';
+
+const MAX_CLAIM_ATTEMPTS = 3;
 
 interface AssignedSpotRow extends Record<string, unknown> {
   readonly id: string;
@@ -90,19 +93,54 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   }
 }
 
-// Only the spot row is locked, and a spot another entry holds is skipped rather than waited on (docs/03).
-// Order: level, aisle, then the number's trailing digits, so A-2 comes before A-10.
+interface FreeSpotRow extends Record<string, unknown> {
+  readonly id: string;
+  readonly number: string;
+  readonly level_order: number;
+  readonly aisle_code: string;
+  readonly distance_to_exit: number;
+  readonly needs_check: boolean;
+}
+
+// The domain picks the spot (chooseSpot); only that spot row is then locked, and a spot another entry
+// holds is skipped rather than waited on (docs/03). A spot lost that way is left out of the next pick.
 async function assignFirstFreeSpot(tx: Transaction, lotId: string): Promise<AssignedSpotRow | undefined> {
+  const lost = new Set<string>();
+  for (let attempt = 0; attempt < MAX_CLAIM_ATTEMPTS; attempt++) {
+    const chosen = chooseSpot((await readFreeSpots(tx, lotId)).filter((free) => !lost.has(free.id)));
+    if (chosen === null) {
+      return undefined;
+    }
+    const claimed = await claimSpot(tx, chosen.id);
+    if (claimed !== undefined) {
+      return claimed;
+    }
+    lost.add(chosen.id);
+  }
+  return undefined;
+}
+
+async function readFreeSpots(tx: Transaction, lotId: string): Promise<FreeSpot[]> {
+  const rows = await tx.execute<FreeSpotRow>(sql`
+    select s.id, s.number, l.display_order as level_order, a.code as aisle_code, s.distance_to_exit, s.needs_check
+    from spot s
+    join aisle a on a.id = s.aisle_id
+    join level l on l.id = a.level_id
+    where s.lot_id = ${lotId} and s.state = 'AVAILABLE'`);
+  return rows.map((row) => ({
+    id: row.id,
+    number: row.number,
+    levelOrder: row.level_order,
+    aisleCode: row.aisle_code,
+    distanceToExit: row.distance_to_exit,
+    needsCheck: row.needs_check,
+  }));
+}
+
+async function claimSpot(tx: Transaction, spotId: string): Promise<AssignedSpotRow | undefined> {
   const rows = await tx.execute<AssignedSpotRow>(sql`
     with chosen as (
-      select s.id
-      from spot s
-      join aisle a on a.id = s.aisle_id
-      join level l on l.id = a.level_id
-      where s.lot_id = ${lotId} and s.state = 'AVAILABLE'
-      order by l.display_order, a.code, substring(s.number from '(\\d+)$')::int nulls last, s.number
-      limit 1
-      for update of s skip locked
+      select id from spot where id = ${spotId} and state = 'AVAILABLE' for update skip locked
     )
     update spot
     set state = 'ASSIGNED', state_changed_at = now()

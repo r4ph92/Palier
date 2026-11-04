@@ -28,7 +28,7 @@ describe('seeded operator personas', () => {
     expect(DASHBOARD_TEST_USER_IDS).toEqual(expect.arrayContaining([...OPERATOR_PERSONA_IDS, JULIE_TREMBLAY_ID]));
   });
 
-  it('puts Parking Test Paliers under Stationnements Lavoie, offline', () => {
-    expect(parkingTestPaliersLot).toMatchObject({ name: 'Parking Test Paliers', operatorId: LAVOIE_OPERATOR_ID, isOnline: false });
+  it('puts Parking Test Paliers under Stationnements Lavoie, online', () => {
+    expect(parkingTestPaliersLot).toMatchObject({ name: 'Parking Test Paliers', operatorId: LAVOIE_OPERATOR_ID, isOnline: true });
   });
 });
