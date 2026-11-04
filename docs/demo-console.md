@@ -29,6 +29,27 @@ les recrée et remet le compteur à 0.
 | Entrée Roy | Garage Roy (hors ligne) | entrée | `qwWc90SgLYX15MzN2UBX8lSQA-hKBlaqbIG9v--98tM` |
 | Entrée Démo, clé **révoquée** | Parking Démo | entrée | `L-xYpKfzUH4NHKxi_r6EKJbBXOIiYvhbawTSt34sgRs` |
 
+## QR des bornes semées
+
+Le contenu de chaque QR imprimé, à coller dans l'onglet « Scanner » de l'app
+(champ « Contenu du QR ») tant que la caméra n'existe pas (#45). Les secrets sont
+fixes dans `apps/api/src/seed/fixtures/gates.ts`, donc ces liens ne changent pas
+d'un seed à l'autre ; `npm run seed --workspace @palier/api` les affiche aussi.
+
+| Borne | Contenu du QR | Réponse attendue |
+|---|---|---|
+| Entrée Démo | `https://palier.app/q/palier1.00000000-0000-4000-8000-000000000701.-Un39K4J0Of87m3s0GAvLuA4iU_WHFQcti4imXHXk6s` | place attribuée, « Barrière ouverte » |
+| Sortie Démo | `https://palier.app/q/palier1.00000000-0000-4000-8000-000000000702.5zM0Mh2G5z5103ZlWxTZQpV74SzJzqo4FatczcMHJQ0` | « Ce QR n’est pas une borne d’entrée » |
+| Entrée Roy | `https://palier.app/q/palier1.00000000-0000-4000-8000-000000000703.58pH8pV4hMitS9Lj679T9Tw5EDVtxcUQ2aQDqVATUXY` | « Ce parking n’est pas en service » |
+
+L'entrée exige `STRIPE_SECRET_KEY` (clé `sk_test_`) dans `apps/api/.env`, puis
+un seed, pour que les conducteurs aient une carte ; sans clé, l'entrée répond
+« Impossible de joindre Palier. » (503). `DEMO_OPERATOR_STRIPE_ACCOUNT_ID`
+(`acct_…`, facultatif) dirige l'autorisation vers le compte connecté de test de
+Stationnements Lavoie ; sans lui, elle reste sur la plateforme (mode démo
+seulement). Une entrée par conducteur et par seed : la deuxième répond « Vous
+avez déjà une entrée en cours ».
+
 ## Utiliser la console
 
 1. Coller une clé dans « Clé d'appareil ». La clé ne quitte jamais la page :
@@ -39,6 +60,9 @@ les recrée et remet le compteur à 0.
 3. Chaque passage enregistré s'ajoute à la liste avec son heure et le nombre de
    véhicules dans le parking. Tirer la liste de l'app vers le bas pour voir les
    places libres.
+4. Dès qu'une clé bien formée est saisie, la console demande chaque seconde les
+   commandes de sa barrière : chaque entrée admise par l'app s'affiche sous
+   « Commandes » (« Ouverture commandée · 18 h 02 »), la plus récente en haut.
 
 Messages : « Clé d'appareil refusée » (clé inconnue, mal formée ou révoquée),
 « Accès refusé pour cette barrière » (403), « Cette barrière n'a pas de
@@ -47,6 +71,10 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
 
 ## Scénarios
 
+- **Entrée par QR** : clé d'Entrée Démo dans la console ; Julie colle le QR
+  d'Entrée Démo dans « Scanner » : l'app affiche « Votre place : A-1 · Palier P1
+  · Allée A » et « Barrière ouverte », la console « Ouverture commandée », et
+  Parking Démo passe à 9 places libres (place attribuée).
 - **Entrée** : clé d'Entrée Démo, une entrée : l'app passe de 10 à 9 places libres.
 - **Sortie** : clé de Sortie Démo, une sortie : retour à 10.
 - **Complet** : 10 entrées : l'app affiche « Complet ». 12 entrées : toujours
@@ -72,6 +100,9 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
   `{ gateId, lotId, kind, closedAt, vehicleCount }`. Le sens et le parking
   viennent de la barrière, jamais du corps. `closedAt` à plus de 5 minutes dans
   le futur : 400.
+- `GET /v1/gates/me/commands?after=<ISO 8601>` : `[{ id, kind: "OPEN", issuedAt }]`
+  de la barrière de la clé, du plus ancien au plus récent, 50 au plus ;
+  strictement après `after`, ou les 50 dernières sans `after`. `after` illisible : 400.
 - Authentification : `Authorization: Bearer <clé>` (32 octets en base64url,
   43 caractères). Toute clé absente, mal formée, inconnue ou révoquée reçoit le
   même 401 avec `WWW-Authenticate: Bearer`, avant toute lecture du corps.
