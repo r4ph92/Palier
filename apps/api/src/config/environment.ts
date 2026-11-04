@@ -7,6 +7,7 @@ export interface ServerEnvironment {
   readonly testSignInEnabled: boolean;
   readonly minimumAppVersion: string | undefined;
   readonly demoMode: boolean;
+  readonly secureCookies: boolean;
 }
 
 const DEFAULT_HOST = '127.0.0.1';
@@ -29,6 +30,7 @@ export function readServerEnvironment(variables: NodeJS.ProcessEnv): ServerEnvir
     testSignInEnabled: readTestSignInEnabled(variables),
     minimumAppVersion: readMinimumAppVersion(variables['MINIMUM_APP_VERSION']),
     demoMode: readDemoMode(variables['DEMO_MODE']),
+    secureCookies: readSecureCookies(variables),
   };
 }
 
@@ -47,6 +49,11 @@ export function readMinimumAppVersion(rawVersion: string | undefined): string | 
 export function readTestSignInEnabled(variables: NodeJS.ProcessEnv): boolean {
   const environment = variables['NODE_ENV'];
   return environment !== undefined && TEST_SIGN_IN_ENVIRONMENTS.has(environment);
+}
+
+// Browsers drop a Secure cookie over plain http, so only local development turns it off.
+export function readSecureCookies(variables: NodeJS.ProcessEnv): boolean {
+  return variables['NODE_ENV'] !== 'development';
 }
 
 function readPort(rawPort: string | undefined): number {

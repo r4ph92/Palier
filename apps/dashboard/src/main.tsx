@@ -1,0 +1,18 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { App } from './App.tsx';
+import './theme/fonts.css';
+import './theme/tokens.css';
+import './theme/layout.css';
+import './theme/lists.css';
+import './theme/forms.css';
+
+const root = document.getElementById('root');
+if (root === null) {
+  throw new Error('index.html must contain <div id="root">.');
+}
+createRoot(root).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);

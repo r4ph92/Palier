@@ -1,7 +1,7 @@
 import { DEMO_ASSETS, demoAssetUrl } from '../../src/http/demo/demoAssets.ts';
 
 // Gated routes refuse a driver who has not accepted the current notice. Exempt routes never check consent.
-// The server must register exactly these routes, so a new route fails until it is listed in one of the two lists.
+// The server must register exactly these routes, so a new route fails until it is listed here or in DASHBOARD_ROUTES.
 export const GATED = [
   'GET /v1/lots',
   'GET /v1/me/vehicles',
@@ -25,6 +25,13 @@ const GATE_DEVICE_ROUTES = ['GET /v1/gates/me', 'GET /v1/gates/me/commands', 'PO
 const DEMO_CONSOLE_ROUTES = Object.keys(DEMO_ASSETS).map((fileName) => `GET ${demoAssetUrl(fileName)}`);
 
 export const EXEMPT = [...DRIVER_EXEMPT, ...GATE_DEVICE_ROUTES, ...DEMO_CONSOLE_ROUTES];
+
+// Dashboard routes read the dashboard cookie, never a driver token: consent does not apply, a dashboard session does.
+export const DASHBOARD_PROTECTED = ['GET /v1/dashboard/me', 'POST /v1/dashboard/operators', 'GET /v1/dashboard/lots', 'GET /v1/dashboard/lots/:id'];
+
+const DASHBOARD_OPEN = ['POST /v1/dashboard/sign-out', 'GET /v1/dashboard/test/users', 'POST /v1/dashboard/test/sign-in'];
+
+export const DASHBOARD_ROUTES = [...DASHBOARD_PROTECTED, ...DASHBOARD_OPEN];
 
 const SAMPLE_UUID = '00000000-0000-4000-8000-000000000999';
 

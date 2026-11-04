@@ -28,6 +28,11 @@ export default tseslint.config(
     ...reactHooks.configs.flat['recommended-latest'],
   },
   {
+    files: ['apps/dashboard/**/*.{ts,tsx}'],
+    ...reactHooks.configs.flat['recommended-latest'],
+    languageOptions: { globals: { ...globals.browser } },
+  },
+  {
     files: ['**/test/**', '**/*.test.ts', '**/*.test.tsx'],
     rules: { 'max-lines-per-function': 'off' },
   },

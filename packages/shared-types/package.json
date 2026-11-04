@@ -24,6 +24,10 @@
     "./entryLink": {
       "types": "./src/entryLink.ts",
       "default": "./src/entryLink.ts"
+    },
+    "./dashboard": {
+      "types": "./src/dashboard.ts",
+      "default": "./src/dashboard.ts"
     }
   },
   "scripts": {

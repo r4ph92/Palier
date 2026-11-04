@@ -5,14 +5,14 @@ ligne par choix ; la raison suit le tiret.
 
 ## Pile
 
-- **Monorepo npm workspaces** (`apps/api`, `apps/mobile`, `packages/shared-types`) — un seul `npm install`, types partagés sans publication.
+- **Monorepo npm workspaces** (`apps/api`, `apps/mobile`, `apps/dashboard`, `packages/shared-types`) — un seul `npm install`, types partagés sans publication.
 - **API : Fastify 5, Drizzle ORM, postgres-js**, exécutée directement par Node 24 (suppression native des types, sans étape de build) — moins d'outillage pour un prototype.
 - **Couches** : `http/` (routes), `domain/` (règles, ports), `infrastructure/postgres/` (schéma, dépôts), comme dans `docs/04`.
 - **App : Expo SDK 58**, configuration dans `app.config.ts`, dossiers `ios/` et `android/` générés et ignorés par git ; Expo Go suffit tant qu'aucun module natif n'existe. Le module balises (P03) passera à `expo-dev-client`.
 - **Node 24** (`.nvmrc`, `engines`) — Expo 58 refuse Node 25.
 - **Tests** : Vitest pour l'API, Jest (`jest-expo`) et Testing Library pour l'app. `npm run gate` n'exécute que des tests unitaires. Le projet n'a aucun test de base de données, d'intégration ou de navigateur (voir `docs/decisions/005-tests-unitaires-uniquement.md`).
 - **Postgres 17 dans Docker sur le port 5433**, base de test créée par `docker/postgres/init`.
-- **React épinglé par `overrides`** à la version d'Expo — sinon npm installe deux copies de React dans le monorepo et les tests plantent.
+- **React et React DOM épinglés par `overrides`** à la version d'Expo — sinon npm installe deux copies de React dans le monorepo et les tests plantent.
 
 ## Modèle de données (écarts et ajouts par rapport à `docs/02`)
 
@@ -27,7 +27,8 @@ ligne par choix ; la raison suit le tiret.
 - `capacity` et `vehicle_count` ne peuvent pas être négatifs (contrainte CHECK, D6).
 - Garage Roy : capacité 0, plafond journalier 25,00 $, sans palier ni place — le tableau de fixtures ne lui donne que sa borne d'entrée (story ultérieure).
 - `app_user` (#29) : `email`, `first_name`, `last_name`, `stripe_customer_id`, `default_pm_id`. `first_name` et `last_name` sont ajoutés au dossier pour « Bonjour Julie » et la liste de test ; `oauth_provider` et `oauth_subject` sont reportés à #30 — pas de colonne sans usage.
-- `user_session_token` (#29) : `token_hash` (SHA-256, clé primaire), `user_id`, `created_at`, `revoked_at` — voir `docs/decisions/004`.
+- `user_session_token` (#29) : `token_hash` (SHA-256, clé primaire), `user_id`, `created_at`, `revoked_at` — voir `docs/decisions/004`. `scope` (`APP` | `DASHBOARD`, #62) sépare les jetons de l'app de ceux du tableau de bord — voir `docs/decisions/010`.
+- `operator_member` (#62) : `user_id` (clé primaire, donc un opérateur par utilisateur), `operator_id` (indexé), `created_at` — l'appartenance D7, absente de `docs/02`. Seed : Sophie Lavoie (Lavoie), Pierre Roy (Roy), Nouvel Opérateur (aucun) ; « Parking Test Paliers » (Lavoie, hors ligne, sans palier ni place).
 - Conducteurs du seed : Julie Tremblay et Marc Gagnon (carte de test Visa `pm_card_visa`), Nadia Bouchard (sans carte, pour les stories qui bloquent un conducteur sans carte). Avec `STRIPE_SECRET_KEY` (clé `sk_test_` seulement, une clé live est refusée), le seed crée leurs clients Stripe sur la plateforme et réutilise ceux d'un seed précédent ; sans clé, ils sont créés sans identifiants Stripe.
 
 ## API
@@ -80,3 +81,14 @@ ligne par choix ; la raison suit le tiret.
 - Les clients authentifiés (véhicules, entrée) passent par `api/authorizedRequest.ts` : 401 déconnecte, 403 `CONSENT_REQUIRED` remontre l'avis, les statuts de refus listés par le client portent le code de l'API, tout autre statut lève `PalierStatusError`.
 - « Connexion de test » n'apparaît que si le build porte `EXPO_PUBLIC_TEST_SIGN_IN=true` (voir `apps/mobile/.env.example`).
 - Signaux de positionnement : `positioning/` porte le port `PositioningModule` et `PositioningCore` (commandes transmises, événements diffusés). Le module simulé et le panneau « Signaux simulés » vivent dans `dev/` et ne sont chargés que par `dev/loadDeveloperTools.ts`, derrière un ternaire `__DEV__` que Metro évalue à la compilation : ils sont absents du bundle de production (voir `docs/pont-natif.md`).
+
+## Tableau de bord opérateur (#62)
+
+- `apps/dashboard` : Vite 8, React 19.3, TypeScript, sans routeur (le chemin est l'état : `/`, `/lots/:id`, sinon « Introuvable »). Lancer : `npm run dev --workspace @palier/dashboard` avec `apps/dashboard/.env` (`API_PORT`, `VITE_TEST_SIGN_IN`) ; Vite relaie `/v1` vers `http://127.0.0.1:${API_PORT}`.
+- Session par cookie `palier_dashboard` et en-tête `X-Requested-With: palier-dashboard` sur chaque écriture : `docs/decisions/010`. La page ne lit jamais le jeton ; `GET /v1/dashboard/me` dit qui est connecté.
+- Langue : français par défaut, bouton « English » / « Français » mémorisé dans `localStorage` (`palier.language`) ; `lang` et le titre de l'onglet suivent. Les codes d'erreur de l'API deviennent des phrases du dictionnaire, jamais le message anglais de l'API.
+- « Connexion de test » vit dans `src/testSignIn/` (client, textes, section), chargé seulement derrière `import.meta.env.DEV` : un `vite build` ne contient ni la section ni ses routes ni ses textes.
+- Jetons de couleur : `src/theme/tokens.css` reprend `apps/mobile/src/theme/tokens.ts` (clair et sombre) ; `test/themeTokens.test.ts` échoue si les couleurs, les espacements ou la cible tactile divergent. Polices servies depuis `@expo-google-fonts`, sans requête externe.
+- Un utilisateur sans opérateur ne voit que « Créer votre opérateur », quelle que soit l'adresse. La règle de la raison sociale est une seule fonction, `isValidLegalName` dans `packages/shared-types/src/dashboard.ts`, appliquée par l'API et le tableau de bord : de 2 à 120 caractères comptés en points de code après retrait des espaces, sans caractère de contrôle ni de format (NUL, espaces de largeur nulle, marques de direction) ; sinon `LEGAL_NAME_INVALID`. Un second opérateur est refusé (`OPERATOR_EXISTS`) et la page relit alors la session.
+- Toute réponse 401 relit `GET /v1/dashboard/me` et ramène à la page de connexion si la session a pris fin. Les identifiants des personas de test sont dans `apps/api/src/config/testPersonas.ts`, partagés par le seed et les routes de connexion de test.
+

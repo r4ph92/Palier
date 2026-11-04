@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, index, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, index, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const appUser = pgTable('app_user', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -12,6 +12,9 @@ export const appUser = pgTable('app_user', {
   cardLast4: text('card_last4'),
 });
 
+// APP tokens open the driver API, DASHBOARD tokens the operator dashboard; neither opens the other.
+export const sessionScope = pgEnum('session_scope', ['APP', 'DASHBOARD']);
+
 export const userSessionToken = pgTable(
   'user_session_token',
   {
@@ -19,6 +22,7 @@ export const userSessionToken = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => appUser.id),
+    scope: sessionScope('scope').notNull().default('APP'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull().default(sql`now() + interval '30 days'`),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),

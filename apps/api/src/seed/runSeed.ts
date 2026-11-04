@@ -20,7 +20,7 @@ try {
   }
   const drivers = stripeKey === null ? undefined : await createStripeTestCustomers(new Stripe(stripeKey), driverPersonas);
   await seedDatabase(connection.database, { drivers, demoOperatorAccountId });
-  console.log('Seeded Parking Démo, Garage Roy, their gates and the driver personas.');
+  console.log('Seeded Parking Démo, Garage Roy, Parking Test Paliers, their gates, the driver personas and the operator users.');
   console.log('Entry terminal QRs, to paste into the app’s Scanner tab:');
   for (const { gateName, link } of seededQrLinks()) {
     console.log(`  ${gateName}: ${link}`);

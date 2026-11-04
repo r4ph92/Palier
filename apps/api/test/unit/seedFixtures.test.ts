@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isSignedWith, readGateToken } from '../../src/domain/entries/gateToken.ts';
-import { JULIE_TREMBLAY_ID, NADIA_BOUCHARD_ID } from '../../src/seed/fixtures/drivers.ts';
+import { JULIE_TREMBLAY_ID, NADIA_BOUCHARD_ID } from '../../src/config/testPersonas.ts';
 import { ENTREE_DEMO_ID, gateFixtures, seededQrLinks } from '../../src/seed/fixtures/gates.ts';
 import { vehicleFixtures } from '../../src/seed/fixtures/vehicles.ts';
 

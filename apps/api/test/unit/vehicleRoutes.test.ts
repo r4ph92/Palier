@@ -4,7 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie, marc } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
-import { fakeGateDependencies } from './fakes/serverDependencies.ts';
+import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
 const abc123 = { plate: 'abc 123', province: 'QC' };
@@ -19,7 +19,7 @@ describe('vehicle routes', () => {
   function startServer() {
     driverRepository = new FakeDriverRepository();
     vehicleRepository = new FakeVehicleRepository();
-    server = buildServer({ gates: fakeGateDependencies(), repositories: { vehicleRepository, lotAvailabilityRepository: noLots, driverRepository } });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ vehicleRepository, lotAvailabilityRepository: noLots, driverRepository }) });
   }
 
   describe('for a driver who has not accepted the privacy notice', () => {

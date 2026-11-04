@@ -1,87 +1,34 @@
 import type { SavedCard } from '@palier/shared-types';
 import type { Driver } from '../../src/domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../src/domain/drivers/DriverRepository.ts';
-import { hashSessionToken } from '../../src/domain/drivers/driverSessions.ts';
+import type { UserDirectory } from '../../src/domain/sessions/UserDirectory.ts';
+import { hashSessionToken } from '../../src/domain/sessions/sessionTokens.ts';
+import { FakeSessionTokenRepository } from './fakes/fakeSessionTokenRepository.ts';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 
 export const julie: Driver = { id: '00000000-0000-4000-8000-000000000501', firstName: 'Julie', lastName: 'Tremblay' };
 export const marc: Driver = { id: '00000000-0000-4000-8000-000000000502', firstName: 'Marc', lastName: 'Gagnon' };
 
-interface SessionToken {
-  readonly driverId: string;
-  readonly expiresAt: Date;
-  revokedAt: Date | null;
-}
-
-const SESSION_TOKEN_LIFETIME_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
-
-function isActive(token: SessionToken, now: Date): boolean {
-  return token.revokedAt === null && token.expiresAt > now;
-}
-
-export class FakeDriverRepository implements DriverRepository {
+// Drivers and the user directory read the same user rows, so one fake plays both.
+export class FakeDriverRepository implements DriverRepository, UserDirectory {
   readonly #drivers: readonly Driver[];
-  readonly #sessionTokens = new Map<string, SessionToken>();
+  // Session tokens join the same user rows, so the fake keeps them beside the drivers it knows.
+  readonly sessions: FakeSessionTokenRepository;
   readonly #noticeVersions = new Map<string, string>();
   readonly #stripeCustomerIds = new Map<string, string>();
   readonly #savedCards = new Map<string, { paymentMethodId: string; card: SavedCard }>();
 
   constructor(drivers: readonly Driver[] = [julie, marc]) {
     this.#drivers = drivers;
+    this.sessions = new FakeSessionTokenRepository(drivers);
   }
 
-  get activeTokenHashes(): readonly string[] {
-    const now = new Date();
-    return [...this.#sessionTokens].filter(([, token]) => isActive(token, now)).map(([tokenHash]) => tokenHash);
+  findUser(userId: string): Promise<Driver | null> {
+    return Promise.resolve(this.#drivers.find((driver) => driver.id === userId) ?? null);
   }
 
-  listDrivers(): Promise<readonly Driver[]> {
-    return Promise.resolve(this.#drivers);
-  }
-
-  findDriver(driverId: string): Promise<Driver | null> {
-    return Promise.resolve(this.#drivers.find((driver) => driver.id === driverId) ?? null);
-  }
-
-  saveSessionToken(driverId: string, tokenHash: string): Promise<void> {
-    const expiresAt = new Date(Date.now() + SESSION_TOKEN_LIFETIME_MILLISECONDS);
-    this.#sessionTokens.set(tokenHash, { driverId, expiresAt, revokedAt: null });
-    return Promise.resolve();
-  }
-
-  findDriverBySessionToken(tokenHash: string): Promise<Driver | null> {
-    const token = this.#sessionTokens.get(tokenHash);
-    return token !== undefined && isActive(token, new Date()) ? this.findDriver(token.driverId) : Promise.resolve(null);
-  }
-
-  revokeSessionToken(tokenHash: string): Promise<void> {
-    const token = this.#sessionTokens.get(tokenHash);
-    if (token !== undefined && token.revokedAt === null) {
-      token.revokedAt = new Date();
-    }
-    return Promise.resolve();
-  }
-
-  revokeOldestSessionTokens(driverId: string, keep: number): Promise<void> {
-    // Map keeps insertion order, so the first entries of a driver are its oldest tokens.
-    const now = new Date();
-    const driverTokens = [...this.#sessionTokens].filter(([, token]) => token.driverId === driverId && isActive(token, now));
-    for (const [, token] of driverTokens.slice(0, Math.max(0, driverTokens.length - keep))) {
-      token.revokedAt = now;
-    }
-    return Promise.resolve();
-  }
-
-  purgeEndedSessionTokens(endedBefore: Date): Promise<number> {
-    let purged = 0;
-    for (const [tokenHash, token] of this.#sessionTokens) {
-      const revokedBefore = token.revokedAt !== null && token.revokedAt < endedBefore;
-      if (token.expiresAt < endedBefore || revokedBefore) {
-        this.#sessionTokens.delete(tokenHash);
-        purged += 1;
-      }
-    }
-    return Promise.resolve(purged);
+  findUsers(userIds: readonly string[]): Promise<readonly Driver[]> {
+    return Promise.resolve(userIds.flatMap((userId) => this.#drivers.filter((driver) => driver.id === userId)));
   }
 
   findLatestNoticeVersion(driverId: string): Promise<string | null> {
@@ -130,7 +77,10 @@ export async function acceptNoticeAs(repository: DriverRepository, driver: Drive
   await repository.saveNoticeAcceptance(driver.id, noticeVersion);
 }
 
-export async function authorizationFor(repository: DriverRepository, driver: Driver, token = `${driver.firstName}-token`) {
-  await repository.saveSessionToken(driver.id, hashSessionToken(token));
+const APP_TOKEN_LIFETIME_MILLISECONDS = 30 * 24 * 60 * 60 * 1000;
+
+export async function authorizationFor(repository: FakeDriverRepository, driver: Driver, token = `${driver.firstName}-token`) {
+  const expiresAt = new Date(Date.now() + APP_TOKEN_LIFETIME_MILLISECONDS);
+  await repository.sessions.saveSessionToken({ userId: driver.id, tokenHash: hashSessionToken(token), scope: 'APP', expiresAt });
   return { authorization: `Bearer ${token}` };
 }

@@ -1,0 +1,21 @@
+/* The fonts ship with the app from the same packages the mobile app embeds: no request leaves the dashboard's origin. */
+@font-face {
+  font-family: 'Archivo';
+  font-weight: 400;
+  font-display: swap;
+  src: url('@expo-google-fonts/archivo/400Regular/Archivo_400Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Archivo';
+  font-weight: 600;
+  font-display: swap;
+  src: url('@expo-google-fonts/archivo/600SemiBold/Archivo_600SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-weight: 500;
+  font-display: swap;
+  src: url('@expo-google-fonts/ibm-plex-mono/500Medium/IBMPlexMono_500Medium.ttf') format('truetype');
+}

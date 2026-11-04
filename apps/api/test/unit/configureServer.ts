@@ -4,7 +4,7 @@ import { FakeCardGateway } from './fakeCardGateway.ts';
 import { FakeDriverRepository } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 import { fakeEntries } from './fakes/entryFakes.ts';
-import { fakeGateDependencies } from './fakes/serverDependencies.ts';
+import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
 
@@ -21,7 +21,7 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
   const entries = fakeEntries({ drivers: driverRepository, vehicles: vehicleRepository });
   const server: FastifyInstance = buildServer({
     gates: fakeGateDependencies(),
-    repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository },
+    repositories: fakeRepositories({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository }),
     cardGateway: new FakeCardGateway(),
     entries: entries.dependencies,
     settings: { testSignInEnabled, demoMode, minimumAppVersion },
