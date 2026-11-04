@@ -73,6 +73,28 @@ describe('ScanScreen, entering Parking Démo', () => {
   });
 });
 
+describe('ScanScreen before a QR is pasted', () => {
+  it('keeps Scanner disabled while the field is empty or blank, and sends nothing', async () => {
+    applyLanguage('fr');
+    const client = new FakeEntryClient();
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <ScanScreen client={client} onAddPlate={jest.fn()} onAddCard={jest.fn()} />
+      </SafeAreaProvider>,
+    );
+    const user = userEvent.setup();
+
+    expect(screen.getByRole('button', { name: 'Scanner' })).toBeDisabled();
+    await user.type(screen.getByLabelText('Contenu du QR'), '   ');
+    await user.press(screen.getByRole('button', { name: 'Scanner' }));
+    expect(screen.getByRole('button', { name: 'Scanner' })).toBeDisabled();
+    expect(client.scanned).toEqual([]);
+
+    await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
+    expect(screen.getByRole('button', { name: 'Scanner' })).toBeEnabled();
+  });
+});
+
 describe('ScanScreen refusals', () => {
   const refusals = [
     ['QR_NOT_RECOGNIZED', 'QR non reconnu', 'QR not recognized'],

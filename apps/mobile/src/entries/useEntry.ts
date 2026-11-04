@@ -43,7 +43,11 @@ const NOT_RESPONDING: EntryState = { status: 'notResponding' };
 export function useEntry(client: EntryClient): EntryController {
   const [state, setState] = useState<EntryState>(IDLE);
   const [qrContent, setQrContent] = useState('');
-  const submit = useCallback(() => void enter(client, qrContent, setState), [client, qrContent]);
+  const submit = useCallback(() => {
+    if (qrContent.trim() !== '') {
+      void enter(client, qrContent, setState);
+    }
+  }, [client, qrContent]);
   const startOver = useCallback(() => {
     setQrContent('');
     setState(IDLE);

@@ -71,7 +71,12 @@ function ScanForm({ entry, onAddPlate, onAddCard }: ScanFormProps) {
     <View style={styles.section}>
       <QrField entry={entry} />
       <EntryProblem state={state} onAddPlate={onAddPlate} onAddCard={onAddCard} />
-      <PrimaryButton label={i18n.t(submitLabelKey(state))} busy={isSubmitting} onPress={entry.submit} />
+      <PrimaryButton
+        label={i18n.t(submitLabelKey(state))}
+        busy={isSubmitting}
+        disabled={entry.qrContent.trim() === ''}
+        onPress={entry.submit}
+      />
     </View>
   );
 }

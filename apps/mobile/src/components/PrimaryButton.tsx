@@ -10,23 +10,35 @@ interface PrimaryButtonProps {
   readonly label: string;
   readonly onPress: () => void;
   readonly busy?: boolean;
+  readonly disabled?: boolean;
 }
 
-export function PrimaryButton({ label, onPress, busy = false }: PrimaryButtonProps) {
+const PRESSED_OPACITY = 0.8;
+const DISABLED_OPACITY = 0.4;
+
+export function PrimaryButton({ label, onPress, busy = false, disabled = false }: PrimaryButtonProps) {
   const colors = useColors();
+  const isInactive = busy || disabled;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ busy, disabled: busy }}
-      disabled={busy}
+      accessibilityState={{ busy, disabled: isInactive }}
+      disabled={isInactive}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, { backgroundColor: colors.ink, opacity: pressed ? 0.8 : 1 }]}
+      style={({ pressed }) => [styles.button, { backgroundColor: colors.ink, opacity: buttonOpacity(pressed, disabled) }]}
     >
       <Text maxFontSizeMultiplier={BUTTON_LABEL_MAX_FONT_SCALE} style={[typography.button, { color: colors.onInk }]}>
         {label}
       </Text>
     </Pressable>
   );
+}
+
+function buttonOpacity(isPressed: boolean, isDisabled: boolean): number {
+  if (isDisabled) {
+    return DISABLED_OPACITY;
+  }
+  return isPressed ? PRESSED_OPACITY : 1;
 }
 
 const styles = StyleSheet.create({
