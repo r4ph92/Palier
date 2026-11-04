@@ -25,10 +25,28 @@ describe('creating an operator', () => {
     await userEvent.type(field, 'a');
     await userEvent.click(screen.getByRole('button', { name: 'Créer l’opérateur' }));
 
-    expect(screen.getByRole('alert').textContent).toBe('La raison sociale doit compter de 2 à 120 caractères.');
+    expect(screen.getByRole('alert').textContent).toBe('La raison sociale doit compter de 2 à 120 caractères, sans caractère invisible.');
     expect(field.getAttribute('aria-invalid')).toBe('true');
     expect((field as HTMLInputElement).value).toBe('a');
     expect(api.requests).not.toContain('POST /operators');
+  });
+
+  it('refuses a legal name of zero-width spaces without calling the API, by the rule the API applies', async () => {
+    const api = installFakeApi({ signedInAs: nouvelOperateur });
+    renderDashboard();
+
+    await userEvent.type(await screen.findByLabelText('Raison sociale'), '\u200B\u200B\u200B');
+    await userEvent.click(screen.getByRole('button', { name: 'Créer l’opérateur' }));
+
+    expect(screen.getByRole('alert')).toBeDefined();
+    expect(api.requests).not.toContain('POST /operators');
+  });
+
+  it('gives the length limits in the field hint', async () => {
+    installFakeApi({ signedInAs: nouvelOperateur });
+    renderDashboard();
+
+    expect(await screen.findByText('De 2 à 120 caractères, telle qu’inscrite au registre.')).toBeDefined();
   });
 
   it('asks Julie to create an operator even at the address of Parking Démo, and shows her no operator data', async () => {

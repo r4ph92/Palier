@@ -24,7 +24,7 @@ export const en: Dictionary = {
     greeting: 'Hello %{firstName}.',
     intro: 'You are not a member of any operator. Enter your company’s legal name to create one.',
     legalNameLabel: 'Legal name',
-    legalNameHint: '2 to 120 characters, as registered.',
+    legalNameHint: '%{minimum} to %{maximum} characters, as registered.',
     submit: 'Create the operator',
     submitting: 'Creating…',
   },
@@ -59,7 +59,7 @@ export const en: Dictionary = {
   errors: {
     UNAUTHORIZED: 'Your session ended. Sign in again.',
     CSRF_HEADER_MISSING: 'This request was refused. Reload the page.',
-    LEGAL_NAME_INVALID: 'The legal name must be 2 to 120 characters.',
+    LEGAL_NAME_INVALID: 'The legal name must be %{minimum} to %{maximum} characters, with no invisible characters.',
     OPERATOR_EXISTS: 'You are already a member of an operator.',
     NO_OPERATOR: 'Create your operator first.',
     LOT_NOT_FOUND: 'This parking lot cannot be found.',

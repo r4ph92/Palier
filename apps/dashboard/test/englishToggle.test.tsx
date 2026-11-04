@@ -48,7 +48,7 @@ describe('English toggle', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Create the operator' }));
 
-    expect(screen.getByRole('alert').textContent).toBe('The legal name must be 2 to 120 characters.');
+    expect(screen.getByRole('alert').textContent).toBe('The legal name must be 2 to 120 characters, with no invisible characters.');
     expect(frenchLeftOnPage()).toEqual([]);
   });
 

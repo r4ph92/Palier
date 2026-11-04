@@ -3,6 +3,7 @@ import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { useText } from '../i18n/LanguageContext.tsx';
 import { interpolate } from '../i18n/interpolate.ts';
+import { LEGAL_NAME_LIMITS } from '../i18n/legalNameLimits.ts';
 import { useCreateOperatorForm } from './useCreateOperatorForm.ts';
 
 interface CreateOperatorPageProps {
@@ -56,7 +57,7 @@ function LegalNameField({ value, onChange, error }: LegalNameFieldProps) {
         aria-describedby={error === null ? 'legal-name-hint' : 'legal-name-hint legal-name-error'}
         aria-invalid={error !== null}
       />
-      <p id="legal-name-hint" className="field-hint">{text.createOperator.legalNameHint}</p>
+      <p id="legal-name-hint" className="field-hint">{interpolate(text.createOperator.legalNameHint, LEGAL_NAME_LIMITS)}</p>
       {error === null ? null : <ErrorNotice id="legal-name-error" code={error} />}
     </>
   );

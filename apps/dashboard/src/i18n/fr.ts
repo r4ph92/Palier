@@ -22,7 +22,7 @@ export const fr = {
     greeting: 'Bonjour %{firstName}.',
     intro: 'Vous n’êtes membre d’aucun opérateur. Indiquez la raison sociale de votre entreprise pour en créer un.',
     legalNameLabel: 'Raison sociale',
-    legalNameHint: 'De 2 à 120 caractères, telle qu’inscrite au registre.',
+    legalNameHint: 'De %{minimum} à %{maximum} caractères, telle qu’inscrite au registre.',
     submit: 'Créer l’opérateur',
     submitting: 'Création…',
   },
@@ -57,7 +57,7 @@ export const fr = {
   errors: {
     UNAUTHORIZED: 'Votre session a pris fin. Connectez-vous de nouveau.',
     CSRF_HEADER_MISSING: 'Cette demande a été refusée. Rechargez la page.',
-    LEGAL_NAME_INVALID: 'La raison sociale doit compter de 2 à 120 caractères.',
+    LEGAL_NAME_INVALID: 'La raison sociale doit compter de %{minimum} à %{maximum} caractères, sans caractère invisible.',
     OPERATOR_EXISTS: 'Vous êtes déjà membre d’un opérateur.',
     NO_OPERATOR: 'Créez d’abord votre opérateur.',
     LOT_NOT_FOUND: 'Ce stationnement est introuvable.',

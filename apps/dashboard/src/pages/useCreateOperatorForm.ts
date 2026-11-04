@@ -1,14 +1,7 @@
+import { isValidLegalName } from '@palier/shared-types/dashboard';
 import { useState, type FormEvent } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import { asDashboardApiError, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
-
-const LEGAL_NAME_MINIMUM_LENGTH = 2;
-const LEGAL_NAME_MAXIMUM_LENGTH = 120;
-
-function isValidLegalName(legalName: string): boolean {
-  const length = legalName.trim().length;
-  return length >= LEGAL_NAME_MINIMUM_LENGTH && length <= LEGAL_NAME_MAXIMUM_LENGTH;
-}
 
 async function createThenRefresh(legalName: string, onCreated: () => Promise<void>): Promise<DisplayedErrorCode | null> {
   try {
