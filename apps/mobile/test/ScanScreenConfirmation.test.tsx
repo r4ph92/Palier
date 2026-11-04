@@ -1,8 +1,24 @@
+import type { EntryStatusResponse } from '@palier/shared-types';
 import { act, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { ENTRY_STATUS_POLL_LIMIT_MILLISECONDS, ENTRY_STATUS_POLL_MILLISECONDS } from '../src/entries/useConfirmationPolling';
-import { FakeEntryClient } from './fakeEntryClient';
+import { FakeEntryClient, spotA1 } from './fakeEntryClient';
 import { scan } from './renderScanScreen';
+
+// Holds each status answer until the test releases it, to land an answer after the driver moved on.
+class SlowStatusClient extends FakeEntryClient {
+  readonly #held: ((response: EntryStatusResponse) => void)[] = [];
+
+  override status(sessionId: string): Promise<EntryStatusResponse> {
+    this.statusRequests.push(sessionId);
+    return new Promise((resolve) => this.#held.push(resolve));
+  }
+
+  confirmHeldAnswers(): void {
+    const confirmed: EntryStatusResponse = { sessionId: 'session-1', state: 'ENTRY_CONFIRMED', spot: spotA1, entryConfirmedAt: '2026-10-27T22:02:00.000Z' };
+    this.#held.splice(0).forEach((resolve) => resolve(confirmed));
+  }
+}
 
 async function advance(milliseconds: number): Promise<void> {
   await act(async () => {
@@ -105,5 +121,33 @@ describe('ScanScreen, confirming the entry', () => {
 
     expect(client.statusRequests).toHaveLength(1);
     expect(screen.getByText('Barrière ouverte')).toBeOnTheScreen();
+  });
+
+  it('names the confirmation in the result VoiceOver reads, not the open barrier', async () => {
+    const { client } = await scan();
+    await screen.findByLabelText(/Barrière ouverte/);
+    client.sessionState = 'ENTRY_CONFIRMED';
+
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS);
+
+    expect(screen.getByLabelText(/A-1.*\. Entrée confirmée$/)).toBeOnTheScreen();
+    expect(screen.queryByLabelText(/Barrière ouverte/)).not.toBeOnTheScreen();
+  });
+
+  it('ignores a confirmation that answers after "Terminé", and a new scan starts unconfirmed', async () => {
+    const client = new SlowStatusClient();
+    const { user } = await scan({ client });
+    await screen.findByText('Barrière ouverte');
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS);
+    expect(client.statusRequests).toHaveLength(1);
+    await user.press(screen.getByRole('button', { name: 'Terminé' }));
+    await user.type(screen.getByLabelText('Contenu du QR'), 'https://palier.app/q/palier1.00000000-0000-4000-8000-000000000701.signature');
+    await user.press(screen.getByRole('button', { name: 'Scanner' }));
+    await screen.findByText('Barrière ouverte');
+
+    await act(async () => client.confirmHeldAnswers());
+
+    expect(screen.getByText('Barrière ouverte')).toBeOnTheScreen();
+    expect(screen.queryByText('Entrée confirmée')).not.toBeOnTheScreen();
   });
 });

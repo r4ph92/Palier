@@ -210,4 +210,15 @@ describe('GET /v1/entries/:sessionId', () => {
 
     expect((await status(fakeSessionId(1), {} as never)).statusCode).toBe(401);
   });
+
+  it("answers Marc the same 404 body for Julie's session as for an unknown one, so session ids cannot be probed", async () => {
+    const { status, driverRepository, vehicleRepository } = await startWithJulieEntered();
+    const marcHeaders = await readyDriver(driverRepository, vehicleRepository, marc);
+
+    const julies = await status(fakeSessionId(1), marcHeaders);
+    const unknown = await status(fakeSessionId(99), marcHeaders);
+
+    expect(julies.json()).toEqual({ statusCode: 404, error: 'SESSION_NOT_FOUND', message: 'No such entry.' });
+    expect(unknown.json()).toEqual(julies.json());
+  });
 });
