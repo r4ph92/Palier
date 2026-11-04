@@ -79,6 +79,12 @@ describe('EditVehicleScreen', () => {
     expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeBusy();
   });
 
+  it('names the need list as a heading', async () => {
+    await renderEditVehicleScreen(new FakeVehicleClient([eva001]));
+
+    expect(screen.getByRole('header', { name: 'Besoins du véhicule' })).toBeOnTheScreen();
+  });
+
   it('reads in English when the device is English', async () => {
     await renderEditVehicleScreen(new FakeVehicleClient([eva001]), 'en');
 

@@ -16,7 +16,9 @@ export function VehicleNeedsFields({ needs, onToggle }: VehicleNeedsFieldsProps)
   const colors = useColors();
   return (
     <View style={styles.field}>
-      <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('vehicles.needs')}</Text>
+      <Text accessibilityRole="header" style={[typography.bodyStrong, { color: colors.ink }]}>
+        {i18n.t('vehicles.needs')}
+      </Text>
       <View style={[styles.group, { borderColor: colors.line }]}>
         {VEHICLE_NEEDS.map((need) => (
           <NeedOption key={need} need={need} isChecked={needs[need]} onToggle={onToggle} />
