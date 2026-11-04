@@ -1,40 +1,17 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
-import { ScanScreen, spotLabel } from '../src/screens/ScanScreen';
+import { getDefaultNormalizer, screen, userEvent } from '@testing-library/react-native';
+import { applyLanguage } from '../src/i18n/i18n';
+import { spotLabel } from '../src/screens/ScanScreen';
 import { ENTREE_DEMO_QR, FakeEntryClient, spotA1 } from './fakeEntryClient';
+import { openScanner, scan } from './renderScanScreen';
 
-const SAFE_AREA_METRICS = {
-  frame: { x: 0, y: 0, width: 375, height: 812 },
-  insets: { top: 47, left: 0, right: 0, bottom: 34 },
-};
-
-interface Scan {
-  readonly client?: FakeEntryClient;
-  readonly language?: SupportedLanguage;
-  readonly onAddPlate?: () => void;
-  readonly onAddCard?: () => void;
-}
-
-async function scan({ client = new FakeEntryClient(), language = 'fr', onAddPlate = jest.fn(), onAddCard = jest.fn() }: Scan = {}) {
-  applyLanguage(language);
-  await render(
-    <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <ScanScreen client={client} onAddPlate={onAddPlate} onAddCard={onAddCard} />
-    </SafeAreaProvider>,
-  );
-  const user = userEvent.setup();
-  const labels = language === 'fr' ? { field: 'Contenu du QR', submit: 'Scanner' } : { field: 'QR content', submit: 'Scan' };
-  await user.type(screen.getByLabelText(labels.field), ENTREE_DEMO_QR);
-  await user.press(screen.getByRole('button', { name: labels.submit }));
-  return { client, user };
-}
+// The spot number carries an invisible word joiner after its hyphen; the driver reads the same text without it.
+const visibleText = { normalizer: (text: string) => getDefaultNormalizer()(text.replaceAll('\u2060', '')) };
 
 describe('ScanScreen, entering Parking Démo', () => {
   it('shows Julie her spot and the open barrier in French', async () => {
     const { client } = await scan();
 
-    expect(await screen.findByText('Votre place : A-1 · Palier P1 · Allée A')).toBeOnTheScreen();
+    expect(await screen.findByText('Votre place : A-1 · Palier P1 · Allée A', visibleText)).toBeOnTheScreen();
     expect(screen.getByText('Barrière ouverte')).toBeOnTheScreen();
     expect(client.scanned).toEqual([ENTREE_DEMO_QR]);
   });
@@ -42,15 +19,28 @@ describe('ScanScreen, entering Parking Démo', () => {
   it('shows the spot and the open barrier in English', async () => {
     await scan({ language: 'en' });
 
-    expect(await screen.findByText('Your spot: A-1 · Level P1 · Aisle A')).toBeOnTheScreen();
+    expect(await screen.findByText('Your spot: A-1 · Level P1 · Aisle A', visibleText)).toBeOnTheScreen();
     expect(screen.getByText('Barrier open')).toBeOnTheScreen();
   });
 
-  it('keeps the French colon on the line of the word before it', () => {
-    applyLanguage('fr');
+  it.each([
+    ['fr', 'Votre place\u00A0: A-1\u00A0· Palier\u00A0P1\u00A0· Allée\u00A0A'],
+    ['en', 'Your spot: A-1\u00A0· Level\u00A0P1\u00A0· Aisle\u00A0A'],
+  ] as const)('in %s, breaks the spot line only after a « · », never inside « Palier P1 » or before a « · »', (language, label) => {
+    applyLanguage(language);
 
-    expect(spotLabel(spotA1)).toBe('Votre place\u00A0: A-1 · Palier P1 · Allée A');
+    expect(spotLabel(spotA1)).toBe(label);
   });
+
+  it('shows the spot number as the largest text, in mono with tabular figures, unbreakable at its hyphen', async () => {
+    await scan();
+
+    const number = await screen.findByText('A-\u20601');
+
+    expect(number).toHaveStyle({ fontFamily: 'IBMPlexMono_600SemiBold', fontVariant: ['tabular-nums'] });
+    expect(number.props.style.fontSize).toBeGreaterThan(32);
+  });
+
 
   it('goes back to an empty form with "Terminé"', async () => {
     const { user } = await scan();
@@ -75,13 +65,7 @@ describe('ScanScreen, entering Parking Démo', () => {
 
 describe('ScanScreen before a QR is pasted', () => {
   it('keeps Scanner disabled while the field is empty or blank, and sends nothing', async () => {
-    applyLanguage('fr');
-    const client = new FakeEntryClient();
-    await render(
-      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-        <ScanScreen client={client} onAddPlate={jest.fn()} onAddCard={jest.fn()} />
-      </SafeAreaProvider>,
-    );
+    const client = await openScanner();
     const user = userEvent.setup();
 
     expect(screen.getByRole('button', { name: 'Scanner' })).toBeDisabled();
@@ -92,100 +76,5 @@ describe('ScanScreen before a QR is pasted', () => {
 
     await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
     expect(screen.getByRole('button', { name: 'Scanner' })).toBeEnabled();
-  });
-});
-
-describe('ScanScreen refusals', () => {
-  const refusals = [
-    ['QR_NOT_RECOGNIZED', 'QR non reconnu', 'QR not recognized'],
-    ['NOT_AN_ENTRY_GATE', 'Ce QR n’est pas une borne d’entrée', 'This QR is not an entry terminal'],
-    ['LOT_NOT_IN_SERVICE', 'Ce parking n’est pas en service', 'This lot is not in service'],
-    ['GATE_UNAVAILABLE', 'Cette borne n’est pas disponible', 'This terminal is not available'],
-    ['PREREQUISITES_MISSING', 'Ajoutez une plaque et une carte avant d’entrer', 'Add a plate and a card before entering'],
-    ['OPERATOR_NOT_PAYABLE', 'Ce parking n’accepte pas les paiements pour le moment', 'This lot cannot take payments right now'],
-    ['LOT_FULL', 'Ce parking est complet', 'This lot is full'],
-    ['ALREADY_INSIDE', 'Vous avez déjà une entrée en cours', 'You already have an entry in progress'],
-    ['CARD_DECLINED', 'Carte refusée', 'Card declined'],
-    ['TOO_MANY_ENTRIES', 'Trop de tentatives, réessayez dans quelques minutes', 'Too many attempts, try again in a few minutes'],
-  ] as const;
-  const cases = refusals.flatMap(([code, french, english]) => [
-    [code, 'fr', french],
-    [code, 'en', english],
-  ] as const);
-
-  it.each(cases)('reads %s in %s as "%s", without a spot', async (code, language, message) => {
-    const client = new FakeEntryClient();
-    client.nextRejection = code;
-    await scan({ client, language });
-
-    expect(await screen.findByText(message)).toBeOnTheScreen();
-    expect(screen.queryByText(/A-1/)).not.toBeOnTheScreen();
-  });
-
-  it('keeps what was pasted, so a wrong QR can be corrected', async () => {
-    const client = new FakeEntryClient();
-    client.nextRejection = 'QR_NOT_RECOGNIZED';
-    await scan({ client });
-
-    await screen.findByText('QR non reconnu');
-
-    expect(screen.getByLabelText('Contenu du QR')).toHaveDisplayValue(ENTREE_DEMO_QR);
-  });
-
-  it('offers a button to add a plate and one to add a card when either is missing', async () => {
-    const client = new FakeEntryClient();
-    client.nextRejection = 'PREREQUISITES_MISSING';
-    const onAddPlate = jest.fn();
-    const onAddCard = jest.fn();
-    const { user } = await scan({ client, onAddPlate, onAddCard });
-
-    await user.press(await screen.findByRole('button', { name: 'Ajouter une plaque' }));
-    await user.press(screen.getByRole('button', { name: 'Ajouter une carte' }));
-
-    expect(onAddPlate).toHaveBeenCalledTimes(1);
-    expect(onAddCard).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows no prerequisite buttons for another refusal', async () => {
-    const client = new FakeEntryClient();
-    client.nextRejection = 'NOT_AN_ENTRY_GATE';
-    await scan({ client });
-
-    await screen.findByText('Ce QR n’est pas une borne d’entrée');
-
-    expect(screen.queryByRole('button', { name: 'Ajouter une plaque' })).not.toBeOnTheScreen();
-  });
-});
-
-describe('ScanScreen when Palier cannot answer', () => {
-  it('says it cannot reach Palier when the network fails, asks to check the connection, and retries the same QR', async () => {
-    const client = new FakeEntryClient();
-    client.isReachable = false;
-    const { user } = await scan({ client });
-
-    expect(await screen.findByText('Impossible de joindre Palier.')).toBeOnTheScreen();
-    expect(screen.getByText('Vérifiez votre connexion, puis réessayez.')).toBeOnTheScreen();
-    client.isReachable = true;
-    await user.press(screen.getByRole('button', { name: 'Réessayer' }));
-
-    expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();
-  });
-
-  it.each([
-    ['card payments are unavailable (503)', (client: FakeEntryClient) => (client.nextRejection = 'PAYMENTS_UNAVAILABLE')],
-    ['the API fails (500)', (client: FakeEntryClient) => (client.nextStatus = 500)],
-    ['the API answers a code the app does not know', (client: FakeEntryClient) => (client.nextRejection = 'SOMETHING_NEW')],
-  ])('says Palier is not responding when %s, without blaming the connection, and retries the same QR', async (_case, breakClient) => {
-    const client = new FakeEntryClient();
-    breakClient(client);
-    const { user } = await scan({ client });
-
-    expect(await screen.findByText('Palier ne répond pas, réessayez dans un instant')).toBeOnTheScreen();
-    expect(screen.queryByText('Vérifiez votre connexion, puis réessayez.')).not.toBeOnTheScreen();
-    Object.assign(client, { nextStatus: null, nextRejection: null });
-    await user.press(screen.getByRole('button', { name: 'Réessayer' }));
-
-    expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();
-    expect(client.scanned).toEqual([ENTREE_DEMO_QR, ENTREE_DEMO_QR]);
   });
 });

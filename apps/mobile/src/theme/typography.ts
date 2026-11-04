@@ -7,6 +7,9 @@ export const typography = StyleSheet.create({
   lotName: { fontFamily: fontFamilies.textSemiBold, fontSize: 18, lineHeight: 23 },
   countNumber: { fontFamily: fontFamilies.monoSemiBold, fontSize: 30, lineHeight: 36, fontVariant: ['tabular-nums'] },
   countState: { fontFamily: fontFamilies.textSemiBold, fontSize: 22, lineHeight: 28 },
+  // No line height: the line holding the larger spot number grows on its own, the next lines stay tight.
+  spotLine: { fontFamily: fontFamilies.textSemiBold, fontSize: 22 },
+  spotNumber: { fontFamily: fontFamilies.monoSemiBold, fontSize: 36, fontVariant: ['tabular-nums'] },
   countLabel: { fontFamily: fontFamilies.mono, fontSize: 14, lineHeight: 18 },
   body: { fontFamily: fontFamilies.text, fontSize: 16 },
   bodyStrong: { fontFamily: fontFamilies.textSemiBold, fontSize: 17 },

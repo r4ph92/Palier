@@ -15,6 +15,8 @@ import { typography } from '../theme/typography';
 
 // A QR content is a link, never words: no capitals, corrections or spelling marks.
 const QR_INPUT_BEHAVIOUR = { autoCapitalize: 'none', autoCorrect: false, spellCheck: false, returnKeyType: 'go' } as const;
+// After the hyphen of a spot number, so « A-1 » never splits across two lines; it is invisible and not spoken.
+const WORD_JOINER = '\u2060';
 
 interface ScanScreenProps {
   readonly client: EntryClient;
@@ -40,21 +42,36 @@ export function ScanScreen({ client, onAddPlate, onAddCard }: ScanScreenProps) {
 }
 
 export function spotLabel(spot: AssignedSpot): string {
-  return i18n.t('scan.spot', { number: spot.number, level: spot.levelCode, aisle: spot.aisleCode });
+  return `${i18n.t('scan.spotLead')}${spot.number}${spotPlace(spot)}`;
+}
+
+function spotPlace(spot: AssignedSpot): string {
+  return i18n.t('scan.spotPlace', { level: spot.levelCode, aisle: spot.aisleCode });
 }
 
 function EnteredSpot({ spot, onDone }: { readonly spot: AssignedSpot; readonly onDone: () => void }) {
   const colors = useColors();
-  const label = spotLabel(spot);
-  useAnnouncement(`${label}. ${i18n.t('scan.barrierOpen')}`);
+  useAnnouncement(`${spotLabel(spot)}. ${i18n.t('scan.barrierOpen')}`);
   return (
     <View style={styles.section}>
-      <Text style={[typography.countState, { color: colors.ink }]}>{label}</Text>
+      <SpotLine spot={spot} />
       <StateMark color={colors.free}>
         <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('scan.barrierOpen')}</Text>
       </StateMark>
       <PrimaryButton label={i18n.t('scan.done')} onPress={onDone} />
     </View>
+  );
+}
+
+// The spot number is the largest thing on the screen, in mono like every figure (docs/design.md, gesture 3).
+function SpotLine({ spot }: { readonly spot: AssignedSpot }) {
+  const colors = useColors();
+  return (
+    <Text style={[typography.spotLine, { color: colors.ink }]}>
+      {i18n.t('scan.spotLead')}
+      <Text style={typography.spotNumber}>{spot.number.replaceAll('-', `-${WORD_JOINER}`)}</Text>
+      {spotPlace(spot)}
+    </Text>
   );
 }
 
