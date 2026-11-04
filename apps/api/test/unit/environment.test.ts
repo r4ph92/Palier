@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  readDashboardUrl,
   readMinimumAppVersion,
   readSecureCookies,
   readServerEnvironment,
+  readStripeWebhookSecret,
   readSimulateStripeUnreachable,
   readTestSignInEnabled,
 } from '../../src/config/environment.ts';
@@ -88,5 +90,37 @@ describe('readSimulateStripeUnreachable', () => {
 
   it.each(['1', 'yes', ''])('refuses SIMULATE_STRIPE_UNREACHABLE=%s', (rawSwitch) => {
     expect(() => readSimulateStripeUnreachable({ NODE_ENV: 'development', SIMULATE_STRIPE_UNREACHABLE: rawSwitch })).toThrow(/must be "true" or "false"/);
+  });
+});
+
+describe('readStripeWebhookSecret', () => {
+  it.each([{}, { STRIPE_WEBHOOK_SECRET: '' }])('serves no webhook when the secret is unset (%o)', (variables) => {
+    expect(readStripeWebhookSecret(variables)).toBeNull();
+  });
+
+  it('reads a whsec_ signing secret', () => {
+    expect(readStripeWebhookSecret({ STRIPE_WEBHOOK_SECRET: 'whsec_abc' })).toBe('whsec_abc');
+  });
+
+  it.each(['sk_test_abc', 'abc'])('refuses %s, which is not a signing secret', (secret) => {
+    expect(() => readStripeWebhookSecret({ STRIPE_WEBHOOK_SECRET: secret })).toThrow(/whsec_/);
+  });
+});
+
+describe('readDashboardUrl', () => {
+  it.each(['development', 'test'])('defaults to the local dashboard when NODE_ENV is %s', (environment) => {
+    expect(readDashboardUrl({ NODE_ENV: environment })).toBe('http://localhost:5173');
+  });
+
+  it.each([{ NODE_ENV: 'production' }, {}])('has no default outside a test environment (%o)', (variables) => {
+    expect(readDashboardUrl(variables)).toBeNull();
+  });
+
+  it('keeps only the origin of the address it is given', () => {
+    expect(readDashboardUrl({ DASHBOARD_URL: 'https://dashboard.palier.example/some/path?x=1' })).toBe('https://dashboard.palier.example');
+  });
+
+  it.each(['not a url', 'javascript:alert(1)', 'ftp://dashboard.example'])('refuses %s', (rawUrl) => {
+    expect(() => readDashboardUrl({ DASHBOARD_URL: rawUrl })).toThrow(/http\(s\) address/);
   });
 });
