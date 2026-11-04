@@ -27,6 +27,9 @@ export const fr = {
   home: {
     eyebrow: 'Opérateur',
     stripeLabel: 'Compte Stripe',
+    connectStripe: 'Connecter Stripe',
+    resumeStripe: 'Reprendre l’inscription Stripe',
+    redirecting: 'Redirection vers Stripe…',
     lotsTitle: 'Stationnements',
     lotsLoading: 'Chargement des stationnements…',
     lotsEmpty: 'Aucun stationnement pour l’instant.',
@@ -61,6 +64,8 @@ export const fr = {
     OPERATOR_EXISTS: 'Vous êtes déjà membre d’un opérateur.',
     NO_OPERATOR: 'Créez d’abord votre opérateur.',
     LOT_NOT_FOUND: 'Ce stationnement est introuvable.',
+    OPERATOR_NOT_FOUND: 'Cet opérateur est introuvable.',
+    STRIPE_UNAVAILABLE: 'Stripe est injoignable pour l’instant. Réessayez dans un instant.',
     UNKNOWN: 'Une erreur est survenue. Réessayez dans un instant.',
   },
 };

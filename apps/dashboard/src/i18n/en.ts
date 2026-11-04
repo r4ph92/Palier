@@ -29,6 +29,9 @@ export const en: Dictionary = {
   home: {
     eyebrow: 'Operator',
     stripeLabel: 'Stripe account',
+    connectStripe: 'Connect Stripe',
+    resumeStripe: 'Resume Stripe onboarding',
+    redirecting: 'Redirecting to Stripe…',
     lotsTitle: 'Parking lots',
     lotsLoading: 'Loading parking lots…',
     lotsEmpty: 'No parking lots yet.',
@@ -63,6 +66,8 @@ export const en: Dictionary = {
     OPERATOR_EXISTS: 'You are already a member of an operator.',
     NO_OPERATOR: 'Create your operator first.',
     LOT_NOT_FOUND: 'This parking lot cannot be found.',
+    OPERATOR_NOT_FOUND: 'This operator cannot be found.',
+    STRIPE_UNAVAILABLE: 'Stripe cannot be reached right now. Try again in a moment.',
     UNKNOWN: 'Something went wrong. Try again in a moment.',
   },
 };
