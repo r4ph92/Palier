@@ -26,4 +26,17 @@ describe.each<[SupportedLanguage, readonly string[]]>([
       expect(screen.getByText(label)).toHaveProp('maxFontSizeMultiplier', 1.4);
     }
   });
+
+  it('gives each label the full width of its tab', async () => {
+    applyLanguage(language);
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <TabBar selected="lots" onSelect={() => undefined} />
+      </SafeAreaProvider>,
+    );
+
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(tab).toHaveStyle({ paddingHorizontal: 0 });
+    }
+  });
 });
