@@ -92,6 +92,18 @@ describe('entry eligibility', () => {
     expect(await refusalOf(await eligibilityFor({ gates: [unpayable] }), entreeDemoQr)).toBe('OPERATOR_NOT_PAYABLE');
   });
 
+  it('refuses a lot whose vehicles fill its capacity as LOT_FULL', async () => {
+    const full = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 10 } };
+
+    expect(await refusalOf(await eligibilityFor({ gates: [full] }), entreeDemoQr)).toBe('LOT_FULL');
+  });
+
+  it('admits a driver into a lot with one vehicle space left', async () => {
+    const almostFull = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 9 } };
+
+    expect(await refusalOf(await eligibilityFor({ gates: [almostFull] }), entreeDemoQr)).toBeUndefined();
+  });
+
   it('lets the hold stay on the platform in demo mode when the operator has no Stripe account', async () => {
     const unpayable = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, operatorStripeAccountId: null } };
     const policy = { allowPlatformChargesWithoutOperatorAccount: true };
