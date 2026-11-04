@@ -3,7 +3,7 @@ import { StateMark } from '../components/StateMark';
 import { TextButton } from '../components/TextButton';
 import { useAnnouncement } from '../components/useAnnouncement';
 import type { EntryRefusal, EntryState } from '../entries/useEntry';
-import { formatCents } from '../i18n/formatCents';
+import { formatMoney } from '../i18n/formatMoney';
 import { currentLanguage, i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -85,7 +85,7 @@ function problemMessage(state: EntryState): string | null {
 // A declined card names the refused hold; without the amount it falls back to the short refusal.
 function refusalMessage(refusal: EntryRefusal, authorizedCents: number | null): string {
   if (refusal === 'CARD_DECLINED' && authorizedCents !== null) {
-    return i18n.t('scan.cardDeclined', { amount: formatCents(authorizedCents, currentLanguage()) });
+    return i18n.t('scan.cardDeclined', { amount: formatMoney(authorizedCents, currentLanguage()) });
   }
   return i18n.t(`scan.refusals.${refusal}`);
 }
