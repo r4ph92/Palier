@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
@@ -10,13 +11,14 @@ interface Scan {
   readonly language?: SupportedLanguage;
   readonly onAddPlate?: () => void;
   readonly onAddCard?: () => void;
+  readonly wrap?: (screen: ReactNode) => ReactNode;
 }
 
-export async function openScanner({ client = new FakeEntryClient(), language = 'fr', onAddPlate = jest.fn(), onAddCard = jest.fn() }: Scan = {}) {
+export async function openScanner({ client = new FakeEntryClient(), language = 'fr', onAddPlate = jest.fn(), onAddCard = jest.fn(), wrap = (screen) => screen }: Scan = {}) {
   applyLanguage(language);
   await render(
     <SafeAreaProvider initialMetrics={IPHONE_MINI_METRICS}>
-      <ScanScreen client={client} onAddPlate={onAddPlate} onAddCard={onAddCard} />
+      {wrap(<ScanScreen client={client} onAddPlate={onAddPlate} onAddCard={onAddCard} />)}
     </SafeAreaProvider>,
   );
   return client;

@@ -54,7 +54,8 @@ export function useEntry(client: EntryClient): EntryController {
     setState(IDLE);
   }, []);
   const confirm = useCallback(() => setState(withEntryConfirmed), []);
-  const failConfirmation = useCallback(() => setState(NOT_RESPONDING), []);
+  // Thrown inside the state update, like in enter(), so an unexpected error reaches the error boundary.
+  const failConfirmation = useCallback((error: unknown) => setState(() => { throw error; }), []);
   useConfirmationPolling(client, unconfirmedSessionId(state), { onConfirmed: confirm, onUnexpectedError: failConfirmation });
   return { state, qrContent, setQrContent, submit, startOver };
 }

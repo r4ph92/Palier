@@ -1,12 +1,25 @@
 import type { EntryStatusResponse } from '@palier/shared-types';
+import { Component, type ReactNode } from 'react';
 import { act, screen } from '@testing-library/react-native';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, Text } from 'react-native';
 import { ENTRY_STATUS_POLL_LIMIT_MILLISECONDS, ENTRY_STATUS_POLL_MILLISECONDS } from '../src/entries/useConfirmationPolling';
 import { PalierUnauthorizedError } from '../src/api/AuthClient';
 import { PalierStatusError } from '../src/api/LotsClient';
 import { PalierConsentRequiredError } from '../src/api/VehicleClient';
 import { FakeEntryClient, spotA1 } from './fakeEntryClient';
 import { scan } from './renderScanScreen';
+
+class CaughtErrorBoundary extends Component<{ readonly children: ReactNode }, { readonly caught?: Error }> {
+  override state: { readonly caught?: Error } = {};
+
+  static getDerivedStateFromError(error: Error) {
+    return { caught: error };
+  }
+
+  override render() {
+    return this.state.caught === undefined ? this.props.children : <Text>{`caught: ${this.state.caught.message}`}</Text>;
+  }
+}
 
 // Holds each status answer until the test releases it, to land an answer after the driver moved on.
 class SlowStatusClient extends FakeEntryClient {
@@ -114,6 +127,8 @@ describe('ScanScreen, confirming the entry', () => {
     await advance(ENTRY_STATUS_POLL_MILLISECONDS * 3);
 
     expect(client.statusRequests).toHaveLength(1);
+    expect(screen.getByText('Barrière ouverte')).toBeOnTheScreen();
+    expect(screen.queryByText(/Palier ne répond pas/)).not.toBeOnTheScreen();
   });
 
   it('keeps asking after a 500 and confirms once the API recovers', async () => {
@@ -129,15 +144,16 @@ describe('ScanScreen, confirming the entry', () => {
     expect(screen.getByText('Entrée confirmée')).toBeOnTheScreen();
   });
 
-  it('shows the error state and stops asking on an unexpected failure', async () => {
-    const { client } = await scan();
+  it('stops asking and lets the error reach the error boundary on an unexpected failure', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { client } = await scan({ wrap: (screen) => <CaughtErrorBoundary>{screen}</CaughtErrorBoundary> });
     await screen.findByText('Barrière ouverte');
     client.statusFailure = new TypeError('unexpected');
 
     await advance(ENTRY_STATUS_POLL_MILLISECONDS * 3);
 
     expect(client.statusRequests).toHaveLength(1);
-    expect(screen.getByText(/Palier ne répond pas/)).toBeOnTheScreen();
+    expect(screen.getByText('caught: unexpected')).toBeOnTheScreen();
   });
 
   it('stops asking after "Terminé"', async () => {
