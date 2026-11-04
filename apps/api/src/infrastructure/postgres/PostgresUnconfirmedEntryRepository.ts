@@ -3,6 +3,7 @@ import type { ExpiredEntry, PendingRelease, UnconfirmedEntryRepository } from '.
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database } from './database.ts';
+import { lockParkingLot } from './lockParkingLot.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
 
 interface ExpiredEntryRow extends Record<string, unknown> {
@@ -38,10 +39,10 @@ export class PostgresUnconfirmedEntryRepository implements UnconfirmedEntryRepos
     return rows.map((row) => ({ sessionId: row.id, lotId: row.lot_id }));
   }
 
-  // Lot, then session, then spot: the order a loop closure takes, so a closure already queued on the lot finishes first.
+  // A closure already queued on the lot finishes first.
   cancel(entry: ExpiredEntry): Promise<boolean> {
     return this.#database.transaction(async (tx) => {
-      await tx.execute(sql`select id from parking_lot where id = ${entry.lotId} for no key update`);
+      await lockParkingLot(tx, entry.lotId);
       return cancelCreatedSession(tx, entry.sessionId);
     });
   }

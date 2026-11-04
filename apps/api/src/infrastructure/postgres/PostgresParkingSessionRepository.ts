@@ -1,24 +1,17 @@
 import { sql } from 'drizzle-orm';
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
-import type { FreeSpot } from '../../domain/allocation/chooseSpot.ts';
-import { chooseSpotFor } from '../../domain/allocation/chooseSpotFor.ts';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import type { HoldAttachment, OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../domain/entries/ParkingSessionRepository.ts';
-import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
-import { isActiveSessionConflict } from './activeSessionConflict.ts';
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
+import { admissionRefusalOf } from './admissionRefusal.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
+import { lockParkingLot } from './lockParkingLot.ts';
 import { parkingSession } from './schema.ts';
+import { assignFirstFreeSpot, type AssignedSpotRow } from './spotClaim.ts';
 
-const MAX_CLAIM_ATTEMPTS = 3;
-
-interface AssignedSpotRow extends Record<string, unknown> {
-  readonly id: string;
-  readonly number: string;
-  readonly aisle_code: string;
-  readonly level_code: string;
-}
+// Past it, a waiting entry gives up with a retryable refusal instead of holding a pool connection.
+const LIMIT_LOCK_WAIT = sql`set local lock_timeout = '3s'`;
 
 interface SessionStatusRow extends Record<string, unknown> {
   readonly id: string;
@@ -52,15 +45,14 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   async openWithFirstFreeSpot(draft: SessionDraft): Promise<OpenedSession | null> {
     try {
       return await this.#database.transaction(async (tx) => {
+        await tx.execute(LIMIT_LOCK_WAIT);
+        await lockParkingLot(tx, draft.lotId);
         await refuseWhenInside(tx, draft.driverId);
         const assigned = await assignFirstFreeSpot(tx, draft.lotId, draft.needs);
         return assigned === undefined ? null : insertSession(tx, draft, assigned);
       });
     } catch (error) {
-      if (isActiveSessionConflict(error)) {
-        throw new EntryRefusedError('ALREADY_INSIDE', { cause: error });
-      }
-      throw error;
+      throw admissionRefusalOf(error, draft.lotId);
     }
   }
 
@@ -101,70 +93,6 @@ async function refuseWhenInside(tx: Transaction, driverId: string): Promise<void
   if (rows.length > 0) {
     throw new EntryRefusedError('ALREADY_INSIDE');
   }
-}
-
-interface FreeSpotRow extends Record<string, unknown> {
-  readonly id: string;
-  readonly number: string;
-  readonly level_order: number;
-  readonly aisle_code: string;
-  readonly distance_to_exit: number;
-  readonly needs_check: boolean;
-  readonly is_ev: boolean;
-  readonly is_accessible: boolean;
-  readonly is_oversize: boolean;
-}
-
-// The domain picks the spot (chooseSpotFor); only that spot row is then locked, and a spot another entry
-// holds is skipped rather than waited on (docs/03). A spot lost that way is left out of the next pick.
-async function assignFirstFreeSpot(tx: Transaction, lotId: string, needs: VehicleNeeds): Promise<AssignedSpotRow | undefined> {
-  const lost = new Set<string>();
-  for (let attempt = 0; attempt < MAX_CLAIM_ATTEMPTS; attempt++) {
-    const chosen = chooseSpotFor(needs, (await readFreeSpots(tx, lotId)).filter((free) => !lost.has(free.id)));
-    if (chosen === null) {
-      return undefined;
-    }
-    const claimed = await claimSpot(tx, chosen.id);
-    if (claimed !== undefined) {
-      return claimed;
-    }
-    lost.add(chosen.id);
-  }
-  return undefined;
-}
-
-async function readFreeSpots(tx: Transaction, lotId: string): Promise<FreeSpot[]> {
-  const rows = await tx.execute<FreeSpotRow>(sql`
-    select s.id, s.number, l.display_order as level_order, a.code as aisle_code, s.distance_to_exit, s.needs_check,
-      s.is_ev, s.is_accessible, s.is_oversize
-    from spot s
-    join aisle a on a.id = s.aisle_id
-    join level l on l.id = a.level_id
-    where s.lot_id = ${lotId} and s.state = 'AVAILABLE'`);
-  return rows.map((row) => ({
-    id: row.id,
-    number: row.number,
-    levelOrder: row.level_order,
-    aisleCode: row.aisle_code,
-    distanceToExit: row.distance_to_exit,
-    needsCheck: row.needs_check,
-    isEv: row.is_ev,
-    isAccessible: row.is_accessible,
-    isOversize: row.is_oversize,
-  }));
-}
-
-async function claimSpot(tx: Transaction, spotId: string): Promise<AssignedSpotRow | undefined> {
-  const rows = await tx.execute<AssignedSpotRow>(sql`
-    with chosen as (
-      select id from spot where id = ${spotId} and state = 'AVAILABLE' for update skip locked
-    )
-    update spot
-    set state = 'ASSIGNED', state_changed_at = now()
-    from chosen, aisle, level
-    where spot.id = chosen.id and aisle.id = spot.aisle_id and level.id = aisle.level_id
-    returning spot.id, spot.number, aisle.code as aisle_code, level.code as level_code`);
-  return rows[0];
 }
 
 async function insertSession(tx: Transaction, draft: SessionDraft, assigned: AssignedSpotRow): Promise<OpenedSession> {
