@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { ParkingSessionBackdater } from '../../domain/parkingSessions/ParkingSessionBackdater.ts';
+import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import type { Database } from './database.ts';
 
 export class PostgresParkingSessionBackdater implements ParkingSessionBackdater {
@@ -16,7 +17,7 @@ export class PostgresParkingSessionBackdater implements ParkingSessionBackdater 
       update parking_session
       set entry_confirmed_at = entry_confirmed_at + (${instant}::timestamptz - entry_scan_at),
         entry_scan_at = ${instant}::timestamptz
-      where id = ${sessionId} and state <> 'CANCELLED'
+      where id = ${sessionId} and ${ACTIVE_SESSION}
       returning id`);
     return rows.length > 0;
   }
