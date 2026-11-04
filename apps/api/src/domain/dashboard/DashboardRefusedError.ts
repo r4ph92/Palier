@@ -1,9 +1,10 @@
 import type { DashboardErrorCode } from '@palier/shared-types';
+import { LEGAL_NAME_LENGTH } from '@palier/shared-types/dashboard';
 
 const MESSAGES: Record<DashboardErrorCode, string> = {
   UNAUTHORIZED: 'Sign in to the dashboard first.',
   CSRF_HEADER_MISSING: 'This request must come from the dashboard.',
-  LEGAL_NAME_INVALID: 'The legal name must be 2 to 120 characters.',
+  LEGAL_NAME_INVALID: `The legal name must be ${LEGAL_NAME_LENGTH.minimum} to ${LEGAL_NAME_LENGTH.maximum} characters, with no invisible characters.`,
   OPERATOR_EXISTS: 'You already belong to an operator.',
   NO_OPERATOR: 'Create your operator first.',
   LOT_NOT_FOUND: 'No such lot.',

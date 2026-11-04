@@ -2,6 +2,18 @@
 export const DASHBOARD_CSRF_HEADER = 'x-requested-with';
 export const DASHBOARD_CSRF_VALUE = 'palier-dashboard';
 
+export const LEGAL_NAME_LENGTH = { minimum: 2, maximum: 120 } as const;
+
+// Control and format characters (NUL, zero-width spaces, bidi overrides) are invisible, and Postgres refuses NUL in text.
+const INVISIBLE_CHARACTER = /[\p{Cc}\p{Cf}]/u;
+
+// Counted in code points after trimming, so an emoji is one character, the way a person counts it.
+export function isValidLegalName(legalName: string): boolean {
+  const trimmedName = legalName.trim();
+  const length = [...trimmedName].length;
+  return !INVISIBLE_CHARACTER.test(trimmedName) && length >= LEGAL_NAME_LENGTH.minimum && length <= LEGAL_NAME_LENGTH.maximum;
+}
+
 export type KycStatus = 'NOT_STARTED' | 'PENDING' | 'VERIFIED';
 
 export interface DashboardUser {

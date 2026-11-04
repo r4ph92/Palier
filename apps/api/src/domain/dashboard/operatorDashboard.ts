@@ -1,16 +1,13 @@
 import type { DashboardLot, DashboardOperator } from '@palier/shared-types';
+import { isValidLegalName } from '@palier/shared-types/dashboard';
 import { DashboardRefusedError } from './DashboardRefusedError.ts';
 import type { NewOperator, OperatorRepository } from './OperatorRepository.ts';
 
-const LEGAL_NAME_MINIMUM_LENGTH = 2;
-const LEGAL_NAME_MAXIMUM_LENGTH = 120;
-
 export async function createOperator(repository: OperatorRepository, { userId, legalName }: NewOperator): Promise<DashboardOperator> {
-  const trimmedName = legalName.trim();
-  if (trimmedName.length < LEGAL_NAME_MINIMUM_LENGTH || trimmedName.length > LEGAL_NAME_MAXIMUM_LENGTH) {
+  if (!isValidLegalName(legalName)) {
     throw new DashboardRefusedError('LEGAL_NAME_INVALID');
   }
-  const created = await repository.createOperatorWithMember({ userId, legalName: trimmedName });
+  const created = await repository.createOperatorWithMember({ userId, legalName: legalName.trim() });
   if (created === null) {
     throw new DashboardRefusedError('OPERATOR_EXISTS');
   }
