@@ -53,7 +53,7 @@ export function useEntry(client: EntryClient): EntryController {
     setQrContent('');
     setState(IDLE);
   }, []);
-  const confirm = useCallback(() => setState(confirmed), []);
+  const confirm = useCallback(() => setState(withEntryConfirmed), []);
   useConfirmationPolling(client, unconfirmedSessionId(state), confirm);
   return { state, qrContent, setQrContent, submit, startOver };
 }
@@ -62,7 +62,7 @@ function unconfirmedSessionId(state: EntryState): string | null {
   return state.status === 'entered' && !state.isConfirmed ? state.sessionId : null;
 }
 
-function confirmed(state: EntryState): EntryState {
+function withEntryConfirmed(state: EntryState): EntryState {
   return state.status === 'entered' ? { ...state, isConfirmed: true } : state;
 }
 
