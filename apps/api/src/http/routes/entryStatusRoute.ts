@@ -24,6 +24,11 @@ export function registerEntryStatusRoute(
     if (status === undefined || status === null) {
       return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'SESSION_NOT_FOUND', message: 'No such entry.' });
     }
-    return status;
+    return {
+      sessionId: status.id,
+      state: status.state,
+      spot: status.spot,
+      entryConfirmedAt: status.entryConfirmedAt?.toISOString() ?? null,
+    };
   });
 }

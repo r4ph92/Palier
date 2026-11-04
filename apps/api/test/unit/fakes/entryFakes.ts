@@ -1,10 +1,10 @@
-import type { EntryRefusalCode, EntrySessionState, EntryStatusResponse } from '@palier/shared-types';
+import type { EntryRefusalCode, EntrySessionState } from '@palier/shared-types';
 import { EntryAdmission, type EntryLog } from '../../../src/domain/entries/EntryAdmission.ts';
 import { EntryEligibility, type EntryPolicy } from '../../../src/domain/entries/EntryEligibility.ts';
 import type { EntryGate, EntryGateRepository } from '../../../src/domain/entries/EntryGateRepository.ts';
 import { EntryRefusedError } from '../../../src/domain/entries/EntryRefusedError.ts';
 import type { GateCommander, OpenCommand } from '../../../src/domain/entries/GateCommander.ts';
-import type { OpenedSession, ParkingSessionRepository, SessionDraft } from '../../../src/domain/entries/ParkingSessionRepository.ts';
+import type { OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../../src/domain/entries/ParkingSessionRepository.ts';
 import type { AuthorizationRequest, PaymentAuthorizer } from '../../../src/domain/entries/PaymentAuthorizer.ts';
 import type { EntryRouteDependencies } from '../../../src/http/routes/entryRoutes.ts';
 import type { FakeDriverRepository } from '../fakeDriverRepository.ts';
@@ -60,7 +60,7 @@ interface FakeSession {
   readonly driverId: string;
   readonly spot: string;
   state: EntrySessionState;
-  entryConfirmedAt: string | null;
+  entryConfirmedAt: Date | null;
 }
 
 export class FakeParkingSessionRepository implements ParkingSessionRepository {
@@ -114,21 +114,21 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     return Promise.resolve();
   }
 
-  findForUser(sessionId: string, userId: string): Promise<EntryStatusResponse | null> {
+  findForUser(sessionId: string, userId: string): Promise<SessionStatus | null> {
     const session = this.#sessions.get(sessionId);
     if (session === undefined || session.driverId !== userId) {
       return Promise.resolve(null);
     }
     const [aisleCode = ''] = session.spot.split('-');
     const spot = { number: session.spot, levelCode: 'P1', aisleCode };
-    return Promise.resolve({ sessionId, state: session.state, spot, entryConfirmedAt: session.entryConfirmedAt });
+    return Promise.resolve({ id: sessionId, state: session.state, spot, entryConfirmedAt: session.entryConfirmedAt });
   }
 
   confirmEntry(sessionId: string, confirmedAt: Date): void {
     const session = this.#sessions.get(sessionId);
     if (session !== undefined) {
       session.state = 'ENTRY_CONFIRMED';
-      session.entryConfirmedAt = confirmedAt.toISOString();
+      session.entryConfirmedAt = confirmedAt;
     }
   }
 }

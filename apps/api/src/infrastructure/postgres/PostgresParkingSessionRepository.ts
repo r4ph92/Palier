@@ -1,7 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm';
-import type { EntrySessionState, EntryStatusResponse } from '@palier/shared-types';
+import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
-import type { OpenedSession, ParkingSessionRepository, SessionDraft } from '../../domain/entries/ParkingSessionRepository.ts';
+import type { OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../domain/entries/ParkingSessionRepository.ts';
 import { isActiveSessionConflict } from './activeSessionConflict.ts';
 import type { Database, Transaction } from './database.ts';
 import { parkingSession, spot } from './schema.ts';
@@ -22,12 +22,16 @@ interface SessionStatusRow extends Record<string, unknown> {
   readonly level_code: string;
 }
 
-function statusOf(row: SessionStatusRow): EntryStatusResponse {
+function spotOf(row: Pick<AssignedSpotRow, 'number' | 'level_code' | 'aisle_code'>): AssignedSpot {
+  return { number: row.number, levelCode: row.level_code, aisleCode: row.aisle_code };
+}
+
+function statusOf(row: SessionStatusRow): SessionStatus {
   return {
-    sessionId: row.id,
+    id: row.id,
     state: row.state,
-    spot: { number: row.number, levelCode: row.level_code, aisleCode: row.aisle_code },
-    entryConfirmedAt: row.entry_confirmed_at === null ? null : new Date(row.entry_confirmed_at).toISOString(),
+    spot: spotOf(row),
+    entryConfirmedAt: row.entry_confirmed_at === null ? null : new Date(row.entry_confirmed_at),
   };
 }
 
@@ -56,7 +60,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
     await this.#database.update(parkingSession).set({ paymentIntentId }).where(eq(parkingSession.id, sessionId));
   }
 
-  async findForUser(sessionId: string, userId: string): Promise<EntryStatusResponse | null> {
+  async findForUser(sessionId: string, userId: string): Promise<SessionStatus | null> {
     const rows = await this.#database.execute<SessionStatusRow>(sql`
       select ps.id, ps.state, ps.entry_confirmed_at, spot.number, aisle.code as aisle_code, level.code as level_code
       from parking_session ps
@@ -124,5 +128,5 @@ async function insertSession(tx: Transaction, draft: SessionDraft, assigned: Ass
   if (session === undefined) {
     throw new Error('The parking session was not created.');
   }
-  return { id: session.id, spot: { number: assigned.number, levelCode: assigned.level_code, aisleCode: assigned.aisle_code } };
+  return { id: session.id, spot: spotOf(assigned) };
 }
