@@ -3,6 +3,9 @@ import { useSignOut } from '../session/useSignOut.ts';
 import { ErrorNotice } from './ErrorNotice.tsx';
 import { LanguageToggle } from './LanguageToggle.tsx';
 
+// The product name, the same in both languages; each page names itself in its own eyebrow.
+const WORDMARK = 'Palier';
+
 interface AppHeaderProps {
   readonly onSignOut: (() => Promise<void>) | null;
 }
@@ -14,7 +17,9 @@ export function AppHeader({ onSignOut }: AppHeaderProps) {
       <a href="#content" className="skip-link">
         {text.app.skipToContent}
       </a>
-      <p className="app-name">{text.app.eyebrow}</p>
+      <p className="wordmark" lang="fr">
+        {WORDMARK}
+      </p>
       <nav className="app-actions" aria-label={text.app.name}>
         <LanguageToggle />
         {onSignOut === null ? null : <SignOutButton onSignOut={onSignOut} />}

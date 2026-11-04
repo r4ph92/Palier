@@ -46,8 +46,15 @@ body {
   padding-top: var(--space-medium);
 }
 
-.app-name,
-.eyebrow {
+.wordmark {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow,
+.fact-label {
   margin: 0;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -205,15 +212,11 @@ body {
 .fact {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-small);
   padding: var(--space-small) 0;
   border-bottom: 1px solid var(--line);
-}
-
-.fact-label {
-  font-family: var(--font-mono);
-  color: var(--muted);
 }
 
 .fact-value {
@@ -270,6 +273,18 @@ body {
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+}
+
+.stable-label {
+  display: inline-grid;
+}
+
+.stable-label > span {
+  grid-area: 1 / 1;
+}
+
+.stable-label-reserve {
+  visibility: hidden;
 }
 
 .primary-button[aria-disabled='true'] {

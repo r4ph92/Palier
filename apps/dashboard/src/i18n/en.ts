@@ -3,7 +3,6 @@ import type { Dictionary } from './fr.ts';
 export const en: Dictionary = {
   app: {
     name: 'Palier dashboard',
-    eyebrow: 'Palier · Dashboard',
     skipToContent: 'Skip to content',
     signOut: 'Sign out',
     signingOut: 'Signing out…',
@@ -52,6 +51,7 @@ export const en: Dictionary = {
     back: 'Back to home',
   },
   failure: {
+    eyebrow: 'Network error',
     title: 'Palier cannot be reached',
     retry: 'Try again',
   },

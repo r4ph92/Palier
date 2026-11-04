@@ -1,7 +1,6 @@
 export const fr = {
   app: {
     name: 'Tableau de bord Palier',
-    eyebrow: 'Palier · Tableau de bord',
     skipToContent: 'Aller au contenu',
     signOut: 'Se déconnecter',
     signingOut: 'Déconnexion…',
@@ -50,6 +49,7 @@ export const fr = {
     back: 'Retour à l’accueil',
   },
   failure: {
+    eyebrow: 'Erreur réseau',
     title: 'Palier est injoignable',
     retry: 'Réessayer',
   },

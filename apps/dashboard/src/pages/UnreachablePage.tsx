@@ -5,7 +5,7 @@ export function UnreachablePage({ onRetry }: { readonly onRetry: () => Promise<v
   const text = useText();
   return (
     <>
-      <PageHeader eyebrow={text.app.eyebrow} title={text.failure.title} />
+      <PageHeader eyebrow={text.failure.eyebrow} title={text.failure.title} />
       <p className="lead">{text.errors.UNKNOWN}</p>
       <button type="button" className="primary-button" onClick={() => void onRetry()}>
         {text.failure.retry}
