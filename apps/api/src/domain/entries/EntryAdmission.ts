@@ -39,9 +39,10 @@ export class EntryAdmission {
     }
     const run: EntryRun = { entry, payments, log };
     const session = await this.#openSession(entry);
-    const held: HeldSession = { sessionId: session.id, paymentIntentId: await this.#authorize(run, session.id) };
+    const paymentIntentId = await this.#authorize(run, session.id);
+    const held: HeldSession = { sessionId: session.id, paymentIntentId };
     if ((await this.#attachHold(run, held)) === 'cancelled') {
-      await this.#refuseCancelledEntry(run, held);
+      throw await this.#refuseCancelledEntry(run, held);
     }
     await this.#openBarrier(run, held);
     return { sessionId: session.id, spot: session.spot, barrierOpened: true };
@@ -88,10 +89,10 @@ export class EntryAdmission {
   }
 
   // An entry slower than the confirmation window was cancelled by the job: its spot is already free, the barrier stays shut.
-  async #refuseCancelledEntry(run: EntryRun, held: HeldSession): Promise<never> {
+  async #refuseCancelledEntry(run: EntryRun, held: HeldSession): Promise<EntryRefusedError> {
     run.log.warn(held, 'entry cancelled before its hold was recorded');
     await this.#releaseHold(run, held.paymentIntentId);
-    throw new EntryRefusedError('PAYMENTS_UNAVAILABLE');
+    return new EntryRefusedError('PAYMENTS_UNAVAILABLE');
   }
 
   async #openBarrier(run: EntryRun, held: HeldSession): Promise<void> {
@@ -118,7 +119,7 @@ export class EntryAdmission {
     }
   }
 
-  // The cancelled session keeps its hold marked for release, so the cancellation job retries one Stripe did not release here.
+  // The cancelled session keeps its hold marked for release: the job releases it again after an immediate release here (Stripe answers already canceled, harmless) and retries one that failed.
   async #releaseHold({ payments, log }: EntryRun, paymentIntentId: string): Promise<void> {
     try {
       const release = await payments.cancel(paymentIntentId);
