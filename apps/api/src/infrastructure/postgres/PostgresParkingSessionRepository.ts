@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
-import type { OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../domain/entries/ParkingSessionRepository.ts';
+import type { HoldAttachment, OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../domain/entries/ParkingSessionRepository.ts';
 import { isActiveSessionConflict } from './activeSessionConflict.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
@@ -57,13 +57,17 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
     }
   }
 
-  async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<boolean> {
-    const rows = await this.#database.execute<{ is_created: boolean }>(sql`
+  async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment> {
+    const rows = await this.#database.execute<{ state: EntrySessionState }>(sql`
       update parking_session
-      set payment_intent_id = ${paymentIntentId}, hold_release_pending = state <> 'CREATED'
-      where id = ${sessionId}
-      returning state = 'CREATED' as is_created`);
-    return rows[0]?.is_created === true;
+      set payment_intent_id = ${paymentIntentId}, hold_release_pending = (state = 'CANCELLED')
+      where id = ${sessionId} and state in ('CREATED', 'CANCELLED')
+      returning state`);
+    const state = rows[0]?.state;
+    if (state === undefined) {
+      throw new Error(`Session ${sessionId} is neither awaiting its hold nor cancelled: its hold was not recorded.`);
+    }
+    return state === 'CANCELLED' ? 'cancelled' : 'attached';
   }
 
   async findForUser(sessionId: string, userId: string): Promise<SessionStatus | null> {

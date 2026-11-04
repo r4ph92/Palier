@@ -3,7 +3,7 @@ import type { EligibleEntry } from './EntryEligibility.ts';
 import type { EntryLog } from './EntryLog.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import type { GateCommander } from './GateCommander.ts';
-import type { OpenedSession, ParkingSessionRepository } from './ParkingSessionRepository.ts';
+import type { HoldAttachment, OpenedSession, ParkingSessionRepository } from './ParkingSessionRepository.ts';
 import type { PaymentAuthorizer } from './PaymentAuthorizer.ts';
 
 export interface EntryAdmissionDependencies {
@@ -39,8 +39,11 @@ export class EntryAdmission {
     }
     const run: EntryRun = { entry, payments, log };
     const session = await this.#openSession(entry);
-    const paymentIntentId = await this.#authorize(run, session.id);
-    await this.#openBarrier(run, { sessionId: session.id, paymentIntentId });
+    const held: HeldSession = { sessionId: session.id, paymentIntentId: await this.#authorize(run, session.id) };
+    if ((await this.#attachHold(run, held)) === 'cancelled') {
+      await this.#refuseCancelledEntry(run, held);
+    }
+    await this.#openBarrier(run, held);
     return { sessionId: session.id, spot: session.spot, barrierOpened: true };
   }
 
@@ -74,24 +77,36 @@ export class EntryAdmission {
     }
   }
 
-  async #openBarrier(run: EntryRun, { sessionId, paymentIntentId }: HeldSession): Promise<void> {
+  async #attachHold(run: EntryRun, held: HeldSession): Promise<HoldAttachment> {
     try {
-      await this.#attachHold(sessionId, paymentIntentId);
-      await this.#dependencies.gateCommander.open({ gateId: run.entry.gate.id, lotId: run.entry.gate.lotId, sessionId });
+      return await this.#dependencies.sessions.attachPaymentIntent(held.sessionId, held.paymentIntentId);
     } catch (error) {
-      run.log.error({ err: error, sessionId, paymentIntentId }, 'entry barrier was not opened');
-      await this.#releaseSpot(sessionId, run.log);
-      await this.#releaseHold(run, paymentIntentId);
+      run.log.error({ err: error, ...held }, 'entry hold was not recorded');
+      await this.#undo(run, held);
       throw error;
     }
   }
 
-  // An entry slower than the confirmation window was cancelled by the job: the barrier must not open for it.
-  async #attachHold(sessionId: string, paymentIntentId: string): Promise<void> {
-    const isStillCreated = await this.#dependencies.sessions.attachPaymentIntent(sessionId, paymentIntentId);
-    if (!isStillCreated) {
-      throw new EntryRefusedError('PAYMENTS_UNAVAILABLE');
+  // An entry slower than the confirmation window was cancelled by the job: its spot is already free, the barrier stays shut.
+  async #refuseCancelledEntry(run: EntryRun, held: HeldSession): Promise<never> {
+    run.log.warn(held, 'entry cancelled before its hold was recorded');
+    await this.#releaseHold(run, held.paymentIntentId);
+    throw new EntryRefusedError('PAYMENTS_UNAVAILABLE');
+  }
+
+  async #openBarrier(run: EntryRun, held: HeldSession): Promise<void> {
+    try {
+      await this.#dependencies.gateCommander.open({ gateId: run.entry.gate.id, lotId: run.entry.gate.lotId, sessionId: held.sessionId });
+    } catch (error) {
+      run.log.error({ err: error, ...held }, 'entry barrier was not opened');
+      await this.#undo(run, held);
+      throw error;
     }
+  }
+
+  async #undo(run: EntryRun, { sessionId, paymentIntentId }: HeldSession): Promise<void> {
+    await this.#releaseSpot(sessionId, run.log);
+    await this.#releaseHold(run, paymentIntentId);
   }
 
   // Each undo step only logs its own failure: the next step still runs and the driver gets the original error.

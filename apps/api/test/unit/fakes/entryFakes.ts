@@ -5,7 +5,7 @@ import type { EntryGateRepository } from '../../../src/domain/entries/EntryGateR
 import type { EntryLog } from '../../../src/domain/entries/EntryLog.ts';
 import { EntryRefusedError } from '../../../src/domain/entries/EntryRefusedError.ts';
 import type { GateCommander, OpenCommand } from '../../../src/domain/entries/GateCommander.ts';
-import type { OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../../src/domain/entries/ParkingSessionRepository.ts';
+import type { HoldAttachment, OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../../src/domain/entries/ParkingSessionRepository.ts';
 import type { AuthorizationRequest, HoldRelease, PaymentAuthorizer } from '../../../src/domain/entries/PaymentAuthorizer.ts';
 import type { EntryRouteDependencies } from '../../../src/http/routes/entryRoutes.ts';
 import type { FakeDriverRepository } from '../fakeDriverRepository.ts';
@@ -64,10 +64,14 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     return Promise.resolve({ id, spot: { number: spot, levelCode: 'P1', aisleCode } });
   }
 
-  attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<boolean> {
+  attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment> {
     this.#journal.push('attach-intent');
+    const state = this.#sessions.get(sessionId)?.state;
+    if (state !== 'CREATED' && state !== 'CANCELLED') {
+      return Promise.reject(new Error('parking_session hold not recorded'));
+    }
     this.paymentIntents.set(sessionId, paymentIntentId);
-    return Promise.resolve(this.#sessions.get(sessionId)?.state === 'CREATED');
+    return Promise.resolve(state === 'CANCELLED' ? 'cancelled' : 'attached');
   }
 
   cancel(sessionId: string): Promise<void> {
@@ -75,7 +79,7 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     if (this.cancelFails) {
       return Promise.reject(new Error('parking_session update failed'));
     }
-    this.cancelByJob(sessionId);
+    this.cancelIfCreated(sessionId);
     return Promise.resolve();
   }
 
@@ -89,8 +93,8 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     return Promise.resolve({ id: sessionId, state: session.state, spot, entryConfirmedAt: session.entryConfirmedAt });
   }
 
-  // Mirrors the SQL guard: only a CREATED session is cancelled and gives its spot back. The cancellation job does the same.
-  cancelByJob(sessionId: string): void {
+  // Mirrors the SQL guard shared by the rollback and the cancellation job: only a CREATED session is cancelled and gives its spot back.
+  cancelIfCreated(sessionId: string): void {
     const session = this.#sessions.get(sessionId);
     if (session?.state === 'CREATED') {
       session.state = 'CANCELLED';
