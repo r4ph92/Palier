@@ -1,8 +1,7 @@
 import type { SupportedLanguage } from './i18n';
+import { NARROW_NO_BREAK_SPACE, NO_BREAK_SPACE } from './spaces';
 
 const CENTS_PER_DOLLAR = 100;
-const NO_BREAK_SPACE = '\u00A0';
-const NARROW_NO_BREAK_SPACE = '\u202F';
 const THOUSANDS = /\B(?=(\d{3})+(?!\d))/g;
 
 // Written by hand like the clock time: Hermes' Intl on iOS does not follow the backlog's 9,75 $ / $9.75 convention.

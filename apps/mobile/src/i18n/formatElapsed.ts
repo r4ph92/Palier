@@ -1,7 +1,7 @@
 import type { SupportedLanguage } from './i18n';
+import { NO_BREAK_SPACE } from './spaces';
 
 const MINUTES_PER_HOUR = 60;
-const NO_BREAK_SPACE = '\u00A0';
 
 // 3 h 15 in French and 3 h 15 min in English; under an hour, minutes only.
 export function formatElapsed(elapsedMinutes: number, language: SupportedLanguage): string {
