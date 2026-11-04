@@ -1,0 +1,34 @@
+/* Mirrors apps/mobile/src/theme/tokens.ts; test/themeTokens.test.ts fails when the two drift apart. */
+:root {
+  --canvas: #f8f9f6;
+  --sunken: #e4e6e0;
+  --ink: #191c1a;
+  --muted: #4b534d;
+  --line: #d2d6ce;
+  --free: #2e7d4f;
+  --danger: #9c3a2a;
+  --on-ink: #f8f9f6;
+  --font-text: 'Archivo', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --space-extra-small: 4px;
+  --space-small: 8px;
+  --space-medium: 16px;
+  --space-large: 24px;
+  --space-extra-large: 40px;
+  --touch-target: 44px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #121513;
+    --sunken: #242925;
+    --ink: #e7eae4;
+    --muted: #aeb6ae;
+    --line: #2c322d;
+    --free: #63b487;
+    --danger: #d9705e;
+    --on-ink: #121513;
+    color-scheme: dark;
+  }
+}

@@ -1,0 +1,69 @@
+export const fr = {
+  app: {
+    name: 'Tableau de bord Palier',
+    eyebrow: 'Palier · Tableau de bord',
+    skipToContent: 'Aller au contenu',
+    signOut: 'Se déconnecter',
+    signingOut: 'Déconnexion…',
+    loading: 'Chargement…',
+  },
+  language: {
+    switchTo: 'English',
+    switchToCode: 'en',
+    switchLabel: 'Afficher le tableau de bord en anglais',
+  },
+  signIn: {
+    eyebrow: 'Tableau de bord',
+    title: 'Connexion',
+    providersLater: 'La connexion avec Google ou Apple n’est pas encore offerte.',
+  },
+  createOperator: {
+    eyebrow: 'Premier pas',
+    title: 'Créer votre opérateur',
+    greeting: 'Bonjour %{firstName}.',
+    intro: 'Vous n’êtes membre d’aucun opérateur. Indiquez la raison sociale de votre entreprise pour en créer un.',
+    legalNameLabel: 'Raison sociale',
+    legalNameHint: 'De 2 à 120 caractères, telle qu’inscrite au registre.',
+    submit: 'Créer l’opérateur',
+    submitting: 'Création…',
+  },
+  home: {
+    eyebrow: 'Opérateur',
+    stripeLabel: 'Compte Stripe',
+    lotsTitle: 'Stationnements',
+    lotsLoading: 'Chargement des stationnements…',
+    lotsEmpty: 'Aucun stationnement pour l’instant.',
+  },
+  kycStatus: {
+    NOT_STARTED: 'Non commencé',
+    PENDING: 'En attente',
+    VERIFIED: 'Vérifié',
+  },
+  lot: {
+    eyebrow: 'Stationnement',
+    online: 'En ligne',
+    offline: 'Hors ligne',
+    back: 'Retour aux stationnements',
+  },
+  notFound: {
+    eyebrow: 'Erreur 404',
+    title: 'Introuvable',
+    message: 'Cette page n’existe pas ou ne vous est pas accessible.',
+    back: 'Retour à l’accueil',
+  },
+  failure: {
+    title: 'Palier est injoignable',
+    retry: 'Réessayer',
+  },
+  errors: {
+    UNAUTHORIZED: 'Votre session a pris fin. Connectez-vous de nouveau.',
+    CSRF_HEADER_MISSING: 'Cette demande a été refusée. Rechargez la page.',
+    LEGAL_NAME_INVALID: 'La raison sociale doit compter de 2 à 120 caractères.',
+    OPERATOR_EXISTS: 'Vous êtes déjà membre d’un opérateur.',
+    NO_OPERATOR: 'Créez d’abord votre opérateur.',
+    LOT_NOT_FOUND: 'Ce stationnement est introuvable.',
+    UNKNOWN: 'Une erreur est survenue. Réessayez dans un instant.',
+  },
+};
+
+export type Dictionary = typeof fr;
