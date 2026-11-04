@@ -105,6 +105,23 @@ describe('the current session while signed in', () => {
 
     expect(screen.getByText('Montant à ce jour : 9,75 $', visibleText)).toBeOnTheScreen();
     expect(screen.getByText('Mis à jour à 21 h 17', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('Hors ligne, montant au dernier relevé')).toBeOnTheScreen();
+  });
+
+  it('clears the offline mark once a read works again', async () => {
+    const parkingSession = new FakeParkingSessionClient(julieAtParkingDemo());
+    await relaunchAsJulie(parkingSession);
+    await screen.findByText('Montant à ce jour : 9,75 $', visibleText);
+    parkingSession.failure = new PalierUnreachableError('fake');
+    await advance(SESSION_REFRESH_MILLISECONDS);
+    parkingSession.failure = null;
+    parkingSession.session = julieAtParkingDemo({ elapsedMinutes: 196, amountCents: 1050 });
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTimeAsync });
+
+    await user.press(screen.getByRole('button', { name: 'Réessayer' }));
+
+    expect(await screen.findByText('Montant à ce jour : 10,50 $', visibleText)).toBeOnTheScreen();
+    expect(screen.queryByText('Hors ligne, montant au dernier relevé')).not.toBeOnTheScreen();
   });
 
   it('switches to the session only once: a session found later relabels the tab without moving Julie', async () => {

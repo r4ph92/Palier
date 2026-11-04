@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { StateMark } from '../components/StateMark';
 import { TextButton } from '../components/TextButton';
 import { i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
@@ -25,6 +26,19 @@ export function SessionNotice({ state, onRetry }: SessionNoticeProps) {
     default:
       return null;
   }
+}
+
+// On the session screen after a missed refresh: the figures stay, marked as those of the last read.
+export function OfflineNotice({ onRetry }: { readonly onRetry: () => void }) {
+  const colors = useColors();
+  return (
+    <View style={styles.withAction}>
+      <StateMark color={colors.muted}>
+        <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('session.offline')}</Text>
+      </StateMark>
+      <TextButton label={i18n.t('scan.retry')} onPress={onRetry} />
+    </View>
+  );
 }
 
 function MutedLine({ text }: { readonly text: string }) {

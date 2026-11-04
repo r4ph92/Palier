@@ -13,7 +13,10 @@ export type CurrentParkingSessionState =
   // Palier could not be reached and no session is known yet.
   | { readonly status: 'unknown' }
   | { readonly status: 'none' }
-  | { readonly status: 'current'; readonly session: CurrentParkingSession; readonly readAt: Date };
+  // isStale: the last refresh missed, so the session and its amount are those read at readAt.
+  | { readonly status: 'current'; readonly session: CurrentParkingSession; readonly readAt: Date; readonly isStale: boolean };
+
+export type CurrentParkingSessionReading = Extract<CurrentParkingSessionState, { readonly status: 'current' }>;
 
 export interface CurrentParkingSessionController {
   readonly state: CurrentParkingSessionState;
@@ -61,7 +64,7 @@ async function read(client: ParkingSessionClient, { tracker, setState, onFirstSe
   try {
     const session = await client.current();
     if (readNumber === tracker.latest) {
-      setState(session === null ? NONE : { status: 'current', session, readAt: new Date() });
+      setState(session === null ? NONE : { status: 'current', session, readAt: new Date(), isStale: false });
       announceFirstAnswer(tracker, session, onFirstSession.current);
     }
   } catch (error) {
@@ -84,7 +87,7 @@ function stateAfterFailure(previous: CurrentParkingSessionState, error: unknown)
     return previous;
   }
   if (error instanceof PalierUnreachableError) {
-    return previous.status === 'current' ? previous : UNKNOWN;
+    return previous.status === 'current' ? { ...previous, isStale: true } : UNKNOWN;
   }
   throw error;
 }

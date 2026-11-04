@@ -7,25 +7,29 @@ import { formatClockTime } from '../i18n/formatClockTime';
 import { formatElapsed } from '../i18n/formatElapsed';
 import { formatMoney } from '../i18n/formatMoney';
 import { currentLanguage, i18n } from '../i18n/i18n';
+import type { CurrentParkingSessionReading } from '../parkingSessions/useCurrentParkingSession';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
+import { OfflineNotice } from './SessionNotice';
 
 interface CurrentParkingSessionScreenProps {
-  readonly session: CurrentParkingSession;
-  // When the app last heard from Palier, so a driver without signal knows how old the amount is.
-  readonly readAt: Date;
+  // Carries when the app last heard from Palier, so a driver without signal knows how old the amount is.
+  readonly reading: CurrentParkingSessionReading;
+  readonly onRetry: () => void;
 }
 
 // Everything shown comes from the API, priced by its clock; the screen never counts time on its own.
-export function CurrentParkingSessionScreen({ session, readAt }: CurrentParkingSessionScreenProps) {
+export function CurrentParkingSessionScreen({ reading, onRetry }: CurrentParkingSessionScreenProps) {
   const colors = useColors();
   const language = currentLanguage();
+  const { session, readAt } = reading;
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader eyebrow={i18n.t('session.eyebrow')} title={session.lotName} />
         <SessionSpot session={session} />
+        {reading.isStale ? <OfflineNotice onRetry={onRetry} /> : null}
         <SessionAmount session={session} />
         <View>
           <FigureRow lead={i18n.t('session.enteredLead')} value={formatClockTime(new Date(session.enteredAt), language)} />

@@ -33,7 +33,7 @@ export function ScanTab({ entryClient, currentSession, onAddPlate, onAddCard }: 
     };
     return <ScanScreen entry={entry} notice={<SessionNotice state={state} onRetry={refresh} />} onDone={onDone} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
   }
-  return <CurrentParkingSessionScreen session={state.session} readAt={state.readAt} />;
+  return <CurrentParkingSessionScreen reading={state} onRetry={refresh} />;
 }
 
 function isEntryInProgress(state: EntryState): boolean {

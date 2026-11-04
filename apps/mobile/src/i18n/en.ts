@@ -119,6 +119,7 @@ export const en: Translations = {
     capLead: 'Daily cap: ',
     pending: 'Entry awaiting confirmation',
     updatedAt: 'Updated %{time}',
+    offline: 'Offline, amount as of last check',
   },
   tabs: {
     lots: 'Parking lots',

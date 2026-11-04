@@ -1,5 +1,5 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
-import { render, screen } from '@testing-library/react-native';
+import { render, screen, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { CurrentParkingSessionScreen } from '../src/screens/CurrentParkingSessionScreen';
@@ -9,13 +9,15 @@ import { visibleText } from './visibleText';
 
 const readAt = new Date(2026, 10, 4, 21, 17);
 
-async function showSession(session: CurrentParkingSession = julieAtParkingDemo(), language: SupportedLanguage = 'fr') {
+async function showSession(session: CurrentParkingSession = julieAtParkingDemo(), language: SupportedLanguage = 'fr', isStale = false) {
   applyLanguage(language);
+  const onRetry = jest.fn();
   await render(
     <SafeAreaProvider initialMetrics={IPHONE_MINI_METRICS}>
-      <CurrentParkingSessionScreen session={session} readAt={readAt} />
+      <CurrentParkingSessionScreen reading={{ status: 'current', session, readAt, isStale }} onRetry={onRetry} />
     </SafeAreaProvider>,
   );
+  return onRetry;
 }
 
 describe('CurrentParkingSessionScreen', () => {
@@ -63,5 +65,28 @@ describe('CurrentParkingSessionScreen', () => {
     await showSession();
 
     expect(screen.getByText('Mis à jour à 21 h 17', visibleText)).toBeOnTheScreen();
+  });
+
+  it('says nothing about the network while the last read worked', async () => {
+    await showSession();
+
+    expect(screen.queryByText('Hors ligne, montant au dernier relevé')).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Réessayer' })).not.toBeOnTheScreen();
+  });
+
+  it('marks the amount as the last read after a missed refresh, and reads again on Réessayer', async () => {
+    const onRetry = await showSession(julieAtParkingDemo(), 'fr', true);
+
+    expect(screen.getByText('Hors ligne, montant au dernier relevé')).toBeOnTheScreen();
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Réessayer' }));
+
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('says it is offline in English too', async () => {
+    await showSession(julieAtParkingDemo(), 'en', true);
+
+    expect(screen.getByText('Offline, amount as of last check')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeOnTheScreen();
   });
 });

@@ -117,6 +117,7 @@ export const fr = {
     capLead: 'Plafond\u00A0: ',
     pending: 'Entrée en attente de confirmation',
     updatedAt: 'Mis à jour à %{time}',
+    offline: 'Hors ligne, montant au dernier relevé',
   },
   tabs: {
     lots: 'Stationnements',
