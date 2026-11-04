@@ -34,25 +34,36 @@ describe('pollCommands', () => {
   it('asks for the commands after the last one shown and adds them', async () => {
     const api = fakeApi({ status: 200, body: [sameMillisecondA] });
 
-    expect(await pollCommands(api, DEVICE_KEY, [first])).toEqual([first, sameMillisecondA]);
+    expect(await pollCommands(api, DEVICE_KEY, [first])).toEqual({ commands: [first, sameMillisecondA], isKeyRefused: false });
     expect(api.fetchCommands).toHaveBeenCalledWith(DEVICE_KEY, { issuedAt: first.issuedAt, id: first.id });
   });
 
   it('does not call the API until the key has the shape of a device key', async () => {
     const api = fakeApi({ status: 200, body: [first] });
 
-    expect(await pollCommands(api, 'short', [])).toEqual([]);
+    expect(await pollCommands(api, 'short', [])).toEqual({ commands: [], isKeyRefused: false });
     expect(api.fetchCommands).not.toHaveBeenCalled();
   });
 
   it.each([
-    ['a refused key', { status: 401, body: null }],
     ['an unreachable API', { status: 0, body: null }],
     ['a body that is not a list', { status: 200, body: { unexpected: true } }],
   ])('keeps the shown commands on %s', async (_case, response) => {
     const known = [first];
 
-    expect(await pollCommands(fakeApi(response), DEVICE_KEY, known)).toBe(known);
+    const poll = await pollCommands(fakeApi(response), DEVICE_KEY, known);
+
+    expect(poll.commands).toBe(known);
+    expect(poll.isKeyRefused).toBe(false);
+  });
+
+  it.each([401, 403])('reports the key as refused on %i and keeps the shown commands', async (status) => {
+    const known = [first];
+
+    const poll = await pollCommands(fakeApi({ status, body: null }), DEVICE_KEY, known);
+
+    expect(poll).toEqual({ commands: known, isKeyRefused: true });
+    expect(poll.commands).toBe(known);
   });
 });
 

@@ -98,17 +98,29 @@ function renderPassages() {
   elementById('passages').replaceChildren(...items);
 }
 
+// The list is a live region: rebuilding it with the same lines would make a screen reader read them all again.
+let renderedCommandLines = '';
+
 function renderCommands() {
   elementById('no-command').hidden = state.commands.length > 0;
-  const items = [...state.commands].reverse().map((command) => {
-    const item = document.createElement('li');
-    item.textContent = translate(state.language, 'commandLine', {
+  const lines = [...state.commands].reverse().map((command) =>
+    translate(state.language, 'commandLine', {
       command: translate(state.language, 'commandOPEN'),
       time: formatPassageTime(new Date(command.issuedAt), state.language),
-    });
-    return item;
-  });
-  elementById('commands').replaceChildren(...items);
+    }),
+  );
+  if (lines.join('\n') === renderedCommandLines) {
+    return;
+  }
+  renderedCommandLines = lines.join('\n');
+  elementById('commands').replaceChildren(...lines.map(commandItem));
+}
+
+/** @param {string} line */
+function commandItem(line) {
+  const item = document.createElement('li');
+  item.textContent = line;
+  return item;
 }
 
 // An answer for a key the field no longer holds is dropped, so one gate's commands never show under another.
@@ -119,13 +131,24 @@ async function refreshCommands() {
   state.isPolling = true;
   const deviceKey = state.deviceKey;
   try {
-    const commands = await pollCommands(api, deviceKey, state.commands);
-    if (deviceKey === state.deviceKey && commands !== state.commands) {
-      state.commands = commands;
-      renderCommands();
+    const poll = await pollCommands(api, deviceKey, state.commands);
+    if (deviceKey === state.deviceKey) {
+      applyPoll(poll);
     }
   } finally {
     state.isPolling = false;
+  }
+}
+
+/** @param {import('./commandFeed.js').PollResult} poll */
+function applyPoll(poll) {
+  if (poll.isKeyRefused && state.message?.key !== 'keyRefused') {
+    state.message = { key: 'keyRefused', isError: true };
+    renderMessage();
+  }
+  if (poll.commands !== state.commands) {
+    state.commands = poll.commands;
+    renderCommands();
   }
 }
 

@@ -5,6 +5,7 @@ import { DEVICE_KEY_SHAPE } from './loopPress.js';
 /** @typedef {import('./gateApi.js').CommandCursor} CommandCursor */
 
 const OK = 200;
+const KEY_REFUSED_STATUSES = [401, 403];
 // The barrier must look like it reacts to the scan: the console asks for new commands every second.
 export const COMMAND_POLL_MILLISECONDS = 1000;
 
@@ -29,20 +30,25 @@ export function mergeCommands(known, incoming) {
   return [...known, ...incoming.filter((command) => !knownIds.has(command.id))];
 }
 
+/** @typedef {{ commands: readonly GateCommand[], isKeyRefused: boolean }} PollResult */
+
 /**
  * A refused or unreachable poll keeps what is shown; the next poll tries again.
  * @param {CommandApi} api
  * @param {string} deviceKey
  * @param {readonly GateCommand[]} known
- * @returns {Promise<readonly GateCommand[]>}
+ * @returns {Promise<PollResult>}
  */
 export async function pollCommands(api, deviceKey, known) {
   if (!DEVICE_KEY_SHAPE.test(deviceKey)) {
-    return known;
+    return { commands: known, isKeyRefused: false };
   }
   const response = await api.fetchCommands(deviceKey, cursorOf(known));
-  if (response.status !== OK || !Array.isArray(response.body)) {
-    return known;
+  if (KEY_REFUSED_STATUSES.includes(response.status)) {
+    return { commands: known, isKeyRefused: true };
   }
-  return mergeCommands(known, /** @type {GateCommand[]} */ (response.body));
+  if (response.status !== OK || !Array.isArray(response.body)) {
+    return { commands: known, isKeyRefused: false };
+  }
+  return { commands: mergeCommands(known, /** @type {GateCommand[]} */ (response.body)), isKeyRefused: false };
 }
