@@ -99,9 +99,9 @@ function VehicleRow({ vehicle, controller, onEdit }: VehicleRowProps) {
   );
 }
 
-// VoiceOver names the plate it edits.
+// The first action of the line, so it starts under the plate; VoiceOver names the plate it edits.
 function EditButton({ plate, onEdit }: { readonly plate: string; readonly onEdit: () => void }) {
-  return <TextButton label={i18n.t('vehicles.edit')} accessibilityLabel={i18n.t('vehicles.editLabel', { plate })} onPress={onEdit} />;
+  return <TextButton label={i18n.t('vehicles.edit')} accessibilityLabel={i18n.t('vehicles.editLabel', { plate })} align="start" onPress={onEdit} />;
 }
 
 function VehicleLabel({ vehicle }: { readonly vehicle: Vehicle }) {

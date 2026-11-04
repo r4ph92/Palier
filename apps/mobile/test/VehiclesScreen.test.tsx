@@ -126,5 +126,11 @@ describe('VehiclesScreen', () => {
       expect(screen.getByRole('button', { name: 'Use as default' })).toBeOnTheScreen();
       expect(screen.getByRole('button', { name: 'Edit ABC 123' })).toBeOnTheScreen();
     });
+
+    it('starts the short Edit label at the left edge, under the plate', async () => {
+      await renderVehiclesScreen(new FakeVehicleClient([abc123]), 'en');
+
+      expect(await screen.findByText('Edit')).toHaveStyle({ left: 0 });
+    });
   });
 });

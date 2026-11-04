@@ -10,11 +10,13 @@ interface TextButtonProps {
   readonly isBusy?: boolean;
   // Names the button for VoiceOver when the shown word alone is ambiguous, like « Modifier » in a list.
   readonly accessibilityLabel?: string;
+  // 'start' when the button begins a line, so a short label lines up with the text above it.
+  readonly align?: 'start' | 'end';
 }
 
 const BUSY_OPACITY = 0.6;
 
-export function TextButton({ label, busyLabel = label, onPress, isBusy = false, accessibilityLabel }: TextButtonProps) {
+export function TextButton({ label, busyLabel = label, onPress, isBusy = false, accessibilityLabel, align = 'end' }: TextButtonProps) {
   const shownLabel = isBusy ? busyLabel : label;
   const longerLabel = busyLabel.length > label.length ? busyLabel : label;
   return (
@@ -24,21 +26,21 @@ export function TextButton({ label, busyLabel = label, onPress, isBusy = false, 
       accessibilityState={{ busy: isBusy }}
       disabled={isBusy}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, { opacity: isBusy || pressed ? BUSY_OPACITY : 1 }]}
+      style={({ pressed }) => [styles.button, align === 'start' && styles.start, { opacity: isBusy || pressed ? BUSY_OPACITY : 1 }]}
     >
-      <ButtonLabel shown={shownLabel} longest={longerLabel} />
+      <ButtonLabel shown={shownLabel} longest={longerLabel} align={align} />
     </Pressable>
   );
 }
 
-function ButtonLabel({ shown, longest }: { readonly shown: string; readonly longest: string }) {
+function ButtonLabel({ shown, longest, align }: { readonly shown: string; readonly longest: string; readonly align: 'start' | 'end' }) {
   const colors = useColors();
   return (
     <View>
       <Text accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[typography.textButton, styles.widthKeeper]}>
         {longest}
       </Text>
-      <Text style={[typography.textButton, styles.shownLabel, { color: colors.ink }]}>{shown}</Text>
+      <Text style={[typography.textButton, styles.shownLabel, align === 'start' ? styles.labelStart : styles.labelEnd, { color: colors.ink }]}>{shown}</Text>
     </View>
   );
 }
@@ -51,5 +53,8 @@ const styles = StyleSheet.create({
     minWidth: MINIMUM_TOUCH_TARGET,
   },
   widthKeeper: { opacity: 0 },
-  shownLabel: { position: 'absolute', right: 0 },
+  start: { alignItems: 'flex-start' },
+  shownLabel: { position: 'absolute' },
+  labelStart: { left: 0 },
+  labelEnd: { right: 0 },
 });
