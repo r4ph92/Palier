@@ -14,7 +14,7 @@ async function showSession(session: CurrentParkingSession = julieAtParkingDemo()
   const onRetry = jest.fn();
   await render(
     <SafeAreaProvider initialMetrics={IPHONE_MINI_METRICS}>
-      <CurrentParkingSessionScreen reading={{ status: 'current', session, readAt, isStale }} onRetry={onRetry} />
+      <CurrentParkingSessionScreen reading={{ status: 'current', session, readAt, isStale }} progress={{ isReading: false, missedReads: 1 }} onRetry={onRetry} />
     </SafeAreaProvider>,
   );
   return onRetry;

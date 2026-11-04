@@ -1,4 +1,5 @@
 import { useEffect, type ReactElement } from 'react';
+import { assertNever } from '../assertNever';
 import type { EntryClient } from '../api/EntryClient';
 import { LoadingState } from '../components/LoadingState';
 import type { TabLabels } from '../components/TabBar';
@@ -25,7 +26,7 @@ export function scanTabLabels(state: CurrentParkingSessionState): TabLabels {
 // Otherwise the tab waits for Palier's first answer, then shows the current session or the form.
 export function ScanTab({ entryClient, currentSession, onAddPlate, onAddCard }: ScanTabProps) {
   const entry = useEntry(entryClient);
-  const { state, refresh } = currentSession;
+  const { state, refresh, ...progress } = currentSession;
   useRefreshAsEntryProgresses(entry.state, refresh);
   const sessionScreen = isEntryInProgress(entry.state) ? null : sessionScreenFor(currentSession);
   if (sessionScreen !== null) {
@@ -35,11 +36,11 @@ export function ScanTab({ entryClient, currentSession, onAddPlate, onAddCard }: 
     entry.startOver();
     refresh();
   };
-  return <ScanScreen entry={entry} notice={<SessionNotice state={state} onRetry={refresh} />} onDone={onDone} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
+  return <ScanScreen entry={entry} notice={<SessionNotice state={state} progress={progress} onRetry={refresh} />} onDone={onDone} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
 }
 
 // What replaces the scan form: nothing yet known, or a current session.
-function sessionScreenFor({ state, refresh }: CurrentParkingSessionController): ReactElement | null {
+function sessionScreenFor({ state, refresh, ...progress }: CurrentParkingSessionController): ReactElement | null {
   switch (state.status) {
     case 'loading':
       return (
@@ -48,9 +49,12 @@ function sessionScreenFor({ state, refresh }: CurrentParkingSessionController): 
         </ScanFrame>
       );
     case 'current':
-      return <CurrentParkingSessionScreen reading={state} onRetry={refresh} />;
-    default:
+      return <CurrentParkingSessionScreen reading={state} progress={progress} onRetry={refresh} />;
+    case 'none':
+    case 'unknown':
       return null;
+    default:
+      return assertNever(state);
   }
 }
 

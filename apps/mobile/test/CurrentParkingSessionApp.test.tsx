@@ -1,4 +1,5 @@
 import { act, screen, userEvent } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import { PalierUnreachableError } from '../src/api/LotsClient';
 import { SESSION_REFRESH_MILLISECONDS } from '../src/parkingSessions/useCurrentParkingSession';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
@@ -110,6 +111,18 @@ describe('the current session while signed in', () => {
     expect(screen.getByText('3 h 16', visibleText)).toBeOnTheScreen();
   });
 
+  it('announces the offline notice when a refresh misses on the session screen', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+    const parkingSession = new FakeParkingSessionClient(julieAtParkingDemo());
+    await relaunchAsJulie(parkingSession);
+    await screen.findByText('Mis à jour à 21 h 17', visibleText);
+    parkingSession.failure = new PalierUnreachableError('fake');
+
+    await advance(SESSION_REFRESH_MILLISECONDS);
+
+    expect(announce).toHaveBeenCalledWith('Hors ligne, montant au dernier relevé');
+  });
+
   it('keeps the session and the time of the last read when a refresh misses', async () => {
     const parkingSession = new FakeParkingSessionClient(julieAtParkingDemo());
     await relaunchAsJulie(parkingSession);
@@ -163,5 +176,28 @@ describe('the current session while signed in', () => {
     await advance(SESSION_REFRESH_MILLISECONDS * 2);
 
     expect(parkingSession.requests).toBe(requestsAtSignOut);
+  });
+});
+
+describe('announcing a session that cannot be checked', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('announces the failed check, announces it again when a retry fails, and marks the button busy while reading', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+    const parkingSession = new FakeParkingSessionClient(null);
+    parkingSession.failure = new PalierUnreachableError('fake');
+    await relaunchAsJulie(parkingSession);
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole('tab', { name: 'Scanner' }));
+    const checkFailedAnnouncements = () => announce.mock.calls.filter(([message]) => message === 'Impossible de vérifier votre session en cours.').length;
+    expect(checkFailedAnnouncements()).toBe(1);
+    parkingSession.holdsAnswer = true;
+
+    await user.press(screen.getByRole('button', { name: 'Réessayer' }));
+    expect(screen.getByRole('button', { name: 'Réessayer', busy: true })).toBeOnTheScreen();
+    await act(async () => parkingSession.answer());
+
+    expect(checkFailedAnnouncements()).toBe(2);
+    expect(screen.getByRole('button', { name: 'Réessayer', busy: false })).toBeOnTheScreen();
   });
 });

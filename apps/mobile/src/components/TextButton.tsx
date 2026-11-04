@@ -6,13 +6,15 @@ import { typography } from '../theme/typography';
 interface TextButtonProps {
   readonly label: string;
   readonly onPress: () => void;
+  readonly isBusy?: boolean;
 }
 
-export function TextButton({ label, onPress }: TextButtonProps) {
+export function TextButton({ label, onPress, isBusy = false }: TextButtonProps) {
   const colors = useColors();
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ busy: isBusy }}
       onPress={onPress}
       style={({ pressed }) => [styles.button, { opacity: pressed ? 0.6 : 1 }]}
     >

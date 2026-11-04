@@ -1,42 +1,41 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { StateMark } from '../components/StateMark';
+import { assertNever } from '../assertNever';
 import { TextButton } from '../components/TextButton';
+import { useAnnouncement } from '../components/useAnnouncement';
 import { i18n } from '../i18n/i18n';
-import type { CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
+import type { CurrentParkingSessionState, ReadProgress } from '../parkingSessions/useCurrentParkingSession';
 import { useColors } from '../theme/useColors';
 import { typography } from '../theme/typography';
 
 interface SessionNoticeProps {
   readonly state: CurrentParkingSessionState;
+  readonly progress: ReadProgress;
   readonly onRetry: () => void;
 }
 
 // Above the scan form: what Palier said about a current session, so a driver already inside is never left guessing.
-export function SessionNotice({ state, onRetry }: SessionNoticeProps) {
+// Loading and current sessions have their own screens, so they show nothing here.
+export function SessionNotice({ state, progress, onRetry }: SessionNoticeProps) {
   switch (state.status) {
     case 'none':
       return <MutedLine text={i18n.t('session.none')} />;
     case 'unknown':
-      return (
-        <View style={styles.withAction}>
-          <MutedLine text={i18n.t('session.checkFailed')} />
-          <TextButton label={i18n.t('scan.retry')} onPress={onRetry} />
-        </View>
-      );
-    default:
+      return <CheckFailedNotice progress={progress} onRetry={onRetry} />;
+    case 'loading':
+    case 'current':
       return null;
+    default:
+      return assertNever(state);
   }
 }
 
-// On the session screen after a missed refresh: the figures stay, marked as those of the last read.
-export function OfflineNotice({ onRetry }: { readonly onRetry: () => void }) {
-  const colors = useColors();
+function CheckFailedNotice({ progress, onRetry }: { readonly progress: ReadProgress; readonly onRetry: () => void }) {
+  const message = i18n.t('session.checkFailed');
+  useAnnouncement(message, progress.missedReads);
   return (
     <View style={styles.withAction}>
-      <StateMark color={colors.muted}>
-        <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('session.offline')}</Text>
-      </StateMark>
-      <TextButton label={i18n.t('scan.retry')} onPress={onRetry} />
+      <MutedLine text={message} />
+      <TextButton label={i18n.t('scan.retry')} onPress={onRetry} isBusy={progress.isReading} />
     </View>
   );
 }
