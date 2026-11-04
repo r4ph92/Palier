@@ -6,6 +6,7 @@ import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import type { OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../domain/entries/ParkingSessionRepository.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import { isActiveSessionConflict } from './activeSessionConflict.ts';
+import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import type { Database, Transaction } from './database.ts';
 import { parkingSession, spot } from './schema.ts';
 
@@ -50,6 +51,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   async openWithFirstFreeSpot(draft: SessionDraft): Promise<OpenedSession | null> {
     try {
       return await this.#database.transaction(async (tx) => {
+        await refuseWhenInside(tx, draft.driverId);
         const assigned = await assignFirstFreeSpot(tx, draft.lotId, draft.needs);
         return assigned === undefined ? null : insertSession(tx, draft, assigned);
       });
@@ -92,6 +94,15 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
         .set({ state: 'AVAILABLE', stateChangedAt: sql`now()` })
         .where(and(eq(spot.id, cancelled.spotId), eq(spot.state, 'ASSIGNED')));
     });
+  }
+}
+
+// A driver already inside hears ALREADY_INSIDE, not LOT_FULL or NO_SUITABLE_SPOT. Two entries at once still meet the
+// one-active-per-user index when the session is inserted.
+async function refuseWhenInside(tx: Transaction, driverId: string): Promise<void> {
+  const rows = await tx.execute(sql`select 1 from parking_session where user_id = ${driverId} and ${ACTIVE_SESSION} limit 1`);
+  if (rows.length > 0) {
+    throw new EntryRefusedError('ALREADY_INSIDE');
   }
 }
 
