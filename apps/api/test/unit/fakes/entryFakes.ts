@@ -16,7 +16,7 @@ export const SORTIE_DEMO_SECRET = 'pW-gxvykdybxjEOP6ebx6mGn6K21E1Iu9biLvAvAicQ';
 export const ENTREE_ROY_SECRET = 'Qw34Ic7nOubM0aZdCa0HXmkLJ2kxp2hHq8HBd6unq14';
 export const LAVOIE_ACCOUNT = 'acct_1Lavoie';
 
-const parkingDemoLot = { id: entreeDemo.lotId, isOnline: true, dailyCapCents: 2500, operatorStripeAccountId: LAVOIE_ACCOUNT };
+const parkingDemoLot = { id: entreeDemo.lotId, isOnline: true, dailyCapCents: 2500, capacity: 10, vehicleCount: 0, operatorStripeAccountId: LAVOIE_ACCOUNT };
 
 export const entreeDemoGate: EntryGate = {
   id: entreeDemo.id,
@@ -31,7 +31,7 @@ export const entreeRoyGate: EntryGate = {
   kind: 'ENTRY',
   integrationKind: 'DRY_CONTACT',
   qrSecret: ENTREE_ROY_SECRET,
-  lot: { id: '00000000-0000-4000-8000-000000000202', isOnline: false, dailyCapCents: 2500, operatorStripeAccountId: null },
+  lot: { id: '00000000-0000-4000-8000-000000000202', isOnline: false, dailyCapCents: 2500, capacity: 10, vehicleCount: 0, operatorStripeAccountId: null },
 };
 
 export class FakeEntryGateRepository implements EntryGateRepository {

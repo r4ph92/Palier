@@ -6,6 +6,8 @@ export interface EntryGateLot {
   readonly id: string;
   readonly isOnline: boolean;
   readonly dailyCapCents: number;
+  readonly capacity: number;
+  readonly vehicleCount: number;
   readonly operatorStripeAccountId: string | null;
 }
 
