@@ -43,8 +43,9 @@ d'un seed à l'autre ; `npm run seed --workspace @palier/api` les affiche aussi.
 | Entrée Roy | `https://palier.app/q/palier1.00000000-0000-4000-8000-000000000703.58pH8pV4hMitS9Lj679T9Tw5EDVtxcUQ2aQDqVATUXY` | « Ce parking n’est pas en service » |
 
 L'entrée exige `STRIPE_SECRET_KEY` (clé `sk_test_`) dans `apps/api/.env`, puis
-un seed, pour que les conducteurs aient une carte ; sans clé, l'entrée répond
-« Impossible de joindre Palier. » (503). `DEMO_OPERATOR_STRIPE_ACCOUNT_ID`
+un seed, pour que les conducteurs aient une carte ; sans clé, l'entrée répond 503 et l'app
+affiche « Palier ne répond pas, réessayez dans un instant » à l'étape du
+paiement. `DEMO_OPERATOR_STRIPE_ACCOUNT_ID`
 (`acct_…`, facultatif) dirige l'autorisation vers le compte connecté de test de
 Stationnements Lavoie ; sans lui, elle reste sur la plateforme (mode démo
 seulement). Une entrée par conducteur et par seed : la deuxième répond « Vous
