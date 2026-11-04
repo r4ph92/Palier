@@ -1,9 +1,11 @@
 import Stripe from 'stripe';
 import { readServerEnvironment } from './config/environment.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
+import { composeEntries } from './composeEntries.ts';
 import { buildServer } from './http/buildServer.ts';
 import { connectToDatabase } from './infrastructure/postgres/database.ts';
 import { PostgresDriverRepository } from './infrastructure/postgres/PostgresDriverRepository.ts';
+import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateCommandFeed.ts';
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
 import { PostgresPassageLedger } from './infrastructure/postgres/PostgresPassageLedger.ts';
@@ -16,18 +18,30 @@ const environment = readServerEnvironment(process.env);
 const connection = connectToDatabase(environment.databaseUrl);
 const stripeKey = stripeTestKey(process.env);
 const driverRepository = new PostgresDriverRepository(connection.database);
+const vehicleRepository = new PostgresVehicleRepository(connection.database);
 const server = buildServer({
   repositories: {
     lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
     driverRepository,
-    vehicleRepository: new PostgresVehicleRepository(connection.database),
+    vehicleRepository,
   },
   gates: {
     deviceKeys: new PostgresGateDeviceKeyRepository(connection.database),
     ledger: new PostgresPassageLedger(connection.database),
     clock: () => new Date(),
+    commands: new PostgresGateCommandFeed(connection.database),
   },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
+  entries:
+    stripeKey === null
+      ? undefined
+      : composeEntries({
+          database: connection.database,
+          stripeKey,
+          demoMode: environment.demoMode,
+          drivers: driverRepository,
+          vehicles: vehicleRepository,
+        }),
   settings: {
     testSignInEnabled: environment.testSignInEnabled,
     demoMode: environment.demoMode,

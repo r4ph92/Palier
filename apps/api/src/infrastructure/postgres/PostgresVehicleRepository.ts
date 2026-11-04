@@ -26,6 +26,15 @@ export class PostgresVehicleRepository implements VehicleRepository {
     return found ?? null;
   }
 
+  async findDefaultVehicle(driverId: string): Promise<Vehicle | null> {
+    const [found] = await this.#database
+      .select(vehicleColumns)
+      .from(vehicle)
+      .where(and(eq(vehicle.userId, driverId), eq(vehicle.isDefault, true)))
+      .limit(1);
+    return found ?? null;
+  }
+
   // The first vehicle of a driver is the default one.
   saveVehicle(driverId: string, newVehicle: NewVehicle): Promise<Vehicle | null> {
     return this.#database.transaction(async (tx) => {

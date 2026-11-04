@@ -1,11 +1,13 @@
 import type { GateIdentity, GatePassageRequest, GatePassageResponse } from '@palier/shared-types';
 import type { FastifyInstance } from 'fastify';
+import type { GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
 import type { GateDeviceKeyRepository } from '../../domain/gates/GateDeviceKeyRepository.ts';
 import type { PassageLedger } from '../../domain/gates/PassageLedger.ts';
 import { recordPassage } from '../../domain/gates/recordPassage.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 import { authenticatedGateOf, createGateDeviceAuthentication } from '../gates/gateDeviceAuthentication.ts';
 import { handleGateError } from '../gates/handleGateError.ts';
+import { gateCommandListSchema, gateCommandsQuerySchema, type GateCommandsQuery } from '../schemas/entrySchemas.ts';
 import {
   gateIdentitySchema,
   gateIdParametersSchema,
@@ -18,6 +20,14 @@ export interface GateRouteDependencies {
   readonly deviceKeys: GateDeviceKeyRepository;
   readonly ledger: PassageLedger;
   readonly clock: Clock;
+  readonly commands: GateCommandFeed;
+}
+
+const BAD_REQUEST = 400;
+const FIRST_STORABLE_YEAR = 1;
+
+interface CommandsRoute {
+  Querystring: GateCommandsQuery;
 }
 
 interface PassageRoute {
@@ -33,6 +43,7 @@ export function registerGateRoutes(server: FastifyInstance, dependencies: GateRo
       scope.setErrorHandler(handleGateError);
       registerIdentityRoute(scope);
       registerPassageRoute(scope, dependencies);
+      registerCommandsRoute(scope, dependencies.commands);
     },
     { prefix: '/v1/gates' },
   );
@@ -54,5 +65,17 @@ function registerPassageRoute(scope: FastifyInstance, dependencies: GateRouteDep
       closedAt: new Date(request.body.closedAt),
     };
     return recordPassage(command, { ledger: dependencies.ledger, clock: dependencies.clock });
+  });
+}
+
+// The demo console polls this with the issuedAt of the last command it shows, so each poll brings only new ones.
+function registerCommandsRoute(scope: FastifyInstance, commands: GateCommandFeed): void {
+  const schema = { querystring: gateCommandsQuerySchema, response: { 200: gateCommandListSchema } };
+  scope.get<CommandsRoute>('/me/commands', { schema }, async (request, reply) => {
+    const after = request.query.after === undefined ? null : new Date(request.query.after);
+    if (after !== null && !(after.getUTCFullYear() >= FIRST_STORABLE_YEAR)) {
+      return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'AFTER_INVALID', message: 'after is not a date the server can read.' });
+    }
+    return commands.listCommands(authenticatedGateOf(request).id, after);
   });
 }

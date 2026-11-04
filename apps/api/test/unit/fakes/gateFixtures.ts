@@ -1,4 +1,6 @@
+import type { GateCommand } from '@palier/shared-types';
 import type { AuthenticatedGate } from '../../../src/domain/gates/AuthenticatedGate.ts';
+import { GATE_COMMAND_PAGE_SIZE, type GateCommandFeed } from '../../../src/domain/gates/GateCommandFeed.ts';
 import type { DeviceKeyRecord, GateDeviceKeyRepository } from '../../../src/domain/gates/GateDeviceKeyRepository.ts';
 import { hashDeviceKey } from '../../../src/domain/gates/hashDeviceKey.ts';
 import type { PassageEntry, PassageLedger, RecordedPassage } from '../../../src/domain/gates/PassageLedger.ts';
@@ -53,5 +55,26 @@ export class FakePassageLedger implements PassageLedger {
     this.entries.push(entry);
     this.vehicleCount = Math.max(this.vehicleCount + entry.vehicleCountChange, 0);
     return Promise.resolve({ vehicleCount: this.vehicleCount });
+  }
+}
+
+// Mirrors PostgresGateCommandFeed: strictly after the cursor, ordered by time then id, the latest page without one.
+export class FakeGateCommandFeed implements GateCommandFeed {
+  readonly #commands: { gateId: string; command: GateCommand }[] = [];
+
+  add(gateId: string, command: GateCommand): this {
+    this.#commands.push({ gateId, command });
+    return this;
+  }
+
+  listCommands(gateId: string, after: Date | null): Promise<readonly GateCommand[]> {
+    const ordered = this.#commands
+      .filter((entry) => entry.gateId === gateId)
+      .map((entry) => entry.command)
+      .sort((left, right) => left.issuedAt.localeCompare(right.issuedAt) || left.id.localeCompare(right.id));
+    if (after === null) {
+      return Promise.resolve(ordered.slice(-GATE_COMMAND_PAGE_SIZE));
+    }
+    return Promise.resolve(ordered.filter((command) => new Date(command.issuedAt) > after).slice(0, GATE_COMMAND_PAGE_SIZE));
   }
 }

@@ -26,6 +26,11 @@ export class FakeVehicleRepository implements VehicleRepository {
     return Promise.resolve(found === undefined ? null : toVehicle(found));
   }
 
+  findDefaultVehicle(driverId: string): Promise<Vehicle | null> {
+    const found = this.#ownedBy(driverId).find((stored) => stored.isDefault);
+    return Promise.resolve(found === undefined ? null : toVehicle(found));
+  }
+
   saveVehicle(driverId: string, newVehicle: NewVehicle): Promise<Vehicle | null> {
     const duplicate = this.#stored.some(
       (entry) => entry.driverId === driverId && entry.plateKey === newVehicle.plateKey && entry.province === newVehicle.province,
