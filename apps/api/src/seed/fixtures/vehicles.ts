@@ -7,7 +7,7 @@ const QUEBEC = 'QC';
 
 const STANDARD: VehicleNeeds = { isElectric: false, hasAccessiblePermit: false, isOversize: false };
 
-function defaultVehicle(userId: string, typedPlate: string, needs: VehicleNeeds = STANDARD): typeof vehicle.$inferInsert {
+export function defaultVehicle(userId: string, typedPlate: string, needs: VehicleNeeds = STANDARD): typeof vehicle.$inferInsert {
   const plate = readPlate(typedPlate);
   if (plate === null) {
     throw new Error(`The seeded plate "${typedPlate}" is not a valid plate.`);
