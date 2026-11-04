@@ -49,7 +49,8 @@ Monorepo npm : `apps/api` (API Fastify + Drizzle sur Postgres), `apps/mobile`
 (React Native avec Expo SDK 58, ouvert dans Expo Go sur le simulateur iOS) et
 `packages/shared-types` (types échangés entre l'API et l'app). Les choix
 d'implémentation sont dans [`docs/implementation.md`](docs/implementation.md),
-la direction visuelle de l'app dans [`docs/design.md`](docs/design.md).
+la direction visuelle de l'app dans [`docs/design.md`](docs/design.md), le contrat du pont natif
+et le panneau de signaux simulés dans [`docs/pont-natif.md`](docs/pont-natif.md).
 
 ### Prérequis
 

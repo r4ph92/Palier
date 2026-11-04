@@ -64,3 +64,4 @@ ligne par choix ; la raison suit le tiret.
 - Un 401 sur la liste des parkings efface le jeton et ramène à l'écran de connexion. « Se déconnecter » efface le jeton tout de suite et révoque côté serveur au mieux (sans attendre le réseau).
 - Navigation : un état `lots | account` dans `PalierApp` et une barre d'onglets maison, sans bibliothèque de navigation.
 - « Connexion de test » n'apparaît que si le build porte `EXPO_PUBLIC_TEST_SIGN_IN=true` (voir `apps/mobile/.env.example`).
+- Signaux de positionnement : `positioning/` porte le port `PositioningModule` et `PositioningCore` (commandes transmises, événements diffusés). Le module simulé et le panneau « Signaux simulés » vivent dans `dev/` et ne sont chargés que par `dev/loadDeveloperTools.ts`, derrière un ternaire `__DEV__` que Metro évalue à la compilation : ils sont absents du bundle de production (voir `docs/pont-natif.md`).
