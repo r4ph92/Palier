@@ -40,10 +40,19 @@ export type EntryRefusalCode =
   | 'OPERATOR_NOT_PAYABLE'
   | 'PREREQUISITES_MISSING'
   | 'LOT_FULL'
+  | 'NO_SUITABLE_SPOT'
   | 'ALREADY_INSIDE'
   | 'CARD_DECLINED'
   | 'PAYMENTS_UNAVAILABLE'
   | 'TOO_MANY_ENTRIES';
+
+export interface EntryRefusalBody {
+  readonly statusCode: number;
+  readonly error: EntryRefusalCode;
+  readonly message: string;
+  // CARD_DECLINED only: the hold the card refused, so the app can name the amount.
+  readonly authorizedCents?: number;
+}
 
 export type GateCommandKind = 'OPEN';
 

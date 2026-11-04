@@ -9,6 +9,6 @@
 - **Migration 0011** : les sessions existantes reçoivent le tarif de leur parking ; une valeur absente ou qui n'est pas un entier positif prend 75 ¢ par 15 minutes, et le plafond vient de `daily_cap_cents`.
 - **Horloge de test** : `GET`, `PUT` et `DELETE /v1/test/clock` et `PUT /v1/test/sessions/:sessionId/entered-at` n'existent qu'avec la connexion de test (`NODE_ENV` à `development` ou `test`) et seulement si `createClock` a fourni une horloge de test ; ailleurs, 404. Seul `GET /v1/me/session` lit cette horloge : les barrières et `now()` de Postgres restent à l'heure réelle. Ces routes ne demandent aucun jeton, comme la connexion de test. Reculer une session déplace `entry_confirmed_at` du même écart et refuse une heure postérieure à l'horloge ; une session annulée répond 404.
 
-**Annulation (#39)** : l'horloge de test ne change rien à l'annulation des entrées sans passage, jugée sur `now()` de Postgres. Reculer une session `CREATED` déplace `entry_scan_at`, ce qui peut la faire annuler si elle n'a pas de commande `OPEN` (décision 012).
+**Annulation (#39)** : l'horloge de test ne change rien à l'annulation des entrées sans passage, jugée sur `now()` de Postgres. Reculer une session `CREATED` déplace `entry_scan_at`, ce qui peut la faire annuler si elle n'a pas de commande `OPEN` (décision 013).
 
 **Conséquences.** L'app n'a aucun contrôle d'horloge et ne compte pas le temps elle-même : elle relit la session chaque minute. Le SQL de la lecture et du recul n'est vérifié que sur la base de la voie (décisions 002 et 005).

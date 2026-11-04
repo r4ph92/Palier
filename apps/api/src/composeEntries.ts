@@ -10,6 +10,7 @@ import { PostgresEntryGateRepository } from './infrastructure/postgres/PostgresE
 import { PostgresParkingSessionRepository } from './infrastructure/postgres/PostgresParkingSessionRepository.ts';
 import { SimulatedGateCommander } from './infrastructure/postgres/SimulatedGateCommander.ts';
 import { StripePaymentAuthorizer } from './infrastructure/stripe/StripePaymentAuthorizer.ts';
+import { UnreachablePaymentAuthorizer } from './infrastructure/stripe/UnreachablePaymentAuthorizer.ts';
 
 // The app gives up after 8 s: two attempts of 2.5 s plus the retry backoff stay under it, and the retry reuses the entry's idempotency key.
 const STRIPE_TIMEOUT_MILLISECONDS = 2500;
@@ -20,6 +21,8 @@ export interface EntryComposition {
   // Null without STRIPE_SECRET_KEY: QR refusals still answer, an eligible entry gets PAYMENTS_UNAVAILABLE.
   readonly stripeKey: string | null;
   readonly demoMode: boolean;
+  // Test environments only: the entry takes its spot, then the hold fails as if Stripe were down.
+  readonly simulateStripeUnreachable: boolean;
   readonly drivers: DriverRepository;
   readonly vehicles: VehicleRepository;
 }
@@ -30,9 +33,9 @@ export interface ComposedEntries {
   readonly payments: PaymentAuthorizer | null;
 }
 
-export function composeEntries({ database, stripeKey, demoMode, drivers, vehicles }: EntryComposition): ComposedEntries {
+export function composeEntries({ database, stripeKey, demoMode, simulateStripeUnreachable, drivers, vehicles }: EntryComposition): ComposedEntries {
   const sessions = new PostgresParkingSessionRepository(database);
-  const payments = stripeKey === null ? null : paymentAuthorizer(stripeKey);
+  const payments = paymentAuthorizer(stripeKey, simulateStripeUnreachable);
   const routes = {
     sessions,
     eligibility: new EntryEligibility({
@@ -46,6 +49,13 @@ export function composeEntries({ database, stripeKey, demoMode, drivers, vehicle
   return { routes, payments };
 }
 
-function paymentAuthorizer(stripeKey: string): StripePaymentAuthorizer {
+// Exported for its test: the switch must win over a real key.
+export function paymentAuthorizer(stripeKey: string | null, simulateStripeUnreachable: boolean): PaymentAuthorizer | null {
+  if (simulateStripeUnreachable) {
+    return new UnreachablePaymentAuthorizer();
+  }
+  if (stripeKey === null) {
+    return null;
+  }
   return new StripePaymentAuthorizer(new Stripe(stripeKey, { timeout: STRIPE_TIMEOUT_MILLISECONDS, maxNetworkRetries: STRIPE_NETWORK_RETRIES }));
 }

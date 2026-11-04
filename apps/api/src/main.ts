@@ -1,8 +1,9 @@
 import Stripe from 'stripe';
-import { readServerEnvironment } from './config/environment.ts';
+import { readDashboardUrl, readServerEnvironment, readSimulateStripeUnreachable, readStripeWebhookSecret } from './config/environment.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { composeEntries } from './composeEntries.ts';
 import { composeEntryCancellation } from './composeEntryCancellation.ts';
+import { composeOperatorStripe } from './composeOperatorStripe.ts';
 import { buildServer } from './http/buildServer.ts';
 import { connectToDatabase } from './infrastructure/postgres/database.ts';
 import { PostgresCurrentParkingSessionQuery } from './infrastructure/postgres/PostgresCurrentParkingSessionQuery.ts';
@@ -26,6 +27,7 @@ import { startUnconfirmedEntryCancellation } from './scheduler/startUnconfirmedE
 const environment = readServerEnvironment(process.env);
 const connection = connectToDatabase(environment.databaseUrl);
 const stripeKey = stripeTestKey(process.env);
+const simulateStripeUnreachable = readSimulateStripeUnreachable(process.env);
 const driverRepository = new PostgresDriverRepository(connection.database);
 const vehicleRepository = new PostgresVehicleRepository(connection.database);
 const sessionTokenRepository = new PostgresSessionTokenRepository(connection.database);
@@ -33,6 +35,7 @@ const entries = composeEntries({
   database: connection.database,
   stripeKey,
   demoMode: environment.demoMode,
+  simulateStripeUnreachable,
   drivers: driverRepository,
   vehicles: vehicleRepository,
 });
@@ -57,6 +60,12 @@ const server = buildServer({
   },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   entries: entries.routes,
+  operatorStripe: composeOperatorStripe({
+    database: connection.database,
+    stripeKey,
+    webhookSecret: readStripeWebhookSecret(process.env),
+    dashboardUrl: readDashboardUrl(process.env),
+  }),
   settings: {
     testSignInEnabled: environment.testSignInEnabled,
     demoMode: environment.demoMode,
@@ -68,6 +77,9 @@ const server = buildServer({
 
 if (environment.demoMode) {
   server.log.warn('DEMO_MODE is on: the demo console is served at /demo/console. Never enable it in production.');
+}
+if (simulateStripeUnreachable) {
+  server.log.warn('SIMULATE_STRIPE_UNREACHABLE is on: every entry hold fails as if Stripe were down.');
 }
 
 const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(sessionTokenRepository, systemClock()), server.log);

@@ -3,11 +3,13 @@ import { PageHeader } from '../components/PageHeader.tsx';
 import { StateMark, type StateTone } from '../components/StateMark.tsx';
 import { useText } from '../i18n/LanguageContext.tsx';
 import { LotList } from './LotList.tsx';
+import { StripeConnectButton } from './StripeConnectButton.tsx';
 
 // Not started asks for action, pending waits on Stripe, verified can take payments.
 const KYC_TONES: Readonly<Record<KycStatus, StateTone>> = {
   NOT_STARTED: 'danger',
   PENDING: 'muted',
+  ACTION_REQUIRED: 'danger',
   VERIFIED: 'free',
 };
 
@@ -24,6 +26,7 @@ export function OperatorHomePage({ operator }: { readonly operator: DashboardOpe
           </dd>
         </div>
       </dl>
+      <StripeConnectButton operatorId={operator.id} kycStatus={operator.kycStatus} />
       <LotList />
     </>
   );

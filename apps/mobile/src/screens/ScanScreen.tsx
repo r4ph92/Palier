@@ -5,8 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { SpotWithState } from '../components/SpotLine';
-import { StateMark } from '../components/StateMark';
-import { TextButton } from '../components/TextButton';
 import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
 import { useAnnouncement } from '../components/useAnnouncement';
 import type { EntryController, EntryState } from '../entries/useEntry';
@@ -14,6 +12,7 @@ import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
 import { MINIMUM_TOUCH_TARGET, spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
+import { EntryProblem } from './EntryProblem';
 
 // A QR content is a link, never words: no capitals, corrections or spelling marks.
 const QR_INPUT_BEHAVIOUR = { autoCapitalize: 'none', autoCorrect: false, spellCheck: false, returnKeyType: 'go' } as const;
@@ -125,78 +124,10 @@ function QrField({ entry }: { readonly entry: EntryController }) {
   );
 }
 
-interface EntryProblemProps {
-  readonly state: EntryState;
-  readonly onAddPlate: () => void;
-  readonly onAddCard: () => void;
-}
-
-function EntryProblem({ state, onAddPlate, onAddCard }: EntryProblemProps) {
-  const message = problemMessage(state);
-  const takesFocus = state.status === 'cancelled';
-  useAnnouncement(takesFocus ? null : message);
-  if (message === null) {
-    return null;
-  }
-  return (
-    <View style={styles.field}>
-      <ProblemMessage message={message} hint={problemHint(state)} takesFocus={takesFocus} />
-      {state.status === 'refused' && state.refusal === 'PREREQUISITES_MISSING' ? (
-        <View style={styles.links}>
-          <TextButton label={i18n.t('scan.addPlate')} onPress={onAddPlate} />
-          <TextButton label={i18n.t('scan.addCard')} onPress={onAddCard} />
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-interface ProblemMessageProps {
-  readonly message: string;
-  readonly hint: string | null;
-  // A cancellation replaces the spot the driver was on, so VoiceOver moves to it like it moved to the spot.
-  readonly takesFocus: boolean;
-}
-
-function ProblemMessage({ message, hint, takesFocus }: ProblemMessageProps) {
-  const colors = useColors();
-  const focusRef = useAccessibilityFocusOnMount();
-  return (
-    <>
-      <StateMark color={colors.danger}>
-        <Text ref={takesFocus ? focusRef : undefined} accessibilityRole="alert" style={[typography.bodyStrong, { color: colors.ink }]}>
-          {message}
-        </Text>
-      </StateMark>
-      {hint === null ? null : <Text style={[typography.body, { color: colors.muted }]}>{hint}</Text>}
-    </>
-  );
-}
-
-function problemHint(state: EntryState): string | null {
-  return state.status === 'unreachable' ? i18n.t('scan.unreachableHint') : null;
-}
-
-function problemMessage(state: EntryState): string | null {
-  switch (state.status) {
-    case 'refused':
-      return i18n.t(`scan.refusals.${state.refusal}`);
-    case 'notResponding':
-      return i18n.t('scan.notResponding');
-    case 'unreachable':
-      return i18n.t('scan.unreachable');
-    case 'cancelled':
-      return i18n.t('scan.entryCancelled');
-    default:
-      return null;
-  }
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { flexGrow: 1, gap: spacing.medium, paddingHorizontal: spacing.medium, paddingBottom: spacing.large },
   section: { gap: spacing.medium },
   field: { gap: spacing.small },
-  links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.large },
   input: { minHeight: MINIMUM_TOUCH_TARGET, paddingHorizontal: spacing.medium, borderWidth: 2 },
 });

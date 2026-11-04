@@ -1,5 +1,5 @@
 {
-  "id": "1ce85376-e0ca-4cde-a43d-354abdb364a5",
+  "id": "08f83f93-8c14-4a91-b80c-3ec04395f471",
   "prevId": "5463d26f-8b5b-4469-aa12-885ebf5e5f58",
   "version": "7",
   "dialect": "postgresql",
@@ -1221,21 +1221,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "gate_command_session_id_index": {
-          "name": "gate_command_session_id_index",
-          "columns": [
-            {
-              "expression": "session_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -1377,19 +1362,6 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
-        },
-        "hold_release_pending": {
-          "name": "hold_release_pending",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "hold_release_attempted_at": {
-          "name": "hold_release_attempted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
@@ -1421,28 +1393,6 @@
           ],
           "isUnique": true,
           "where": "state in ('CREATED', 'ENTRY_CONFIRMED')",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "parking_session_hold_release_pending_index": {
-          "name": "parking_session_hold_release_pending_index",
-          "columns": [
-            {
-              "expression": "hold_release_attempted_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "first"
-            },
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "\"parking_session\".\"hold_release_pending\"",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1628,6 +1578,7 @@
       "values": [
         "NOT_STARTED",
         "PENDING",
+        "ACTION_REQUIRED",
         "VERIFIED"
       ]
     },

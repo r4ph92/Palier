@@ -36,6 +36,8 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
   readonly drafts: SessionDraft[] = [];
   readonly paymentIntents = new Map<string, string>();
   cancelFails = false;
+  // Stands in for free spots that do not fit the vehicle (chooseSpotFor).
+  noSuitableSpot = false;
   readonly #freeSpots: string[];
   readonly #sessions = new Map<string, FakeSession>();
   readonly #journal: Journal;
@@ -53,6 +55,9 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     this.#journal.push('open-session');
     if ([...this.#sessions.values()].some((session) => session.state !== 'CANCELLED' && session.driverId === draft.driverId)) {
       return Promise.reject(new EntryRefusedError('ALREADY_INSIDE'));
+    }
+    if (this.noSuitableSpot) {
+      return Promise.reject(new EntryRefusedError('NO_SUITABLE_SPOT'));
     }
     const spot = this.#freeSpots.shift();
     if (spot === undefined) {

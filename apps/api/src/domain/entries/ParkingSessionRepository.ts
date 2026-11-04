@@ -1,10 +1,12 @@
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import type { PricingPolicy } from '../pricing/PricingPolicy.ts';
+import type { VehicleNeeds } from '../vehicles/VehicleRepository.ts';
 
 export interface SessionDraft {
   readonly driverId: string;
   readonly vehicleId: string;
   readonly plate: string;
+  readonly needs: VehicleNeeds;
   readonly lotId: string;
   readonly entryGateId: string;
   readonly authorizedCents: number;
@@ -27,7 +29,8 @@ export interface SessionStatus {
 export type HoldAttachment = 'attached' | 'cancelled';
 
 export interface ParkingSessionRepository {
-  // Assigns the lot's first free spot and creates the session in one transaction; null when no spot is free.
+  // Assigns the lot's first free spot that fits the vehicle's needs and creates the session in one transaction;
+  // null when no spot is free. Throws EntryRefusedError NO_SUITABLE_SPOT when spots are free but none fits.
   // Throws EntryRefusedError ALREADY_INSIDE when the driver already has an active session.
   openWithFirstFreeSpot(draft: SessionDraft): Promise<OpenedSession | null>;
   // Records the hold on a CREATED or CANCELLED session, marking it for release when cancelled; throws for any other state or an unknown id.

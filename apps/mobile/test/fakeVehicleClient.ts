@@ -1,8 +1,10 @@
-import type { Vehicle, VehicleListResponse } from '@palier/shared-types';
+import type { Vehicle, VehicleListResponse, VehicleNeeds } from '@palier/shared-types';
 import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 import { PalierRejectedError, type NewVehicleInput, type VehicleClient } from '../src/api/VehicleClient';
 
-export const abc123: Vehicle = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC', isDefault: true };
+export const standardNeeds = { isElectric: false, hasAccessiblePermit: false, isOversize: false };
+
+export const abc123: Vehicle = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC', isDefault: true, ...standardNeeds };
 
 export class FakeVehicleClient implements VehicleClient {
   readonly #vehicles: Vehicle[];
@@ -21,16 +23,38 @@ export class FakeVehicleClient implements VehicleClient {
     return this.isReachable ? Promise.resolve([...this.#vehicles]) : Promise.reject(new PalierUnreachableError('fake'));
   }
 
-  addVehicle({ plate, province }: NewVehicleInput): Promise<Vehicle> {
+  addVehicle({ plate, province, isElectric, hasAccessiblePermit, isOversize }: NewVehicleInput): Promise<Vehicle> {
     if (!this.isReachable) {
       return Promise.reject(new PalierUnreachableError('fake'));
     }
     if (this.nextRejection !== null) {
       return Promise.reject(new PalierRejectedError(this.nextRejection));
     }
-    const vehicle = { id: `vehicle-${this.#vehicles.length + 1}`, plate: plate.trim().toUpperCase(), province, isDefault: this.#vehicles.length === 0 };
+    const vehicle = {
+      id: `vehicle-${this.#vehicles.length + 1}`,
+      plate: plate.trim().toUpperCase(),
+      province,
+      isDefault: this.#vehicles.length === 0,
+      isElectric,
+      hasAccessiblePermit,
+      isOversize,
+    };
     this.#vehicles.push(vehicle);
     return Promise.resolve(vehicle);
+  }
+
+  updateVehicleNeeds(vehicleId: string, needs: VehicleNeeds): Promise<Vehicle> {
+    if (!this.isReachable) {
+      return Promise.reject(new PalierUnreachableError('fake'));
+    }
+    const index = this.#vehicles.findIndex((vehicle) => vehicle.id === vehicleId);
+    const found = this.#vehicles[index];
+    if (found === undefined) {
+      return Promise.reject(new PalierStatusError(404));
+    }
+    const updated = { ...found, ...needs };
+    this.#vehicles[index] = updated;
+    return Promise.resolve(updated);
   }
 
   setDefaultVehicle(vehicleId: string): Promise<Vehicle> {

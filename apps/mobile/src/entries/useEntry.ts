@@ -6,7 +6,7 @@ import { PalierStatusError, PalierUnreachableError } from '../api/LotsClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
 import type { FollowedEntry, PendingEntryWatch } from './usePendingEntryWatch';
 
-// Refusals with a message of their own; PAYMENTS_UNAVAILABLE and any unknown code read as "Palier is not responding".
+// Refusals with a message of their own; any unknown code reads as "Palier is not responding".
 export const ENTRY_REFUSALS = [
   'QR_NOT_RECOGNIZED',
   'NOT_AN_ENTRY_GATE',
@@ -15,8 +15,10 @@ export const ENTRY_REFUSALS = [
   'PREREQUISITES_MISSING',
   'OPERATOR_NOT_PAYABLE',
   'LOT_FULL',
+  'NO_SUITABLE_SPOT',
   'ALREADY_INSIDE',
   'CARD_DECLINED',
+  'PAYMENTS_UNAVAILABLE',
   'TOO_MANY_ENTRIES',
 ] as const satisfies readonly EntryRefusalCode[];
 
@@ -27,7 +29,8 @@ export type EntryState =
   | { readonly status: 'submitting' }
   | { readonly status: 'entered'; readonly sessionId: string; readonly spot: AssignedSpot; readonly isConfirmed: boolean }
   | { readonly status: 'cancelled'; readonly sessionId: string }
-  | { readonly status: 'refused'; readonly refusal: EntryRefusal }
+  // authorizedCents is the hold a declined card refused, when the API named it.
+  | { readonly status: 'refused'; readonly refusal: EntryRefusal; readonly authorizedCents: number | null }
   | { readonly status: 'notResponding' }
   | { readonly status: 'unreachable' };
 
@@ -93,7 +96,7 @@ async function enter(client: EntryClient, qrContent: string, { setState, watch }
 // A status error is checked before the network error it extends: the API answered, so the connection is fine.
 function stateAfterFailure(error: unknown): EntryState {
   if (error instanceof PalierRejectedError) {
-    return isEntryRefusal(error.code) ? { status: 'refused', refusal: error.code } : NOT_RESPONDING;
+    return isEntryRefusal(error.code) ? { status: 'refused', refusal: error.code, authorizedCents: error.authorizedCents } : NOT_RESPONDING;
   }
   if (error instanceof PalierStatusError) {
     return NOT_RESPONDING;

@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
-export const kycStatus = pgEnum('kyc_status', ['NOT_STARTED', 'PENDING', 'VERIFIED']);
+export const kycStatus = pgEnum('kyc_status', ['NOT_STARTED', 'PENDING', 'ACTION_REQUIRED', 'VERIFIED']);
 export const assignmentStrategy = pgEnum('assignment_strategy', ['AISLE_BY_AISLE']);
 export const occupancySource = pgEnum('occupancy_source', ['DECLARATIVE', 'SENSORS']);
 export const spotState = pgEnum('spot_state', [

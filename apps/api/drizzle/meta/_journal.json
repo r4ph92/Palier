@@ -89,8 +89,15 @@
     {
       "idx": 12,
       "version": "7",
-      "when": 1793821008752,
-      "tag": "0012_hold_release_and_command_session_index",
+      "when": 1793822074151,
+      "tag": "0012_operator_kyc_action_required",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793827328344,
+      "tag": "0013_vehicle_needs",
       "breakpoints": true
     }
   ]

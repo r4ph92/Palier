@@ -14,6 +14,7 @@ describe('a vehicle request refused for a missing privacy notice', () => {
         return Promise.reject(new PalierConsentRequiredError());
       },
       addVehicle: () => Promise.reject(new Error('not used in this test')),
+      updateVehicleNeeds: () => Promise.reject(new Error('not used in this test')),
       setDefaultVehicle: () => Promise.reject(new Error('not used in this test')),
       deleteVehicle: () => Promise.reject(new Error('not used in this test')),
     });

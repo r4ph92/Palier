@@ -1,4 +1,4 @@
-# 012 — Annulation des entrées sans passage
+# 013 — Annulation des entrées sans passage
 
 **Contexte.** Une barrière ouverte sans fermeture de boucle (décision 009) laissait la session `CREATED`, la place attribuée et l'autorisation de 25,00 $ tenue. `docs/05` prévoit une tâche planifiée en instance unique, gardée par un verrou consultatif.
 

@@ -20,7 +20,12 @@ import { gateDeviceKeyFixtures, gateFixtures } from './fixtures/gates.ts';
 import { operatorMemberFixtures, operatorUserFixtures } from './fixtures/operatorUsers.ts';
 import { LAVOIE_OPERATOR_ID, operatorFixtures } from './fixtures/operators.ts';
 import { parkingDemoAisles, parkingDemoLevels, parkingDemoLot, parkingDemoSpots } from './fixtures/parkingDemo.ts';
-import { parkingTestPaliersLot } from './fixtures/parkingTestPaliers.ts';
+import {
+  parkingTestPaliersAisles,
+  parkingTestPaliersLevels,
+  parkingTestPaliersLot,
+  parkingTestPaliersSpots,
+} from './fixtures/parkingTestPaliers.ts';
 import { vehicleFixtures } from './fixtures/vehicles.ts';
 import type { StripeIds } from './stripeTestCustomers.ts';
 
@@ -47,9 +52,9 @@ async function insertLots(transaction: Transaction, demoOperatorAccountId: strin
     await transaction.update(operator).set({ stripeAccountId: demoOperatorAccountId }).where(eq(operator.id, LAVOIE_OPERATOR_ID));
   }
   await transaction.insert(parkingLot).values([parkingDemoLot, garageRoyLot, parkingTestPaliersLot]);
-  await transaction.insert(level).values(parkingDemoLevels);
-  await transaction.insert(aisle).values(parkingDemoAisles);
-  await transaction.insert(spot).values(parkingDemoSpots);
+  await transaction.insert(level).values([...parkingDemoLevels, ...parkingTestPaliersLevels]);
+  await transaction.insert(aisle).values([...parkingDemoAisles, ...parkingTestPaliersAisles]);
+  await transaction.insert(spot).values([...parkingDemoSpots, ...parkingTestPaliersSpots]);
   await transaction.insert(gate).values(gateFixtures);
   await transaction.insert(gateDeviceKey).values(gateDeviceKeyFixtures);
 }

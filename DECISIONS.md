@@ -476,4 +476,4 @@ Trois points ont été tranchés en cours de rédaction et méritent une relectu
    la boucle (Q33) est un ordre de grandeur, pas une mesure ; à ajuster sur le
    terrain. Depuis #39, elle se règle par `ENTRY_CONFIRMATION_WINDOW_SECONDS` (30 s au
    moins, 60 s par défaut), la même valeur pour la boucle et l'annulation
-   (`docs/decisions/012`).
+   (`docs/decisions/013`).

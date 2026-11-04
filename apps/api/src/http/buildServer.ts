@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from 'fastify';
+import type { AccountWebhookReader, OperatorStripeAccounts, OperatorStripeGateway } from '../domain/dashboard/OperatorStripe.ts';
 import type { OperatorRepository } from '../domain/dashboard/OperatorRepository.ts';
 import type { DriverRepository } from '../domain/drivers/DriverRepository.ts';
 import type { DriverAccess } from '../domain/drivers/driverSessions.ts';
@@ -21,10 +22,18 @@ import { registerDriverRoutes } from './routes/driverRoutes.ts';
 import { registerEntryRoutes, type EntryRouteDependencies } from './routes/entryRoutes.ts';
 import { registerGateRoutes, type GateRouteDependencies } from './routes/gateRoutes.ts';
 import { registerLotsRoutes } from './routes/lotsRoutes.ts';
+import { registerStripeWebhookRoute } from './routes/stripeWebhookRoute.ts';
 import { registerPaymentMethodRoutes } from './routes/paymentMethodRoutes.ts';
 import { registerVehicleRoutes } from './routes/vehicleRoutes.ts';
 import { registerTestClockRoutes, type TestClockRouteDependencies } from './routes/testClockRoutes.ts';
 import { registerTestSignInRoutes } from './routes/testSignInRoutes.ts';
+
+// Gateway and webhook reader are null without their Stripe settings: onboarding answers 503 and the webhook route does not exist.
+export interface OperatorStripeDependencies {
+  readonly accounts: OperatorStripeAccounts;
+  readonly gateway: OperatorStripeGateway | null;
+  readonly webhookReader: AccountWebhookReader | null;
+}
 
 export interface ServerDependencies {
   readonly repositories: {
@@ -41,6 +50,8 @@ export interface ServerDependencies {
   readonly cardGateway?: CardGateway | undefined;
   // main.ts always passes it; tests of other routes leave it out, and entries then answer 503 PAYMENTS_UNAVAILABLE.
   readonly entries?: EntryRouteDependencies | undefined;
+  // main.ts always passes it; without it the dashboard cannot connect Stripe.
+  readonly operatorStripe?: OperatorStripeDependencies | undefined;
   // Tests hand one in to move it directly. Used only when test sign-in is enabled; gates keep their own clock.
   readonly testClock?: TestClock | undefined;
   readonly settings?: ServerSettings;
@@ -54,13 +65,16 @@ export interface ServerSettings {
   readonly secureCookies?: boolean;
 }
 
-export function buildServer({ repositories, gates, cardGateway, entries, testClock, settings = {} }: ServerDependencies): FastifyInstance {
+export function buildServer({ repositories, gates, cardGateway, entries, operatorStripe, testClock, settings = {} }: ServerDependencies): FastifyInstance {
   // Refuse a value of the wrong JSON type rather than converting it, so ["2026-10-28"] is not read as "2026-10-28".
   const server = Fastify({ logger: settings.logsRequests ?? false, ajv: { customOptions: { coerceTypes: false } } });
   server.setErrorHandler(handleServerError);
   server.decorateRequest('driver', null);
   void server.register(async (appScope) => registerAppRoutes(appScope, { repositories, cardGateway, entries, testClock, settings }));
-  void server.register(async (dashboardScope) => registerDashboardRoutes(dashboardScope, dashboardDependencies(repositories, settings)));
+  void server.register(async (dashboardScope) => registerDashboardRoutes(dashboardScope, dashboardDependencies(repositories, settings, operatorStripe)));
+  if (operatorStripe?.webhookReader != null) {
+    registerStripeWebhookRoute(server, { reader: operatorStripe.webhookReader, accounts: operatorStripe.accounts });
+  }
   registerGateRoutes(server, gates);
   if (settings.demoMode === true) {
     registerDemoConsoleRoutes(server);
@@ -69,10 +83,15 @@ export function buildServer({ repositories, gates, cardGateway, entries, testClo
 }
 
 // The dashboard has its own scope, outside the app's: the minimum app version does not apply to a browser.
-function dashboardDependencies(repositories: ServerDependencies['repositories'], settings: ServerSettings): DashboardRouteDependencies {
+function dashboardDependencies(
+  repositories: ServerDependencies['repositories'],
+  settings: ServerSettings,
+  operatorStripe: OperatorStripeDependencies | undefined,
+): DashboardRouteDependencies {
   return {
     access: { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository },
     operators: repositories.operatorRepository,
+    stripe: operatorStripe?.gateway == null ? null : { accounts: operatorStripe.accounts, gateway: operatorStripe.gateway },
     testSignInEnabled: settings.testSignInEnabled === true,
     secureCookies: settings.secureCookies ?? true,
   };
@@ -97,7 +116,7 @@ function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway,
   }
 }
 
-type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock'> & Pick<ServerDependencies, 'testClock'>;
+type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock' | 'operatorStripe'> & Pick<ServerDependencies, 'testClock'>;
 
 // Test sign-in is the one switch for every test-only tool: without it the session is priced in real time and nothing moves it.
 function testToolsFor(

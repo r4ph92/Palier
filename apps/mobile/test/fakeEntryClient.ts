@@ -9,6 +9,7 @@ export const spotA1: AssignedSpot = { number: 'A-1', levelCode: 'P1', aisleCode:
 export class FakeEntryClient implements EntryClient {
   readonly scanned: string[] = [];
   nextRejection: string | null = null;
+  nextRejectionCents: number | null = null;
   nextStatus: number | null = null;
   isReachable = true;
   #pending: { resolve: (response: EntryResponse) => void } | null = null;
@@ -28,7 +29,7 @@ export class FakeEntryClient implements EntryClient {
       return Promise.reject(new PalierStatusError(this.nextStatus));
     }
     if (this.nextRejection !== null) {
-      return Promise.reject(new PalierRejectedError(this.nextRejection));
+      return Promise.reject(new PalierRejectedError(this.nextRejection, this.nextRejectionCents));
     }
     const response: EntryResponse = { sessionId: 'session-1', spot: spotA1, barrierOpened: true };
     if (this.holdsAnswer) {

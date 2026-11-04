@@ -41,6 +41,9 @@ function routeSignedIn(state: FakeApiState, request: string, body: Record<string
   if (request === 'POST /operators') {
     return createOperator(state, body['legalName'] ?? '');
   }
+  if (request.startsWith('POST /operators/') && request.endsWith('/stripe-onboarding')) {
+    return startStripeOnboarding(state.me?.operator ?? null, request);
+  }
   return routeLots(state.me?.operator ?? null, request);
 }
 
@@ -63,4 +66,11 @@ function createOperator(state: FakeApiState, legalName: string): FakeResponse {
   const operator: DashboardOperator = { id: '00000000-0000-4000-8000-000000000199', legalName: legalName.trim(), kycStatus: 'NOT_STARTED' };
   state.me = { user: state.me.user, operator };
   return { status: 201, body: operator };
+}
+
+export const STRIPE_ONBOARDING_URL = 'https://connect.stripe.com/setup/e/acct_test/onboarding';
+
+// Only a member's own operator answers; any other id is not found, as in the API.
+function startStripeOnboarding(operator: DashboardOperator | null, request: string): FakeResponse {
+  return request === `POST /operators/${operator?.id}/stripe-onboarding` ? { status: 200, body: { url: STRIPE_ONBOARDING_URL } } : refused(404, 'OPERATOR_NOT_FOUND');
 }
