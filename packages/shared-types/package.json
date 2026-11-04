@@ -16,6 +16,10 @@
     "./appVersion": {
       "types": "./src/appVersion.ts",
       "default": "./src/appVersion.ts"
+    },
+    "./entryLink": {
+      "types": "./src/entryLink.ts",
+      "default": "./src/entryLink.ts"
     }
   },
   "scripts": {
