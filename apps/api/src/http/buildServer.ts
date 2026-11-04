@@ -1,23 +1,53 @@
 import Fastify, { type FastifyInstance } from 'fastify';
+import type { DriverRepository } from '../domain/drivers/DriverRepository.ts';
+import type { CardGateway } from '../domain/payments/CardGateway.ts';
 import type { LotAvailabilityRepository } from '../domain/lots/LotAvailabilityRepository.ts';
+import type { VehicleRepository } from '../domain/vehicles/VehicleRepository.ts';
 import { registerDemoConsoleRoutes } from './demo/demoConsoleRoutes.ts';
 import { handleServerError } from './handleServerError.ts';
+import { requireMinimumAppVersion } from './requireMinimumAppVersion.ts';
+import { registerDriverRoutes } from './routes/driverRoutes.ts';
 import { registerGateRoutes, type GateRouteDependencies } from './routes/gateRoutes.ts';
 import { registerLotsRoutes } from './routes/lotsRoutes.ts';
+import { registerPaymentMethodRoutes } from './routes/paymentMethodRoutes.ts';
+import { registerVehicleRoutes } from './routes/vehicleRoutes.ts';
+import { registerTestSignInRoutes } from './routes/testSignInRoutes.ts';
 
 export interface ServerDependencies {
-  readonly lotAvailabilityRepository: LotAvailabilityRepository;
+  readonly repositories: {
+    readonly lotAvailabilityRepository: LotAvailabilityRepository;
+    readonly driverRepository: DriverRepository;
+    readonly vehicleRepository: VehicleRepository;
+  };
   readonly gates: GateRouteDependencies;
-  readonly demoMode?: boolean;
-  readonly logsRequests?: boolean;
+  readonly cardGateway?: CardGateway | undefined;
+  readonly settings?: ServerSettings;
 }
 
-export function buildServer(dependencies: ServerDependencies): FastifyInstance {
-  const server = Fastify({ logger: dependencies.logsRequests ?? false });
+export interface ServerSettings {
+  readonly testSignInEnabled?: boolean;
+  readonly demoMode?: boolean;
+  readonly logsRequests?: boolean;
+  readonly minimumAppVersion?: string | undefined;
+}
+
+export function buildServer({ repositories, gates, cardGateway, settings = {} }: ServerDependencies): FastifyInstance {
+  // Refuse a value of the wrong JSON type rather than converting it, so ["2026-10-28"] is not read as "2026-10-28".
+  const server = Fastify({ logger: settings.logsRequests ?? false, ajv: { customOptions: { coerceTypes: false } } });
   server.setErrorHandler(handleServerError);
-  registerLotsRoutes(server, dependencies.lotAvailabilityRepository);
-  registerGateRoutes(server, dependencies.gates);
-  if (dependencies.demoMode === true) {
+  server.decorateRequest('driver', null);
+  if (settings.minimumAppVersion !== undefined) {
+    server.addHook('onRequest', requireMinimumAppVersion(settings.minimumAppVersion));
+  }
+  registerLotsRoutes(server, repositories.lotAvailabilityRepository, repositories.driverRepository);
+  registerVehicleRoutes(server, repositories.vehicleRepository, repositories.driverRepository);
+  registerDriverRoutes(server, repositories.driverRepository);
+  registerPaymentMethodRoutes(server, repositories.driverRepository, cardGateway);
+  registerGateRoutes(server, gates);
+  if (settings.testSignInEnabled === true) {
+    registerTestSignInRoutes(server, repositories.driverRepository);
+  }
+  if (settings.demoMode === true) {
     registerDemoConsoleRoutes(server);
   }
   return server;

@@ -13,7 +13,7 @@ describe('demo console', () => {
   afterEach(() => server.close());
 
   it.each(CONSOLE_ASSETS)('serves %s in demo mode with the console headers', async (url, contentType) => {
-    server = buildServer(serverDependencies({ demoMode: true }));
+    server = buildServer(serverDependencies({ settings: { demoMode: true } }));
 
     const response = await server.inject({ method: 'GET', url });
 
@@ -50,7 +50,7 @@ describe('demo console', () => {
   });
 
   it('declares in the stylesheet every font it serves', async () => {
-    server = buildServer(serverDependencies({ demoMode: true }));
+    server = buildServer(serverDependencies({ settings: { demoMode: true } }));
 
     const stylesheet = (await server.inject({ method: 'GET', url: '/demo/console.css' })).body;
     const fontUrls = CONSOLE_ASSETS.filter(([, contentType]) => contentType === 'font/ttf').map(([url]) => url);
@@ -62,7 +62,7 @@ describe('demo console', () => {
   });
 
   it('has no inline script or style that the policy would block', async () => {
-    server = buildServer(serverDependencies({ demoMode: true }));
+    server = buildServer(serverDependencies({ settings: { demoMode: true } }));
 
     const page = (await server.inject({ method: 'GET', url: '/demo/console' })).body;
 
@@ -71,7 +71,7 @@ describe('demo console', () => {
   });
 
   it('asks for the device key in a password field that browsers do not fill or remember', async () => {
-    server = buildServer(serverDependencies({ demoMode: true }));
+    server = buildServer(serverDependencies({ settings: { demoMode: true } }));
 
     const page = (await server.inject({ method: 'GET', url: '/demo/console' })).body;
 

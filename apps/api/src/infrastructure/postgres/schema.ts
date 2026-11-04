@@ -15,6 +15,9 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
+// Drivers and their vehicles live beside, so this one file stays the schema drizzle-kit reads.
+export * from './driverSchema.ts';
+
 export const kycStatus = pgEnum('kyc_status', ['NOT_STARTED', 'PENDING', 'VERIFIED']);
 export const assignmentStrategy = pgEnum('assignment_strategy', ['AISLE_BY_AISLE']);
 export const occupancySource = pgEnum('occupancy_source', ['DECLARATIVE', 'SENSORS']);

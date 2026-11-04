@@ -1,0 +1,2 @@
+ALTER TABLE "vehicle" ADD COLUMN "is_default" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "vehicle_one_default_per_user_index" ON "vehicle" USING btree ("user_id") WHERE "vehicle"."is_default";

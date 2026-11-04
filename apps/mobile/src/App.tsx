@@ -1,17 +1,54 @@
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { HttpAuthClient } from './api/HttpAuthClient';
 import { HttpLotsClient } from './api/HttpLotsClient';
-import { LotsClientProvider } from './api/LotsClientContext';
+import { HttpPaymentMethodClient } from './api/HttpPaymentMethodClient';
+import { HttpVehicleClient } from './api/HttpVehicleClient';
+import type { LotsClient } from './api/LotsClient';
+import type { PaymentMethodClient } from './api/PaymentMethodClient';
+import type { VehicleClient } from './api/VehicleClient';
+import { secureTokenStore } from './auth/TokenStore';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
 import { applyLanguage, deviceLanguage } from './i18n/i18n';
-import { HomeScreen } from './screens/HomeScreen';
+import { PalierApp } from './PalierApp';
 import { fontAssets } from './theme/fonts';
 
 const LOCAL_API_URL = 'http://localhost:3000';
 
-const lotsClient = new HttpLotsClient({ baseUrl: process.env.EXPO_PUBLIC_API_URL ?? LOCAL_API_URL });
+const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? LOCAL_API_URL;
+const authClient = new HttpAuthClient({ baseUrl: apiUrl });
+// Set only in local and test builds; a production build leaves it out and shows no test sign-in.
+const testSignInEnabled = process.env.EXPO_PUBLIC_TEST_SIGN_IN === 'true';
+// The publishable key comes from the environment; use a test key (pk_test_…) in local and test builds.
+const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 applyLanguage(deviceLanguage());
+
+function createLotsClient(token: string, onUnauthorized: () => void): LotsClient {
+  return new HttpLotsClient({ baseUrl: apiUrl, token, onUnauthorized });
+}
+
+function createPaymentMethodClient(token: string, onUnauthorized: () => void): PaymentMethodClient {
+  return new HttpPaymentMethodClient({ baseUrl: apiUrl, token, onUnauthorized });
+}
+
+function createVehicleClient(token: string, onUnauthorized: () => void, onConsentRequired: () => void): VehicleClient {
+  return new HttpVehicleClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired });
+}
+
+const palierApp = (
+  <StripeProvider publishableKey={stripePublishableKey}>
+    <PalierApp
+      authClient={authClient}
+      tokenStore={secureTokenStore}
+      testSignInEnabled={testSignInEnabled}
+      createLotsClient={createLotsClient}
+      createPaymentMethodClient={createPaymentMethodClient}
+      createVehicleClient={createVehicleClient}
+    />
+  </StripeProvider>
+);
 
 export function App() {
   const [fontsLoaded] = useFonts(fontAssets);
@@ -21,11 +58,7 @@ export function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="auto" />
-      <AppErrorBoundary>
-        <LotsClientProvider client={lotsClient}>
-          <HomeScreen />
-        </LotsClientProvider>
-      </AppErrorBoundary>
+      <AppErrorBoundary>{palierApp}</AppErrorBoundary>
     </SafeAreaProvider>
   );
 }

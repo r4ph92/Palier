@@ -1,4 +1,4 @@
-# 004 — Clés d'appareil hachées et passage enregistré en une seule instruction
+# 006 — Clés d'appareil hachées et passage enregistré en une seule instruction
 
 **Contexte.** Les contrôleurs de barrière (et la console de démonstration qui
 les joue) s'authentifient par une clé d'appareil (`docs/04`) ; le dossier ne dit
@@ -22,7 +22,7 @@ jamais descendre sous zéro (D6), même avec des passages simultanés.
 
 **Conséquences.** Le passage et le compteur réussissent ou échouent ensemble ;
 les entrées simultanées sont sérialisées par le verrou de ligne de
-`parking_lot` (vérifié par `test:db`). Une clé perdue ne se récupère pas : on
+`parking_lot` (garanti par la base et vérifié en QA manuelle, 005). Une clé perdue ne se récupère pas : on
 en crée une nouvelle et on révoque l'ancienne. Le compteur peut dépasser la
 capacité (passages d'abonnés inconnus de Palier, Q35) ; l'affichage plafonne
 les places libres à `min(capacité − véhicules, places libres)`, jamais négatif.

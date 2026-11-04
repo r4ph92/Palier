@@ -1,12 +1,17 @@
+import { VERSION_PATTERN } from '@palier/shared-types/appVersion';
+
 export interface ServerEnvironment {
   readonly databaseUrl: string;
   readonly host: string;
   readonly port: number;
+  readonly testSignInEnabled: boolean;
+  readonly minimumAppVersion: string | undefined;
   readonly demoMode: boolean;
 }
 
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 3000;
+const TEST_SIGN_IN_ENVIRONMENTS = new Set(['development', 'test']);
 
 export function readDatabaseUrl(variables: NodeJS.ProcessEnv): string {
   const databaseUrl = variables['DATABASE_URL'];
@@ -21,8 +26,27 @@ export function readServerEnvironment(variables: NodeJS.ProcessEnv): ServerEnvir
     databaseUrl: readDatabaseUrl(variables),
     host: variables['HOST'] ?? DEFAULT_HOST,
     port: readPort(variables['PORT']),
+    testSignInEnabled: readTestSignInEnabled(variables),
+    minimumAppVersion: readMinimumAppVersion(variables['MINIMUM_APP_VERSION']),
     demoMode: readDemoMode(variables['DEMO_MODE']),
   };
+}
+
+// Unset means every app version is accepted; set, it is the lowest app version the API still serves.
+export function readMinimumAppVersion(rawVersion: string | undefined): string | undefined {
+  if (rawVersion === undefined || rawVersion === '') {
+    return undefined;
+  }
+  if (!VERSION_PATTERN.test(rawVersion)) {
+    throw new Error(`MINIMUM_APP_VERSION must look like 1.2.0, got "${rawVersion}".`);
+  }
+  return rawVersion;
+}
+
+// Test sign-in exists only when NODE_ENV says local or test; anything else, unset included, is treated as production.
+export function readTestSignInEnabled(variables: NodeJS.ProcessEnv): boolean {
+  const environment = variables['NODE_ENV'];
+  return environment !== undefined && TEST_SIGN_IN_ENVIRONMENTS.has(environment);
 }
 
 function readPort(rawPort: string | undefined): number {

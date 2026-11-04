@@ -12,8 +12,50 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1793126381395,
-      "tag": "0001_gates_and_passages",
+      "when": 1793218714766,
+      "tag": "0001_app_user_and_session_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793225432180,
+      "tag": "0002_user_consent",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793230506195,
+      "tag": "0003_vehicle",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793413040444,
+      "tag": "0004_card_brand_and_last4",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793415991308,
+      "tag": "0005_session_expiry",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793504292623,
+      "tag": "0006_vehicle_default",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793780229202,
+      "tag": "0007_gates_and_passages",
       "breakpoints": true
     }
   ]

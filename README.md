@@ -68,8 +68,8 @@ npm install
 docker compose up -d --wait                  # bases palier et palier_test
 cp apps/api/.env.example apps/api/.env       # NODE_ENV=development, base locale
 npm run db:migrate
-npm run seed --workspace @palier/api         # Parking Démo (10 places), Garage Roy, barrières
-npm run start --workspace @palier/api        # http://127.0.0.1:3000/v1/lots
+npm run seed --workspace @palier/api         # Parking Démo, Garage Roy, barrières et conducteurs de test
+npm run start --workspace @palier/api        # http://127.0.0.1:3000 (/v1/lots exige un jeton)
 ```
 
 Avec `DEMO_MODE=true` (valeur de `.env.example`), l'API sert aussi la console
@@ -82,8 +82,14 @@ Dans un second terminal :
 npm run ios --workspace @palier/mobile       # Metro + Expo Go dans le simulateur
 ```
 
-L'app appelle `http://localhost:3000` ; pour une autre adresse, copier
-`apps/mobile/.env.example` en `apps/mobile/.env` et changer `EXPO_PUBLIC_API_URL`.
+Copier `apps/mobile/.env.example` en `apps/mobile/.env` : il garde l'API sur
+`http://localhost:3000` (`EXPO_PUBLIC_API_URL`) et active « Connexion de test »
+(`EXPO_PUBLIC_TEST_SIGN_IN=true`). Sans ce fichier, l'écran de connexion n'offre
+rien tant qu'Apple et Google (#30) ne sont pas là.
+
+Pour que le seed crée les clients Stripe de test des conducteurs (carte Visa 4242
+pour Julie et Marc), mettre une clé `sk_test_…` dans `STRIPE_SECRET_KEY` de
+`apps/api/.env` ; sans clé, le seed les crée sans Stripe.
 Si Expo Go affiche « UNIQUE constraint failed: updates.scope_key » à la
 réouverture, toucher « Try again ».
 
@@ -91,6 +97,11 @@ réouverture, toucher « Try again ».
 
 - **Passages aux barrières** : voir [`docs/demo-console.md`](docs/demo-console.md)
   (entrée, sortie, « Complet », clé refusée, mauvaise barrière).
+- **Connexion de test** : sur l'écran de connexion, toucher « Connexion de test »
+  puis « Julie Tremblay » : l'accueil dit « Bonjour Julie ». Elle reste connectée
+  après avoir tué et relancé l'app ; « Compte » > « Se déconnecter » ramène à la
+  connexion et révoque son jeton. Avec `NODE_ENV=production` dans `apps/api/.env`,
+  `curl -i http://127.0.0.1:3000/v1/test/drivers` répond 404.
 - **Place hors service** : `npm run seed:spot-state --workspace @palier/api -- --lot "Parking Démo" --spot A-1 --state OUT_OF_SERVICE`,
   puis tirer la liste vers le bas : « 9 places libres ». Remettre la place avec
   `--state AVAILABLE`, ou tout réinitialiser avec `npm run seed --workspace @palier/api`.
@@ -118,7 +129,6 @@ Le seed et `seed:spot-state` refusent de tourner si `NODE_ENV` n'est pas
 
 ```
 npm run gate        # lint + typecheck + tests unitaires API (Vitest) + app (Jest)
-npm run test:db     # optionnel : test du dépôt Postgres sur palier_test (Docker requis)
 ```
 
 `gate` ne touche ni base ni simulateur ; la CI (`.github/workflows/ci.yml`)

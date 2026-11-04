@@ -1,5 +1,5 @@
 {
-  "id": "cfc64091-fa81-4187-bdfc-934abf7c76cc",
+  "id": "48bee992-1d5a-4f22-a1d0-e587789f6bc8",
   "prevId": "7367f4a7-b484-43cb-87f1-e7c8e3ee51ed",
   "version": "7",
   "dialect": "postgresql",
@@ -124,8 +124,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.gate": {
-      "name": "gate",
+    "public.app_user": {
+      "name": "app_user",
       "schema": "",
       "columns": {
         "id": {
@@ -135,267 +135,49 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "lot_id": {
-          "name": "lot_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
+        "email": {
+          "name": "email",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "kind": {
-          "name": "kind",
-          "type": "gate_kind",
-          "typeSchema": "public",
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "integration_kind": {
-          "name": "integration_kind",
-          "type": "gate_integration_kind",
-          "typeSchema": "public",
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "endpoint": {
-          "name": "endpoint",
+        "stripe_customer_id": {
+          "name": "stripe_customer_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "has_loops": {
-          "name": "has_loops",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "exit_id_kind": {
-          "name": "exit_id_kind",
-          "type": "exit_id_kind",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'NONE'"
-        },
-        "qr_secret": {
-          "name": "qr_secret",
+        "default_pm_id": {
+          "name": "default_pm_id",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "verified_at": {
-          "name": "verified_at",
-          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "gate_lot_id_parking_lot_id_fk": {
-          "name": "gate_lot_id_parking_lot_id_fk",
-          "tableFrom": "gate",
-          "tableTo": "parking_lot",
-          "columnsFrom": [
-            "lot_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "gate_lot_id_name_unique": {
-          "name": "gate_lot_id_name_unique",
+        "app_user_email_unique": {
+          "name": "app_user_email_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "lot_id",
-            "name"
-          ]
-        },
-        "gate_id_lot_id_unique": {
-          "name": "gate_id_lot_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "id",
-            "lot_id"
+            "email"
           ]
         }
       },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.gate_device_key": {
-      "name": "gate_device_key",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "gate_id": {
-          "name": "gate_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "key_hash": {
-          "name": "key_hash",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "revoked_at": {
-          "name": "revoked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "gate_device_key_gate_id_index": {
-          "name": "gate_device_key_gate_id_index",
-          "columns": [
-            {
-              "expression": "gate_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "gate_device_key_gate_id_gate_id_fk": {
-          "name": "gate_device_key_gate_id_gate_id_fk",
-          "tableFrom": "gate_device_key",
-          "tableTo": "gate",
-          "columnsFrom": [
-            "gate_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "gate_device_key_key_hash_unique": {
-          "name": "gate_device_key_key_hash_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "key_hash"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.gate_passage": {
-      "name": "gate_passage",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "gate_id": {
-          "name": "gate_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "lot_id": {
-          "name": "lot_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "closed_at": {
-          "name": "closed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "recorded_at": {
-          "name": "recorded_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "gate_passage_gate_id_recorded_at_index": {
-          "name": "gate_passage_gate_id_recorded_at_index",
-          "columns": [
-            {
-              "expression": "gate_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "recorded_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "gate_passage_gate_in_same_lot_fk": {
-          "name": "gate_passage_gate_in_same_lot_fk",
-          "tableFrom": "gate_passage",
-          "tableTo": "gate",
-          "columnsFrom": [
-            "gate_id",
-            "lot_id"
-          ],
-          "columnsTo": [
-            "id",
-            "lot_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -834,6 +616,74 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.user_session_token": {
+      "name": "user_session_token",
+      "schema": "",
+      "columns": {
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "user_session_token_user_id_index": {
+          "name": "user_session_token_user_id_index",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "user_session_token_user_id_app_user_id_fk": {
+          "name": "user_session_token_user_id_app_user_id_fk",
+          "tableFrom": "user_session_token",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -842,32 +692,6 @@
       "schema": "public",
       "values": [
         "AISLE_BY_AISLE"
-      ]
-    },
-    "public.exit_id_kind": {
-      "name": "exit_id_kind",
-      "schema": "public",
-      "values": [
-        "ANPR",
-        "RFID",
-        "NONE"
-      ]
-    },
-    "public.gate_integration_kind": {
-      "name": "gate_integration_kind",
-      "schema": "public",
-      "values": [
-        "DRY_CONTACT",
-        "ACCESS_CONTROL_API",
-        "SIMULATED"
-      ]
-    },
-    "public.gate_kind": {
-      "name": "gate_kind",
-      "schema": "public",
-      "values": [
-        "ENTRY",
-        "EXIT"
       ]
     },
     "public.kyc_status": {
