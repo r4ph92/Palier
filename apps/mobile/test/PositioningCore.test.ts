@@ -59,6 +59,19 @@ describe('PositioningCore events', () => {
     }
   });
 
+  it('forwards the queue flush a flushOfflineQueue command ends with to every subscriber', () => {
+    const { core } = createRig();
+    const first = spyListener();
+    const second = spyListener();
+    core.subscribe(first);
+    core.subscribe(second);
+
+    core.flushOfflineQueue();
+
+    expect(first.onQueueFlushed).toHaveBeenCalledWith(0);
+    expect(second.onQueueFlushed).toHaveBeenCalledWith(0);
+  });
+
   it('stops notifying a subscriber that unsubscribed', () => {
     const { simulator, core } = createRig();
     const listener = spyListener();

@@ -28,6 +28,7 @@ export class SimulatedPositioningModule implements PositioningModule {
 
   flushOfflineQueue(): void {
     this.journal.append(describeCommand.flushOfflineQueue());
+    this.listener?.onQueueFlushed(0);
   }
 
   setListener(listener: PositioningListener | null): void {
