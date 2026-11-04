@@ -33,7 +33,7 @@ export function EditVehicleScreen({ client, vehicle, onCancel, onSaved }: EditVe
         />
         <VehicleNeedsFields needs={form.needs} onToggle={form.toggleNeed} />
         {form.hasFailed ? <SaveFailedMessage /> : null}
-        <PrimaryButton label={i18n.t('vehicles.save')} onPress={form.save} />
+        <PrimaryButton label={i18n.t('vehicles.save')} onPress={form.save} busy={form.isSaving} />
       </ScrollView>
     </SafeAreaView>
   );
