@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { chooseSpot, type FreeSpot } from '../../src/domain/allocation/chooseSpot.ts';
 
-function spot(number: string, levelOrder: number, distanceToExit: number, needsCheck = false): FreeSpot {
-  return { id: number, number, levelOrder, aisleCode: number.split('-')[0] ?? '', distanceToExit, needsCheck };
+function spot(number: string, levelOrder: number, distanceToExit: number): FreeSpot {
+  return { id: number, number, levelOrder, aisleCode: number.split('-')[0] ?? '', distanceToExit, needsCheck: false };
 }
 
 const A2 = spot('A-2', 1, 10);
@@ -29,11 +29,11 @@ describe('chooseSpot', () => {
   });
 
   it('prefers an unflagged spot over a nearer flagged one', () => {
-    expect(chooseSpot([spot('A-1', 1, 5, true), spot('A-2', 1, 20)])?.number).toBe('A-2');
+    expect(chooseSpot([{ ...spot('A-1', 1, 5), needsCheck: true }, spot('A-2', 1, 20)])?.number).toBe('A-2');
   });
 
   it('assigns a flagged spot when only flagged spots are free', () => {
-    expect(chooseSpot([spot('A-1', 1, 5, true)])?.number).toBe('A-1');
+    expect(chooseSpot([{ ...spot('A-1', 1, 5), needsCheck: true }])?.number).toBe('A-1');
   });
 
   it('returns null when no spot is free', () => {
