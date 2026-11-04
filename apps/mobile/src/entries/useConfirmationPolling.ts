@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import type { EntryClient } from '../api/EntryClient';
+import { PalierStatusError, PalierUnreachableError } from '../api/LotsClient';
 
 export const ENTRY_STATUS_POLL_MILLISECONDS = 2000;
 export const ENTRY_STATUS_POLL_LIMIT_MILLISECONDS = 2 * 60 * 1000;
 const MAXIMUM_POLLS = ENTRY_STATUS_POLL_LIMIT_MILLISECONDS / ENTRY_STATUS_POLL_MILLISECONDS;
 
-type Outcome = 'confirmed' | 'cancelled' | 'waiting';
+type Outcome = 'confirmed' | 'cancelled' | 'waiting' | 'refused';
 
 // Asks for the session until the entry loop confirms it, the session is cancelled, or two minutes pass.
 // A null sessionId polls nothing.
@@ -48,12 +49,17 @@ async function tick(poll: Poll, ask: () => Promise<Outcome>, handlers: { onConfi
   }
 }
 
-// A failed answer is not worth an error: the next tick asks again.
 async function askOnce(client: EntryClient, sessionId: string): Promise<Outcome> {
   try {
     return outcomeOf((await client.status(sessionId)).state);
-  } catch {
-    return 'waiting';
+  } catch (error) {
+    if (error instanceof PalierStatusError) {
+      return 'refused';
+    }
+    if (error instanceof PalierUnreachableError) {
+      return 'waiting';
+    }
+    throw error;
   }
 }
 

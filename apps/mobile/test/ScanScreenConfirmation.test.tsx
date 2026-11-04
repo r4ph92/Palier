@@ -77,7 +77,7 @@ describe('ScanScreen, confirming the entry', () => {
     expect(client.statusRequests).toHaveLength(1);
   });
 
-  it('ignores a failed answer and asks again on the next tick', async () => {
+  it('keeps asking when the API is unreachable', async () => {
     const { client } = await scan();
     await screen.findByText('Barrière ouverte');
     client.failingStatusRequests = 1;
@@ -88,6 +88,16 @@ describe('ScanScreen, confirming the entry', () => {
     await advance(ENTRY_STATUS_POLL_MILLISECONDS);
 
     expect(screen.getByText('Entrée confirmée')).toBeOnTheScreen();
+  });
+
+  it('stops asking when the API answers with a status such as 404', async () => {
+    const { client } = await scan();
+    await screen.findByText('Barrière ouverte');
+    client.statusCode = 404;
+
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS * 3);
+
+    expect(client.statusRequests).toHaveLength(1);
   });
 
   it('stops asking after "Terminé"', async () => {
