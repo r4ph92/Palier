@@ -11,10 +11,20 @@ export const parkingDemo: DashboardLot = { id: '00000000-0000-4000-8000-00000000
 const parkingTestPaliers: DashboardLot = { id: '00000000-0000-4000-8000-000000000203', name: 'Parking Test Paliers', isOnline: false };
 const garageRoy: DashboardLot = { id: '00000000-0000-4000-8000-000000000202', name: 'Garage Roy', isOnline: false };
 
+export interface FakeResponse {
+  readonly status: number;
+  readonly body?: unknown;
+}
+
+// 'pending' never answers, for the states shown while a request is on its way.
+export type FakeAnswer = FakeResponse | 'pending';
+
 export interface FakeApiState {
   me: DashboardMeResponse | null;
   readonly testUsersListed: boolean;
   readonly requests: string[];
+  // Answers by "METHOD /path" that replace the fake's own; a test deletes one to let the request succeed again.
+  readonly answers: Map<string, FakeAnswer>;
 }
 
 const operatorsByUser = new Map<string, DashboardOperator>([[sophie.id, lavoie], [pierre.id, roy]]);

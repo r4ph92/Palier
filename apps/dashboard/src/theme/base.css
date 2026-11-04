@@ -58,7 +58,14 @@ body {
 
 .app-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--space-medium);
+}
+
+.app-actions .error-notice {
+  flex-basis: 100%;
+  margin: 0;
 }
 
 .page {

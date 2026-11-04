@@ -1,5 +1,6 @@
-import { useState } from 'react';
 import { useText } from '../i18n/LanguageContext.tsx';
+import { useSignOut } from '../session/useSignOut.ts';
+import { ErrorNotice } from './ErrorNotice.tsx';
 import { LanguageToggle } from './LanguageToggle.tsx';
 
 interface AppHeaderProps {
@@ -24,14 +25,13 @@ export function AppHeader({ onSignOut }: AppHeaderProps) {
 
 function SignOutButton({ onSignOut }: { readonly onSignOut: () => Promise<void> }) {
   const text = useText();
-  const [signingOut, setSigningOut] = useState(false);
-  const signOut = () => {
-    setSigningOut(true);
-    void onSignOut();
-  };
+  const { pending, error, signOut } = useSignOut(onSignOut);
   return (
-    <button type="button" className="text-button" onClick={signOut} disabled={signingOut}>
-      {signingOut ? text.app.signingOut : text.app.signOut}
-    </button>
+    <>
+      <button type="button" className="text-button" onClick={signOut} disabled={pending}>
+        {pending ? text.app.signingOut : text.app.signOut}
+      </button>
+      {error === null ? null : <ErrorNotice code={error} />}
+    </>
   );
 }

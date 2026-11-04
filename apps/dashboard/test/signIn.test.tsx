@@ -38,4 +38,21 @@ describe('dashboard sign-in', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Connexion' })).toBeDefined();
   });
+
+  it('keeps Sophie signed in and says so when the sign-out fails, then signs out on a second try', async () => {
+    const api = installFakeApi({ answers: { 'POST /sign-out': { status: 500 } } });
+    renderDashboard();
+    await userEvent.click(await screen.findByRole('button', { name: 'Sophie Lavoie' }));
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Se déconnecter' }));
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Une erreur est survenue. Réessayez dans un instant.');
+    expect(screen.getByRole('heading', { level: 1, name: 'Stationnements Lavoie inc.' })).toBeDefined();
+
+    api.answers.delete('POST /sign-out');
+    await userEvent.click(screen.getByRole('button', { name: 'Se déconnecter' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Connexion' })).toBeDefined();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
 });

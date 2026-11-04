@@ -29,8 +29,9 @@ async function currentSession(): Promise<Session> {
 export function useDashboardSession(): SessionControls {
   const [session, setSession] = useState<Session>({ status: 'loading' });
   const refresh = useCallback(async () => setSession(await currentSession()), []);
+  // A failed sign-out leaves the cookie valid, so the page stays signed in and the caller shows why.
   const signOut = useCallback(async () => {
-    await dashboardClient.signOut().catch(() => undefined);
+    await dashboardClient.signOut();
     setSession({ status: 'signedOut' });
   }, []);
   useEffect(() => {

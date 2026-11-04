@@ -1,18 +1,17 @@
 import type { DashboardOperator } from '@palier/shared-types';
-import { type FakeApiState, lotsByOperator, meFor, testUsers } from './fakeDashboardData.ts';
-
-export interface FakeResponse {
-  readonly status: number;
-  readonly body?: unknown;
-}
+import { type FakeAnswer, type FakeApiState, type FakeResponse, lotsByOperator, meFor, testUsers } from './fakeDashboardData.ts';
 
 const refused = (status: number, error: string): FakeResponse => ({ status, body: { statusCode: status, error, message: error } });
 
-export function routeRequest(state: FakeApiState, url: string, init: RequestInit = {}): FakeResponse {
+export function routeRequest(state: FakeApiState, url: string, init: RequestInit = {}): FakeAnswer {
   const method = init.method ?? 'GET';
   const path = url.replace('/v1/dashboard', '');
   const body = typeof init.body === 'string' ? (JSON.parse(init.body) as Record<string, string>) : {};
   state.requests.push(`${method} ${path}`);
+  const answer = state.answers.get(`${method} ${path}`);
+  if (answer !== undefined) {
+    return answer;
+  }
   if (path.startsWith('/test/')) {
     return routeTestRequest(state, path, body);
   }
