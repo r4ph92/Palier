@@ -22,7 +22,7 @@ describe.each([1, 1.35, 2.3, 3.1])('VehiclesScreen at text scale %d', (fontScale
     applyLanguage('fr');
   });
 
-  it('keeps the plate and the default badge on screen, stacked only at large text sizes', async () => {
+  it('keeps the plate and the default badge on screen, with the actions wrapping under the plate', async () => {
     await render(
       <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
         <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123])} onAddVehicle={jest.fn()} onEditVehicle={jest.fn()} />
@@ -31,7 +31,8 @@ describe.each([1, 1.35, 2.3, 3.1])('VehiclesScreen at text scale %d', (fontScale
 
     expect(await screen.findByText('ABC 123 · QC')).toBeOnTheScreen();
     expect(screen.getByText('Par défaut')).toBeOnTheScreen();
-    expect(screen.getByTestId(`vehicle-row-${abc123.id}`)).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
+    expect(screen.getByTestId(`vehicle-row-${abc123.id}`)).not.toHaveStyle({ flexDirection: 'row' });
+    expect(screen.getByTestId(`vehicle-actions-${abc123.id}`)).toHaveStyle({ flexWrap: 'wrap' });
   });
 
   it('keeps the use-as-default and delete actions on screen at every text size', async () => {

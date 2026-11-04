@@ -7,7 +7,6 @@ import { MessageState } from '../components/MessageState';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
 import { i18n } from '../i18n/i18n';
-import { useIsLargeText } from '../theme/useIsLargeText';
 import { declaredNeeds } from '../vehicles/vehicleNeeds';
 import { useVehicles, type VehicleActionError, type VehiclesController } from '../vehicles/useVehicles';
 import { useColors } from '../theme/useColors';
@@ -83,13 +82,11 @@ interface VehicleRowProps {
 
 function VehicleRow({ vehicle, controller, onEdit }: VehicleRowProps) {
   const colors = useColors();
-  const layout = useIsLargeText() ? stackedStyles : sideBySideStyles;
+  // The label keeps the full width and the actions wrap under it, so nothing is cut off at any text size.
   return (
-    <View testID={`vehicle-row-${vehicle.id}`} style={[styles.row, layout.row, { borderBottomColor: colors.line }]}>
-      <View style={layout.plate}>
-        <VehicleLabel vehicle={vehicle} />
-      </View>
-      <View style={styles.actions}>
+    <View testID={`vehicle-row-${vehicle.id}`} style={[styles.row, { borderBottomColor: colors.line }]}>
+      <VehicleLabel vehicle={vehicle} />
+      <View testID={`vehicle-actions-${vehicle.id}`} style={styles.actions}>
         <TextButton label={i18n.t('vehicles.edit')} onPress={onEdit} />
         {vehicle.isDefault ? (
           <Text style={[typography.bodyStrong, { color: colors.muted }]}>{i18n.t('vehicles.defaultBadge')}</Text>
@@ -130,17 +127,7 @@ function VehiclesStateMessage({ controller }: { readonly controller: VehiclesCon
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { flexGrow: 1, paddingHorizontal: spacing.medium },
-  row: { paddingVertical: spacing.medium, borderBottomWidth: StyleSheet.hairlineWidth },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.medium },
+  row: { gap: spacing.extraSmall, paddingVertical: spacing.medium, borderBottomWidth: StyleSheet.hairlineWidth },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.medium },
   actionError: { paddingBottom: spacing.medium },
-});
-
-const sideBySideStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.medium },
-  plate: { flexShrink: 1 },
-});
-
-const stackedStyles = StyleSheet.create({
-  row: { flexDirection: 'column', alignItems: 'flex-start', gap: spacing.extraSmall },
-  plate: {},
 });
