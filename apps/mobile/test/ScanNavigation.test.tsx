@@ -1,12 +1,6 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { applyLanguage } from '../src/i18n/i18n';
-import { PalierApp } from '../src/PalierApp';
-import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
+import { screen, userEvent } from '@testing-library/react-native';
 import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
-import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
-import { FakePaymentMethodClient } from './fakePaymentMethodClient';
-import { FakeVehicleClient } from './fakeVehicleClient';
+import { IPHONE_MINI_METRICS, renderPalierApp, signedInJulie } from './renderPalierApp';
 
 // The card page renders Stripe's native card field, which has no test renderer.
 jest.mock('@stripe/stripe-react-native', () => ({
@@ -14,31 +8,10 @@ jest.mock('@stripe/stripe-react-native', () => ({
   useConfirmSetupIntent: () => ({ confirmSetupIntent: jest.fn(), loading: false }),
 }));
 
-const SAFE_AREA_METRICS = {
-  frame: { x: 0, y: 0, width: 375, height: 812 },
-  insets: { top: 47, left: 0, right: 0, bottom: 34 },
-};
-const JULIE_TOKEN = `${julie.id}-token`;
-
 async function scanWithoutPrerequisites() {
-  applyLanguage('fr');
-  const authClient = new FakeAuthClient();
-  authClient.validTokens.add(JULIE_TOKEN);
   const entryClient = new FakeEntryClient();
   entryClient.nextRejection = 'PREREQUISITES_MISSING';
-  await render(
-    <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <PalierApp
-        authClient={authClient}
-        tokenStore={new MemoryTokenStore(JULIE_TOKEN)}
-        testSignInEnabled={false}
-        createLotsClient={() => new FakeLotsClient(parkingDemoWith(10))}
-        createPaymentMethodClient={() => new FakePaymentMethodClient()}
-        createVehicleClient={() => new FakeVehicleClient()}
-        createEntryClient={() => entryClient}
-      />
-    </SafeAreaProvider>,
-  );
+  await renderPalierApp({ ...signedInJulie(), testSignInEnabled: false, metrics: IPHONE_MINI_METRICS, clients: () => ({ entry: entryClient }) });
   const user = userEvent.setup();
   await user.press(await screen.findByRole('tab', { name: 'Scanner' }));
   await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);

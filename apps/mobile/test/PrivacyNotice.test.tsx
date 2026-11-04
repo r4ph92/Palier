@@ -1,36 +1,13 @@
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
-import { render, screen, userEvent } from '@testing-library/react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
-import { PalierApp } from '../src/PalierApp';
-import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
-import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
-import { FakePaymentMethodClient } from './fakePaymentMethodClient';
-import { FakeEntryClient } from './fakeEntryClient';
-import { FakeVehicleClient } from './fakeVehicleClient';
+import { screen, userEvent } from '@testing-library/react-native';
+import type { SupportedLanguage } from '../src/i18n/i18n';
+import { FakeAuthClient, MemoryTokenStore } from './fakeAuth';
+import { JULIE_TOKEN, renderPalierApp } from './renderPalierApp';
 
-const SAFE_AREA_METRICS = {
-  frame: { x: 0, y: 0, width: 393, height: 852 },
-  insets: { top: 59, left: 0, right: 0, bottom: 34 },
-};
-const JULIE_TOKEN = `${julie.id}-token`;
 const OLDER_NOTICE_VERSION = '2020-01-01';
 
 async function renderApp(authClient: FakeAuthClient, tokenStore: MemoryTokenStore, language: SupportedLanguage = 'fr') {
-  applyLanguage(language);
-  return render(
-    <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <PalierApp
-        authClient={authClient}
-        tokenStore={tokenStore}
-        testSignInEnabled
-        createLotsClient={() => new FakeLotsClient(parkingDemoWith(10))}
-        createPaymentMethodClient={() => new FakePaymentMethodClient()}
-        createVehicleClient={() => new FakeVehicleClient()}
-        createEntryClient={() => new FakeEntryClient()}
-      />
-    </SafeAreaProvider>,
-  );
+  return renderPalierApp({ authClient, tokenStore, language });
 }
 
 function driverWhoNeverAccepted() {

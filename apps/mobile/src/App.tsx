@@ -2,15 +2,12 @@ import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import type { EntryClient } from './api/EntryClient';
 import { HttpAuthClient } from './api/HttpAuthClient';
 import { HttpEntryClient } from './api/HttpEntryClient';
 import { HttpLotsClient } from './api/HttpLotsClient';
 import { HttpPaymentMethodClient } from './api/HttpPaymentMethodClient';
 import { HttpVehicleClient } from './api/HttpVehicleClient';
-import type { LotsClient } from './api/LotsClient';
-import type { PaymentMethodClient } from './api/PaymentMethodClient';
-import type { VehicleClient } from './api/VehicleClient';
+import type { SignedInClients, SignedInSession } from './api/SignedInClients';
 import { secureTokenStore } from './auth/TokenStore';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
 import { applyLanguage, deviceLanguage } from './i18n/i18n';
@@ -27,20 +24,13 @@ const testSignInEnabled = process.env.EXPO_PUBLIC_TEST_SIGN_IN === 'true';
 const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 applyLanguage(deviceLanguage());
 
-function createLotsClient(token: string, onUnauthorized: () => void): LotsClient {
-  return new HttpLotsClient({ baseUrl: apiUrl, token, onUnauthorized });
-}
-
-function createPaymentMethodClient(token: string, onUnauthorized: () => void): PaymentMethodClient {
-  return new HttpPaymentMethodClient({ baseUrl: apiUrl, token, onUnauthorized });
-}
-
-function createVehicleClient(token: string, onUnauthorized: () => void, onConsentRequired: () => void): VehicleClient {
-  return new HttpVehicleClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired });
-}
-
-function createEntryClient(token: string, onUnauthorized: () => void, onConsentRequired: () => void): EntryClient {
-  return new HttpEntryClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired });
+function createSignedInClients({ token, onUnauthorized, onConsentRequired }: SignedInSession): SignedInClients {
+  return {
+    lots: new HttpLotsClient({ baseUrl: apiUrl, token, onUnauthorized }),
+    payment: new HttpPaymentMethodClient({ baseUrl: apiUrl, token, onUnauthorized }),
+    vehicles: new HttpVehicleClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
+    entry: new HttpEntryClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
+  };
 }
 
 const palierApp = (
@@ -49,10 +39,7 @@ const palierApp = (
       authClient={authClient}
       tokenStore={secureTokenStore}
       testSignInEnabled={testSignInEnabled}
-      createLotsClient={createLotsClient}
-      createPaymentMethodClient={createPaymentMethodClient}
-      createVehicleClient={createVehicleClient}
-      createEntryClient={createEntryClient}
+      createSignedInClients={createSignedInClients}
     />
   </StripeProvider>
 );

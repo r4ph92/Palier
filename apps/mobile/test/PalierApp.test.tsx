@@ -1,55 +1,14 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { screen, userEvent } from '@testing-library/react-native';
 import { palierFetch } from '../src/api/appUpdate';
 import { PalierStatusError, PalierUnreachableError, type LotsClient } from '../src/api/LotsClient';
-import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
-import { PalierApp } from '../src/PalierApp';
-import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
-import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
-import { FakePaymentMethodClient } from './fakePaymentMethodClient';
-import { FakeEntryClient } from './fakeEntryClient';
-import { FakeVehicleClient } from './fakeVehicleClient';
-
-const SAFE_AREA_METRICS = {
-  frame: { x: 0, y: 0, width: 393, height: 852 },
-  insets: { top: 59, left: 0, right: 0, bottom: 34 },
-};
-const JULIE_TOKEN = `${julie.id}-token`;
-
-interface AppOptions {
-  readonly authClient?: FakeAuthClient;
-  readonly tokenStore?: MemoryTokenStore;
-  readonly createLotsClient?: (token: string, onUnauthorized: () => void) => LotsClient;
-  readonly language?: SupportedLanguage;
-}
-
-async function renderApp(options: AppOptions = {}) {
-  applyLanguage(options.language ?? 'fr');
-  return render(
-    <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <PalierApp
-        authClient={options.authClient ?? new FakeAuthClient()}
-        tokenStore={options.tokenStore ?? new MemoryTokenStore()}
-        testSignInEnabled
-        createLotsClient={options.createLotsClient ?? (() => new FakeLotsClient(parkingDemoWith(10)))}
-        createPaymentMethodClient={() => new FakePaymentMethodClient()}
-        createVehicleClient={() => new FakeVehicleClient()}
-        createEntryClient={() => new FakeEntryClient()}
-      />
-    </SafeAreaProvider>,
-  );
-}
-
-function signedInJulie() {
-  const authClient = new FakeAuthClient();
-  authClient.validTokens.add(JULIE_TOKEN);
-  return { authClient, tokenStore: new MemoryTokenStore(JULIE_TOKEN) };
-}
+import type { SignedInSession } from '../src/api/SignedInClients';
+import { FakeAuthClient, MemoryTokenStore } from './fakeAuth';
+import { JULIE_TOKEN, renderPalierApp, signedInJulie } from './renderPalierApp';
 
 describe('PalierApp sign-in', () => {
   it('signs Julie in from "Connexion de test", greets her and loads the lots', async () => {
     const tokenStore = new MemoryTokenStore();
-    await renderApp({ tokenStore });
+    await renderPalierApp({ tokenStore });
     const user = userEvent.setup();
 
     await user.press(await screen.findByRole('button', { name: 'Connexion de test' }));
@@ -61,26 +20,26 @@ describe('PalierApp sign-in', () => {
   });
 
   it('keeps Julie signed in when the app is relaunched', async () => {
-    await renderApp(signedInJulie());
+    await renderPalierApp(signedInJulie());
 
     expect(await screen.findByText('Bonjour Julie')).toBeOnTheScreen();
     expect(screen.queryByText('Connexion de test')).not.toBeOnTheScreen();
   });
 
   it('sends the stored token with the lots request', async () => {
-    const createLotsClient = jest.fn(() => new FakeLotsClient(parkingDemoWith(10)));
-    await renderApp({ ...signedInJulie(), createLotsClient });
+    const clients = jest.fn(() => ({}));
+    await renderPalierApp({ ...signedInJulie(), clients });
 
     await screen.findByText('Parking Démo');
 
-    expect(createLotsClient).toHaveBeenCalledWith(JULIE_TOKEN, expect.any(Function));
+    expect(clients).toHaveBeenCalledWith(expect.objectContaining({ token: JULIE_TOKEN }));
   });
 });
 
 describe('PalierApp with a refused token', () => {
   it('shows the sign-in screen and forgets a stored token the API refuses', async () => {
     const tokenStore = new MemoryTokenStore('revoked-token');
-    await renderApp({ tokenStore });
+    await renderPalierApp({ tokenStore });
 
     expect(await screen.findByRole('button', { name: 'Connexion de test' })).toBeOnTheScreen();
     expect(tokenStore.token).toBeNull();
@@ -88,13 +47,13 @@ describe('PalierApp with a refused token', () => {
 
   it('shows the sign-in screen when the lots list answers unauthorized', async () => {
     const { authClient, tokenStore } = signedInJulie();
-    const refusingLots = (_token: string, onUnauthorized: () => void): LotsClient => ({
+    const refusingLots = ({ onUnauthorized }: SignedInSession): LotsClient => ({
       listLots: () => {
         onUnauthorized();
         return Promise.reject(new PalierStatusError(401));
       },
     });
-    await renderApp({ authClient, tokenStore, createLotsClient: refusingLots });
+    await renderPalierApp({ authClient, tokenStore, clients: (session) => ({ lots: refusingLots(session) }) });
 
     expect(await screen.findByRole('button', { name: 'Connexion de test' })).toBeOnTheScreen();
     expect(tokenStore.token).toBeNull();
@@ -104,7 +63,7 @@ describe('PalierApp with a refused token', () => {
 describe('PalierApp sign-out', () => {
   it('signs Julie out from "Compte": sign-in screen, token forgotten and revoked on the API', async () => {
     const { authClient, tokenStore } = signedInJulie();
-    await renderApp({ authClient, tokenStore });
+    await renderPalierApp({ authClient, tokenStore });
     const user = userEvent.setup();
     await screen.findByText('Bonjour Julie');
 
@@ -119,7 +78,7 @@ describe('PalierApp sign-out', () => {
   it('signs Julie out on the device when the API cannot be reached', async () => {
     const { authClient, tokenStore } = signedInJulie();
     authClient.signOut = () => Promise.reject(new PalierUnreachableError('offline'));
-    await renderApp({ authClient, tokenStore });
+    await renderPalierApp({ authClient, tokenStore });
     const user = userEvent.setup();
     await screen.findByText('Bonjour Julie');
 
@@ -134,7 +93,7 @@ describe('PalierApp sign-out', () => {
     const { authClient, tokenStore } = signedInJulie();
     let finishSignOut: () => void = () => undefined;
     authClient.signOut = () => new Promise<void>((resolve) => (finishSignOut = resolve));
-    await renderApp({ authClient, tokenStore });
+    await renderPalierApp({ authClient, tokenStore });
     const user = userEvent.setup();
     await screen.findByText('Bonjour Julie');
 
@@ -151,7 +110,7 @@ describe('PalierApp sign-out', () => {
   });
 
   it('reads "Sign out" on an English device', async () => {
-    await renderApp({ ...signedInJulie(), language: 'en' });
+    await renderPalierApp({ ...signedInJulie(), language: 'en' });
     await screen.findByText('Hello Julie');
 
     await userEvent.setup().press(screen.getByRole('tab', { name: 'Account' }));
@@ -165,7 +124,7 @@ describe('PalierApp when the profile cannot load after sign-in', () => {
     const authClient = new FakeAuthClient();
     authClient.isReachable = false;
     const tokenStore = new MemoryTokenStore();
-    await renderApp({ authClient, tokenStore });
+    await renderPalierApp({ authClient, tokenStore });
     const user = userEvent.setup();
 
     await user.press(await screen.findByRole('button', { name: 'Connexion de test' }));
@@ -180,7 +139,7 @@ describe('PalierApp when the API is unreachable at launch', () => {
   it('offers to try again, then restores the session', async () => {
     const { authClient, tokenStore } = signedInJulie();
     authClient.isReachable = false;
-    await renderApp({ authClient, tokenStore });
+    await renderPalierApp({ authClient, tokenStore });
 
     expect(await screen.findByText('Impossible de joindre Palier.')).toBeOnTheScreen();
     authClient.isReachable = true;
@@ -192,7 +151,7 @@ describe('PalierApp when the API is unreachable at launch', () => {
 
   it('replaces the app with the update screen when the API answers 426', async () => {
     const fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 426 }));
-    await renderApp();
+    await renderPalierApp();
     expect(await screen.findByRole('button', { name: 'Connexion de test' })).toBeOnTheScreen();
 
     await palierFetch('http://localhost:3000/v1/lots');

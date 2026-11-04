@@ -3,12 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import type { AuthClient } from './api/AuthClient';
-import type { EntryClient } from './api/EntryClient';
 import { onUpdateRequired, STORE_URL } from './api/appUpdate';
-import type { LotsClient } from './api/LotsClient';
 import { LotsClientProvider } from './api/LotsClientContext';
-import type { PaymentMethodClient } from './api/PaymentMethodClient';
-import type { VehicleClient } from './api/VehicleClient';
+import type { CreateSignedInClients, SignedInClients } from './api/SignedInClients';
 import type { TokenStore } from './auth/TokenStore';
 import { useSession, type SessionController, type SessionState } from './auth/useSession';
 import { ErrorState } from './components/ErrorState';
@@ -30,10 +27,7 @@ export interface PalierAppProps {
   readonly authClient: AuthClient;
   readonly tokenStore: TokenStore;
   readonly testSignInEnabled: boolean;
-  readonly createLotsClient: (token: string, onUnauthorized: () => void) => LotsClient;
-  readonly createPaymentMethodClient: (token: string, onUnauthorized: () => void) => PaymentMethodClient;
-  readonly createVehicleClient: (token: string, onUnauthorized: () => void, onConsentRequired: () => void) => VehicleClient;
-  readonly createEntryClient: (token: string, onUnauthorized: () => void, onConsentRequired: () => void) => EntryClient;
+  readonly createSignedInClients: CreateSignedInClients;
 }
 
 type AccountPage = 'account' | 'vehicles' | 'addVehicle' | 'payment';
@@ -54,45 +48,31 @@ export function PalierApp(props: PalierAppProps) {
     case 'signedOut':
       return <SignInScreen testSignInEnabled={props.testSignInEnabled} authClient={props.authClient} onSignIn={session.signIn} />;
     case 'signedIn':
-      return <SignedInApp signedIn={state} session={session} factories={props} />;
+      return <SignedInApp signedIn={state} session={session} createClients={props.createSignedInClients} />;
   }
 }
 
 interface SignedInAppProps {
   readonly signedIn: Extract<SessionState, { status: 'signedIn' }>;
   readonly session: SessionController;
-  readonly factories: PalierAppProps;
+  readonly createClients: CreateSignedInClients;
 }
 
-function SignedInApp({ signedIn, session, factories }: SignedInAppProps) {
+function SignedInApp({ signedIn, session, createClients }: SignedInAppProps) {
   const { driver } = signedIn;
-  const clients = useSignedInClients(signedIn.token, session, factories);
+  const clients = useSignedInClients(signedIn.token, session, createClients);
   if (driver.acceptedNoticeVersion !== PRIVACY_NOTICE_VERSION) {
     return <PrivacyNoticeScreen onAccept={session.acceptNotice} onSignOut={session.signOut} />;
   }
   return <SignedInTabs firstName={driver.firstName} clients={clients} onSignOut={session.signOut} />;
 }
 
-interface SignedInClients {
-  readonly lots: LotsClient;
-  readonly payment: PaymentMethodClient;
-  readonly vehicles: VehicleClient;
-  readonly entry: EntryClient;
-}
-
-function useSignedInClients(token: string, session: SessionController, factories: PalierAppProps): SignedInClients {
+function useSignedInClients(token: string, session: SessionController, createClients: CreateSignedInClients): SignedInClients {
   const { expire, refreshDriver } = session;
-  const lots = useMemo(() => factories.createLotsClient(token, expire), [factories, token, expire]);
-  const payment = useMemo(() => factories.createPaymentMethodClient(token, expire), [factories, token, expire]);
-  const vehicles = useMemo(
-    () => factories.createVehicleClient(token, expire, () => refreshDriver(token)),
-    [factories, token, expire, refreshDriver],
+  return useMemo(
+    () => createClients({ token, onUnauthorized: expire, onConsentRequired: () => refreshDriver(token) }),
+    [createClients, token, expire, refreshDriver],
   );
-  const entry = useMemo(
-    () => factories.createEntryClient(token, expire, () => refreshDriver(token)),
-    [factories, token, expire, refreshDriver],
-  );
-  return { lots, payment, vehicles, entry };
 }
 
 interface SignedInTabsProps {
