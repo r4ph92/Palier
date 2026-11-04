@@ -1,5 +1,5 @@
 const UNIQUE_VIOLATION = '23505';
-const ONE_ACTIVE_SESSION_PER_USER = 'parking_session_one_active_per_user_index';
+const ACTIVE_SESSION_INDEXES = new Set(['parking_session_one_active_per_user_index', 'parking_session_one_active_per_spot_index']);
 // Bounds the walk down the causes, so an error that is its own cause cannot loop forever.
 const MAX_CAUSE_DEPTH = 5;
 
@@ -20,6 +20,7 @@ function isOneActiveSessionViolation(candidate: object): boolean {
     'code' in candidate &&
     candidate.code === UNIQUE_VIOLATION &&
     'constraint_name' in candidate &&
-    candidate.constraint_name === ONE_ACTIVE_SESSION_PER_USER
+    typeof candidate.constraint_name === 'string' &&
+    ACTIVE_SESSION_INDEXES.has(candidate.constraint_name)
   );
 }

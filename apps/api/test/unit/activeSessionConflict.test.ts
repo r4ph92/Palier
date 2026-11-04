@@ -8,12 +8,16 @@ describe('isActiveSessionConflict', () => {
     expect(isActiveSessionConflict(oneActivePerUser)).toBe(true);
   });
 
+  it('recognizes the one-active-session-per-spot violation as the same conflict', () => {
+    expect(isActiveSessionConflict({ code: '23505', constraint_name: 'parking_session_one_active_per_spot_index' })).toBe(true);
+  });
+
   it('finds it under the error Drizzle wraps around it', () => {
     expect(isActiveSessionConflict(new Error('Failed query', { cause: oneActivePerUser }))).toBe(true);
   });
 
   it.each([
-    ['another unique index', { code: '23505', constraint_name: 'parking_session_one_active_per_spot_index' }],
+    ['another unique index', { code: '23505', constraint_name: 'parking_session_user_email_index' }],
     ['another error code on the same index', { code: '23503', constraint_name: 'parking_session_one_active_per_user_index' }],
     ['an error without Postgres fields', new Error('connection reset')],
     ['something that is not an error', 'boom'],
