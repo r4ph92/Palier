@@ -11,7 +11,10 @@ import type { SignedInClients, SignedInSession } from './api/SignedInClients';
 import { secureTokenStore } from './auth/TokenStore';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
 import { applyLanguage, deviceLanguage } from './i18n/i18n';
+import { developerTools } from './dev/loadDeveloperTools';
 import { PalierApp } from './PalierApp';
+import { NullPositioningModule } from './positioning/NullPositioningModule';
+import { PositioningCore } from './positioning/PositioningCore';
 import { fontAssets } from './theme/fonts';
 
 const LOCAL_API_URL = 'http://localhost:3000';
@@ -33,6 +36,9 @@ function createSignedInClients({ token, onUnauthorized, onConsentRequired }: Sig
   };
 }
 
+const positioningCore = new PositioningCore(developerTools?.module ?? new NullPositioningModule());
+const developerEntry = developerTools?.bind(positioningCore);
+
 const palierApp = (
   <StripeProvider publishableKey={stripePublishableKey}>
     <PalierApp
@@ -40,6 +46,7 @@ const palierApp = (
       tokenStore={secureTokenStore}
       testSignInEnabled={testSignInEnabled}
       createSignedInClients={createSignedInClients}
+      developerEntry={developerEntry}
     />
   </StripeProvider>
 );

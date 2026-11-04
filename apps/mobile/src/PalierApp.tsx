@@ -10,16 +10,13 @@ import type { TokenStore } from './auth/TokenStore';
 import { useSession, type SessionController, type SessionState } from './auth/useSession';
 import { ErrorState } from './components/ErrorState';
 import { TabBar, type Tab } from './components/TabBar';
-import { usePaymentCard } from './payment/usePaymentCard';
-import { AccountScreen } from './screens/AccountScreen';
+import { AccountTab, type AccountPage } from './screens/AccountTab';
+import type { DeveloperEntry } from './screens/DeveloperEntry';
 import { AppUpdateRequiredScreen } from './screens/AppUpdateRequiredScreen';
-import { AddVehicleScreen } from './screens/AddVehicleScreen';
 import { HomeScreen } from './screens/HomeScreen';
-import { PaymentMethodScreen } from './screens/PaymentMethodScreen';
 import { PrivacyNoticeScreen } from './screens/PrivacyNoticeScreen';
 import { ScanScreen } from './screens/ScanScreen';
 import { SignInScreen } from './screens/SignInScreen';
-import { VehiclesScreen } from './screens/VehiclesScreen';
 import { useColors } from './theme/useColors';
 import { spacing } from './theme/tokens';
 
@@ -28,9 +25,8 @@ export interface PalierAppProps {
   readonly tokenStore: TokenStore;
   readonly testSignInEnabled: boolean;
   readonly createSignedInClients: CreateSignedInClients;
+  readonly developerEntry?: DeveloperEntry | undefined;
 }
-
-type AccountPage = 'account' | 'vehicles' | 'addVehicle' | 'payment';
 
 export function PalierApp(props: PalierAppProps) {
   const [updateRequired, setUpdateRequired] = useState(false);
@@ -48,7 +44,7 @@ export function PalierApp(props: PalierAppProps) {
     case 'signedOut':
       return <SignInScreen testSignInEnabled={props.testSignInEnabled} authClient={props.authClient} onSignIn={session.signIn} />;
     case 'signedIn':
-      return <SignedInApp signedIn={state} session={session} createClients={props.createSignedInClients} />;
+      return <SignedInApp signedIn={state} session={session} createClients={props.createSignedInClients} developerEntry={props.developerEntry} />;
   }
 }
 
@@ -56,15 +52,16 @@ interface SignedInAppProps {
   readonly signedIn: Extract<SessionState, { status: 'signedIn' }>;
   readonly session: SessionController;
   readonly createClients: CreateSignedInClients;
+  readonly developerEntry: DeveloperEntry | undefined;
 }
 
-function SignedInApp({ signedIn, session, createClients }: SignedInAppProps) {
+function SignedInApp({ signedIn, session, createClients, developerEntry }: SignedInAppProps) {
   const { driver } = signedIn;
   const clients = useSignedInClients(signedIn.token, session, createClients);
   if (driver.acceptedNoticeVersion !== PRIVACY_NOTICE_VERSION) {
     return <PrivacyNoticeScreen onAccept={session.acceptNotice} onSignOut={session.signOut} />;
   }
-  return <SignedInTabs firstName={driver.firstName} clients={clients} onSignOut={session.signOut} />;
+  return <SignedInTabs firstName={driver.firstName} clients={clients} developerEntry={developerEntry} onSignOut={session.signOut} />;
 }
 
 function useSignedInClients(token: string, session: SessionController, createClients: CreateSignedInClients): SignedInClients {
@@ -78,15 +75,16 @@ function useSignedInClients(token: string, session: SessionController, createCli
 interface SignedInTabsProps {
   readonly firstName: string;
   readonly clients: SignedInClients;
+  readonly developerEntry: DeveloperEntry | undefined;
   readonly onSignOut: () => void;
 }
 
-function SignedInTabs({ firstName, clients, onSignOut }: SignedInTabsProps) {
+function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: SignedInTabsProps) {
   const tabs = useTabs();
   return (
     <View style={styles.app}>
       <LotsClientProvider client={clients.lots}>
-        <TabContent firstName={firstName} clients={clients} tabs={tabs} onSignOut={onSignOut} />
+        <TabContent firstName={firstName} clients={clients} tabs={tabs} developerEntry={developerEntry} onSignOut={onSignOut} />
       </LotsClientProvider>
       <TabBar selected={tabs.tab} onSelect={tabs.selectTab} />
     </View>
@@ -97,14 +95,14 @@ interface TabContentProps extends SignedInTabsProps {
   readonly tabs: TabsController;
 }
 
-function TabContent({ firstName, clients, tabs, onSignOut }: TabContentProps) {
+function TabContent({ firstName, clients, tabs, developerEntry, onSignOut }: TabContentProps) {
   switch (tabs.tab) {
     case 'lots':
       return <HomeScreen firstName={firstName} />;
     case 'scan':
       return <ScanScreen client={clients.entry} onAddPlate={() => tabs.openAccountPage('vehicles')} onAddCard={() => tabs.openAccountPage('payment')} />;
     case 'account':
-      return <AccountTab firstName={firstName} page={tabs.accountPage} clients={clients} onPageChange={tabs.setAccountPage} onSignOut={onSignOut} />;
+      return <AccountTab firstName={firstName} page={tabs.accountPage} clients={clients} developerEntry={developerEntry} onPageChange={tabs.setAccountPage} onSignOut={onSignOut} />;
   }
 }
 
@@ -130,28 +128,6 @@ function useTabs(): TabsController {
     setAccountPage(page);
   }
   return { tab, accountPage, selectTab, setAccountPage, openAccountPage };
-}
-
-interface AccountTabProps {
-  readonly firstName: string;
-  readonly page: AccountPage;
-  readonly clients: SignedInClients;
-  readonly onPageChange: (page: AccountPage) => void;
-  readonly onSignOut: () => void;
-}
-
-function AccountTab({ firstName, page, clients, onPageChange, onSignOut }: AccountTabProps) {
-  const { state: cardState, setCard } = usePaymentCard(clients.payment);
-  switch (page) {
-    case 'account':
-      return <AccountScreen cardState={cardState} onOpenVehicles={() => onPageChange('vehicles')} onOpenPaymentMethod={() => onPageChange('payment')} onSignOut={onSignOut} />;
-    case 'vehicles':
-      return <VehiclesScreen firstName={firstName} client={clients.vehicles} onAddVehicle={() => onPageChange('addVehicle')} />;
-    case 'addVehicle':
-      return <AddVehicleScreen client={clients.vehicles} onCancel={() => onPageChange('vehicles')} onSaved={() => onPageChange('vehicles')} />;
-    case 'payment':
-      return <PaymentMethodScreen client={clients.payment} onSaved={setCard} onBack={() => onPageChange('account')} />;
-  }
 }
 
 function StartupError({ onRetry }: { readonly onRetry: () => void }) {

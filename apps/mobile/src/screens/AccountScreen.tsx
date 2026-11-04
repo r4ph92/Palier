@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -10,24 +10,32 @@ import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
+export interface DeveloperLink {
+  readonly label: string;
+  readonly onOpen: () => void;
+}
+
 interface AccountScreenProps {
   readonly cardState: CardState;
   readonly onOpenVehicles: () => void;
   readonly onOpenPaymentMethod: () => void;
   readonly onSignOut: () => void;
+  readonly developerLink?: DeveloperLink;
 }
 
-export function AccountScreen({ cardState, onOpenVehicles, onOpenPaymentMethod, onSignOut }: AccountScreenProps) {
+export function AccountScreen({ cardState, onOpenVehicles, onOpenPaymentMethod, onSignOut, developerLink }: AccountScreenProps) {
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
-      <View style={styles.content}>
+      {/* A ScrollView keeps the last button reachable at the largest text sizes. */}
+      <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader title={i18n.t('account.title')} />
         <Text style={[typography.bodyStrong, { color: colors.ink }]}>{describeCard(cardState)}</Text>
         <PrimaryButton label={i18n.t('account.vehicles')} onPress={onOpenVehicles} />
         <PrimaryButton label={i18n.t('account.paymentMethod')} onPress={onOpenPaymentMethod} />
+        {developerLink === undefined ? null : <PrimaryButton label={developerLink.label} onPress={developerLink.onOpen} />}
         <SignOutButton onSignOut={onSignOut} />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -61,5 +69,5 @@ function describeCard(cardState: CardState): string {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { gap: spacing.medium, paddingHorizontal: spacing.medium },
+  content: { gap: spacing.medium, paddingHorizontal: spacing.medium, paddingBottom: spacing.large },
 });
