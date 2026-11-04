@@ -69,3 +69,17 @@ function readDemoMode(rawDemoMode: string | undefined): boolean {
   }
   throw new Error(`DEMO_MODE must be "true" or "false", got "${rawDemoMode}".`);
 }
+
+const STRIPE_ACCOUNT_PREFIX = 'acct_';
+
+// The seed writes it on Stationnements Lavoie so entry holds go to that connected test account; unset leaves none.
+export function readDemoOperatorStripeAccountId(variables: NodeJS.ProcessEnv): string | null {
+  const accountId = variables['DEMO_OPERATOR_STRIPE_ACCOUNT_ID'];
+  if (accountId === undefined || accountId === '') {
+    return null;
+  }
+  if (!accountId.startsWith(STRIPE_ACCOUNT_PREFIX)) {
+    throw new Error(`DEMO_OPERATOR_STRIPE_ACCOUNT_ID must be a Stripe account id (acct_…), got "${accountId}".`);
+  }
+  return accountId;
+}

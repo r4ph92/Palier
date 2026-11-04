@@ -3,7 +3,7 @@ import { UNREACHABLE } from './gateApi.js';
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('@palier/shared-types').GateKind} GateKind */
 /** @typedef {import('@palier/shared-types').GatePassageResponse} GatePassageResponse */
-/** @typedef {import('./gateApi.js').GateApi} GateApi */
+/** @typedef {Pick<import('./gateApi.js').GateApi, 'fetchIdentity' | 'postPassage'>} PassageApi */
 /** @typedef {import('./consoleText.js').TextKey} TextKey */
 /**
  * @typedef {object} LoopPress
@@ -20,7 +20,7 @@ import { UNREACHABLE } from './gateApi.js';
  */
 
 const OK = 200;
-const DEVICE_KEY_SHAPE = /^[A-Za-z0-9_-]{43}$/;
+export const DEVICE_KEY_SHAPE = /^[A-Za-z0-9_-]{43}$/;
 
 /** @type {Record<number, TextKey>} */
 const MESSAGE_BY_STATUS = { [UNREACHABLE]: 'unreachable', 401: 'keyRefused', 403: 'gateForbidden', 409: 'gateWithoutLoops' };
@@ -47,7 +47,7 @@ export function isLoopEnabled(loop, state) {
 
 /**
  * @param {LoopPress} press
- * @param {GateApi} api
+ * @param {PassageApi} api
  * @returns {Promise<PressOutcome>}
  */
 export async function pressLoop(press, api) {
@@ -79,7 +79,7 @@ function passageRefusal(status) {
 
 /**
  * @param {string} deviceKey
- * @param {GateApi} api
+ * @param {PassageApi} api
  * @returns {Promise<GateIdentity | RefusedOutcome>}
  */
 async function identify(deviceKey, api) {

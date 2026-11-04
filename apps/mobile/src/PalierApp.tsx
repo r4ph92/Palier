@@ -4,10 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import type { AuthClient } from './api/AuthClient';
 import { onUpdateRequired, STORE_URL } from './api/appUpdate';
-import type { LotsClient } from './api/LotsClient';
 import { LotsClientProvider } from './api/LotsClientContext';
-import type { PaymentMethodClient } from './api/PaymentMethodClient';
-import type { VehicleClient } from './api/VehicleClient';
+import type { CreateSignedInClients, SignedInClients } from './api/SignedInClients';
 import type { TokenStore } from './auth/TokenStore';
 import { useSession, type SessionController, type SessionState } from './auth/useSession';
 import { ErrorState } from './components/ErrorState';
@@ -17,6 +15,7 @@ import type { DeveloperEntry } from './screens/DeveloperEntry';
 import { AppUpdateRequiredScreen } from './screens/AppUpdateRequiredScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { PrivacyNoticeScreen } from './screens/PrivacyNoticeScreen';
+import { ScanScreen } from './screens/ScanScreen';
 import { SignInScreen } from './screens/SignInScreen';
 import { useColors } from './theme/useColors';
 import { spacing } from './theme/tokens';
@@ -25,9 +24,7 @@ export interface PalierAppProps {
   readonly authClient: AuthClient;
   readonly tokenStore: TokenStore;
   readonly testSignInEnabled: boolean;
-  readonly createLotsClient: (token: string, onUnauthorized: () => void) => LotsClient;
-  readonly createPaymentMethodClient: (token: string, onUnauthorized: () => void) => PaymentMethodClient;
-  readonly createVehicleClient: (token: string, onUnauthorized: () => void, onConsentRequired: () => void) => VehicleClient;
+  readonly createSignedInClients: CreateSignedInClients;
   readonly developerEntry?: DeveloperEntry | undefined;
 }
 
@@ -47,40 +44,32 @@ export function PalierApp(props: PalierAppProps) {
     case 'signedOut':
       return <SignInScreen testSignInEnabled={props.testSignInEnabled} authClient={props.authClient} onSignIn={session.signIn} />;
     case 'signedIn':
-      return <SignedInApp signedIn={state} session={session} factories={props} />;
+      return <SignedInApp signedIn={state} session={session} createClients={props.createSignedInClients} developerEntry={props.developerEntry} />;
   }
 }
 
 interface SignedInAppProps {
   readonly signedIn: Extract<SessionState, { status: 'signedIn' }>;
   readonly session: SessionController;
-  readonly factories: PalierAppProps;
+  readonly createClients: CreateSignedInClients;
+  readonly developerEntry: DeveloperEntry | undefined;
 }
 
-function SignedInApp({ signedIn, session, factories }: SignedInAppProps) {
+function SignedInApp({ signedIn, session, createClients, developerEntry }: SignedInAppProps) {
   const { driver } = signedIn;
-  const clients = useSignedInClients(signedIn.token, session, factories);
+  const clients = useSignedInClients(signedIn.token, session, createClients);
   if (driver.acceptedNoticeVersion !== PRIVACY_NOTICE_VERSION) {
     return <PrivacyNoticeScreen onAccept={session.acceptNotice} onSignOut={session.signOut} />;
   }
-  return <SignedInTabs firstName={driver.firstName} clients={clients} developerEntry={factories.developerEntry} onSignOut={session.signOut} />;
+  return <SignedInTabs firstName={driver.firstName} clients={clients} developerEntry={developerEntry} onSignOut={session.signOut} />;
 }
 
-interface SignedInClients {
-  readonly lots: LotsClient;
-  readonly payment: PaymentMethodClient;
-  readonly vehicles: VehicleClient;
-}
-
-function useSignedInClients(token: string, session: SessionController, factories: PalierAppProps): SignedInClients {
+function useSignedInClients(token: string, session: SessionController, createClients: CreateSignedInClients): SignedInClients {
   const { expire, refreshDriver } = session;
-  const lots = useMemo(() => factories.createLotsClient(token, expire), [factories, token, expire]);
-  const payment = useMemo(() => factories.createPaymentMethodClient(token, expire), [factories, token, expire]);
-  const vehicles = useMemo(
-    () => factories.createVehicleClient(token, expire, () => refreshDriver(token)),
-    [factories, token, expire, refreshDriver],
+  return useMemo(
+    () => createClients({ token, onUnauthorized: expire, onConsentRequired: () => refreshDriver(token) }),
+    [createClients, token, expire, refreshDriver],
   );
-  return { lots, payment, vehicles };
 }
 
 interface SignedInTabsProps {
@@ -91,30 +80,54 @@ interface SignedInTabsProps {
 }
 
 function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: SignedInTabsProps) {
-  const { tab, accountPage, selectTab, setAccountPage } = useTabs();
+  const tabs = useTabs();
   return (
     <View style={styles.app}>
       <LotsClientProvider client={clients.lots}>
-        {tab === 'lots' ? (
-          <HomeScreen firstName={firstName} />
-        ) : (
-          <AccountTab firstName={firstName} page={accountPage} clients={clients} developerEntry={developerEntry} onPageChange={setAccountPage} onSignOut={onSignOut} />
-        )}
+        <TabContent firstName={firstName} clients={clients} tabs={tabs} developerEntry={developerEntry} onSignOut={onSignOut} />
       </LotsClientProvider>
-      <TabBar selected={tab} onSelect={selectTab} />
+      <TabBar selected={tabs.tab} onSelect={tabs.selectTab} />
     </View>
   );
 }
 
+interface TabContentProps extends SignedInTabsProps {
+  readonly tabs: TabsController;
+}
+
+function TabContent({ firstName, clients, tabs, developerEntry, onSignOut }: TabContentProps) {
+  switch (tabs.tab) {
+    case 'lots':
+      return <HomeScreen firstName={firstName} />;
+    case 'scan':
+      return <ScanScreen client={clients.entry} onAddPlate={() => tabs.openAccountPage('vehicles')} onAddCard={() => tabs.openAccountPage('payment')} />;
+    case 'account':
+      return <AccountTab firstName={firstName} page={tabs.accountPage} clients={clients} developerEntry={developerEntry} onPageChange={tabs.setAccountPage} onSignOut={onSignOut} />;
+  }
+}
+
+interface TabsController {
+  readonly tab: Tab;
+  readonly accountPage: AccountPage;
+  selectTab(next: Tab): void;
+  setAccountPage(page: AccountPage): void;
+  openAccountPage(page: AccountPage): void;
+}
+
 // Choosing a tab starts the account tab again at its first page, so Compte never reopens on Véhicules.
-function useTabs() {
+function useTabs(): TabsController {
   const [tab, setTab] = useState<Tab>('lots');
   const [accountPage, setAccountPage] = useState<AccountPage>('account');
   function selectTab(next: Tab) {
     setTab(next);
     setAccountPage('account');
   }
-  return { tab, accountPage, selectTab, setAccountPage };
+  // The scan tab sends a driver without plate or card straight to the page that adds one.
+  function openAccountPage(page: AccountPage) {
+    setTab('account');
+    setAccountPage(page);
+  }
+  return { tab, accountPage, selectTab, setAccountPage, openAccountPage };
 }
 
 function StartupError({ onRetry }: { readonly onRetry: () => void }) {

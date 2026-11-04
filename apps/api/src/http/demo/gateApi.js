@@ -1,8 +1,10 @@
 /** @typedef {{ status: number, body: unknown }} ApiResponse */
+/** @typedef {{ issuedAt: string, id: string }} CommandCursor */
 /**
  * @typedef {object} GateApi
  * @property {(deviceKey: string) => Promise<ApiResponse>} fetchIdentity
  * @property {(deviceKey: string, gateId: string, closedAt: string) => Promise<ApiResponse>} postPassage
+ * @property {(deviceKey: string, after: CommandCursor | null) => Promise<ApiResponse>} fetchCommands
  */
 
 export const UNREACHABLE = 0;
@@ -20,7 +22,20 @@ export function createGateApi(fetchFunction) {
         headers: { ...authorization(deviceKey), 'content-type': 'application/json' },
         body: JSON.stringify({ closedAt }),
       }),
+    fetchCommands: (deviceKey, after) =>
+      request(fetchFunction, commandsUrl(after), { headers: authorization(deviceKey) }),
   };
+}
+
+/**
+ * @param {CommandCursor | null} after
+ * @returns {string}
+ */
+function commandsUrl(after) {
+  if (after === null) {
+    return '/v1/gates/me/commands';
+  }
+  return `/v1/gates/me/commands?${new URLSearchParams({ after: after.issuedAt, afterId: after.id })}`;
 }
 
 /**

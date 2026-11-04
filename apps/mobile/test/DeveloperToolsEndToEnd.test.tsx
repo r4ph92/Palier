@@ -1,19 +1,9 @@
-import { act, render, screen, userEvent, within } from '@testing-library/react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { act, screen, userEvent, within } from '@testing-library/react-native';
 import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import { applyLanguage } from '../src/i18n/i18n';
-import { PalierApp } from '../src/PalierApp';
 import { PositioningCore } from '../src/positioning/PositioningCore';
-import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
-import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
-import { FakePaymentMethodClient } from './fakePaymentMethodClient';
-import { FakeVehicleClient } from './fakeVehicleClient';
+import { renderPalierApp, signedInJulie } from './renderPalierApp';
 
-const SAFE_AREA_METRICS = {
-  frame: { x: 0, y: 0, width: 393, height: 852 },
-  insets: { top: 59, left: 0, right: 0, bottom: 34 },
-};
-const JULIE_TOKEN = `${julie.id}-token`;
 const AISLE_TWO_LINE = /^\d{1,2} h \d{2} min \d{2} s\s+Allée détectée : minor 2$/;
 const START_MONITORING_LINE = /^\d{1,2} h \d{2} min \d{2} s\s+startMonitoring uuid=B9407F30 major=1$/;
 
@@ -26,22 +16,7 @@ function wireDeveloperTools() {
 
 async function renderSignedInApp(language: 'fr' | 'en') {
   const { positioningCore, developerEntry } = wireDeveloperTools();
-  applyLanguage(language);
-  const authClient = new FakeAuthClient();
-  authClient.validTokens.add(JULIE_TOKEN);
-  await render(
-    <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <PalierApp
-        authClient={authClient}
-        tokenStore={new MemoryTokenStore(JULIE_TOKEN)}
-        testSignInEnabled={false}
-        createLotsClient={() => new FakeLotsClient(parkingDemoWith(10))}
-        createPaymentMethodClient={() => new FakePaymentMethodClient()}
-        createVehicleClient={() => new FakeVehicleClient()}
-        developerEntry={developerEntry}
-      />
-    </SafeAreaProvider>,
-  );
+  await renderPalierApp({ ...signedInJulie(), language, testSignInEnabled: false, developerEntry });
   return { user: userEvent.setup(), positioningCore };
 }
 

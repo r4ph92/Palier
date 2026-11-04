@@ -3,6 +3,7 @@ import { buildServer } from '../../src/http/buildServer.ts';
 import { FakeCardGateway } from './fakeCardGateway.ts';
 import { FakeDriverRepository } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
+import { fakeEntries } from './fakes/entryFakes.ts';
 import { fakeGateDependencies } from './fakes/serverDependencies.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
@@ -16,13 +17,16 @@ interface ServerOptions {
 // The one place route tests build the real server over fake repositories.
 export function configureServer({ testSignInEnabled = false, demoMode = false, minimumAppVersion }: ServerOptions = {}) {
   const driverRepository = new FakeDriverRepository();
+  const vehicleRepository = new FakeVehicleRepository();
+  const entries = fakeEntries({ drivers: driverRepository, vehicles: vehicleRepository });
   const server: FastifyInstance = buildServer({
     gates: fakeGateDependencies(),
-    repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository: new FakeVehicleRepository() },
+    repositories: { lotAvailabilityRepository: noLots, driverRepository, vehicleRepository },
     cardGateway: new FakeCardGateway(),
+    entries: entries.dependencies,
     settings: { testSignInEnabled, demoMode, minimumAppVersion },
   });
-  return { server, driverRepository };
+  return { server, driverRepository, vehicleRepository, entries };
 }
 
 // Every route the server registers, as "METHOD /path" with the :params kept, read from Fastify's route tree.

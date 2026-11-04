@@ -12,12 +12,13 @@ export const GATED = [
   'GET /v1/me/payment-method',
   'PUT /v1/me/payment-method',
   'POST /v1/me/setup-intent',
+  'POST /v1/entries',
 ];
 
 const DRIVER_EXEMPT = ['GET /v1/me', 'POST /v1/consent', 'POST /v1/sign-out', 'GET /v1/test/drivers', 'POST /v1/test/sign-in'];
 
 // Gate controllers sign with a device key, never a driver token: there is no driver whose consent could be checked.
-const GATE_DEVICE_ROUTES = ['GET /v1/gates/me', 'POST /v1/gates/:id/passage'];
+const GATE_DEVICE_ROUTES = ['GET /v1/gates/me', 'GET /v1/gates/me/commands', 'POST /v1/gates/:id/passage'];
 
 // The demo console is static files served only in demo mode; it reaches data through the gate routes with a device key.
 const DEMO_CONSOLE_ROUTES = Object.keys(DEMO_ASSETS).map((fileName) => `GET ${demoAssetUrl(fileName)}`);

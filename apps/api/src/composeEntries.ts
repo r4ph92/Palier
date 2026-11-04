@@ -1,0 +1,44 @@
+import Stripe from 'stripe';
+import type { DriverRepository } from './domain/drivers/DriverRepository.ts';
+import { EntryAdmission } from './domain/entries/EntryAdmission.ts';
+import { EntryEligibility } from './domain/entries/EntryEligibility.ts';
+import type { VehicleRepository } from './domain/vehicles/VehicleRepository.ts';
+import type { EntryRouteDependencies } from './http/routes/entryRoutes.ts';
+import type { Database } from './infrastructure/postgres/database.ts';
+import { PostgresEntryGateRepository } from './infrastructure/postgres/PostgresEntryGateRepository.ts';
+import { PostgresParkingSessionRepository } from './infrastructure/postgres/PostgresParkingSessionRepository.ts';
+import { SimulatedGateCommander } from './infrastructure/postgres/SimulatedGateCommander.ts';
+import { StripePaymentAuthorizer } from './infrastructure/stripe/StripePaymentAuthorizer.ts';
+
+// The app gives up after 8 s: two attempts of 2.5 s plus the retry backoff stay under it, and the retry reuses the entry's idempotency key.
+const STRIPE_TIMEOUT_MILLISECONDS = 2500;
+const STRIPE_NETWORK_RETRIES = 1;
+
+export interface EntryComposition {
+  readonly database: Database;
+  // Null without STRIPE_SECRET_KEY: QR refusals still answer, an eligible entry gets PAYMENTS_UNAVAILABLE.
+  readonly stripeKey: string | null;
+  readonly demoMode: boolean;
+  readonly drivers: DriverRepository;
+  readonly vehicles: VehicleRepository;
+}
+
+export function composeEntries({ database, stripeKey, demoMode, drivers, vehicles }: EntryComposition): EntryRouteDependencies {
+  return {
+    eligibility: new EntryEligibility({
+      gates: new PostgresEntryGateRepository(database),
+      vehicles,
+      drivers,
+      policy: { allowPlatformChargesWithoutOperatorAccount: demoMode },
+    }),
+    admission: new EntryAdmission({
+      sessions: new PostgresParkingSessionRepository(database),
+      payments: stripeKey === null ? null : paymentAuthorizer(stripeKey),
+      gateCommander: new SimulatedGateCommander(database),
+    }),
+  };
+}
+
+function paymentAuthorizer(stripeKey: string): StripePaymentAuthorizer {
+  return new StripePaymentAuthorizer(new Stripe(stripeKey, { timeout: STRIPE_TIMEOUT_MILLISECONDS, maxNetworkRetries: STRIPE_NETWORK_RETRIES }));
+}
