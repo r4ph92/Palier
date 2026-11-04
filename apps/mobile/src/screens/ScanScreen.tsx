@@ -80,7 +80,7 @@ function submitLabelKey(state: EntryState): string {
   if (state.status === 'submitting') {
     return 'scan.submitting';
   }
-  return state.status === 'unreachable' ? 'scan.retry' : 'scan.submit';
+  return state.status === 'unreachable' || state.status === 'notResponding' ? 'scan.retry' : 'scan.submit';
 }
 
 function QrField({ entry }: { readonly entry: EntryController }) {
@@ -143,10 +143,16 @@ function ProblemMessage({ message, hint }: { readonly message: string; readonly 
 }
 
 function problemMessage(state: EntryState): string | null {
-  if (state.status === 'refused') {
-    return i18n.t(`scan.refusals.${state.refusal}`);
+  switch (state.status) {
+    case 'refused':
+      return i18n.t(`scan.refusals.${state.refusal}`);
+    case 'notResponding':
+      return i18n.t('scan.notResponding');
+    case 'unreachable':
+      return i18n.t('scan.unreachable');
+    default:
+      return null;
   }
-  return state.status === 'unreachable' ? i18n.t('scan.unreachable') : null;
 }
 
 const styles = StyleSheet.create({

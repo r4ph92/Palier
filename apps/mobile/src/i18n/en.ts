@@ -93,15 +93,18 @@ export const en: Translations = {
     retry: 'Try again',
     unreachable: 'Can’t reach Palier.',
     unreachableHint: 'Check your connection, then try again.',
+    notResponding: 'Palier is not responding, try again in a moment',
     refusals: {
       QR_NOT_RECOGNIZED: 'QR not recognized',
       NOT_AN_ENTRY_GATE: 'This QR is not an entry terminal',
       LOT_NOT_IN_SERVICE: 'This lot is not in service',
+      GATE_UNAVAILABLE: 'This terminal is not available',
       PREREQUISITES_MISSING: 'Add a plate and a card before entering',
       OPERATOR_NOT_PAYABLE: 'This lot cannot take payments right now',
       LOT_FULL: 'This lot is full',
       ALREADY_INSIDE: 'You already have an entry in progress',
       CARD_DECLINED: 'Card declined',
+      TOO_MANY_ENTRIES: 'Too many attempts, try again in a few minutes',
     },
   },
   tabs: {

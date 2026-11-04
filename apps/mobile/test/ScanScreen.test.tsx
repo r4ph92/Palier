@@ -78,11 +78,13 @@ describe('ScanScreen refusals', () => {
     ['QR_NOT_RECOGNIZED', 'QR non reconnu', 'QR not recognized'],
     ['NOT_AN_ENTRY_GATE', 'Ce QR n’est pas une borne d’entrée', 'This QR is not an entry terminal'],
     ['LOT_NOT_IN_SERVICE', 'Ce parking n’est pas en service', 'This lot is not in service'],
+    ['GATE_UNAVAILABLE', 'Cette borne n’est pas disponible', 'This terminal is not available'],
     ['PREREQUISITES_MISSING', 'Ajoutez une plaque et une carte avant d’entrer', 'Add a plate and a card before entering'],
     ['OPERATOR_NOT_PAYABLE', 'Ce parking n’accepte pas les paiements pour le moment', 'This lot cannot take payments right now'],
     ['LOT_FULL', 'Ce parking est complet', 'This lot is full'],
     ['ALREADY_INSIDE', 'Vous avez déjà une entrée en cours', 'You already have an entry in progress'],
     ['CARD_DECLINED', 'Carte refusée', 'Card declined'],
+    ['TOO_MANY_ENTRIES', 'Trop de tentatives, réessayez dans quelques minutes', 'Too many attempts, try again in a few minutes'],
   ] as const;
   const cases = refusals.flatMap(([code, french, english]) => [
     [code, 'fr', french],
@@ -134,17 +136,31 @@ describe('ScanScreen refusals', () => {
 });
 
 describe('ScanScreen when Palier cannot answer', () => {
+  it('says it cannot reach Palier when the network fails, asks to check the connection, and retries the same QR', async () => {
+    const client = new FakeEntryClient();
+    client.isReachable = false;
+    const { user } = await scan({ client });
+
+    expect(await screen.findByText('Impossible de joindre Palier.')).toBeOnTheScreen();
+    expect(screen.getByText('Vérifiez votre connexion, puis réessayez.')).toBeOnTheScreen();
+    client.isReachable = true;
+    await user.press(screen.getByRole('button', { name: 'Réessayer' }));
+
+    expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();
+  });
+
   it.each([
-    ['the network fails', (client: FakeEntryClient) => (client.isReachable = false)],
-    ['Stripe or the gate is unavailable (503)', (client: FakeEntryClient) => (client.nextStatus = 503)],
-    ['the API refuses the request shape', (client: FakeEntryClient) => (client.nextRejection = 'FST_ERR_VALIDATION')],
-  ])('says it cannot reach Palier when %s, and retries the same QR', async (_case, breakClient) => {
+    ['card payments are unavailable (503)', (client: FakeEntryClient) => (client.nextRejection = 'PAYMENTS_UNAVAILABLE')],
+    ['the API fails (500)', (client: FakeEntryClient) => (client.nextStatus = 500)],
+    ['the API answers a code the app does not know', (client: FakeEntryClient) => (client.nextRejection = 'SOMETHING_NEW')],
+  ])('says Palier is not responding when %s, without blaming the connection, and retries the same QR', async (_case, breakClient) => {
     const client = new FakeEntryClient();
     breakClient(client);
     const { user } = await scan({ client });
 
-    expect(await screen.findByText('Impossible de joindre Palier.')).toBeOnTheScreen();
-    Object.assign(client, { isReachable: true, nextStatus: null, nextRejection: null });
+    expect(await screen.findByText('Palier ne répond pas, réessayez dans un instant')).toBeOnTheScreen();
+    expect(screen.queryByText('Vérifiez votre connexion, puis réessayez.')).not.toBeOnTheScreen();
+    Object.assign(client, { nextStatus: null, nextRejection: null });
     await user.press(screen.getByRole('button', { name: 'Réessayer' }));
 
     expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();

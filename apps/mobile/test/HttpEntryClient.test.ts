@@ -43,14 +43,23 @@ describe('HttpEntryClient', () => {
     [400, 'QR_NOT_RECOGNIZED'],
     [402, 'CARD_DECLINED'],
     [409, 'PREREQUISITES_MISSING'],
+    [429, 'TOO_MANY_ENTRIES'],
+    [503, 'GATE_UNAVAILABLE'],
+    [503, 'PAYMENTS_UNAVAILABLE'],
   ])('reports a %i with the API reason %s', async (status, code) => {
     const { client } = clientAnswering(jsonResponse({ statusCode: status, error: code, message: 'refused' }, status));
 
     await expect(client.enter(ENTREE_DEMO_QR)).rejects.toEqual(new PalierRejectedError(code));
   });
 
-  it('reports a 503 as a status error, not a refusal', async () => {
-    const { client } = clientAnswering(jsonResponse({ error: 'PAYMENTS_UNAVAILABLE' }, 503));
+  it('reports a QR content the API schema refuses as an unrecognized QR', async () => {
+    const { client } = clientAnswering(jsonResponse({ statusCode: 400, error: 'FST_ERR_VALIDATION', message: 'body/qrContent too long' }, 400));
+
+    await expect(client.enter(ENTREE_DEMO_QR)).rejects.toEqual(new PalierRejectedError('QR_NOT_RECOGNIZED'));
+  });
+
+  it('reports a 500 as a status error, not a refusal', async () => {
+    const { client } = clientAnswering(jsonResponse({ statusCode: 500, error: 'Internal Server Error' }, 500));
 
     await expect(client.enter(ENTREE_DEMO_QR)).rejects.toBeInstanceOf(PalierStatusError);
   });

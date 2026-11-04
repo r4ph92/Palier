@@ -91,15 +91,18 @@ export const fr = {
     retry: 'Réessayer',
     unreachable: 'Impossible de joindre Palier.',
     unreachableHint: 'Vérifiez votre connexion, puis réessayez.',
+    notResponding: 'Palier ne répond pas, réessayez dans un instant',
     refusals: {
       QR_NOT_RECOGNIZED: 'QR non reconnu',
       NOT_AN_ENTRY_GATE: 'Ce QR n’est pas une borne d’entrée',
       LOT_NOT_IN_SERVICE: 'Ce parking n’est pas en service',
+      GATE_UNAVAILABLE: 'Cette borne n’est pas disponible',
       PREREQUISITES_MISSING: 'Ajoutez une plaque et une carte avant d’entrer',
       OPERATOR_NOT_PAYABLE: 'Ce parking n’accepte pas les paiements pour le moment',
       LOT_FULL: 'Ce parking est complet',
       ALREADY_INSIDE: 'Vous avez déjà une entrée en cours',
       CARD_DECLINED: 'Carte refusée',
+      TOO_MANY_ENTRIES: 'Trop de tentatives, réessayez dans quelques minutes',
     },
   },
   tabs: {
