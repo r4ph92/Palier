@@ -6,8 +6,11 @@ export interface PricingPolicy {
 }
 
 export class PricingPolicyInvalidError extends Error {
-  constructor() {
-    super('The lot has no usable pricing policy.');
+  readonly lotId: string | undefined;
+
+  constructor(lotId?: string, options?: ErrorOptions) {
+    super(lotId === undefined ? 'The lot has no usable pricing policy.' : `Lot ${lotId} has no usable pricing policy.`, options);
+    this.lotId = lotId;
     this.name = 'PricingPolicyInvalidError';
   }
 }

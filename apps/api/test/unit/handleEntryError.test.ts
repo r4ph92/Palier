@@ -15,11 +15,11 @@ function handle(error: Error) {
 
 describe('handleEntryError', () => {
   it('logs a warning with the pricing error when a lot has no usable pricing policy', () => {
-    const cause = new PricingPolicyInvalidError();
+    const cause = new PricingPolicyInvalidError('lot-7');
 
     const { log, sent } = handle(new EntryRefusedError('LOT_NOT_IN_SERVICE', { cause }));
 
-    expect(log.warnings).toEqual([[{ err: cause }, 'entry refused: the lot has no usable pricing policy']]);
+    expect(log.warnings).toEqual([[{ lotId: 'lot-7', err: cause }, 'entry refused: the lot has no usable pricing policy']]);
     expect(sent).toEqual([expect.objectContaining({ statusCode: 409, error: 'LOT_NOT_IN_SERVICE' })]);
   });
 

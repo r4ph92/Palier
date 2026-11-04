@@ -24,7 +24,7 @@ export function handleEntryError(error: FastifyError, request: FastifyRequest, r
     return handleServerError(error, request, reply);
   }
   if (refusal.cause instanceof PricingPolicyInvalidError) {
-    request.log.warn({ err: refusal.cause }, 'entry refused: the lot has no usable pricing policy');
+    request.log.warn({ lotId: refusal.cause.lotId, err: refusal.cause }, 'entry refused: the lot has no usable pricing policy');
   }
   const statusCode = STATUS_BY_REASON[refusal.reason];
   return reply.status(statusCode).send({ statusCode, error: refusal.reason, message: refusal.message });

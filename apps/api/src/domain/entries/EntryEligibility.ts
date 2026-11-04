@@ -111,6 +111,6 @@ function lotPricing(lot: EntryGateLot): PricingPolicy {
     if (!(error instanceof PricingPolicyInvalidError)) {
       throw error;
     }
-    throw new EntryRefusedError('LOT_NOT_IN_SERVICE', { cause: error });
+    throw new EntryRefusedError('LOT_NOT_IN_SERVICE', { cause: new PricingPolicyInvalidError(lot.id, { cause: error }) });
   }
 }
