@@ -31,6 +31,35 @@ describe('creating an operator', () => {
     expect(api.requests).not.toContain('POST /operators');
   });
 
+  it('clears the length error as soon as the name changes', async () => {
+    installFakeApi({ signedInAs: nouvelOperateur });
+    renderDashboard();
+    const field = await screen.findByLabelText('Raison sociale');
+    await userEvent.type(field, 'a');
+    await userEvent.click(screen.getByRole('button', { name: 'Créer l’opérateur' }));
+
+    await userEvent.type(field, 'b');
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(field.getAttribute('aria-invalid')).toBe('false');
+  });
+
+  it('clears the previous failure while the next attempt is on its way', async () => {
+    const api = installFakeApi({ signedInAs: nouvelOperateur, answers: { 'POST /operators': { status: 500 } } });
+    renderDashboard();
+    const field = await screen.findByLabelText('Raison sociale');
+    await userEvent.type(field, 'Stationnements Exemple inc.');
+    await userEvent.click(screen.getByRole('button', { name: 'Créer l’opérateur' }));
+    expect(await screen.findByRole('alert')).toBeDefined();
+
+    api.answers.set('POST /operators', 'pending');
+    await userEvent.click(screen.getByRole('button', { name: 'Créer l’opérateur' }));
+
+    expect(await screen.findByRole('button', { name: 'Création…' })).toBeDefined();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(field.getAttribute('aria-invalid')).toBe('false');
+  });
+
   it('refuses a legal name of zero-width spaces without calling the API, by the rule the API applies', async () => {
     const api = installFakeApi({ signedInAs: nouvelOperateur });
     renderDashboard();
