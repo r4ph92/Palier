@@ -1,11 +1,12 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactElement } from 'react';
 import type { EntryClient } from '../api/EntryClient';
+import { LoadingState } from '../components/LoadingState';
 import type { TabLabels } from '../components/TabBar';
 import { useEntry, type EntryState } from '../entries/useEntry';
 import { i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionController, CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
 import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
-import { ScanScreen } from './ScanScreen';
+import { ScanFrame, ScanScreen } from './ScanScreen';
 import { SessionNotice } from './SessionNotice';
 
 interface ScanTabProps {
@@ -21,19 +22,36 @@ export function scanTabLabels(state: CurrentParkingSessionState): TabLabels {
 }
 
 // An entry in progress keeps the scan screen, so its spot, polling and announcement are never cut off by a refresh.
-// Otherwise a current session replaces the form; without one, the form shows.
+// Otherwise the tab waits for Palier's first answer, then shows the current session or the form.
 export function ScanTab({ entryClient, currentSession, onAddPlate, onAddCard }: ScanTabProps) {
   const entry = useEntry(entryClient);
   const { state, refresh } = currentSession;
   useRefreshAsEntryProgresses(entry.state, refresh);
-  if (isEntryInProgress(entry.state) || state.status !== 'current') {
-    const onDone = () => {
-      entry.startOver();
-      refresh();
-    };
-    return <ScanScreen entry={entry} notice={<SessionNotice state={state} onRetry={refresh} />} onDone={onDone} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
+  const sessionScreen = isEntryInProgress(entry.state) ? null : sessionScreenFor(currentSession);
+  if (sessionScreen !== null) {
+    return sessionScreen;
   }
-  return <CurrentParkingSessionScreen reading={state} onRetry={refresh} />;
+  const onDone = () => {
+    entry.startOver();
+    refresh();
+  };
+  return <ScanScreen entry={entry} notice={<SessionNotice state={state} onRetry={refresh} />} onDone={onDone} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
+}
+
+// What replaces the scan form: nothing yet known, or a current session.
+function sessionScreenFor({ state, refresh }: CurrentParkingSessionController): ReactElement | null {
+  switch (state.status) {
+    case 'loading':
+      return (
+        <ScanFrame>
+          <LoadingState label={i18n.t('session.loading')} />
+        </ScanFrame>
+      );
+    case 'current':
+      return <CurrentParkingSessionScreen reading={state} onRetry={refresh} />;
+    default:
+      return null;
+  }
 }
 
 function isEntryInProgress(state: EntryState): boolean {

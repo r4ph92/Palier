@@ -113,6 +113,7 @@ export const en: Translations = {
     eyebrow: 'Current session',
     none: 'No session in progress',
     checkFailed: 'Couldn’t check for a current session.',
+    loading: 'Checking for a current session',
     enteredLead: 'Entered ',
     elapsedLead: 'Time parked ',
     amountLead: 'Amount so far: ',

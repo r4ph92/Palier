@@ -28,19 +28,28 @@ interface ScanScreenProps {
 }
 
 export function ScanScreen({ entry, notice, onDone, onAddPlate, onAddCard }: ScanScreenProps) {
+  return (
+    <ScanFrame>
+      {entry.state.status === 'entered' ? (
+        <EnteredSpot spot={entry.state.spot} isConfirmed={entry.state.isConfirmed} onDone={onDone} />
+      ) : (
+        <>
+          {notice}
+          <ScanForm entry={entry} onAddPlate={onAddPlate} onAddCard={onAddCard} />
+        </>
+      )}
+    </ScanFrame>
+  );
+}
+
+// The scan tab's screen and header, also shown while the tab waits to know whether a session is current.
+export function ScanFrame({ children }: { readonly children: ReactNode }) {
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ScreenHeader eyebrow={i18n.t('scan.eyebrow')} title={i18n.t('scan.title')} />
-        {entry.state.status === 'entered' ? (
-          <EnteredSpot spot={entry.state.spot} isConfirmed={entry.state.isConfirmed} onDone={onDone} />
-        ) : (
-          <>
-            {notice}
-            <ScanForm entry={entry} onAddPlate={onAddPlate} onAddCard={onAddCard} />
-          </>
-        )}
+        {children}
       </ScrollView>
     </SafeAreaView>
   );

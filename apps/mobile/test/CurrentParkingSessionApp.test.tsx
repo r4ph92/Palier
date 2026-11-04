@@ -49,6 +49,21 @@ describe('the current session after a relaunch', () => {
     expect(screen.getByRole('tab', { name: 'Session' })).toBeOnTheScreen();
   });
 
+  it('shows a loading state in place of the scan form until Palier first answers', async () => {
+    const parkingSession = new FakeParkingSessionClient(null);
+    parkingSession.holdsAnswer = true;
+    await relaunchAsJulie(parkingSession);
+    const user = userEvent.setup();
+    await user.press(await screen.findByRole('tab', { name: 'Scanner' }));
+
+    expect(screen.getByLabelText('Vérification de votre session en cours')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Contenu du QR')).not.toBeOnTheScreen();
+    await act(async () => parkingSession.answer());
+
+    expect(screen.getByText('Aucune session en cours')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Contenu du QR')).toBeOnTheScreen();
+  });
+
   it('says the session could not be checked while Palier cannot be reached, above the scan form', async () => {
     const parkingSession = new FakeParkingSessionClient(null);
     parkingSession.failure = new PalierUnreachableError('fake');
