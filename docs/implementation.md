@@ -97,6 +97,11 @@ ligne par choix ; la raison suit le tiret.
 - Un utilisateur sans opérateur ne voit que « Créer votre opérateur », quelle que soit l'adresse. La règle de la raison sociale est une seule fonction, `isValidLegalName` dans `packages/shared-types/src/dashboard.ts`, appliquée par l'API et le tableau de bord : de 2 à 120 caractères comptés en points de code après retrait des espaces, sans caractère de contrôle ni de format (NUL, espaces de largeur nulle, marques de direction) ; sinon `LEGAL_NAME_INVALID`. Un second opérateur est refusé (`OPERATOR_EXISTS`) et la page relit alors la session.
 - Toute réponse 401 relit `GET /v1/dashboard/me` et ramène à la page de connexion si la session a pris fin. Les identifiants des personas de test sont dans `apps/api/src/config/testPersonas.ts`, partagés par le seed et les routes de connexion de test.
 
+## Compte Stripe Express de l'opérateur (#63)
+
+- Routes, statut à quatre valeurs, webhook signé et réglages `STRIPE_WEBHOOK_SECRET` et `DASHBOARD_URL` : `docs/decisions/012`. Le bouton « Connecter Stripe » (ou « Reprendre l'inscription Stripe » tant que le compte n'est pas vérifié) mène à la page hébergée de Stripe ; le statut affiché vient du dernier webhook `account.updated`.
+- Localement : `stripe listen --forward-to localhost:3000/v1/stripe/webhook`, puis copier le `whsec_…` affiché dans `apps/api/.env`. Compte de test : le formulaire hébergé accepte les données de test de Stripe.
+
 ## Session en cours (#38)
 
 - Tarif figé à l'entrée, départ de la facturation au scan, arrondi et horloge de test : `docs/decisions/011`.

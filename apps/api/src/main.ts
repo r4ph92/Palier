@@ -1,7 +1,8 @@
 import Stripe from 'stripe';
-import { readServerEnvironment, readSimulateStripeUnreachable } from './config/environment.ts';
+import { readDashboardUrl, readServerEnvironment, readSimulateStripeUnreachable, readStripeWebhookSecret } from './config/environment.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { composeEntries } from './composeEntries.ts';
+import { composeOperatorStripe } from './composeOperatorStripe.ts';
 import { buildServer } from './http/buildServer.ts';
 import { connectToDatabase } from './infrastructure/postgres/database.ts';
 import { PostgresCurrentParkingSessionQuery } from './infrastructure/postgres/PostgresCurrentParkingSessionQuery.ts';
@@ -52,6 +53,12 @@ const server = buildServer({
     simulateStripeUnreachable,
     drivers: driverRepository,
     vehicles: vehicleRepository,
+  }),
+  operatorStripe: composeOperatorStripe({
+    database: connection.database,
+    stripeKey,
+    webhookSecret: readStripeWebhookSecret(process.env),
+    dashboardUrl: readDashboardUrl(process.env),
   }),
   settings: {
     testSignInEnabled: environment.testSignInEnabled,

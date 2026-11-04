@@ -36,10 +36,20 @@ const GATE_DEVICE_ROUTES = ['GET /v1/gates/me', 'GET /v1/gates/me/commands', 'PO
 // The demo console is static files served only in demo mode; it reaches data through the gate routes with a device key.
 const DEMO_CONSOLE_ROUTES = Object.keys(DEMO_ASSETS).map((fileName) => `GET ${demoAssetUrl(fileName)}`);
 
-export const EXEMPT = [...DRIVER_EXEMPT, ...GATE_DEVICE_ROUTES, ...DEMO_CONSOLE_ROUTES];
+// Stripe calls the webhook with no driver token and no cookie: its signature is the only credential, checked in the route.
+const STRIPE_WEBHOOK_ROUTES = ['POST /v1/stripe/webhook'];
+
+export const EXEMPT = [...DRIVER_EXEMPT, ...GATE_DEVICE_ROUTES, ...DEMO_CONSOLE_ROUTES, ...STRIPE_WEBHOOK_ROUTES];
 
 // Dashboard routes read the dashboard cookie, never a driver token: consent does not apply, a dashboard session does.
-export const DASHBOARD_PROTECTED = ['GET /v1/dashboard/me', 'POST /v1/dashboard/operators', 'GET /v1/dashboard/lots', 'GET /v1/dashboard/lots/:id'];
+export const DASHBOARD_PROTECTED = [
+  'GET /v1/dashboard/me',
+  'POST /v1/dashboard/operators',
+  'GET /v1/dashboard/operators/:id',
+  'POST /v1/dashboard/operators/:id/stripe-onboarding',
+  'GET /v1/dashboard/lots',
+  'GET /v1/dashboard/lots/:id',
+];
 
 const DASHBOARD_OPEN = ['POST /v1/dashboard/sign-out', 'GET /v1/dashboard/test/users', 'POST /v1/dashboard/test/sign-in'];
 

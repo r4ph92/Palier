@@ -3,6 +3,7 @@ import type {
   DashboardLotListResponse,
   DashboardMeResponse,
   DashboardOperator,
+  StripeOnboardingLink,
 } from '@palier/shared-types';
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
 import { DashboardApiError } from './DashboardApiError.ts';
@@ -48,6 +49,8 @@ export const dashboardClient = {
   me: () => dashboardRequest<DashboardMeResponse>('/me'),
   signOut: () => dashboardRequest<undefined>('/sign-out', { method: 'POST' }),
   createOperator: (legalName: string) => dashboardRequest<DashboardOperator>('/operators', { method: 'POST', body: { legalName } }),
+  startStripeOnboarding: (operatorId: string) =>
+    dashboardRequest<StripeOnboardingLink>(`/operators/${encodeURIComponent(operatorId)}/stripe-onboarding`, { method: 'POST' }),
   lots: () => dashboardRequest<DashboardLotListResponse>('/lots'),
   lot: (lotId: string) => dashboardRequest<DashboardLot>(`/lots/${encodeURIComponent(lotId)}`),
 };

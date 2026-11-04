@@ -105,3 +105,32 @@ export function readDemoOperatorStripeAccountId(variables: NodeJS.ProcessEnv): s
   }
   return accountId;
 }
+
+const WEBHOOK_SECRET_PREFIX = 'whsec_';
+
+// The signing secret of Palier's Stripe webhook endpoint (`stripe listen` prints it locally). Unset means the endpoint is not served.
+export function readStripeWebhookSecret(variables: NodeJS.ProcessEnv): string | null {
+  const secret = variables['STRIPE_WEBHOOK_SECRET'];
+  if (secret === undefined || secret === '') {
+    return null;
+  }
+  if (!secret.startsWith(WEBHOOK_SECRET_PREFIX)) {
+    throw new Error('STRIPE_WEBHOOK_SECRET must be a Stripe webhook signing secret (whsec_…).');
+  }
+  return secret;
+}
+
+const LOCAL_DASHBOARD_URL = 'http://localhost:5173';
+
+// Where Stripe sends the operator back after onboarding. Local development has the Vite default; elsewhere unset means no onboarding.
+export function readDashboardUrl(variables: NodeJS.ProcessEnv): string | null {
+  const rawUrl = variables['DASHBOARD_URL'];
+  if (rawUrl === undefined || rawUrl === '') {
+    return readTestSignInEnabled(variables) ? LOCAL_DASHBOARD_URL : null;
+  }
+  const url = URL.canParse(rawUrl) ? new URL(rawUrl) : null;
+  if (url === null || (url.protocol !== 'https:' && url.protocol !== 'http:')) {
+    throw new Error(`DASHBOARD_URL must be an http(s) address, got "${rawUrl}".`);
+  }
+  return url.origin;
+}

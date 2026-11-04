@@ -1,5 +1,5 @@
 {
-  "id": "a6b70c41-7eb5-4cfc-9cd7-0dfc75e6f23d",
+  "id": "08f83f93-8c14-4a91-b80c-3ec04395f471",
   "prevId": "5463d26f-8b5b-4469-aa12-885ebf5e5f58",
   "version": "7",
   "dialect": "postgresql",
@@ -256,27 +256,6 @@
         },
         "is_default": {
           "name": "is_default",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "is_electric": {
-          "name": "is_electric",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "has_accessible_permit": {
-          "name": "has_accessible_permit",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "is_oversize": {
-          "name": "is_oversize",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
@@ -1599,6 +1578,7 @@
       "values": [
         "NOT_STARTED",
         "PENDING",
+        "ACTION_REQUIRED",
         "VERIFIED"
       ]
     },

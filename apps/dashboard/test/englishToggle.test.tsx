@@ -3,8 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { installFakeApi, nouvelOperateur, parkingDemo, pierre, sophie } from './fakeDashboardApi.ts';
-import { seededNames } from './fakeDashboardData.ts';
-import { translatedFrenchFragments } from './frenchStrings.ts';
+import { frenchLeftOnEnglishPage } from './frenchLeft.ts';
 import { renderDashboard } from './renderDashboard.tsx';
 
 interface PageCase {
@@ -22,11 +21,6 @@ const pages: readonly PageCase[] = [
   { page: 'not found', signedInAs: pierre, path: `/lots/${parkingDemo.id}`, englishHeading: 'Not found' },
 ];
 
-function frenchLeftOnPage(): string[] {
-  const shown = seededNames.reduce((text, name) => text.replaceAll(name, ''), document.body.textContent);
-  return translatedFrenchFragments().filter((fragment) => shown.includes(fragment));
-}
-
 describe('English toggle', () => {
   it.each(pages)('shows the $page page entirely in English', async ({ signedInAs, path, englishHeading }) => {
     installFakeApi(signedInAs === undefined ? {} : { signedInAs });
@@ -36,7 +30,7 @@ describe('English toggle', () => {
     await screen.findByRole('heading', { name: englishHeading });
     await screen.findByText(/English|Français/);
 
-    expect(frenchLeftOnPage()).toEqual([]);
+    expect(frenchLeftOnEnglishPage()).toEqual([]);
     expect(document.documentElement.lang).toBe('en');
     await waitFor(() => expect(document.title).toMatch(/· Palier dashboard$/));
   });
@@ -49,7 +43,7 @@ describe('English toggle', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Create the operator' }));
 
     expect(screen.getByRole('alert').textContent).toBe('The legal name must be 2 to 120 characters, with no invisible characters.');
-    expect(frenchLeftOnPage()).toEqual([]);
+    expect(frenchLeftOnEnglishPage()).toEqual([]);
   });
 
   it('keeps English after a reload', async () => {

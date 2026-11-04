@@ -1,0 +1,15 @@
+# 012 — Compte Stripe Express de l'opérateur : lien d'inscription, webhook signé et statut à quatre valeurs
+
+## Contexte
+#63 branche la séquence D de `docs/03` : l'opérateur crée un compte Stripe Express depuis le tableau de bord, la vérification se fait chez Stripe et revient par webhook. Les pré-autorisations de l'entrée (#36) paient déjà `operator.stripe_account_id` en charges de destination ; cette story est ce qui remplit la colonne.
+
+## Décision
+- `kyc_status` passe à quatre valeurs : `NOT_STARTED`, `PENDING` (« Vérification en cours »), `ACTION_REQUIRED` (« Action requise »), `VERIFIED` (migration 0012). `ACTION_REQUIRED` est stocké plutôt que déduit : le tableau de bord ne lit jamais Stripe.
+- Règle unique, `kycStatusOf` : `VERIFIED` si les paiements et les virements sont actifs et que rien n'est dû (`currently_due`, `past_due`) ; `ACTION_REQUIRED` si les détails sont soumis et que Stripe demande encore des renseignements ; sinon `PENDING`. Une inscription abandonnée avant l'envoi reste `PENDING`, et le bouton la reprend.
+- `POST /v1/dashboard/operators/:id/stripe-onboarding` (cookie du tableau de bord et en-tête d'écriture) crée le compte Express canadien la première fois (clé d'idempotence `operator-account-<operatorId>`, écriture conditionnelle `stripe_account_id IS NULL` : de deux requêtes simultanées, une seule garde son compte) puis renvoie un lien d'inscription hébergé neuf ; les appels suivants reprennent le même compte. `GET /v1/dashboard/operators/:id` relit l'opérateur.
+- Un opérateur n'atteint que le sien : l'identifiant du chemin est comparé à celui du membre connecté, jamais cru. L'opérateur d'un autre, un identifiant inconnu et un identifiant mal formé répondent le même 404 `OPERATOR_NOT_FOUND`, et Stripe n'est pas appelé. Sans clé Stripe, 503 `STRIPE_UNAVAILABLE` (après la vérification d'appartenance, donc Sophie reste en 404).
+- `POST /v1/stripe/webhook` n'a ni cookie ni session : la signature `Stripe-Signature` est le seul justificatif, vérifiée par `stripe.webhooks.constructEvent` sur le corps brut (la portée garde le JSON en tampon). Signature absente ou fausse : 400 `INVALID_SIGNATURE`, rien ne change. Un événement signé d'un autre type, ou d'un compte qu'aucun opérateur ne possède, répond 200 sans rien changer. La route n'existe pas sans `STRIPE_WEBHOOK_SECRET`.
+- Réglages : `STRIPE_WEBHOOK_SECRET` (`whsec_…`, de `stripe listen --forward-to localhost:3000/v1/stripe/webhook`) et `DASHBOARD_URL` (origine où Stripe ramène l'opérateur ; `http://localhost:5173` par défaut en développement et en test, sans défaut ailleurs). Mode test seulement : la clé `sk_test_` est déjà exigée.
+
+## Conséquences
+Les tests couvrent le comportement sur de faux dépôts et un faux client Stripe ; la signature est vérifiée pour de vrai avec un secret de test. La création réelle du compte et le formulaire hébergé ne sont vérifiés que par la QA manuelle en mode test Stripe (décisions 002 et 005). Frais de plateforme (OQ5) : non touchés, 0 % par défaut.

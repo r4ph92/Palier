@@ -27,7 +27,7 @@ export function isValidLegalName(legalName: string): boolean {
   );
 }
 
-export type KycStatus = 'NOT_STARTED' | 'PENDING' | 'VERIFIED';
+export type KycStatus = 'NOT_STARTED' | 'PENDING' | 'ACTION_REQUIRED' | 'VERIFIED';
 
 export interface DashboardUser {
   readonly id: string;
@@ -39,6 +39,10 @@ export interface DashboardOperator {
   readonly id: string;
   readonly legalName: string;
   readonly kycStatus: KycStatus;
+}
+
+export interface StripeOnboardingLink {
+  readonly url: string;
 }
 
 export interface DashboardMeResponse {
@@ -76,6 +80,8 @@ export const DASHBOARD_ERROR_CODES = [
   'OPERATOR_EXISTS',
   'NO_OPERATOR',
   'LOT_NOT_FOUND',
+  'OPERATOR_NOT_FOUND',
+  'STRIPE_UNAVAILABLE',
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];
