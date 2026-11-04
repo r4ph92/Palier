@@ -1,10 +1,11 @@
+import {
+  AMELIE_LAVOIE_ID,
+  ERIC_DUFRESNE_ID,
+  JULIE_TREMBLAY_ID,
+  MARC_GAGNON_ID,
+  NADIA_BOUCHARD_ID,
+} from '../../config/testPersonas.ts';
 import type { appUser } from '../../infrastructure/postgres/schema.ts';
-
-export const JULIE_TREMBLAY_ID = '00000000-0000-4000-8000-000000000501';
-export const MARC_GAGNON_ID = '00000000-0000-4000-8000-000000000502';
-export const NADIA_BOUCHARD_ID = '00000000-0000-4000-8000-000000000503';
-export const AMELIE_LAVOIE_ID = '00000000-0000-4000-8000-000000000504';
-export const ERIC_DUFRESNE_ID = '00000000-0000-4000-8000-000000000505';
 
 const STRIPE_TEST_VISA = 'pm_card_visa';
 // Stripe's test token for 4000 0000 0000 0341: the card attaches, but charges to it fail.

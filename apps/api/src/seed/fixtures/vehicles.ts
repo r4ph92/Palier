@@ -1,6 +1,6 @@
 import { readPlate } from '../../domain/vehicles/plate.ts';
 import type { vehicle } from '../../infrastructure/postgres/schema.ts';
-import { AMELIE_LAVOIE_ID, ERIC_DUFRESNE_ID, JULIE_TREMBLAY_ID, MARC_GAGNON_ID } from './drivers.ts';
+import { AMELIE_LAVOIE_ID, ERIC_DUFRESNE_ID, JULIE_TREMBLAY_ID, MARC_GAGNON_ID } from '../../config/testPersonas.ts';
 
 const QUEBEC = 'QC';
 

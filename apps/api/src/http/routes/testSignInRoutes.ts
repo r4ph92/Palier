@@ -1,7 +1,7 @@
 import type { SignInResponse, TestDriverListResponse } from '@palier/shared-types';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { signInDriver, type DriverAccess } from '../../domain/drivers/driverSessions.ts';
-import { OPERATOR_PERSONA_IDS } from '../../seed/fixtures/operatorUsers.ts';
+import { OPERATOR_PERSONA_IDS } from '../../config/testPersonas.ts';
 import { signInResponseSchema, testDriverListSchema, testSignInBodySchema } from '../schemas/driverSchemas.ts';
 import type { SetupLimiter } from '../SetupLimiter.ts';
 import { createSignInLimiter, refuseTooManySignIns } from '../signInLimit.ts';

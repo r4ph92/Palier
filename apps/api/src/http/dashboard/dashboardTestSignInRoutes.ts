@@ -2,7 +2,7 @@ import type { DashboardSignInResponse, DashboardTestSignInRequest, DashboardTest
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { signInDashboardUser } from '../../domain/dashboard/dashboardSessions.ts';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
-import { DASHBOARD_TEST_USER_IDS } from '../../seed/fixtures/operatorUsers.ts';
+import { DASHBOARD_TEST_USER_IDS } from '../../config/testPersonas.ts';
 import type { SetupLimiter } from '../SetupLimiter.ts';
 import { dashboardSignInResponseSchema, dashboardTestSignInBodySchema, dashboardTestUserListSchema } from '../schemas/dashboardSchemas.ts';
 import { createSignInLimiter, refuseTooManySignIns } from '../signInLimit.ts';

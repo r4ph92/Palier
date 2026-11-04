@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { driverPersonas, JULIE_TREMBLAY_ID } from '../../src/seed/fixtures/drivers.ts';
 import {
   DASHBOARD_TEST_USER_IDS,
+  JULIE_TREMBLAY_ID,
   NOUVEL_OPERATEUR_ID,
   OPERATOR_PERSONA_IDS,
-  operatorMemberFixtures,
-  operatorUserFixtures,
   SOPHIE_LAVOIE_ID,
-} from '../../src/seed/fixtures/operatorUsers.ts';
+} from '../../src/config/testPersonas.ts';
+import { driverPersonas } from '../../src/seed/fixtures/drivers.ts';
+import { operatorMemberFixtures, operatorUserFixtures } from '../../src/seed/fixtures/operatorUsers.ts';
 import { LAVOIE_OPERATOR_ID } from '../../src/seed/fixtures/operators.ts';
 import { parkingTestPaliersLot } from '../../src/seed/fixtures/parkingTestPaliers.ts';
 

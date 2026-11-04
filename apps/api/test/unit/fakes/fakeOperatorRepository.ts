@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DashboardLot, DashboardOperator } from '@palier/shared-types';
 import type { NewOperator, OperatorRepository } from '../../../src/domain/dashboard/OperatorRepository.ts';
 import { GARAGE_ROY_ID } from '../../../src/seed/fixtures/garageRoy.ts';
-import { PIERRE_ROY_ID, SOPHIE_LAVOIE_ID } from '../../../src/seed/fixtures/operatorUsers.ts';
+import { PIERRE_ROY_ID, SOPHIE_LAVOIE_ID } from '../../../src/config/testPersonas.ts';
 import { LAVOIE_OPERATOR_ID, ROY_OPERATOR_ID } from '../../../src/seed/fixtures/operators.ts';
 import { PARKING_DEMO_ID } from '../../../src/seed/fixtures/parkingDemo.ts';
 import { PARKING_TEST_PALIERS_ID } from '../../../src/seed/fixtures/parkingTestPaliers.ts';
