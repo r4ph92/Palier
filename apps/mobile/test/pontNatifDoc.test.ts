@@ -17,8 +17,10 @@ describe('docs/pont-natif.md', () => {
     expect(doc).toContain(signature);
   });
 
-  it('explains how iOS and Android honor keepAlive', () => {
-    expect(doc).toMatch(/iOS/);
-    expect(doc).toMatch(/Android/);
+  it('explains how iOS and Android honor keepAlive in its own section', () => {
+    const section = doc.split('### `keepAlive` selon la plateforme')[1]?.split('\n## ')[0] ?? '';
+
+    expect(section).toMatch(/\*\*iOS\*\*/);
+    expect(section).toMatch(/\*\*Android\*\*/);
   });
 });
