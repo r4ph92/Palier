@@ -76,15 +76,18 @@ function EventLog({ journal }: { readonly journal: SignalJournal }) {
         </Text>
       ) : null}
       {entries.map((entry) => (
-        <Text
-          key={entry.id}
-          maxFontSizeMultiplier={MAX_FONT_SCALE}
-          style={[typography.countLabel, styles.logLine, { color: colors.ink, borderBottomColor: colors.line }]}
-        >
-          {`${formatLogTime(entry.at)}  ${entry.text}`}
-        </Text>
+        <LogLine key={entry.id} entry={entry} />
       ))}
     </View>
+  );
+}
+
+function LogLine({ entry }: { readonly entry: LogEntry }) {
+  const colors = useColors();
+  return (
+    <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[typography.countLabel, styles.logLine, { color: colors.ink, borderBottomColor: colors.line }]}>
+      {`${formatLogTime(entry.at)}  ${entry.text}`}
+    </Text>
   );
 }
 
