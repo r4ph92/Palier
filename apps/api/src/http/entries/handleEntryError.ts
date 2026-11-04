@@ -1,6 +1,7 @@
 import type { EntryRefusalBody, EntryRefusalCode } from '@palier/shared-types';
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
+import { PricingPolicyInvalidError } from '../../domain/pricing/PricingPolicy.ts';
 import { handleServerError } from '../handleServerError.ts';
 
 const STATUS_BY_REASON: Record<EntryRefusalCode, number> = {
@@ -21,6 +22,9 @@ export function handleEntryError(error: FastifyError, request: FastifyRequest, r
   const refusal = refusalOf(error);
   if (refusal === undefined) {
     return handleServerError(error, request, reply);
+  }
+  if (refusal.cause instanceof PricingPolicyInvalidError) {
+    request.log.warn({ lotId: refusal.cause.lotId, err: refusal.cause }, 'entry refused: the lot has no usable pricing policy');
   }
   const statusCode = STATUS_BY_REASON[refusal.reason];
   const body: EntryRefusalBody = { statusCode, error: refusal.reason, message: refusal.message };

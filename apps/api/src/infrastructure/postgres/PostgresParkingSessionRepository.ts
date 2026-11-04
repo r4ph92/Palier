@@ -113,20 +113,24 @@ async function assignFirstFreeSpot(tx: Transaction, lotId: string): Promise<Assi
 }
 
 async function insertSession(tx: Transaction, draft: SessionDraft, assigned: AssignedSpotRow): Promise<OpenedSession> {
-  const [session] = await tx
-    .insert(parkingSession)
-    .values({
-      userId: draft.driverId,
-      vehicleId: draft.vehicleId,
-      plate: draft.plate,
-      lotId: draft.lotId,
-      assignedSpotId: assigned.id,
-      entryGateId: draft.entryGateId,
-      authorizedCents: draft.authorizedCents,
-    })
-    .returning({ id: parkingSession.id });
+  const [session] = await tx.insert(parkingSession).values(sessionValues(draft, assigned.id)).returning({ id: parkingSession.id });
   if (session === undefined) {
     throw new Error('The parking session was not created.');
   }
   return { id: session.id, spot: spotOf(assigned) };
+}
+
+function sessionValues(draft: SessionDraft, assignedSpotId: string): typeof parkingSession.$inferInsert {
+  return {
+    userId: draft.driverId,
+    vehicleId: draft.vehicleId,
+    plate: draft.plate,
+    lotId: draft.lotId,
+    assignedSpotId,
+    entryGateId: draft.entryGateId,
+    authorizedCents: draft.authorizedCents,
+    pricingIncrementCents: draft.pricing.incrementCents,
+    pricingIncrementMinutes: draft.pricing.incrementMinutes,
+    pricingDailyCapCents: draft.pricing.dailyCapCents,
+  };
 }

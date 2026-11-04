@@ -1,7 +1,7 @@
 import type { SupportedLanguage } from './i18n';
+import { NO_BREAK_SPACE } from './spaces';
 
 const HOURS_PER_HALF_DAY = 12;
-const NO_BREAK_SPACE = '\u00A0';
 
 export function formatClockTime(moment: Date, language: SupportedLanguage): string {
   const minutes = String(moment.getMinutes()).padStart(2, '0');

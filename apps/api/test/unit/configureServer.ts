@@ -1,8 +1,10 @@
 import type { FastifyInstance } from 'fastify';
+import { createTestClock } from '../../src/domain/time/TestClock.ts';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { FakeCardGateway } from './fakeCardGateway.ts';
 import { FakeDriverRepository } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
+import { FakeCurrentParkingSessions } from './fakes/fakeCurrentParkingSessions.ts';
 import { fakeEntries } from './fakes/entryFakes.ts';
 import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
 
@@ -19,14 +21,17 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
   const driverRepository = new FakeDriverRepository();
   const vehicleRepository = new FakeVehicleRepository();
   const entries = fakeEntries({ drivers: driverRepository, vehicles: vehicleRepository });
+  const parkingSessions = new FakeCurrentParkingSessions();
+  const testClock = createTestClock();
   const server: FastifyInstance = buildServer({
     gates: fakeGateDependencies(),
-    repositories: fakeRepositories({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository }),
+    repositories: fakeRepositories({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository, parkingSessions }),
     cardGateway: new FakeCardGateway(),
     entries: entries.dependencies,
+    testClock,
     settings: { testSignInEnabled, demoMode, minimumAppVersion },
   });
-  return { server, driverRepository, vehicleRepository, entries };
+  return { server, driverRepository, vehicleRepository, entries, parkingSessions, testClock };
 }
 
 // Every route the server registers, as "METHOD /path" with the :params kept, read from Fastify's route tree.

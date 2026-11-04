@@ -1,12 +1,10 @@
 import type { EntryResponse } from '@palier/shared-types';
-import type { FastifyBaseLogger } from 'fastify';
 import type { EligibleEntry } from './EntryEligibility.ts';
+import type { EntryLog } from './EntryLog.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import type { GateCommander } from './GateCommander.ts';
 import type { OpenedSession, ParkingSessionRepository } from './ParkingSessionRepository.ts';
 import type { PaymentAuthorizer } from './PaymentAuthorizer.ts';
-
-export type EntryLog = Pick<FastifyBaseLogger, 'warn' | 'error'>;
 
 export interface EntryAdmissionDependencies {
   readonly sessions: ParkingSessionRepository;
@@ -54,6 +52,7 @@ export class EntryAdmission {
       lotId: entry.gate.lotId,
       entryGateId: entry.gate.id,
       authorizedCents: entry.payment.amountCents,
+      pricing: entry.pricing,
     });
     if (session === null) {
       throw new EntryRefusedError('LOT_FULL');

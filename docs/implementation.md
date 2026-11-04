@@ -21,7 +21,8 @@ ligne par choix ; la raison suit le tiret.
 - `aisle.lot_id` et `spot.lot_id` dénormalisés, avec clés étrangères composées `(level_id, lot_id)` et `(aisle_id, lot_id)` — la base garantit qu'une place appartient au parking de son allée, et `UNIQUE (lot_id, number)` est une vraie contrainte.
 - `UNIQUE (lot_id, beacon_minor)` sur `aisle` et `UNIQUE beacon_major` sur `parking_lot` — Q40 : un major par parking, un minor par allée.
 - `spot.current_session_id` n'existe pas : c'est `parking_session.assigned_spot_id` qui pointe vers la place, avec un index unique partiel sur les sessions actives (#36, `docs/decisions/007`).
-- `session` du dossier s'appelle `parking_session` (#36) : `user_id`, `vehicle_id` (nullable, `ON DELETE SET NULL`) et `plate` copiée à l'entrée, `lot_id`, `assigned_spot_id` et `entry_gate_id` avec clés étrangères composées vers `spot(id, lot_id)` et `gate(id, lot_id)`, `state` (`CREATED`, `CANCELLED` pour l'instant), `payment_intent_id`, `authorized_cents`, `entry_scan_at`, `cancelled_at`.
+- `session` du dossier s'appelle `parking_session` (#36) : `user_id`, `vehicle_id` (nullable, `ON DELETE SET NULL`) et `plate` copiée à l'entrée, `lot_id`, `assigned_spot_id` et `entry_gate_id` avec clés étrangères composées vers `spot(id, lot_id)` et `gate(id, lot_id)`, `state` (`CREATED`, `ENTRY_CONFIRMED` depuis #37, `CANCELLED`), `payment_intent_id`, `authorized_cents`, `entry_scan_at`, `cancelled_at`.
+- `parking_session.pricing_increment_cents`, `pricing_increment_minutes`, `pricing_daily_cap_cents` (#38) : le tarif du parking copié à l'entrée (D1) — voir `docs/decisions/011`. Le seed donne à Garage Roy et à Parking Test Paliers le même tarif que Parking Démo (0,75 $ par 15 minutes, plafond 25,00 $).
 - `gate_command` (#36) : `gate_id`, `lot_id`, `kind` (`OPEN`), `session_id`, `issued_at` à la milliseconde — la commande d'une barrière simulée, lue par la console.
 - `kyc_status` : `NOT_STARTED`, `PENDING`, `VERIFIED` ; `assignment_strategy` : `AISLE_BY_AISLE` seulement (Q15).
 - `capacity` et `vehicle_count` ne peuvent pas être négatifs (contrainte CHECK, D6).
@@ -78,7 +79,7 @@ ligne par choix ; la raison suit le tiret.
 - Le jeton vit dans le trousseau iOS (`expo-secure-store`). Au lancement, l'app le relit et appelle `GET /v1/me` : 200 ouvre l'accueil, 401 efface le jeton et montre la connexion, API injoignable montre « Impossible de joindre Palier. » avec « Réessayer ».
 - Un 401 sur la liste des parkings efface le jeton et ramène à l'écran de connexion. « Se déconnecter » efface le jeton tout de suite et révoque côté serveur au mieux (sans attendre le réseau).
 - Navigation : un état `lots | scan | account` dans `PalierApp` et une barre d'onglets maison, sans bibliothèque de navigation. Depuis « Scanner », « Ajouter une plaque » et « Ajouter une carte » ouvrent directement la page correspondante de « Compte ».
-- « Scanner » (#36) prend le contenu du QR dans un champ texte : Expo Go n'a pas de lecteur de code-barres et la caméra arrive avec #45. Le résultat n'est pas conservé quand on change d'onglet ; la vue de session viendra avec #37.
+- « Scanner » (#36) prend le contenu du QR dans un champ texte : Expo Go n'a pas de lecteur de code-barres et la caméra arrive avec #45. Le résultat n'est pas conservé quand on change d'onglet ; la session en cours prend le relais (#38).
 - Les clients authentifiés (véhicules, entrée) passent par `api/authorizedRequest.ts` : 401 déconnecte, 403 `CONSENT_REQUIRED` remontre l'avis, les statuts de refus listés par le client portent le code de l'API, tout autre statut lève `PalierStatusError`.
 - « Connexion de test » n'apparaît que si le build porte `EXPO_PUBLIC_TEST_SIGN_IN=true` (voir `apps/mobile/.env.example`).
 - Signaux de positionnement : `positioning/` porte le port `PositioningModule` et `PositioningCore` (commandes transmises, événements diffusés). Le module simulé et le panneau « Signaux simulés » vivent dans `dev/` et ne sont chargés que par `dev/loadDeveloperTools.ts`, derrière un ternaire `__DEV__` que Metro évalue à la compilation : ils sont absents du bundle de production (voir `docs/pont-natif.md`).
@@ -93,3 +94,21 @@ ligne par choix ; la raison suit le tiret.
 - Un utilisateur sans opérateur ne voit que « Créer votre opérateur », quelle que soit l'adresse. La règle de la raison sociale est une seule fonction, `isValidLegalName` dans `packages/shared-types/src/dashboard.ts`, appliquée par l'API et le tableau de bord : de 2 à 120 caractères comptés en points de code après retrait des espaces, sans caractère de contrôle ni de format (NUL, espaces de largeur nulle, marques de direction) ; sinon `LEGAL_NAME_INVALID`. Un second opérateur est refusé (`OPERATOR_EXISTS`) et la page relit alors la session.
 - Toute réponse 401 relit `GET /v1/dashboard/me` et ramène à la page de connexion si la session a pris fin. Les identifiants des personas de test sont dans `apps/api/src/config/testPersonas.ts`, partagés par le seed et les routes de connexion de test.
 
+## Session en cours (#38)
+
+- Tarif figé à l'entrée, départ de la facturation au scan, arrondi et horloge de test : `docs/decisions/011`.
+- `GET /v1/me/session` (jeton de conducteur, consentement) → `{ session: null }` ou `{ session: { sessionId, state, lotName, spot, enteredAt, elapsedMinutes, amountCents, dailyCapCents } }`, calculé par l'API avec son horloge. Une session est « en cours » en `CREATED` ou `ENTRY_CONFIRMED` (`ACTIVE_ENTRY_SESSION_STATES`, dont le texte SQL sert aussi aux index partiels de la décision 007). Pas d'identifiant dans le chemin : un conducteur ne lit que la sienne ; la session d'un autre reste un 404 sur `GET /v1/entries/:sessionId`.
+- L'app garde trois onglets. La session vit dans l'onglet « Scanner », qui s'appelle « Session » tant qu'une session est en cours. La session est lue au-dessus des onglets (`useCurrentParkingSession`) à la connexion ou au relancement, puis chaque minute ; à la première réponse qui contient une session, l'app ouvre cet onglet, sauf si le conducteur a déjà choisi un onglet.
+- Règle d'affichage de l'onglet : entrée en cours d'envoi ou barrière ouverte → écran de scan (la place, le suivi de la boucle et l'annonce VoiceOver ne sont jamais coupés) ; sinon session en cours → écran de session ; sinon formulaire de scan, précédé de « Aucune session en cours » quand Palier a répondu qu'il n'y en a pas.
+- Un rafraîchissement raté garde la session affichée avec « Mis à jour à 21 h 17 » : un conducteur sans réseau au sous-sol a toujours besoin de sa place.
+- Montants `9,75 $` / `$9.75` (`formatMoney`) et durée `3 h 15` / `3 h 15 min` (`formatElapsed`), formatés à la main comme l'heure ; chiffres en IBM Plex Mono tabulaire.
+- Horloge de test, en développement seulement (port de la voie à adapter) :
+
+```sh
+curl -X PUT localhost:3000/v1/test/clock -H 'content-type: application/json' -d '{"now":"2026-11-05T02:17:00Z"}'
+curl localhost:3000/v1/test/clock
+curl -X PUT localhost:3000/v1/test/sessions/<sessionId>/entered-at -H 'content-type: application/json' -d '{"enteredAt":"2026-11-04T23:02:00Z"}'
+curl -X DELETE localhost:3000/v1/test/clock
+```
+
+  Les heures sont en UTC : 23 h 02 Z est 18 h 02 à Montréal en novembre. L'horloge fixée reste figée jusqu'au prochain `PUT` ou `DELETE`, et revient à l'heure réelle au redémarrage de l'API.

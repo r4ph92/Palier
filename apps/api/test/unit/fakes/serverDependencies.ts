@@ -4,6 +4,7 @@ import type { ServerDependencies } from '../../../src/http/buildServer.ts';
 import type { GateRouteDependencies } from '../../../src/http/routes/gateRoutes.ts';
 import { FakeDriverRepository } from '../fakeDriverRepository.ts';
 import { FakeVehicleRepository } from '../fakeVehicleRepository.ts';
+import { FakeCurrentParkingSessions } from './fakeCurrentParkingSessions.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
 import { FakeGateCommandFeed, FakeGateDeviceKeyRepository, FakePassageLedger } from './gateFixtures.ts';
 
@@ -18,6 +19,7 @@ interface FakeRepositoryChoices {
   readonly vehicleRepository?: VehicleRepository;
   readonly lotAvailabilityRepository?: LotAvailabilityRepository;
   readonly operatorRepository?: FakeOperatorRepository;
+  readonly parkingSessions?: FakeCurrentParkingSessions;
 }
 
 // Session tokens come from the driver fake, so a token a test saves for Julie is the one the server reads.
@@ -26,9 +28,18 @@ export function fakeRepositories({
   vehicleRepository = new FakeVehicleRepository(),
   lotAvailabilityRepository = { findOnlineLots: () => Promise.resolve([]) },
   operatorRepository = new FakeOperatorRepository(),
+  parkingSessions = new FakeCurrentParkingSessions(),
 }: FakeRepositoryChoices = {}): ServerDependencies['repositories'] {
-  const sessionTokenRepository = driverRepository.sessions;
-  return { lotAvailabilityRepository, driverRepository, sessionTokenRepository, userDirectory: driverRepository, vehicleRepository, operatorRepository };
+  return {
+    lotAvailabilityRepository,
+    driverRepository,
+    sessionTokenRepository: driverRepository.sessions,
+    userDirectory: driverRepository,
+    vehicleRepository,
+    operatorRepository,
+    currentParkingSessions: parkingSessions,
+    parkingSessionBackdater: parkingSessions,
+  };
 }
 
 export function serverDependencies(overrides: Partial<ServerDependencies> = {}): ServerDependencies {
