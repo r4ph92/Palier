@@ -17,17 +17,18 @@ export interface PendingEntryWatch {
 }
 
 // Owned above the tabs, so the one polling of an entry outlives the scan tab while the driver browses the others.
-export function usePendingEntryWatch(client: EntryClient, onCancelled: () => void): PendingEntryWatch {
+export function usePendingEntryWatch(client: EntryClient, onSettled: () => void): PendingEntryWatch {
   const [followed, setFollowed] = useState<FollowedEntry | null>(null);
-  const latestOnCancelled = useRef(onCancelled);
+  const latestOnSettled = useRef(onSettled);
   useEffect(() => {
-    latestOnCancelled.current = onCancelled;
+    latestOnSettled.current = onSettled;
   });
-  const confirm = useCallback(() => setFollowed(withOutcome('confirmed')), []);
-  const cancel = useCallback(() => {
-    setFollowed(withOutcome('cancelled'));
-    latestOnCancelled.current();
+  const settle = useCallback((outcome: FollowedEntryOutcome) => {
+    setFollowed(withOutcome(outcome));
+    latestOnSettled.current();
   }, []);
+  const confirm = useCallback(() => settle('confirmed'), [settle]);
+  const cancel = useCallback(() => settle('cancelled'), [settle]);
   // Thrown inside the state update, like in useEntry, so an unexpected error reaches the error boundary.
   const fail = useCallback((error: unknown) => setFollowed(() => { throw error; }), []);
   useConfirmationPolling(client, waitingEntry(followed), { onConfirmed: confirm, onCancelled: cancel, onUnexpectedError: fail });

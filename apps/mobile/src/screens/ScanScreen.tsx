@@ -133,13 +133,14 @@ interface EntryProblemProps {
 
 function EntryProblem({ state, onAddPlate, onAddCard }: EntryProblemProps) {
   const message = problemMessage(state);
-  useAnnouncement(message);
+  const takesFocus = state.status === 'cancelled';
+  useAnnouncement(takesFocus ? null : message);
   if (message === null) {
     return null;
   }
   return (
     <View style={styles.field}>
-      <ProblemMessage message={message} hint={problemHint(state)} takesFocus={state.status === 'cancelled'} />
+      <ProblemMessage message={message} hint={problemHint(state)} takesFocus={takesFocus} />
       {state.status === 'refused' && state.refusal === 'PREREQUISITES_MISSING' ? (
         <View style={styles.links}>
           <TextButton label={i18n.t('scan.addPlate')} onPress={onAddPlate} />
