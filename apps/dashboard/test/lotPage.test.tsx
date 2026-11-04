@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { installFakeApi, parkingDemo, pierre, sophie } from './fakeDashboardApi.ts';
@@ -11,7 +11,7 @@ describe('lot page', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Introuvable' })).toBeDefined();
     expect(screen.queryByText(/Parking Démo/)).toBeNull();
-    expect(document.title).toBe('Introuvable · Tableau de bord Palier');
+    await waitFor(() => expect(document.title).toBe('Introuvable · Tableau de bord Palier'));
   });
 
   it('opens Parking Démo from Sophie’s list and comes back', async () => {

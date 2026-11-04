@@ -1,5 +1,5 @@
 import type { DashboardUser } from '@palier/shared-types';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { installFakeApi, nouvelOperateur, parkingDemo, pierre, sophie } from './fakeDashboardApi.ts';
@@ -38,7 +38,7 @@ describe('English toggle', () => {
 
     expect(frenchLeftOnPage()).toEqual([]);
     expect(document.documentElement.lang).toBe('en');
-    expect(document.title).toMatch(/· Palier dashboard$/);
+    await waitFor(() => expect(document.title).toMatch(/· Palier dashboard$/));
   });
 
   it('shows the legal name error in English', async () => {
@@ -61,7 +61,7 @@ describe('English toggle', () => {
     renderDashboard();
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeDefined();
-    expect(document.title).toBe('Sign in · Palier dashboard');
+    await waitFor(() => expect(document.title).toBe('Sign in · Palier dashboard'));
   });
 
   it('opens in French with French page titles by default', async () => {
@@ -70,6 +70,6 @@ describe('English toggle', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Connexion' })).toBeDefined();
     expect(document.documentElement.lang).toBe('fr');
-    expect(document.title).toBe('Connexion · Tableau de bord Palier');
+    await waitFor(() => expect(document.title).toBe('Connexion · Tableau de bord Palier'));
   });
 });
