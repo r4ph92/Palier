@@ -29,8 +29,9 @@ défaire une entrée qui échoue à mi-chemin.
   `payment_intent_id` est écrit juste après l'autorisation.
 - **Compensation** : un refus de carte annule la session et libère la place ;
   un échec de la commande d'ouverture libère d'abord la place en base, puis
-  annule l'intention, et un échec de cette annulation est seulement journalisé
-  (l'autorisation expire d'elle-même chez Stripe).
+  annule l'intention. Chaque étape d'annulation est gardée : son échec est
+  journalisé, l'étape suivante s'exécute quand même et le conducteur reçoit
+  l'erreur d'origine (une autorisation non annulée expire d'elle-même chez Stripe).
 - **Une seule session active par conducteur et par place**, garanti par deux
   index uniques partiels sur `parking_session` avec une liste explicite d'états
   actifs : `state IN ('CREATED')` aujourd'hui. Chaque story qui ajoute un état
