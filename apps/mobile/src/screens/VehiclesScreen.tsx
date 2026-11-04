@@ -87,7 +87,7 @@ function VehicleRow({ vehicle, controller, onEdit }: VehicleRowProps) {
     <View testID={`vehicle-row-${vehicle.id}`} style={[styles.row, { borderBottomColor: colors.line }]}>
       <VehicleLabel vehicle={vehicle} />
       <View testID={`vehicle-actions-${vehicle.id}`} style={styles.actions}>
-        <TextButton label={i18n.t('vehicles.edit')} onPress={onEdit} />
+        <EditButton plate={vehicle.plate} onEdit={onEdit} />
         {vehicle.isDefault ? (
           <Text style={[typography.bodyStrong, { color: colors.muted }]}>{i18n.t('vehicles.defaultBadge')}</Text>
         ) : (
@@ -97,6 +97,11 @@ function VehicleRow({ vehicle, controller, onEdit }: VehicleRowProps) {
       </View>
     </View>
   );
+}
+
+// VoiceOver names the plate it edits.
+function EditButton({ plate, onEdit }: { readonly plate: string; readonly onEdit: () => void }) {
+  return <TextButton label={i18n.t('vehicles.edit')} accessibilityLabel={i18n.t('vehicles.editLabel', { plate })} onPress={onEdit} />;
 }
 
 function VehicleLabel({ vehicle }: { readonly vehicle: Vehicle }) {

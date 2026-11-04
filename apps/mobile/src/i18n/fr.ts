@@ -71,6 +71,7 @@ export const fr = {
     isOversize: 'Gabarit large',
     edit: 'Modifier',
     editTitle: 'Modifier le véhicule',
+    editLabel: 'Modifier %{plate}',
     save: 'Enregistrer',
     cancel: 'Annuler',
     invalidPlate: 'Plaque invalide',

@@ -73,6 +73,7 @@ export const en: Translations = {
     isOversize: 'Oversize',
     edit: 'Edit',
     editTitle: 'Edit vehicle',
+    editLabel: 'Edit %{plate}',
     save: 'Save',
     cancel: 'Cancel',
     invalidPlate: 'Invalid plate',

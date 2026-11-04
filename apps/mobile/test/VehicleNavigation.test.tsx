@@ -44,7 +44,7 @@ describe('the vehicles page of the account tab', () => {
 
     await user.press(await screen.findByRole('tab', { name: 'Compte' }));
     await user.press(screen.getByRole('button', { name: 'Mes véhicules' }));
-    await user.press(await screen.findByRole('button', { name: 'Modifier' }));
+    await user.press(await screen.findByRole('button', { name: 'Modifier ABC 123' }));
     await user.press(screen.getByRole('checkbox', { name: 'Gabarit large' }));
     await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
 

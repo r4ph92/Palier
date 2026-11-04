@@ -45,7 +45,7 @@ describe('VehiclesScreen', () => {
       </SafeAreaProvider>,
     );
 
-    await userEvent.setup().press(await screen.findByRole('button', { name: 'Modifier' }));
+    await userEvent.setup().press(await screen.findByRole('button', { name: 'Modifier ABC 123' }));
 
     expect(onEditVehicle).toHaveBeenCalledWith(abc123);
   });
@@ -124,6 +124,7 @@ describe('VehiclesScreen', () => {
 
       expect(await screen.findByText('Default')).toBeOnTheScreen();
       expect(screen.getByRole('button', { name: 'Use as default' })).toBeOnTheScreen();
+      expect(screen.getByRole('button', { name: 'Edit ABC 123' })).toBeOnTheScreen();
     });
   });
 });

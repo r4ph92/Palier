@@ -8,17 +8,19 @@ interface TextButtonProps {
   readonly busyLabel?: string;
   readonly onPress: () => void;
   readonly isBusy?: boolean;
+  // Names the button for VoiceOver when the shown word alone is ambiguous, like « Modifier » in a list.
+  readonly accessibilityLabel?: string;
 }
 
 const BUSY_OPACITY = 0.6;
 
-export function TextButton({ label, busyLabel = label, onPress, isBusy = false }: TextButtonProps) {
+export function TextButton({ label, busyLabel = label, onPress, isBusy = false, accessibilityLabel }: TextButtonProps) {
   const shownLabel = isBusy ? busyLabel : label;
   const longerLabel = busyLabel.length > label.length ? busyLabel : label;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={shownLabel}
+      accessibilityLabel={accessibilityLabel ?? shownLabel}
       accessibilityState={{ busy: isBusy }}
       disabled={isBusy}
       onPress={onPress}
