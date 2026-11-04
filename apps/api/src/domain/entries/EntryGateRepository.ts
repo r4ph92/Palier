@@ -8,6 +8,8 @@ export interface EntryGateLot {
   readonly dailyCapCents: number;
   // The lot's jsonb policy as stored, read by parsePricingPolicy.
   readonly pricingPolicy: unknown;
+  readonly capacity: number;
+  readonly vehicleCount: number;
   readonly operatorStripeAccountId: string | null;
 }
 

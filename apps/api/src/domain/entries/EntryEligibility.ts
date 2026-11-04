@@ -86,6 +86,10 @@ export class EntryEligibility {
     if (gate.lot.operatorStripeAccountId === null && !this.#dependencies.policy.allowPlatformChargesWithoutOperatorAccount) {
       throw new EntryRefusedError('OPERATOR_NOT_PAYABLE');
     }
+    // Same count as freeSpotCount: a lot can be full by vehicles inside even while spots look free.
+    if (gate.lot.capacity - gate.lot.vehicleCount <= 0) {
+      throw new EntryRefusedError('LOT_FULL');
+    }
   }
 
   async #driverPrerequisites(driverId: string): Promise<DriverPrerequisites> {
