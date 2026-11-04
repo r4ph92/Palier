@@ -3,9 +3,12 @@ import { dashboardClient } from '../api/dashboardClient.ts';
 import { useResource } from '../api/useResource.ts';
 import { AppLink } from '../components/AppLink.tsx';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
+import { SkeletonRows } from '../components/SkeletonRows.tsx';
 import { StateMark } from '../components/StateMark.tsx';
 import { useText } from '../i18n/LanguageContext.tsx';
 import { lotPath } from '../navigation/routes.ts';
+
+const LOADING_ROWS = 2;
 
 export function LotList() {
   const text = useText();
@@ -23,7 +26,7 @@ function LotListContent() {
   const text = useText();
   const lots = useResource(dashboardClient.lots);
   if (lots.status === 'loading') {
-    return <p role="status" className="muted">{text.home.lotsLoading}</p>;
+    return <SkeletonRows count={LOADING_ROWS} label={text.home.lotsLoading} />;
   }
   if (lots.status === 'failed') {
     return <ErrorNotice code={lots.error.code} />;

@@ -153,6 +153,20 @@ body {
   overflow-wrap: anywhere;
 }
 
+.skeleton-row {
+  height: var(--touch-target);
+  background: var(--sunken);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .row-button[aria-disabled='true'],
 .text-button[aria-disabled='true'] {
   cursor: wait;
