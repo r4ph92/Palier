@@ -56,6 +56,15 @@ describe('EditVehicleScreen', () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 
+  it('says the needs could not be saved when the vehicle was removed meanwhile, and stays on the page', async () => {
+    const onSaved = await renderEditVehicleScreen(new FakeVehicleClient());
+
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(await screen.findByText('Enregistrement impossible. Vérifiez votre connexion, puis réessayez.')).toBeOnTheScreen();
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
   it('reads in English when the device is English', async () => {
     await renderEditVehicleScreen(new FakeVehicleClient([eva001]), 'en');
 
