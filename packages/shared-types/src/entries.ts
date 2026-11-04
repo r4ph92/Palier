@@ -15,6 +15,16 @@ export interface EntryResponse {
   readonly barrierOpened: true;
 }
 
+export type EntrySessionState = 'CREATED' | 'ENTRY_CONFIRMED' | 'CANCELLED';
+
+export interface EntryStatusResponse {
+  readonly sessionId: string;
+  readonly state: EntrySessionState;
+  readonly spot: AssignedSpot;
+  // When the entry loop proved the car passed; null until then.
+  readonly entryConfirmedAt: string | null;
+}
+
 export type EntryRefusalCode =
   | 'QR_NOT_RECOGNIZED'
   | 'NOT_AN_ENTRY_GATE'

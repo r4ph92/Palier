@@ -1,11 +1,13 @@
 import type { GateKind, GatePassageResponse } from '@palier/shared-types';
 import type { Clock } from '../time/Clock.ts';
 import type { AuthenticatedGate } from './AuthenticatedGate.ts';
-import type { PassageLedger, VehicleCountChange } from './PassageLedger.ts';
+import type { OpeningWindow, PassageLedger, VehicleCountChange } from './PassageLedger.ts';
 import { PassageRefusedError } from './PassageRefusedError.ts';
 
 const ALLOWED_CLOCK_DRIFT_MILLISECONDS = 5 * 60 * 1000;
 const FIRST_STORABLE_YEAR = 1;
+// An opening is confirmed by the loop closing up to a minute after it; the same drift as above covers a console clock that runs ahead.
+export const OPENING_CONFIRMATION_WINDOW_MILLISECONDS = 60 * 1000;
 
 const VEHICLE_COUNT_CHANGE: Record<GateKind, VehicleCountChange> = { ENTRY: 1, EXIT: -1 };
 
@@ -27,8 +29,21 @@ export async function recordPassage(
   ensurePassageAllowed(command, collaborators.clock());
   const { gate, closedAt } = command;
   const vehicleCountChange = VEHICLE_COUNT_CHANGE[gate.kind];
-  const { vehicleCount } = await collaborators.ledger.recordPassage({ gate, closedAt, vehicleCountChange });
-  return { gateId: gate.id, lotId: gate.lotId, kind: gate.kind, closedAt: closedAt.toISOString(), vehicleCount };
+  const confirmableOpenings = gate.kind === 'ENTRY' ? openingWindowAround(closedAt) : null;
+  const { vehicleCount, confirmedSessionId } = await collaborators.ledger.recordPassage({
+    gate,
+    closedAt,
+    vehicleCountChange,
+    confirmableOpenings,
+  });
+  return { gateId: gate.id, lotId: gate.lotId, kind: gate.kind, closedAt: closedAt.toISOString(), vehicleCount, confirmedSessionId };
+}
+
+function openingWindowAround(closedAt: Date): OpeningWindow {
+  return {
+    from: new Date(closedAt.getTime() - OPENING_CONFIRMATION_WINDOW_MILLISECONDS),
+    to: new Date(closedAt.getTime() + ALLOWED_CLOCK_DRIFT_MILLISECONDS),
+  };
 }
 
 function ensurePassageAllowed(command: PassageCommand, now: Date): void {

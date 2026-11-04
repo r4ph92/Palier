@@ -48,7 +48,25 @@ describe('gate routes', () => {
         kind: 'ENTRY',
         closedAt: NOW.toISOString(),
         vehicleCount: 1,
+        confirmedSessionId: null,
       });
+    });
+
+    it('answers the session the closure confirmed, and counts the vehicle', async () => {
+      startServer(0);
+      ledger.pendingOpenings.push('session-julie');
+
+      const response = await postPassage(entreeDemo.id, bearer(ENTREE_DEMO_KEY));
+
+      expect(response.json()).toMatchObject({ vehicleCount: 1, confirmedSessionId: 'session-julie' });
+    });
+
+    it('counts the vehicle and confirms no session when no opening waits', async () => {
+      startServer(0);
+
+      const response = await postPassage(entreeDemo.id, bearer(ENTREE_DEMO_KEY));
+
+      expect(response.json()).toMatchObject({ vehicleCount: 1, confirmedSessionId: null });
     });
 
     it('counts the vehicle out at the exit gate', async () => {

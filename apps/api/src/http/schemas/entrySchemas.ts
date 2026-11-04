@@ -1,4 +1,4 @@
-import type { EntryRequest, EntryResponse, GateCommand } from '@palier/shared-types';
+import type { EntryRequest, EntryResponse, EntryStatusResponse, GateCommand } from '@palier/shared-types';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
 
@@ -12,21 +12,43 @@ export const entryRequestSchema = {
   properties: { qrContent: { type: 'string', maxLength: QR_CONTENT_MAX_LENGTH } },
 } as const;
 
+const assignedSpotSchema = {
+  type: 'object',
+  required: ['number', 'levelCode', 'aisleCode'],
+  additionalProperties: false,
+  properties: { number: { type: 'string' }, levelCode: { type: 'string' }, aisleCode: { type: 'string' } },
+} as const;
+
 export const entryResponseSchema = {
   type: 'object',
   required: ['sessionId', 'spot', 'barrierOpened'],
   additionalProperties: false,
   properties: {
     sessionId: { type: 'string' },
-    spot: {
-      type: 'object',
-      required: ['number', 'levelCode', 'aisleCode'],
-      additionalProperties: false,
-      properties: { number: { type: 'string' }, levelCode: { type: 'string' }, aisleCode: { type: 'string' } },
-    },
+    spot: assignedSpotSchema,
     barrierOpened: { type: 'boolean', const: true },
   },
 } as const;
+
+export const entryStatusResponseSchema = {
+  type: 'object',
+  required: ['sessionId', 'state', 'spot', 'entryConfirmedAt'],
+  additionalProperties: false,
+  properties: {
+    sessionId: { type: 'string' },
+    state: { type: 'string', enum: ['CREATED', 'ENTRY_CONFIRMED', 'CANCELLED'] },
+    spot: assignedSpotSchema,
+    entryConfirmedAt: { type: ['string', 'null'] },
+  },
+} as const;
+
+export const entrySessionParametersSchema = {
+  type: 'object',
+  required: ['sessionId'],
+  properties: { sessionId: { type: 'string', format: 'uuid' } },
+} as const;
+
+export type EntrySessionParameters = FromSchema<typeof entrySessionParametersSchema>;
 
 const gateCommandSchema = {
   type: 'object',
@@ -48,3 +70,6 @@ export type GateCommandsQuery = FromSchema<typeof gateCommandsQuerySchema>;
 export type RequestSchemaMatchesEntryRequest = AssertTrue<MutuallyAssignable<FromSchema<typeof entryRequestSchema>, EntryRequest>>;
 export type ResponseSchemaMatchesEntryResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof entryResponseSchema>, EntryResponse>>;
 export type CommandSchemaMatchesGateCommand = AssertTrue<MutuallyAssignable<FromSchema<typeof gateCommandSchema>, GateCommand>>;
+export type ResponseSchemaMatchesEntryStatus = AssertTrue<
+  MutuallyAssignable<FromSchema<typeof entryStatusResponseSchema>, EntryStatusResponse>
+>;

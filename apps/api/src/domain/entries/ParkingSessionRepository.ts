@@ -1,4 +1,4 @@
-import type { AssignedSpot } from '@palier/shared-types';
+import type { AssignedSpot, EntryStatusResponse } from '@palier/shared-types';
 
 export interface SessionDraft {
   readonly driverId: string;
@@ -19,6 +19,8 @@ export interface ParkingSessionRepository {
   // Throws EntryRefusedError ALREADY_INSIDE when the driver already has an active session.
   openWithFirstFreeSpot(draft: SessionDraft): Promise<OpenedSession | null>;
   attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<void>;
+  // The driver's own session only; null for an unknown id or another driver's session.
+  findForUser(sessionId: string, userId: string): Promise<EntryStatusResponse | null>;
   // Cancels the session and frees its spot in one transaction.
   cancel(sessionId: string): Promise<void>;
 }

@@ -13,6 +13,7 @@ export const GATED = [
   'PUT /v1/me/payment-method',
   'POST /v1/me/setup-intent',
   'POST /v1/entries',
+  'GET /v1/entries/:sessionId',
 ];
 
 const DRIVER_EXEMPT = ['GET /v1/me', 'POST /v1/consent', 'POST /v1/sign-out', 'GET /v1/test/drivers', 'POST /v1/test/sign-in'];
@@ -32,7 +33,7 @@ export function methodOf(route: string): string {
 }
 
 export function urlOf(route: string): string {
-  return (route.split(' ')[1] ?? '').replace(':id', SAMPLE_VEHICLE_ID);
+  return (route.split(' ')[1] ?? '').replace(':id', SAMPLE_VEHICLE_ID).replace(':sessionId', SAMPLE_VEHICLE_ID);
 }
 
 // Only JSON bodies carry an error code: some routes answer with no body, and the console serves HTML, CSS, scripts and fonts.

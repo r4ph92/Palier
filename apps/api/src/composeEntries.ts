@@ -24,7 +24,9 @@ export interface EntryComposition {
 }
 
 export function composeEntries({ database, stripeKey, demoMode, drivers, vehicles }: EntryComposition): EntryRouteDependencies {
+  const sessions = new PostgresParkingSessionRepository(database);
   return {
+    sessions,
     eligibility: new EntryEligibility({
       gates: new PostgresEntryGateRepository(database),
       vehicles,
@@ -32,7 +34,7 @@ export function composeEntries({ database, stripeKey, demoMode, drivers, vehicle
       policy: { allowPlatformChargesWithoutOperatorAccount: demoMode },
     }),
     admission: new EntryAdmission({
-      sessions: new PostgresParkingSessionRepository(database),
+      sessions,
       payments: stripeKey === null ? null : paymentAuthorizer(stripeKey),
       gateCommander: new SimulatedGateCommander(database),
     }),

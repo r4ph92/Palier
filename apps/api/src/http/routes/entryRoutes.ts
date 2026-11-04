@@ -2,12 +2,14 @@ import type { EntryRequest, EntryResponse } from '@palier/shared-types';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
 import type { EntryAdmission } from '../../domain/entries/EntryAdmission.ts';
+import type { ParkingSessionRepository } from '../../domain/entries/ParkingSessionRepository.ts';
 import type { EntryEligibility } from '../../domain/entries/EntryEligibility.ts';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import { handleEntryError } from '../entries/handleEntryError.ts';
 import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
 import { requireConsent } from '../requireConsent.ts';
 import { requireDriver, signedInDriver } from '../requireDriver.ts';
+import { registerEntryStatusRoute } from './entryStatusRoute.ts';
 import { entryRequestSchema, entryResponseSchema } from '../schemas/entrySchemas.ts';
 
 const CREATED = 201;
@@ -18,6 +20,7 @@ const ENTRY_WINDOW_MILLISECONDS = 10 * 60 * 1000;
 export interface EntryRouteDependencies {
   readonly eligibility: EntryEligibility;
   readonly admission: EntryAdmission;
+  readonly sessions: ParkingSessionRepository;
 }
 
 interface EnterRoute {
@@ -28,6 +31,7 @@ interface EnterRoute {
 export function registerEntryRoutes(server: FastifyInstance, driverRepository: DriverRepository, entries: EntryRouteDependencies | undefined): void {
   const guards = [requireDriver(driverRepository), requireConsent(driverRepository)];
   const limiter = createSetupLimiter(ENTRY_LIMIT, ENTRY_WINDOW_MILLISECONDS);
+  registerEntryStatusRoute(server, driverRepository, entries?.sessions);
   void server.register(async (scope) => {
     scope.setErrorHandler(handleEntryError);
     scope.post<EnterRoute>(

@@ -1,4 +1,5 @@
 import { and, eq, sql } from 'drizzle-orm';
+import type { EntrySessionState, EntryStatusResponse } from '@palier/shared-types';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import type { OpenedSession, ParkingSessionRepository, SessionDraft } from '../../domain/entries/ParkingSessionRepository.ts';
 import { isActiveSessionConflict } from './activeSessionConflict.ts';
@@ -10,6 +11,24 @@ interface AssignedSpotRow extends Record<string, unknown> {
   readonly number: string;
   readonly aisle_code: string;
   readonly level_code: string;
+}
+
+interface SessionStatusRow extends Record<string, unknown> {
+  readonly id: string;
+  readonly state: EntrySessionState;
+  readonly entry_confirmed_at: Date | string | null;
+  readonly number: string;
+  readonly aisle_code: string;
+  readonly level_code: string;
+}
+
+function statusOf(row: SessionStatusRow): EntryStatusResponse {
+  return {
+    sessionId: row.id,
+    state: row.state,
+    spot: { number: row.number, levelCode: row.level_code, aisleCode: row.aisle_code },
+    entryConfirmedAt: row.entry_confirmed_at === null ? null : new Date(row.entry_confirmed_at).toISOString(),
+  };
 }
 
 export class PostgresParkingSessionRepository implements ParkingSessionRepository {
@@ -35,6 +54,18 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 
   async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<void> {
     await this.#database.update(parkingSession).set({ paymentIntentId }).where(eq(parkingSession.id, sessionId));
+  }
+
+  async findForUser(sessionId: string, userId: string): Promise<EntryStatusResponse | null> {
+    const rows = await this.#database.execute<SessionStatusRow>(sql`
+      select ps.id, ps.state, ps.entry_confirmed_at, spot.number, aisle.code as aisle_code, level.code as level_code
+      from parking_session ps
+      join spot on spot.id = ps.assigned_spot_id
+      join aisle on aisle.id = spot.aisle_id
+      join level on level.id = aisle.level_id
+      where ps.id = ${sessionId} and ps.user_id = ${userId}`);
+    const row = rows[0];
+    return row === undefined ? null : statusOf(row);
   }
 
   async cancel(sessionId: string): Promise<void> {

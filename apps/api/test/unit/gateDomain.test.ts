@@ -48,13 +48,21 @@ describe('recordPassage', () => {
 
     const passage = await recordPassage(entryAt(now), { ledger, clock });
 
-    expect(ledger.entries).toEqual([{ gate: entreeDemo, closedAt: now, vehicleCountChange: 1 }]);
+    expect(ledger.entries).toEqual([
+      {
+        gate: entreeDemo,
+        closedAt: now,
+        vehicleCountChange: 1,
+        confirmableOpenings: { from: new Date('2026-10-27T22:01:00Z'), to: new Date('2026-10-27T22:07:00Z') },
+      },
+    ]);
     expect(passage).toEqual({
       gateId: entreeDemo.id,
       lotId: entreeDemo.lotId,
       kind: 'ENTRY',
       closedAt: '2026-10-27T22:02:00.000Z',
       vehicleCount: 1,
+      confirmedSessionId: null,
     });
   });
 
@@ -81,6 +89,26 @@ describe('recordPassage', () => {
 
     await expect(recordPassage(command, { ledger, clock })).rejects.toEqual(new PassageRefusedError('GATE_FORBIDDEN'));
     expect(ledger.entries).toEqual([]);
+  });
+
+  it('confirms nothing at an exit gate', async () => {
+    const ledger = new FakePassageLedger(1);
+    ledger.pendingOpenings.push('session-waiting');
+
+    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now }, { ledger, clock });
+
+    expect(ledger.entries[0]?.confirmableOpenings).toBeNull();
+    expect(passage.confirmedSessionId).toBeNull();
+  });
+
+  it('answers the session the ledger confirmed at an entry gate', async () => {
+    const ledger = new FakePassageLedger(0);
+    ledger.pendingOpenings.push('session-julie', 'session-marc');
+
+    const passage = await recordPassage(entryAt(now), { ledger, clock });
+
+    expect(passage).toMatchObject({ vehicleCount: 1, confirmedSessionId: 'session-julie' });
+    expect(ledger.pendingOpenings).toEqual(['session-marc']);
   });
 
   it('refuses a passage from a gate without loops', async () => {

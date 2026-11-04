@@ -8,6 +8,7 @@ import {
   LAVOIE_ACCOUNT,
   silentLog,
   type Journal,
+  fakeSessionId,
 } from './fakes/entryFakes.ts';
 import { entreeDemo } from './fakes/gateFixtures.ts';
 import { julie } from './fakeDriverRepository.ts';
@@ -34,7 +35,7 @@ describe('entry admission', () => {
 
     const response = await admission.admit(julieAtEntreeDemo, log);
 
-    expect(response).toEqual({ sessionId: 'session-1', spot: { number: 'A-1', levelCode: 'P1', aisleCode: 'A' }, barrierOpened: true });
+    expect(response).toEqual({ sessionId: fakeSessionId(1), spot: { number: 'A-1', levelCode: 'P1', aisleCode: 'A' }, barrierOpened: true });
     expect(journal).toEqual(['open-session', 'authorize', 'attach-intent', 'open-gate']);
   });
 
@@ -47,10 +48,10 @@ describe('entry admission', () => {
       { driverId: julie.id, vehicleId: 'vehicle-julie', plate: 'ABC 123', lotId: entreeDemo.lotId, entryGateId: entreeDemo.id, authorizedCents: 2500 },
     ]);
     expect(payments.authorized).toEqual([
-      { sessionId: 'session-1', customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },
+      { sessionId: fakeSessionId(1), customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },
     ]);
-    expect(sessions.paymentIntents.get('session-1')).toBe('pi_session-1');
-    expect(gateCommander.opened).toEqual([{ gateId: entreeDemo.id, lotId: entreeDemo.lotId, sessionId: 'session-1' }]);
+    expect(sessions.paymentIntents.get(fakeSessionId(1))).toBe(`pi_${fakeSessionId(1)}`);
+    expect(gateCommander.opened).toEqual([{ gateId: entreeDemo.id, lotId: entreeDemo.lotId, sessionId: fakeSessionId(1) }]);
   });
 
   it('refuses LOT_FULL without touching the card or the barrier when no spot is free', async () => {
@@ -76,7 +77,7 @@ describe('entry admission', () => {
 
     await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toThrow('gate_command insert failed');
     expect(journal).toEqual(['open-session', 'authorize', 'attach-intent', 'open-gate', 'cancel-session', 'cancel-intent']);
-    expect(payments.cancelled).toEqual(['pi_session-1']);
+    expect(payments.cancelled).toEqual([`pi_${fakeSessionId(1)}`]);
     expect(sessions.freeSpots[0]).toBe('A-1');
   });
 
@@ -96,7 +97,7 @@ describe('entry admission', () => {
 
     await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toThrow('gate_command insert failed');
     expect(journal).toEqual(['open-session', 'authorize', 'attach-intent', 'open-gate', 'cancel-session', 'cancel-intent']);
-    expect(payments.cancelled).toEqual(['pi_session-1']);
+    expect(payments.cancelled).toEqual([`pi_${fakeSessionId(1)}`]);
     expect(log.errors).toHaveLength(2);
   });
 
