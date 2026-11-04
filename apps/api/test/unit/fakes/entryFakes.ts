@@ -6,7 +6,7 @@ import type { EntryLog } from '../../../src/domain/entries/EntryLog.ts';
 import { EntryRefusedError } from '../../../src/domain/entries/EntryRefusedError.ts';
 import type { GateCommander, OpenCommand } from '../../../src/domain/entries/GateCommander.ts';
 import type { OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../../src/domain/entries/ParkingSessionRepository.ts';
-import type { AuthorizationRequest, PaymentAuthorizer } from '../../../src/domain/entries/PaymentAuthorizer.ts';
+import type { AuthorizationRequest, HoldRelease, PaymentAuthorizer } from '../../../src/domain/entries/PaymentAuthorizer.ts';
 import type { EntryRouteDependencies } from '../../../src/http/routes/entryRoutes.ts';
 import type { FakeDriverRepository } from '../fakeDriverRepository.ts';
 import type { FakeVehicleRepository } from '../fakeVehicleRepository.ts';
@@ -64,10 +64,10 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     return Promise.resolve({ id, spot: { number: spot, levelCode: 'P1', aisleCode } });
   }
 
-  attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<void> {
+  attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<boolean> {
     this.#journal.push('attach-intent');
     this.paymentIntents.set(sessionId, paymentIntentId);
-    return Promise.resolve();
+    return Promise.resolve(this.#sessions.get(sessionId)?.state === 'CREATED');
   }
 
   cancel(sessionId: string): Promise<void> {
@@ -75,11 +75,7 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     if (this.cancelFails) {
       return Promise.reject(new Error('parking_session update failed'));
     }
-    const session = this.#sessions.get(sessionId);
-    if (session !== undefined) {
-      session.state = 'CANCELLED';
-      this.#freeSpots.unshift(session.spot);
-    }
+    this.cancelByJob(sessionId);
     return Promise.resolve();
   }
 
@@ -91,6 +87,15 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     const [aisleCode = ''] = session.spot.split('-');
     const spot = { number: session.spot, levelCode: 'P1', aisleCode };
     return Promise.resolve({ id: sessionId, state: session.state, spot, entryConfirmedAt: session.entryConfirmedAt });
+  }
+
+  // Mirrors the SQL guard: only a CREATED session is cancelled and gives its spot back. The cancellation job does the same.
+  cancelByJob(sessionId: string): void {
+    const session = this.#sessions.get(sessionId);
+    if (session?.state === 'CREATED') {
+      session.state = 'CANCELLED';
+      this.#freeSpots.unshift(session.spot);
+    }
   }
 
   confirmEntry(sessionId: string, confirmedAt: Date): void {
@@ -106,7 +111,7 @@ export class FakePaymentAuthorizer implements PaymentAuthorizer {
   readonly authorized: AuthorizationRequest[] = [];
   readonly cancelled: string[] = [];
   refusal: EntryRefusalCode | null = null;
-  cancelFails = false;
+  release: HoldRelease = 'released';
   readonly #journal: Journal;
 
   constructor(journal: Journal = []) {
@@ -122,13 +127,12 @@ export class FakePaymentAuthorizer implements PaymentAuthorizer {
     return Promise.resolve(`pi_${request.sessionId}`);
   }
 
-  cancel(paymentIntentId: string): Promise<void> {
+  cancel(paymentIntentId: string): Promise<HoldRelease> {
     this.#journal.push('cancel-intent');
-    if (this.cancelFails) {
-      return Promise.reject(new Error('Stripe is down'));
+    if (this.release === 'released') {
+      this.cancelled.push(paymentIntentId);
     }
-    this.cancelled.push(paymentIntentId);
-    return Promise.resolve();
+    return Promise.resolve(this.release);
   }
 }
 

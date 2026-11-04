@@ -27,9 +27,10 @@ export interface ParkingSessionRepository {
   // Assigns the lot's first free spot and creates the session in one transaction; null when no spot is free.
   // Throws EntryRefusedError ALREADY_INSIDE when the driver already has an active session.
   openWithFirstFreeSpot(draft: SessionDraft): Promise<OpenedSession | null>;
-  attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<void>;
+  // Records the hold on the session; false when the session was cancelled meanwhile, its hold then marked for release.
+  attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<boolean>;
   // The driver's own session only; null for an unknown id or another driver's session.
   findForUser(sessionId: string, userId: string): Promise<SessionStatus | null>;
-  // Cancels the session and frees its spot in one transaction.
+  // Cancels a CREATED session and frees its spot in one transaction, marking its hold, if any, for release by the cancellation job.
   cancel(sessionId: string): Promise<void>;
 }

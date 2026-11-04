@@ -72,11 +72,51 @@ describe('StripePaymentAuthorizer', () => {
     },
   );
 
-  it('cancels a hold by its intent id', async () => {
+  it('cancels a hold by its intent id, without a custom idempotency key', async () => {
     const { stripe, cancel } = fakeStripe(Promise.resolve({ id: 'pi_1', status: 'requires_capture' }));
 
-    await new StripePaymentAuthorizer(stripe).cancel('pi_1');
-
+    expect(await new StripePaymentAuthorizer(stripe).cancel('pi_1')).toBe('released');
     expect(cancel).toHaveBeenCalledWith('pi_1');
+  });
+
+  function refusedCancel(error: unknown) {
+    const { stripe, cancel } = fakeStripe(Promise.resolve({ id: 'pi_1', status: 'requires_capture' }));
+    cancel.mockRejectedValueOnce(error);
+    return new StripePaymentAuthorizer(stripe).cancel('pi_1');
+  }
+
+  it('answers released for an intent Stripe already canceled', async () => {
+    const alreadyCanceled = Object.assign(new Error('already canceled'), {
+      type: 'StripeInvalidRequestError',
+      code: 'payment_intent_unexpected_state',
+      payment_intent: { id: 'pi_1', status: 'canceled' },
+    });
+
+    expect(await refusedCancel(alreadyCanceled)).toBe('released');
+  });
+
+  it('answers gone for an intent captured before the cancellation', async () => {
+    const captured = Object.assign(new Error('captured'), {
+      type: 'StripeInvalidRequestError',
+      code: 'payment_intent_unexpected_state',
+      payment_intent: { id: 'pi_1', status: 'succeeded' },
+    });
+
+    expect(await refusedCancel(captured)).toBe('gone');
+  });
+
+  it('answers gone for an intent Stripe does not know', async () => {
+    const missing = Object.assign(new Error('No such payment_intent'), { type: 'StripeInvalidRequestError', code: 'resource_missing' });
+
+    expect(await refusedCancel(missing)).toBe('gone');
+  });
+
+  it.each([
+    ['a connection error', Object.assign(new Error('socket hang up'), { type: 'StripeConnectionError' })],
+    ['a Stripe outage', Object.assign(new Error('internal'), { type: 'StripeAPIError' })],
+    ['a rate limit', Object.assign(new Error('too many'), { type: 'StripeRateLimitError', code: 'rate_limit' })],
+    ['something that is not an object', 'boom'],
+  ])('answers failed, to retry, for %s', async (_case, error) => {
+    expect(await refusedCancel(error)).toBe('failed');
   });
 });

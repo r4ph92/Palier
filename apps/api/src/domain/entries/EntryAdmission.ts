@@ -75,15 +75,22 @@ export class EntryAdmission {
   }
 
   async #openBarrier(run: EntryRun, { sessionId, paymentIntentId }: HeldSession): Promise<void> {
-    const { sessions, gateCommander } = this.#dependencies;
     try {
-      await sessions.attachPaymentIntent(sessionId, paymentIntentId);
-      await gateCommander.open({ gateId: run.entry.gate.id, lotId: run.entry.gate.lotId, sessionId });
+      await this.#attachHold(sessionId, paymentIntentId);
+      await this.#dependencies.gateCommander.open({ gateId: run.entry.gate.id, lotId: run.entry.gate.lotId, sessionId });
     } catch (error) {
-      run.log.error({ err: error, sessionId, paymentIntentId }, 'entry barrier command failed');
+      run.log.error({ err: error, sessionId, paymentIntentId }, 'entry barrier was not opened');
       await this.#releaseSpot(sessionId, run.log);
       await this.#releaseHold(run, paymentIntentId);
       throw error;
+    }
+  }
+
+  // An entry slower than the confirmation window was cancelled by the job: the barrier must not open for it.
+  async #attachHold(sessionId: string, paymentIntentId: string): Promise<void> {
+    const isStillCreated = await this.#dependencies.sessions.attachPaymentIntent(sessionId, paymentIntentId);
+    if (!isStillCreated) {
+      throw new EntryRefusedError('PAYMENTS_UNAVAILABLE');
     }
   }
 
@@ -96,10 +103,13 @@ export class EntryAdmission {
     }
   }
 
-  // A hold Stripe would not cancel expires on its own, so it is only logged.
+  // The cancelled session keeps its hold marked for release, so the cancellation job retries one Stripe did not release here.
   async #releaseHold({ payments, log }: EntryRun, paymentIntentId: string): Promise<void> {
     try {
-      await payments.cancel(paymentIntentId);
+      const release = await payments.cancel(paymentIntentId);
+      if (release !== 'released') {
+        log.error({ paymentIntentId, release }, 'could not cancel the entry hold');
+      }
     } catch (error) {
       log.error({ err: error, paymentIntentId }, 'could not cancel the entry hold');
     }

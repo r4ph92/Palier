@@ -1,10 +1,11 @@
-import { and, eq, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import type { OpenedSession, ParkingSessionRepository, SessionDraft, SessionStatus } from '../../domain/entries/ParkingSessionRepository.ts';
 import { isActiveSessionConflict } from './activeSessionConflict.ts';
+import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
-import { parkingSession, spot } from './schema.ts';
+import { parkingSession } from './schema.ts';
 
 interface AssignedSpotRow extends Record<string, unknown> {
   readonly id: string;
@@ -56,8 +57,13 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
     }
   }
 
-  async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<void> {
-    await this.#database.update(parkingSession).set({ paymentIntentId }).where(eq(parkingSession.id, sessionId));
+  async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<boolean> {
+    const rows = await this.#database.execute<{ is_created: boolean }>(sql`
+      update parking_session
+      set payment_intent_id = ${paymentIntentId}, hold_release_pending = state <> 'CREATED'
+      where id = ${sessionId}
+      returning state = 'CREATED' as is_created`);
+    return rows[0]?.is_created === true;
   }
 
   async findForUser(sessionId: string, userId: string): Promise<SessionStatus | null> {
@@ -73,20 +79,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   }
 
   async cancel(sessionId: string): Promise<void> {
-    await this.#database.transaction(async (tx) => {
-      const [cancelled] = await tx
-        .update(parkingSession)
-        .set({ state: 'CANCELLED', cancelledAt: sql`now()` })
-        .where(and(eq(parkingSession.id, sessionId), eq(parkingSession.state, 'CREATED')))
-        .returning({ spotId: parkingSession.assignedSpotId });
-      if (cancelled === undefined) {
-        return;
-      }
-      await tx
-        .update(spot)
-        .set({ state: 'AVAILABLE', stateChangedAt: sql`now()` })
-        .where(and(eq(spot.id, cancelled.spotId), eq(spot.state, 'ASSIGNED')));
-    });
+    await this.#database.transaction((tx) => cancelCreatedSession(tx, sessionId));
   }
 }
 
