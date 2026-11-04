@@ -1,0 +1,13 @@
+# 012 — Annulation des entrées sans passage
+
+**Contexte.** Une barrière ouverte sans fermeture de boucle (décision 009) laissait la session `CREATED`, la place attribuée et l'autorisation de 25,00 $ tenue. `docs/05` prévoit une tâche planifiée en instance unique, gardée par un verrou consultatif.
+
+**Décision.**
+- **Tâche `cancel_unconfirmed_entries`** dans chaque instance de l'API, toutes les `ENTRY_CANCELLATION_PERIOD_SECONDS` (30 s par défaut). Elle annule une session `CREATED` dont la commande `OPEN` date de plus de `ENTRY_CONFIRMATION_WINDOW_SECONDS` (60 s par défaut) ; sans commande (panne entre la place et la barrière), c'est `entry_scan_at` qui compte.
+- **Une seule fenêtre, une seule horloge** : `composeEntryCancellation` crée un objet `OpeningWindow` donné aux barrières et à la tâche, et `isWithinOpeningWindow` (SQL, `now()` de Postgres) sert aux deux côtés : la boucle confirme `issued_at >= now() − fenêtre`, la tâche prend le reste. Ouverture à 59 s : confirmée ; à 61 s : annulée.
+- **Ordre des verrous** : une transaction par session, `parking_lot FOR NO KEY UPDATE`, puis la session, puis la place, comme une fermeture de boucle. Une fermeture déjà engagée sur le parking passe d'abord, et la garde `state = 'CREATED'` laisse sa session confirmée.
+- **Plusieurs instances** : pas de verrou consultatif. La garde d'état sous le verrou du parking rend une seconde annulation sans effet, et `claimPendingReleases` (`FOR UPDATE SKIP LOCKED`) répartit les libérations.
+- **Libération de l'autorisation** : l'annulation pose `hold_release_pending` dans la même transaction (toute session annulée avec `payment_intent_id`, retour arrière de l'entrée compris) ; la tâche en libère au plus 5 par passage, les moins récemment tentées d'abord (`hold_release_attempted_at`), et ne l'efface que si Stripe confirme. `PaymentAuthorizer.cancel` répond `released`, `gone` (introuvable ou capturée : effacée et journalisée) ou `failed` (réessayée). Les libérations ne retardent jamais les annulations. Sans clé Stripe, un avertissement par passage donne le nombre en attente.
+- **Bornes** : fenêtre ≥ 30 s (au-delà des 8 s de l'app et ~6 s de l'autorisation) ; période ≤ fenêtre ; fenêtre + période ≤ 110 s, sous les 2 min où l'app suit l'entrée. Une entrée annulée avant d'attacher son autorisation est refusée (`PAYMENTS_UNAVAILABLE`) sans ouvrir la barrière.
+
+**Conséquences.** L'horloge de test ne touche pas la règle de la commande `OPEN` ; le recul d'une session (`entered-at`) déplace `entry_scan_at` d'une session `CREATED` et peut donc la faire annuler par la règle sans commande. Le SQL n'est vérifié que sur la base de la voie (décision 005).

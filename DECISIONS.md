@@ -474,4 +474,6 @@ Trois points ont été tranchés en cours de rédaction et méritent une relectu
    TTL en Q10 ; depuis Q36 il présume la place occupée au lieu de la libérer.
 3. **La fenêtre de 60 secondes** entre la commande d'ouverture et la fermeture de
    la boucle (Q33) est un ordre de grandeur, pas une mesure ; à ajuster sur le
-   terrain.
+   terrain. Depuis #39, elle se règle par `ENTRY_CONFIRMATION_WINDOW_SECONDS` (30 s au
+   moins, 60 s par défaut), la même valeur pour la boucle et l'annulation
+   (`docs/decisions/012`).

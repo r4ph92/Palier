@@ -82,6 +82,16 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
   `min(capacité − véhicules, places libres)`, plancher 0).
 - **Clé refusée** : une clé quelconque ou la clé révoquée : « Clé d'appareil
   refusée », le compteur ne bouge pas.
+- **Entrée annulée sans passage** (#39) : sans clé Stripe, l'entrée par l'app
+  répond 503 ; on crée donc la session et sa commande d'ouverture en SQL, avec une
+  `issued_at` reculée (recette dans `.claude/work/39-cancel-unused-entry/state.md`,
+  section Build). Ouverture reculée de 61 s : au passage suivant de la tâche (30 s
+  au plus), la session passe à `CANCELLED`, la place revient à `AVAILABLE` et
+  Parking Démo retrouve ses places libres ; l'API journalise
+  `cancelled an entry nobody drove through`. Ouverture reculée de 59 s puis
+  « Boucle d'entrée fermée » aussitôt : la session est confirmée et le reste. Un appui
+  sur « Boucle d'entrée fermée » après l'annulation ajoute 1 au compteur
+  et la session reste annulée.
 - **Mauvaise barrière** (la console poste toujours vers sa propre barrière, donc
   par curl) :
 
@@ -99,7 +109,7 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
 - `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>" }` :
   `{ gateId, lotId, kind, closedAt, vehicleCount, confirmedSessionId }`.
   `confirmedSessionId` est la session d'entrée que ce passage a confirmée (la plus
-  ancienne ouverture de cette barrière émise dans les 60 secondes avant la réception du passage, mesurées
+  ancienne ouverture de cette barrière émise dans les 60 secondes (`ENTRY_CONFIRMATION_WINDOW_SECONDS`) avant la réception du passage, mesurées
   sur l'horloge de Postgres seule : la dérive de la console n'y change rien), ou
   `null` s'il n'y en avait aucune ou à une sortie. Le sens et le parking
   viennent de la barrière, jamais du corps. `closedAt` à plus de 5 minutes dans

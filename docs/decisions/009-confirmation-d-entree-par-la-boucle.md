@@ -8,7 +8,8 @@ boucle ne connaissait que le compteur de véhicules du parking.
 - Une fermeture de boucle à une barrière d'entrée confirme, dans la même transaction
   que le compteur, l'ouverture en attente la plus ancienne de cette barrière : la
   commande `OPEN` dont la session est encore `CREATED` et émise au plus 60 s avant
-  l'horloge de Postgres (`issued_at >= now() − 60 s`, sans borne supérieure). Le domaine
+  l'horloge de Postgres (`issued_at >= now() − 60 s`, sans borne supérieure). Depuis #39,
+  ces 60 s sont `ENTRY_CONFIRMATION_WINDOW_SECONDS` (décision 012). Le domaine
   ne transmet que la durée ; Postgres, qui a aussi horodaté la commande, est la seule
   horloge qui décide : la dérive de la console ne joue pas. `closedAt` reste l'heure de passage enregistrée et vaut `entry_confirmed_at`. La session passe à `ENTRY_CONFIRMED` avec `entry_confirmed_at`,
   et sa place de `ASSIGNED` à `OCCUPIED`. Le `UPDATE … FOR UPDATE OF s`
@@ -23,5 +24,6 @@ boucle ne connaissait que le compteur de véhicules du parking.
 - L'app lit `GET /v1/entries/:sessionId` toutes les 2 s, jusqu'à 2 min, tant que
   l'entrée n'est pas confirmée.
 
-**Conséquences.** Une ouverture de plus de 60 s avant la boucle reste `CREATED` jusqu'à #39.
+**Conséquences.** Une ouverture de plus de 60 s avant la boucle ne confirme rien ; depuis #39,
+la tâche d'annulation l'annule et libère la place et l'autorisation (décision 012).
 Une horloge de console en avance de plus de 5 min est refusée comme avant, sans effet sur la fenêtre.

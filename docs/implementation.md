@@ -23,7 +23,8 @@ ligne par choix ; la raison suit le tiret.
 - `spot.current_session_id` n'existe pas : c'est `parking_session.assigned_spot_id` qui pointe vers la place, avec un index unique partiel sur les sessions actives (#36, `docs/decisions/007`).
 - `session` du dossier s'appelle `parking_session` (#36) : `user_id`, `vehicle_id` (nullable, `ON DELETE SET NULL`) et `plate` copiée à l'entrée, `lot_id`, `assigned_spot_id` et `entry_gate_id` avec clés étrangères composées vers `spot(id, lot_id)` et `gate(id, lot_id)`, `state` (`CREATED`, `ENTRY_CONFIRMED` depuis #37, `CANCELLED`), `payment_intent_id`, `authorized_cents`, `entry_scan_at`, `cancelled_at`.
 - `parking_session.pricing_increment_cents`, `pricing_increment_minutes`, `pricing_daily_cap_cents` (#38) : le tarif du parking copié à l'entrée (D1) — voir `docs/decisions/011`. Le seed donne à Garage Roy et à Parking Test Paliers le même tarif que Parking Démo (0,75 $ par 15 minutes, plafond 25,00 $).
-- `gate_command` (#36) : `gate_id`, `lot_id`, `kind` (`OPEN`), `session_id`, `issued_at` à la milliseconde — la commande d'une barrière simulée, lue par la console.
+- `parking_session.hold_release_pending` (booléen, faux par défaut) et `hold_release_attempted_at` (#39) : l'autorisation d'une session annulée attend sa libération par Stripe ; index partiel sur `hold_release_attempted_at` des sessions en attente — voir `docs/decisions/012`.
+- `gate_command` (#36) : `gate_id`, `lot_id`, `kind` (`OPEN`), `session_id`, `issued_at` à la milliseconde — la commande d'une barrière simulée, lue par la console. Index sur `session_id` (#39) pour retrouver l'ouverture d'une session.
 - `kyc_status` : `NOT_STARTED`, `PENDING`, `VERIFIED` ; `assignment_strategy` : `AISLE_BY_AISLE` seulement (Q15).
 - `capacity` et `vehicle_count` ne peuvent pas être négatifs (contrainte CHECK, D6).
 - Garage Roy : capacité 0, plafond journalier 25,00 $, sans palier ni place — le tableau de fixtures ne lui donne que sa borne d'entrée (story ultérieure).
@@ -60,7 +61,7 @@ ligne par choix ; la raison suit le tiret.
 - Pré-autorisation : `capture_method: manual`, plafond journalier du parking en CAD, `transfer_data.destination` = compte de l'opérateur, `metadata.sessionId`, clé d'idempotence `entry-<sessionId>`, client Stripe à 2,5 s et 1 relance réseau, pour que les deux tentatives et l'attente entre elles restent sous le délai de 8 s de l'app. Un statut autre que `requires_capture` ou une erreur de carte donne `CARD_DECLINED` ; toute autre erreur Stripe `PAYMENTS_UNAVAILABLE`, avec le `sessionId` au journal.
 - Limite : 5 entrées admissibles par conducteur en 10 minutes (429 `TOO_MANY_ENTRIES`), comptées après les contrôles — un QR refusé ne consomme rien et n'atteint jamais Stripe.
 - `DEMO_OPERATOR_STRIPE_ACCOUNT_ID` (`acct_…`, facultatif) est lu par le seed, qui l'écrit sur Stationnements Lavoie. Le seed ajoute aussi un véhicule par défaut à Julie (`ABC 123`), Marc (`XYZ 789`), Amélie (`EVA 001`) et Éric (`DEC 404`), en Québec ; Nadia n'en a pas.
-- **Écart connu jusqu'à #39 (D4)** : si l'app abandonne après 8 s alors que le serveur a admis l'entrée, la place reste attribuée et l'autorisation tenue ; un nouveau scan répond « Vous avez déjà une entrée en cours ». L'annulation à 60 s et le balayage de #39 refermeront ce trou.
+- **Écart refermé par #39 (D4)** : si l'app abandonne après 8 s alors que le serveur a admis l'entrée, la place reste attribuée et l'autorisation tenue jusqu'au passage suivant de la tâche d'annulation, une minute à une minute et demie plus tard ; d'ici là, un nouveau scan répond « Vous avez déjà une entrée en cours ».
 
 ## Console de démonstration
 
@@ -98,7 +99,7 @@ ligne par choix ; la raison suit le tiret.
 - Tarif figé à l'entrée, départ de la facturation au scan, arrondi et horloge de test : `docs/decisions/011`.
 - `GET /v1/me/session` (jeton de conducteur, consentement) → `{ session: null }` ou `{ session: { sessionId, state, lotName, spot, enteredAt, elapsedMinutes, amountCents, dailyCapCents } }`, calculé par l'API avec son horloge. Une session est « en cours » en `CREATED` ou `ENTRY_CONFIRMED` (`ACTIVE_ENTRY_SESSION_STATES`, dont le texte SQL sert aussi aux index partiels de la décision 007). Pas d'identifiant dans le chemin : un conducteur ne lit que la sienne ; la session d'un autre reste un 404 sur `GET /v1/entries/:sessionId`.
 - L'app garde trois onglets. La session vit dans l'onglet « Scanner », qui s'appelle « Session » tant qu'une session est en cours. La session est lue au-dessus des onglets (`useCurrentParkingSession`) à la connexion ou au relancement, puis chaque minute ; à la première réponse qui contient une session, l'app ouvre cet onglet, sauf si le conducteur a déjà choisi un onglet.
-- Règle d'affichage de l'onglet : entrée en cours d'envoi ou barrière ouverte → écran de scan (la place, le suivi de la boucle et l'annonce VoiceOver ne sont jamais coupés) ; sinon session en cours → écran de session ; sinon formulaire de scan, précédé de « Aucune session en cours » quand Palier a répondu qu'il n'y en a pas.
+- Règle d'affichage de l'onglet : entrée en cours d'envoi, barrière ouverte ou entrée annulée → écran de scan (la place, le suivi de la boucle et l'annonce VoiceOver ne sont jamais coupés) ; sinon session en cours → écran de session ; sinon formulaire de scan, précédé de « Aucune session en cours » quand Palier a répondu qu'il n'y en a pas.
 - Un rafraîchissement raté garde la session affichée avec « Mis à jour à 21 h 17 » : un conducteur sans réseau au sous-sol a toujours besoin de sa place.
 - Montants `9,75 $` / `$9.75` (`formatMoney`) et durée `3 h 15` / `3 h 15 min` (`formatElapsed`), formatés à la main comme l'heure ; chiffres en IBM Plex Mono tabulaire.
 - Horloge de test, en développement seulement (port de la voie à adapter) :
@@ -111,3 +112,11 @@ curl -X DELETE localhost:3000/v1/test/clock
 ```
 
   Les heures sont en UTC : 23 h 02 Z est 18 h 02 à Montréal en novembre. L'horloge fixée reste figée jusqu'au prochain `PUT` ou `DELETE`, et revient à l'heure réelle au redémarrage de l'API.
+
+## Annulation des entrées sans passage (#39)
+
+- Règles, verrous, horloge et libération de l'autorisation : `docs/decisions/012`.
+- Configuration (`apps/api/.env.example`) : `ENTRY_CONFIRMATION_WINDOW_SECONDS` (60 par défaut, 30 au moins) et `ENTRY_CANCELLATION_PERIOD_SECONDS` (30 par défaut, au plus la fenêtre) ; fenêtre + période ≤ 110 s, sinon l'API refuse de démarrer. Lus par `config/entryCancellationTiming.ts`.
+- Tâche : `scheduler/startUnconfirmedEntryCancellation.ts` lance à chaque période `cancelUnconfirmedEntries` puis `releasePendingHolds` (`domain/entries/unconfirmedEntryCancellation.ts`), chacune ignorée si la précédente tourne encore ; l'arrêt du serveur attend l'annulation en cours, pas une libération bloquée sur Stripe. Dépôt : `PostgresUnconfirmedEntryRepository` ; l'annulation partage `cancelCreatedSession` avec le retour arrière de l'entrée.
+- Journal : `cancelled an entry nobody drove through` (info, `sessionId`), `released the card hold of a cancelled entry`, `Stripe did not release the card hold, retried at the next check` (avertissement), `card holds wait for release: the server has no Stripe key` (avertissement, `pending`).
+- App : le suivi de l'entrée reçoit `CANCELLED` et affiche « Entrée annulée : aucun passage détecté. Aucun montant retenu. » / « Entry cancelled: no passage detected. Nothing charged. » au-dessus du formulaire, comme une alerte annoncée par VoiceOver ; l'onglet redevient « Scanner ». Après « Terminé » avant la boucle, `usePendingEntryWatch` (au-dessus des onglets) continue de suivre l'entrée, jusqu'à 2 min, et affiche le même message au retour sur « Scanner », jusqu'au scan suivant.
