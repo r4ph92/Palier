@@ -13,6 +13,7 @@ describe('ScanScreen refusals', () => {
     ['LOT_FULL', 'Complet — la barrière reste fermée', 'Full — the barrier stays closed'],
     ['ALREADY_INSIDE', 'Vous avez déjà une entrée en cours', 'You already have an entry in progress'],
     ['CARD_DECLINED', 'Carte refusée', 'Card declined'],
+    ['PAYMENTS_UNAVAILABLE', 'Paiement momentanément indisponible — la barrière reste fermée', 'Payment temporarily unavailable — the barrier stays closed'],
     ['TOO_MANY_ENTRIES', 'Trop de tentatives, réessayez dans quelques minutes', 'Too many attempts, try again in a few minutes'],
   ] as const;
   const cases = refusals.flatMap(([code, french, english]) => [
@@ -105,7 +106,6 @@ describe('ScanScreen when Palier cannot answer', () => {
   });
 
   it.each([
-    ['card payments are unavailable (503)', (client: FakeEntryClient) => (client.nextRejection = 'PAYMENTS_UNAVAILABLE')],
     ['the API fails (500)', (client: FakeEntryClient) => (client.nextStatus = 500)],
     ['the API answers a code the app does not know', (client: FakeEntryClient) => (client.nextRejection = 'SOMETHING_NEW')],
   ])('says Palier is not responding when %s, without blaming the connection, and retries the same QR', async (_case, breakClient) => {

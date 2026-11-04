@@ -108,6 +108,7 @@ export const en: Translations = {
       LOT_FULL: 'Full — the barrier stays closed',
       ALREADY_INSIDE: 'You already have an entry in progress',
       CARD_DECLINED: 'Card declined',
+      PAYMENTS_UNAVAILABLE: 'Payment temporarily unavailable — the barrier stays closed',
       TOO_MANY_ENTRIES: 'Too many attempts, try again in a few minutes',
     },
   },

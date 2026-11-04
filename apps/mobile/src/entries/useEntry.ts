@@ -6,7 +6,7 @@ import { PalierStatusError, PalierUnreachableError } from '../api/LotsClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
 import { useConfirmationPolling } from './useConfirmationPolling';
 
-// Refusals with a message of their own; PAYMENTS_UNAVAILABLE and any unknown code read as "Palier is not responding".
+// Refusals with a message of their own; any unknown code reads as "Palier is not responding".
 export const ENTRY_REFUSALS = [
   'QR_NOT_RECOGNIZED',
   'NOT_AN_ENTRY_GATE',
@@ -17,6 +17,7 @@ export const ENTRY_REFUSALS = [
   'LOT_FULL',
   'ALREADY_INSIDE',
   'CARD_DECLINED',
+  'PAYMENTS_UNAVAILABLE',
   'TOO_MANY_ENTRIES',
 ] as const satisfies readonly EntryRefusalCode[];
 
