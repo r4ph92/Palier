@@ -35,8 +35,8 @@ five drivers below plus Conducteur Test 01 to 20.
 |---|---|---|
 | Julie Tremblay | julie.tremblay@palier.test | Driver, consented to the notice |
 | Marc Gagnon | marc.gagnon@palier.test | Driver, consented |
-| Amélie Côté | amelie.cote@palier.test | Driver, consented |
-| Éric Fortin | eric.fortin@palier.test | Driver, consented |
+| Amélie Lavoie | amelie.lavoie@palier.test | Driver, consented, electric vehicle with a permit |
+| Éric Dufresne | eric.dufresne@palier.test | Driver, consented |
 | Nadia Bouchard | nadia.bouchard@palier.test | Driver without consent, sees the notice first |
 
 ## Architecture
