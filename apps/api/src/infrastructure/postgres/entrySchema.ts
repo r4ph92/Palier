@@ -4,11 +4,11 @@ import { appUser, vehicle } from './driverSchema.ts';
 import { gate } from './gateSchema.ts';
 import { parkingLot, spot } from './lotSchema.ts';
 
-export const parkingSessionState = pgEnum('parking_session_state', ['CREATED', 'CANCELLED']);
+export const parkingSessionState = pgEnum('parking_session_state', ['CREATED', 'ENTRY_CONFIRMED', 'CANCELLED']);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
 
 // Later stories add states (entered, exited…); each active one joins these index predicates, see docs/decisions/007.
-const ACTIVE_SESSION = sql`state in ('CREATED')`;
+const ACTIVE_SESSION = sql`state in ('CREATED', 'ENTRY_CONFIRMED')`;
 
 export const parkingSession = pgTable(
   'parking_session',
@@ -28,6 +28,7 @@ export const parkingSession = pgTable(
     paymentIntentId: text('payment_intent_id'),
     authorizedCents: integer('authorized_cents').notNull(),
     entryScanAt: timestamp('entry_scan_at', { withTimezone: true }).notNull().defaultNow(),
+    entryConfirmedAt: timestamp('entry_confirmed_at', { withTimezone: true }),
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
   },
   (table) => [

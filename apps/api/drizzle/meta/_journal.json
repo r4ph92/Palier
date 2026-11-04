@@ -64,6 +64,13 @@
       "when": 1793781489692,
       "tag": "0008_parking_session_and_gate_command",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793808131629,
+      "tag": "0009_entry_confirmed",
+      "breakpoints": true
     }
   ]
 }
