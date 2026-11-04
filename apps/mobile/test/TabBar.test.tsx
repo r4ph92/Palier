@@ -40,3 +40,20 @@ describe.each<[SupportedLanguage, readonly string[]]>([
     }
   });
 });
+
+describe.each<[SupportedLanguage, string]>([
+  ['fr', 'Session'],
+  ['en', 'Session'],
+])('TabBar in %s with a current session', (language, label) => {
+  it('names the scan tab after the session, still among three tabs', async () => {
+    applyLanguage(language);
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <TabBar selected="scan" onSelect={() => undefined} hasCurrentSession />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByRole('tab', { name: label, selected: true })).toBeOnTheScreen();
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
+  });
+});

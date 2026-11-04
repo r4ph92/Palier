@@ -16,22 +16,28 @@ const TAB_SIDE_PADDING = 0;
 interface TabBarProps {
   readonly selected: Tab;
   readonly onSelect: (tab: Tab) => void;
+  // The scan tab reads « Session » while the driver has one; it is still the same tab.
+  readonly hasCurrentSession?: boolean;
 }
 
-export function TabBar({ selected, onSelect }: TabBarProps) {
+export function TabBar({ selected, onSelect, hasCurrentSession = false }: TabBarProps) {
   const colors = useColors();
   return (
     <SafeAreaView edges={['bottom']} style={[styles.bar, { backgroundColor: colors.canvas, borderTopColor: colors.ink }]}>
       <View accessibilityRole="tablist" style={styles.row}>
         {TABS.map((tab) => (
-          <TabButton key={tab} tab={tab} isSelected={tab === selected} onPress={() => onSelect(tab)} />
+          <TabButton key={tab} label={tabLabel(tab, hasCurrentSession)} isSelected={tab === selected} onPress={() => onSelect(tab)} />
         ))}
       </View>
     </SafeAreaView>
   );
 }
 
-function TabButton({ tab, isSelected, onPress }: { readonly tab: Tab; readonly isSelected: boolean; readonly onPress: () => void }) {
+function tabLabel(tab: Tab, hasCurrentSession: boolean): string {
+  return i18n.t(tab === 'scan' && hasCurrentSession ? 'tabs.session' : `tabs.${tab}`);
+}
+
+function TabButton({ label, isSelected, onPress }: { readonly label: string; readonly isSelected: boolean; readonly onPress: () => void }) {
   const colors = useColors();
   return (
     <Pressable accessibilityRole="tab" accessibilityState={{ selected: isSelected }} onPress={onPress} style={styles.tab}>
@@ -41,7 +47,7 @@ function TabButton({ tab, isSelected, onPress }: { readonly tab: Tab; readonly i
         maxFontSizeMultiplier={TAB_LABEL_MAX_FONT_SCALE}
         style={[typography.button, isSelected ? styles.selected : null, { color: isSelected ? colors.ink : colors.muted }]}
       >
-        {i18n.t(`tabs.${tab}`)}
+        {label}
       </Text>
     </Pressable>
   );

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useEntry } from '../src/entries/useEntry';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { ScanScreen } from '../src/screens/ScanScreen';
 import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
@@ -14,11 +15,23 @@ interface Scan {
   readonly wrap?: (screen: ReactNode) => ReactNode;
 }
 
+interface ScanHarnessProps {
+  readonly client: FakeEntryClient;
+  readonly onAddPlate: () => void;
+  readonly onAddCard: () => void;
+}
+
+// The scan tab owns the entry; this stands in for it with Terminé going back to the form.
+function ScanHarness({ client, onAddPlate, onAddCard }: ScanHarnessProps) {
+  const entry = useEntry(client);
+  return <ScanScreen entry={entry} hasNoSession={false} onDone={entry.startOver} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
+}
+
 export async function openScanner({ client = new FakeEntryClient(), language = 'fr', onAddPlate = jest.fn(), onAddCard = jest.fn(), wrap = (screen) => screen }: Scan = {}) {
   applyLanguage(language);
   await render(
     <SafeAreaProvider initialMetrics={IPHONE_MINI_METRICS}>
-      {wrap(<ScanScreen client={client} onAddPlate={onAddPlate} onAddCard={onAddCard} />)}
+      {wrap(<ScanHarness client={client} onAddPlate={onAddPlate} onAddCard={onAddCard} />)}
     </SafeAreaProvider>,
   );
   return client;

@@ -109,9 +109,21 @@ export const en: Translations = {
       TOO_MANY_ENTRIES: 'Too many attempts, try again in a few minutes',
     },
   },
+  session: {
+    eyebrow: 'Current session',
+    none: 'No session in progress',
+    enteredLead: 'Entered ',
+    elapsedLead: 'Time parked ',
+    amountLead: 'Amount so far: ',
+    capLead: 'Daily cap: ',
+    pending: 'Entry awaiting confirmation',
+    confirmed: 'Entry confirmed',
+    updatedAt: 'Updated %{time}',
+  },
   tabs: {
     lots: 'Parking lots',
     scan: 'Scan',
+    session: 'Session',
     account: 'Account',
   },
   notice: {

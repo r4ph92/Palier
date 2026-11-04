@@ -107,9 +107,21 @@ export const fr = {
       TOO_MANY_ENTRIES: 'Trop de tentatives, réessayez dans quelques minutes',
     },
   },
+  session: {
+    eyebrow: 'Session en cours',
+    none: 'Aucune session en cours',
+    enteredLead: 'Entrée ',
+    elapsedLead: 'Durée ',
+    amountLead: 'Montant à ce jour\u00A0: ',
+    capLead: 'Plafond\u00A0: ',
+    pending: 'Entrée en attente de confirmation',
+    confirmed: 'Entrée confirmée',
+    updatedAt: 'Mis à jour à %{time}',
+  },
   tabs: {
     lots: 'Stationnements',
     scan: 'Scanner',
+    session: 'Session',
     account: 'Compte',
   },
   notice: {
