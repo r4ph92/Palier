@@ -7,6 +7,7 @@ export const GATED = [
   'GET /v1/me/vehicles',
   'POST /v1/me/vehicles',
   'GET /v1/me/vehicles/:id',
+  'PATCH /v1/me/vehicles/:id',
   'POST /v1/me/vehicles/:id/default',
   'DELETE /v1/me/vehicles/:id',
   'GET /v1/me/payment-method',

@@ -5,7 +5,7 @@ import { PalierConsentRequiredError, PalierRejectedError } from '../src/api/Vehi
 
 const BASE_URL = 'http://localhost:3000';
 const TOKEN = 'julie-token';
-const abc123 = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC', isDefault: true };
+const abc123 = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC', isDefault: true, isElectric: false, hasAccessiblePermit: false, isOversize: false };
 
 function jsonResponse(body: unknown, status = 200): Promise<Response> {
   return Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -37,6 +37,13 @@ describe('HttpVehicleClient', () => {
       `${BASE_URL}/v1/me/vehicles`,
       expect.objectContaining({ method: 'GET', headers: { Authorization: `Bearer ${TOKEN}` } }),
     );
+  });
+
+  it('treats a vehicle without its needs as an unexpected answer', async () => {
+    const withoutOversize: Partial<typeof abc123> = { ...abc123 };
+    delete withoutOversize.isOversize;
+
+    await expect(clientAnswering(jsonResponse([withoutOversize])).listVehicles()).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 
   it('posts the plate and province and returns the saved vehicle', async () => {

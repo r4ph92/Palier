@@ -2,9 +2,9 @@ import { render, screen, userEvent, within } from '@testing-library/react-native
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { applyLanguage } from '../src/i18n/i18n';
 import { VehiclesScreen } from '../src/screens/VehiclesScreen';
-import { abc123, FakeVehicleClient } from './fakeVehicleClient';
+import { abc123, FakeVehicleClient, standardNeeds } from './fakeVehicleClient';
 
-const def456 = { id: 'vehicle-2', plate: 'DEF 456', province: 'QC', isDefault: false };
+const def456 = { id: 'vehicle-2', plate: 'DEF 456', province: 'QC', isDefault: false, ...standardNeeds };
 
 const SAFE_AREA_METRICS = {
   frame: { x: 0, y: 0, width: 393, height: 852 },

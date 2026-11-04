@@ -5,7 +5,7 @@ import type { EntryGate } from '../../src/domain/entries/EntryGateRepository.ts'
 import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { PricingPolicyInvalidError } from '../../src/domain/pricing/PricingPolicy.ts';
 import { FakeDriverRepository, julie } from './fakeDriverRepository.ts';
-import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
+import { FakeVehicleRepository, standardNeeds } from './fakeVehicleRepository.ts';
 import {
   ENTREE_DEMO_SECRET,
   ENTREE_ROY_SECRET,
@@ -31,7 +31,7 @@ async function eligibilityFor({ gates, policy = STRICT, plate = true, card = tru
   const drivers = new FakeDriverRepository();
   const vehicles = new FakeVehicleRepository();
   if (plate) {
-    await vehicles.saveVehicle(julie.id, { plate: 'ABC 123', plateKey: 'ABC123', province: 'QC' });
+    await vehicles.saveVehicle(julie.id, { plate: 'ABC 123', plateKey: 'ABC123', province: 'QC', ...standardNeeds });
   }
   if (card) {
     await drivers.saveStripeCustomerIdIfMissing(julie.id, 'cus_julie');

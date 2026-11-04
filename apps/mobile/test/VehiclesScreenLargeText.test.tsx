@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { applyLanguage } from '../src/i18n/i18n';
 import { VehiclesScreen } from '../src/screens/VehiclesScreen';
-import { abc123, FakeVehicleClient } from './fakeVehicleClient';
+import { abc123, FakeVehicleClient, standardNeeds } from './fakeVehicleClient';
 
 const mockWindow = { width: 402, height: 874, scale: 3, fontScale: 1 };
 
@@ -35,7 +35,7 @@ describe.each([1, 1.35, 2.3, 3.1])('VehiclesScreen at text scale %d', (fontScale
   });
 
   it('keeps the use-as-default and delete actions on screen at every text size', async () => {
-    const def456 = { id: 'vehicle-2', plate: 'DEF 456', province: 'QC', isDefault: false };
+    const def456 = { id: 'vehicle-2', plate: 'DEF 456', province: 'QC', isDefault: false, ...standardNeeds };
     await render(
       <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
         <VehiclesScreen firstName="Julie" client={new FakeVehicleClient([abc123, def456])} onAddVehicle={jest.fn()} />

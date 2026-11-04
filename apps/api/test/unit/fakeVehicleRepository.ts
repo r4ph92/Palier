@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import type { DeleteVehicleResult, NewVehicle, Vehicle, VehicleRepository } from '../../src/domain/vehicles/VehicleRepository.ts';
+import type { DeleteVehicleResult, NewVehicle, Vehicle, VehicleNeeds, VehicleRepository } from '../../src/domain/vehicles/VehicleRepository.ts';
 
-interface StoredVehicle {
+export const standardNeeds: VehicleNeeds = { isElectric: false, hasAccessiblePermit: false, isOversize: false };
+
+interface StoredVehicle extends VehicleNeeds {
   readonly driverId: string;
   readonly plateKey: string;
   readonly id: string;
@@ -45,9 +47,22 @@ export class FakeVehicleRepository implements VehicleRepository {
       plate: newVehicle.plate,
       province: newVehicle.province,
       isDefault: this.#ownedBy(driverId).length === 0,
+      isElectric: newVehicle.isElectric,
+      hasAccessiblePermit: newVehicle.hasAccessiblePermit,
+      isOversize: newVehicle.isOversize,
     };
     this.#stored.push(stored);
     return Promise.resolve(toVehicle(stored));
+  }
+
+  updateVehicleNeeds(driverId: string, vehicleId: string, needs: VehicleNeeds): Promise<Vehicle | null> {
+    const target = this.#find(driverId, vehicleId);
+    if (target === undefined) {
+      return Promise.resolve(null);
+    }
+    const updated: StoredVehicle = { ...target, ...needs };
+    this.#stored.splice(this.#stored.indexOf(target), 1, updated);
+    return Promise.resolve(toVehicle(updated));
   }
 
   setDefaultVehicle(driverId: string, vehicleId: string): Promise<Vehicle | null> {
@@ -87,6 +102,6 @@ export class FakeVehicleRepository implements VehicleRepository {
   }
 }
 
-function toVehicle({ id, plate, province, isDefault }: StoredVehicle): Vehicle {
-  return { id, plate, province, isDefault };
+function toVehicle({ id, plate, province, isDefault, isElectric, hasAccessiblePermit, isOversize }: StoredVehicle): Vehicle {
+  return { id, plate, province, isDefault, isElectric, hasAccessiblePermit, isOversize };
 }
