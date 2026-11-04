@@ -10,14 +10,20 @@ import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
+export interface DeveloperLink {
+  readonly label: string;
+  readonly onOpen: () => void;
+}
+
 interface AccountScreenProps {
   readonly cardState: CardState;
   readonly onOpenVehicles: () => void;
   readonly onOpenPaymentMethod: () => void;
   readonly onSignOut: () => void;
+  readonly developerLink?: DeveloperLink;
 }
 
-export function AccountScreen({ cardState, onOpenVehicles, onOpenPaymentMethod, onSignOut }: AccountScreenProps) {
+export function AccountScreen({ cardState, onOpenVehicles, onOpenPaymentMethod, onSignOut, developerLink }: AccountScreenProps) {
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
@@ -26,6 +32,7 @@ export function AccountScreen({ cardState, onOpenVehicles, onOpenPaymentMethod, 
         <Text style={[typography.bodyStrong, { color: colors.ink }]}>{describeCard(cardState)}</Text>
         <PrimaryButton label={i18n.t('account.vehicles')} onPress={onOpenVehicles} />
         <PrimaryButton label={i18n.t('account.paymentMethod')} onPress={onOpenPaymentMethod} />
+        {developerLink === undefined ? null : <PrimaryButton label={developerLink.label} onPress={developerLink.onOpen} />}
         <SignOutButton onSignOut={onSignOut} />
       </View>
     </SafeAreaView>
