@@ -9,9 +9,10 @@ import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateC
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
 import { PostgresPassageLedger } from './infrastructure/postgres/PostgresPassageLedger.ts';
+import { PostgresSessionTokenRepository } from './infrastructure/postgres/PostgresSessionTokenRepository.ts';
 import { StripeCardGateway } from './infrastructure/stripe/StripeCardGateway.ts';
 import { PostgresVehicleRepository } from './infrastructure/postgres/PostgresVehicleRepository.ts';
-import { purgeEndedSessionTokens } from './domain/drivers/driverSessions.ts';
+import { purgeEndedSessionTokens } from './domain/sessions/sessionTokens.ts';
 import { startSessionTokenPurge } from './scheduler/startSessionTokenPurge.ts';
 
 const environment = readServerEnvironment(process.env);
@@ -19,10 +20,12 @@ const connection = connectToDatabase(environment.databaseUrl);
 const stripeKey = stripeTestKey(process.env);
 const driverRepository = new PostgresDriverRepository(connection.database);
 const vehicleRepository = new PostgresVehicleRepository(connection.database);
+const sessionTokenRepository = new PostgresSessionTokenRepository(connection.database);
 const server = buildServer({
   repositories: {
     lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
     driverRepository,
+    sessionTokenRepository,
     vehicleRepository,
   },
   gates: {
@@ -51,7 +54,7 @@ if (environment.demoMode) {
   server.log.warn('DEMO_MODE is on: the demo console is served at /demo/console. Never enable it in production.');
 }
 
-const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(driverRepository, new Date()), server.log);
+const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(sessionTokenRepository, new Date()), server.log);
 server.addHook('onClose', async () => {
   await stopSessionTokenPurge();
   await connection.close();

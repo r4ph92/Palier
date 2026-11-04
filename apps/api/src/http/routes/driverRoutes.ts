@@ -2,7 +2,7 @@ import type { CurrentDriver } from '@palier/shared-types';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import type { FastifyInstance, preHandlerAsyncHookHandler } from 'fastify';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
-import { signOutDriver } from '../../domain/drivers/driverSessions.ts';
+import { signOutDriver, type DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import { bearerToken, requireDriver, signedInDriver } from '../requireDriver.ts';
 import { acceptNoticeBodySchema, currentDriverSchema } from '../schemas/driverSchemas.ts';
 
@@ -13,13 +13,13 @@ interface AcceptNoticeRequest {
   readonly Body: { readonly noticeVersion: string };
 }
 
-export function registerDriverRoutes(server: FastifyInstance, repository: DriverRepository): void {
-  const preHandler = requireDriver(repository);
-  registerMeRoute(server, repository, preHandler);
-  registerConsentRoute(server, repository, preHandler);
+export function registerDriverRoutes(server: FastifyInstance, { drivers, sessions }: DriverAccess): void {
+  const preHandler = requireDriver(sessions);
+  registerMeRoute(server, drivers, preHandler);
+  registerConsentRoute(server, drivers, preHandler);
 
   server.post('/v1/sign-out', { preHandler }, async (request, reply) => {
-    await signOutDriver(repository, bearerToken(request) ?? '');
+    await signOutDriver(sessions, bearerToken(request) ?? '');
     return reply.status(NO_CONTENT).send();
   });
 }

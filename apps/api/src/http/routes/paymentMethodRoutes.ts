@@ -2,11 +2,12 @@ import type { PaymentMethodResponse, SavedCard, SavePaymentMethodRequest, SetupI
 import type { FastifyInstance, FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import type { Driver } from '../../domain/drivers/Driver.ts';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
+import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { CardGateway } from '../../domain/payments/CardGateway.ts';
 import { detachReplacedCard } from '../../domain/payments/detachReplacedCard.ts';
 import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
-import { requireConsent } from '../requireConsent.ts';
-import { requireDriver, signedInDriver } from '../requireDriver.ts';
+import { consentedDriverGuards } from '../requireConsent.ts';
+import { signedInDriver } from '../requireDriver.ts';
 import {
   paymentMethodResponseSchema,
   savedCardSchema,
@@ -33,12 +34,12 @@ interface CardRoutesContext {
 }
 
 // Card routes are gated with onRequest: body validation runs before preHandler, so an unauthenticated request must be refused first.
-export function registerPaymentMethodRoutes(server: FastifyInstance, repository: DriverRepository, cardGateway: CardGateway | undefined): void {
+export function registerPaymentMethodRoutes(server: FastifyInstance, driverAccess: DriverAccess, cardGateway: CardGateway | undefined): void {
   const context: CardRoutesContext = {
     server,
-    repository,
+    repository: driverAccess.drivers,
     cardGateway,
-    guards: [requireDriver(repository), requireConsent(repository)],
+    guards: consentedDriverGuards(driverAccess),
   };
   registerReadCardRoute(context);
   registerSetupIntentRoute(context, createSetupLimiter(SETUP_LIMIT, SETUP_WINDOW_MILLISECONDS));

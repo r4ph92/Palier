@@ -1,7 +1,6 @@
 import type { SignInResponse, TestDriverListResponse } from '@palier/shared-types';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
-import { signInDriver } from '../../domain/drivers/driverSessions.ts';
+import { signInDriver, type DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import { signInResponseSchema, testDriverListSchema, testSignInBodySchema } from '../schemas/driverSchemas.ts';
 import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
 
@@ -17,28 +16,28 @@ interface TestSignInRequest {
 }
 
 // Registered only when test sign-in is enabled; otherwise these paths answer 404 like any unknown route.
-export function registerTestSignInRoutes(server: FastifyInstance, repository: DriverRepository): void {
+export function registerTestSignInRoutes(server: FastifyInstance, driverAccess: DriverAccess): void {
   const limiter = createSetupLimiter(SIGN_IN_LIMIT, SIGN_IN_WINDOW_MILLISECONDS);
   server.get(
     '/v1/test/drivers',
     { schema: { response: { 200: testDriverListSchema } } },
-    (): Promise<TestDriverListResponse> => repository.listDrivers(),
+    (): Promise<TestDriverListResponse> => driverAccess.drivers.listDrivers(),
   );
 
   server.post<TestSignInRequest>(
     '/v1/test/sign-in',
     { schema: { body: testSignInBodySchema, response: { 200: signInResponseSchema } } },
-    (request, reply) => signInAsTestDriver({ repository, limiter }, request, reply),
+    (request, reply) => signInAsTestDriver({ driverAccess, limiter }, request, reply),
   );
 }
 
 interface SignInDependencies {
-  readonly repository: DriverRepository;
+  readonly driverAccess: DriverAccess;
   readonly limiter: SetupLimiter;
 }
 
 async function signInAsTestDriver(
-  { repository, limiter }: SignInDependencies,
+  { driverAccess, limiter }: SignInDependencies,
   request: FastifyRequest<TestSignInRequest>,
   reply: FastifyReply,
 ): Promise<SignInResponse | FastifyReply> {
@@ -48,7 +47,7 @@ async function signInAsTestDriver(
       .header('Retry-After', RETRY_AFTER_SECONDS)
       .send({ statusCode: TOO_MANY_REQUESTS, error: 'Too Many Requests', message: 'Too many sign-ins from this address.' });
   }
-  const signedIn = await signInDriver(repository, request.body.driverId);
+  const signedIn = await signInDriver(driverAccess, request.body.driverId);
   if (signedIn === null) {
     return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'Not Found', message: 'No such test driver.' });
   }

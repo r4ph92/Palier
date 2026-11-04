@@ -4,13 +4,6 @@ import type { Driver } from './Driver.ts';
 export interface DriverRepository {
   listDrivers(): Promise<readonly Driver[]>;
   findDriver(driverId: string): Promise<Driver | null>;
-  saveSessionToken(driverId: string, tokenHash: string): Promise<void>;
-  findDriverBySessionToken(tokenHash: string): Promise<Driver | null>;
-  revokeSessionToken(tokenHash: string): Promise<void>;
-  // Revokes every active token of the driver except the keep newest ones.
-  revokeOldestSessionTokens(driverId: string, keep: number): Promise<void>;
-  // Deletes the tokens that expired or were revoked before the given time, and returns how many it deleted.
-  purgeEndedSessionTokens(endedBefore: Date): Promise<number>;
   findLatestNoticeVersion(driverId: string): Promise<string | null>;
   // True when the latest notice the driver accepted is the given version, which is the consent rule the guards apply.
   hasLatestNoticeVersion(driverId: string, noticeVersion: string): Promise<boolean>;

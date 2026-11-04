@@ -1,7 +1,9 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { DriverRepository } from '../domain/drivers/DriverRepository.ts';
+import type { DriverAccess } from '../domain/drivers/driverSessions.ts';
 import type { CardGateway } from '../domain/payments/CardGateway.ts';
 import type { LotAvailabilityRepository } from '../domain/lots/LotAvailabilityRepository.ts';
+import type { SessionTokenRepository } from '../domain/sessions/SessionTokenRepository.ts';
 import type { VehicleRepository } from '../domain/vehicles/VehicleRepository.ts';
 import { registerDemoConsoleRoutes } from './demo/demoConsoleRoutes.ts';
 import { handleServerError } from './handleServerError.ts';
@@ -18,6 +20,7 @@ export interface ServerDependencies {
   readonly repositories: {
     readonly lotAvailabilityRepository: LotAvailabilityRepository;
     readonly driverRepository: DriverRepository;
+    readonly sessionTokenRepository: SessionTokenRepository;
     readonly vehicleRepository: VehicleRepository;
   };
   readonly gates: GateRouteDependencies;
@@ -55,12 +58,13 @@ function registerAppRoutes(
   if (settings.minimumAppVersion !== undefined) {
     server.addHook('onRequest', requireMinimumAppVersion(settings.minimumAppVersion));
   }
-  registerLotsRoutes(server, repositories.lotAvailabilityRepository, repositories.driverRepository);
-  registerVehicleRoutes(server, repositories.vehicleRepository, repositories.driverRepository);
-  registerDriverRoutes(server, repositories.driverRepository);
-  registerPaymentMethodRoutes(server, repositories.driverRepository, cardGateway);
-  registerEntryRoutes(server, repositories.driverRepository, entries);
+  const driverAccess: DriverAccess = { drivers: repositories.driverRepository, sessions: repositories.sessionTokenRepository };
+  registerLotsRoutes(server, repositories.lotAvailabilityRepository, driverAccess);
+  registerVehicleRoutes(server, repositories.vehicleRepository, driverAccess);
+  registerDriverRoutes(server, driverAccess);
+  registerPaymentMethodRoutes(server, driverAccess, cardGateway);
+  registerEntryRoutes(server, driverAccess, entries);
   if (settings.testSignInEnabled === true) {
-    registerTestSignInRoutes(server, repositories.driverRepository);
+    registerTestSignInRoutes(server, driverAccess);
   }
 }

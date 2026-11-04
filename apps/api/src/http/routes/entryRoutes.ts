@@ -1,13 +1,13 @@
 import type { EntryRequest, EntryResponse } from '@palier/shared-types';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
+import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { EntryAdmission } from '../../domain/entries/EntryAdmission.ts';
 import type { EntryEligibility } from '../../domain/entries/EntryEligibility.ts';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import { handleEntryError } from '../entries/handleEntryError.ts';
 import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
-import { requireConsent } from '../requireConsent.ts';
-import { requireDriver, signedInDriver } from '../requireDriver.ts';
+import { consentedDriverGuards } from '../requireConsent.ts';
+import { signedInDriver } from '../requireDriver.ts';
 import { entryRequestSchema, entryResponseSchema } from '../schemas/entrySchemas.ts';
 
 const CREATED = 201;
@@ -25,8 +25,8 @@ interface EnterRoute {
 }
 
 // Refusals get their own error handler in this scope, so the server-wide handler never sees them.
-export function registerEntryRoutes(server: FastifyInstance, driverRepository: DriverRepository, entries: EntryRouteDependencies | undefined): void {
-  const guards = [requireDriver(driverRepository), requireConsent(driverRepository)];
+export function registerEntryRoutes(server: FastifyInstance, driverAccess: DriverAccess, entries: EntryRouteDependencies | undefined): void {
+  const guards = consentedDriverGuards(driverAccess);
   const limiter = createSetupLimiter(ENTRY_LIMIT, ENTRY_WINDOW_MILLISECONDS);
   void server.register(async (scope) => {
     scope.setErrorHandler(handleEntryError);

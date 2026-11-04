@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import type { Driver } from '../domain/drivers/Driver.ts';
-import type { DriverRepository } from '../domain/drivers/DriverRepository.ts';
 import { authenticateDriver } from '../domain/drivers/driverSessions.ts';
+import type { SessionTokenRepository } from '../domain/sessions/SessionTokenRepository.ts';
 
 const UNAUTHORIZED = 401;
 const BEARER_PREFIX = 'Bearer ';
@@ -21,10 +21,10 @@ export function bearerToken(request: FastifyRequest): string | null {
   return token === '' ? null : token;
 }
 
-export function requireDriver(repository: DriverRepository): preHandlerAsyncHookHandler {
+export function requireDriver(sessions: SessionTokenRepository): preHandlerAsyncHookHandler {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     const token = bearerToken(request);
-    request.driver = token === null ? null : await authenticateDriver(repository, token);
+    request.driver = token === null ? null : await authenticateDriver(sessions, token);
     if (request.driver === null) {
       return reply
         .status(UNAUTHORIZED)

@@ -6,7 +6,7 @@ import { FakeDriverRepository } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 import { ENTREE_DEMO_SECRET, entreeDemoGate, fakeEntries } from './fakes/entryFakes.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
-import { serverDependencies } from './fakes/serverDependencies.ts';
+import { fakeRepositories, serverDependencies } from './fakes/serverDependencies.ts';
 
 const entreeDemoQr = gateQrLink(entreeDemoGate.id, ENTREE_DEMO_SECRET);
 const alteredQr = `${entreeDemoQr.slice(0, -1)}${entreeDemoQr.endsWith('A') ? 'B' : 'A'}`;
@@ -20,7 +20,7 @@ describe('POST /v1/entries without payments', () => {
     const drivers = new FakeDriverRepository();
     const vehicles = new FakeVehicleRepository();
     const base = serverDependencies();
-    const repositories = { ...base.repositories, driverRepository: drivers, vehicleRepository: vehicles };
+    const repositories = fakeRepositories({ driverRepository: drivers, vehicleRepository: vehicles });
     server = buildServer({ ...base, repositories, ...withEntries(drivers, vehicles) });
     const headers = await readyDriver(drivers, vehicles);
     return (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent } });

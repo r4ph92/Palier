@@ -1,7 +1,8 @@
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import type { DriverRepository } from '../domain/drivers/DriverRepository.ts';
-import { signedInDriver } from './requireDriver.ts';
+import type { DriverAccess } from '../domain/drivers/driverSessions.ts';
+import { requireDriver, signedInDriver } from './requireDriver.ts';
 
 const FORBIDDEN = 403;
 
@@ -15,4 +16,9 @@ export function requireConsent(repository: DriverRepository): preHandlerAsyncHoo
         .send({ statusCode: FORBIDDEN, error: 'CONSENT_REQUIRED', message: 'Accept the privacy notice first.' });
     }
   };
+}
+
+// The pair every consent-gated route runs, in this order: a valid app token, then the current notice.
+export function consentedDriverGuards({ drivers, sessions }: DriverAccess): preHandlerAsyncHookHandler[] {
+  return [requireDriver(sessions), requireConsent(drivers)];
 }

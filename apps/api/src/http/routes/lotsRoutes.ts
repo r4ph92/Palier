@@ -1,20 +1,19 @@
 import type { LotListResponse } from '@palier/shared-types';
 import type { FastifyInstance } from 'fastify';
-import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
+import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { LotAvailabilityRepository } from '../../domain/lots/LotAvailabilityRepository.ts';
 import { listOnlineLots } from '../../domain/lots/listOnlineLots.ts';
-import { requireConsent } from '../requireConsent.ts';
-import { requireDriver } from '../requireDriver.ts';
+import { consentedDriverGuards } from '../requireConsent.ts';
 import { lotListResponseSchema } from '../schemas/lotListResponseSchema.ts';
 
 export function registerLotsRoutes(
   server: FastifyInstance,
   repository: LotAvailabilityRepository,
-  driverRepository: DriverRepository,
+  driverAccess: DriverAccess,
 ): void {
   server.get(
     '/v1/lots',
-    { preHandler: [requireDriver(driverRepository), requireConsent(driverRepository)], schema: { response: { 200: lotListResponseSchema } } },
+    { preHandler: consentedDriverGuards(driverAccess), schema: { response: { 200: lotListResponseSchema } } },
     async (): Promise<LotListResponse> => listOnlineLots(repository),
   );
 }

@@ -4,7 +4,7 @@ import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { julie, marc, FakeDriverRepository } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
-import { fakeGateDependencies } from './fakes/serverDependencies.ts';
+import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
 
@@ -14,7 +14,7 @@ describe('test sign-in when enabled', () => {
   afterEach(() => server.close());
 
   function startServer() {
-    server = buildServer({ gates: fakeGateDependencies(), repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository() }, settings: { testSignInEnabled: true } });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository() }), settings: { testSignInEnabled: true } });
   }
 
   it('lists the seeded drivers to pick from', async () => {
@@ -70,7 +70,7 @@ describe('test sign-in rate limit', () => {
 
   it('answers 429 with Retry-After and issues no token after ten sign-ins from one address', async () => {
     const repository = new FakeDriverRepository();
-    server = buildServer({ gates: fakeGateDependencies(), repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: repository }, settings: { testSignInEnabled: true } });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: repository }), settings: { testSignInEnabled: true } });
     for (let attempt = 0; attempt < 10; attempt += 1) {
       await server.inject({ method: 'POST', url: '/v1/test/sign-in', payload: { driverId: julie.id } });
     }
@@ -79,11 +79,11 @@ describe('test sign-in rate limit', () => {
 
     expect(response.statusCode).toBe(429);
     expect(response.headers['retry-after']).toBe('60');
-    expect(repository.activeTokenHashes).toHaveLength(10);
+    expect(repository.sessions.activeTokenHashes).toHaveLength(10);
   });
 
   it('still signs in a driver from another address after one address is refused', async () => {
-    server = buildServer({ gates: fakeGateDependencies(), repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository() }, settings: { testSignInEnabled: true } });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository() }), settings: { testSignInEnabled: true } });
     for (let attempt = 0; attempt < 10; attempt += 1) {
       await server.inject({ method: 'POST', url: '/v1/test/sign-in', payload: { driverId: julie.id }, remoteAddress: '10.0.0.1' });
     }
@@ -102,7 +102,7 @@ describe('test sign-in body', () => {
   afterEach(() => server.close());
 
   it('drops extra fields instead of using them', async () => {
-    server = buildServer({ gates: fakeGateDependencies(), repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository() }, settings: { testSignInEnabled: true } });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository() }), settings: { testSignInEnabled: true } });
 
     const response = await server.inject({
       method: 'POST',
@@ -120,7 +120,7 @@ describe('test sign-in when disabled', () => {
   afterEach(() => server.close());
 
   function startServer() {
-    server = buildServer({ gates: fakeGateDependencies(), repositories: { vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository() } });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: noLots, driverRepository: new FakeDriverRepository() }) });
   }
 
   it('GET /v1/test/drivers answers 404', async () => {
