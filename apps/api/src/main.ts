@@ -1,14 +1,17 @@
 import Stripe from 'stripe';
+import { createClock } from './config/createClock.ts';
 import { readServerEnvironment } from './config/environment.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { composeEntries } from './composeEntries.ts';
 import { buildServer } from './http/buildServer.ts';
 import { connectToDatabase } from './infrastructure/postgres/database.ts';
+import { PostgresCurrentParkingSessionQuery } from './infrastructure/postgres/PostgresCurrentParkingSessionQuery.ts';
 import { PostgresDriverRepository } from './infrastructure/postgres/PostgresDriverRepository.ts';
 import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateCommandFeed.ts';
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
 import { PostgresOperatorRepository } from './infrastructure/postgres/PostgresOperatorRepository.ts';
+import { PostgresParkingSessionBackdater } from './infrastructure/postgres/PostgresParkingSessionBackdater.ts';
 import { PostgresPassageLedger } from './infrastructure/postgres/PostgresPassageLedger.ts';
 import { PostgresSessionTokenRepository } from './infrastructure/postgres/PostgresSessionTokenRepository.ts';
 import { PostgresUserDirectory } from './infrastructure/postgres/PostgresUserDirectory.ts';
@@ -31,6 +34,8 @@ const server = buildServer({
     userDirectory: new PostgresUserDirectory(connection.database),
     vehicleRepository,
     operatorRepository: new PostgresOperatorRepository(connection.database),
+    currentParkingSessions: new PostgresCurrentParkingSessionQuery(connection.database),
+    parkingSessionBackdater: new PostgresParkingSessionBackdater(connection.database),
   },
   gates: {
     deviceKeys: new PostgresGateDeviceKeyRepository(connection.database),
@@ -46,6 +51,7 @@ const server = buildServer({
     drivers: driverRepository,
     vehicles: vehicleRepository,
   }),
+  clock: createClock(environment.testSignInEnabled),
   settings: {
     testSignInEnabled: environment.testSignInEnabled,
     demoMode: environment.demoMode,

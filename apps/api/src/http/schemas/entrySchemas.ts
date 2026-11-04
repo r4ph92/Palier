@@ -13,7 +13,7 @@ export const entryRequestSchema = {
   properties: { qrContent: { type: 'string', maxLength: QR_CONTENT_MAX_LENGTH } },
 } as const;
 
-const assignedSpotSchema = {
+export const assignedSpotSchema = {
   type: 'object',
   required: ['number', 'levelCode', 'aisleCode'],
   additionalProperties: false,
