@@ -42,6 +42,7 @@ const server = buildServer({
     ledger: new PostgresPassageLedger(connection.database),
     clock: systemClock,
     commands: new PostgresGateCommandFeed(connection.database),
+    openingWindow: { withinMilliseconds: environment.entryCancellation.confirmationWindowSeconds * 1000 },
   },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   entries: composeEntries({

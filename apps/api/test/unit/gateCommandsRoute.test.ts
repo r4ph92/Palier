@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { ENTREE_DEMO_KEY, entreeDemo, FakeGateCommandFeed, FakeGateDeviceKeyRepository, FakePassageLedger, sortieDemo } from './fakes/gateFixtures.ts';
-import { NOW, serverDependencies } from './fakes/serverDependencies.ts';
+import { NOW, serverDependencies, SIXTY_SECOND_WINDOW } from './fakes/serverDependencies.ts';
 
 const firstOpen = { id: '00000000-0000-4000-8000-000000000c01', kind: 'OPEN', issuedAt: '2026-10-27T22:02:00.000Z' } as const;
 const sameMillisecondA = { id: '00000000-0000-4000-8000-000000000c2a', kind: 'OPEN', issuedAt: '2026-10-27T22:03:00.000Z' } as const;
@@ -16,7 +16,7 @@ describe('GET /v1/gates/me/commands', () => {
   let server: FastifyInstance;
 
   function startServer(commands: FakeGateCommandFeed) {
-    const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger: new FakePassageLedger(), clock: () => NOW, commands };
+    const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger: new FakePassageLedger(), clock: () => NOW, commands, openingWindow: SIXTY_SECOND_WINDOW };
     server = buildServer(serverDependencies({ gates }));
   }
 
