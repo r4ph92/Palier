@@ -72,6 +72,33 @@ describe('PositioningCore events', () => {
     expect(second.onQueueFlushed).toHaveBeenCalledWith(0);
   });
 
+  describe('when the first subscriber throws', () => {
+    const emitters: [string, (simulator: SimulatedPositioningModule) => void, keyof PositioningListener][] = [
+      ['onAisleChanged', (simulator) => simulator.enterAisle(2), 'onAisleChanged'],
+      ['onLotExit', (simulator) => simulator.exitLot(), 'onLotExit'],
+      ['onParkedDetected', (simulator) => simulator.detectParked('high'), 'onParkedDetected'],
+      ['onQueueFlushed', (simulator) => simulator.flushOfflineQueue(), 'onQueueFlushed'],
+    ];
+
+    it.each(emitters)('still delivers %s to the second subscriber, without throwing', (_name, emit, event) => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const { simulator, core } = createRig();
+      const failing = spyListener();
+      const healthy = spyListener();
+      failing[event].mockImplementation(() => {
+        throw new Error('subscriber failed');
+      });
+      core.subscribe(failing);
+      core.subscribe(healthy);
+
+      expect(() => emit(simulator)).not.toThrow();
+
+      expect(healthy[event]).toHaveBeenCalledTimes(1);
+      expect(consoleError).toHaveBeenCalledTimes(1);
+      consoleError.mockRestore();
+    });
+  });
+
   it('stops notifying a subscriber that unsubscribed', () => {
     const { simulator, core } = createRig();
     const listener = spyListener();
