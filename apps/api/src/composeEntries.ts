@@ -10,9 +10,9 @@ import { PostgresParkingSessionRepository } from './infrastructure/postgres/Post
 import { SimulatedGateCommander } from './infrastructure/postgres/SimulatedGateCommander.ts';
 import { StripePaymentAuthorizer } from './infrastructure/stripe/StripePaymentAuthorizer.ts';
 
-// The driver waits at the barrier: a slow Stripe answer is cut at 5 s, and retries reuse the entry's idempotency key.
-const STRIPE_TIMEOUT_MILLISECONDS = 5000;
-const STRIPE_NETWORK_RETRIES = 2;
+// The app gives up after 8 s: two attempts of 2.5 s plus the retry backoff stay under it, and the retry reuses the entry's idempotency key.
+const STRIPE_TIMEOUT_MILLISECONDS = 2500;
+const STRIPE_NETWORK_RETRIES = 1;
 
 export interface EntryComposition {
   readonly database: Database;
