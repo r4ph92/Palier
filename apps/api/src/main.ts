@@ -1,5 +1,4 @@
 import Stripe from 'stripe';
-import { createClock } from './config/createClock.ts';
 import { readServerEnvironment } from './config/environment.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { composeEntries } from './composeEntries.ts';
@@ -51,7 +50,6 @@ const server = buildServer({
     drivers: driverRepository,
     vehicles: vehicleRepository,
   }),
-  clock: createClock(environment.testSignInEnabled),
   settings: {
     testSignInEnabled: environment.testSignInEnabled,
     demoMode: environment.demoMode,

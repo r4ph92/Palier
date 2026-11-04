@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { createClock } from '../../src/config/createClock.ts';
+import { createTestClock } from '../../src/domain/time/TestClock.ts';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { configureServer } from './configureServer.ts';
-import { acceptNoticeAs, authorizationFor, julie } from './fakeDriverRepository.ts';
-import { JULIE_SESSION_ID, julieAtParkingDemo } from './fakes/fakeCurrentParkingSessions.ts';
+import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie } from './fakeDriverRepository.ts';
+import { FakeCurrentParkingSessions, JULIE_SESSION_ID, julieAtParkingDemo } from './fakes/fakeCurrentParkingSessions.ts';
 import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
 import { methodOf, TEST_ROUTES, urlOf } from './routeClassification.ts';
 
@@ -63,7 +63,7 @@ describe('backdating a session in a test environment', () => {
     const configured = configureServer({ testSignInEnabled: true });
     server = configured.server;
     configured.parkingSessions.add(julie.id, julieAtParkingDemo(new Date(2026, 10, 4, 20, 0)));
-    configured.clock.testClock?.setFixed(nineFifteen);
+    configured.testClock.setFixed(nineFifteen);
     await acceptNoticeAs(configured.driverRepository, julie);
     const headers = await authorizationFor(configured.driverRepository, julie);
     return { ...configured, readSession: () => server.inject({ method: 'GET', url: '/v1/me/session', headers }) };
@@ -135,10 +135,24 @@ describe('test clock in production', () => {
   afterEach(() => server?.close());
 
   it.each(TEST_ROUTES)('%s answers 404 even when handed a test clock', async (route) => {
-    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories(), clock: createClock(true) });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories(), testClock: createTestClock() });
 
     const response = await server.inject({ method: methodOf(route) as 'GET', url: urlOf(route), payload: { now: nineFifteen.toISOString() } });
 
     expect(response.statusCode).toBe(404);
+  });
+
+  it('prices the session in real time even when handed a test clock', async () => {
+    const parkingSessions = new FakeCurrentParkingSessions();
+    const driverRepository = new FakeDriverRepository();
+    parkingSessions.add(julie.id, julieAtParkingDemo(new Date(2020, 0, 1, 8, 0)));
+    const testClock = createTestClock();
+    testClock.setFixed(new Date(2020, 0, 1, 8, 10));
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ driverRepository, parkingSessions }), testClock });
+    await acceptNoticeAs(driverRepository, julie);
+
+    const response = await server.inject({ method: 'GET', url: '/v1/me/session', headers: await authorizationFor(driverRepository, julie) });
+
+    expect(response.json()).toMatchObject({ session: { amountCents: 2500 } });
   });
 });

@@ -15,7 +15,7 @@ describe('GET /v1/me/session', () => {
     const configured = configureServer({ testSignInEnabled: true });
     server = configured.server;
     configured.parkingSessions.add(julie.id, julieAtParkingDemo(enteredAt));
-    configured.clock.testClock?.setFixed(now);
+    configured.testClock.setFixed(now);
     await acceptNoticeAs(configured.driverRepository, julie);
     const headers = await authorizationFor(configured.driverRepository, julie);
     return { ...configured, readSession: () => server.inject({ method: 'GET', url: '/v1/me/session', headers }) };
