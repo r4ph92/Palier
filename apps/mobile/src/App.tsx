@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HttpAuthClient } from './api/HttpAuthClient';
 import { HttpEntryClient } from './api/HttpEntryClient';
 import { HttpLotsClient } from './api/HttpLotsClient';
+import { HttpParkingSessionClient } from './api/HttpParkingSessionClient';
 import { HttpPaymentMethodClient } from './api/HttpPaymentMethodClient';
 import { HttpVehicleClient } from './api/HttpVehicleClient';
 import type { SignedInClients, SignedInSession } from './api/SignedInClients';
@@ -33,6 +34,7 @@ function createSignedInClients({ token, onUnauthorized, onConsentRequired }: Sig
     payment: new HttpPaymentMethodClient({ baseUrl: apiUrl, token, onUnauthorized }),
     vehicles: new HttpVehicleClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
     entry: new HttpEntryClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
+    parkingSession: new HttpParkingSessionClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
   };
 }
 

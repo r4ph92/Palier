@@ -7,6 +7,7 @@ import type { DeveloperEntry } from '../src/screens/DeveloperEntry';
 import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
 import { FakeEntryClient } from './fakeEntryClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
+import { FakeParkingSessionClient } from './fakeParkingSessionClient';
 import { FakePaymentMethodClient } from './fakePaymentMethodClient';
 import { FakeVehicleClient } from './fakeVehicleClient';
 
@@ -37,6 +38,7 @@ export function fakeSignedInClients(): SignedInClients {
     payment: new FakePaymentMethodClient(),
     vehicles: new FakeVehicleClient(),
     entry: new FakeEntryClient(),
+    parkingSession: new FakeParkingSessionClient(),
   };
 }
 
