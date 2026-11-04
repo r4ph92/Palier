@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { isSignedWith, readGateToken } from '../../src/domain/entries/gateToken.ts';
 import { JULIE_TREMBLAY_ID, NADIA_BOUCHARD_ID } from '../../src/config/testPersonas.ts';
 import { ENTREE_DEMO_ID, gateFixtures, seededQrLinks } from '../../src/seed/fixtures/gates.ts';
-import { parkingTestPaliersSpots } from '../../src/seed/fixtures/parkingTestPaliers.ts';
+import { parsePricingPolicy } from '../../src/domain/pricing/PricingPolicy.ts';
+import { garageRoyLot } from '../../src/seed/fixtures/garageRoy.ts';
+import { parkingDemoLot } from '../../src/seed/fixtures/parkingDemo.ts';
+import { parkingTestPaliersLot, parkingTestPaliersSpots } from '../../src/seed/fixtures/parkingTestPaliers.ts';
 import { vehicleFixtures } from '../../src/seed/fixtures/vehicles.ts';
 
 describe('seeded entry fixtures', () => {
@@ -39,5 +42,9 @@ describe('seeded entry fixtures', () => {
       { userId: JULIE_TREMBLAY_ID, plate: 'ABC 123', plateKey: 'ABC123', province: 'QC', isDefault: true },
     ]);
     expect(vehicleFixtures.some(({ userId }) => userId === NADIA_BOUCHARD_ID)).toBe(false);
+  });
+
+  it.each([parkingDemoLot, garageRoyLot, parkingTestPaliersLot])('prices $name at 0,75 $ per started 15 minutes, capped at 25,00 $', (lot) => {
+    expect(parsePricingPolicy(lot.pricingPolicy, lot.dailyCapCents)).toEqual({ incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 });
   });
 });

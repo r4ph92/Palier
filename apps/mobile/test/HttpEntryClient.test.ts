@@ -52,6 +52,18 @@ describe('HttpEntryClient', () => {
     await expect(client.enter(ENTREE_DEMO_QR)).rejects.toEqual(new PalierRejectedError(code));
   });
 
+  it('carries the refused amount of a declined card', async () => {
+    const { client } = clientAnswering(jsonResponse({ statusCode: 402, error: 'CARD_DECLINED', message: 'refused', authorizedCents: 2500 }, 402));
+
+    await expect(client.enter(ENTREE_DEMO_QR)).rejects.toMatchObject({ code: 'CARD_DECLINED', authorizedCents: 2500 });
+  });
+
+  it.each([-1, 12.5, '2500'])('ignores a refused amount of %p that is not whole cents', async (authorizedCents) => {
+    const { client } = clientAnswering(jsonResponse({ statusCode: 402, error: 'CARD_DECLINED', message: 'refused', authorizedCents }, 402));
+
+    await expect(client.enter(ENTREE_DEMO_QR)).rejects.toMatchObject({ code: 'CARD_DECLINED', authorizedCents: null });
+  });
+
   it('reports a 500 as a status error, not a refusal', async () => {
     const { client } = clientAnswering(jsonResponse({ statusCode: 500, error: 'Internal Server Error' }, 500));
 

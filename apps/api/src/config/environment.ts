@@ -77,6 +77,21 @@ function readDemoMode(rawDemoMode: string | undefined): boolean {
   throw new Error(`DEMO_MODE must be "true" or "false", got "${rawDemoMode}".`);
 }
 
+// Test environments only: every Stripe call at entry fails as if Stripe could not be reached.
+export function readSimulateStripeUnreachable(variables: NodeJS.ProcessEnv): boolean {
+  const rawSwitch = variables['SIMULATE_STRIPE_UNREACHABLE'];
+  if (rawSwitch === undefined || rawSwitch === 'false') {
+    return false;
+  }
+  if (rawSwitch !== 'true') {
+    throw new Error(`SIMULATE_STRIPE_UNREACHABLE must be "true" or "false", got "${rawSwitch}".`);
+  }
+  if (!readTestSignInEnabled(variables)) {
+    throw new Error('SIMULATE_STRIPE_UNREACHABLE is only allowed when NODE_ENV is development or test.');
+  }
+  return true;
+}
+
 const STRIPE_ACCOUNT_PREFIX = 'acct_';
 
 // The seed writes it on Stationnements Lavoie so entry holds go to that connected test account; unset leaves none.

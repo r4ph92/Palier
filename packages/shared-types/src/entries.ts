@@ -19,6 +19,11 @@ export const ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'CANCELLED'] 
 
 export type EntrySessionState = (typeof ENTRY_SESSION_STATES)[number];
 
+// A driver has at most one session in these states: the one the app shows as current.
+export const ACTIVE_ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED'] as const satisfies readonly EntrySessionState[];
+
+export type ActiveEntrySessionState = (typeof ACTIVE_ENTRY_SESSION_STATES)[number];
+
 export interface EntryStatusResponse {
   readonly sessionId: string;
   readonly state: EntrySessionState;
@@ -39,6 +44,14 @@ export type EntryRefusalCode =
   | 'CARD_DECLINED'
   | 'PAYMENTS_UNAVAILABLE'
   | 'TOO_MANY_ENTRIES';
+
+export interface EntryRefusalBody {
+  readonly statusCode: number;
+  readonly error: EntryRefusalCode;
+  readonly message: string;
+  // CARD_DECLINED only: the hold the card refused, so the app can name the amount.
+  readonly authorizedCents?: number;
+}
 
 export type GateCommandKind = 'OPEN';
 

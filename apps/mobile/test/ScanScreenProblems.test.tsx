@@ -13,6 +13,7 @@ describe('ScanScreen refusals', () => {
     ['LOT_FULL', 'Complet — la barrière reste fermée', 'Full — the barrier stays closed'],
     ['ALREADY_INSIDE', 'Vous avez déjà une entrée en cours', 'You already have an entry in progress'],
     ['CARD_DECLINED', 'Carte refusée', 'Card declined'],
+    ['PAYMENTS_UNAVAILABLE', 'Paiement momentanément indisponible — la barrière reste fermée', 'Payment temporarily unavailable — the barrier stays closed'],
     ['TOO_MANY_ENTRIES', 'Trop de tentatives, réessayez dans quelques minutes', 'Too many attempts, try again in a few minutes'],
   ] as const;
   const cases = refusals.flatMap(([code, french, english]) => [
@@ -53,6 +54,32 @@ describe('ScanScreen refusals', () => {
     expect(onAddCard).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    ['fr', 'Votre carte a refusé l’autorisation de 25,00\u00A0$. Mettez à jour votre moyen de paiement.'],
+    ['en', 'Your card declined the $25.00 authorization. Update your payment method.'],
+  ] as const)('names the refused amount when the card is declined, in %s', async (language, message) => {
+    const client = new FakeEntryClient();
+    client.nextRejection = 'CARD_DECLINED';
+    client.nextRejectionCents = 2500;
+    await scan({ client, language });
+
+    expect(await screen.findByText(message)).toBeOnTheScreen();
+    expect(screen.queryByText(/A-1/)).not.toBeOnTheScreen();
+  });
+
+  it('opens the payment method from a declined card', async () => {
+    const client = new FakeEntryClient();
+    client.nextRejection = 'CARD_DECLINED';
+    client.nextRejectionCents = 2500;
+    const onAddCard = jest.fn();
+    const { user } = await scan({ client, onAddCard });
+
+    await user.press(await screen.findByRole('button', { name: 'Moyen de paiement' }));
+
+    expect(onAddCard).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Ajouter une plaque' })).not.toBeOnTheScreen();
+  });
+
   it('shows no prerequisite buttons for another refusal', async () => {
     const client = new FakeEntryClient();
     client.nextRejection = 'NOT_AN_ENTRY_GATE';
@@ -79,7 +106,6 @@ describe('ScanScreen when Palier cannot answer', () => {
   });
 
   it.each([
-    ['card payments are unavailable (503)', (client: FakeEntryClient) => (client.nextRejection = 'PAYMENTS_UNAVAILABLE')],
     ['the API fails (500)', (client: FakeEntryClient) => (client.nextStatus = 500)],
     ['the API answers a code the app does not know', (client: FakeEntryClient) => (client.nextRejection = 'SOMETHING_NEW')],
   ])('says Palier is not responding when %s, without blaming the connection, and retries the same QR', async (_case, breakClient) => {

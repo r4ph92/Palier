@@ -40,3 +40,17 @@ describe.each<[SupportedLanguage, readonly string[]]>([
     }
   });
 });
+
+describe('TabBar with a label given for a tab', () => {
+  it('shows that label in place of the tab name, still among three tabs', async () => {
+    applyLanguage('fr');
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <TabBar selected="scan" onSelect={() => undefined} labels={{ scan: 'Session' }} />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByRole('tab', { name: 'Session', selected: true })).toBeOnTheScreen();
+    expect(screen.getAllByRole('tab')).toHaveLength(3);
+  });
+});

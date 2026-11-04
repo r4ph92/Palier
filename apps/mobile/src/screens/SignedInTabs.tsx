@@ -1,0 +1,59 @@
+import { StyleSheet, View } from 'react-native';
+import { LotsClientProvider } from '../api/LotsClientContext';
+import type { SignedInClients } from '../api/SignedInClients';
+import { TabBar } from '../components/TabBar';
+import { useTabs, type TabsController } from '../navigation/useTabs';
+import { useCurrentParkingSession, type CurrentParkingSessionController } from '../parkingSessions/useCurrentParkingSession';
+import { AccountTab } from './AccountTab';
+import type { DeveloperEntry } from './DeveloperEntry';
+import { HomeScreen } from './HomeScreen';
+import { ScanTab, scanTabLabels } from './ScanTab';
+
+interface SignedInTabsProps {
+  readonly firstName: string;
+  readonly clients: SignedInClients;
+  readonly developerEntry: DeveloperEntry | undefined;
+  readonly onSignOut: () => void;
+}
+
+// The current session is read here, above the tabs, so a relaunch finds it before any tab is opened.
+export function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: SignedInTabsProps) {
+  const tabs = useTabs();
+  const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
+  const content = { firstName, clients, developerEntry, onSignOut, tabs, currentSession };
+  return (
+    <View style={styles.app}>
+      <LotsClientProvider client={clients.lots}>
+        <TabContent {...content} />
+      </LotsClientProvider>
+      <TabBar selected={tabs.tab} onSelect={tabs.selectTab} labels={scanTabLabels(currentSession.state)} />
+    </View>
+  );
+}
+
+interface TabContentProps extends SignedInTabsProps {
+  readonly tabs: TabsController;
+  readonly currentSession: CurrentParkingSessionController;
+}
+
+function TabContent({ firstName, clients, tabs, currentSession, developerEntry, onSignOut }: TabContentProps) {
+  switch (tabs.tab) {
+    case 'lots':
+      return <HomeScreen firstName={firstName} />;
+    case 'scan':
+      return (
+        <ScanTab
+          entryClient={clients.entry}
+          currentSession={currentSession}
+          onAddPlate={() => tabs.openAccountPage('vehicles')}
+          onAddCard={() => tabs.openAccountPage('payment')}
+        />
+      );
+    case 'account':
+      return <AccountTab firstName={firstName} page={tabs.accountPage} clients={clients} developerEntry={developerEntry} onPageChange={tabs.setAccountPage} onSignOut={onSignOut} />;
+  }
+}
+
+const styles = StyleSheet.create({
+  app: { flex: 1 },
+});

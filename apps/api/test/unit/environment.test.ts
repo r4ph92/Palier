@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { readMinimumAppVersion, readSecureCookies, readServerEnvironment, readTestSignInEnabled } from '../../src/config/environment.ts';
+import {
+  readMinimumAppVersion,
+  readSecureCookies,
+  readServerEnvironment,
+  readSimulateStripeUnreachable,
+  readTestSignInEnabled,
+} from '../../src/config/environment.ts';
 
 const databaseUrl = 'postgres://palier:palier@localhost:5433/palier';
 
@@ -64,5 +70,23 @@ describe('readSecureCookies', () => {
 
   it('keeps cookies Secure when NODE_ENV is not set', () => {
     expect(readSecureCookies({})).toBe(true);
+  });
+});
+
+describe('readSimulateStripeUnreachable', () => {
+  it.each([{}, { SIMULATE_STRIPE_UNREACHABLE: 'false' }])('keeps Stripe reachable by default (%o)', (variables) => {
+    expect(readSimulateStripeUnreachable({ NODE_ENV: 'development', ...variables })).toBe(false);
+  });
+
+  it.each(['development', 'test'])('simulates Stripe unreachable when NODE_ENV is %s', (environment) => {
+    expect(readSimulateStripeUnreachable({ NODE_ENV: environment, SIMULATE_STRIPE_UNREACHABLE: 'true' })).toBe(true);
+  });
+
+  it.each([{ NODE_ENV: 'production' }, {}])('refuses to start with the switch on outside a test environment (%o)', (variables) => {
+    expect(() => readSimulateStripeUnreachable({ ...variables, SIMULATE_STRIPE_UNREACHABLE: 'true' })).toThrow(/only allowed/);
+  });
+
+  it.each(['1', 'yes', ''])('refuses SIMULATE_STRIPE_UNREACHABLE=%s', (rawSwitch) => {
+    expect(() => readSimulateStripeUnreachable({ NODE_ENV: 'development', SIMULATE_STRIPE_UNREACHABLE: rawSwitch })).toThrow(/must be "true" or "false"/);
   });
 });

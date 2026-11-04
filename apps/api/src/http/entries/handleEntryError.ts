@@ -1,6 +1,7 @@
-import type { EntryRefusalCode } from '@palier/shared-types';
+import type { EntryRefusalBody, EntryRefusalCode } from '@palier/shared-types';
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
+import { PricingPolicyInvalidError } from '../../domain/pricing/PricingPolicy.ts';
 import { handleServerError } from '../handleServerError.ts';
 
 const STATUS_BY_REASON: Record<EntryRefusalCode, number> = {
@@ -22,8 +23,13 @@ export function handleEntryError(error: FastifyError, request: FastifyRequest, r
   if (refusal === undefined) {
     return handleServerError(error, request, reply);
   }
+  if (refusal.cause instanceof PricingPolicyInvalidError) {
+    request.log.warn({ lotId: refusal.cause.lotId, err: refusal.cause }, 'entry refused: the lot has no usable pricing policy');
+  }
   const statusCode = STATUS_BY_REASON[refusal.reason];
-  return reply.status(statusCode).send({ statusCode, error: refusal.reason, message: refusal.message });
+  const body: EntryRefusalBody = { statusCode, error: refusal.reason, message: refusal.message };
+  const { authorizedCents } = refusal;
+  return reply.status(statusCode).send(authorizedCents === undefined ? body : { ...body, authorizedCents });
 }
 
 // A body the schema refuses carries no readable QR, so for the driver it is the same unrecognized QR.

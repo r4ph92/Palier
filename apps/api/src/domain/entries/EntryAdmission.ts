@@ -1,12 +1,10 @@
 import type { EntryResponse } from '@palier/shared-types';
-import type { FastifyBaseLogger } from 'fastify';
 import type { EligibleEntry } from './EntryEligibility.ts';
+import type { EntryLog } from './EntryLog.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import type { GateCommander } from './GateCommander.ts';
 import type { OpenedSession, ParkingSessionRepository } from './ParkingSessionRepository.ts';
 import type { PaymentAuthorizer } from './PaymentAuthorizer.ts';
-
-export type EntryLog = Pick<FastifyBaseLogger, 'warn' | 'error'>;
 
 export interface EntryAdmissionDependencies {
   readonly sessions: ParkingSessionRepository;
@@ -54,6 +52,7 @@ export class EntryAdmission {
       lotId: entry.gate.lotId,
       entryGateId: entry.gate.id,
       authorizedCents: entry.payment.amountCents,
+      pricing: entry.pricing,
     });
     if (session === null) {
       throw new EntryRefusedError('LOT_FULL');
@@ -71,7 +70,7 @@ export class EntryAdmission {
       // The intent, if Stripe created one, carries this session id in its metadata.
       log.warn({ err: error, sessionId }, 'entry authorization failed');
       await this.#releaseSpot(sessionId, log);
-      throw error;
+      throw withRefusedAmount(error, entry.payment.amountCents);
     }
   }
 
@@ -105,4 +104,12 @@ export class EntryAdmission {
       log.error({ err: error, paymentIntentId }, 'could not cancel the entry hold');
     }
   }
+}
+
+// A declined card names the amount it refused, so the driver knows what the card must cover.
+function withRefusedAmount(error: unknown, amountCents: number): unknown {
+  if (error instanceof EntryRefusedError && error.reason === 'CARD_DECLINED') {
+    return new EntryRefusedError('CARD_DECLINED', { cause: error, authorizedCents: amountCents });
+  }
+  return error;
 }

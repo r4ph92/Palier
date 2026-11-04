@@ -14,9 +14,20 @@ export const GATED = [
   'POST /v1/me/setup-intent',
   'POST /v1/entries',
   'GET /v1/entries/:sessionId',
+  'GET /v1/me/session',
 ];
 
-const DRIVER_EXEMPT = ['GET /v1/me', 'POST /v1/consent', 'POST /v1/sign-out', 'GET /v1/test/drivers', 'POST /v1/test/sign-in'];
+// The test routes exist only in test environments and take no driver token.
+export const TEST_ROUTES = [
+  'GET /v1/test/drivers',
+  'POST /v1/test/sign-in',
+  'GET /v1/test/clock',
+  'PUT /v1/test/clock',
+  'DELETE /v1/test/clock',
+  'PUT /v1/test/sessions/:sessionId/entered-at',
+];
+
+const DRIVER_EXEMPT = ['GET /v1/me', 'POST /v1/consent', 'POST /v1/sign-out', ...TEST_ROUTES];
 
 // Gate controllers sign with a device key, never a driver token: there is no driver whose consent could be checked.
 const GATE_DEVICE_ROUTES = ['GET /v1/gates/me', 'GET /v1/gates/me/commands', 'POST /v1/gates/:id/passage'];

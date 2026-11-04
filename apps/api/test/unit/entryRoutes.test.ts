@@ -74,15 +74,16 @@ describe('POST /v1/entries', () => {
     expect(entries.journal).toEqual([]);
   });
 
-  it('answers 402 CARD_DECLINED and frees the spot when the card is refused', async () => {
+  it('answers 402 CARD_DECLINED with the refused amount, frees the spot and opens nothing when the card is refused', async () => {
     const { enter, entries } = await startWithJulieReady();
     entries.payments.refusal = 'CARD_DECLINED';
 
     const response = await enter(entreeDemoQr);
 
     expect(response.statusCode).toBe(402);
-    expect(response.json()).toMatchObject({ error: 'CARD_DECLINED' });
+    expect(response.json()).toEqual({ statusCode: 402, error: 'CARD_DECLINED', message: 'The card was declined.', authorizedCents: 2500 });
     expect(entries.sessions.freeSpots).toHaveLength(10);
+    expect(entries.journal).not.toContain('open-gate');
   });
 
   it('answers 503 PAYMENTS_UNAVAILABLE when Stripe cannot be reached', async () => {

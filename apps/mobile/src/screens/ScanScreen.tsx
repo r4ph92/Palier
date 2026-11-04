@@ -1,53 +1,57 @@
 import type { AssignedSpot } from '@palier/shared-types';
+import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { EntryClient } from '../api/EntryClient';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { StateMark } from '../components/StateMark';
-import { TextButton } from '../components/TextButton';
+import { SpotWithState } from '../components/SpotLine';
 import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
 import { useAnnouncement } from '../components/useAnnouncement';
-import { useEntry, type EntryController, type EntryState } from '../entries/useEntry';
+import type { EntryController, EntryState } from '../entries/useEntry';
 import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
 import { MINIMUM_TOUCH_TARGET, spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
+import { EntryProblem } from './EntryProblem';
 
 // A QR content is a link, never words: no capitals, corrections or spelling marks.
 const QR_INPUT_BEHAVIOUR = { autoCapitalize: 'none', autoCorrect: false, spellCheck: false, returnKeyType: 'go' } as const;
-// After the hyphen of a spot number, so « A-1 » never splits across two lines; it is invisible and not spoken.
-const WORD_JOINER = '\u2060';
 
 interface ScanScreenProps {
-  readonly client: EntryClient;
+  readonly entry: EntryController;
+  // Shown above the form: what the tab knows about a current session.
+  readonly notice?: ReactNode;
+  readonly onDone: () => void;
   readonly onAddPlate: () => void;
   readonly onAddCard: () => void;
 }
 
-export function ScanScreen({ client, onAddPlate, onAddCard }: ScanScreenProps) {
+export function ScanScreen({ entry, notice, onDone, onAddPlate, onAddCard }: ScanScreenProps) {
+  return (
+    <ScanFrame>
+      {entry.state.status === 'entered' ? (
+        <EnteredSpot spot={entry.state.spot} isConfirmed={entry.state.isConfirmed} onDone={onDone} />
+      ) : (
+        <>
+          {notice}
+          <ScanForm entry={entry} onAddPlate={onAddPlate} onAddCard={onAddCard} />
+        </>
+      )}
+    </ScanFrame>
+  );
+}
+
+// The scan tab's screen and header, also shown while the tab waits to know whether a session is current.
+export function ScanFrame({ children }: { readonly children: ReactNode }) {
   const colors = useColors();
-  const entry = useEntry(client);
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ScreenHeader eyebrow={i18n.t('scan.eyebrow')} title={i18n.t('scan.title')} />
-        {entry.state.status === 'entered' ? (
-          <EnteredSpot spot={entry.state.spot} isConfirmed={entry.state.isConfirmed} onDone={entry.startOver} />
-        ) : (
-          <ScanForm entry={entry} onAddPlate={onAddPlate} onAddCard={onAddCard} />
-        )}
+        {children}
       </ScrollView>
     </SafeAreaView>
   );
-}
-
-export function spotLabel(spot: AssignedSpot): string {
-  return `${i18n.t('scan.spotLead')}${spot.number}${spotPlace(spot)}`;
-}
-
-function spotPlace(spot: AssignedSpot): string {
-  return i18n.t('scan.spotPlace', { level: spot.levelCode, aisle: spot.aisleCode });
 }
 
 interface EnteredSpotProps {
@@ -65,26 +69,9 @@ function EnteredSpot({ spot, isConfirmed, onDone }: EnteredSpotProps) {
   useAnnouncement(isConfirmed ? status : null);
   return (
     <View style={styles.section}>
-      <View ref={resultRef} accessible accessibilityLabel={`${spotLabel(spot)}. ${status}`} style={styles.field}>
-        <SpotLine spot={spot} />
-        <StateMark color={colors.free}>
-          <Text style={[typography.bodyStrong, { color: colors.ink }]}>{status}</Text>
-        </StateMark>
-      </View>
+      <SpotWithState ref={resultRef} spot={spot} lead={i18n.t('scan.spotLead')} status={status} markColor={colors.free} />
       <PrimaryButton label={i18n.t('scan.done')} onPress={onDone} />
     </View>
-  );
-}
-
-// The spot number is the largest thing on the screen, in mono like every figure (docs/design.md, gesture 3).
-function SpotLine({ spot }: { readonly spot: AssignedSpot }) {
-  const colors = useColors();
-  return (
-    <Text style={[typography.spotLine, { color: colors.ink }]}>
-      {i18n.t('scan.spotLead')}
-      <Text style={typography.spotNumber}>{spot.number.replaceAll('-', `-${WORD_JOINER}`)}</Text>
-      {spotPlace(spot)}
-    </Text>
   );
 }
 
@@ -137,63 +124,10 @@ function QrField({ entry }: { readonly entry: EntryController }) {
   );
 }
 
-interface EntryProblemProps {
-  readonly state: EntryState;
-  readonly onAddPlate: () => void;
-  readonly onAddCard: () => void;
-}
-
-function EntryProblem({ state, onAddPlate, onAddCard }: EntryProblemProps) {
-  const message = problemMessage(state);
-  useAnnouncement(message);
-  if (message === null) {
-    return null;
-  }
-  return (
-    <View style={styles.field}>
-      <ProblemMessage message={message} hint={state.status === 'unreachable' ? i18n.t('scan.unreachableHint') : null} />
-      {state.status === 'refused' && state.refusal === 'PREREQUISITES_MISSING' ? (
-        <View style={styles.links}>
-          <TextButton label={i18n.t('scan.addPlate')} onPress={onAddPlate} />
-          <TextButton label={i18n.t('scan.addCard')} onPress={onAddCard} />
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-function ProblemMessage({ message, hint }: { readonly message: string; readonly hint: string | null }) {
-  const colors = useColors();
-  return (
-    <>
-      <StateMark color={colors.danger}>
-        <Text accessibilityRole="alert" style={[typography.bodyStrong, { color: colors.ink }]}>
-          {message}
-        </Text>
-      </StateMark>
-      {hint === null ? null : <Text style={[typography.body, { color: colors.muted }]}>{hint}</Text>}
-    </>
-  );
-}
-
-function problemMessage(state: EntryState): string | null {
-  switch (state.status) {
-    case 'refused':
-      return i18n.t(`scan.refusals.${state.refusal}`);
-    case 'notResponding':
-      return i18n.t('scan.notResponding');
-    case 'unreachable':
-      return i18n.t('scan.unreachable');
-    default:
-      return null;
-  }
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { flexGrow: 1, gap: spacing.medium, paddingHorizontal: spacing.medium, paddingBottom: spacing.large },
   section: { gap: spacing.medium },
   field: { gap: spacing.small },
-  links: { flexDirection: 'row', flexWrap: 'wrap', columnGap: spacing.large },
   input: { minHeight: MINIMUM_TOUCH_TARGET, paddingHorizontal: spacing.medium, borderWidth: 2 },
 });
