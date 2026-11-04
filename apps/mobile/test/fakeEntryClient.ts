@@ -1,4 +1,4 @@
-import type { AssignedSpot, EntryResponse } from '@palier/shared-types';
+import type { AssignedSpot, EntryResponse, EntrySessionState, EntryStatusResponse } from '@palier/shared-types';
 import type { EntryClient } from '../src/api/EntryClient';
 import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 import { PalierRejectedError } from '../src/api/VehicleClient';
@@ -13,6 +13,9 @@ export class FakeEntryClient implements EntryClient {
   isReachable = true;
   #pending: { resolve: (response: EntryResponse) => void } | null = null;
   holdsAnswer = false;
+  readonly statusRequests: string[] = [];
+  sessionState: EntrySessionState = 'CREATED';
+  failingStatusRequests = 0;
 
   enter(qrContent: string): Promise<EntryResponse> {
     this.scanned.push(qrContent);
@@ -32,6 +35,16 @@ export class FakeEntryClient implements EntryClient {
       });
     }
     return Promise.resolve(response);
+  }
+
+  status(sessionId: string): Promise<EntryStatusResponse> {
+    this.statusRequests.push(sessionId);
+    if (this.failingStatusRequests > 0) {
+      this.failingStatusRequests -= 1;
+      return Promise.reject(new PalierUnreachableError('fake'));
+    }
+    const entryConfirmedAt = this.sessionState === 'ENTRY_CONFIRMED' ? '2026-10-27T22:02:00.000Z' : null;
+    return Promise.resolve({ sessionId, state: this.sessionState, spot: spotA1, entryConfirmedAt });
   }
 
   answer(): void {

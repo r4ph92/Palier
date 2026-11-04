@@ -1,7 +1,8 @@
-import type { EntryResponse } from '@palier/shared-types';
+import type { EntryResponse, EntryStatusResponse } from '@palier/shared-types';
 import { AuthorizedRequester, readJson, type AuthorizedClientOptions } from './authorizedRequest';
 import type { EntryClient } from './EntryClient';
 import { parseEntry } from './parseEntry';
+import { parseEntryStatus } from './parseEntryStatus';
 
 const BAD_REQUEST = 400;
 const PAYMENT_REQUIRED = 402;
@@ -24,5 +25,10 @@ export class HttpEntryClient implements EntryClient {
       body: JSON.stringify({ qrContent }),
     });
     return parseEntry(await readJson(response));
+  }
+
+  async status(sessionId: string): Promise<EntryStatusResponse> {
+    const response = await this.#requester.send(`/v1/entries/${encodeURIComponent(sessionId)}`, { method: 'GET' });
+    return parseEntryStatus(await readJson(response));
   }
 }

@@ -16,7 +16,7 @@ function isEntry(candidate: unknown): candidate is EntryResponse {
   return typeof sessionId === 'string' && isSpot(spot) && barrierOpened === true;
 }
 
-function isSpot(candidate: unknown): candidate is AssignedSpot {
+export function isSpot(candidate: unknown): candidate is AssignedSpot {
   if (typeof candidate !== 'object' || candidate === null) {
     return false;
   }
