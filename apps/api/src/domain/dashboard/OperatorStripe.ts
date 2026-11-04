@@ -25,6 +25,18 @@ export interface OperatorStripeGateway {
   createOnboardingLink(accountId: string): Promise<string>;
 }
 
+export class InvalidWebhookSignatureError extends Error {
+  constructor(options?: ErrorOptions) {
+    super('The Stripe signature is missing or does not match.', options);
+    this.name = 'InvalidWebhookSignatureError';
+  }
+}
+
+// Checks the signature of a Stripe notification on its raw body; null when the event is not an account update.
+export interface AccountWebhookReader {
+  read(rawBody: Buffer, signature: string | undefined): AccountSnapshot | null;
+}
+
 export interface OperatorStripeAccounts {
   findAccountId(operatorId: string): Promise<string | null>;
   // Stores the account as PENDING when the operator has none, and answers the id now stored: the one that won a concurrent request.
