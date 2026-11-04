@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import type { EntrySessionState } from '@palier/shared-types';
 import type { EntryClient } from '../api/EntryClient';
+import { PalierUnauthorizedError } from '../api/AuthClient';
 import { PalierStatusError, PalierUnreachableError } from '../api/LotsClient';
+import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
 
 export const ENTRY_STATUS_POLL_MILLISECONDS = 2000;
 export const ENTRY_STATUS_POLL_LIMIT_MILLISECONDS = 2 * 60 * 1000;
@@ -9,10 +11,16 @@ const MAXIMUM_POLLS = ENTRY_STATUS_POLL_LIMIT_MILLISECONDS / ENTRY_STATUS_POLL_M
 
 type Outcome = 'confirmed' | 'cancelled' | 'waiting' | 'refused';
 
-export function useConfirmationPolling(client: EntryClient, sessionId: string | null, onConfirmed: () => void): void {
+interface Handlers {
+  onConfirmed: () => void;
+  onUnexpectedError: (error: unknown) => void;
+}
+
+export function useConfirmationPolling(client: EntryClient, sessionId: string | null, handlers: Handlers): void {
+  const { onConfirmed, onUnexpectedError } = handlers;
   useEffect(() => {
-    return sessionId === null ? undefined : startPolling(client, sessionId, onConfirmed);
-  }, [client, sessionId, onConfirmed]);
+    return sessionId === null ? undefined : startPolling(client, sessionId, { onConfirmed, onUnexpectedError });
+  }, [client, sessionId, onConfirmed, onUnexpectedError]);
 }
 
 interface Poll {
@@ -22,29 +30,38 @@ interface Poll {
 }
 
 // A request still in flight never overlaps the next tick.
-function startPolling(client: EntryClient, sessionId: string, onConfirmed: () => void): () => void {
+function startPolling(client: EntryClient, sessionId: string, handlers: Handlers): () => void {
   const poll: Poll = { isActive: true, isAsking: false, count: 0 };
   const stop = () => {
     poll.isActive = false;
     clearInterval(timer);
   };
-  const timer = setInterval(() => void tick(poll, () => askOnce(client, sessionId), { onConfirmed, stop }), ENTRY_STATUS_POLL_MILLISECONDS);
+  const timer = setInterval(() => void tick(poll, () => askOnce(client, sessionId), { ...handlers, stop }), ENTRY_STATUS_POLL_MILLISECONDS);
   return stop;
 }
 
-async function tick(poll: Poll, ask: () => Promise<Outcome>, handlers: { onConfirmed: () => void; stop: () => void }): Promise<void> {
+async function tick(poll: Poll, ask: () => Promise<Outcome>, handlers: Handlers & { stop: () => void }): Promise<void> {
   if (poll.isAsking) {
     return;
   }
   poll.isAsking = true;
   poll.count += 1;
-  const outcome = await ask();
-  poll.isAsking = false;
-  if (poll.isActive && outcome === 'confirmed') {
-    handlers.onConfirmed();
-  }
-  if (outcome !== 'waiting' || poll.count >= MAXIMUM_POLLS) {
+  try {
+    const outcome = await ask();
+    if (poll.isActive && outcome === 'confirmed') {
+      handlers.onConfirmed();
+    }
+    if (outcome !== 'waiting' || poll.count >= MAXIMUM_POLLS) {
+      handlers.stop();
+    }
+  } catch (error) {
+    const wasActive = poll.isActive;
     handlers.stop();
+    if (wasActive) {
+      handlers.onUnexpectedError(error);
+    }
+  } finally {
+    poll.isAsking = false;
   }
 }
 
@@ -52,14 +69,22 @@ async function askOnce(client: EntryClient, sessionId: string): Promise<Outcome>
   try {
     return outcomeOf((await client.status(sessionId)).state);
   } catch (error) {
-    if (error instanceof PalierStatusError) {
-      return 'refused';
-    }
-    if (error instanceof PalierUnreachableError) {
-      return 'waiting';
-    }
-    throw error;
+    return outcomeOfFailure(error);
   }
+}
+
+// A status error is checked before the network error it extends: the API answered, so only a 4xx is final.
+function outcomeOfFailure(error: unknown): Outcome {
+  if (error instanceof PalierUnauthorizedError || error instanceof PalierConsentRequiredError || error instanceof PalierRejectedError) {
+    return 'refused';
+  }
+  if (error instanceof PalierStatusError) {
+    return error.status >= 500 ? 'waiting' : 'refused';
+  }
+  if (error instanceof PalierUnreachableError) {
+    return 'waiting';
+  }
+  throw error;
 }
 
 function outcomeOf(state: EntrySessionState): Outcome {

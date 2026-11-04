@@ -2,6 +2,9 @@ import type { EntryStatusResponse } from '@palier/shared-types';
 import { act, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { ENTRY_STATUS_POLL_LIMIT_MILLISECONDS, ENTRY_STATUS_POLL_MILLISECONDS } from '../src/entries/useConfirmationPolling';
+import { PalierUnauthorizedError } from '../src/api/AuthClient';
+import { PalierStatusError } from '../src/api/LotsClient';
+import { PalierConsentRequiredError } from '../src/api/VehicleClient';
 import { FakeEntryClient, spotA1 } from './fakeEntryClient';
 import { scan } from './renderScanScreen';
 
@@ -98,6 +101,43 @@ describe('ScanScreen, confirming the entry', () => {
     await advance(ENTRY_STATUS_POLL_MILLISECONDS * 3);
 
     expect(client.statusRequests).toHaveLength(1);
+  });
+
+  it.each([
+    ['401', new PalierUnauthorizedError()],
+    ['403', new PalierConsentRequiredError()],
+  ])('stops asking when the API answers %s', async (_label, failure) => {
+    const { client } = await scan();
+    await screen.findByText('Barrière ouverte');
+    client.statusFailure = failure;
+
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS * 3);
+
+    expect(client.statusRequests).toHaveLength(1);
+  });
+
+  it('keeps asking after a 500 and confirms once the API recovers', async () => {
+    const { client } = await scan();
+    await screen.findByText('Barrière ouverte');
+    client.statusFailure = new PalierStatusError(500);
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS);
+    client.statusFailure = null;
+    client.sessionState = 'ENTRY_CONFIRMED';
+
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS);
+
+    expect(screen.getByText('Entrée confirmée')).toBeOnTheScreen();
+  });
+
+  it('shows the error state and stops asking on an unexpected failure', async () => {
+    const { client } = await scan();
+    await screen.findByText('Barrière ouverte');
+    client.statusFailure = new TypeError('unexpected');
+
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS * 3);
+
+    expect(client.statusRequests).toHaveLength(1);
+    expect(screen.getByText(/Palier ne répond pas/)).toBeOnTheScreen();
   });
 
   it('stops asking after "Terminé"', async () => {

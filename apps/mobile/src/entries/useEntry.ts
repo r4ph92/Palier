@@ -54,7 +54,8 @@ export function useEntry(client: EntryClient): EntryController {
     setState(IDLE);
   }, []);
   const confirm = useCallback(() => setState(withEntryConfirmed), []);
-  useConfirmationPolling(client, unconfirmedSessionId(state), confirm);
+  const failConfirmation = useCallback(() => setState(NOT_RESPONDING), []);
+  useConfirmationPolling(client, unconfirmedSessionId(state), { onConfirmed: confirm, onUnexpectedError: failConfirmation });
   return { state, qrContent, setQrContent, submit, startOver };
 }
 

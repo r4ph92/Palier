@@ -17,6 +17,7 @@ export class FakeEntryClient implements EntryClient {
   sessionState: EntrySessionState = 'CREATED';
   failingStatusRequests = 0;
   statusCode: number | null = null;
+  statusFailure: Error | null = null;
 
   enter(qrContent: string): Promise<EntryResponse> {
     this.scanned.push(qrContent);
@@ -43,6 +44,9 @@ export class FakeEntryClient implements EntryClient {
     if (this.failingStatusRequests > 0) {
       this.failingStatusRequests -= 1;
       return Promise.reject(new PalierUnreachableError('fake'));
+    }
+    if (this.statusFailure !== null) {
+      return Promise.reject(this.statusFailure);
     }
     if (this.statusCode !== null) {
       return Promise.reject(new PalierStatusError(this.statusCode));
