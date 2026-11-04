@@ -11,6 +11,8 @@ const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
   OPERATOR_EXISTS: 409,
   NO_OPERATOR: 409,
   LOT_NOT_FOUND: 404,
+  OPERATOR_NOT_FOUND: 404,
+  STRIPE_UNAVAILABLE: 503,
 };
 
 export function handleDashboardError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { DashboardLot, DashboardOperator } from '@palier/shared-types';
+import type { DashboardLot, DashboardOperator, KycStatus } from '@palier/shared-types';
 import type { NewOperator, OperatorRepository } from '../../../src/domain/dashboard/OperatorRepository.ts';
 import { GARAGE_ROY_ID } from '../../../src/seed/fixtures/garageRoy.ts';
 import { PIERRE_ROY_ID, SOPHIE_LAVOIE_ID } from '../../../src/config/testPersonas.ts';
@@ -40,6 +40,13 @@ export class FakeOperatorRepository implements OperatorRepository {
     this.#operators.set(created.id, created);
     this.#memberships.set(userId, created.id);
     return Promise.resolve(created);
+  }
+
+  setKycStatus(operatorId: string, kycStatus: KycStatus): void {
+    const found = this.#operators.get(operatorId);
+    if (found !== undefined) {
+      this.#operators.set(operatorId, { ...found, kycStatus });
+    }
   }
 
   listLotsOfOperator(operatorId: string): Promise<readonly DashboardLot[]> {

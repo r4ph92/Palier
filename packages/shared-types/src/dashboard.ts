@@ -76,6 +76,8 @@ export const DASHBOARD_ERROR_CODES = [
   'OPERATOR_EXISTS',
   'NO_OPERATOR',
   'LOT_NOT_FOUND',
+  'OPERATOR_NOT_FOUND',
+  'STRIPE_UNAVAILABLE',
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];
