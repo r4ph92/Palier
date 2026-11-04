@@ -3,6 +3,7 @@ import type { EntryRefusalCode } from '@palier/shared-types';
 import { EntryEligibility, type EntryPolicy } from '../../src/domain/entries/EntryEligibility.ts';
 import type { EntryGate } from '../../src/domain/entries/EntryGateRepository.ts';
 import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
+import { PricingPolicyInvalidError } from '../../src/domain/pricing/PricingPolicy.ts';
 import { FakeDriverRepository, julie } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 import {
@@ -12,7 +13,6 @@ import {
   entreeRoyGate,
   FakeEntryGateRepository,
   LAVOIE_ACCOUNT,
-  silentLog,
   SORTIE_DEMO_SECRET,
   sortieDemoGate,
 } from './fakes/entryFakes.ts';
@@ -41,7 +41,7 @@ async function eligibilityFor({ gates, policy = STRICT, plate = true, card = tru
 }
 
 async function refusalOf(eligibility: EntryEligibility, qrContent: string): Promise<EntryRefusalCode | undefined> {
-  const error: unknown = await eligibility.check({ driverId: julie.id, qrContent }, silentLog()).catch((caught: unknown) => caught);
+  const error: unknown = await eligibility.check({ driverId: julie.id, qrContent }).catch((caught: unknown) => caught);
   return error instanceof Error && 'reason' in error ? (error.reason as EntryRefusalCode) : undefined;
 }
 
@@ -49,7 +49,7 @@ describe('entry eligibility', () => {
   it('answers what the admission needs for Julie at Entrée Démo', async () => {
     const eligibility = await eligibilityFor();
 
-    const eligible = await eligibility.check({ driverId: julie.id, qrContent: entreeDemoQr }, silentLog());
+    const eligible = await eligibility.check({ driverId: julie.id, qrContent: entreeDemoQr });
 
     expect(eligible).toEqual({
       driverId: julie.id,
@@ -63,15 +63,14 @@ describe('entry eligibility', () => {
   it.each([
     ['no pricing policy', null],
     ['a policy without an increment length', { incrementCents: 75 }],
-  ])('refuses a lot with %s as LOT_NOT_IN_SERVICE and logs a warning', async (_case, pricingPolicy) => {
+  ])('refuses a lot with %s as LOT_NOT_IN_SERVICE, with the pricing error as cause', async (_case, pricingPolicy) => {
     const unpriced = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, pricingPolicy } };
     const eligibility = await eligibilityFor({ gates: [unpriced] });
-    const log = silentLog();
 
-    const refusal: unknown = await eligibility.check({ driverId: julie.id, qrContent: entreeDemoQr }, log).catch((caught: unknown) => caught);
+    const refusal: unknown = await eligibility.check({ driverId: julie.id, qrContent: entreeDemoQr }).catch((caught: unknown) => caught);
 
     expect(refusal).toMatchObject({ reason: 'LOT_NOT_IN_SERVICE' });
-    expect(log.warnings).toHaveLength(1);
+    expect((refusal as Error).cause).toBeInstanceOf(PricingPolicyInvalidError);
   });
 
   it.each([
@@ -112,7 +111,7 @@ describe('entry eligibility', () => {
     const unpayable = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, operatorStripeAccountId: null } };
     const policy = { allowPlatformChargesWithoutOperatorAccount: true };
 
-    const eligible = await (await eligibilityFor({ gates: [unpayable], policy })).check({ driverId: julie.id, qrContent: entreeDemoQr }, silentLog());
+    const eligible = await (await eligibilityFor({ gates: [unpayable], policy })).check({ driverId: julie.id, qrContent: entreeDemoQr });
 
     expect(eligible.payment.destinationAccountId).toBeNull();
   });

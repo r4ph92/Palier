@@ -53,7 +53,7 @@ async function enter(request: FastifyRequest<EnterRoute>, reply: FastifyReply, {
     throw new EntryRefusedError('PAYMENTS_UNAVAILABLE');
   }
   const driver = signedInDriver(request);
-  const eligible = await entries.eligibility.check({ driverId: driver.id, qrContent: request.body.qrContent }, request.log);
+  const eligible = await entries.eligibility.check({ driverId: driver.id, qrContent: request.body.qrContent });
   if (!limiter.allow(driver.id)) {
     throw new EntryRefusedError('TOO_MANY_ENTRIES');
   }
