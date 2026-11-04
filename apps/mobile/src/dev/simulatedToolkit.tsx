@@ -7,16 +7,21 @@ import { SignalJournal } from './SignalJournal';
 import { SimulatedPositioningModule } from './SimulatedPositioningModule';
 import { SimulatedSignalsPanel } from './SimulatedSignalsPanel';
 
-const journal = new SignalJournal(() => new Date());
-const simulator = new SimulatedPositioningModule(journal, () => Date.now());
+export function createSimulatedToolkit(now: () => number): DeveloperToolkit {
+  const journal = new SignalJournal(() => new Date(now()));
+  const simulator = new SimulatedPositioningModule(journal, now);
 
-function bind(core: PositioningCore): DeveloperEntry {
-  core.subscribe(recordEvents(journal));
-  const actions = [...signalActions(simulator), ...commandActions(core, () => Date.now())];
-  return {
-    label: 'Développeur',
-    Panel: ({ onBack }) => <SimulatedSignalsPanel journal={journal} actions={actions} onBack={onBack} />,
-  };
+  function bind(core: PositioningCore): DeveloperEntry {
+    core.subscribe(recordEvents(journal));
+    const signals = signalActions(simulator);
+    const commands = commandActions(core, now);
+    return {
+      label: 'Développeur',
+      Panel: ({ onBack }) => <SimulatedSignalsPanel journal={journal} signals={signals} commands={commands} onBack={onBack} />,
+    };
+  }
+
+  return { module: simulator, bind };
 }
 
-export const simulatedToolkit: DeveloperToolkit = { module: simulator, bind };
+export const simulatedToolkit: DeveloperToolkit = createSimulatedToolkit(() => Date.now());

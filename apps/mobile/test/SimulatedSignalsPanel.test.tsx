@@ -1,10 +1,7 @@
+import { AccessibilityInfo } from 'react-native';
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { commandActions, signalActions } from '../src/dev/panelActions';
-import { recordEvents } from '../src/dev/recordEvents';
-import { SignalJournal } from '../src/dev/SignalJournal';
-import { SimulatedPositioningModule } from '../src/dev/SimulatedPositioningModule';
-import { SimulatedSignalsPanel } from '../src/dev/SimulatedSignalsPanel';
+import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import { PositioningCore } from '../src/positioning/PositioningCore';
 
 const SAFE_AREA_METRICS = {
@@ -14,14 +11,11 @@ const SAFE_AREA_METRICS = {
 const CLOCK = new Date(2026, 10, 4, 18, 2, 5);
 
 async function renderPanel(onBack: () => void = () => undefined) {
-  const journal = new SignalJournal(() => CLOCK);
-  const simulator = new SimulatedPositioningModule(journal, () => CLOCK.getTime());
-  const core = new PositioningCore(simulator);
-  core.subscribe(recordEvents(journal));
-  const actions = [...signalActions(simulator), ...commandActions(core, () => CLOCK.getTime())];
+  const toolkit = createSimulatedToolkit(() => CLOCK.getTime());
+  const { Panel } = toolkit.bind(new PositioningCore(toolkit.module));
   await render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <SimulatedSignalsPanel journal={journal} actions={actions} onBack={onBack} />
+      <Panel onBack={onBack} />
     </SafeAreaProvider>,
   );
   return userEvent.setup();
@@ -74,5 +68,39 @@ describe('SimulatedSignalsPanel commands', () => {
     await user.press(screen.getByRole('button', { name: button }));
 
     expect(screen.getByText(`18 h 02 min 05 s  ${line}`)).toBeOnTheScreen();
+  });
+});
+
+describe('SimulatedSignalsPanel accessibility', () => {
+  let announce: jest.SpyInstance;
+
+  beforeEach(() => {
+    announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockImplementation(() => undefined);
+    announce.mockClear();
+  });
+
+  afterEach(() => announce.mockRestore());
+
+  it('announces the newest entry every time, even when the text repeats', async () => {
+    const user = await renderPanel();
+
+    await user.press(screen.getByRole('button', { name: 'Allée 2' }));
+    await user.press(screen.getByRole('button', { name: 'Allée 2' }));
+
+    expect(announce.mock.calls).toEqual([['Allée détectée : minor 2'], ['Allée détectée : minor 2']]);
+  });
+
+  it('announces nothing when the panel opens', async () => {
+    await renderPanel();
+
+    expect(announce).not.toHaveBeenCalled();
+  });
+
+  it('marks the Journal, Signaux and Commandes labels as headers', async () => {
+    await renderPanel();
+
+    for (const name of ['Journal', 'Signaux', 'Commandes']) {
+      expect(screen.getByRole('header', { name })).toBeOnTheScreen();
+    }
   });
 });
