@@ -106,6 +106,7 @@ export const en: Translations = {
       PREREQUISITES_MISSING: 'Add a plate and a card before entering',
       OPERATOR_NOT_PAYABLE: 'This lot cannot take payments right now',
       LOT_FULL: 'Full — the barrier stays closed',
+      NO_SUITABLE_SPOT: 'No suitable spot for your vehicle — the barrier stays closed',
       ALREADY_INSIDE: 'You already have an entry in progress',
       CARD_DECLINED: 'Card declined',
       PAYMENTS_UNAVAILABLE: 'Payment temporarily unavailable — the barrier stays closed',

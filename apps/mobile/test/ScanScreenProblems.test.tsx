@@ -11,6 +11,7 @@ describe('ScanScreen refusals', () => {
     ['PREREQUISITES_MISSING', 'Ajoutez une plaque et une carte avant d’entrer', 'Add a plate and a card before entering'],
     ['OPERATOR_NOT_PAYABLE', 'Ce parking n’accepte pas les paiements pour le moment', 'This lot cannot take payments right now'],
     ['LOT_FULL', 'Complet — la barrière reste fermée', 'Full — the barrier stays closed'],
+    ['NO_SUITABLE_SPOT', 'Aucune place adaptée à votre véhicule — la barrière reste fermée', 'No suitable spot for your vehicle — the barrier stays closed'],
     ['ALREADY_INSIDE', 'Vous avez déjà une entrée en cours', 'You already have an entry in progress'],
     ['CARD_DECLINED', 'Carte refusée', 'Card declined'],
     ['PAYMENTS_UNAVAILABLE', 'Paiement momentanément indisponible — la barrière reste fermée', 'Payment temporarily unavailable — the barrier stays closed'],

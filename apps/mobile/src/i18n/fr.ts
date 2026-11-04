@@ -104,6 +104,7 @@ export const fr = {
       PREREQUISITES_MISSING: 'Ajoutez une plaque et une carte avant d’entrer',
       OPERATOR_NOT_PAYABLE: 'Ce parking n’accepte pas les paiements pour le moment',
       LOT_FULL: 'Complet — la barrière reste fermée',
+      NO_SUITABLE_SPOT: 'Aucune place adaptée à votre véhicule — la barrière reste fermée',
       ALREADY_INSIDE: 'Vous avez déjà une entrée en cours',
       CARD_DECLINED: 'Carte refusée',
       PAYMENTS_UNAVAILABLE: 'Paiement momentanément indisponible — la barrière reste fermée',
