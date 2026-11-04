@@ -17,12 +17,16 @@ interface Handlers {
   onUnexpectedError: (error: unknown) => void;
 }
 
-// Pass stable handlers: a new function restarts the polling and its two-minute limit.
-export function useConfirmationPolling(client: EntryClient, sessionId: string | null, handlers: Handlers): void {
+export interface PolledEntry {
+  readonly sessionId: string;
+}
+
+// Each new entry object, or handler, restarts the polling and its two-minute limit: pass stable ones.
+export function useConfirmationPolling(client: EntryClient, entry: PolledEntry | null, handlers: Handlers): void {
   const { onConfirmed, onCancelled, onUnexpectedError } = handlers;
   useEffect(() => {
-    return sessionId === null ? undefined : startPolling(client, sessionId, { onConfirmed, onCancelled, onUnexpectedError });
-  }, [client, sessionId, onConfirmed, onCancelled, onUnexpectedError]);
+    return entry === null ? undefined : startPolling(client, entry.sessionId, { onConfirmed, onCancelled, onUnexpectedError });
+  }, [client, entry, onConfirmed, onCancelled, onUnexpectedError]);
 }
 
 type PollHandlers = Handlers & { stop: () => void };

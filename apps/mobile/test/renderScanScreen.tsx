@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEntry } from '../src/entries/useEntry';
+import { usePendingEntryWatch } from '../src/entries/usePendingEntryWatch';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { ScanScreen } from '../src/screens/ScanScreen';
 import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
@@ -21,9 +22,11 @@ interface ScanHarnessProps {
   readonly onAddCard: () => void;
 }
 
-// The scan tab owns the entry; this stands in for it with Terminé going back to the form.
+const noSessionToRefresh = () => undefined;
+
+// The scan tab owns the entry and the tabs own its watch; this stands in for both, with Terminé going back to the form.
 function ScanHarness({ client, onAddPlate, onAddCard }: ScanHarnessProps) {
-  const entry = useEntry(client);
+  const entry = useEntry(client, usePendingEntryWatch(client, noSessionToRefresh));
   return <ScanScreen entry={entry} onDone={entry.startOver} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
 }
 

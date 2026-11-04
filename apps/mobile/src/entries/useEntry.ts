@@ -4,7 +4,7 @@ import { PalierUnauthorizedError } from '../api/AuthClient';
 import type { EntryClient } from '../api/EntryClient';
 import { PalierStatusError, PalierUnreachableError } from '../api/LotsClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
-import { useConfirmationPolling } from './useConfirmationPolling';
+import type { FollowedEntry, PendingEntryWatch } from './usePendingEntryWatch';
 
 // Refusals with a message of their own; PAYMENTS_UNAVAILABLE and any unknown code read as "Palier is not responding".
 export const ENTRY_REFUSALS = [
@@ -26,7 +26,6 @@ export type EntryState =
   | { readonly status: 'idle' }
   | { readonly status: 'submitting' }
   | { readonly status: 'entered'; readonly sessionId: string; readonly spot: AssignedSpot; readonly isConfirmed: boolean }
-  // Nobody drove through within the confirmation window: Palier freed the spot and released the hold.
   | { readonly status: 'cancelled'; readonly sessionId: string }
   | { readonly status: 'refused'; readonly refusal: EntryRefusal }
   | { readonly status: 'notResponding' }
@@ -43,43 +42,47 @@ export interface EntryController {
 const IDLE: EntryState = { status: 'idle' };
 const NOT_RESPONDING: EntryState = { status: 'notResponding' };
 
-export function useEntry(client: EntryClient): EntryController {
+// The barrier's entry is handed to the watch above the tabs, which alone polls it and reports what became of it.
+export function useEntry(client: EntryClient, pendingEntry: PendingEntryWatch): EntryController {
   const [state, setState] = useState<EntryState>(IDLE);
   const [qrContent, setQrContent] = useState('');
+  const { followed, watch, clear } = pendingEntry;
   const submit = useCallback(() => {
     if (qrContent.trim() !== '') {
-      void enter(client, qrContent, setState);
+      clear();
+      void enter(client, qrContent, { setState, watch });
     }
-  }, [client, qrContent]);
+  }, [client, qrContent, clear, watch]);
   const startOver = useCallback(() => {
     setQrContent('');
     setState(IDLE);
   }, []);
-  const confirm = useCallback(() => setState(withEntryConfirmed), []);
-  const cancel = useCallback(() => setState(withEntryCancelled), []);
-  // Thrown inside the state update, like in enter(), so an unexpected error reaches the error boundary.
-  const failConfirmation = useCallback((error: unknown) => setState(() => { throw error; }), []);
-  useConfirmationPolling(client, unconfirmedSessionId(state), { onConfirmed: confirm, onCancelled: cancel, onUnexpectedError: failConfirmation });
-  return { state, qrContent, setQrContent, submit, startOver };
+  return { state: withFollowedOutcome(state, followed), qrContent, setQrContent, submit, startOver };
 }
 
-export function unconfirmedSessionId(state: EntryState): string | null {
-  return state.status === 'entered' && !state.isConfirmed ? state.sessionId : null;
+// On the spot the outcome replaces the barrier line; once the driver left the spot, only a cancellation still shows, on the form.
+function withFollowedOutcome(state: EntryState, followed: FollowedEntry | null): EntryState {
+  if (followed === null || followed.outcome === 'waiting') {
+    return state;
+  }
+  const cancelled: EntryState = { status: 'cancelled', sessionId: followed.sessionId };
+  if (state.status === 'entered' && state.sessionId === followed.sessionId) {
+    return followed.outcome === 'confirmed' ? { ...state, isConfirmed: true } : cancelled;
+  }
+  return state.status === 'idle' && followed.outcome === 'cancelled' ? cancelled : state;
 }
 
-function withEntryConfirmed(state: EntryState): EntryState {
-  return state.status === 'entered' ? { ...state, isConfirmed: true } : state;
+interface EntryUpdates {
+  readonly setState: Dispatch<SetStateAction<EntryState>>;
+  readonly watch: (sessionId: string) => void;
 }
 
-function withEntryCancelled(state: EntryState): EntryState {
-  return state.status === 'entered' ? { status: 'cancelled', sessionId: state.sessionId } : state;
-}
-
-async function enter(client: EntryClient, qrContent: string, setState: Dispatch<SetStateAction<EntryState>>): Promise<void> {
+async function enter(client: EntryClient, qrContent: string, { setState, watch }: EntryUpdates): Promise<void> {
   setState({ status: 'submitting' });
   try {
     const entry = await client.enter(qrContent);
     setState({ status: 'entered', sessionId: entry.sessionId, spot: entry.spot, isConfirmed: false });
+    watch(entry.sessionId);
   } catch (error) {
     // Run inside the state update so an unexpected error is thrown during render and reaches the error boundary.
     setState(() => stateAfterFailure(error));
