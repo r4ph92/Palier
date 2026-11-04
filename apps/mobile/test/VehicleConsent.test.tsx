@@ -5,6 +5,7 @@ import { applyLanguage } from '../src/i18n/i18n';
 import { PalierApp } from '../src/PalierApp';
 import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
+import { FakeEntryClient } from './fakeEntryClient';
 import { FakePaymentMethodClient } from './fakePaymentMethodClient';
 
 const SAFE_AREA_METRICS = {
@@ -26,6 +27,7 @@ describe('a vehicle request refused for a missing privacy notice', () => {
           testSignInEnabled={false}
           createLotsClient={() => new FakeLotsClient(parkingDemoWith(10))}
           createPaymentMethodClient={() => new FakePaymentMethodClient()}
+          createEntryClient={() => new FakeEntryClient()}
           createVehicleClient={(_token, _onUnauthorized, onConsentRequired) => ({
             listVehicles() {
               // A newer notice is now in force: Julie's record no longer carries an accepted version.

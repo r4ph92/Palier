@@ -5,9 +5,9 @@ import { useColors } from '../theme/useColors';
 import { MINIMUM_TOUCH_TARGET, spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
-export type Tab = 'lots' | 'account';
+export type Tab = 'lots' | 'scan' | 'account';
 
-const TABS: readonly Tab[] = ['lots', 'account'];
+const TABS: readonly Tab[] = ['lots', 'scan', 'account'];
 // Like the system tab bar, labels grow a little with Dynamic Type, then shrink to fit on one line.
 const TAB_LABEL_MAX_FONT_SCALE = 1.4;
 

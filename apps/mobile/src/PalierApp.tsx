@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import type { AuthClient } from './api/AuthClient';
+import type { EntryClient } from './api/EntryClient';
 import { onUpdateRequired, STORE_URL } from './api/appUpdate';
 import type { LotsClient } from './api/LotsClient';
 import { LotsClientProvider } from './api/LotsClientContext';
@@ -19,6 +20,7 @@ import { AddVehicleScreen } from './screens/AddVehicleScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { PaymentMethodScreen } from './screens/PaymentMethodScreen';
 import { PrivacyNoticeScreen } from './screens/PrivacyNoticeScreen';
+import { ScanScreen } from './screens/ScanScreen';
 import { SignInScreen } from './screens/SignInScreen';
 import { VehiclesScreen } from './screens/VehiclesScreen';
 import { useColors } from './theme/useColors';
@@ -31,6 +33,7 @@ export interface PalierAppProps {
   readonly createLotsClient: (token: string, onUnauthorized: () => void) => LotsClient;
   readonly createPaymentMethodClient: (token: string, onUnauthorized: () => void) => PaymentMethodClient;
   readonly createVehicleClient: (token: string, onUnauthorized: () => void, onConsentRequired: () => void) => VehicleClient;
+  readonly createEntryClient: (token: string, onUnauthorized: () => void, onConsentRequired: () => void) => EntryClient;
 }
 
 type AccountPage = 'account' | 'vehicles' | 'addVehicle' | 'payment';
@@ -74,6 +77,7 @@ interface SignedInClients {
   readonly lots: LotsClient;
   readonly payment: PaymentMethodClient;
   readonly vehicles: VehicleClient;
+  readonly entry: EntryClient;
 }
 
 function useSignedInClients(token: string, session: SessionController, factories: PalierAppProps): SignedInClients {
@@ -84,7 +88,11 @@ function useSignedInClients(token: string, session: SessionController, factories
     () => factories.createVehicleClient(token, expire, () => refreshDriver(token)),
     [factories, token, expire, refreshDriver],
   );
-  return { lots, payment, vehicles };
+  const entry = useMemo(
+    () => factories.createEntryClient(token, expire, () => refreshDriver(token)),
+    [factories, token, expire, refreshDriver],
+  );
+  return { lots, payment, vehicles, entry };
 }
 
 interface SignedInTabsProps {
@@ -94,30 +102,54 @@ interface SignedInTabsProps {
 }
 
 function SignedInTabs({ firstName, clients, onSignOut }: SignedInTabsProps) {
-  const { tab, accountPage, selectTab, setAccountPage } = useTabs();
+  const tabs = useTabs();
   return (
     <View style={styles.app}>
       <LotsClientProvider client={clients.lots}>
-        {tab === 'lots' ? (
-          <HomeScreen firstName={firstName} />
-        ) : (
-          <AccountTab firstName={firstName} page={accountPage} clients={clients} onPageChange={setAccountPage} onSignOut={onSignOut} />
-        )}
+        <TabContent firstName={firstName} clients={clients} tabs={tabs} onSignOut={onSignOut} />
       </LotsClientProvider>
-      <TabBar selected={tab} onSelect={selectTab} />
+      <TabBar selected={tabs.tab} onSelect={tabs.selectTab} />
     </View>
   );
 }
 
+interface TabContentProps extends SignedInTabsProps {
+  readonly tabs: TabsController;
+}
+
+function TabContent({ firstName, clients, tabs, onSignOut }: TabContentProps) {
+  switch (tabs.tab) {
+    case 'lots':
+      return <HomeScreen firstName={firstName} />;
+    case 'scan':
+      return <ScanScreen client={clients.entry} onAddPlate={() => tabs.openAccountPage('vehicles')} onAddCard={() => tabs.openAccountPage('payment')} />;
+    case 'account':
+      return <AccountTab firstName={firstName} page={tabs.accountPage} clients={clients} onPageChange={tabs.setAccountPage} onSignOut={onSignOut} />;
+  }
+}
+
+interface TabsController {
+  readonly tab: Tab;
+  readonly accountPage: AccountPage;
+  selectTab(next: Tab): void;
+  setAccountPage(page: AccountPage): void;
+  openAccountPage(page: AccountPage): void;
+}
+
 // Choosing a tab starts the account tab again at its first page, so Compte never reopens on Véhicules.
-function useTabs() {
+function useTabs(): TabsController {
   const [tab, setTab] = useState<Tab>('lots');
   const [accountPage, setAccountPage] = useState<AccountPage>('account');
   function selectTab(next: Tab) {
     setTab(next);
     setAccountPage('account');
   }
-  return { tab, accountPage, selectTab, setAccountPage };
+  // The scan tab sends a driver without plate or card straight to the page that adds one.
+  function openAccountPage(page: AccountPage) {
+    setTab('account');
+    setAccountPage(page);
+  }
+  return { tab, accountPage, selectTab, setAccountPage, openAccountPage };
 }
 
 interface AccountTabProps {

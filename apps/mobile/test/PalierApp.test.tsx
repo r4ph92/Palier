@@ -7,6 +7,7 @@ import { PalierApp } from '../src/PalierApp';
 import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakePaymentMethodClient } from './fakePaymentMethodClient';
+import { FakeEntryClient } from './fakeEntryClient';
 import { FakeVehicleClient } from './fakeVehicleClient';
 
 const SAFE_AREA_METRICS = {
@@ -33,6 +34,7 @@ async function renderApp(options: AppOptions = {}) {
         createLotsClient={options.createLotsClient ?? (() => new FakeLotsClient(parkingDemoWith(10)))}
         createPaymentMethodClient={() => new FakePaymentMethodClient()}
         createVehicleClient={() => new FakeVehicleClient()}
+        createEntryClient={() => new FakeEntryClient()}
       />
     </SafeAreaProvider>,
   );

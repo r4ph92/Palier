@@ -4,6 +4,7 @@ import { applyLanguage } from '../src/i18n/i18n';
 import { PalierApp } from '../src/PalierApp';
 import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
+import { FakeEntryClient } from './fakeEntryClient';
 import { FakePaymentMethodClient } from './fakePaymentMethodClient';
 import { abc123, FakeVehicleClient } from './fakeVehicleClient';
 
@@ -26,6 +27,7 @@ async function renderSignedInJulie(vehicleClient: FakeVehicleClient) {
         createLotsClient={() => new FakeLotsClient(parkingDemoWith(10))}
         createVehicleClient={() => vehicleClient}
         createPaymentMethodClient={() => new FakePaymentMethodClient()}
+        createEntryClient={() => new FakeEntryClient()}
       />
     </SafeAreaProvider>,
   );

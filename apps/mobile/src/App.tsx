@@ -2,7 +2,9 @@ import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import type { EntryClient } from './api/EntryClient';
 import { HttpAuthClient } from './api/HttpAuthClient';
+import { HttpEntryClient } from './api/HttpEntryClient';
 import { HttpLotsClient } from './api/HttpLotsClient';
 import { HttpPaymentMethodClient } from './api/HttpPaymentMethodClient';
 import { HttpVehicleClient } from './api/HttpVehicleClient';
@@ -37,6 +39,10 @@ function createVehicleClient(token: string, onUnauthorized: () => void, onConsen
   return new HttpVehicleClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired });
 }
 
+function createEntryClient(token: string, onUnauthorized: () => void, onConsentRequired: () => void): EntryClient {
+  return new HttpEntryClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired });
+}
+
 const palierApp = (
   <StripeProvider publishableKey={stripePublishableKey}>
     <PalierApp
@@ -46,6 +52,7 @@ const palierApp = (
       createLotsClient={createLotsClient}
       createPaymentMethodClient={createPaymentMethodClient}
       createVehicleClient={createVehicleClient}
+      createEntryClient={createEntryClient}
     />
   </StripeProvider>
 );
