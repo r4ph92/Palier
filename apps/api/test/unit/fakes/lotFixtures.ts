@@ -8,9 +8,9 @@ export const PARKING_DEMO_CATEGORIES: SpotCountByCategory = { standard: 7, elect
 // Displayed once 8 vehicles are inside while every spot is free: 2 by the counter.
 export const PARKING_DEMO_CATEGORIES_WITH_8_INSIDE: SpotCountByCategory = { standard: 2, electric: 1, accessible: 1, oversize: 1 };
 
-// Parking Démo as seeded: capacity 10, nobody inside, every spot free.
+// Parking Démo as seeded: capacity 10, nobody inside, nothing held, every spot free.
 export function parkingDemoAvailability(overrides: Partial<LotAvailability> = {}): LotAvailability {
-  return { capacity: 10, vehicleCount: 0, availableSpotCount: 10, availableByCategory: PARKING_DEMO_CATEGORIES, ...overrides };
+  return { capacity: 10, vehicleCount: 0, heldSpotCount: 0, availableSpotCount: 10, availableByCategory: PARKING_DEMO_CATEGORIES, ...overrides };
 }
 
 export function parkingDemoOnline(availability = parkingDemoAvailability()): OnlineLot {

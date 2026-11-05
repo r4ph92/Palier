@@ -13,6 +13,21 @@ describe('freeSpotCount', () => {
     expect(freeSpotCount(parkingDemoAvailability({ vehicleCount, availableSpotCount }))).toBe(expected);
   });
 
+  it.each([
+    [1, 9, 9],
+    [3, 7, 7],
+    [3, 10, 7],
+  ])('with %i held spots and %i available spots shows %i', (heldSpotCount, availableSpotCount, expected) => {
+    expect(freeSpotCount(parkingDemoAvailability({ heldSpotCount, availableSpotCount }))).toBe(expected);
+  });
+
+  it('drops by one for a hold even when the vehicle count is the binding term', () => {
+    const before = parkingDemoAvailability({ vehicleCount: 8, availableSpotCount: 10 });
+    const afterOneHold = parkingDemoAvailability({ vehicleCount: 8, heldSpotCount: 1, availableSpotCount: 9 });
+
+    expect(freeSpotCount(afterOneHold)).toBe(freeSpotCount(before) - 1);
+  });
+
   it('is zero for a lot without capacity', () => {
     expect(freeSpotCount(parkingDemoAvailability({ capacity: 0, availableSpotCount: 0 }))).toBe(0);
   });

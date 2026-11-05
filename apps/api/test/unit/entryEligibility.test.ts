@@ -125,6 +125,12 @@ describe('entry eligibility', () => {
     expect(await refusalOf(await eligibilityFor({ gates: [full] }), entreeDemoQr)).toBe('LOT_FULL');
   });
 
+  it('refuses a lot whose vehicles and held spots fill its capacity as LOT_FULL', async () => {
+    const heldFull = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 7, heldSpotCount: 3 } };
+
+    expect(await refusalOf(await eligibilityFor({ gates: [heldFull] }), entreeDemoQr)).toBe('LOT_FULL');
+  });
+
   it('admits a driver into a lot with one vehicle space left', async () => {
     const almostFull = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 9 } };
 

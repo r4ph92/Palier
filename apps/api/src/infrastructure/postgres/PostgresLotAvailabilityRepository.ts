@@ -3,6 +3,7 @@ import type { LotAvailabilityRepository } from '../../domain/lots/LotAvailabilit
 import type { OnlineLot } from '../../domain/lots/OnlineLot.ts';
 import type { AvailableSpotGroup } from '../../domain/occupancy/availableByCategory.ts';
 import type { Database } from './database.ts';
+import { HELD_SPOT_COUNT } from './heldSpotCount.ts';
 import { onlineLotFromRow } from './onlineLotRow.ts';
 import { parkingLot, spot } from './schema.ts';
 
@@ -27,6 +28,7 @@ export class PostgresLotAvailabilityRepository implements LotAvailabilityReposit
         longitude: parkingLot.longitude,
         capacity: parkingLot.capacity,
         vehicleCount: parkingLot.vehicleCount,
+        heldSpotCount: HELD_SPOT_COUNT,
       })
       .from(parkingLot)
       .where(eq(parkingLot.isOnline, true))

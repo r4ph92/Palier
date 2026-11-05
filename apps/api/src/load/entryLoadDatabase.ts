@@ -4,6 +4,7 @@ import { hasRoomForAnotherVehicle } from '../domain/occupancy/hasRoomForAnotherV
 import type { VehicleNeeds } from '../domain/vehicles/VehicleRepository.ts';
 import { ACTIVE_SESSION } from '../infrastructure/postgres/activeSessionStates.ts';
 import type { Database } from '../infrastructure/postgres/database.ts';
+import { HELD_SPOT_COUNT } from '../infrastructure/postgres/heldSpotCount.ts';
 import { readFreeSpots } from '../infrastructure/postgres/spotClaim.ts';
 
 export interface SessionCheck {
@@ -27,6 +28,7 @@ interface CountRow extends Record<string, unknown> {
 interface LotOccupancyRow extends Record<string, unknown> {
   readonly capacity: number;
   readonly vehicle_count: number;
+  readonly held_spot_count: number;
 }
 
 interface SessionCheckRow extends Record<string, unknown> {
@@ -41,11 +43,12 @@ export async function countActiveSessionsOf(database: Database, driverIds: reado
   return rows[0]?.count ?? 0;
 }
 
-// Eligibility refuses the whole lot once its vehicles reach capacity; below that, the free spots that fit decide.
+// Eligibility refuses the whole lot once its vehicles and held spots reach capacity; below that, the free spots that fit decide.
 export async function countAdmissibleSpots(database: Database, lotId: string, needs: VehicleNeeds): Promise<number> {
-  const rows = await database.execute<LotOccupancyRow>(sql`select capacity, vehicle_count from parking_lot where id = ${lotId}`);
+  const rows = await database.execute<LotOccupancyRow>(sql`
+    select capacity, vehicle_count, ${HELD_SPOT_COUNT} as held_spot_count from parking_lot where id = ${lotId}`);
   const lot = rows[0];
-  if (lot === undefined || !hasRoomForAnotherVehicle({ capacity: lot.capacity, vehicleCount: lot.vehicle_count })) {
+  if (lot === undefined || !hasRoomForAnotherVehicle({ capacity: lot.capacity, vehicleCount: lot.vehicle_count, heldSpotCount: lot.held_spot_count })) {
     return 0;
   }
   return (await readFreeSpots(database, lotId)).filter((spot) => spotFits(needs, spot)).length;

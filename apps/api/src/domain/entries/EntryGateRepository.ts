@@ -10,6 +10,7 @@ export interface EntryGateLot {
   readonly pricingPolicy: unknown;
   readonly capacity: number;
   readonly vehicleCount: number;
+  readonly heldSpotCount: number;
   readonly operatorStripeAccountId: string | null;
 }
 

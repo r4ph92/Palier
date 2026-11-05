@@ -1,8 +1,13 @@
 import type { LotAvailability } from './LotAvailability.ts';
 
-export type LotOccupancy = Pick<LotAvailability, 'capacity' | 'vehicleCount'>;
+export type LotOccupancy = Pick<LotAvailability, 'capacity' | 'vehicleCount' | 'heldSpotCount'>;
 
-// Same count as freeSpotCount: a lot can be full by vehicles inside even while spots look free.
+// A held spot is promised to a driver on the way, so it takes room like a vehicle already inside.
+export function vehicleRoomLeft({ capacity, vehicleCount, heldSpotCount }: LotOccupancy): number {
+  return capacity - vehicleCount - heldSpotCount;
+}
+
+// Same count as freeSpotCount: a lot can be full by vehicles inside and holds even while spots look free.
 export function hasRoomForAnotherVehicle(lot: LotOccupancy): boolean {
-  return lot.capacity - lot.vehicleCount > 0;
+  return vehicleRoomLeft(lot) > 0;
 }
