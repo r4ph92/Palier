@@ -17,9 +17,10 @@ export interface SpotHoldUpdates {
   readonly isReading: RefObject<boolean>;
 }
 
-// True when Palier answered.
-export async function readCurrentHold(client: SpotHoldClient, updates: SpotHoldUpdates): Promise<boolean> {
-  let isAnswered = false;
+export type HoldReadResult = 'answered' | 'unanswered';
+
+export async function readCurrentHold(client: SpotHoldClient, updates: SpotHoldUpdates): Promise<HoldReadResult> {
+  let result: HoldReadResult = 'unanswered';
   const holdChangesBefore = updates.holdChanges.current;
   updates.isReading.current = true;
   try {
@@ -28,13 +29,13 @@ export async function readCurrentHold(client: SpotHoldClient, updates: SpotHoldU
       updates.setHeld((previous) => heldSpotAfterRead(previous, spotHold));
     }
     updates.setReadState('settled');
-    isAnswered = true;
+    result = 'answered';
   } catch (error) {
     rethrowUnexpectedReadFailure(error, updates);
   } finally {
     updates.isReading.current = false;
   }
-  return isAnswered;
+  return result;
 }
 
 // Run inside the state update so an unexpected error is thrown during render and reaches the error boundary.
@@ -97,7 +98,8 @@ export async function releaseHold(client: SpotHoldClient, spotHoldId: string, up
 // Released on another device first: the hold is read again and the banner goes. Without an answer the banner would stay, so the driver is told.
 async function showReleaseFailure(client: SpotHoldClient, error: unknown, updates: SpotHoldUpdates & ReleaseCallbacks): Promise<void> {
   const isGone = error instanceof PalierRejectedError && error.code === 'HOLD_NOT_FOUND';
-  if (isGone && (await readCurrentHold(client, updates))) {
+  const read = isGone ? await readCurrentHold(client, updates) : 'unanswered';
+  if (read === 'answered') {
     updates.onGone();
     return;
   }
