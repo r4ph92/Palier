@@ -1,5 +1,6 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
 import { ACTIVE_ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
+import { isInstant } from './isInstant';
 import { PalierUnreachableError } from './LotsClient';
 import { isSpot } from './parseEntry';
 
@@ -30,10 +31,6 @@ function isCurrentParkingSession(candidate: unknown): candidate is CurrentParkin
     isInstant(enteredAt) &&
     [elapsedMinutes, amountCents, dailyCapCents].every(isCount)
   );
-}
-
-function isInstant(candidate: unknown): candidate is string {
-  return typeof candidate === 'string' && !Number.isNaN(Date.parse(candidate));
 }
 
 function isCount(candidate: unknown): candidate is number {
