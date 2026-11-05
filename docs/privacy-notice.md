@@ -38,6 +38,10 @@ Identifying information is kept 90 days after your visit, then anonymized.
 
 Buttons: "I accept" and "Decline". Declining shows: "Palier cannot be used without your consent." with "Sign out".
 
+## Hors du texte affiché
+
+- **Position de l'appareil (#5).** Avec la permission « pendant l'utilisation », l'app lit la position du téléphone pour trier les stationnements par distance. Le calcul se fait sur l'appareil ; la position n'est jamais envoyée à Palier ni conservée (`docs/decisions/015`). Le texte affiché et `PRIVACY_NOTICE_VERSION` ne changent pas : à confirmer par le responsable avant la mise en production. La raison montrée par iOS est `NSLocationWhenInUseUsageDescription` dans `apps/mobile/app.config.ts` ; Expo Go montre la sienne.
+
 ## Hors de cet avis
 
 - L'évaluation des facteurs relatifs à la vie privée (Loi 25) est un document distinct.
