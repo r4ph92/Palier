@@ -17,12 +17,7 @@ const LATITUDE_LIMIT_DEGREES = 90;
 const LONGITUDE_LIMIT_DEGREES = 180;
 
 export function isOnEarth({ latitude, longitude }: GeoPosition): boolean {
-  return (
-    Number.isFinite(latitude) &&
-    Number.isFinite(longitude) &&
-    Math.abs(latitude) <= LATITUDE_LIMIT_DEGREES &&
-    Math.abs(longitude) <= LONGITUDE_LIMIT_DEGREES
-  );
+  return Math.abs(latitude) <= LATITUDE_LIMIT_DEGREES && Math.abs(longitude) <= LONGITUDE_LIMIT_DEGREES;
 }
 
 export interface LotSummary {
