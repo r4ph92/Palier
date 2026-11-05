@@ -1,6 +1,5 @@
 import { readPositiveWholeNumber } from './readPositiveWholeNumber.ts';
 
-
 export interface EntryCancellationTiming {
   readonly confirmationWindowSeconds: number;
   readonly cancellationPeriodSeconds: number;
