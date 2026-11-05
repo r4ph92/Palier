@@ -68,11 +68,4 @@ describe('releaseSpotHold', () => {
     expect(await reasonOf(releaseSpotHold(dependencies, { driverId: julie.id, spotHoldId: fakeSpotHoldId(1) }))).toBe('HOLD_EXPIRED');
     expect(spotHolds.releases).toHaveLength(0);
   });
-
-  it('lets a lock timeout through as HOLD_UNAVAILABLE', async () => {
-    const { dependencies, spotHolds } = await holdingJulie(AT_14_10);
-    spotHolds.refusal = 'HOLD_UNAVAILABLE';
-
-    expect(await reasonOf(releaseSpotHold(dependencies, { driverId: julie.id, spotHoldId: fakeSpotHoldId(1) }))).toBe('HOLD_UNAVAILABLE');
-  });
 });

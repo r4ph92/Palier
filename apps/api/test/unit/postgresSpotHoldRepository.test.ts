@@ -146,7 +146,7 @@ describe('reading spot holds before the lot lock', () => {
     const active = await new PostgresSpotHoldRepository(scripted.database()).findActiveSpotHold('driver-julie');
 
     expect(active).toEqual({ id: 'hold-1', lotId: LOT_ID, lotName: 'Parking Démo', expiresAt: EXPIRES_AT });
-    expect(scripted.statements).toEqual([{ label: 'read-active-spot-hold', params: ['driver-julie'], onTransaction: false }]);
+    expect(scripted.statements).toEqual([expect.objectContaining({ label: 'read-active-spot-hold', params: ['driver-julie'], onTransaction: false })]);
   });
 
   it('answers null for a driver without an active hold', async () => {
@@ -178,6 +178,10 @@ function scriptedRelease(): ScriptedSql {
     .answer('free-held-spot', [{ id: 'spot-A-1' }]);
 }
 
+function textOf(scripted: ScriptedSql, label: StatementLabel): string {
+  return scripted.statements.find((statement) => statement.label === label)?.text ?? '';
+}
+
 function releaseWith(scripted: ScriptedSql) {
   return new PostgresSpotHoldRepository(scripted.database()).releaseSpotHold(release);
 }
@@ -201,6 +205,25 @@ describe('releasing a spot hold under the lot lock', () => {
     expect(paramsOf(scripted, 'lock-lot')).toEqual([LOT_ID]);
     expect(paramsOf(scripted, 'release-spot-hold')).toEqual(['hold-1', 'driver-julie']);
     expect(paramsOf(scripted, 'free-held-spot')).toEqual(['2026-11-04T19:05:00.000Z', 'spot-A-1']);
+  });
+
+  it('only releases an ACTIVE hold and only frees a HELD spot', async () => {
+    const scripted = scriptedRelease();
+
+    await releaseWith(scripted);
+
+    expect(textOf(scripted, 'release-spot-hold')).toContain("status = 'ACTIVE'");
+    expect(textOf(scripted, 'free-held-spot')).toContain("state = 'HELD'");
+  });
+
+  it('refuses HOLD_UNAVAILABLE and updates nothing when the lot lock times out', async () => {
+    const scripted = scriptedRelease().fail('lock-lot', new Error('Failed query', { cause: { code: '55P03' } }));
+
+    const error: unknown = await releaseWith(scripted).catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({ reason: 'HOLD_UNAVAILABLE' });
+    expect(scripted.count('release-spot-hold')).toBe(0);
+    expect(scripted.count('free-held-spot')).toBe(0);
   });
 
   it('refuses HOLD_NOT_FOUND and frees no spot when a concurrent release got there first', async () => {
@@ -228,7 +251,7 @@ describe('reading one of the driver\'s own holds', () => {
     const found = await new PostgresSpotHoldRepository(scripted.database()).findOwnActiveSpotHold('driver-julie', 'hold-1');
 
     expect(found).toEqual({ id: 'hold-1', lotId: LOT_ID, lotName: 'Parking Démo', expiresAt: EXPIRES_AT });
-    expect(scripted.statements).toEqual([{ label: 'read-active-spot-hold', params: ['hold-1', 'driver-julie'], onTransaction: false }]);
+    expect(scripted.statements).toEqual([expect.objectContaining({ label: 'read-active-spot-hold', params: ['hold-1', 'driver-julie'], onTransaction: false })]);
   });
 
   it('answers null when the id and the driver match no active hold', async () => {
