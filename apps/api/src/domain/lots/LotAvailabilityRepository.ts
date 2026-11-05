@@ -1,5 +1,5 @@
 import type { OnlineLot } from './OnlineLot.ts';
 
 export interface LotAvailabilityRepository {
-  findOnlineLots(): Promise<readonly OnlineLot[]>;
+  findOnlineLots(limit: number): Promise<readonly OnlineLot[]>;
 }

@@ -6,8 +6,6 @@ import type { Database } from './database.ts';
 import { onlineLotFromRow } from './onlineLotRow.ts';
 import { parkingLot, spot } from './schema.ts';
 
-export const ONLINE_LOTS_LIMIT = 50;
-
 interface LotSpotGroup extends AvailableSpotGroup {
   readonly lotId: string;
 }
@@ -20,7 +18,7 @@ export class PostgresLotAvailabilityRepository implements LotAvailabilityReposit
     this.#database = database;
   }
 
-  async findOnlineLots(): Promise<readonly OnlineLot[]> {
+  async findOnlineLots(limit: number): Promise<readonly OnlineLot[]> {
     const lots = await this.#database
       .select({
         id: parkingLot.id,
@@ -33,7 +31,7 @@ export class PostgresLotAvailabilityRepository implements LotAvailabilityReposit
       .from(parkingLot)
       .where(eq(parkingLot.isOnline, true))
       .orderBy(asc(parkingLot.name))
-      .limit(ONLINE_LOTS_LIMIT);
+      .limit(limit);
     const groups = await this.#availableSpotGroups(lots.map(({ id }) => id));
     return lots.map((lot) => onlineLotFromRow(lot, groups.filter(({ lotId }) => lotId === lot.id)));
   }
