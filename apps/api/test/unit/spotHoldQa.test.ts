@@ -29,6 +29,7 @@ describe('QA spot hold: the free count', () => {
       // Drizzle leaves a column of the only table in the query unqualified, so inside the subquery "id" is spot.id:
       // the held count would always be 0 and a lot full by capacity minus vehicles would keep offering the spot.
       expect(sql).not.toMatch(/spot\.lot_id = "id"/);
+      expect(sql).toContain('spot.lot_id = parking_lot.id');
     } finally {
       await connection.close();
     }
