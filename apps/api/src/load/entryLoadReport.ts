@@ -1,3 +1,4 @@
+import { ENTRY_LIMIT, ENTRY_WINDOW_MINUTES } from '../http/routes/entryLimit.ts';
 import type { SessionCheck } from './entryLoadDatabase.ts';
 import { ADMITTED, type EntryOutcome } from './fireEntries.ts';
 
@@ -85,7 +86,7 @@ function latencyFailure(maxLatencyMilliseconds: number | null, slowestMillisecon
 
 function unexpectedAnswer(answer: string, count: number): string {
   if (answer === TOO_MANY_ENTRIES) {
-    return `${count} answers were TOO_MANY_ENTRIES: the API allows 5 entries per driver in 10 minutes, restart the API between runs.`;
+    return `${count} answers were TOO_MANY_ENTRIES: the API allows ${ENTRY_LIMIT} entries per driver in ${ENTRY_WINDOW_MINUTES} minutes, restart the API between runs.`;
   }
   return `${count} answers were ${answer}, where only admissions and LOT_FULL are expected.`;
 }

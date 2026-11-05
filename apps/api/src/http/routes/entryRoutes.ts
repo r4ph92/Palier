@@ -9,13 +9,11 @@ import { handleEntryError } from '../entries/handleEntryError.ts';
 import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
+import { ENTRY_LIMIT, ENTRY_WINDOW_MILLISECONDS } from './entryLimit.ts';
 import { registerEntryStatusRoute } from './entryStatusRoute.ts';
 import { entryRequestSchema, entryResponseSchema } from '../schemas/entrySchemas.ts';
 
 const CREATED = 201;
-// Same window as card setups: it bounds the card holds one driver token can ask Stripe for.
-const ENTRY_LIMIT = 5;
-const ENTRY_WINDOW_MILLISECONDS = 10 * 60 * 1000;
 
 export interface EntryRouteDependencies {
   readonly eligibility: EntryEligibility;
