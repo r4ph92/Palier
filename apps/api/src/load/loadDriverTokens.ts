@@ -11,17 +11,20 @@ export class LoadDriverTokens {
   }
 
   async signIn(driverIds: readonly string[]): Promise<readonly string[]> {
+    const newTokens: string[] = [];
     for (const driverId of driverIds) {
       const signedIn = await signInDriver(this.#access, driverId);
       if (signedIn === null) {
         throw new Error(`Load-test driver ${driverId} is not in the database: reseed first (npm run seed --workspace @palier/api).`);
       }
       this.#tokens.push(signedIn.token);
+      newTokens.push(signedIn.token);
     }
-    return this.#tokens;
+    return newTokens;
   }
 
   async revokeAll(): Promise<void> {
-    await Promise.all(this.#tokens.map((token) => signOutDriver(this.#access.sessions, token)));
+    const tokens = this.#tokens.splice(0);
+    await Promise.all(tokens.map((token) => signOutDriver(this.#access.sessions, token)));
   }
 }
