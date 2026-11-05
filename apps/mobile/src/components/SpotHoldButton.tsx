@@ -16,12 +16,13 @@ export function SpotHoldButton({ lot, spotHold, onHeld }: SpotHoldButtonProps) {
     return null;
   }
   const label = i18n.t('spotHold.hold');
+  const isRequestedLot = spotHold.requestedLotId === lot.id;
   return (
     <TextButton
       label={label}
-      busyLabel={spotHold.requestedLotId === lot.id ? i18n.t('spotHold.holding') : label}
+      busyLabel={isRequestedLot ? i18n.t('spotHold.holding') : label}
       isBusy={spotHold.requestedLotId !== null}
-      accessibilityLabel={i18n.t('spotHold.holdAccessibilityLabel', { lotName: lot.name })}
+      accessibilityLabel={i18n.t(isRequestedLot ? 'spotHold.holdingAccessibilityLabel' : 'spotHold.holdAccessibilityLabel', { lotName: lot.name })}
       align="start"
       onPress={() => spotHold.hold(lot.id, onHeld)}
     />

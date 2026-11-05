@@ -50,6 +50,7 @@ export const en: Translations = {
     hold: 'Guarantee a spot for 15 min',
     holding: 'Guaranteeing…',
     holdAccessibilityLabel: 'Guarantee a spot for 15 min at %{lotName}',
+    holdingAccessibilityLabel: 'Guaranteeing at %{lotName}',
     guaranteedUntilLead: GUARANTEED_UNTIL,
     guaranteedUntil: `${GUARANTEED_UNTIL} %{time}`,
     notResponding: NOT_RESPONDING,

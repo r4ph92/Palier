@@ -52,6 +52,7 @@ export const fr = {
     hold: 'Garantir une place 15 min',
     holding: 'Garantie en cours…',
     holdAccessibilityLabel: 'Garantir une place 15 min à %{lotName}',
+    holdingAccessibilityLabel: 'Garantie en cours à %{lotName}',
     guaranteedUntilLead: GUARANTEED_UNTIL,
     guaranteedUntil: `${GUARANTEED_UNTIL} %{time}`,
     notResponding: NOT_RESPONDING,

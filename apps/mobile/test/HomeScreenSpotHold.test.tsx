@@ -96,7 +96,7 @@ describe('HomeScreen spot hold', () => {
     await holdAtParkingDemo(new FakeLotsClient([parkingDemo(10), parkingTestPaliers]), spotHoldClient);
 
     expect(screen.getByText('Garantie en cours…')).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: HOLD_BUTTON_FR })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Garantie en cours à Parking Démo' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Garantir une place 15 min à Parking Test Paliers' })).toBeDisabled();
 
     await act(async () => spotHoldClient.answer());
