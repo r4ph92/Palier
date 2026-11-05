@@ -80,7 +80,7 @@ ligne par choix ; la raison suit le tiret.
 
 ## App
 
-- Langue : celle de l'appareil au lancement ; anglais si l'appareil est en anglais, sinon français. Pluriel français : 0 et 1 au singulier.
+- Langue : celle de l'appareil au lancement ; anglais si l'appareil est en anglais, sinon français. Pluriel français : singulier en dessous de 2 (« 0 place libre », « 1,2 kilomètre »).
 - Erreur réseau, statut non 2xx, corps illisible ou délai de 8 s : tous affichent « Impossible de joindre Palier. » ; un rafraîchissement demandé (tirer, « Actualiser ») qui rate retire les chiffres affichés plutôt que de laisser des comptes périmés. Un statut non 2xx lève `PalierStatusError` (sous-type de `PalierUnreachableError`, avec le statut) ; toute autre erreur n'est pas déguisée en « injoignable » et remonte au rendu.
 - À 0 place libre, la ligne affiche « Complet » / « Full » après le carré `danger`, sans catégories ; VoiceOver lit « Complet, 0 place libre ».
 - Accueil (#5) : sous le nom, la distance (« 350 m », « 1,2 km » / « 1.2 km », `i18n/formatDistance`) et les places libres par catégorie (« Standard 7 · Électrique 1 · Accessible 1 · Grand gabarit 1 », « EV » et « Oversize » en anglais). VoiceOver lit la ligne entière : « Parking Démo, 350 mètres, 2 places libres, Standard 2, … ».

@@ -28,10 +28,12 @@ describe('formatDistance', () => {
 describe('spokenDistance', () => {
   it.each([
     ['fr', 350, '350 mètres'],
-    ['fr', 1234, '1,2 kilomètres'],
+    ['fr', 1234, '1,2 kilomètre'],
+    ['fr', 2500, '2,5 kilomètres'],
     ['fr', 1000, '1 kilomètre'],
     ['en', 350, '350 metres'],
     ['en', 1234, '1.2 kilometres'],
+    ['en', 2500, '2.5 kilometres'],
     ['en', 1000, '1 kilometre'],
   ] as const)('reads %s %i metres as %s', (language, metres, expected) => {
     applyLanguage(language);
