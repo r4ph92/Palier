@@ -1,4 +1,5 @@
 import { parseArgs } from 'node:util';
+import { readPositiveWholeNumber } from '../config/readPositiveWholeNumber.ts';
 import { LOAD_DRIVER_COUNT } from '../seed/fixtures/loadDrivers.ts';
 import { LOCAL_HOST_NAMES, LOCAL_HOSTS } from '../seed/seedGuard.ts';
 
@@ -13,8 +14,6 @@ export interface EntryLoadArguments {
 const USAGE = 'Usage: npm run load:entries -- [--api http://127.0.0.1:3000] [--drivers 20] [--gate "Entrée Démo"] [--max-latency-ms 3000]';
 const DEFAULT_GATE_NAME = 'Entrée Démo';
 const DEFAULT_PORT = '3000';
-// Number() alone would read 1e1, 0x5 or " 3" as numbers.
-const WHOLE_NUMBER = /^\d+$/;
 
 export function parseEntryLoadArguments(argumentList: readonly string[], variables: NodeJS.ProcessEnv): EntryLoadArguments {
   const { values } = parseArgs({
@@ -42,8 +41,8 @@ function localApiUrl(rawUrl: string): URL {
 }
 
 function boundedWholeNumber(name: string, rawValue: string, maximum: number): number {
-  const value = Number(rawValue);
-  if (!WHOLE_NUMBER.test(rawValue) || value < 1 || value > maximum) {
+  const value = readPositiveWholeNumber(rawValue);
+  if (value === null || value > maximum) {
     const range = maximum === Infinity ? 'a positive whole number' : `a whole number from 1 to ${maximum}`;
     throw new Error(`${name} must be ${range}, got "${rawValue}". ${USAGE}`);
   }

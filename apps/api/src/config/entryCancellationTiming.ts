@@ -1,3 +1,6 @@
+import { readPositiveWholeNumber } from './readPositiveWholeNumber.ts';
+
+
 export interface EntryCancellationTiming {
   readonly confirmationWindowSeconds: number;
   readonly cancellationPeriodSeconds: number;
@@ -24,8 +27,8 @@ function readSeconds(name: string, variables: NodeJS.ProcessEnv, defaultSeconds:
   if (rawSeconds === undefined || rawSeconds === '') {
     return defaultSeconds;
   }
-  const seconds = Number(rawSeconds);
-  if (!Number.isInteger(seconds) || seconds <= 0) {
+  const seconds = readPositiveWholeNumber(rawSeconds);
+  if (seconds === null) {
     throw new Error(`${name} must be a positive whole number of seconds, got "${rawSeconds}".`);
   }
   return seconds;
