@@ -1,5 +1,6 @@
 import { applyLanguage } from '../src/i18n/i18n';
 import { formatDistance, spokenDistance } from '../src/i18n/formatDistance';
+import { NO_BREAK_SPACE } from '../src/i18n/spaces';
 import { asSeen } from './visibleText';
 
 describe('formatDistance', () => {
@@ -20,7 +21,7 @@ describe('formatDistance', () => {
   });
 
   it('keeps the figure and its unit together with a no-break space', () => {
-    expect(formatDistance(350, 'fr')).toBe('350 m');
+    expect(formatDistance(350, 'fr')).toBe(`350${NO_BREAK_SPACE}m`);
   });
 });
 
