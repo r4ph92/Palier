@@ -50,6 +50,7 @@ function TabContent({ firstName, clients, tabs, currentSession, pendingEntry, sp
           entryClient={clients.entry}
           currentSession={currentSession}
           pendingEntry={pendingEntry}
+          refreshHold={spotHold.refreshHold}
           onAddPlate={() => tabs.openAccountPage('vehicles')}
           onAddCard={() => tabs.openAccountPage('payment')}
         />
