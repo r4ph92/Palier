@@ -10,8 +10,8 @@ export interface EntryRequestTarget {
 export const ADMITTED = 'ADMITTED';
 export const UNREACHABLE = 'UNREACHABLE';
 
-// HTTP_<status> for an answer whose body carries no refusal code.
-export type EntryAnswer = typeof ADMITTED | EntryRefusalCode | `HTTP_${number}` | typeof UNREACHABLE;
+// HTTP_<status> for an answer whose body carries no refusal code; UNREACHABLE:<code> names why no answer came.
+export type EntryAnswer = typeof ADMITTED | EntryRefusalCode | `HTTP_${number}` | typeof UNREACHABLE | `${typeof UNREACHABLE}:${string}`;
 
 export interface EntryOutcome {
   readonly answer: EntryAnswer;
@@ -53,7 +53,14 @@ async function answerTo(url: URL, request: RequestInit): Promise<Omit<EntryOutco
       return { answer: ADMITTED, spot: `${String(body.spot?.levelCode)} ${String(body.spot?.number)}` };
     }
     return { answer: body.error ?? `HTTP_${response.status}`, spot: null };
-  } catch {
-    return { answer: UNREACHABLE, spot: null };
+  } catch (error) {
+    return { answer: unreachableAnswer(error), spot: null };
   }
+}
+
+// fetch rejects with "fetch failed"; the system error (ECONNREFUSED, ENOTFOUND…) is its cause.
+export function unreachableAnswer(error: unknown): EntryAnswer {
+  const cause: unknown = error instanceof Error ? error.cause : undefined;
+  const code = typeof cause === 'object' && cause !== null && 'code' in cause && typeof cause.code === 'string' ? cause.code : null;
+  return code === null ? UNREACHABLE : `${UNREACHABLE}:${code}`;
 }
