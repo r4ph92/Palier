@@ -4,6 +4,8 @@ import type { SpotCategory, SpotHoldRefusalCode } from '@palier/shared-types';
 const LOT_NOT_IN_SERVICE = 'Ce parking n’est pas en service';
 const TOO_MANY_ATTEMPTS = 'Trop de tentatives, réessayez dans quelques minutes';
 const NOT_RESPONDING = 'Palier ne répond pas, réessayez dans un instant';
+// « 15 min » never breaks across two lines.
+const HOLD_FOR_FIFTEEN_MINUTES = 'Garantir une place 15\u00A0min';
 // The banner sets the time apart in mono; VoiceOver reads the whole sentence.
 const GUARANTEED_UNTIL = 'Place garantie jusqu’à';
 
@@ -49,9 +51,9 @@ export const fr = {
     },
   },
   spotHold: {
-    hold: 'Garantir une place 15 min',
+    hold: HOLD_FOR_FIFTEEN_MINUTES,
     holding: 'Garantie en cours…',
-    holdAccessibilityLabel: 'Garantir une place 15 min à %{lotName}',
+    holdAccessibilityLabel: `${HOLD_FOR_FIFTEEN_MINUTES} à %{lotName}`,
     holdingAccessibilityLabel: 'Garantie en cours à %{lotName}',
     guaranteedUntilLead: GUARANTEED_UNTIL,
     guaranteedUntil: `${GUARANTEED_UNTIL} %{time}`,

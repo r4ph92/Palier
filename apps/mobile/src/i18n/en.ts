@@ -3,6 +3,7 @@ import type { Translations } from './fr';
 const LOT_NOT_IN_SERVICE = 'This lot is not in service';
 const TOO_MANY_ATTEMPTS = 'Too many attempts, try again in a few minutes';
 const NOT_RESPONDING = 'Palier is not responding, try again in a moment';
+const HOLD_FOR_FIFTEEN_MINUTES = 'Guarantee a spot for 15\u00A0min';
 const GUARANTEED_UNTIL = 'Spot guaranteed until';
 
 export const en: Translations = {
@@ -47,9 +48,9 @@ export const en: Translations = {
     },
   },
   spotHold: {
-    hold: 'Guarantee a spot for 15 min',
+    hold: HOLD_FOR_FIFTEEN_MINUTES,
     holding: 'Guaranteeing…',
-    holdAccessibilityLabel: 'Guarantee a spot for 15 min at %{lotName}',
+    holdAccessibilityLabel: `${HOLD_FOR_FIFTEEN_MINUTES} at %{lotName}`,
     holdingAccessibilityLabel: 'Guaranteeing at %{lotName}',
     guaranteedUntilLead: GUARANTEED_UNTIL,
     guaranteedUntil: `${GUARANTEED_UNTIL} %{time}`,
