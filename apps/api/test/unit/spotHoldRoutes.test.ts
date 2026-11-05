@@ -1,3 +1,4 @@
+import { spotHoldServicesOf } from '../../src/composeSpotHolds.ts';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
@@ -132,7 +133,7 @@ describe('POST /v1/lots/:id/holds', () => {
     const leaking = new FakeSpotHoldRepository();
     const place = leaking.placeSpotHold.bind(leaking);
     leaking.placeSpotHold = async (draft) => Object.assign(await place(draft), { spotNumber: 'A-1' });
-    server = buildServer(serverDependencies({ repositories: fakeRepositories({ driverRepository, vehicleRepository }), spotHolds: { repository: leaking, policy: STRICT_POLICY } }));
+    server = buildServer(serverDependencies({ repositories: fakeRepositories({ driverRepository, vehicleRepository }), spotHolds: spotHoldServicesOf(leaking, { vehicles: vehicleRepository, drivers: driverRepository }, STRICT_POLICY) }));
     const headers = await readyDriver(driverRepository, vehicleRepository);
 
     const response = await server.inject({ method: 'POST', url: `/v1/lots/${PARKING_DEMO_ID}/holds`, headers });

@@ -114,8 +114,7 @@ function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway,
   registerPaymentMethodRoutes(server, driverAccess, cardGateway);
   registerEntryRoutes(server, driverAccess, entries);
   registerCurrentParkingSessionRoute(server, driverAccess, { sessions: repositories.currentParkingSessions, clock });
-  const prerequisites = { vehicles: repositories.vehicleRepository, drivers: repositories.driverRepository };
-  registerSpotHoldRoutes(server, driverAccess, { services: spotHolds, prerequisites, clock });
+  registerSpotHoldRoutes(server, driverAccess, { services: spotHolds, clock });
   if (testTools !== null) {
     registerTestSignInRoutes(server, { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository });
     registerTestClockRoutes(server, testTools);

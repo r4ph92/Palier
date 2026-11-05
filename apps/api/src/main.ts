@@ -69,7 +69,7 @@ const server = buildServer({
   },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   entries: entries.routes,
-  spotHolds: composeSpotHolds(connection.database, environment.demoMode),
+  spotHolds: composeSpotHolds(connection.database, environment.demoMode, { vehicles: vehicleRepository, drivers: driverRepository }),
   operatorStripe: composeOperatorStripe({
     database: connection.database,
     stripeKey,

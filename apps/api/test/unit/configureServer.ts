@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { spotHoldServicesOf } from '../../src/composeSpotHolds.ts';
 import { createTestClock } from '../../src/domain/time/TestClock.ts';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { FakeCardGateway } from './fakeCardGateway.ts';
@@ -35,7 +36,7 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
     operatorStripe: fakeOperatorStripe(operatorRepository).dependencies,
     cardGateway: new FakeCardGateway(),
     entries: entries.dependencies,
-    spotHolds: { repository: spotHolds, policy: STRICT_POLICY },
+    spotHolds: spotHoldServicesOf(spotHolds, { vehicles: vehicleRepository, drivers: driverRepository }, STRICT_POLICY),
     testClock,
     settings: { testSignInEnabled, demoMode, minimumAppVersion },
   });
