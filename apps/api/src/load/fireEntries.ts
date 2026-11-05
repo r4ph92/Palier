@@ -1,3 +1,4 @@
+import type { EntryRefusalBody, EntryRefusalCode } from '@palier/shared-types';
 import { APP_VERSION_HEADER } from '@palier/shared-types/appVersion';
 
 export interface EntryRequestTarget {
@@ -6,18 +7,21 @@ export interface EntryRequestTarget {
   readonly appVersion: string;
 }
 
+export const ADMITTED = 'ADMITTED';
+export const UNREACHABLE = 'UNREACHABLE';
+
+// HTTP_<status> for an answer whose body carries no refusal code.
+export type EntryAnswer = typeof ADMITTED | EntryRefusalCode | `HTTP_${number}` | typeof UNREACHABLE;
+
 export interface EntryOutcome {
-  // ADMITTED for a 201, else the refusal code, HTTP_<status> for a body without one, UNREACHABLE without an answer.
-  readonly answer: string;
+  readonly answer: EntryAnswer;
   readonly spot: string | null;
   readonly latencyMilliseconds: number;
 }
 
-export const ADMITTED = 'ADMITTED';
 const CREATED = 201;
 
-interface EntryAnswerBody {
-  readonly error?: unknown;
+interface EntryAnswerBody extends Partial<Pick<EntryRefusalBody, 'error'>> {
   readonly spot?: { readonly levelCode?: unknown; readonly number?: unknown };
 }
 
@@ -48,8 +52,8 @@ async function answerTo(url: URL, request: RequestInit): Promise<Omit<EntryOutco
     if (response.status === CREATED) {
       return { answer: ADMITTED, spot: `${String(body.spot?.levelCode)} ${String(body.spot?.number)}` };
     }
-    return { answer: typeof body.error === 'string' ? body.error : `HTTP_${response.status}`, spot: null };
+    return { answer: body.error ?? `HTTP_${response.status}`, spot: null };
   } catch {
-    return { answer: 'UNREACHABLE', spot: null };
+    return { answer: UNREACHABLE, spot: null };
   }
 }

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionCheck } from '../../src/load/entryLoadDatabase.ts';
 import { reportEntryLoad, type EntryLoadRun } from '../../src/load/entryLoadReport.ts';
-import type { EntryOutcome } from '../../src/load/fireEntries.ts';
+import type { EntryAnswer, EntryOutcome } from '../../src/load/fireEntries.ts';
 
 function admitted(spotNumber: string, latencyMilliseconds = 100): EntryOutcome {
   return { answer: 'ADMITTED', spot: `P1 ${spotNumber}`, latencyMilliseconds };
 }
 
-function refused(answer: string): EntryOutcome {
+function refused(answer: EntryAnswer): EntryOutcome {
   return { answer, spot: null, latencyMilliseconds: 50 };
 }
 

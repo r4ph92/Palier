@@ -1,6 +1,7 @@
 import { ENTRY_LIMIT, ENTRY_WINDOW_MINUTES } from '../http/routes/entryLimit.ts';
+import type { EntryRefusalCode } from '@palier/shared-types';
 import type { SessionCheck } from './entryLoadDatabase.ts';
-import { ADMITTED, type EntryOutcome } from './fireEntries.ts';
+import { ADMITTED, type EntryAnswer, type EntryOutcome } from './fireEntries.ts';
 
 export interface EntryLoadRun {
   readonly expectedAdmissions: number;
@@ -19,12 +20,12 @@ export interface EntryLoadReport {
 interface Tally {
   readonly admitted: number;
   readonly lotFull: number;
-  readonly others: ReadonlyMap<string, number>;
+  readonly others: ReadonlyMap<EntryAnswer, number>;
   readonly distinctSpots: number;
 }
 
-const LOT_FULL = 'LOT_FULL';
-const TOO_MANY_ENTRIES = 'TOO_MANY_ENTRIES';
+const LOT_FULL = 'LOT_FULL' satisfies EntryRefusalCode;
+const TOO_MANY_ENTRIES = 'TOO_MANY_ENTRIES' satisfies EntryRefusalCode;
 
 export function reportEntryLoad(run: EntryLoadRun): EntryLoadReport {
   const tally = tallyOf(run.outcomes);
@@ -34,7 +35,7 @@ export function reportEntryLoad(run: EntryLoadRun): EntryLoadReport {
 
 function tallyOf(outcomes: readonly EntryOutcome[]): Tally {
   const admitted = outcomes.filter(({ answer }) => answer === ADMITTED);
-  const others = new Map<string, number>();
+  const others = new Map<EntryAnswer, number>();
   for (const { answer } of outcomes.filter(({ answer }) => answer !== ADMITTED && answer !== LOT_FULL)) {
     others.set(answer, (others.get(answer) ?? 0) + 1);
   }
@@ -84,7 +85,7 @@ function latencyFailure(maxLatencyMilliseconds: number | null, slowestMillisecon
   return `the slowest answer took ${slowestMilliseconds} ms, over the ${maxLatencyMilliseconds} ms allowed.`;
 }
 
-function unexpectedAnswer(answer: string, count: number): string {
+function unexpectedAnswer(answer: EntryAnswer, count: number): string {
   if (answer === TOO_MANY_ENTRIES) {
     return `${count} answers were TOO_MANY_ENTRIES: the API allows ${ENTRY_LIMIT} entries per driver in ${ENTRY_WINDOW_MINUTES} minutes, restart the API between runs.`;
   }
