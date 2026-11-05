@@ -1,3 +1,4 @@
+import type { JobLog } from '../JobLog.ts';
 import type { Clock } from '../time/Clock.ts';
 import type { SpotHoldRepository } from './SpotHoldRepository.ts';
 
@@ -6,14 +7,8 @@ export interface HoldExpiryJob {
   readonly clock: Clock;
 }
 
-export interface HoldExpiryLog {
-  info(details: object, message: string): void;
-  warn(details: object, message: string): void;
-  error(details: object, message: string): void;
-}
-
 // One clock reading per run and one transaction per lot: a lot that cannot be locked waits for the next run, the others still expire.
-export async function expireSpotHolds({ spotHolds, clock }: HoldExpiryJob, log: HoldExpiryLog): Promise<void> {
+export async function expireSpotHolds({ spotHolds, clock }: HoldExpiryJob, log: JobLog): Promise<void> {
   const now = clock();
   for (const lotId of await spotHolds.findLotsWithExpiredHolds(now)) {
     await expireLot(spotHolds, { lotId, now }, log);
@@ -25,7 +20,7 @@ interface LotExpiry {
   readonly now: Date;
 }
 
-async function expireLot(spotHolds: HoldExpiryJob['spotHolds'], { lotId, now }: LotExpiry, log: HoldExpiryLog): Promise<void> {
+async function expireLot(spotHolds: HoldExpiryJob['spotHolds'], { lotId, now }: LotExpiry, log: JobLog): Promise<void> {
   try {
     const { expired, freed } = await spotHolds.expireLotSpotHolds(lotId, now);
     if (expired > 0) {
