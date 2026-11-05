@@ -1,4 +1,4 @@
-import type { SpotHoldRefusalCode } from '@palier/shared-types';
+import { SPOT_HOLD_REFUSAL_CODES } from '@palier/shared-types/spotHolds';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, describe, expect, it } from 'vitest';
 import { connectToDatabase } from '../../src/infrastructure/postgres/database.ts';
@@ -8,17 +8,6 @@ import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { configureServer } from './configureServer.ts';
 import { authorizationFor, marc } from './fakeDriverRepository.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
-
-const REFUSALS: readonly SpotHoldRefusalCode[] = [
-  'PREREQUISITES_MISSING',
-  'HOLD_ALREADY_EXISTS',
-  'HOLD_QUOTA_REACHED',
-  'NO_SUITABLE_SPOT',
-  'LOT_NOT_FOUND',
-  'LOT_NOT_IN_SERVICE',
-  'HOLD_UNAVAILABLE',
-  'TOO_MANY_HOLD_ATTEMPTS',
-];
 
 describe('QA spot hold: the free count', () => {
   it('reads the lot of a held spot as the lot being listed, not as the spot', async () => {
@@ -119,7 +108,7 @@ describe('QA spot hold: hostile requests', () => {
     }
   });
 
-  it.each(REFUSALS)('answers %s with the three envelope fields and no spot, plate or card detail', async (reason) => {
+  it.each(SPOT_HOLD_REFUSAL_CODES)('answers %s with the three envelope fields and no spot, plate or card detail', async (reason) => {
     const { post, spotHolds } = await startWithJulieReady();
     spotHolds.refusal = reason;
 
