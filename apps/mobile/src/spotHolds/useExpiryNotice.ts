@@ -8,10 +8,10 @@ type ExpiryNotice = 'none' | 'announce' | 'focus';
 // A driver in the middle of releasing loses those controls at that moment, so VoiceOver moves to the banner instead. Returns its ref.
 export function useExpiryNotice(isExpired: boolean, message: string, takesFocus: boolean): RefObject<HostInstance | null> {
   const bannerRef = useRef<HostInstance>(null);
-  const [wasCounting, setWasCounting] = useState(!isExpired);
+  const [previousIsExpired, setPreviousIsExpired] = useState(isExpired);
   const [notice, setNotice] = useState<ExpiryNotice>('none');
-  if (isExpired === wasCounting) {
-    setWasCounting(!isExpired);
+  if (isExpired !== previousIsExpired) {
+    setPreviousIsExpired(isExpired);
     setNotice(isExpired ? noticeFor(takesFocus) : 'none');
   }
   useAnnouncement(notice === 'announce' ? message : null);
