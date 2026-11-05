@@ -75,7 +75,7 @@ function ReleaseConfirmation({ lotName, onConfirm, onCancel }: ReleaseConfirmati
       <View style={styles.choices}>
         <TextButton
           label={i18n.t('spotHold.releaseConfirm')}
-          accessibilityLabel={i18n.t('spotHold.releaseAccessibilityLabel', { lotName })}
+          accessibilityLabel={i18n.t('spotHold.releaseConfirmAccessibilityLabel', { lotName })}
           align="start"
           onPress={onConfirm}
         />

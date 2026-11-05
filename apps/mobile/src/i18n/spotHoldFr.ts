@@ -20,6 +20,8 @@ export const spotHoldFr = {
   releasingAccessibilityLabel: 'Libération de la garantie à %{lotName}',
   releasePrompt: 'Libérer cette garantie?',
   releaseConfirm: 'Oui, libérer',
+  releaseConfirmAccessibilityLabel: 'Oui, libérer la garantie à %{lotName}',
+  releaseNotFound: 'Cette garantie n’existe plus, actualisez la liste',
   releaseUnavailable: 'Impossible de libérer la garantie pour le moment, réessayez dans un instant',
   releaseCancel: 'Annuler',
   released: 'Garantie libérée',

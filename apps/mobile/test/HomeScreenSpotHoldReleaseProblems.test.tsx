@@ -8,6 +8,7 @@ import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient
 import { renderHomeScreenWith } from './renderHomeScreen';
 
 const RELEASE_FR = 'Libérer la garantie à Parking Démo';
+const CONFIRM_FR = 'Oui, libérer la garantie à Parking Démo';
 
 async function renderJulieHolding(spotHoldClient: FakeSpotHoldClient, language: 'fr' | 'en' = 'fr') {
   const lotsClient = new FakeLotsClient(parkingDemoWith(9), parkingDemoWith(10));
@@ -47,7 +48,7 @@ describe('HomeScreen release: focus and escape', () => {
     await screen.findByText('Libérer cette garantie?');
     focus.mockClear();
 
-    await user.press(screen.getByRole('button', { name: RELEASE_FR }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_FR }));
     await screen.findByText('Libération…');
 
     expect(focusEvents(focus)).toEqual([FOCUS]);
@@ -67,20 +68,20 @@ describe('HomeScreen release: focus and escape', () => {
 });
 
 describe('HomeScreen release: problems', () => {
-  async function release(user: ReturnType<typeof userEvent.setup>, name = RELEASE_FR) {
-    await user.press(await screen.findByRole('button', { name }));
-    await user.press(await screen.findByRole('button', { name }));
+  async function release(user: ReturnType<typeof userEvent.setup>, [open, confirm]: readonly [string, string] = [RELEASE_FR, CONFIRM_FR]) {
+    await user.press(await screen.findByRole('button', { name: open }));
+    await user.press(await screen.findByRole('button', { name: confirm }));
   }
 
   it.each([
-    ['fr', 'Impossible de libérer la garantie pour le moment, réessayez dans un instant', RELEASE_FR],
-    ['en', 'Can’t release the guarantee right now, try again in a moment', 'Release the guarantee at Parking Démo'],
-  ] as const)('words a busy lot for the release in %s', async (language, message, name) => {
+    ['fr', 'Impossible de libérer la garantie pour le moment, réessayez dans un instant', [RELEASE_FR, CONFIRM_FR]],
+    ['en', 'Can’t release the guarantee right now, try again in a moment', ['Release the guarantee at Parking Démo', 'Yes, release the guarantee at Parking Démo']],
+  ] as const)('words a busy lot for the release in %s', async (language, message, names) => {
     const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
     const { user } = await renderJulieHolding(spotHoldClient, language);
     spotHoldClient.nextRejection = 'HOLD_UNAVAILABLE';
 
-    await release(user, name);
+    await release(user, names);
 
     expect(await screen.findByText(message)).toBeOnTheScreen();
     expect(screen.getByTestId('spot-hold-banner')).toBeOnTheScreen();
@@ -96,8 +97,8 @@ describe('HomeScreen release: problems', () => {
 
     await release(user);
 
-    expect(await screen.findByText('Cette garantie n’existe plus')).toBeOnTheScreen();
-    expect(announce.mock.calls.filter(([message]) => message === 'Cette garantie n’existe plus')).toHaveLength(1);
+    expect(await screen.findByText('Cette garantie n’existe plus, actualisez la liste')).toBeOnTheScreen();
+    expect(announce.mock.calls.filter(([message]) => message === 'Cette garantie n’existe plus, actualisez la liste')).toHaveLength(1);
   });
 
   it('reads the lots again when the hold was already released elsewhere', async () => {

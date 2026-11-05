@@ -18,6 +18,8 @@ export const spotHoldEn: Translations['spotHold'] = {
   releasingAccessibilityLabel: 'Releasing the guarantee at %{lotName}',
   releasePrompt: 'Release this guarantee?',
   releaseConfirm: 'Yes, release',
+  releaseConfirmAccessibilityLabel: 'Yes, release the guarantee at %{lotName}',
+  releaseNotFound: 'This guarantee no longer exists, refresh the list',
   releaseUnavailable: 'Can’t release the guarantee right now, try again in a moment',
   releaseCancel: 'Cancel',
   released: 'Guarantee released',

@@ -43,10 +43,13 @@ function failureMessage({ reason, target }: SpotHoldFailure): string {
   }
 }
 
-// A busy lot is worded for the action that met it: a release is not a hold request.
+const RELEASE_MESSAGE_KEYS: Partial<Record<SpotHoldRefusalCode, string>> = {
+  HOLD_UNAVAILABLE: 'spotHold.releaseUnavailable',
+  HOLD_NOT_FOUND: 'spotHold.releaseNotFound',
+};
+
+// A refusal is worded for the action that met it: a release is not a hold request.
 function refusalMessage(refusal: SpotHoldRefusalCode, target: SpotHoldFailureTarget): string {
-  if (target.kind === 'heldSpot' && refusal === 'HOLD_UNAVAILABLE') {
-    return i18n.t('spotHold.releaseUnavailable');
-  }
-  return i18n.t(`spotHold.refusals.${refusal}`);
+  const releaseKey = target.kind === 'heldSpot' ? RELEASE_MESSAGE_KEYS[refusal] : undefined;
+  return i18n.t(releaseKey ?? `spotHold.refusals.${refusal}`);
 }
