@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
+import type { EntrySessionState } from '@palier/shared-types';
 import { decideRepeatedScan, openingFor } from '../../domain/entries/decideRepeatedScan.ts';
 import type {
   HoldAttachment,
@@ -17,21 +17,15 @@ import type { Database, Transaction } from './database.ts';
 import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
 import { parkingSession } from './schema.ts';
 import { assignFirstFreeSpot, type AssignedSpotRow } from './spotClaim.ts';
+import { spotOf, type SpotLabelRow } from './spotLabel.ts';
 
 // Past it, a waiting entry gives up with a retryable refusal instead of holding a pool connection.
 const LIMIT_LOCK_WAIT = sql`set local lock_timeout = '3s'`;
 
-interface SessionStatusRow extends Record<string, unknown> {
+interface SessionStatusRow extends SpotLabelRow {
   readonly id: string;
   readonly state: EntrySessionState;
   readonly entry_confirmed_at: Date | string | null;
-  readonly number: string;
-  readonly aisle_code: string;
-  readonly level_code: string;
-}
-
-function spotOf(row: Pick<AssignedSpotRow, 'number' | 'level_code' | 'aisle_code'>): AssignedSpot {
-  return { number: row.number, levelCode: row.level_code, aisleCode: row.aisle_code };
 }
 
 function statusOf(row: SessionStatusRow): SessionStatus {

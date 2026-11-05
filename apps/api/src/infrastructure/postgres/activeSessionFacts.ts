@@ -5,16 +5,14 @@ import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import type { Transaction } from './database.ts';
 import { entryOpenedAt, isWithinOpeningWindow } from './openingWindowSql.ts';
+import { spotOf, type SpotLabelRow } from './spotLabel.ts';
 
-interface ActiveSessionRow extends Record<string, unknown> {
+interface ActiveSessionRow extends SpotLabelRow {
   readonly id: string;
   readonly lot_id: string;
   readonly entry_gate_id: string;
   readonly state: ActiveEntrySessionState;
   readonly is_within_opening_window: boolean;
-  readonly number: string;
-  readonly aisle_code: string;
-  readonly level_code: string;
 }
 
 // The active session is filtered alone first, with the index's own condition, before the joins (docs/decisions/007).
@@ -38,6 +36,6 @@ function factsOf(row: ActiveSessionRow): ActiveSessionFacts {
     entryGateId: row.entry_gate_id,
     state: row.state,
     isWithinOpeningWindow: row.is_within_opening_window,
-    spot: { number: row.number, levelCode: row.level_code, aisleCode: row.aisle_code },
+    spot: spotOf(row),
   };
 }

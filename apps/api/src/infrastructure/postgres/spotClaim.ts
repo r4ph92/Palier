@@ -3,12 +3,10 @@ import type { FreeSpot } from '../../domain/allocation/chooseSpot.ts';
 import { chooseSpotFor } from '../../domain/allocation/chooseSpotFor.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Database, Transaction } from './database.ts';
+import type { SpotLabelRow } from './spotLabel.ts';
 
-export interface AssignedSpotRow extends Record<string, unknown> {
+export interface AssignedSpotRow extends SpotLabelRow {
   readonly id: string;
-  readonly number: string;
-  readonly aisle_code: string;
-  readonly level_code: string;
 }
 
 interface FreeSpotRow extends Record<string, unknown> {
