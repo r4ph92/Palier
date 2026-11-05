@@ -25,6 +25,10 @@
       "types": "./src/entryLink.ts",
       "default": "./src/entryLink.ts"
     },
+    "./lots": {
+      "types": "./src/lots.ts",
+      "default": "./src/lots.ts"
+    },
     "./dashboard": {
       "types": "./src/dashboard.ts",
       "default": "./src/dashboard.ts"

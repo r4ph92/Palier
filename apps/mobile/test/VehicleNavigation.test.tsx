@@ -45,10 +45,10 @@ describe('the vehicles page of the account tab', () => {
     await user.press(await screen.findByRole('tab', { name: 'Compte' }));
     await user.press(screen.getByRole('button', { name: 'Mes véhicules' }));
     await user.press(await screen.findByRole('button', { name: 'Modifier ABC 123' }));
-    await user.press(screen.getByRole('checkbox', { name: 'Gabarit large' }));
+    await user.press(screen.getByRole('checkbox', { name: 'Grand gabarit' }));
     await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
 
-    expect(await screen.findByText('Gabarit large')).toBeOnTheScreen();
+    expect(await screen.findByText('Grand gabarit')).toBeOnTheScreen();
     expect(screen.getByText('ABC 123 · QC')).toBeOnTheScreen();
   });
 });

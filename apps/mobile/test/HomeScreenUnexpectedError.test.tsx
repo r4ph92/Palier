@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { LotsClient } from '../src/api/LotsClient';
-import { LotsClientProvider } from '../src/api/LotsClientContext';
 import { applyLanguage } from '../src/i18n/i18n';
 import { HomeScreen } from '../src/screens/HomeScreen';
+import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 
 class CaughtErrorBoundary extends Component<{ readonly children: ReactNode }, { readonly caught?: Error }> {
   override state: { readonly caught?: Error } = {};
@@ -29,9 +29,7 @@ describe('HomeScreen with an unexpected client failure', () => {
     await render(
       <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 393, height: 852 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } }}>
         <CaughtErrorBoundary>
-          <LotsClientProvider client={brokenClient}>
-            <HomeScreen firstName="Julie" />
-          </LotsClientProvider>
+          <HomeScreen firstName="Julie" lotsClient={brokenClient} locationClient={new FakeDeviceLocationClient()} />
         </CaughtErrorBoundary>
       </SafeAreaProvider>,
     );

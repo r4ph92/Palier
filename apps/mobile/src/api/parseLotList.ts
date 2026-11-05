@@ -1,4 +1,6 @@
-import type { LotListResponse, LotSummary } from '@palier/shared-types';
+import type { GeoPosition, LotListResponse, LotSummary, SpotCountByCategory } from '@palier/shared-types';
+import { isOnEarth, SPOT_CATEGORIES } from '@palier/shared-types/lots';
+import { asRecord } from './asRecord';
 import { PalierUnreachableError } from './LotsClient';
 
 export function parseLotList(body: unknown): LotListResponse {
@@ -9,9 +11,22 @@ export function parseLotList(body: unknown): LotListResponse {
 }
 
 function isLotSummary(candidate: unknown): candidate is LotSummary {
-  if (typeof candidate !== 'object' || candidate === null) {
-    return false;
-  }
-  const { id, name, freeSpots } = candidate as Record<string, unknown>;
-  return typeof id === 'string' && typeof name === 'string' && Number.isInteger(freeSpots);
+  const { id, name, freeSpots, freeSpotsByCategory, location } = asRecord(candidate);
+  return (
+    typeof id === 'string' &&
+    typeof name === 'string' &&
+    Number.isInteger(freeSpots) &&
+    isSpotCountByCategory(freeSpotsByCategory) &&
+    (location === null || isGeoPosition(location))
+  );
+}
+
+function isSpotCountByCategory(candidate: unknown): candidate is SpotCountByCategory {
+  const counts = asRecord(candidate);
+  return SPOT_CATEGORIES.every((category) => Number.isInteger(counts[category]));
+}
+
+function isGeoPosition(candidate: unknown): candidate is GeoPosition {
+  const { latitude, longitude } = asRecord(candidate);
+  return typeof latitude === 'number' && typeof longitude === 'number' && isOnEarth({ latitude, longitude });
 }

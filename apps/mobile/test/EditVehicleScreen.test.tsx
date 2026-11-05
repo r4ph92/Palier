@@ -29,7 +29,7 @@ describe('EditVehicleScreen', () => {
     expect(screen.getByText('EVA 001 · QC')).toBeOnTheScreen();
     expect(screen.getByRole('checkbox', { name: 'Véhicule électrique' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Vignette pour personnes handicapées' })).not.toBeChecked();
-    expect(screen.getByRole('checkbox', { name: 'Gabarit large' })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Grand gabarit' })).not.toBeChecked();
   });
 
   it('saves the needs Nadia ticks and goes back', async () => {
@@ -38,7 +38,7 @@ describe('EditVehicleScreen', () => {
     const user = userEvent.setup();
 
     await user.press(screen.getByRole('checkbox', { name: 'Vignette pour personnes handicapées' }));
-    await user.press(screen.getByRole('checkbox', { name: 'Gabarit large' }));
+    await user.press(screen.getByRole('checkbox', { name: 'Grand gabarit' }));
     await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
 
     expect(client.savedVehicles).toEqual([{ ...eva001, hasAccessiblePermit: true, isOversize: true }]);

@@ -1,16 +1,13 @@
 import { StyleSheet, View } from 'react-native';
-import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
-
-const PLACEHOLDER_ROWS = [0, 1, 2];
+import { COUNT_BAR, NAME_BAR, PLACEHOLDER_ROWS } from './placeholderBars';
 
 interface LoadingStateProps {
-  // What VoiceOver says is loading; the lots by default.
-  readonly label?: string;
+  readonly label: string;
 }
 
-export function LoadingState({ label = i18n.t('home.loading') }: LoadingStateProps) {
+export function LoadingState({ label }: LoadingStateProps) {
   const colors = useColors();
   return (
     <View accessible accessibilityLabel={label} accessibilityState={{ busy: true }}>
@@ -32,6 +29,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.medium,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  name: { width: '45%', height: 20 },
-  count: { width: '35%', height: 32 },
+  name: NAME_BAR,
+  count: COUNT_BAR,
 });

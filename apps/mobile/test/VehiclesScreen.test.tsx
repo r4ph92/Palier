@@ -33,7 +33,7 @@ describe('VehiclesScreen', () => {
     await renderVehiclesScreen(new FakeVehicleClient([abc123, eva001]));
 
     expect(await screen.findByText('Véhicule électrique · Vignette pour personnes handicapées')).toBeOnTheScreen();
-    expect(within(screen.getByTestId(`vehicle-row-${abc123.id}`)).queryByText(/Véhicule électrique|Gabarit large/)).not.toBeOnTheScreen();
+    expect(within(screen.getByTestId(`vehicle-row-${abc123.id}`)).queryByText(/Véhicule électrique|Grand gabarit/)).not.toBeOnTheScreen();
   });
 
   it('opens the edit page of the vehicle Julie chooses', async () => {

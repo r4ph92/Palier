@@ -28,7 +28,7 @@ export type {
   GateCommandListResponse,
 } from './entries.ts';
 export type { GateIdentity, GateKind, GatePassageRequest, GatePassageResponse } from './gates.ts';
-export type { LotListResponse, LotSummary } from './lots.ts';
+export type { GeoPosition, LotListResponse, LotSummary, SpotCategory, SpotCountByCategory } from './lots.ts';
 export type {
   BackdateParkingSessionRequest,
   CurrentParkingSession,

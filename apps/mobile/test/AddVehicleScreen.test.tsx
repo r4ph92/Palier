@@ -51,7 +51,7 @@ describe('AddVehicleScreen', () => {
   it('unticks a need pressed twice', async () => {
     await renderAddVehicleScreen(new FakeVehicleClient());
     const user = userEvent.setup();
-    const oversize = screen.getByRole('checkbox', { name: 'Gabarit large' });
+    const oversize = screen.getByRole('checkbox', { name: 'Grand gabarit' });
 
     await user.press(oversize);
     expect(oversize).toBeChecked();

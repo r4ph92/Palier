@@ -7,6 +7,7 @@ import { MessageState } from '../components/MessageState';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
 import { i18n } from '../i18n/i18n';
+import { LIST_SEPARATOR } from '../i18n/spaces';
 import { declaredNeeds } from '../vehicles/vehicleNeeds';
 import { useVehicles, type VehicleActionError, type VehiclesController } from '../vehicles/useVehicles';
 import { useColors } from '../theme/useColors';
@@ -109,8 +110,8 @@ function VehicleLabel({ vehicle }: { readonly vehicle: Vehicle }) {
   const needs = declaredNeeds(vehicle);
   return (
     <>
-      <Text style={[typography.lotName, { color: colors.ink }]}>{`${vehicle.plate} · ${vehicle.province}`}</Text>
-      {needs.length > 0 ? <Text style={[typography.body, { color: colors.muted }]}>{needs.join(' · ')}</Text> : null}
+      <Text style={[typography.lotName, { color: colors.ink }]}>{`${vehicle.plate}${LIST_SEPARATOR}${vehicle.province}`}</Text>
+      {needs.length > 0 ? <Text style={[typography.body, { color: colors.muted }]}>{needs.join(LIST_SEPARATOR)}</Text> : null}
     </>
   );
 }

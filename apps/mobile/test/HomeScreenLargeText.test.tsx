@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react-native';
-import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
+import { FakeLotsClient, PARKING_DEMO_CATEGORY_LINE_FR, parkingDemoWith } from './fakeLotsClient';
 import { renderHomeScreen } from './renderHomeScreen';
+import { visibleText } from './visibleText';
 
 const mockWindow = { width: 402, height: 874, scale: 3, fontScale: 1 };
 
@@ -22,12 +23,29 @@ describe.each([1, 1.35, 2.3, 3.1])('HomeScreen at text scale %d', (fontScale) =>
     expect(screen.getByRole('button', { name: 'Actualiser' })).toBeOnTheScreen();
   });
 
-  it('stacks the header and the name above the count only at large text sizes', async () => {
+  it('stacks the header and the name above the count only at large text sizes, categories always below', async () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)));
 
     await screen.findByText('Parking Démo');
 
     expect(screen.getByTestId('header-eyebrow-row')).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
-    expect(screen.getByTestId(`lot-row-${parkingDemoWith(10)[0]?.id}`)).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
+    expect(screen.getByTestId(`lot-summary-${parkingDemoWith(10)[0]?.id}`)).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
+    expect(screen.getByTestId(`lot-row-${parkingDemoWith(10)[0]?.id}`)).not.toHaveStyle({ flexDirection: 'row' });
+  });
+
+  it('joins the categories on one line, or gives each its own line at large text sizes', async () => {
+    await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)));
+
+    await screen.findByText('Parking Démo');
+
+    if (fontScale < 1.35) {
+      expect(screen.getByText(PARKING_DEMO_CATEGORY_LINE_FR, visibleText)).toBeOnTheScreen();
+      return;
+    }
+    const nbsp = '\u00A0';
+    for (const line of ['Standard 7', 'Électrique 1', 'Accessible 1', 'Grand gabarit 1']) {
+      expect(screen.getByText(line.replaceAll(' ', nbsp), visibleText)).toBeOnTheScreen();
+    }
+    expect(screen.queryByText(/·/, visibleText)).not.toBeOnTheScreen();
   });
 });

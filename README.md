@@ -127,6 +127,14 @@ réouverture, toucher « Try again ».
   `kill $(lsof -ti tcp:3000 -sTCP:LISTEN)`), puis ouvrir l'app ou tirer vers le
   bas : « Impossible de joindre Palier. » et « Réessayer ». Relancer l'API puis
   toucher « Réessayer ».
+- **Stationnements à proximité** (#5) : dans le Simulator, « Features » >
+  « Location » > « Custom Location… », latitude `45.5048`, longitude `-73.5673`,
+  puis accepter la localisation à l'ouverture de l'accueil : Parking Démo à
+  « 350 m » avec « Standard 7 · Électrique 1 · Accessible 1 · Grand gabarit 1 »,
+  puis Parking Test Paliers à « 570 m ». Refuser la localisation (ou la retirer
+  dans Réglages > Expo Go) trie par nom avec « Activez la localisation pour trier
+  par distance ». La liste se relit toute seule toutes les 30 secondes.
+  En ligne de commande : `xcrun simctl location booted set 45.5048,-73.5673`.
 - **Langue de l'appareil** : l'app suit la langue du simulateur (français par
   défaut, anglais si l'appareil est en anglais).
 

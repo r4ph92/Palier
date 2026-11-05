@@ -1,5 +1,6 @@
 import type { CurrentDriver, DriverProfile, SignInResponse, TestDriver, TestDriverListResponse } from '@palier/shared-types';
 import { PalierUnreachableError } from './LotsClient';
+import { asRecord } from './asRecord';
 
 export function parseDriverProfile(body: unknown): DriverProfile {
   if (!isDriverProfile(body)) {
@@ -39,8 +40,4 @@ function isDriverProfile(candidate: unknown): candidate is DriverProfile {
 
 function isTestDriver(candidate: unknown): candidate is TestDriver {
   return isDriverProfile(candidate) && typeof asRecord(candidate).lastName === 'string';
-}
-
-function asRecord(candidate: unknown): Record<string, unknown> {
-  return typeof candidate === 'object' && candidate !== null ? (candidate as Record<string, unknown>) : {};
 }

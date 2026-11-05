@@ -1,3 +1,5 @@
+import type { SpotCategory } from '@palier/shared-types';
+
 export const fr = {
   app: {
     crashed: 'Une erreur inattendue est survenue.',
@@ -25,6 +27,19 @@ export const fr = {
     unreachableHint: 'Vérifiez votre connexion, puis réessayez.',
     retry: 'Réessayer',
     refresh: 'Actualiser',
+    categories: {
+      standard: 'Standard',
+      electric: 'Électrique',
+      accessible: 'Accessible',
+      oversize: 'Grand gabarit',
+    } satisfies Record<SpotCategory, string>,
+    locationDenied: 'Activez la localisation pour trier par distance',
+    locationUnavailable: 'Position introuvable\u00A0: stationnements triés par nom',
+    emptyNearby: 'Aucun stationnement en ligne à moins de %{radius}.',
+    distance: {
+      metres: { one: '%{amount} mètre', other: '%{amount} mètres' },
+      kilometres: { one: '%{amount} kilomètre', other: '%{amount} kilomètres' },
+    },
   },
   signIn: {
     title: 'Connexion',
@@ -68,7 +83,7 @@ export const fr = {
     needs: 'Besoins du véhicule',
     isElectric: 'Véhicule électrique',
     hasAccessiblePermit: 'Vignette pour personnes handicapées',
-    isOversize: 'Gabarit large',
+    isOversize: 'Grand gabarit',
     edit: 'Modifier',
     editTitle: 'Modifier le véhicule',
     editLabel: 'Modifier %{plate}',

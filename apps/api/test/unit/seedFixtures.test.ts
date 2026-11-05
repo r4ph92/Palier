@@ -26,6 +26,14 @@ describe('seeded entry fixtures', () => {
     expect(seededQrLinks()[0]).toEqual(seededQrLinks()[0]);
   });
 
+  it('places the seeded lots at their Montréal coordinates', () => {
+    expect([parkingDemoLot, parkingTestPaliersLot, garageRoyLot].map(({ latitude, longitude }) => [latitude, longitude])).toEqual([
+      ['45.501650', '-73.567300'],
+      ['45.505000', '-73.560000'],
+      ['45.520000', '-73.580000'],
+    ]);
+  });
+
   it('seeds Parking Test Paliers with the spots of the allocation scenario', () => {
     expect(parkingTestPaliersSpots.map(({ number, distanceToExit, state }) => [number, distanceToExit, state ?? 'AVAILABLE'])).toEqual([
       ['A-1', 5, 'OCCUPIED'],

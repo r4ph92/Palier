@@ -1,0 +1,50 @@
+import type { DeviceLocationClient } from '../src/deviceLocation/DeviceLocationClient';
+import { locateDriver } from '../src/deviceLocation/locateDriver';
+import { FakeDeviceLocationClient, SIMULATOR_POSITION } from './fakeDeviceLocationClient';
+
+describe('locateDriver', () => {
+  it('gives the position when the driver allows location', async () => {
+    await expect(locateDriver(new FakeDeviceLocationClient())).resolves.toEqual({ status: 'located', position: SIMULATOR_POSITION });
+  });
+
+  it('reads no position when the driver denies location', async () => {
+    const client = new FakeDeviceLocationClient('denied');
+
+    await expect(locateDriver(client)).resolves.toEqual({ status: 'denied' });
+    expect(client.positionReads).toBe(0);
+  });
+
+  it('counts a failed permission request as denied and logs why', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await expect(locateDriver(new FakeDeviceLocationClient('failing'))).resolves.toEqual({ status: 'denied' });
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('permission'), expect.any(Error));
+    warn.mockRestore();
+  });
+
+  it('says the position is unavailable when the device has none', async () => {
+    await expect(locateDriver(new FakeDeviceLocationClient('granted', null))).resolves.toEqual({ status: 'unavailable' });
+  });
+
+  it.each([
+    ['NaN', { latitude: NaN, longitude: NaN }],
+    ['infinite', { latitude: Infinity, longitude: 0 }],
+    ['past the pole', { latitude: 91, longitude: 0 }],
+  ])('says the position is unavailable when the device gives one %s', async (_case, position) => {
+    await expect(locateDriver(new FakeDeviceLocationClient('granted', position))).resolves.toEqual({ status: 'unavailable' });
+  });
+
+  it('says the position is unavailable when reading it fails', async () => {
+    const failingRead: DeviceLocationClient = {
+      requestWhileInUse: () => Promise.resolve('granted'),
+      currentPosition: () => Promise.reject(new Error('location services off')),
+    };
+
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await expect(locateDriver(failingRead)).resolves.toEqual({ status: 'unavailable' });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('position'), expect.any(Error));
+    warn.mockRestore();
+  });
+});

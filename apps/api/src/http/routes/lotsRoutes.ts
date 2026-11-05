@@ -14,6 +14,6 @@ export function registerLotsRoutes(
   server.get(
     '/v1/lots',
     { preHandler: consentedDriverGuards(driverAccess), schema: { response: { 200: lotListResponseSchema } } },
-    async (): Promise<LotListResponse> => listOnlineLots(repository),
+    async (request): Promise<LotListResponse> => listOnlineLots(repository, request.log),
   );
 }

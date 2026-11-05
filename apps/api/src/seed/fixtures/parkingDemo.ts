@@ -25,6 +25,8 @@ export const parkingDemoLot: typeof parkingLot.$inferInsert = {
   id: PARKING_DEMO_ID,
   operatorId: LAVOIE_OPERATOR_ID,
   name: 'Parking Démo',
+  latitude: '45.501650',
+  longitude: '-73.567300',
   beaconMajor: 1,
   pricingPolicy: SEEDED_PRICING_POLICY,
   dailyCapCents: 2500,
