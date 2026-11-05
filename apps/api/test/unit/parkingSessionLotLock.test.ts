@@ -7,6 +7,7 @@ import { ScriptedSql } from './fakes/scriptedSql.ts';
 const NOW = new Date('2026-11-05T12:00:00Z');
 const draft: SessionDraft = {
   driverId: 'driver-julie',
+  now: NOW,
   vehicleId: 'vehicle-julie',
   plate: 'ABC 123',
   needs: { isElectric: false, hasAccessiblePermit: false, isOversize: false },
@@ -36,7 +37,7 @@ function scriptedEntry(): ScriptedSql {
 }
 
 async function openEntry(scripted: ScriptedSql) {
-  const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 }, () => NOW);
+  const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 });
   return repository.openOrReplay(draft);
 }
 
@@ -46,7 +47,7 @@ describe('opening an entry under the lot lock', () => {
 
     await openEntry(scripted);
 
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'use-spot-hold', 'read-free-spots', 'claim-spot', 'insert-session']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-free-spots', 'claim-spot', 'insert-session']);
   });
 
   it('runs every statement on the transaction, never on the shared connection', async () => {
@@ -79,12 +80,14 @@ describe('opening an entry under the lot lock', () => {
 });
 
 describe('opening an entry for a driver who holds a spot', () => {
-  const heldSpot = { id: 'spot-B-2', number: 'B-2', aisle_code: 'B', level_code: 'P1' };
+  const heldSpotRow = { hold_id: 'hold-1', spot_id: 'spot-B-2', is_ev: false, is_accessible: false, is_oversize: false };
+  const assignedRow = { id: 'spot-B-2', number: 'B-2', aisle_code: 'B', level_code: 'P1' };
 
   function scriptedHeldEntry(): ScriptedSql {
     return new ScriptedSql()
-      .answer('use-spot-hold', [{ spot_id: 'spot-B-2' }])
-      .answer('assign-held-spot', [heldSpot])
+      .answer('read-held-spot', [heldSpotRow])
+      .answer('use-spot-hold', [{ id: 'hold-1' }])
+      .answer('assign-held-spot', [assignedRow])
       .answer('insert-session', [{ id: 'session-1' }]);
   }
 
@@ -94,7 +97,7 @@ describe('opening an entry for a driver who holds a spot', () => {
     const opening = await openEntry(scripted);
 
     expect(opening).toEqual({ kind: 'opened', session: { id: 'session-1', spot: { number: 'B-2', levelCode: 'P1', aisleCode: 'B' } } });
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'use-spot-hold', 'assign-held-spot', 'insert-session']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'use-spot-hold', 'assign-held-spot', 'insert-session']);
   });
 
   it('looks for the hold of this driver in the scanned lot only, still running at the API clock instant', async () => {
@@ -102,18 +105,51 @@ describe('opening an entry for a driver who holds a spot', () => {
 
     await openEntry(scripted);
 
-    expect(scripted.statements.find(({ label }) => label === 'use-spot-hold')?.params).toEqual([draft.driverId, draft.lotId, NOW.toISOString()]);
+    const read = scripted.statements.find(({ label }) => label === 'read-held-spot');
+    expect(read?.params).toEqual([draft.driverId, draft.lotId, NOW.toISOString()]);
+    expect(read?.text).toContain(`status = 'ACTIVE'`);
+    expect(read?.text).toContain('expires_at >');
   });
 
-  it('claims a free spot when she has no usable hold, and refuses a full lot', async () => {
+  it('ends only an active hold that is still running, and only the one it read', async () => {
+    const scripted = scriptedHeldEntry();
+
+    await openEntry(scripted);
+
+    const used = scripted.statements.find(({ label }) => label === 'use-spot-hold');
+    expect(used?.text).toContain(`status = 'ACTIVE'`);
+    expect(used?.text).toContain('expires_at >');
+    expect(used?.params).toEqual(['hold-1', draft.driverId, draft.lotId, NOW.toISOString()]);
+  });
+
+  it('turns only a held spot into the assigned one', async () => {
+    const scripted = scriptedHeldEntry();
+
+    await openEntry(scripted);
+
+    const assigned = scripted.statements.find(({ label }) => label === 'assign-held-spot');
+    expect(assigned?.text).toContain(`state = 'HELD'`);
+    expect(assigned?.params).toContain('spot-B-2');
+  });
+
+  it('asks for a free spot when she has no usable hold, and refuses a full lot', async () => {
     const scripted = new ScriptedSql();
 
     expect(await openEntry(scripted)).toBeNull();
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'use-spot-hold', 'read-free-spots']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-free-spots']);
+  });
+
+  it('leaves the hold alone and claims a free spot when the held spot no longer fits her vehicle', async () => {
+    const scripted = new ScriptedSql().answer('read-held-spot', [{ ...heldSpotRow, is_accessible: true }]).answer('read-free-spots', [freeSpot]).answer('claim-spot', [assignedRow]).answer('insert-session', [{ id: 'session-1' }]);
+
+    await openEntry(scripted);
+
+    expect(scripted.count('use-spot-hold')).toBe(0);
+    expect(scripted.count('claim-spot')).toBe(1);
   });
 
   it('rolls the entry back when the hold was used but its spot was no longer held', async () => {
-    const scripted = new ScriptedSql().answer('use-spot-hold', [{ spot_id: 'spot-B-2' }]);
+    const scripted = new ScriptedSql().answer('read-held-spot', [heldSpotRow]).answer('use-spot-hold', [{ id: 'hold-1' }]);
 
     await expect(openEntry(scripted)).rejects.toThrow('was not held');
   });
@@ -129,12 +165,12 @@ describe('opening an entry for a driver who holds a spot', () => {
     level_code: 'P1',
   };
 
-  it('never uses a hold when the scan is a replay', async () => {
+  it('does not look at holds when the scan replays an entry still opening', async () => {
     const scripted = new ScriptedSql().answer('read-active-session', [replayableSessionRow]);
 
     await openEntry(scripted);
 
-    expect(scripted.count('use-spot-hold')).toBe(0);
+    expect(scripted.count('read-held-spot')).toBe(0);
   });
 });
 

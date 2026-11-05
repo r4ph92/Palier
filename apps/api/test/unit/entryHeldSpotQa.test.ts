@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SessionDraft } from '../../src/domain/entries/ParkingSessionRepository.ts';
 import { EntryRefusedError } from '../../src/domain/entries/EntryRefusedError.ts';
 import type { VehicleNeeds } from '../../src/domain/vehicles/VehicleRepository.ts';
-import { PostgresEntryGateRepository } from '../../src/infrastructure/postgres/PostgresEntryGateRepository.ts';
+import { PostgresSpotHoldRepository } from '../../src/infrastructure/postgres/PostgresSpotHoldRepository.ts';
 import { PostgresParkingSessionRepository } from '../../src/infrastructure/postgres/PostgresParkingSessionRepository.ts';
 import { markSpotHoldsExpired } from '../../src/infrastructure/postgres/spotExpiry.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
@@ -14,6 +14,7 @@ const oversizeNeeds: VehicleNeeds = { isElectric: false, hasAccessiblePermit: fa
 function draftWith(needs: VehicleNeeds): SessionDraft {
   return {
     driverId: 'driver-julie',
+    now: NOW,
     vehicleId: 'vehicle-julie',
     plate: 'ABC 123',
     needs,
@@ -39,14 +40,15 @@ const freeOversizeSpot = {
 };
 
 function openEntry(scripted: ScriptedSql, draft: SessionDraft) {
-  const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 }, () => NOW);
+  const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 });
   return repository.openOrReplay(draft);
 }
 
 describe('QA #9: the held spot at the entry, under the lot lock', () => {
   it('never seats an oversize vehicle in the standard spot its driver held before switching vehicles', async () => {
     const scripted = new ScriptedSql()
-      .answer('use-spot-hold', [{ spot_id: 'spot-A-1' }])
+      .answer('read-held-spot', [{ hold_id: 'hold-1', spot_id: 'spot-A-1', is_ev: false, is_accessible: false, is_oversize: false }])
+      .answer('use-spot-hold', [{ id: 'hold-1' }])
       .answer('assign-held-spot', [heldStandardSpot])
       .answer('read-free-spots', [freeOversizeSpot])
       .answer('claim-spot', [{ id: 'spot-B-4', number: 'B-4', aisle_code: 'B', level_code: 'P1' }])
@@ -82,7 +84,8 @@ describe('QA #9: the held spot at the entry, under the lot lock', () => {
 
   it('uses the hold only after the lot is locked, so the expiry job and a release wait for it', async () => {
     const scripted = new ScriptedSql()
-      .answer('use-spot-hold', [{ spot_id: 'spot-A-1' }])
+      .answer('read-held-spot', [{ hold_id: 'hold-1', spot_id: 'spot-A-1', is_ev: false, is_accessible: false, is_oversize: false }])
+      .answer('use-spot-hold', [{ id: 'hold-1' }])
       .answer('assign-held-spot', [heldStandardSpot])
       .answer('insert-session', [{ id: 'session-1' }]);
 
@@ -94,7 +97,11 @@ describe('QA #9: the held spot at the entry, under the lot lock', () => {
   });
 
   it('at the instant a hold ends, entry and the expiry job agree: the job ends it, the entry cannot use it', async () => {
-    const entry = new ScriptedSql();
+    const entry = new ScriptedSql()
+      .answer('read-held-spot', [{ hold_id: 'hold-1', spot_id: 'spot-A-1', is_ev: false, is_accessible: false, is_oversize: false }])
+      .answer('use-spot-hold', [{ id: 'hold-1' }])
+      .answer('assign-held-spot', [heldStandardSpot])
+      .answer('insert-session', [{ id: 'session-1' }]);
     await openEntry(entry, draftWith(standardNeeds));
     const expiry = new ScriptedSql();
     await markSpotHoldsExpired(expiry.executor(), 'lot-demo', NOW);
@@ -111,9 +118,9 @@ describe('QA #9: the held spot at the entry, under the lot lock', () => {
 describe('QA #9: the eligibility query for a driver holding room in a full lot', () => {
   it('asks only for this driver’s active hold in the scanned lot, still running at the API clock instant', async () => {
     const scripted = new ScriptedSql();
-    const gates = new PostgresEntryGateRepository(scripted.database());
+    const gates = new PostgresSpotHoldRepository(scripted.database());
 
-    const holdsRoom = await gates.holdsRoomIn({ driverId: 'driver-julie', lotId: 'lot-demo', now: NOW });
+    const holdsRoom = await gates.hasUsableSpotHold({ driverId: 'driver-julie', lotId: 'lot-demo', now: NOW });
 
     const [statement] = scripted.statements;
     expect(holdsRoom).toBe(false);

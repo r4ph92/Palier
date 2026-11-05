@@ -1,5 +1,5 @@
 import type { EntryPolicy } from '../../../src/domain/payments/EntryPolicy.ts';
-import type { EntryGate, EntryGateRepository, HoldQuery } from '../../../src/domain/entries/EntryGateRepository.ts';
+import type { EntryGate, EntryGateRepository } from '../../../src/domain/entries/EntryGateRepository.ts';
 import { entreeDemo, sortieDemo } from './gateFixtures.ts';
 
 export const ENTREE_DEMO_SECRET = 'uC_Nt1LDTNCeYZC9i6ENFZifPf953v6Hz2vMWeBf2a4';
@@ -47,8 +47,6 @@ export const entreeRoyGate: EntryGate = {
 };
 
 export class FakeEntryGateRepository implements EntryGateRepository {
-  // Active holds, as the database would answer holdsRoomIn.
-  readonly holds: { driverId: string; lotId: string; expiresAt: Date }[] = [];
   readonly #gates: Map<string, EntryGate>;
 
   constructor(gates: readonly EntryGate[] = [entreeDemoGate, sortieDemoGate, entreeRoyGate]) {
@@ -57,10 +55,5 @@ export class FakeEntryGateRepository implements EntryGateRepository {
 
   findGate(gateId: string): Promise<EntryGate | null> {
     return Promise.resolve(this.#gates.get(gateId) ?? null);
-  }
-
-  holdsRoomIn({ driverId, lotId, now }: HoldQuery): Promise<boolean> {
-    const hold = this.holds.find((candidate) => candidate.driverId === driverId && candidate.lotId === lotId);
-    return Promise.resolve(hold !== undefined && hold.expiresAt > now);
   }
 }

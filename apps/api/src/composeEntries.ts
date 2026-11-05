@@ -11,6 +11,7 @@ import type { VehicleRepository } from './domain/vehicles/VehicleRepository.ts';
 import type { EntryRouteDependencies } from './http/routes/entryRoutes.ts';
 import type { Database } from './infrastructure/postgres/database.ts';
 import { PostgresEntryGateRepository } from './infrastructure/postgres/PostgresEntryGateRepository.ts';
+import { PostgresSpotHoldRepository } from './infrastructure/postgres/PostgresSpotHoldRepository.ts';
 import { PostgresParkingSessionRepository } from './infrastructure/postgres/PostgresParkingSessionRepository.ts';
 import { SimulatedGateCommander } from './infrastructure/postgres/SimulatedGateCommander.ts';
 import { SimulatedPaymentAuthorizer } from './infrastructure/stripe/SimulatedPaymentAuthorizer.ts';
@@ -41,16 +42,17 @@ export interface ComposedEntries {
 }
 
 export function composeEntries({ database, stripeKey, demoMode, paymentsSimulation, drivers, vehicles, openingWindow, clock }: EntryComposition): ComposedEntries {
-  const sessions = new PostgresParkingSessionRepository(database, openingWindow, clock);
+  const sessions = new PostgresParkingSessionRepository(database, openingWindow);
   const payments = paymentAuthorizer(stripeKey, paymentsSimulation);
   const routes = {
     sessions,
+    clock,
     eligibility: new EntryEligibility({
       gates: new PostgresEntryGateRepository(database),
       vehicles,
       drivers,
       policy: entryPolicyFor(demoMode),
-      clock,
+      spotHolds: new PostgresSpotHoldRepository(database),
     }),
     admission: new EntryAdmission({ sessions, payments, gateCommander: new SimulatedGateCommander(database) }),
   };

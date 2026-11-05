@@ -1,4 +1,5 @@
 import type { Clock } from '../time/Clock.ts';
+import { hasSpotHoldEnded } from './SpotHold.ts';
 import { SpotHoldRefusedError } from './SpotHoldRefusedError.ts';
 import type { SpotHoldRepository } from './SpotHoldRepository.ts';
 
@@ -19,7 +20,7 @@ export async function releaseSpotHold({ spotHolds, clock }: SpotHoldReleaseDepen
   if (spotHold === null) {
     throw new SpotHoldRefusedError('HOLD_NOT_FOUND');
   }
-  if (spotHold.expiresAt <= now) {
+  if (hasSpotHoldEnded(spotHold, now)) {
     throw new SpotHoldRefusedError('HOLD_EXPIRED');
   }
   try {

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { ACTIVE_SPOT_HOLD } from './activeSpotHold.ts';
+import { ACTIVE_SPOT_HOLD, spotHoldEndedAt } from './activeSpotHold.ts';
 import type { Transaction } from './database.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
@@ -8,7 +8,7 @@ type Executor = Pick<Transaction, 'execute'>;
 export async function markSpotHoldsExpired(tx: Executor, lotId: string, now: Date): Promise<string[]> {
   const rows = await tx.execute<{ spot_id: string }>(sql`
     update spot_hold set status = 'EXPIRED'
-    where lot_id = ${lotId} and ${ACTIVE_SPOT_HOLD} and expires_at <= ${now.toISOString()}::timestamptz
+    where lot_id = ${lotId} and ${ACTIVE_SPOT_HOLD} and ${spotHoldEndedAt(now)}
     returning spot_id`);
   return rows.map(({ spot_id }) => spot_id);
 }
@@ -27,6 +27,6 @@ export async function freeHeldSpots(tx: Executor, spotIds: readonly string[], fr
 
 export async function findLotsWithExpiredHolds(tx: Executor, now: Date): Promise<string[]> {
   const rows = await tx.execute<{ lot_id: string }>(sql`
-    select distinct lot_id from spot_hold where ${ACTIVE_SPOT_HOLD} and expires_at <= ${now.toISOString()}::timestamptz`);
+    select distinct lot_id from spot_hold where ${ACTIVE_SPOT_HOLD} and ${spotHoldEndedAt(now)}`);
   return rows.map(({ lot_id }) => lot_id);
 }

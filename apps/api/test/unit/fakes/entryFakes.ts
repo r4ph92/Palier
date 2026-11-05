@@ -12,6 +12,7 @@ import type { EntryRouteDependencies } from '../../../src/http/routes/entryRoute
 import type { FakeDriverRepository } from '../fakeDriverRepository.ts';
 import type { FakeVehicleRepository } from '../fakeVehicleRepository.ts';
 
+import { FakeSpotHoldRepository } from './fakeSpotHolds.ts';
 import { FakeEntryGateRepository, STRICT_POLICY } from './entryGateFakes.ts';
 import { FakeParkingSessionRepository, type Journal } from './fakeParkingSessions.ts';
 
@@ -79,10 +80,11 @@ interface FakeEntriesOptions {
   readonly vehicles: FakeVehicleRepository;
   readonly policy?: EntryPolicy;
   readonly gates?: EntryGateRepository;
+  readonly spotHolds?: FakeSpotHoldRepository;
   readonly hasPaymentAuthorizer?: boolean;
 }
 
-export function fakeEntries({ drivers, vehicles, policy, gates, hasPaymentAuthorizer = true }: FakeEntriesOptions): FakeEntries {
+export function fakeEntries({ drivers, vehicles, policy, gates, spotHolds = new FakeSpotHoldRepository(), hasPaymentAuthorizer = true }: FakeEntriesOptions): FakeEntries {
   const journal: Journal = [];
   const sessions = new FakeParkingSessionRepository(journal);
   const payments = new FakePaymentAuthorizer(journal);
@@ -92,10 +94,10 @@ export function fakeEntries({ drivers, vehicles, policy, gates, hasPaymentAuthor
     vehicles,
     drivers,
     policy: policy ?? STRICT_POLICY,
-    clock: systemClock,
+    spotHolds,
   });
   const admission = new EntryAdmission({ sessions, payments: hasPaymentAuthorizer ? payments : null, gateCommander });
-  return { journal, sessions, payments, gateCommander, dependencies: { eligibility, admission, sessions } };
+  return { journal, sessions, payments, gateCommander, dependencies: { eligibility, admission, sessions, clock: systemClock } };
 }
 
 export function silentLog(): EntryLog & { readonly warnings: unknown[]; readonly errors: unknown[] } {

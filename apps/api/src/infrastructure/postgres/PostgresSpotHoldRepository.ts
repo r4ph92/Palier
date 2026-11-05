@@ -2,8 +2,8 @@ import { sql, type SQL } from 'drizzle-orm';
 import { decideSpotHoldRequest } from '../../domain/spotHolds/decideSpotHoldRequest.ts';
 import type { SpotHold } from '../../domain/spotHolds/SpotHold.ts';
 import { SpotHoldRefusedError } from '../../domain/spotHolds/SpotHoldRefusedError.ts';
-import type { SpotHoldDraft, SpotHoldExpiry, SpotHoldLot, SpotHoldRelease, SpotHoldRepository } from '../../domain/spotHolds/SpotHoldRepository.ts';
-import { ACTIVE_SPOT_HOLD } from './activeSpotHold.ts';
+import type { SpotHoldDraft, SpotHoldExpiry, SpotHoldLot, SpotHoldRelease, SpotHoldRepository, UsableSpotHoldQuery } from '../../domain/spotHolds/SpotHoldRepository.ts';
+import { ACTIVE_SPOT_HOLD, usableSpotHold } from './activeSpotHold.ts';
 import type { Database, Transaction } from './database.ts';
 import { LOT_LOCK_TRANSACTION, lockParkingLot, type LockedParkingLot } from './lockParkingLot.ts';
 import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
@@ -50,6 +50,11 @@ export class PostgresSpotHoldRepository implements SpotHoldRepository {
       join parking_lot lot on lot.id = h.lot_id`);
     const row = rows[0];
     return row === undefined ? null : { id: row.id, lotId: row.lot_id, lotName: row.lot_name, expiresAt: new Date(row.expires_at) };
+  }
+
+  async hasUsableSpotHold(query: UsableSpotHoldQuery): Promise<boolean> {
+    const rows = await this.#database.execute(sql`select 1 from spot_hold where ${usableSpotHold(query)} limit 1`);
+    return rows.length > 0;
   }
 
   async findSpotHoldLot(lotId: string): Promise<SpotHoldLot | null> {
