@@ -14,6 +14,7 @@ describe('readServerEnvironment', () => {
   it('defaults to 127.0.0.1:3000 without test sign-in or demo mode', () => {
     expect(readServerEnvironment({ DATABASE_URL: databaseUrl })).toEqual({
       databaseUrl,
+      databasePoolMax: 5,
       host: '127.0.0.1',
       port: 3000,
       testSignInEnabled: false,

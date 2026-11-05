@@ -27,7 +27,7 @@ import { startSessionTokenPurge } from './scheduler/startSessionTokenPurge.ts';
 import { startUnconfirmedEntryCancellation } from './scheduler/startUnconfirmedEntryCancellation.ts';
 
 const environment = readServerEnvironment(process.env);
-const connection = connectToDatabase(environment.databaseUrl);
+const connection = connectToDatabase(environment.databaseUrl, environment.databasePoolMax);
 const stripeKey = stripeTestKey(process.env);
 const paymentsSimulation = readPaymentsSimulation(process.env);
 const driverRepository = new PostgresDriverRepository(connection.database);

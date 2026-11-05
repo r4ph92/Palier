@@ -1,8 +1,10 @@
 import { VERSION_PATTERN } from '@palier/shared-types/appVersion';
+import { readDatabasePoolMax } from './databasePool.ts';
 import { readEntryCancellationTiming, type EntryCancellationTiming } from './entryCancellationTiming.ts';
 
 export interface ServerEnvironment {
   readonly databaseUrl: string;
+  readonly databasePoolMax: number;
   readonly host: string;
   readonly port: number;
   readonly testSignInEnabled: boolean;
@@ -27,6 +29,7 @@ export function readDatabaseUrl(variables: NodeJS.ProcessEnv): string {
 export function readServerEnvironment(variables: NodeJS.ProcessEnv): ServerEnvironment {
   return {
     databaseUrl: readDatabaseUrl(variables),
+    databasePoolMax: readDatabasePoolMax(variables),
     host: variables['HOST'] ?? DEFAULT_HOST,
     port: readPort(variables['PORT']),
     testSignInEnabled: readTestSignInEnabled(variables),
