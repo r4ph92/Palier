@@ -22,11 +22,14 @@ export class FakeSpotHoldClient implements SpotHoldClient {
   nextRejection: string | null = null;
   nextFailure: Error | null = null;
   isReachable = true;
+  // True: a read answers with the server's `now` moved on by the time that passed on the device since the fake was made, as a real server would.
+  serverClockRuns = false;
   holdsAnswer = false;
   releasesAnswer = false;
   readonly releasedIds: string[] = [];
   currentRequests = 0;
   readonly #pending: (() => void)[] = [];
+  readonly #startedAt = Date.now();
 
   constructor(current: SpotHold | null = null) {
     this.activeHold = current;
@@ -42,7 +45,7 @@ export class FakeSpotHoldClient implements SpotHoldClient {
 
   current(): Promise<SpotHold | null> {
     this.currentRequests += 1;
-    return this.isReachable ? Promise.resolve(this.activeHold) : Promise.reject(new PalierUnreachableError('fake'));
+    return this.isReachable ? Promise.resolve(this.#asServerSeesIt(this.activeHold)) : Promise.reject(new PalierUnreachableError('fake'));
   }
 
   release(spotHoldId: string): Promise<void> {
@@ -56,6 +59,13 @@ export class FakeSpotHoldClient implements SpotHoldClient {
   // Answers every hold or release request still waiting, with whatever the fake is set to answer now.
   answer(): void {
     this.#pending.splice(0).forEach((resolve) => resolve());
+  }
+
+  #asServerSeesIt(spotHold: SpotHold | null): SpotHold | null {
+    if (spotHold === null || !this.serverClockRuns) {
+      return spotHold;
+    }
+    return { ...spotHold, now: new Date(Date.parse(spotHold.now) + Date.now() - this.#startedAt).toISOString() };
   }
 
   #releaseNow(): Promise<void> {

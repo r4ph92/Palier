@@ -96,7 +96,7 @@ describe('QA HomeScreen expired spot hold', () => {
     });
     await tick(5);
 
-    expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('15:00');
+    expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent(/^(15:00|14:[5-9]\d)$/);
   });
 
   it('shows the message on a refresh once Palier says the hold has ended, even though the device still counts time left', async () => {

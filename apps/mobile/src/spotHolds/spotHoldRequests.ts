@@ -48,12 +48,13 @@ function rethrowUnexpectedReadFailure(error: unknown, updates: SpotHoldUpdates):
   });
 }
 
-// The hold already on screen stays as it is, so a fresh hold still moves VoiceOver to its banner.
+// Rebuilt from every read, so the server's timing always wins; a fresh hold stays fresh until its banner has moved VoiceOver.
 function heldSpotAfterRead(previous: HeldSpot | null, spotHold: SpotHold | null): HeldSpot | null {
   if (spotHold === null) {
     return null;
   }
-  return previous?.spotHold.spotHoldId === spotHold.spotHoldId ? previous : heldSpotFrom(spotHold, Date.now(), false);
+  const isStillFresh = previous?.spotHold.spotHoldId === spotHold.spotHoldId && previous.isFresh;
+  return heldSpotFrom(spotHold, Date.now(), isStillFresh);
 }
 
 interface HoldRequestUpdates extends SpotHoldUpdates {
