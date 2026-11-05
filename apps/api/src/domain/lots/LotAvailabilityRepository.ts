@@ -1,5 +1,5 @@
-import type { LotAvailability } from '../occupancy/LotAvailability.ts';
+import type { OnlineLot } from './OnlineLot.ts';
 
 export interface LotAvailabilityRepository {
-  findOnlineLots(): Promise<readonly LotAvailability[]>;
+  findOnlineLots(): Promise<readonly OnlineLot[]>;
 }
