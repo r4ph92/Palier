@@ -70,7 +70,7 @@ describe('useSpotHold', () => {
 
     await act(async () => result.current.refreshHold());
     expect(result.current.held?.isFresh).toBe(false);
-    expect(result.current.failure).toEqual({ target: PARKING_DEMO_ID, reason: { kind: 'refused', refusal: 'HOLD_QUOTA_REACHED' }, isFresh: true });
+    expect(result.current.failure).toEqual({ target: { kind: 'lot', lotId: PARKING_DEMO_ID }, reason: { kind: 'refused', refusal: 'HOLD_QUOTA_REACHED' }, isFresh: true });
 
     await act(async () => result.current.dismissProblem());
     expect(result.current.failure).toBeNull();

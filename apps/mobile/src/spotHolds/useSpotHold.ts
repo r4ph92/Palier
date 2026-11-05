@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SpotHoldClient } from '../api/SpotHoldClient';
 import type { HeldSpot } from './heldSpot';
 import type { SpotHoldFailure } from './spotHoldFailure';
-import { readCurrentHold, releaseHold, requestHold, type SpotHoldReadState, type SpotHoldUpdates } from './spotHoldRequests';
+import { readCurrentHold, releaseHold, requestHold, type ReleaseCallbacks, type SpotHoldReadState, type SpotHoldUpdates } from './spotHoldRequests';
 
 export interface SpotHoldController {
   readonly held: HeldSpot | null;
@@ -11,9 +11,8 @@ export interface SpotHoldController {
   // The lot of the request in flight; every hold button waits while it runs.
   readonly requestedLotId: string | null;
   hold(lotId: string, onHeld: () => void): void;
-  // True while the release of the hold on screen runs.
   readonly isReleasing: boolean;
-  release(onReleased: () => void): void;
+  release(callbacks: ReleaseCallbacks): void;
   // Reads the hold again, unless a read is already on its way.
   refreshHold(): void;
   dismissProblem(): void;
@@ -41,48 +40,50 @@ export function useSpotHold(client: SpotHoldClient): SpotHoldController {
   return { held, readState, failure, requestedLotId, hold, isReleasing, release, refreshHold, dismissProblem, ...useAcknowledgements(setHeld, setFailure) };
 }
 
-// The ref refuses a second request while one runs, so a double tap sends one request.
 function useHoldRequest(client: SpotHoldClient, updates: SpotHoldUpdates): Pick<SpotHoldController, 'requestedLotId' | 'hold'> {
-  const [requestedLotId, setRequestedLotId] = useState<string | null>(null);
-  const isRequesting = useRef(false);
+  const { runningKey: requestedLotId, run } = useSingleFlight<string>();
   const hold = useCallback(
     (lotId: string, onHeld: () => void) => {
-      if (isRequesting.current) {
-        return;
-      }
-      isRequesting.current = true;
-      setRequestedLotId(lotId);
-      updates.setFailure(null);
-      void requestHold(client, lotId, { ...updates, onHeld }).finally(() => {
-        isRequesting.current = false;
-        setRequestedLotId(null);
+      run(lotId, () => {
+        updates.setFailure(null);
+        return requestHold(client, lotId, { ...updates, onHeld });
       });
     },
-    [client, updates],
+    [client, updates, run],
   );
   return { requestedLotId, hold };
 }
 
-// The same ref guard as a hold request: a double tap on « Confirmer » sends one release.
 function useReleaseRequest(client: SpotHoldClient, updates: SpotHoldUpdates, held: HeldSpot | null): Pick<SpotHoldController, 'isReleasing' | 'release'> {
-  const [isReleasing, setIsReleasing] = useState(false);
-  const isRequesting = useRef(false);
+  const { runningKey, run } = useSingleFlight<string>();
   const spotHoldId = held?.spotHold.spotHoldId;
   const release = useCallback(
-    (onReleased: () => void) => {
-      if (isRequesting.current || spotHoldId === undefined) {
-        return;
+    (callbacks: ReleaseCallbacks) => {
+      if (spotHoldId !== undefined) {
+        run(spotHoldId, () => releaseHold(client, spotHoldId, { ...updates, ...callbacks }));
       }
-      isRequesting.current = true;
-      setIsReleasing(true);
-      void releaseHold(client, spotHoldId, { ...updates, onReleased }).finally(() => {
-        isRequesting.current = false;
-        setIsReleasing(false);
-      });
     },
-    [client, updates, spotHoldId],
+    [client, updates, run, spotHoldId],
   );
-  return { isReleasing, release };
+  return { isReleasing: runningKey !== null, release };
+}
+
+// The ref refuses a second task while one runs, so a double tap sends one request.
+function useSingleFlight<Key>() {
+  const [runningKey, setRunningKey] = useState<Key | null>(null);
+  const isRunning = useRef(false);
+  const run = useCallback((key: Key, task: () => Promise<void>) => {
+    if (isRunning.current) {
+      return;
+    }
+    isRunning.current = true;
+    setRunningKey(key);
+    void task().finally(() => {
+      isRunning.current = false;
+      setRunningKey(null);
+    });
+  }, []);
+  return { runningKey, run };
 }
 
 function useAcknowledgements(

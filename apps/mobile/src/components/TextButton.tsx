@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { RefObject } from 'react';
+import { Pressable, StyleSheet, Text, View, type HostInstance } from 'react-native';
 import { useColors } from '../theme/useColors';
 import { MINIMUM_TOUCH_TARGET } from '../theme/tokens';
 import { typography } from '../theme/typography';
@@ -12,15 +13,18 @@ interface TextButtonProps {
   readonly accessibilityLabel?: string;
   // 'start' when the button begins a line, so a short label lines up with the text above it.
   readonly align?: 'start' | 'end';
+  // Gives the button VoiceOver focus when it is attached to this ref.
+  readonly focusRef?: RefObject<HostInstance | null> | undefined;
 }
 
 const BUSY_OPACITY = 0.6;
 
-export function TextButton({ label, busyLabel = label, onPress, isBusy = false, accessibilityLabel, align = 'end' }: TextButtonProps) {
+export function TextButton({ label, busyLabel = label, onPress, isBusy = false, accessibilityLabel, align = 'end', focusRef }: TextButtonProps) {
   const shownLabel = isBusy ? busyLabel : label;
   const longerLabel = busyLabel.length > label.length ? busyLabel : label;
   return (
     <Pressable
+      ref={focusRef}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? shownLabel}
       accessibilityState={{ busy: isBusy }}

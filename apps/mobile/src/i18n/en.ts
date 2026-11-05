@@ -1,5 +1,5 @@
 import type { Translations } from './fr';
-import { enSpotHold } from './spotHoldEn';
+import { spotHoldEn } from './spotHoldEn';
 import { LOT_NOT_IN_SERVICE, NOT_RESPONDING, TOO_MANY_ATTEMPTS } from './sharedEn';
 
 export const en: Translations = {
@@ -43,7 +43,7 @@ export const en: Translations = {
       kilometres: { one: '%{amount} kilometre', other: '%{amount} kilometres' },
     },
   },
-  spotHold: enSpotHold,
+  spotHold: spotHoldEn,
   signIn: {
     title: 'Sign in',
     testSignIn: 'Test sign-in',

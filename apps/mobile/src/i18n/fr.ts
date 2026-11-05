@@ -1,5 +1,5 @@
 import type { SpotCategory } from '@palier/shared-types';
-import { frSpotHold } from './spotHoldFr';
+import { spotHoldFr } from './spotHoldFr';
 import { LOT_NOT_IN_SERVICE, NOT_RESPONDING, TOO_MANY_ATTEMPTS } from './sharedFr';
 
 export const fr = {
@@ -43,7 +43,7 @@ export const fr = {
       kilometres: { one: '%{amount} kilomètre', other: '%{amount} kilomètres' },
     },
   },
-  spotHold: frSpotHold,
+  spotHold: spotHoldFr,
   signIn: {
     title: 'Connexion',
     testSignIn: 'Connexion de test',

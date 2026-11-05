@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { BANNER_TARGET } from '../spotHolds/spotHoldFailure';
+import type { ReleaseCallbacks } from '../spotHolds/spotHoldRequests';
 import type { SpotHoldController } from '../spotHolds/useSpotHold';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -9,21 +9,21 @@ import { SpotHoldProblem } from './SpotHoldProblem';
 
 interface HeldSpotSectionProps {
   readonly spotHold: SpotHoldController;
-  readonly onReleased: () => void;
+  readonly onRelease: ReleaseCallbacks;
 }
 
 // The banner is one accessible group, so the release button and its problem sit beside it, not inside it.
-export function HeldSpotSection({ spotHold, onReleased }: HeldSpotSectionProps) {
+export function HeldSpotSection({ spotHold, onRelease }: HeldSpotSectionProps) {
   const colors = useColors();
   const { held, failure } = spotHold;
   if (held === null) {
     return null;
   }
-  const bannerFailure = failure?.target === BANNER_TARGET ? failure : null;
+  const bannerFailure = failure?.target.kind === 'heldSpot' ? failure : null;
   return (
     <View style={[styles.section, { borderColor: colors.line }]}>
       <SpotHoldBanner held={held} onFreshHoldShown={spotHold.acknowledgeFreshHold} />
-      <ReleaseSpotHold lotName={held.spotHold.lotName} spotHold={spotHold} onReleased={onReleased} />
+      <ReleaseSpotHold lotName={held.spotHold.lotName} isReleasing={spotHold.isReleasing} onConfirm={() => spotHold.release(onRelease)} />
       {bannerFailure === null ? null : <SpotHoldProblem failure={bannerFailure} onAnnounced={spotHold.acknowledgeFreshFailure} />}
     </View>
   );

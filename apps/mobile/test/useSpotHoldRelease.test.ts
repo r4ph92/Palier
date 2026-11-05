@@ -1,7 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { PalierStatusError } from '../src/api/LotsClient';
+import { PalierRejectedError } from '../src/api/VehicleClient';
 import type { SpotHoldClient } from '../src/api/SpotHoldClient';
-import { BANNER_TARGET } from '../src/spotHolds/spotHoldFailure';
 import { useSpotHold } from '../src/spotHolds/useSpotHold';
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
 
@@ -11,35 +10,41 @@ async function renderHolding(client: SpotHoldClient) {
   return rendered;
 }
 
+const HELD_SPOT_TARGET = { kind: 'heldSpot' };
+
+function callbacks() {
+  return { onReleased: jest.fn(), onGone: jest.fn() };
+}
+
 describe('useSpotHold release', () => {
   it('clears the hold and calls back once when the release goes through', async () => {
     const client = new FakeSpotHoldClient(julieHoldAtParkingDemo());
-    const onReleased = jest.fn();
+    const release = callbacks();
     const { result } = await renderHolding(client);
 
-    await act(async () => result.current.release(onReleased));
+    await act(async () => result.current.release(release));
 
     expect(client.releasedIds).toEqual(['hold-1']);
     expect(result.current.held).toBeNull();
-    expect(onReleased).toHaveBeenCalledTimes(1);
+    expect(release.onReleased).toHaveBeenCalledTimes(1);
     expect(result.current.isReleasing).toBe(false);
   });
 
   it('sends one request for a double tap', async () => {
     const client = new FakeSpotHoldClient(julieHoldAtParkingDemo());
     client.releasesAnswer = true;
-    const onReleased = jest.fn();
+    const release = callbacks();
     const { result } = await renderHolding(client);
 
     await act(async () => {
-      result.current.release(onReleased);
-      result.current.release(onReleased);
+      result.current.release(release);
+      result.current.release(release);
     });
     expect(result.current.isReleasing).toBe(true);
     await act(async () => client.answer());
 
     expect(client.releasedIds).toEqual(['hold-1']);
-    expect(onReleased).toHaveBeenCalledTimes(1);
+    expect(release.onReleased).toHaveBeenCalledTimes(1);
     expect(result.current.isReleasing).toBe(false);
   });
 
@@ -47,22 +52,22 @@ describe('useSpotHold release', () => {
     const client = new FakeSpotHoldClient();
     const { result } = await renderHolding(client);
 
-    await act(async () => result.current.release(jest.fn()));
+    await act(async () => result.current.release(callbacks()));
 
-    expect(client.releasedIds).toEqual([]);
+    expect(client.releasedIds).toHaveLength(0);
   });
 
   it('keeps the hold and shows an expired guarantee under the banner', async () => {
     const client = new FakeSpotHoldClient(julieHoldAtParkingDemo());
     client.nextRejection = 'HOLD_EXPIRED';
-    const onReleased = jest.fn();
+    const release = callbacks();
     const { result } = await renderHolding(client);
 
-    await act(async () => result.current.release(onReleased));
+    await act(async () => result.current.release(release));
 
     expect(result.current.held?.spotHold.spotHoldId).toBe('hold-1');
-    expect(result.current.failure).toEqual({ target: BANNER_TARGET, reason: { kind: 'refused', refusal: 'HOLD_EXPIRED' }, isFresh: true });
-    expect(onReleased).not.toHaveBeenCalled();
+    expect(result.current.failure).toEqual({ target: HELD_SPOT_TARGET, reason: { kind: 'refused', refusal: 'HOLD_EXPIRED' }, isFresh: true });
+    expect(release.onReleased).not.toHaveBeenCalled();
   });
 
   it('reads the hold again, with no message, when it was already released elsewhere', async () => {
@@ -70,22 +75,38 @@ describe('useSpotHold release', () => {
     const { result } = await renderHolding(client);
     client.activeHold = null;
     client.nextRejection = 'HOLD_NOT_FOUND';
+    const release = callbacks();
 
-    await act(async () => result.current.release(jest.fn()));
+    await act(async () => result.current.release(release));
 
     expect(result.current.held).toBeNull();
     expect(result.current.failure).toBeNull();
     expect(client.currentRequests).toBe(2);
+    expect(release.onGone).toHaveBeenCalledTimes(1);
+    expect(release.onReleased).not.toHaveBeenCalled();
   });
 
-  it('says Palier is not responding on an HTTP 503 and keeps the hold', async () => {
+  it('says the guarantee no longer exists when it was released elsewhere and the hold cannot be read again', async () => {
     const client = new FakeSpotHoldClient(julieHoldAtParkingDemo());
-    client.nextFailure = new PalierStatusError(503);
+    const { result } = await renderHolding(client);
+    client.nextFailure = new PalierRejectedError('HOLD_NOT_FOUND');
+    client.isReachable = false;
+    const release = callbacks();
+
+    await act(async () => result.current.release(release));
+
+    expect(result.current.failure).toEqual({ target: HELD_SPOT_TARGET, reason: { kind: 'refused', refusal: 'HOLD_NOT_FOUND' }, isFresh: true });
+    expect(release.onGone).not.toHaveBeenCalled();
+  });
+
+  it('keeps the hold and reports a busy lot as HOLD_UNAVAILABLE under the banner', async () => {
+    const client = new FakeSpotHoldClient(julieHoldAtParkingDemo());
+    client.nextRejection = 'HOLD_UNAVAILABLE';
     const { result } = await renderHolding(client);
 
-    await act(async () => result.current.release(jest.fn()));
+    await act(async () => result.current.release(callbacks()));
 
-    expect(result.current.failure).toMatchObject({ target: BANNER_TARGET, reason: { kind: 'notResponding' } });
+    expect(result.current.failure).toMatchObject({ target: HELD_SPOT_TARGET, reason: { kind: 'refused', refusal: 'HOLD_UNAVAILABLE' } });
     expect(result.current.held).not.toBeNull();
   });
 
@@ -93,11 +114,11 @@ describe('useSpotHold release', () => {
     const client = new FakeSpotHoldClient(julieHoldAtParkingDemo());
     const { result } = await renderHolding(client);
     client.isReachable = false;
-    await act(async () => result.current.release(jest.fn()));
+    await act(async () => result.current.release(callbacks()));
     expect(result.current.failure?.reason).toEqual({ kind: 'unreachable' });
     client.isReachable = true;
 
-    await act(async () => result.current.release(jest.fn()));
+    await act(async () => result.current.release(callbacks()));
 
     expect(result.current.failure).toBeNull();
     expect(result.current.held).toBeNull();
@@ -110,7 +131,7 @@ describe('useSpotHold release', () => {
     client.current = () => new Promise((resolve) => (answerRead = resolve));
     await act(async () => result.current.refreshHold());
 
-    await act(async () => result.current.release(jest.fn()));
+    await act(async () => result.current.release(callbacks()));
     await act(async () => answerRead(julieHoldAtParkingDemo()));
 
     expect(result.current.held).toBeNull();

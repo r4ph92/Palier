@@ -3,7 +3,7 @@ import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { SpotHoldClient } from '../api/SpotHoldClient';
 import { PalierRejectedError } from '../api/VehicleClient';
 import { heldSpotFrom, type HeldSpot } from './heldSpot';
-import { BANNER_TARGET, failureReasonOf, isExpectedReadFailure, type SpotHoldFailure } from './spotHoldFailure';
+import { failureReasonOf, isExpectedReadFailure, type SpotHoldFailure, type SpotHoldFailureTarget } from './spotHoldFailure';
 
 // 'unknown' until Palier has said whether the driver holds a spot: no hold button shows before then.
 export type SpotHoldReadState = 'unknown' | 'settled';
@@ -17,7 +17,9 @@ export interface SpotHoldUpdates {
   readonly isReading: RefObject<boolean>;
 }
 
-export async function readCurrentHold(client: SpotHoldClient, updates: SpotHoldUpdates): Promise<void> {
+// True when Palier answered.
+export async function readCurrentHold(client: SpotHoldClient, updates: SpotHoldUpdates): Promise<boolean> {
+  let isAnswered = false;
   const holdChangesBefore = updates.holdChanges.current;
   updates.isReading.current = true;
   try {
@@ -26,17 +28,23 @@ export async function readCurrentHold(client: SpotHoldClient, updates: SpotHoldU
       updates.setHeld((previous) => heldSpotAfterRead(previous, spotHold));
     }
     updates.setReadState('settled');
+    isAnswered = true;
   } catch (error) {
-    // Run inside the state update so an unexpected error is thrown during render and reaches the error boundary.
-    updates.setFailure((previous) => {
-      if (isExpectedReadFailure(error)) {
-        return previous;
-      }
-      throw error;
-    });
+    rethrowUnexpectedReadFailure(error, updates);
   } finally {
     updates.isReading.current = false;
   }
+  return isAnswered;
+}
+
+// Run inside the state update so an unexpected error is thrown during render and reaches the error boundary.
+function rethrowUnexpectedReadFailure(error: unknown, updates: SpotHoldUpdates): void {
+  updates.setFailure((previous) => {
+    if (isExpectedReadFailure(error)) {
+      return previous;
+    }
+    throw error;
+  });
 }
 
 // The hold already on screen stays as it is, so a fresh hold still moves VoiceOver to its banner.
@@ -56,7 +64,7 @@ export async function requestHold(client: SpotHoldClient, lotId: string, updates
   try {
     spotHold = await client.hold(lotId);
   } catch (error) {
-    updates.setFailure(() => freshFailureOf(error, lotId));
+    updates.setFailure(() => freshFailureOf(error, { kind: 'lot', lotId }));
     if (error instanceof PalierRejectedError && error.code === 'HOLD_ALREADY_EXISTS') {
       await readCurrentHold(client, updates);
     }
@@ -67,11 +75,13 @@ export async function requestHold(client: SpotHoldClient, lotId: string, updates
   updates.onHeld();
 }
 
-interface ReleaseRequestUpdates extends SpotHoldUpdates {
+export interface ReleaseCallbacks {
   readonly onReleased: () => void;
+  // The hold was already gone and the lots may show it: they are read again.
+  readonly onGone: () => void;
 }
 
-export async function releaseHold(client: SpotHoldClient, spotHoldId: string, updates: ReleaseRequestUpdates): Promise<void> {
+export async function releaseHold(client: SpotHoldClient, spotHoldId: string, updates: SpotHoldUpdates & ReleaseCallbacks): Promise<void> {
   updates.setFailure(null);
   try {
     await client.release(spotHoldId);
@@ -84,16 +94,17 @@ export async function releaseHold(client: SpotHoldClient, spotHoldId: string, up
   updates.onReleased();
 }
 
-// Another device released it first: the hold is read again and the banner goes, with nothing to tell.
-async function showReleaseFailure(client: SpotHoldClient, error: unknown, updates: SpotHoldUpdates): Promise<void> {
-  if (error instanceof PalierRejectedError && error.code === 'HOLD_NOT_FOUND') {
-    await readCurrentHold(client, updates);
+// Released on another device first: the hold is read again and the banner goes. Without an answer the banner would stay, so the driver is told.
+async function showReleaseFailure(client: SpotHoldClient, error: unknown, updates: SpotHoldUpdates & ReleaseCallbacks): Promise<void> {
+  const isGone = error instanceof PalierRejectedError && error.code === 'HOLD_NOT_FOUND';
+  if (isGone && (await readCurrentHold(client, updates))) {
+    updates.onGone();
     return;
   }
-  updates.setFailure(() => freshFailureOf(error, BANNER_TARGET));
+  updates.setFailure(() => freshFailureOf(error, { kind: 'heldSpot' }));
 }
 
-function freshFailureOf(error: unknown, target: string): SpotHoldFailure | null {
+function freshFailureOf(error: unknown, target: SpotHoldFailureTarget): SpotHoldFailure | null {
   const reason = failureReasonOf(error);
   return reason === null ? null : { target, reason, isFresh: true };
 }

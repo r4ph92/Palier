@@ -17,9 +17,9 @@ async function renderJulieHolding(spotHoldClient: FakeSpotHoldClient, language: 
   return { lotsClient, user: userEvent.setup() };
 }
 
-async function confirmRelease(user: ReturnType<typeof userEvent.setup>, name = RELEASE_FR, confirm = 'Confirmer') {
+async function confirmRelease(user: ReturnType<typeof userEvent.setup>, name = RELEASE_FR) {
   await user.press(await screen.findByRole('button', { name }));
-  await user.press(await screen.findByRole('button', { name: confirm }));
+  await user.press(await screen.findByRole('button', { name }));
 }
 
 describe('HomeScreen releasing a hold', () => {
@@ -37,9 +37,9 @@ describe('HomeScreen releasing a hold', () => {
     expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: RELEASE_FR }));
-    expect(screen.getByText('Libérer cette garantie ?')).toBeOnTheScreen();
-    expect(spotHoldClient.releasedIds).toEqual([]);
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    expect(screen.getByText('Libérer cette garantie?')).toBeOnTheScreen();
+    expect(spotHoldClient.releasedIds).toHaveLength(0);
+    await user.press(screen.getByRole('button', { name: RELEASE_FR }));
 
     expect(await screen.findByText('10 places libres', visibleText)).toBeOnTheScreen();
     expect(screen.queryByTestId('spot-hold-banner')).not.toBeOnTheScreen();
@@ -56,7 +56,7 @@ describe('HomeScreen releasing a hold', () => {
     await user.press(screen.getByRole('button', { name: RELEASE_FR }));
     await user.press(screen.getByRole('button', { name: 'Annuler' }));
 
-    expect(spotHoldClient.releasedIds).toEqual([]);
+    expect(spotHoldClient.releasedIds).toHaveLength(0);
     expect(screen.getByTestId('spot-hold-banner')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: RELEASE_FR })).toBeOnTheScreen();
   });
@@ -66,7 +66,11 @@ describe('HomeScreen releasing a hold', () => {
     spotHoldClient.releasesAnswer = true;
     const { user } = await renderJulieHolding(spotHoldClient);
 
-    await confirmRelease(user);
+    await user.press(await screen.findByRole('button', { name: RELEASE_FR }));
+    await screen.findByText('Libérer cette garantie?');
+    const confirm = screen.getByRole('button', { name: RELEASE_FR });
+    await user.press(confirm);
+    await user.press(confirm);
 
     expect(screen.getByText('Libération…')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Libération de la garantie à Parking Démo' })).toBeDisabled();
@@ -137,7 +141,7 @@ describe('HomeScreen releasing a hold', () => {
     await user.press(screen.getByRole('button', { name: RELEASE_EN }));
     expect(screen.getByText('Release this guarantee?')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeOnTheScreen();
-    await user.press(screen.getByRole('button', { name: 'Confirm' }));
+    await user.press(screen.getByRole('button', { name: RELEASE_EN }));
 
     expect(await screen.findByText('10 free spots', visibleText)).toBeOnTheScreen();
     expect(announce).toHaveBeenCalledWith('Guarantee released');
@@ -148,7 +152,7 @@ describe('HomeScreen releasing a hold', () => {
     const { user } = await renderJulieHolding(spotHoldClient, 'en');
     spotHoldClient.nextRejection = 'HOLD_EXPIRED';
 
-    await confirmRelease(user, RELEASE_EN, 'Confirm');
+    await confirmRelease(user, RELEASE_EN);
 
     expect(await screen.findByText('This guarantee has already expired')).toBeOnTheScreen();
   });

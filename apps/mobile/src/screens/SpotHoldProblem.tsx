@@ -3,7 +3,8 @@ import { Text } from 'react-native';
 import { StateMark } from '../components/StateMark';
 import { useAnnouncement } from '../components/useAnnouncement';
 import { i18n } from '../i18n/i18n';
-import type { SpotHoldFailure, SpotHoldFailureReason } from '../spotHolds/spotHoldFailure';
+import type { SpotHoldRefusalCode } from '@palier/shared-types';
+import type { SpotHoldFailure, SpotHoldFailureTarget } from '../spotHolds/spotHoldFailure';
 import { useColors } from '../theme/useColors';
 import { typography } from '../theme/typography';
 
@@ -15,7 +16,7 @@ interface SpotHoldProblemProps {
 // Announced once, when the driver's tap fails: their focus stays on the button they tapped, and a tab return stays quiet.
 export function SpotHoldProblem({ failure, onAnnounced }: SpotHoldProblemProps) {
   const colors = useColors();
-  const message = failureMessage(failure.reason);
+  const message = failureMessage(failure);
   useAnnouncement(failure.isFresh ? message : null);
   useEffect(() => {
     if (failure.isFresh) {
@@ -31,13 +32,21 @@ export function SpotHoldProblem({ failure, onAnnounced }: SpotHoldProblemProps) 
   );
 }
 
-function failureMessage(reason: SpotHoldFailureReason): string {
+function failureMessage({ reason, target }: SpotHoldFailure): string {
   switch (reason.kind) {
     case 'refused':
-      return i18n.t(`spotHold.refusals.${reason.refusal}`);
+      return refusalMessage(reason.refusal, target);
     case 'notResponding':
       return i18n.t('spotHold.notResponding');
     case 'unreachable':
       return i18n.t('home.unreachable');
   }
+}
+
+// A busy lot is worded for the action that met it: a release is not a hold request.
+function refusalMessage(refusal: SpotHoldRefusalCode, target: SpotHoldFailureTarget): string {
+  if (target.kind === 'heldSpot' && refusal === 'HOLD_UNAVAILABLE') {
+    return i18n.t('spotHold.releaseUnavailable');
+  }
+  return i18n.t(`spotHold.refusals.${refusal}`);
 }

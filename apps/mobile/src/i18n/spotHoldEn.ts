@@ -4,7 +4,7 @@ import { LOT_NOT_IN_SERVICE, NOT_RESPONDING, TOO_MANY_ATTEMPTS } from './sharedE
 const HOLD_FOR_FIFTEEN_MINUTES = 'Guarantee a spot for 15\u00A0min';
 const GUARANTEED_UNTIL = 'Spot guaranteed until';
 
-export const enSpotHold: Translations['spotHold'] = {
+export const spotHoldEn: Translations['spotHold'] = {
   hold: HOLD_FOR_FIFTEEN_MINUTES,
   holding: 'Guaranteeing…',
   holdAccessibilityLabel: `${HOLD_FOR_FIFTEEN_MINUTES} at %{lotName}`,
@@ -17,7 +17,8 @@ export const enSpotHold: Translations['spotHold'] = {
   releaseAccessibilityLabel: 'Release the guarantee at %{lotName}',
   releasingAccessibilityLabel: 'Releasing the guarantee at %{lotName}',
   releasePrompt: 'Release this guarantee?',
-  releaseConfirm: 'Confirm',
+  releaseConfirm: 'Yes, release',
+  releaseUnavailable: 'Can’t release the guarantee right now, try again in a moment',
   releaseCancel: 'Cancel',
   released: 'Guarantee released',
   minutesLeft: { one: '%{count} minute left', other: '%{count} minutes left' },

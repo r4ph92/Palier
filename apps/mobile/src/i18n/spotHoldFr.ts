@@ -6,7 +6,7 @@ const HOLD_FOR_FIFTEEN_MINUTES = 'Garantir une place 15\u00A0min';
 // The banner sets the time apart in mono; VoiceOver reads the whole sentence.
 const GUARANTEED_UNTIL = 'Place garantie jusqu’à';
 
-export const frSpotHold = {
+export const spotHoldFr = {
   hold: HOLD_FOR_FIFTEEN_MINUTES,
   holding: 'Garantie en cours…',
   holdAccessibilityLabel: `${HOLD_FOR_FIFTEEN_MINUTES} à %{lotName}`,
@@ -18,8 +18,9 @@ export const frSpotHold = {
   releasing: 'Libération…',
   releaseAccessibilityLabel: 'Libérer la garantie à %{lotName}',
   releasingAccessibilityLabel: 'Libération de la garantie à %{lotName}',
-  releasePrompt: 'Libérer cette garantie\u00A0?',
-  releaseConfirm: 'Confirmer',
+  releasePrompt: 'Libérer cette garantie?',
+  releaseConfirm: 'Oui, libérer',
+  releaseUnavailable: 'Impossible de libérer la garantie pour le moment, réessayez dans un instant',
   releaseCancel: 'Annuler',
   released: 'Garantie libérée',
   minutesLeft: { one: '%{count} minute restante', other: '%{count} minutes restantes' },

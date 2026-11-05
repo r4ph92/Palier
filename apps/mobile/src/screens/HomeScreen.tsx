@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { AccessibilityInfo, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { LotsClient } from '../api/LotsClient';
@@ -15,6 +15,7 @@ import type { DeviceLocationClient } from '../deviceLocation/DeviceLocationClien
 import type { DriverLocation } from '../deviceLocation/locateDriver';
 import { NEARBY_RADIUS_METRES, type NearbyLot } from '../lots/nearbyLots';
 import { useLots, type LotsController, type LotsState } from '../lots/useLots';
+import type { ReleaseCallbacks } from '../spotHolds/spotHoldRequests';
 import type { SpotHoldController } from '../spotHolds/useSpotHold';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -37,14 +38,14 @@ interface HomeHeaderProps {
   readonly firstName: string;
   readonly spotHold: SpotHoldController;
   readonly onRefresh: () => void;
-  readonly onReleased: () => void;
+  readonly onRelease: ReleaseCallbacks;
 }
 
 // A new hold or a release refreshes the list, so the lot's count shows the spot gone or back.
 export function HomeScreen({ firstName, lotsClient, locationClient, spotHold }: HomeScreenProps) {
   const controller = useLots(lotsClient, locationClient);
   const refreshByDriver = useHomeRefresh(controller, spotHold);
-  const onReleased = useReleasedHold(controller.refresh);
+  const onRelease = useReleaseCallbacks(controller.refresh);
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
@@ -52,7 +53,7 @@ export function HomeScreen({ firstName, lotsClient, locationClient, spotHold }: 
         data={controller.state.status === 'loaded' ? controller.state.lots : NO_LOTS}
         keyExtractor={({ lot }) => lot.id}
         renderItem={({ item }) => <LotRow nearbyLot={item} action={<LotSpotHold lot={item.lot} spotHold={spotHold} onHeld={controller.refresh} />} />}
-        ListHeaderComponent={<HomeHeader controller={controller} firstName={firstName} spotHold={spotHold} onRefresh={refreshByDriver} onReleased={onReleased} />}
+        ListHeaderComponent={<HomeHeader controller={controller} firstName={firstName} spotHold={spotHold} onRefresh={refreshByDriver} onRelease={onRelease} />}
         ListEmptyComponent={<HomeStateMessage controller={controller} />}
         refreshControl={<RefreshControl refreshing={controller.isRefreshing} onRefresh={refreshByDriver} />}
         contentContainerStyle={styles.content}
@@ -62,7 +63,7 @@ export function HomeScreen({ firstName, lotsClient, locationClient, spotHold }: 
   );
 }
 
-function HomeHeader({ controller, firstName, spotHold, onRefresh, onReleased }: HomeHeaderProps) {
+function HomeHeader({ controller, firstName, spotHold, onRefresh, onRelease }: HomeHeaderProps) {
   const colors = useColors();
   return (
     <View>
@@ -72,7 +73,7 @@ function HomeHeader({ controller, firstName, spotHold, onRefresh, onReleased }: 
         title={i18n.t('home.title')}
         action={<TextButton label={i18n.t('home.refresh')} onPress={onRefresh} />}
       />
-      <HeldSpotSection spotHold={spotHold} onReleased={onReleased} />
+      <HeldSpotSection spotHold={spotHold} onRelease={onRelease} />
       {controller.state.status === 'loaded' ? <LocationNotice location={controller.state.location} /> : null}
     </View>
   );
@@ -95,11 +96,17 @@ function useHomeRefresh(controller: LotsController, spotHold: SpotHoldController
   }, [dismissProblem, refreshHold, refresh]);
 }
 
-function useReleasedHold(refresh: () => void): () => void {
-  return useCallback(() => {
-    AccessibilityInfo.announceForAccessibility(i18n.t('spotHold.released'));
-    refresh();
-  }, [refresh]);
+function useReleaseCallbacks(refresh: () => void): ReleaseCallbacks {
+  return useMemo(
+    () => ({
+      onReleased: () => {
+        AccessibilityInfo.announceForAccessibility(i18n.t('spotHold.released'));
+        refresh();
+      },
+      onGone: refresh,
+    }),
+    [refresh],
+  );
 }
 
 function freshnessStamp(state: LotsState): string {
