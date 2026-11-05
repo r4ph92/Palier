@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLotsClient } from '../api/LotsClientContext';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
-import { LoadingState } from '../components/LoadingState';
+import { LotListLoading } from '../components/LotListLoading';
 import { LotRow } from '../components/LotRow';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
@@ -70,7 +70,7 @@ function freshnessStamp(state: LotsState): string {
 function HomeStateMessage({ controller }: { readonly controller: LotsController }) {
   switch (controller.state.status) {
     case 'loading':
-      return <LoadingState />;
+      return <LotListLoading />;
     case 'error':
       return <ErrorState onRetry={controller.retry} />;
     case 'loaded':

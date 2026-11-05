@@ -24,12 +24,13 @@ describe.each([1, 1.35, 2.3, 3.1])('HomeScreen at text scale %d', (fontScale) =>
     expect(screen.getByRole('button', { name: 'Actualiser' })).toBeOnTheScreen();
   });
 
-  it('stacks the header and the name above the count only at large text sizes', async () => {
+  it('stacks the header and the name above the count only at large text sizes, categories always below', async () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)));
 
     await screen.findByText('Parking Démo');
 
     expect(screen.getByTestId('header-eyebrow-row')).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
-    expect(screen.getByTestId(`lot-row-${parkingDemoWith(10)[0]?.id}`)).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
+    expect(screen.getByTestId(`lot-summary-${parkingDemoWith(10)[0]?.id}`)).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
+    expect(screen.getByTestId(`lot-row-${parkingDemoWith(10)[0]?.id}`)).not.toHaveStyle({ flexDirection: 'row' });
   });
 });

@@ -10,7 +10,9 @@ const SPOKEN_SEPARATOR = ', ';
 
 // « Standard 7 · Électrique 1 · Accessible 1 · Grand gabarit 1 »
 export function categoryLine(counts: SpotCountByCategory): string {
-  return categoryCounts(counts, NO_BREAK_SPACE).join(CATEGORY_SEPARATOR);
+  return categoryCounts(counts, NO_BREAK_SPACE)
+    .map((categoryCount) => categoryCount.replaceAll(' ', NO_BREAK_SPACE))
+    .join(CATEGORY_SEPARATOR);
 }
 
 // « Parking Démo, 350 mètres, 2 places libres, Standard 2, Électrique 1, Accessible 1, Grand gabarit 1 »

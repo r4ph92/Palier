@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react-native';
+import { screen, within } from '@testing-library/react-native';
+import { NO_BREAK_SPACE } from '../src/i18n/spaces';
 import { AccessibilityInfo } from 'react-native';
 import { FakeDeviceLocationClient, LOCATION_DENIED_NOTICE_FR } from './fakeDeviceLocationClient';
 import { FakeLotsClient, PARKING_DEMO_CATEGORY_LINE_FR, parkingDemo, parkingTestPaliers } from './fakeLotsClient';
@@ -17,6 +18,20 @@ describe('HomeScreen with location allowed', () => {
     expect(screen.getByText('570 m', visibleText)).toBeOnTheScreen();
     expect(screen.getByText(PARKING_DEMO_CATEGORY_LINE_FR, visibleText)).toBeOnTheScreen();
     expect(lotNamesInOrder()).toEqual(['Parking Démo', 'Parking Test Paliers']);
+  });
+
+  it('runs the categories under the name and the count, with each label kept on one line', async () => {
+    await renderHomeScreen(new FakeLotsClient([parkingDemo(10)]));
+
+    const categories = await screen.findByText(PARKING_DEMO_CATEGORY_LINE_FR, visibleText);
+    expect(categories.props.children).toContain(`Grand${NO_BREAK_SPACE}gabarit${NO_BREAK_SPACE}1`);
+    expect(within(screen.getByTestId(`lot-summary-${parkingDemo(10).id}`)).queryByText(PARKING_DEMO_CATEGORY_LINE_FR, visibleText)).toBeNull();
+  });
+
+  it('shows placeholder rows shaped like a lot while the position is asked', async () => {
+    await renderHomeScreen(new FakeLotsClient([parkingDemo(10)]), 'fr', new FakeDeviceLocationClient('pending'));
+
+    expect(screen.getAllByTestId('lot-placeholder')).toHaveLength(3);
   });
 
   it('leaves out a lot further than 10 km', async () => {
