@@ -53,16 +53,26 @@ function HeldSpotContent({ spotHold, countdown, onRelease }: HeldSpotContentProp
         takesFocusOnExpiry={isConfirming || spotHold.isReleasing}
         onFreshHoldShown={spotHold.acknowledgeFreshHold}
       />
-      {isExpired ? null : (
-        <ReleaseSpotHold
-          lotName={spotHold.held.spotHold.lotName}
-          isReleasing={spotHold.isReleasing}
-          onConfirm={() => spotHold.release(onRelease)}
-          onConfirmingChange={setIsConfirming}
-        />
-      )}
+      {isExpired ? null : <ReleaseControl spotHold={spotHold} onRelease={onRelease} onConfirmingChange={setIsConfirming} />}
       {failure === null ? null : <SpotHoldProblem failure={failure} onAnnounced={spotHold.acknowledgeFreshFailure} />}
     </View>
+  );
+}
+
+interface ReleaseControlProps {
+  readonly spotHold: HoldingController;
+  readonly onRelease: ReleaseCallbacks;
+  readonly onConfirmingChange: (isConfirming: boolean) => void;
+}
+
+function ReleaseControl({ spotHold, onRelease, onConfirmingChange }: ReleaseControlProps) {
+  return (
+    <ReleaseSpotHold
+      lotName={spotHold.held.spotHold.lotName}
+      isReleasing={spotHold.isReleasing}
+      onConfirm={() => spotHold.release(onRelease)}
+      onConfirmingChange={onConfirmingChange}
+    />
   );
 }
 
