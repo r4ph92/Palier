@@ -4,6 +4,7 @@ import { PalierUnreachableError } from '../src/api/LotsClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeLotsClient, PARKING_DEMO_ID, parkingDemo, parkingDemoWith, parkingTestPaliers } from './fakeLotsClient';
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
+import { typography } from '../src/theme/typography';
 import { renderHomeScreen, renderHomeScreenWith } from './renderHomeScreen';
 import { visibleText } from './visibleText';
 
@@ -33,6 +34,7 @@ describe('HomeScreen spot hold', () => {
 
     expect(await screen.findByText("Place garantie jusqu'à 14 h 17", visibleText)).toBeOnTheScreen();
     expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('15:00');
+    expect(screen.getByText('14 h 17', visibleText)).toHaveStyle({ fontFamily: typography.figure.fontFamily });
     expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
     expect(spotHoldClient.heldLots).toEqual([PARKING_DEMO_ID]);
     expect(lotsClient.callCount).toBe(2);

@@ -4,6 +4,8 @@ import type { SpotHoldRefusal } from '../spotHolds/spotHoldRefusals';
 // Said the same way whether the driver scans at the terminal or holds a spot from the list.
 const LOT_NOT_IN_SERVICE = 'Ce parking n’est pas en service';
 const TOO_MANY_ATTEMPTS = 'Trop de tentatives, réessayez dans quelques minutes';
+// The banner sets the time apart in mono; VoiceOver reads the whole sentence.
+const GUARANTEED_UNTIL = "Place garantie jusqu'à";
 
 export const fr = {
   app: {
@@ -50,7 +52,8 @@ export const fr = {
     hold: 'Garantir une place 15 min',
     holding: 'Garantie en cours…',
     holdAccessibilityLabel: 'Garantir une place 15 min à %{lotName}',
-    guaranteedUntil: "Place garantie jusqu'à %{time}",
+    guaranteedUntilLead: GUARANTEED_UNTIL,
+    guaranteedUntil: `${GUARANTEED_UNTIL} %{time}`,
     minutesLeft: { one: '%{count} minute restante', other: '%{count} minutes restantes' },
     bannerAccessibilityLabel: '%{guaranteedUntil}, %{lotName}, %{minutesLeft}',
     refusals: {

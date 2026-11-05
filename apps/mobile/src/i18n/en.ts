@@ -2,6 +2,7 @@ import type { Translations } from './fr';
 
 const LOT_NOT_IN_SERVICE = 'This lot is not in service';
 const TOO_MANY_ATTEMPTS = 'Too many attempts, try again in a few minutes';
+const GUARANTEED_UNTIL = 'Spot guaranteed until';
 
 export const en: Translations = {
   app: {
@@ -48,7 +49,8 @@ export const en: Translations = {
     hold: 'Guarantee a spot for 15 min',
     holding: 'Guaranteeing…',
     holdAccessibilityLabel: 'Guarantee a spot for 15 min at %{lotName}',
-    guaranteedUntil: 'Spot guaranteed until %{time}',
+    guaranteedUntilLead: GUARANTEED_UNTIL,
+    guaranteedUntil: `${GUARANTEED_UNTIL} %{time}`,
     minutesLeft: { one: '%{count} minute left', other: '%{count} minutes left' },
     bannerAccessibilityLabel: '%{guaranteedUntil}, %{lotName}, %{minutesLeft}',
     refusals: {

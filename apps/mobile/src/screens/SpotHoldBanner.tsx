@@ -20,32 +20,35 @@ export function SpotHoldBanner({ held, onFreshHoldShown }: SpotHoldBannerProps) 
   const colors = useColors();
   const seconds = useSecondsLeft(held);
   const focusRef = useFreshHoldFocus(held.isFresh, onFreshHoldShown);
-  const guaranteedUntil = guaranteedUntilOf(held);
+  const time = formatClockTime(new Date(held.spotHold.expiresAt), currentLanguage());
   return (
     <View
       ref={focusRef}
       accessible
-      accessibilityLabel={bannerLabel(guaranteedUntil, held.spotHold.lotName, seconds)}
+      accessibilityLabel={bannerLabel(time, held.spotHold.lotName, seconds)}
       testID="spot-hold-banner"
       style={[styles.banner, { borderColor: colors.line }]}
     >
-      <BannerLines guaranteedUntil={guaranteedUntil} lotName={held.spotHold.lotName} seconds={seconds} />
+      <BannerLines time={time} lotName={held.spotHold.lotName} seconds={seconds} />
     </View>
   );
 }
 
 interface BannerLinesProps {
-  readonly guaranteedUntil: string;
+  readonly time: string;
   readonly lotName: string;
   readonly seconds: number;
 }
 
-function BannerLines({ guaranteedUntil, lotName, seconds }: BannerLinesProps) {
+function BannerLines({ time, lotName, seconds }: BannerLinesProps) {
   const colors = useColors();
   return (
     <>
       <StateMark color={colors.free}>
-        <Text style={[typography.bodyStrong, { color: colors.ink }]}>{guaranteedUntil}</Text>
+        <Text style={[typography.bodyStrong, { color: colors.ink }]}>
+          {`${i18n.t('spotHold.guaranteedUntilLead')} `}
+          <Text style={typography.figure}>{time}</Text>
+        </Text>
       </StateMark>
       <Text style={[typography.body, { color: colors.muted }]}>{lotName}</Text>
       <Text testID="spot-hold-countdown" style={[typography.countNumber, { color: colors.ink }]}>
@@ -55,11 +58,8 @@ function BannerLines({ guaranteedUntil, lotName, seconds }: BannerLinesProps) {
   );
 }
 
-function guaranteedUntilOf(held: HeldSpot): string {
-  return i18n.t('spotHold.guaranteedUntil', { time: formatClockTime(new Date(held.spotHold.expiresAt), currentLanguage()) });
-}
-
-function bannerLabel(guaranteedUntil: string, lotName: string, seconds: number): string {
+function bannerLabel(time: string, lotName: string, seconds: number): string {
+  const guaranteedUntil = i18n.t('spotHold.guaranteedUntil', { time });
   const minutesLeft = i18n.t('spotHold.minutesLeft', { count: Math.ceil(seconds / SECONDS_PER_MINUTE) });
   return i18n.t('spotHold.bannerAccessibilityLabel', { guaranteedUntil, lotName, minutesLeft });
 }
