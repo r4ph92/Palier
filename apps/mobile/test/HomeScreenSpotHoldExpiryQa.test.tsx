@@ -13,6 +13,7 @@ const CONFIRM_FR = 'Oui, libérer la garantie à Parking Démo';
 
 async function renderJulieHolding(spotHoldClient: FakeSpotHoldClient, language: 'fr' | 'en' = 'fr') {
   const lotsClient = new FakeLotsClient(parkingDemoWith(9));
+  spotHoldClient.serverClockRuns = true;
   await renderHomeScreenWith({ lotsClient, locationClient: new FakeDeviceLocationClient(), spotHoldClient }, language);
   await screen.findByTestId('spot-hold-banner');
   return userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
@@ -73,30 +74,32 @@ describe('QA HomeScreen expired spot hold', () => {
     expect(screen.getByRole('button', { name: HOLD_BUTTON_FR })).toBeOnTheScreen();
   });
 
-  it('announces the English message once on an English device', async () => {
+  it('announces the English message once on an English device, across the reads that still answer the hold', async () => {
     await renderJulieHolding(new FakeSpotHoldClient(julieHoldAtParkingDemo()), 'en');
 
-    await tick(15 * 60 + 20);
+    await tick(15 * 60);
+    for (let read = 0; read < 4; read += 1) {
+      await tick(5);
+    }
 
     expect(screen.getByText(EXPIRED_EN)).toBeOnTheScreen();
     expect(announcementsOf(EXPIRED_EN)).toBe(1);
     expect(announcementsOf(EXPIRED_FR)).toBe(0);
   });
 
-  it('counts a new hold read after the expired one down from at most 15:00', async () => {
+  it('counts a new hold read after the expired one down from at most 15:00, on the new hold', async () => {
     const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
     await renderJulieHolding(spotHoldClient);
     await tick(15 * 60);
     await tick(20);
+    const readsBefore = spotHoldClient.currentRequests;
 
-    spotHoldClient.activeHold = julieHoldAtParkingDemo({
-      spotHoldId: 'hold-2',
-      now: new Date(Date.now()).toISOString(),
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-    });
+    spotHoldClient.activeHold = julieHoldAtParkingDemo({ spotHoldId: 'hold-2', now: new Date(2026, 10, 4, 14, 2).toISOString(), expiresAt: new Date(2026, 10, 4, 14, 32, 20).toISOString() });
     await tick(5);
 
-    expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent(/^(15:00|14:[5-9]\d)$/);
+    expect(spotHoldClient.currentRequests).toBe(readsBefore + 1);
+    expect(screen.getByTestId('spot-hold-banner').props.accessibilityLabel).toMatch(/14\sh\s32, Parking Démo, 15 minutes restantes$/);
+    expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent(/^(15:00|14:5\d)$/);
   });
 
   it('shows the message on a refresh once Palier says the hold has ended, even though the device still counts time left', async () => {
@@ -116,6 +119,8 @@ describe('QA HomeScreen expired spot hold', () => {
     const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
     await renderJulieHolding(spotHoldClient);
     await tick(60);
+    // The fake measures the server's time with the device clock: frozen here, the server keeps its own time while the device jumps.
+    spotHoldClient.serverClockRuns = false;
 
     jest.setSystemTime(Date.now() + 14 * 60 * 1000);
     await tick(1);
