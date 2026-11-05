@@ -36,7 +36,7 @@ function scriptedEntry(): ScriptedSql {
 
 async function openEntry(scripted: ScriptedSql) {
   const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 });
-  return repository.openWithFirstFreeSpot(draft);
+  return repository.openOrReplay(draft);
 }
 
 describe('opening an entry under the lot lock', () => {

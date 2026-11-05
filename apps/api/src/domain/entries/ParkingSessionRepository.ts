@@ -35,11 +35,8 @@ export interface SessionStatus {
 export type HoldAttachment = 'attached' | 'cancelled';
 
 export interface ParkingSessionRepository {
-  // Under the lot lock, in one transaction: replays the driver's same entry still opening, or assigns the lot's first free
-  // spot that fits the vehicle's needs and creates the session; null when no spot is free.
-  // Throws EntryRefusedError NO_SUITABLE_SPOT when spots are free but none fits, ALREADY_INSIDE when the driver has
-  // another active session, PAYMENTS_UNAVAILABLE when the lot stays locked too long.
-  openWithFirstFreeSpot(draft: SessionDraft): Promise<SessionOpening | null>;
+  // Null when no spot is free; refuses NO_SUITABLE_SPOT, ALREADY_INSIDE, or PAYMENTS_UNAVAILABLE when the lot stays locked too long.
+  openOrReplay(draft: SessionDraft): Promise<SessionOpening | null>;
   // Records the hold on a CREATED or CANCELLED session, marking it for release when cancelled; throws for any other state or an unknown id.
   attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment>;
   // The driver's own session only; null for an unknown id or another driver's session.

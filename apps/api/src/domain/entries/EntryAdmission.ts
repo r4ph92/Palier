@@ -61,7 +61,7 @@ export class EntryAdmission {
   }
 
   async #openSession(entry: EligibleEntry): Promise<SessionOpening> {
-    const opening = await this.#dependencies.sessions.openWithFirstFreeSpot({
+    const opening = await this.#dependencies.sessions.openOrReplay({
       driverId: entry.driverId,
       vehicleId: entry.vehicle.id,
       plate: entry.vehicle.plate,

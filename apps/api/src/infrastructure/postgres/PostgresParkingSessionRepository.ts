@@ -54,7 +54,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   }
 
   // Every statement after the lock runs on tx, so a second scan of the same lot waits and then reads the first one's session.
-  async openWithFirstFreeSpot(draft: SessionDraft): Promise<SessionOpening | null> {
+  async openOrReplay(draft: SessionDraft): Promise<SessionOpening | null> {
     try {
       return await this.#database.transaction(async (tx) => {
         await tx.execute(LIMIT_LOCK_WAIT);

@@ -54,7 +54,7 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
   }
 
   // Same rule as the SQL repository under its lot lock: decideRepeatedScan on the driver's active session.
-  openWithFirstFreeSpot(draft: SessionDraft): Promise<SessionOpening | null> {
+  openOrReplay(draft: SessionDraft): Promise<SessionOpening | null> {
     this.#journal.push('open-session');
     const decision = decideRepeatedScan(this.#activeSessionOf(draft.driverId), draft);
     if (decision.kind === 'refuse') {
