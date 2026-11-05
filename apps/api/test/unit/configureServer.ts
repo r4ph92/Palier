@@ -8,6 +8,7 @@ import { FakeOperatorRepository } from './fakes/fakeOperatorRepository.ts';
 import { fakeOperatorStripe } from './fakes/fakeOperatorStripe.ts';
 import { FakeCurrentParkingSessions } from './fakes/fakeCurrentParkingSessions.ts';
 import { fakeEntries } from './fakes/entryFakes.ts';
+import { FakeSpotHoldRepository, STRICT_POLICY } from './fakes/fakeSpotHolds.ts';
 import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
@@ -26,16 +27,18 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
   const parkingSessions = new FakeCurrentParkingSessions();
   const testClock = createTestClock();
   const operatorRepository = new FakeOperatorRepository();
+  const spotHolds = new FakeSpotHoldRepository();
   const server: FastifyInstance = buildServer({
     gates: fakeGateDependencies(),
     repositories: fakeRepositories({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository, operatorRepository, parkingSessions }),
     operatorStripe: fakeOperatorStripe(operatorRepository).dependencies,
     cardGateway: new FakeCardGateway(),
     entries: entries.dependencies,
+    spotHolds: { repository: spotHolds, policy: STRICT_POLICY },
     testClock,
     settings: { testSignInEnabled, demoMode, minimumAppVersion },
   });
-  return { server, driverRepository, vehicleRepository, entries, parkingSessions, testClock };
+  return { server, driverRepository, vehicleRepository, entries, spotHolds, parkingSessions, testClock };
 }
 
 // Every route the server registers, as "METHOD /path" with the :params kept, read from Fastify's route tree.

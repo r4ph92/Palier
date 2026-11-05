@@ -8,9 +8,8 @@ import type { SpotHoldLot } from '../../src/domain/spotHolds/SpotHoldRepository.
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { FakeDriverRepository, julie } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository, standardNeeds } from './fakeVehicleRepository.ts';
-import { FakeSpotHoldRepository, GARAGE_ROY_ID, parkingDemoSpotHoldLot } from './fakes/fakeSpotHolds.ts';
+import { FakeSpotHoldRepository, GARAGE_ROY_ID, parkingDemoSpotHoldLot, STRICT_POLICY } from './fakes/fakeSpotHolds.ts';
 
-const STRICT: EntryPolicy = { allowPlatformChargesWithoutOperatorAccount: false };
 const UNKNOWN_LOT_ID = '00000000-0000-4000-8000-000000000299';
 
 interface Setup {
@@ -20,7 +19,7 @@ interface Setup {
   readonly policy?: EntryPolicy;
 }
 
-async function eligibilityFor({ plate = true, card = true, lots, policy = STRICT }: Setup = {}) {
+async function eligibilityFor({ plate = true, card = true, lots, policy = STRICT_POLICY }: Setup = {}) {
   const drivers = new FakeDriverRepository();
   const vehicles = new FakeVehicleRepository();
   const spotHolds = new FakeSpotHoldRepository(lots);
