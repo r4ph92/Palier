@@ -25,7 +25,7 @@ interface FreeSpotRow extends Record<string, unknown> {
 
 // The domain picks the spot (chooseSpotFor); only that spot row is then locked, and a spot another writer holds is
 // skipped rather than waited on (docs/03). Each lost spot leaves the candidates, so the attempts end with the free spots.
-export async function assignFirstFreeSpot(tx: Transaction, lotId: string, needs: VehicleNeeds): Promise<AssignedSpotRow | undefined> {
+export async function assignFirstFreeSpot(tx: Pick<Transaction, 'execute'>, lotId: string, needs: VehicleNeeds): Promise<AssignedSpotRow | undefined> {
   let candidates = await readFreeSpots(tx, lotId);
   let chosen = chooseSpotFor(needs, candidates);
   while (chosen !== null) {
@@ -61,7 +61,7 @@ export async function readFreeSpots(executor: Pick<Database, 'execute'>, lotId: 
   }));
 }
 
-async function claimSpot(tx: Transaction, spotId: string): Promise<AssignedSpotRow | undefined> {
+async function claimSpot(tx: Pick<Transaction, 'execute'>, spotId: string): Promise<AssignedSpotRow | undefined> {
   const rows = await tx.execute<AssignedSpotRow>(sql`
     with chosen as (
       select id from spot where id = ${spotId} and state = 'AVAILABLE' for update skip locked
