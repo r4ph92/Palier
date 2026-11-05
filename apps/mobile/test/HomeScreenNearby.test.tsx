@@ -43,8 +43,10 @@ describe('HomeScreen with location allowed', () => {
     expect(screen.queryByText('Garage Québec')).not.toBeOnTheScreen();
   });
 
-  it('shows 2 free spots and no category above 2 when the vehicle count leaves 2', async () => {
-    await renderHomeScreen(new FakeLotsClient([parkingDemo(2)]));
+  it('shows the total and the category counts the API sends, as they are', async () => {
+    const twoLeftByCounter = { ...parkingDemo(10), freeSpots: 2, freeSpotsByCategory: { standard: 2, electric: 1, accessible: 1, oversize: 1 } };
+
+    await renderHomeScreen(new FakeLotsClient([twoLeftByCounter]));
 
     expect(await screen.findByText('2 places libres', visibleText)).toBeOnTheScreen();
     expect(screen.getByText('Standard 2 · Électrique 1 · Accessible 1 · Grand gabarit 1', visibleText)).toBeOnTheScreen();
