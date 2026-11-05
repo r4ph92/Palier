@@ -1,3 +1,4 @@
+import { useCallback, useEffect } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { LotsClient } from '../api/LotsClient';
@@ -14,10 +15,13 @@ import type { DeviceLocationClient } from '../deviceLocation/DeviceLocationClien
 import type { DriverLocation } from '../deviceLocation/locateDriver';
 import { NEARBY_RADIUS_METRES, type NearbyLot } from '../lots/nearbyLots';
 import { useLots, type LotsController, type LotsState } from '../lots/useLots';
+import type { SpotHoldController } from '../spotHolds/useSpotHold';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 import { LocationNotice } from './LocationNotice';
+import { SpotHoldBanner } from './SpotHoldBanner';
+import { LotSpotHold } from './LotSpotHold';
 
 const NO_LOTS: readonly NearbyLot[] = [];
 
@@ -25,20 +29,30 @@ interface HomeScreenProps {
   readonly firstName: string;
   readonly lotsClient: LotsClient;
   readonly locationClient: DeviceLocationClient;
+  readonly spotHold: SpotHoldController;
 }
 
-export function HomeScreen({ firstName, lotsClient, locationClient }: HomeScreenProps) {
+interface HomeHeaderProps {
+  readonly controller: LotsController;
+  readonly firstName: string;
+  readonly spotHold: SpotHoldController;
+  readonly onRefresh: () => void;
+}
+
+// A new hold refreshes the list, so the lot's count shows the held spot gone.
+export function HomeScreen({ firstName, lotsClient, locationClient, spotHold }: HomeScreenProps) {
   const controller = useLots(lotsClient, locationClient);
+  const refreshByDriver = useHomeRefresh(controller, spotHold);
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <FlatList
         data={controller.state.status === 'loaded' ? controller.state.lots : NO_LOTS}
         keyExtractor={({ lot }) => lot.id}
-        renderItem={({ item }) => <LotRow nearbyLot={item} />}
-        ListHeaderComponent={<HomeHeader controller={controller} firstName={firstName} />}
+        renderItem={({ item }) => <LotRow nearbyLot={item} action={<LotSpotHold lot={item.lot} spotHold={spotHold} onHeld={controller.refresh} />} />}
+        ListHeaderComponent={<HomeHeader controller={controller} firstName={firstName} spotHold={spotHold} onRefresh={refreshByDriver} />}
         ListEmptyComponent={<HomeStateMessage controller={controller} />}
-        refreshControl={<RefreshControl refreshing={controller.isRefreshing} onRefresh={controller.refresh} />}
+        refreshControl={<RefreshControl refreshing={controller.isRefreshing} onRefresh={refreshByDriver} />}
         contentContainerStyle={styles.content}
         testID="lot-list"
       />
@@ -46,7 +60,7 @@ export function HomeScreen({ firstName, lotsClient, locationClient }: HomeScreen
   );
 }
 
-function HomeHeader({ controller, firstName }: { readonly controller: LotsController; readonly firstName: string }) {
+function HomeHeader({ controller, firstName, spotHold, onRefresh }: HomeHeaderProps) {
   const colors = useColors();
   return (
     <View>
@@ -54,11 +68,29 @@ function HomeHeader({ controller, firstName }: { readonly controller: LotsContro
       <ScreenHeader
         eyebrow={freshnessStamp(controller.state)}
         title={i18n.t('home.title')}
-        action={<TextButton label={i18n.t('home.refresh')} onPress={controller.refresh} />}
+        action={<TextButton label={i18n.t('home.refresh')} onPress={onRefresh} />}
       />
+      {spotHold.held === null ? null : <SpotHoldBanner held={spotHold.held} onFreshHoldShown={spotHold.acknowledgeFreshHold} />}
       {controller.state.status === 'loaded' ? <LocationNotice location={controller.state.location} /> : null}
     </View>
   );
+}
+
+// A list read retries a hold read that failed; once the hold is known, only the driver's own refresh reads it again
+// and clears the problem left by an earlier tap. Returns that refresh.
+function useHomeRefresh(controller: LotsController, spotHold: SpotHoldController): () => void {
+  const { state, refresh } = controller;
+  const { readState, refreshHold, dismissProblem } = spotHold;
+  useEffect(() => {
+    if (state.status === 'loaded' && readState === 'unknown') {
+      refreshHold();
+    }
+  }, [state, readState, refreshHold]);
+  return useCallback(() => {
+    dismissProblem();
+    refreshHold();
+    refresh();
+  }, [dismissProblem, refreshHold, refresh]);
 }
 
 function freshnessStamp(state: LotsState): string {

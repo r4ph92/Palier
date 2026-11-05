@@ -1,5 +1,11 @@
 import type { Translations } from './fr';
 
+const LOT_NOT_IN_SERVICE = 'This lot is not in service';
+const TOO_MANY_ATTEMPTS = 'Too many attempts, try again in a few minutes';
+const NOT_RESPONDING = 'Palier is not responding, try again in a moment';
+const HOLD_FOR_FIFTEEN_MINUTES = 'Guarantee a spot for 15\u00A0min';
+const GUARANTEED_UNTIL = 'Spot guaranteed until';
+
 export const en: Translations = {
   app: {
     crashed: 'Something unexpected went wrong.',
@@ -39,6 +45,27 @@ export const en: Translations = {
     distance: {
       metres: { one: '%{amount} metre', other: '%{amount} metres' },
       kilometres: { one: '%{amount} kilometre', other: '%{amount} kilometres' },
+    },
+  },
+  spotHold: {
+    hold: HOLD_FOR_FIFTEEN_MINUTES,
+    holding: 'Guaranteeing…',
+    holdAccessibilityLabel: `${HOLD_FOR_FIFTEEN_MINUTES} at %{lotName}`,
+    holdingAccessibilityLabel: 'Guaranteeing at %{lotName}',
+    guaranteedUntilLead: GUARANTEED_UNTIL,
+    guaranteedUntil: `${GUARANTEED_UNTIL} %{time}`,
+    notResponding: NOT_RESPONDING,
+    minutesLeft: { one: '%{count} minute left', other: '%{count} minutes left' },
+    bannerAccessibilityLabel: '%{guaranteedUntil}, %{lotName}, %{minutesLeft}',
+    refusals: {
+      PREREQUISITES_MISSING: 'Add a plate and a card before guaranteeing a spot',
+      HOLD_ALREADY_EXISTS: 'You already have a guaranteed spot',
+      HOLD_QUOTA_REACHED: 'Too many guaranteed spots in this lot right now',
+      NO_SUITABLE_SPOT: 'No spot available',
+      LOT_NOT_FOUND: 'This lot is no longer offered',
+      LOT_NOT_IN_SERVICE,
+      HOLD_UNAVAILABLE: 'Can’t guarantee a spot right now, try again in a moment',
+      TOO_MANY_HOLD_ATTEMPTS: TOO_MANY_ATTEMPTS,
     },
   },
   signIn: {
@@ -116,13 +143,13 @@ export const en: Translations = {
     retry: 'Try again',
     unreachable: 'Can’t reach Palier',
     unreachableHint: 'Check your connection, then try again.',
-    notResponding: 'Palier is not responding, try again in a moment',
+    notResponding: NOT_RESPONDING,
     cardDeclined: 'Your card declined the %{amount} authorization. Update your payment method.',
     paymentMethod: 'Payment method',
     refusals: {
       QR_NOT_RECOGNIZED: 'QR not recognized',
       NOT_AN_ENTRY_GATE: 'This QR is not an entry terminal',
-      LOT_NOT_IN_SERVICE: 'This lot is not in service',
+      LOT_NOT_IN_SERVICE,
       GATE_UNAVAILABLE: 'This terminal is not available',
       PREREQUISITES_MISSING: 'Add a plate and a card before entering',
       OPERATOR_NOT_PAYABLE: 'This lot cannot take payments right now',
@@ -131,7 +158,7 @@ export const en: Translations = {
       ALREADY_INSIDE: 'You already have an entry in progress',
       CARD_DECLINED: 'Card declined',
       PAYMENTS_UNAVAILABLE: 'Payment temporarily unavailable — the barrier stays closed',
-      TOO_MANY_ENTRIES: 'Too many attempts, try again in a few minutes',
+      TOO_MANY_ENTRIES: TOO_MANY_ATTEMPTS,
     },
   },
   session: {

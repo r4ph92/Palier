@@ -1,6 +1,5 @@
+import { MILLISECONDS_PER_MINUTE } from '../time/durations.ts';
 import type { PricingPolicy } from './PricingPolicy.ts';
-
-const MILLISECONDS_PER_MINUTE = 60_000;
 
 export interface PricedSession {
   readonly enteredAt: Date;

@@ -3,6 +3,7 @@ import type { PaymentsSimulation } from './config/paymentsSimulation.ts';
 import type { DriverRepository } from './domain/drivers/DriverRepository.ts';
 import { EntryAdmission } from './domain/entries/EntryAdmission.ts';
 import { EntryEligibility } from './domain/entries/EntryEligibility.ts';
+import { entryPolicyFor } from './domain/payments/EntryPolicy.ts';
 import type { PaymentAuthorizer } from './domain/entries/PaymentAuthorizer.ts';
 import type { OpeningWindow } from './domain/gates/OpeningWindow.ts';
 import type { VehicleRepository } from './domain/vehicles/VehicleRepository.ts';
@@ -46,7 +47,7 @@ export function composeEntries({ database, stripeKey, demoMode, paymentsSimulati
       gates: new PostgresEntryGateRepository(database),
       vehicles,
       drivers,
-      policy: { allowPlatformChargesWithoutOperatorAccount: demoMode },
+      policy: entryPolicyFor(demoMode),
     }),
     admission: new EntryAdmission({ sessions, payments, gateCommander: new SimulatedGateCommander(database) }),
   };

@@ -3,6 +3,7 @@ import type { EntryClient } from './EntryClient';
 import type { LotsClient } from './LotsClient';
 import type { ParkingSessionClient } from './ParkingSessionClient';
 import type { PaymentMethodClient } from './PaymentMethodClient';
+import type { SpotHoldClient } from './SpotHoldClient';
 import type { VehicleClient } from './VehicleClient';
 
 // What every client of a signed-in driver receives: the token and what to do when the API refuses it.
@@ -19,6 +20,7 @@ export interface SignedInClients {
   readonly vehicles: VehicleClient;
   readonly entry: EntryClient;
   readonly parkingSession: ParkingSessionClient;
+  readonly spotHold: SpotHoldClient;
   readonly location: DeviceLocationClient;
 }
 

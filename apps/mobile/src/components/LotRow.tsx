@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { formatDistance } from '../i18n/formatDistance';
 import { currentLanguage } from '../i18n/i18n';
@@ -12,27 +13,31 @@ import { LotCategories } from './LotCategories';
 
 interface LotRowProps {
   readonly nearbyLot: NearbyLot;
+  // Rendered under the categories, outside the row VoiceOver reads as one, so it stays a button of its own.
+  readonly action?: ReactNode;
+}
+
+interface LotSummaryLineProps {
+  readonly nearbyLot: NearbyLot;
 }
 
 // The categories run full width under the name and the count, so they wrap on one or two lines, not four.
 // A full lot shows « Complet » alone: its categories would all read 0.
-export function LotRow({ nearbyLot }: LotRowProps) {
+export function LotRow({ nearbyLot, action = null }: LotRowProps) {
   const colors = useColors();
   const { lot } = nearbyLot;
   return (
-    <View
-      accessible
-      accessibilityLabel={lotAccessibilityLabel(nearbyLot)}
-      testID={`lot-row-${lot.id}`}
-      style={[styles.row, { borderBottomColor: colors.line }]}
-    >
-      <LotSummaryLine nearbyLot={nearbyLot} />
-      {lot.freeSpots > 0 ? <LotCategories counts={lot.freeSpotsByCategory} /> : null}
+    <View style={[styles.row, { borderBottomColor: colors.line }]}>
+      <View accessible accessibilityLabel={lotAccessibilityLabel(nearbyLot)} testID={`lot-row-${lot.id}`} style={styles.details}>
+        <LotSummaryLine nearbyLot={nearbyLot} />
+        {lot.freeSpots > 0 ? <LotCategories counts={lot.freeSpotsByCategory} /> : null}
+      </View>
+      {action}
     </View>
   );
 }
 
-function LotSummaryLine({ nearbyLot: { lot, distanceMetres } }: LotRowProps) {
+function LotSummaryLine({ nearbyLot: { lot, distanceMetres } }: LotSummaryLineProps) {
   const colors = useColors();
   const layout = useIsLargeText() ? stackedStyles : sideBySideStyles;
   return (
@@ -49,7 +54,8 @@ function LotSummaryLine({ nearbyLot: { lot, distanceMetres } }: LotRowProps) {
 }
 
 const styles = StyleSheet.create({
-  row: { gap: spacing.small, paddingVertical: spacing.medium, borderBottomWidth: StyleSheet.hairlineWidth },
+  row: { gap: spacing.extraSmall, paddingVertical: spacing.medium, borderBottomWidth: StyleSheet.hairlineWidth },
+  details: { gap: spacing.small },
   summary: { gap: spacing.medium },
   identity: { gap: spacing.extraSmall },
 });

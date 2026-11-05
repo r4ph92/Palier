@@ -118,6 +118,9 @@ export const spot = pgTable(
     index('spot_available_by_aisle_index')
       .on(table.aisleId, table.state)
       .where(sql`${table.state} = 'AVAILABLE'`),
+    index('spot_held_by_lot_index')
+      .on(table.lotId)
+      .where(sql`${table.state} = 'HELD'`),
   ],
 );
 

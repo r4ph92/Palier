@@ -1,9 +1,8 @@
 import type { EntryRefusalBody, EntryRefusalCode } from '@palier/shared-types';
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
-import { LotBusyError } from '../../domain/entries/LotBusyError.ts';
-import { PricingPolicyInvalidError } from '../../domain/pricing/PricingPolicy.ts';
 import { handleServerError } from '../handleServerError.ts';
+import { logLotRefusalCause } from '../logLotRefusalCause.ts';
 
 const STATUS_BY_REASON: Record<EntryRefusalCode, number> = {
   QR_NOT_RECOGNIZED: 400,
@@ -25,20 +24,11 @@ export function handleEntryError(error: FastifyError, request: FastifyRequest, r
   if (refusal === undefined) {
     return handleServerError(error, request, reply);
   }
-  logRefusalCause(refusal, request);
+  logLotRefusalCause(refusal.cause, request, 'entry refused');
   const statusCode = STATUS_BY_REASON[refusal.reason];
   const body: EntryRefusalBody = { statusCode, error: refusal.reason, message: refusal.message };
   const { authorizedCents } = refusal;
   return reply.status(statusCode).send(authorizedCents === undefined ? body : { ...body, authorizedCents });
-}
-
-function logRefusalCause({ cause }: EntryRefusedError, request: FastifyRequest): void {
-  if (cause instanceof PricingPolicyInvalidError) {
-    request.log.warn({ lotId: cause.lotId, err: cause }, 'entry refused: the lot has no usable pricing policy');
-  }
-  if (cause instanceof LotBusyError) {
-    request.log.warn({ lotId: cause.lotId, err: cause }, 'entry refused: the lot stayed locked past the lock timeout');
-  }
 }
 
 // A body the schema refuses carries no readable QR, so for the driver it is the same unrecognized QR.

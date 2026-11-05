@@ -4,8 +4,11 @@ import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { LotsClient } from '../src/api/LotsClient';
 import { applyLanguage } from '../src/i18n/i18n';
-import { HomeScreen } from '../src/screens/HomeScreen';
+import type { SpotHoldClient } from '../src/api/SpotHoldClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
+import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
+import { FakeSpotHoldClient } from './fakeSpotHoldClient';
+import { HomeScreenWithSpotHold } from './renderHomeScreen';
 
 class CaughtErrorBoundary extends Component<{ readonly children: ReactNode }, { readonly caught?: Error }> {
   override state: { readonly caught?: Error } = {};
@@ -20,21 +23,39 @@ class CaughtErrorBoundary extends Component<{ readonly children: ReactNode }, { 
 }
 
 const brokenClient: LotsClient = { listLots: () => Promise.reject(new TypeError('a programming error')) };
+const brokenSpotHoldClient: SpotHoldClient = {
+  hold: () => Promise.reject(new TypeError('a hold programming error')),
+  current: () => Promise.reject(new TypeError('a hold programming error')),
+};
+const METRICS = { frame: { x: 0, y: 0, width: 393, height: 852 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } };
+
+async function renderCaught(lotsClient: LotsClient, spotHoldClient: SpotHoldClient) {
+  await render(
+    <SafeAreaProvider initialMetrics={METRICS}>
+      <CaughtErrorBoundary>
+        <HomeScreenWithSpotHold lotsClient={lotsClient} locationClient={new FakeDeviceLocationClient()} spotHoldClient={spotHoldClient} />
+      </CaughtErrorBoundary>
+    </SafeAreaProvider>,
+  );
+}
 
 describe('HomeScreen with an unexpected client failure', () => {
   it('lets the error surface instead of showing the unreachable state', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
     applyLanguage('fr');
 
-    await render(
-      <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 393, height: 852 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } }}>
-        <CaughtErrorBoundary>
-          <HomeScreen firstName="Julie" lotsClient={brokenClient} locationClient={new FakeDeviceLocationClient()} />
-        </CaughtErrorBoundary>
-      </SafeAreaProvider>,
-    );
+    await renderCaught(brokenClient, new FakeSpotHoldClient());
 
     expect(await screen.findByText('caught: a programming error')).toBeOnTheScreen();
     expect(screen.queryByText('Impossible de joindre Palier.')).not.toBeOnTheScreen();
+  });
+
+  it('lets a programming error of the spot hold read surface too', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    applyLanguage('fr');
+
+    await renderCaught(new FakeLotsClient(parkingDemoWith(10)), brokenSpotHoldClient);
+
+    expect(await screen.findByText('caught: a hold programming error')).toBeOnTheScreen();
   });
 });

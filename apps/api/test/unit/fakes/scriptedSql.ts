@@ -9,6 +9,10 @@ export type StatementLabel =
   | 'read-free-spots'
   | 'claim-spot'
   | 'insert-session'
+  | 'read-active-spot-hold'
+  | 'read-spot-hold-lot'
+  | 'read-spot-hold-facts'
+  | 'insert-spot-hold'
   | 'unknown';
 
 export interface ExecutedStatement {
@@ -28,6 +32,10 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-active-session', /with active as/],
   ['claim-spot', /for update skip locked/],
   ['read-free-spots', /s\.state = 'AVAILABLE'/],
+  ['read-active-spot-hold', /from \(select id, lot_id, expires_at from spot_hold/],
+  ['read-spot-hold-lot', /join operator on/],
+  ['read-spot-hold-facts', /as active_holds_in_lot/],
+  ['insert-spot-hold', /insert into spot_hold/],
 ];
 
 function labelOf(text: string): StatementLabel {

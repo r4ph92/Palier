@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EntryRefusedError } from '../../src/domain/entries/EntryRefusedError.ts';
-import { LotBusyError } from '../../src/domain/entries/LotBusyError.ts';
+import { LotBusyError } from '../../src/domain/lots/LotBusyError.ts';
 import { admissionRefusalOf } from '../../src/infrastructure/postgres/admissionRefusal.ts';
 
 const lockTimeout = { code: '55P03', message: 'canceling statement due to lock timeout' };

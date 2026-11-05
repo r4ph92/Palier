@@ -4,6 +4,7 @@ import { TabBar } from '../components/TabBar';
 import { usePendingEntryWatch, type PendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { useTabs, type TabsController } from '../navigation/useTabs';
 import { useCurrentParkingSession, type CurrentParkingSessionController } from '../parkingSessions/useCurrentParkingSession';
+import { useSpotHold, type SpotHoldController } from '../spotHolds/useSpotHold';
 import { AccountTab } from './AccountTab';
 import type { DeveloperEntry } from './DeveloperEntry';
 import { HomeScreen } from './HomeScreen';
@@ -16,12 +17,14 @@ interface SignedInTabsProps {
   readonly onSignOut: () => void;
 }
 
-// The current session is read here, above the tabs, so a relaunch finds it before any tab is opened.
+// The current session and the spot hold are read here, above the tabs, so a relaunch finds them before any tab is opened;
+// the lot list reads the hold again with every list.
 export function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: SignedInTabsProps) {
   const tabs = useTabs();
   const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
   const pendingEntry = usePendingEntryWatch(clients.entry, currentSession.refresh);
-  const content = { firstName, clients, developerEntry, onSignOut, tabs, currentSession, pendingEntry };
+  const spotHold = useSpotHold(clients.spotHold);
+  const content = { firstName, clients, developerEntry, onSignOut, tabs, currentSession, pendingEntry, spotHold };
   return (
     <View style={styles.app}>
       <TabContent {...content} />
@@ -34,12 +37,13 @@ interface TabContentProps extends SignedInTabsProps {
   readonly tabs: TabsController;
   readonly currentSession: CurrentParkingSessionController;
   readonly pendingEntry: PendingEntryWatch;
+  readonly spotHold: SpotHoldController;
 }
 
-function TabContent({ firstName, clients, tabs, currentSession, pendingEntry, developerEntry, onSignOut }: TabContentProps) {
+function TabContent({ firstName, clients, tabs, currentSession, pendingEntry, spotHold, developerEntry, onSignOut }: TabContentProps) {
   switch (tabs.tab) {
     case 'lots':
-      return <HomeScreen firstName={firstName} lotsClient={clients.lots} locationClient={clients.location} />;
+      return <HomeScreen firstName={firstName} lotsClient={clients.lots} locationClient={clients.location} spotHold={spotHold} />;
     case 'scan':
       return (
         <ScanTab

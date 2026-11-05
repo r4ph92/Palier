@@ -5,6 +5,7 @@ import { stripeTestKey } from './config/stripeTestKey.ts';
 import { composeEntries } from './composeEntries.ts';
 import { composeEntryCancellation } from './composeEntryCancellation.ts';
 import { composeOperatorStripe } from './composeOperatorStripe.ts';
+import { composeSpotHolds } from './composeSpotHolds.ts';
 import { buildServer } from './http/buildServer.ts';
 import { connectToDatabase } from './infrastructure/postgres/database.ts';
 import { PostgresCurrentParkingSessionQuery } from './infrastructure/postgres/PostgresCurrentParkingSessionQuery.ts';
@@ -68,6 +69,7 @@ const server = buildServer({
   },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   entries: entries.routes,
+  spotHolds: composeSpotHolds(connection.database, environment.demoMode, { vehicles: vehicleRepository, drivers: driverRepository }),
   operatorStripe: composeOperatorStripe({
     database: connection.database,
     stripeKey,

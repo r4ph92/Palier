@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EntryRefusalCode } from '@palier/shared-types';
-import { EntryEligibility, type EntryPolicy } from '../../src/domain/entries/EntryEligibility.ts';
+import { EntryEligibility } from '../../src/domain/entries/EntryEligibility.ts';
+import type { EntryPolicy } from '../../src/domain/payments/EntryPolicy.ts';
 import type { EntryGate } from '../../src/domain/entries/EntryGateRepository.ts';
 import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { PricingPolicyInvalidError } from '../../src/domain/pricing/PricingPolicy.ts';
@@ -17,8 +18,8 @@ import {
   SORTIE_DEMO_SECRET,
   sortieDemoGate,
 } from './fakes/entryFakes.ts';
+import { STRICT_POLICY } from './fakes/entryGateFakes.ts';
 
-const STRICT: EntryPolicy = { allowPlatformChargesWithoutOperatorAccount: false };
 const entreeDemoQr = gateQrLink(entreeDemoGate.id, ENTREE_DEMO_SECRET);
 
 interface Setup {
@@ -29,7 +30,7 @@ interface Setup {
   readonly needs?: VehicleNeeds;
 }
 
-async function eligibilityFor({ gates, policy = STRICT, plate = true, card = true, needs = standardNeeds }: Setup = {}) {
+async function eligibilityFor({ gates, policy = STRICT_POLICY, plate = true, card = true, needs = standardNeeds }: Setup = {}) {
   const drivers = new FakeDriverRepository();
   const vehicles = new FakeVehicleRepository();
   if (plate) {
@@ -125,6 +126,12 @@ describe('entry eligibility', () => {
     expect(await refusalOf(await eligibilityFor({ gates: [full] }), entreeDemoQr)).toBe('LOT_FULL');
   });
 
+  it('refuses a lot whose vehicles and held spots fill its capacity as LOT_FULL', async () => {
+    const heldFull = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 7, heldSpotCount: 3 } };
+
+    expect(await refusalOf(await eligibilityFor({ gates: [heldFull] }), entreeDemoQr)).toBe('LOT_FULL');
+  });
+
   it('admits a driver into a lot with one vehicle space left', async () => {
     const almostFull = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 9 } };
 
@@ -158,5 +165,17 @@ describe('entry eligibility', () => {
     const offline = { ...entreeDemoGate, integrationKind: 'DRY_CONTACT' as const, lot: { ...entreeDemoGate.lot, isOnline: false } };
 
     expect(await refusalOf(await eligibilityFor({ gates: [offline] }), entreeDemoQr)).toBe('LOT_NOT_IN_SERVICE');
+  });
+
+  it('checks the lot terms before the integration: an unpayable lot with a dry-contact gate names the operator', async () => {
+    const unpayable = { ...entreeDemoGate, integrationKind: 'DRY_CONTACT' as const, lot: { ...entreeDemoGate.lot, operatorStripeAccountId: null } };
+
+    expect(await refusalOf(await eligibilityFor({ gates: [unpayable] }), entreeDemoQr)).toBe('OPERATOR_NOT_PAYABLE');
+  });
+
+  it('checks the lot terms before the room: a full lot without a readable price is not in service', async () => {
+    const fullUnpriced = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 10, pricingPolicy: null } };
+
+    expect(await refusalOf(await eligibilityFor({ gates: [fullUnpriced] }), entreeDemoQr)).toBe('LOT_NOT_IN_SERVICE');
   });
 });

@@ -36,4 +36,5 @@ export type {
   TestClockReading,
 } from './parkingSessions.ts';
 export type { PaymentMethodResponse, SavedCard, SavePaymentMethodRequest, SetupIntentResponse } from './paymentMethods.ts';
+export type { CurrentSpotHoldResponse, SpotHold, SpotHoldRefusalBody, SpotHoldRefusalCode, SpotHoldStatus } from './spotHolds.ts';
 export type { Vehicle, VehicleListResponse, VehicleNeeds } from './vehicles.ts';

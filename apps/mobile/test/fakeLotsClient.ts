@@ -25,11 +25,13 @@ export class FakeLotsClient implements LotsClient {
   }
 }
 
+export const PARKING_DEMO_ID = '00000000-0000-4000-8000-000000000201';
+
 // Parking Démo as seeded (7 standard, 1 electric, 1 accessible, 1 oversize), each category capped at freeSpots.
 export function parkingDemo(freeSpots: number): LotSummary {
   const capped = (count: number) => Math.min(count, freeSpots);
   return {
-    id: '00000000-0000-4000-8000-000000000201',
+    id: PARKING_DEMO_ID,
     name: 'Parking Démo',
     freeSpots,
     freeSpotsByCategory: { standard: capped(7), electric: capped(1), accessible: capped(1), oversize: capped(1) },

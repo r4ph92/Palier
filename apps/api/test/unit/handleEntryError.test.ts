@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { EntryRefusedError } from '../../src/domain/entries/EntryRefusedError.ts';
-import { LotBusyError } from '../../src/domain/entries/LotBusyError.ts';
+import { LotBusyError } from '../../src/domain/lots/LotBusyError.ts';
 import { PricingPolicyInvalidError } from '../../src/domain/pricing/PricingPolicy.ts';
 import { handleEntryError } from '../../src/http/entries/handleEntryError.ts';
 import { silentLog } from './fakes/entryFakes.ts';

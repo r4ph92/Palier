@@ -27,6 +27,25 @@ export function parsePricingPolicy(storedPolicy: unknown, dailyCapCents: number)
   return { incrementCents, incrementMinutes, dailyCapCents };
 }
 
+export interface PricedLot {
+  readonly id: string;
+  // The lot's jsonb policy as stored.
+  readonly pricingPolicy: unknown;
+  readonly dailyCapCents: number;
+}
+
+// The problem is returned, not thrown, so each caller turns it into its own refusal and keeps it as the cause to log.
+export function readLotPricing(lot: PricedLot): PricingPolicy | PricingPolicyInvalidError {
+  try {
+    return parsePricingPolicy(lot.pricingPolicy, lot.dailyCapCents);
+  } catch (error) {
+    if (!(error instanceof PricingPolicyInvalidError)) {
+      throw error;
+    }
+    return new PricingPolicyInvalidError(lot.id, { cause: error });
+  }
+}
+
 function isPositiveInteger(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
 }

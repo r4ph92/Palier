@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AvailableSpotGroup } from '../../src/domain/occupancy/availableByCategory.ts';
+import { freeSpotCount } from '../../src/domain/occupancy/freeSpotCount.ts';
 import { onlineLotFromRow, type OnlineLotRow } from '../../src/infrastructure/postgres/onlineLotRow.ts';
 import { PARKING_DEMO_ID, parkingDemoLot } from '../../src/seed/fixtures/parkingDemo.ts';
 
@@ -10,6 +11,7 @@ const parkingDemoRow: OnlineLotRow = {
   longitude: parkingDemoLot.longitude ?? null,
   capacity: 10,
   vehicleCount: 0,
+  heldSpotCount: 0,
 };
 
 const fourThreeTwoOne: readonly AvailableSpotGroup[] = [
@@ -28,9 +30,17 @@ describe('onlineLotFromRow', () => {
     expect(onlineLotFromRow(parkingDemoRow, fourThreeTwoOne).availability).toEqual({
       capacity: 10,
       vehicleCount: 0,
+      heldSpotCount: 0,
       availableSpotCount: 10,
       availableByCategory: { standard: 4, electric: 3, accessible: 2, oversize: 1 },
     });
+  });
+
+  it('carries the held spots, so a lot full by capacity shows none free', () => {
+    const availability = onlineLotFromRow({ ...parkingDemoRow, vehicleCount: 8, heldSpotCount: 2 }, fourThreeTwoOne).availability;
+
+    expect(availability.heldSpotCount).toBe(2);
+    expect(freeSpotCount(availability)).toBe(0);
   });
 
   it.each([

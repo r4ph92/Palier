@@ -15,12 +15,10 @@ import { admissionRefusalOf } from './admissionRefusal.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
 import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
+import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
 import { parkingSession } from './schema.ts';
-import { assignFirstFreeSpot, type AssignedSpotRow } from './spotClaim.ts';
+import { ASSIGNED_TO_ENTRY, claimFirstFittingSpot, type AssignedSpotRow } from './spotClaim.ts';
 import { spotOf, type SpotLabelRow } from './spotLabel.ts';
-
-// Past it, a waiting entry gives up with a retryable refusal instead of holding a pool connection.
-const LIMIT_LOCK_WAIT = sql`set local lock_timeout = '3s'`;
 
 interface SessionStatusRow extends SpotLabelRow {
   readonly id: string;
@@ -94,7 +92,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 }
 
 async function openSession(tx: Transaction, draft: SessionDraft): Promise<OpenedSession | null> {
-  const assigned = await assignFirstFreeSpot(tx, draft.lotId, draft.needs);
+  const assigned = await claimFirstFittingSpot(tx, { lotId: draft.lotId, needs: draft.needs, target: ASSIGNED_TO_ENTRY });
   return assigned === undefined ? null : insertSession(tx, draft, assigned);
 }
 

@@ -11,6 +11,7 @@ export interface OnlineLotRow {
   readonly longitude: string | null;
   readonly capacity: number;
   readonly vehicleCount: number;
+  readonly heldSpotCount: number;
 }
 
 export function onlineLotFromRow(row: OnlineLotRow, availableSpots: readonly AvailableSpotGroup[]): OnlineLot {
@@ -21,6 +22,7 @@ export function onlineLotFromRow(row: OnlineLotRow, availableSpots: readonly Ava
     availability: {
       capacity: row.capacity,
       vehicleCount: row.vehicleCount,
+      heldSpotCount: row.heldSpotCount,
       availableSpotCount: availableSpotCount(availableSpots),
       availableByCategory: availableByCategory(availableSpots),
     },

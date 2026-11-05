@@ -208,6 +208,7 @@ describe('QA #5 onlineLotFromRow with hostile rows', () => {
     longitude: '-73.567300',
     capacity: 10,
     vehicleCount: 0,
+    heldSpotCount: 0,
   };
 
   it.each([
