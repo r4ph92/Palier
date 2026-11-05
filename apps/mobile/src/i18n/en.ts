@@ -35,7 +35,7 @@ export const en: Translations = {
     },
     locationDenied: 'Turn on location to sort by distance',
     locationUnavailable: 'Location unavailable: lots sorted by name',
-    emptyNearby: 'No lot online within %{radius}.',
+    emptyNearby: 'No parking lot online within %{radius}.',
     distance: {
       metres: { one: '%{amount} metre', other: '%{amount} metres' },
       kilometres: { one: '%{amount} kilometre', other: '%{amount} kilometres' },

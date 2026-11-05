@@ -156,6 +156,6 @@ describe('HomeScreen nearby lots in English', () => {
   it('says no lot is online within 10 km', async () => {
     await renderHomeScreen(new FakeLotsClient([]), 'en');
 
-    expect(await screen.findByText('No lot online within 10 km.', visibleText)).toBeOnTheScreen();
+    expect(await screen.findByText('No parking lot online within 10 km.', visibleText)).toBeOnTheScreen();
   });
 });
