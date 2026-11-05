@@ -15,7 +15,6 @@ export interface EntryLoadSetup {
   readonly appVersion: string;
 }
 
-// Expected admissions are measured before firing, then every count is checked against the database afterwards.
 export async function runEntryLoad({ database, options, appVersion }: EntryLoadSetup): Promise<EntryLoadReport> {
   const target = seededEntryGate(options.gateName);
   const driverIds = LOAD_DRIVER_IDS.slice(0, options.drivers);

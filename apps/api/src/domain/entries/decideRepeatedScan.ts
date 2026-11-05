@@ -2,7 +2,6 @@ import type { ActiveEntrySessionState, AssignedSpot } from '@palier/shared-types
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import type { OpenedSession, SessionOpening } from './ParkingSessionRepository.ts';
 
-// What the repository reads, under the lot lock, about the driver's active session, whatever its lot.
 export interface ActiveSessionFacts {
   readonly id: string;
   readonly lotId: string;
@@ -22,8 +21,7 @@ export type RepeatedScanDecision =
   | { readonly kind: 'replay'; readonly session: OpenedSession }
   | { readonly kind: 'refuse' };
 
-// A second scan of the same entry gate while that entry is still opening is the same entry (a double tap, a re-scan
-// after the app gave up): the driver gets it back. Any other scan from a driver with an active session is ALREADY_INSIDE.
+// A re-scan of the same gate while that entry is still opening (a double tap, an app timeout) gets the same entry back.
 export function decideRepeatedScan(active: ActiveSessionFacts | null, scan: ScannedEntryGate): RepeatedScanDecision {
   if (active === null) {
     return { kind: 'open' };

@@ -2,8 +2,7 @@ import type { AuthorizationRequest, HoldRelease, PaymentAuthorizer } from '../..
 
 const SIMULATED_INTENT_PREFIX = 'pi_sim_';
 
-// The test environment's "payments succeed" switch, for a lane without a Stripe key: no call leaves the server.
-// The intent id derives from the session, as Stripe's idempotency key entry-<sessionId> would make a retry answer the same intent.
+// The intent id derives from the session, so a retry gets the same intent, as Stripe's idempotency key entry-<sessionId> would.
 export class SimulatedPaymentAuthorizer implements PaymentAuthorizer {
   authorize({ sessionId }: AuthorizationRequest): Promise<string> {
     return Promise.resolve(`${SIMULATED_INTENT_PREFIX}${sessionId}`);

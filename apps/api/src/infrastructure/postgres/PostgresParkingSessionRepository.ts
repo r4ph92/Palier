@@ -46,7 +46,6 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
     this.#openingWindow = openingWindow;
   }
 
-  // Every statement after the lock runs on tx, so a second scan of the same lot waits and then reads the first one's session.
   async openOrReplay(draft: SessionDraft): Promise<SessionOpening | null> {
     try {
       return await this.#database.transaction(async (tx) => {

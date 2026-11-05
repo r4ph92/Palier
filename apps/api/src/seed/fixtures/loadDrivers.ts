@@ -22,8 +22,7 @@ function loadDriverId(sequence: number): string {
   return `00000000-0000-4000-8000-${String(FIRST_LOAD_DRIVER_SEQUENCE + sequence - 1).padStart(12, '0')}`;
 }
 
-// Conducteur Test 01 to 20, for the entry load script only: they stay off the app's test sign-in list.
-// The simulated customer and card let them enter under PAYMENTS_SIMULATION=success; a seed with a Stripe key replaces them.
+// Off the app's sign-in list; the simulated card lets them enter under PAYMENTS_SIMULATION=success until a seed with a key replaces it.
 function loadDriverPersona(id: string, number: string): DriverPersona {
   return {
     user: {

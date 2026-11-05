@@ -28,7 +28,6 @@ export interface EntryComposition {
   readonly paymentsSimulation: PaymentsSimulation;
   readonly drivers: DriverRepository;
   readonly vehicles: VehicleRepository;
-  // A repeated scan replays the entry only while it is inside this window (decideRepeatedScan).
   readonly openingWindow: OpeningWindow;
 }
 

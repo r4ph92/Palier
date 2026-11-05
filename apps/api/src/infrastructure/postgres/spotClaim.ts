@@ -21,8 +21,7 @@ interface FreeSpotRow extends Record<string, unknown> {
   readonly is_oversize: boolean;
 }
 
-// The domain picks the spot (chooseSpotFor); only that spot row is then locked, and a spot another writer holds is
-// skipped rather than waited on (docs/03). Each lost spot leaves the candidates, so the attempts end with the free spots.
+// Only the chosen spot is locked, and a spot another writer holds is skipped rather than waited on (docs/03).
 export async function assignFirstFreeSpot(tx: Pick<Transaction, 'execute'>, lotId: string, needs: VehicleNeeds): Promise<AssignedSpotRow | undefined> {
   let candidates = await readFreeSpots(tx, lotId);
   let chosen = chooseSpotFor(needs, candidates);

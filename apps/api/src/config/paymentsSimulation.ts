@@ -1,8 +1,7 @@
 import { readTestSignInEnabled } from './environment.ts';
 import { stripeTestKey } from './stripeTestKey.ts';
 
-// none: real Stripe, or no payments without a key; unreachable: every hold fails as if Stripe were down (#41);
-// success: every hold succeeds without calling Stripe, for a lane without a key (load script, #42).
+// unreachable: every hold fails as if Stripe were down (#41); success: every hold succeeds without calling Stripe (#42).
 export const PAYMENTS_SIMULATIONS = ['none', 'unreachable', 'success'] as const;
 
 export type PaymentsSimulation = (typeof PAYMENTS_SIMULATIONS)[number];
