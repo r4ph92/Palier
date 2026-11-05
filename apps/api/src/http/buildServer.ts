@@ -9,7 +9,7 @@ import type { CurrentParkingSessionQuery } from '../domain/parkingSessions/Activ
 import type { ParkingSessionBackdater } from '../domain/parkingSessions/ParkingSessionBackdater.ts';
 import type { SessionTokenRepository } from '../domain/sessions/SessionTokenRepository.ts';
 import { systemClock } from '../domain/time/Clock.ts';
-import { createTestClock, type TestClock } from '../domain/time/TestClock.ts';
+import type { TestClock } from '../domain/time/TestClock.ts';
 import type { UserDirectory } from '../domain/sessions/UserDirectory.ts';
 import type { VehicleRepository } from '../domain/vehicles/VehicleRepository.ts';
 import type { DashboardRouteDependencies } from './dashboard/DashboardRouteDependencies.ts';
@@ -55,7 +55,7 @@ export interface ServerDependencies {
   readonly spotHolds?: SpotHoldServices | undefined;
   // main.ts always passes it; without it the dashboard cannot connect Stripe.
   readonly operatorStripe?: OperatorStripeDependencies | undefined;
-  // Tests and main.ts hand one in so the routes and the hold expiry job share it. Used only when test sign-in is enabled, by the current session, the spot hold routes (place, read, release) and the expiry job; gates keep their own clock.
+  // Required when test sign-in is enabled (composeClock builds it); gates keep their own clock.
   readonly testClock?: TestClock | undefined;
   readonly settings?: ServerSettings;
 }
@@ -132,5 +132,8 @@ function testToolsFor(
   if (settings.testSignInEnabled !== true) {
     return null;
   }
-  return { testClock: testClock ?? createTestClock(), backdater: repositories.parkingSessionBackdater };
+  if (testClock === undefined) {
+    throw new Error('Test sign-in needs a test clock: compose it with composeClock.');
+  }
+  return { testClock, backdater: repositories.parkingSessionBackdater };
 }

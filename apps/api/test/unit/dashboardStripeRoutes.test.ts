@@ -1,3 +1,4 @@
+import { composeClock } from '../../src/composeClock.ts';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
@@ -124,7 +125,7 @@ describe('connecting Stripe from the dashboard', () => {
 
   it('answers 503 for Pierre but still 404 for Sophie when the server has no Stripe key', async () => {
     const driverRepository = new FakeDriverRepository([julie, sophie, pierre]);
-    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ driverRepository }), settings: { testSignInEnabled: true } });
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ driverRepository }), testClock: composeClock(true).testClock, settings: { testSignInEnabled: true } });
 
     const own = await post(ROY_OPERATOR_ID, await dashboardCookieFor(server, pierre));
     const other = await post(ROY_OPERATOR_ID, await dashboardCookieFor(server, sophie));

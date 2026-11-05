@@ -1,3 +1,4 @@
+import { composeClock } from '../../src/composeClock.ts';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { SPOT_CATEGORIES } from '@palier/shared-types/lots';
@@ -23,6 +24,7 @@ function startServer(lots = [parkingDemo], drivers = [julie, marc]) {
     gates: fakeGateDependencies(),
     repositories: fakeRepositories({ driverRepository, operatorRepository, vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: repositoryReturning(lots) }),
     operatorStripe: fakeOperatorStripe(operatorRepository).dependencies,
+    testClock: composeClock(true).testClock,
     settings: { testSignInEnabled: true },
   });
   return { server, driverRepository };

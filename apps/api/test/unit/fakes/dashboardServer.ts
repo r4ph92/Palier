@@ -1,3 +1,4 @@
+import { composeClock } from '../../../src/composeClock.ts';
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
 import type { FastifyInstance } from 'fastify';
 import type { Driver } from '../../../src/domain/drivers/Driver.ts';
@@ -19,6 +20,7 @@ export function startDashboardServer(settings: ServerSettings = { testSignInEnab
     gates: fakeGateDependencies(),
     repositories: fakeRepositories({ driverRepository, operatorRepository }),
     operatorStripe: stripe.dependencies,
+    testClock: composeClock(settings.testSignInEnabled === true).testClock,
     settings,
   });
   return { server, driverRepository, ...stripe };
