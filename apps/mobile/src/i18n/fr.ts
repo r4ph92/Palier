@@ -3,6 +3,7 @@ import type { SpotCategory, SpotHoldRefusalCode } from '@palier/shared-types';
 // Said the same way whether the driver scans at the terminal or holds a spot from the list.
 const LOT_NOT_IN_SERVICE = 'Ce parking n’est pas en service';
 const TOO_MANY_ATTEMPTS = 'Trop de tentatives, réessayez dans quelques minutes';
+const NOT_RESPONDING = 'Palier ne répond pas, réessayez dans un instant';
 // The banner sets the time apart in mono; VoiceOver reads the whole sentence.
 const GUARANTEED_UNTIL = "Place garantie jusqu'à";
 
@@ -53,6 +54,7 @@ export const fr = {
     holdAccessibilityLabel: 'Garantir une place 15 min à %{lotName}',
     guaranteedUntilLead: GUARANTEED_UNTIL,
     guaranteedUntil: `${GUARANTEED_UNTIL} %{time}`,
+    notResponding: NOT_RESPONDING,
     minutesLeft: { one: '%{count} minute restante', other: '%{count} minutes restantes' },
     bannerAccessibilityLabel: '%{guaranteedUntil}, %{lotName}, %{minutesLeft}',
     refusals: {
@@ -141,7 +143,7 @@ export const fr = {
     retry: 'Réessayer',
     unreachable: 'Impossible de joindre Palier',
     unreachableHint: 'Vérifiez votre connexion, puis réessayez.',
-    notResponding: 'Palier ne répond pas, réessayez dans un instant',
+    notResponding: NOT_RESPONDING,
     cardDeclined: 'Votre carte a refusé l’autorisation de %{amount}. Mettez à jour votre moyen de paiement.',
     paymentMethod: 'Moyen de paiement',
     refusals: {

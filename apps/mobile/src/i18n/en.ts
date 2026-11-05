@@ -2,6 +2,7 @@ import type { Translations } from './fr';
 
 const LOT_NOT_IN_SERVICE = 'This lot is not in service';
 const TOO_MANY_ATTEMPTS = 'Too many attempts, try again in a few minutes';
+const NOT_RESPONDING = 'Palier is not responding, try again in a moment';
 const GUARANTEED_UNTIL = 'Spot guaranteed until';
 
 export const en: Translations = {
@@ -51,6 +52,7 @@ export const en: Translations = {
     holdAccessibilityLabel: 'Guarantee a spot for 15 min at %{lotName}',
     guaranteedUntilLead: GUARANTEED_UNTIL,
     guaranteedUntil: `${GUARANTEED_UNTIL} %{time}`,
+    notResponding: NOT_RESPONDING,
     minutesLeft: { one: '%{count} minute left', other: '%{count} minutes left' },
     bannerAccessibilityLabel: '%{guaranteedUntil}, %{lotName}, %{minutesLeft}',
     refusals: {
@@ -139,7 +141,7 @@ export const en: Translations = {
     retry: 'Try again',
     unreachable: 'Can’t reach Palier',
     unreachableHint: 'Check your connection, then try again.',
-    notResponding: 'Palier is not responding, try again in a moment',
+    notResponding: NOT_RESPONDING,
     cardDeclined: 'Your card declined the %{amount} authorization. Update your payment method.',
     paymentMethod: 'Payment method',
     refusals: {

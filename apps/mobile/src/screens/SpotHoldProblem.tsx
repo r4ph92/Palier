@@ -36,7 +36,7 @@ function failureMessage(reason: SpotHoldFailureReason): string {
     case 'refused':
       return i18n.t(`spotHold.refusals.${reason.refusal}`);
     case 'notResponding':
-      return i18n.t('scan.notResponding');
+      return i18n.t('spotHold.notResponding');
     case 'unreachable':
       return i18n.t('home.unreachable');
   }
