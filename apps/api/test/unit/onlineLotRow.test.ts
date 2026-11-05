@@ -37,6 +37,9 @@ describe('onlineLotFromRow', () => {
     ['no coordinates', null, null],
     ['a latitude without longitude', parkingDemoRow.latitude, null],
     ['a longitude without latitude', null, parkingDemoRow.longitude],
+    ['a NaN latitude', 'NaN', parkingDemoRow.longitude],
+    ['a latitude past the pole', '90.000001', parkingDemoRow.longitude],
+    ['a longitude past the antimeridian', parkingDemoRow.latitude, '-180.5'],
   ])('gives a lot with %s no location', (_case, latitude, longitude) => {
     expect(onlineLotFromRow({ ...parkingDemoRow, latitude, longitude }, []).location).toBeNull();
   });

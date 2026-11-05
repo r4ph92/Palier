@@ -1,4 +1,5 @@
 import type { GeoPosition } from '@palier/shared-types';
+import { isOnEarth } from '@palier/shared-types/lots';
 import type { OnlineLot } from '../../domain/lots/OnlineLot.ts';
 import { availableByCategory, availableSpotCount, type AvailableSpotGroup } from '../../domain/occupancy/availableByCategory.ts';
 
@@ -30,5 +31,6 @@ function locationFrom({ latitude, longitude }: OnlineLotRow): GeoPosition | null
   if (latitude === null || longitude === null) {
     return null;
   }
-  return { latitude: Number(latitude), longitude: Number(longitude) };
+  const location = { latitude: Number(latitude), longitude: Number(longitude) };
+  return isOnEarth(location) ? location : null;
 }
