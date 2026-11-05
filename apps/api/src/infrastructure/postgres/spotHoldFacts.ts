@@ -23,9 +23,9 @@ export async function readSpotHoldFacts(tx: Pick<Transaction, 'execute'>, lot: L
     throw new Error('The spot hold facts query answered no row.');
   }
   return {
-    isLotOnline: lot.is_online,
+    isLotOnline: lot.isOnline,
     hasOwnActiveHold: row.own_active_hold,
     activeHoldsInLot: row.active_holds_in_lot,
-    occupancy: { capacity: lot.capacity, vehicleCount: lot.vehicle_count, heldSpotCount: row.held_spot_count },
+    occupancy: { capacity: lot.capacity, vehicleCount: lot.vehicleCount, heldSpotCount: row.held_spot_count },
   };
 }
