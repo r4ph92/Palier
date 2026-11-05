@@ -23,13 +23,14 @@ export const currentSpotHoldResponseSchema = {
   properties: { spotHold: { anyOf: [spotHoldSchema, { type: 'null' }] } },
 } as const;
 
-export const spotHoldLotParametersSchema = {
+// The lot id of a request, the hold id of a release.
+export const spotHoldPathParametersSchema = {
   type: 'object',
   required: ['id'],
   properties: { id: { type: 'string', format: 'uuid' } },
 } as const;
 
-export type SpotHoldLotParameters = FromSchema<typeof spotHoldLotParametersSchema>;
+export type SpotHoldPathParameters = FromSchema<typeof spotHoldPathParametersSchema>;
 
 export type ResponseSchemaMatchesSpotHold = AssertTrue<MutuallyAssignable<FromSchema<typeof spotHoldSchema>, SpotHold>>;
 export type ResponseSchemaMatchesCurrentSpotHold = AssertTrue<

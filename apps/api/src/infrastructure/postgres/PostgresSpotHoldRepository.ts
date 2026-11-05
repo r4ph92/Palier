@@ -1,13 +1,14 @@
-import { sql } from 'drizzle-orm';
+import { sql, type SQL } from 'drizzle-orm';
 import { decideSpotHoldRequest } from '../../domain/spotHolds/decideSpotHoldRequest.ts';
 import type { SpotHold } from '../../domain/spotHolds/SpotHold.ts';
 import { SpotHoldRefusedError } from '../../domain/spotHolds/SpotHoldRefusedError.ts';
-import type { SpotHoldDraft, SpotHoldLot, SpotHoldRepository } from '../../domain/spotHolds/SpotHoldRepository.ts';
+import type { SpotHoldDraft, SpotHoldLot, SpotHoldRelease, SpotHoldRepository } from '../../domain/spotHolds/SpotHoldRepository.ts';
 import { ACTIVE_SPOT_HOLD } from './activeSpotHold.ts';
 import type { Database, Transaction } from './database.ts';
 import { LOT_LOCK_TRANSACTION, lockParkingLot, type LockedParkingLot } from './lockParkingLot.ts';
 import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
 import { claimFirstFittingSpot, heldSince } from './spotClaim.ts';
+import { freeHeldSpot, markSpotHoldReleased } from './spotRelease.ts';
 import { readSpotHoldFacts } from './spotHoldFacts.ts';
 import { spotHoldRefusalOf } from './spotHoldRefusal.ts';
 
@@ -33,10 +34,18 @@ export class PostgresSpotHoldRepository implements SpotHoldRepository {
     this.#database = database;
   }
 
-  async findActiveSpotHold(driverId: string): Promise<SpotHold | null> {
+  findActiveSpotHold(driverId: string): Promise<SpotHold | null> {
+    return this.#findActive(sql`user_id = ${driverId}`);
+  }
+
+  findOwnActiveSpotHold(driverId: string, spotHoldId: string): Promise<SpotHold | null> {
+    return this.#findActive(sql`id = ${spotHoldId} and user_id = ${driverId}`);
+  }
+
+  async #findActive(selection: SQL): Promise<SpotHold | null> {
     const rows = await this.#database.execute<ActiveSpotHoldRow>(sql`
       select h.id, h.lot_id, lot.name as lot_name, h.expires_at
-      from (select id, lot_id, expires_at from spot_hold where user_id = ${driverId} and ${ACTIVE_SPOT_HOLD}) h
+      from (select id, lot_id, expires_at from spot_hold where ${selection} and ${ACTIVE_SPOT_HOLD}) h
       join parking_lot lot on lot.id = h.lot_id`);
     const row = rows[0];
     return row === undefined ? null : { id: row.id, lotId: row.lot_id, lotName: row.lot_name, expiresAt: new Date(row.expires_at) };
@@ -63,6 +72,29 @@ export class PostgresSpotHoldRepository implements SpotHoldRepository {
     } catch (error) {
       throw spotHoldRefusalOf(error, draft.lotId);
     }
+  }
+
+  async releaseSpotHold(release: SpotHoldRelease): Promise<void> {
+    try {
+      await this.#database.transaction(async (tx) => {
+        await tx.execute(LIMIT_LOCK_WAIT);
+        await releaseUnderLotLock(tx, release);
+      }, LOT_LOCK_TRANSACTION);
+    } catch (error) {
+      throw spotHoldRefusalOf(error, release.lotId);
+    }
+  }
+}
+
+// Same order as placing: the lot first, then the hold, then its spot.
+async function releaseUnderLotLock(tx: Transaction, release: SpotHoldRelease): Promise<void> {
+  await lockParkingLot(tx, release.lotId);
+  const spotId = await markSpotHoldReleased(tx, release);
+  if (spotId === undefined) {
+    throw new SpotHoldRefusedError('HOLD_NOT_FOUND');
+  }
+  if (!(await freeHeldSpot(tx, spotId, release.releasedAt))) {
+    throw new Error(`Spot ${spotId} of released hold ${release.spotHoldId} was not held.`);
   }
 }
 

@@ -25,7 +25,7 @@ interface BackdateRoute {
 }
 
 // Registered with the test sign-in, only in test environments; no driver token, like the test sign-in itself.
-// Only the current-session and spot hold routes read this clock: gates and SQL now() keep real time.
+// Only the current-session routes and the spot hold routes (place, read, release) read this clock: gates and SQL now() keep real time.
 export function registerTestClockRoutes(server: FastifyInstance, { testClock, backdater }: TestClockRouteDependencies): void {
   const response = { 200: testClockReadingSchema };
   server.get('/v1/test/clock', { schema: { response } }, () => readingOf(testClock));

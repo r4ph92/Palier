@@ -9,6 +9,8 @@ const MESSAGES: Record<SpotHoldRefusalCode, string> = {
   LOT_NOT_IN_SERVICE: 'This lot is not in service.',
   HOLD_UNAVAILABLE: 'Spots cannot be held right now.',
   TOO_MANY_HOLD_ATTEMPTS: 'Too many attempts. Try again in a few minutes.',
+  HOLD_NOT_FOUND: 'No such hold.',
+  HOLD_EXPIRED: 'This guarantee has already expired.',
 };
 
 export class SpotHoldRefusedError extends Error {

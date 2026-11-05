@@ -13,10 +13,12 @@ const STATUS_BY_REASON: Record<SpotHoldRefusalCode, number> = {
   LOT_NOT_IN_SERVICE: 409,
   HOLD_UNAVAILABLE: 503,
   TOO_MANY_HOLD_ATTEMPTS: 429,
+  HOLD_NOT_FOUND: 404,
+  HOLD_EXPIRED: 409,
 };
 
 export function handleSpotHoldError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {
-  const refusal = refusalOf(error);
+  const refusal = refusalOf(error, request);
   if (refusal === undefined) {
     return handleServerError(error, request, reply);
   }
@@ -26,10 +28,10 @@ export function handleSpotHoldError(error: FastifyError, request: FastifyRequest
   return reply.status(statusCode).send(body);
 }
 
-// The path carries the only input, the lot id: one that is not a UUID names no lot.
-function refusalOf(error: FastifyError): SpotHoldRefusedError | undefined {
+// The path carries the only input, a lot id or a hold id: one that is not a UUID names nothing.
+function refusalOf(error: FastifyError, request: FastifyRequest): SpotHoldRefusedError | undefined {
   if (error instanceof SpotHoldRefusedError) {
     return error;
   }
-  return error.validation === undefined ? undefined : new SpotHoldRefusedError('LOT_NOT_FOUND');
+  return error.validation === undefined ? undefined : new SpotHoldRefusedError(request.method === 'DELETE' ? 'HOLD_NOT_FOUND' : 'LOT_NOT_FOUND');
 }

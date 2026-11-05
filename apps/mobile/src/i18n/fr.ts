@@ -69,6 +69,8 @@ export const fr = {
       LOT_NOT_IN_SERVICE,
       HOLD_UNAVAILABLE: 'Impossible de garantir une place pour le moment, réessayez dans un instant',
       TOO_MANY_HOLD_ATTEMPTS: TOO_MANY_ATTEMPTS,
+      HOLD_NOT_FOUND: 'Cette garantie n’existe plus',
+      HOLD_EXPIRED: 'Cette garantie a déjà expiré',
     } satisfies Record<SpotHoldRefusalCode, string>,
   },
   signIn: {

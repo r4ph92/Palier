@@ -66,6 +66,8 @@ export const en: Translations = {
       LOT_NOT_IN_SERVICE,
       HOLD_UNAVAILABLE: 'Can’t guarantee a spot right now, try again in a moment',
       TOO_MANY_HOLD_ATTEMPTS: TOO_MANY_ATTEMPTS,
+      HOLD_NOT_FOUND: 'This guarantee no longer exists',
+      HOLD_EXPIRED: 'This guarantee has already expired',
     },
   },
   signIn: {
