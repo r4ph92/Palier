@@ -5,7 +5,7 @@ import { SPOT_HOLD_QUOTA_PER_LOT } from './spotHoldRules.ts';
 // Read under the lot lock, so no other hold of this lot changes them before the decision is applied.
 export interface SpotHoldFacts {
   readonly isLotOnline: boolean;
-  readonly ownActiveHold: boolean;
+  readonly hasOwnActiveHold: boolean;
   readonly activeHoldsInLot: number;
   readonly occupancy: LotOccupancy;
 }
@@ -17,11 +17,11 @@ export function decideSpotHoldRequest(facts: SpotHoldFacts): SpotHoldDecision {
   return reason === null ? { kind: 'proceed' } : { kind: 'refuse', reason };
 }
 
-function refusalReason({ isLotOnline, ownActiveHold, activeHoldsInLot, occupancy }: SpotHoldFacts): SpotHoldRefusalCode | null {
+function refusalReason({ isLotOnline, hasOwnActiveHold, activeHoldsInLot, occupancy }: SpotHoldFacts): SpotHoldRefusalCode | null {
   if (!isLotOnline) {
     return 'LOT_NOT_IN_SERVICE';
   }
-  if (ownActiveHold) {
+  if (hasOwnActiveHold) {
     return 'HOLD_ALREADY_EXISTS';
   }
   if (activeHoldsInLot >= SPOT_HOLD_QUOTA_PER_LOT) {
