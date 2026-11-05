@@ -1,9 +1,7 @@
 import { readDatabaseUrl } from '../config/environment.ts';
+import { LOCAL_HOST_NAMES, LOCAL_HOSTS } from '../config/localHosts.ts';
 
 const ALLOWED_ENVIRONMENTS = new Set(['development', 'test']);
-// As URL.hostname writes them: an IPv6 address keeps its brackets.
-export const LOCAL_HOSTS: ReadonlySet<string> = new Set(['localhost', '127.0.0.1', '[::1]']);
-export const LOCAL_HOST_NAMES = [...LOCAL_HOSTS].join(', ');
 
 export function databaseUrlAllowedForSeeding(variables: NodeJS.ProcessEnv): string {
   const environment = variables['NODE_ENV'];

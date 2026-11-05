@@ -9,7 +9,7 @@ import { handleEntryError } from '../entries/handleEntryError.ts';
 import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
-import { ENTRY_LIMIT, ENTRY_WINDOW_MILLISECONDS } from './entryLimit.ts';
+import { ENTRY_LIMIT, ENTRY_WINDOW_MILLISECONDS } from '../../domain/entries/entryLimit.ts';
 import { registerEntryStatusRoute } from './entryStatusRoute.ts';
 import { entryRequestSchema, entryResponseSchema } from '../schemas/entrySchemas.ts';
 

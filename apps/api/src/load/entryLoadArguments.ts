@@ -1,7 +1,7 @@
 import { parseArgs } from 'node:util';
+import { LOCAL_HOST_NAMES, LOCAL_HOSTS } from '../config/localHosts.ts';
 import { readPositiveWholeNumber } from '../config/readPositiveWholeNumber.ts';
 import { LOAD_DRIVER_COUNT } from '../seed/fixtures/loadDrivers.ts';
-import { LOCAL_HOST_NAMES, LOCAL_HOSTS } from '../seed/seedGuard.ts';
 
 export interface EntryLoadArguments {
   readonly apiUrl: URL;

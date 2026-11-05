@@ -1,4 +1,4 @@
-import { ENTRY_LIMIT, ENTRY_WINDOW_MINUTES } from '../http/routes/entryLimit.ts';
+import { ENTRY_LIMIT, ENTRY_WINDOW_MINUTES } from '../domain/entries/entryLimit.ts';
 import type { EntryRefusalCode } from '@palier/shared-types';
 import type { SessionCheck } from './entryLoadDatabase.ts';
 import { ADMITTED, type EntryAnswer, type EntryOutcome } from './fireEntries.ts';
