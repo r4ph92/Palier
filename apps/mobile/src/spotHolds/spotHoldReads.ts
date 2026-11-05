@@ -5,8 +5,12 @@ import { PalierRejectedError } from '../api/VehicleClient';
 import { heldSpotFrom, type HeldSpot } from './heldSpot';
 import { failureReasonOf, isExpectedReadFailure, type SpotHoldFailure } from './spotHoldFailure';
 
+// 'unknown' until Palier has said whether the driver holds a spot: no hold button shows before then.
+export type SpotHoldReadState = 'unknown' | 'settled';
+
 export interface SpotHoldUpdates {
   readonly setHeld: Dispatch<SetStateAction<HeldSpot | null>>;
+  readonly setReadState: Dispatch<SetStateAction<SpotHoldReadState>>;
   readonly setFailure: Dispatch<SetStateAction<SpotHoldFailure | null>>;
   // Counts the holds taken here: a read that started before one was taken answers too late to be shown.
   readonly holdsTaken: RefObject<number>;
@@ -19,6 +23,7 @@ export async function readCurrentHold(client: SpotHoldClient, updates: SpotHoldU
     if (updates.holdsTaken.current === holdsTakenBefore) {
       updates.setHeld((previous) => heldSpotAfterRead(previous, spotHold));
     }
+    updates.setReadState('settled');
   } catch (error) {
     // Run inside the state update so an unexpected error is thrown during render and reaches the error boundary.
     updates.setFailure((previous) => {
@@ -56,6 +61,7 @@ export async function requestHold(client: SpotHoldClient, lotId: string, updates
   }
   updates.holdsTaken.current += 1;
   updates.setHeld(heldSpotFrom(spotHold, Date.now(), true));
+  updates.setReadState('settled');
   updates.onHeld();
 }
 

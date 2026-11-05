@@ -1,5 +1,6 @@
 import { act, screen, userEvent, within } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
+import { PalierUnreachableError } from '../src/api/LotsClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeLotsClient, PARKING_DEMO_ID, parkingDemo, parkingDemoWith, parkingTestPaliers } from './fakeLotsClient';
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
@@ -84,6 +85,19 @@ describe('HomeScreen spot hold', () => {
 
     await act(async () => spotHoldClient.answer());
     expect(await screen.findByTestId('spot-hold-banner')).toBeOnTheScreen();
+  });
+
+  it('offers no hold until Palier has said whether Julie already holds one, and reads it again with the list', async () => {
+    const spotHoldClient = new FakeSpotHoldClient();
+    spotHoldClient.isReachable = false;
+    await renderHomeScreenWith({ lotsClient: new FakeLotsClient(parkingDemoWith(10)), locationClient: new FakeDeviceLocationClient(), spotHoldClient });
+    await screen.findByText('10 places libres', visibleText);
+    expect(screen.queryByRole('button', { name: HOLD_BUTTON_FR })).not.toBeOnTheScreen();
+
+    spotHoldClient.isReachable = true;
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Actualiser' }));
+
+    expect(await screen.findByRole('button', { name: HOLD_BUTTON_FR })).toBeOnTheScreen();
   });
 
   it('offers no hold on a full lot', async () => {
@@ -176,7 +190,7 @@ describe('HomeScreen spot hold refusals', () => {
 
   it('says Palier cannot be reached without network', async () => {
     const spotHoldClient = new FakeSpotHoldClient();
-    spotHoldClient.isReachable = false;
+    spotHoldClient.nextFailure = new PalierUnreachableError('fake');
     await holdAtParkingDemo(new FakeLotsClient(parkingDemoWith(10)), spotHoldClient);
 
     expect(await screen.findAllByText('Impossible de joindre Palier.')).not.toHaveLength(0);
