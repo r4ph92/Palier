@@ -33,11 +33,10 @@ export class PostgresSpotHoldRepository implements SpotHoldRepository {
     this.#database = database;
   }
 
-  // The inner select keeps the partial index's exact predicate, so the per-driver unique index serves it.
   async findActiveSpotHold(driverId: string): Promise<SpotHold | null> {
     const rows = await this.#database.execute<ActiveSpotHoldRow>(sql`
       select h.id, h.lot_id, lot.name as lot_name, h.expires_at
-      from (select * from spot_hold where user_id = ${driverId} and ${ACTIVE_SPOT_HOLD}) h
+      from (select id, lot_id, expires_at from spot_hold where user_id = ${driverId} and ${ACTIVE_SPOT_HOLD}) h
       join parking_lot lot on lot.id = h.lot_id`);
     const row = rows[0];
     return row === undefined ? null : { id: row.id, lotId: row.lot_id, lotName: row.lot_name, expiresAt: new Date(row.expires_at) };

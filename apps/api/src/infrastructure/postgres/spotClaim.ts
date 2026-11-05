@@ -6,7 +6,6 @@ import type { Database, Transaction } from './database.ts';
 import type { SpotState } from './lotSchema.ts';
 import type { SpotLabelRow } from './spotLabel.ts';
 
-// The state a claimed spot moves to, and the instant recorded for that change.
 export interface SpotClaimTarget {
   readonly state: Extract<SpotState, 'ASSIGNED' | 'HELD'>;
   readonly changedAt: SQL;

@@ -3,7 +3,7 @@ export const SPOT_HOLD_STATUSES = ['ACTIVE', 'RELEASED', 'EXPIRED', 'USED'] as c
 
 export type SpotHoldStatus = (typeof SPOT_HOLD_STATUSES)[number];
 
-// The held spot's number is never sent: the hold guarantees a place in the lot, the spot is chosen at entry (D3, Q22).
+// The held spot's number is never sent: the hold guarantees the driver a place in the lot, not a spot number (D3, Q22).
 export interface SpotHold {
   readonly spotHoldId: string;
   readonly lotId: string;

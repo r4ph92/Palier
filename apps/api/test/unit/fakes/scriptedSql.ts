@@ -32,7 +32,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-active-session', /with active as/],
   ['claim-spot', /for update skip locked/],
   ['read-free-spots', /s\.state = 'AVAILABLE'/],
-  ['read-active-spot-hold', /from \(select \* from spot_hold/],
+  ['read-active-spot-hold', /from \(select id, lot_id, expires_at from spot_hold/],
   ['read-spot-hold-lot', /join operator on/],
   ['read-spot-hold-facts', /as active_holds_in_lot/],
   ['insert-spot-hold', /insert into spot_hold/],
