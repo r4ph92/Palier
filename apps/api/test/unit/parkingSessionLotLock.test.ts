@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SessionDraft } from '../../src/domain/entries/ParkingSessionRepository.ts';
 import { PostgresParkingSessionRepository } from '../../src/infrastructure/postgres/PostgresParkingSessionRepository.ts';
+import { PostgresUnconfirmedEntryRepository } from '../../src/infrastructure/postgres/PostgresUnconfirmedEntryRepository.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
 
 const draft: SessionDraft = {
@@ -55,6 +56,14 @@ describe('opening an entry under the lot lock', () => {
     expect(scripted.statements.every(({ onTransaction }) => onTransaction)).toBe(true);
   });
 
+  it('opens its transaction in READ COMMITTED, so the reads after the lock wait see the previous holder', async () => {
+    const scripted = scriptedEntry();
+
+    await openEntry(scripted);
+
+    expect(scripted.isolationLevels).toEqual(['read committed']);
+  });
+
   it('locks the scanned lot', async () => {
     const scripted = scriptedEntry();
 
@@ -65,5 +74,17 @@ describe('opening an entry under the lot lock', () => {
 
   it('opens a new session on the claimed spot', async () => {
     expect(await openEntry(scriptedEntry())).toEqual({ kind: 'opened', session: { id: 'session-1', spot: { number: 'A-1', levelCode: 'P1', aisleCode: 'A' } } });
+  });
+});
+
+describe('cancelling an unconfirmed entry under the lot lock', () => {
+  it('locks the lot first, in a READ COMMITTED transaction', async () => {
+    const scripted = new ScriptedSql();
+    const repository = new PostgresUnconfirmedEntryRepository(scripted.database());
+
+    await repository.cancel({ sessionId: 'session-1', lotId: draft.lotId });
+
+    expect(scripted.isolationLevels).toEqual(['read committed']);
+    expect(scripted.labels()[0]).toBe('lock-lot');
   });
 });

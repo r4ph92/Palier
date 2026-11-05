@@ -3,7 +3,7 @@ import type { ExpiredEntry, PendingRelease, UnconfirmedEntryRepository } from '.
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database } from './database.ts';
-import { lockParkingLot } from './lockParkingLot.ts';
+import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
 import { entryOpenedAt, isWithinOpeningWindow } from './openingWindowSql.ts';
 
 interface ExpiredEntryRow extends Record<string, unknown> {
@@ -41,7 +41,7 @@ export class PostgresUnconfirmedEntryRepository implements UnconfirmedEntryRepos
     return this.#database.transaction(async (tx) => {
       await lockParkingLot(tx, entry.lotId);
       return cancelCreatedSession(tx, entry.sessionId);
-    });
+    }, LOT_LOCK_TRANSACTION);
   }
 
   // Skip locked only spares waiting on a row another instance is claiming; a hold released twice is harmless, Stripe answers already canceled.

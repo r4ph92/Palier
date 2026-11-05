@@ -15,7 +15,7 @@ import { findActiveSessionFacts } from './activeSessionFacts.ts';
 import { admissionRefusalOf } from './admissionRefusal.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
-import { lockParkingLot } from './lockParkingLot.ts';
+import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
 import { parkingSession } from './schema.ts';
 import { assignFirstFreeSpot, type AssignedSpotRow } from './spotClaim.ts';
 
@@ -60,7 +60,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
         await tx.execute(LIMIT_LOCK_WAIT);
         await lockParkingLot(tx, draft.lotId);
         return await this.#openUnderLotLock(tx, draft);
-      });
+      }, LOT_LOCK_TRANSACTION);
     } catch (error) {
       throw admissionRefusalOf(error, draft.lotId);
     }
