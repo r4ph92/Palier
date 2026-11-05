@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { LotsClient } from '../api/LotsClient';
@@ -41,6 +42,7 @@ interface HomeHeaderProps {
 // A new hold refreshes the list, so the lot's count shows the held spot gone.
 export function HomeScreen({ firstName, lotsClient, locationClient, spotHold }: HomeScreenProps) {
   const controller = useLots(lotsClient, locationClient);
+  useHoldReadOnEveryLotsRead(controller.state, spotHold.refreshHold);
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
@@ -69,10 +71,19 @@ function HomeHeader({ controller, firstName, spotHold }: HomeHeaderProps) {
         action={<TextButton label={i18n.t('home.refresh')} onPress={controller.refresh} />}
       />
       {spotHold.held === null ? null : <SpotHoldBanner held={spotHold.held} onFreshHoldShown={spotHold.acknowledgeFreshHold} />}
-      {spotHold.failure === null ? null : <SpotHoldProblem failure={spotHold.failure} />}
+      {spotHold.failure === null ? null : <SpotHoldProblem failure={spotHold.failure} onAnnounced={spotHold.acknowledgeFreshFailure} />}
       {controller.state.status === 'loaded' ? <LocationNotice location={controller.state.location} /> : null}
     </View>
   );
+}
+
+// Each new list also reads the hold again and clears a problem left from an earlier tap.
+function useHoldReadOnEveryLotsRead(state: LotsState, refreshHold: () => void): void {
+  useEffect(() => {
+    if (state.status === 'loaded') {
+      refreshHold();
+    }
+  }, [state, refreshHold]);
 }
 
 function freshnessStamp(state: LotsState): string {

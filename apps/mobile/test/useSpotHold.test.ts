@@ -32,7 +32,10 @@ describe('useSpotHold', () => {
     expect(result.current.requestedLotId).toBeNull();
   });
 
-  it('keeps the hold just taken when the launch read answers late with nothing', async () => {
+  it.each([
+    ['nothing', null],
+    ['an older hold', julieHoldAtParkingDemo({ spotHoldId: 'hold-0' })],
+  ])('keeps the hold just taken when the launch read answers late with %s', async (_case, lateAnswer) => {
     let answerLaunchRead: (spotHold: SpotHold | null) => void = () => undefined;
     const client: SpotHoldClient = {
       hold: () => Promise.resolve(julieHoldAtParkingDemo()),
@@ -41,10 +44,45 @@ describe('useSpotHold', () => {
     const { result } = await renderSpotHold(client);
 
     await act(async () => result.current.hold(PARKING_DEMO_ID, () => undefined));
-    await act(async () => answerLaunchRead(null));
+    await act(async () => answerLaunchRead(lateAnswer));
 
     expect(result.current.held?.spotHold.spotHoldId).toBe('hold-1');
     expect(result.current.held?.isFresh).toBe(true);
+  });
+
+  it('keeps a fresh hold fresh when a read after it finds the same hold', async () => {
+    const client = new FakeSpotHoldClient();
+    const { result } = await renderSpotHold(client);
+    await act(async () => result.current.hold(PARKING_DEMO_ID, () => undefined));
+
+    await act(async () => result.current.refreshHold());
+
+    expect(result.current.held?.isFresh).toBe(true);
+  });
+
+  it('clears the last problem and reads the hold again on refresh', async () => {
+    const client = new FakeSpotHoldClient();
+    client.nextRejection = 'HOLD_QUOTA_REACHED';
+    const { result } = await renderSpotHold(client);
+    await act(async () => result.current.hold(PARKING_DEMO_ID, () => undefined));
+    expect(result.current.failure).toEqual({ reason: { kind: 'refused', refusal: 'HOLD_QUOTA_REACHED' }, isFresh: true });
+    client.activeHold = julieHoldAtParkingDemo();
+
+    await act(async () => result.current.refreshHold());
+
+    expect(result.current.failure).toBeNull();
+    expect(result.current.held?.isFresh).toBe(false);
+  });
+
+  it('marks a problem announced once the screen has said it', async () => {
+    const client = new FakeSpotHoldClient();
+    client.nextRejection = 'NO_SUITABLE_SPOT';
+    const { result } = await renderSpotHold(client);
+    await act(async () => result.current.hold(PARKING_DEMO_ID, () => undefined));
+
+    await act(async () => result.current.acknowledgeFreshFailure());
+
+    expect(result.current.failure?.isFresh).toBe(false);
   });
 
   it('reads a hold already taken back when told one exists, without moving focus to it', async () => {
@@ -56,7 +94,7 @@ describe('useSpotHold', () => {
 
     await act(async () => result.current.hold(PARKING_DEMO_ID, onHeld));
 
-    expect(result.current.failure).toEqual({ kind: 'refused', refusal: 'HOLD_ALREADY_EXISTS' });
+    expect(result.current.failure?.reason).toEqual({ kind: 'refused', refusal: 'HOLD_ALREADY_EXISTS' });
     expect(result.current.held?.spotHold.lotName).toBe('Parking Démo');
     expect(result.current.held?.isFresh).toBe(false);
     expect(client.currentRequests).toBe(2);
@@ -70,7 +108,7 @@ describe('useSpotHold', () => {
 
     await act(async () => result.current.hold(PARKING_DEMO_ID, () => undefined));
 
-    expect(result.current.failure).toEqual({ kind: 'notResponding' });
+    expect(result.current.failure?.reason).toEqual({ kind: 'notResponding' });
   });
 
   it('reads a code it does not know as Palier not responding', async () => {
@@ -80,7 +118,7 @@ describe('useSpotHold', () => {
 
     await act(async () => result.current.hold(PARKING_DEMO_ID, () => undefined));
 
-    expect(result.current.failure).toEqual({ kind: 'notResponding' });
+    expect(result.current.failure?.reason).toEqual({ kind: 'notResponding' });
   });
 
   it('says Palier is unreachable without network and clears it on the next try', async () => {
@@ -88,7 +126,7 @@ describe('useSpotHold', () => {
     const { result } = await renderSpotHold(client);
     client.isReachable = false;
     await act(async () => result.current.hold(PARKING_DEMO_ID, () => undefined));
-    expect(result.current.failure).toEqual({ kind: 'unreachable' });
+    expect(result.current.failure?.reason).toEqual({ kind: 'unreachable' });
 
     client.isReachable = true;
     await act(async () => result.current.hold(PARKING_DEMO_ID, () => undefined));

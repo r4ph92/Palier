@@ -151,6 +151,18 @@ describe('HomeScreen spot hold refusals', () => {
     expect(focus).not.toHaveBeenCalled();
   });
 
+  it('clears a refusal when the list is read again', async () => {
+    const spotHoldClient = new FakeSpotHoldClient();
+    spotHoldClient.nextRejection = 'HOLD_QUOTA_REACHED';
+    await holdAtParkingDemo(new FakeLotsClient(parkingDemoWith(10), parkingDemoWith(9)), spotHoldClient);
+    await screen.findByText('Trop de places garanties dans ce parking pour le moment');
+
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Actualiser' }));
+
+    expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
+    expect(screen.queryByText('Trop de places garanties dans ce parking pour le moment')).not.toBeOnTheScreen();
+  });
+
   it('says Palier cannot be reached without network', async () => {
     const spotHoldClient = new FakeSpotHoldClient();
     spotHoldClient.isReachable = false;

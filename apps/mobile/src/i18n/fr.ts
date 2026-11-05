@@ -1,5 +1,5 @@
 import type { SpotCategory } from '@palier/shared-types';
-import type { SpotHoldRefusal } from '../spotHolds/useSpotHold';
+import type { SpotHoldRefusal } from '../spotHolds/spotHoldRefusals';
 
 // Said the same way whether the driver scans at the terminal or holds a spot from the list.
 const LOT_NOT_IN_SERVICE = 'Ce parking n’est pas en service';

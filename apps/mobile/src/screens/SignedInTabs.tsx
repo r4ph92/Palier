@@ -17,7 +17,8 @@ interface SignedInTabsProps {
   readonly onSignOut: () => void;
 }
 
-// The current session and the spot hold are read here, above the tabs, so a relaunch finds them before any tab is opened.
+// The current session and the spot hold are read here, above the tabs, so a relaunch finds them before any tab is opened;
+// the lot list reads the hold again with every list.
 export function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: SignedInTabsProps) {
   const tabs = useTabs();
   const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
