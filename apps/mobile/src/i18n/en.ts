@@ -27,6 +27,10 @@ export const en: Translations = {
     unreachableHint: 'Check your connection, then try again.',
     retry: 'Try again',
     refresh: 'Refresh',
+    distance: {
+      metres: { one: '%{amount} metre', other: '%{amount} metres' },
+      kilometres: { one: '%{amount} kilometre', other: '%{amount} kilometres' },
+    },
   },
   signIn: {
     title: 'Sign in',

@@ -25,6 +25,10 @@ export const fr = {
     unreachableHint: 'Vérifiez votre connexion, puis réessayez.',
     retry: 'Réessayer',
     refresh: 'Actualiser',
+    distance: {
+      metres: { one: '%{amount} mètre', other: '%{amount} mètres' },
+      kilometres: { one: '%{amount} kilomètre', other: '%{amount} kilomètres' },
+    },
   },
   signIn: {
     title: 'Connexion',
