@@ -42,7 +42,7 @@ interface HeldSpotContentProps {
 // An expired hold has nothing left to release, and the refusal that says so would repeat the banner.
 function HeldSpotContent({ spotHold, countdown, onRelease }: HeldSpotContentProps) {
   const colors = useColors();
-  const [isConfirming, setIsConfirming] = useState(false);
+  const [holdsFocus, setHoldsFocus] = useState(false);
   const isExpired = countdown.kind === 'expired';
   const failure = bannerFailureOf(spotHold.failure, isExpired);
   return (
@@ -50,10 +50,10 @@ function HeldSpotContent({ spotHold, countdown, onRelease }: HeldSpotContentProp
       <SpotHoldBanner
         held={spotHold.held}
         countdown={countdown}
-        takesFocusOnExpiry={isConfirming || spotHold.isReleasing}
+        takesFocusOnExpiry={holdsFocus}
         onFreshHoldShown={spotHold.acknowledgeFreshHold}
       />
-      {isExpired ? null : <ReleaseControl spotHold={spotHold} onRelease={onRelease} onConfirmingChange={setIsConfirming} />}
+      {isExpired ? null : <ReleaseControl spotHold={spotHold} onRelease={onRelease} onHoldsFocusChange={setHoldsFocus} />}
       {failure === null ? null : <SpotHoldProblem failure={failure} onAnnounced={spotHold.acknowledgeFreshFailure} />}
     </View>
   );
@@ -62,16 +62,16 @@ function HeldSpotContent({ spotHold, countdown, onRelease }: HeldSpotContentProp
 interface ReleaseControlProps {
   readonly spotHold: HoldingController;
   readonly onRelease: ReleaseCallbacks;
-  readonly onConfirmingChange: (isConfirming: boolean) => void;
+  readonly onHoldsFocusChange: (holdsFocus: boolean) => void;
 }
 
-function ReleaseControl({ spotHold, onRelease, onConfirmingChange }: ReleaseControlProps) {
+function ReleaseControl({ spotHold, onRelease, onHoldsFocusChange }: ReleaseControlProps) {
   return (
     <ReleaseSpotHold
       lotName={spotHold.held.spotHold.lotName}
       isReleasing={spotHold.isReleasing}
       onConfirm={() => spotHold.release(onRelease)}
-      onConfirmingChange={onConfirmingChange}
+      onHoldsFocusChange={onHoldsFocusChange}
     />
   );
 }

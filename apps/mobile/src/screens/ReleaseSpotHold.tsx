@@ -11,16 +11,16 @@ interface ReleaseSpotHoldProps {
   readonly lotName: string;
   readonly isReleasing: boolean;
   readonly onConfirm: () => void;
-  readonly onConfirmingChange: (isConfirming: boolean) => void;
+  readonly onHoldsFocusChange: (holdsFocus: boolean) => void;
 }
 
 // idle: the button as the banner shows it; confirming: the question; answered: the button again, which takes VoiceOver back.
 type ReleaseStep = 'idle' | 'confirming' | 'answered';
 
 // Giving the spot back cannot be undone, so « Libérer » asks once, in place: an Alert would hide the banner and cannot be tested.
-export function ReleaseSpotHold({ lotName, isReleasing, onConfirm, onConfirmingChange }: ReleaseSpotHoldProps) {
+export function ReleaseSpotHold({ lotName, isReleasing, onConfirm, onHoldsFocusChange }: ReleaseSpotHoldProps) {
   const [step, setStep] = useState<ReleaseStep>('idle');
-  useEffect(() => onConfirmingChange(step === 'confirming'), [step, onConfirmingChange]);
+  useEffect(() => onHoldsFocusChange(step !== 'idle'), [step, onHoldsFocusChange]);
   if (step === 'confirming') {
     return (
       <ReleaseConfirmation

@@ -164,6 +164,21 @@ describe('HomeScreen expired spot hold', () => {
     expect(announcementsOf(EXPIRED_FR)).toBe(0);
   });
 
+  it('moves VoiceOver to the banner when the release button, back after « Annuler », vanishes at expiry', async () => {
+    const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent');
+    const { user } = await renderJulieHolding(new FakeSpotHoldClient(julieHoldAtParkingDemo()));
+    await user.press(screen.getByRole('button', { name: RELEASE_BUTTON }));
+    await user.press(screen.getByRole('button', { name: 'Annuler' }));
+    focus.mockClear();
+
+    await tick(15 * 60);
+
+    expect(focus).toHaveBeenCalledTimes(1);
+    expect(focus).toHaveBeenCalledWith(expect.anything(), 'focus');
+    expect(screen.getByTestId('spot-hold-banner')).toHaveProp('accessibilityLabel', `${EXPIRED_FR}, Parking Démo`);
+    expect(announcementsOf(EXPIRED_FR)).toBe(0);
+  });
+
   it('does not move VoiceOver when the driver was not releasing', async () => {
     const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent');
     await renderJulieHolding(new FakeSpotHoldClient(julieHoldAtParkingDemo()));
