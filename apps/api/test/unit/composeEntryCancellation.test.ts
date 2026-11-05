@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { composeEntryCancellation, openingWindowOf } from '../../src/composeEntryCancellation.ts';
+import { composeEntryCancellation } from '../../src/composeEntryCancellation.ts';
+import { openingWindowOf } from '../../src/domain/gates/OpeningWindow.ts';
 import type { Database } from '../../src/infrastructure/postgres/database.ts';
 import { FakePaymentAuthorizer } from './fakes/entryFakes.ts';
 
@@ -8,15 +9,14 @@ const unusedDatabase = {} as Database;
 
 describe('composeEntryCancellation', () => {
   it('turns the configured confirmation seconds into the opening window', () => {
-    expect(openingWindowOf({ confirmationWindowSeconds: 60, cancellationPeriodSeconds: 30 })).toEqual({ withinMilliseconds: 60_000 });
+    expect(openingWindowOf(60)).toEqual({ withinMilliseconds: 60_000 });
   });
 
-  it('hands the gate routes and the job the very window it was given, and the period in milliseconds', () => {
+  it('hands the job the very window it was given, and the period in milliseconds', () => {
     const openingWindow = { withinMilliseconds: 60_000 };
 
     const composed = composeEntryCancellation({ openingWindow, cancellationPeriodSeconds: 30 }, unusedDatabase, null);
 
-    expect(composed.openingWindow).toBe(openingWindow);
     expect(composed.job.openingWindow).toBe(openingWindow);
     expect(composed.periodMilliseconds).toBe(30_000);
   });

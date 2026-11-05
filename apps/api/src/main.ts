@@ -3,7 +3,7 @@ import { readDashboardUrl, readServerEnvironment, readStripeWebhookSecret } from
 import { readPaymentsSimulation } from './config/paymentsSimulation.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { composeEntries } from './composeEntries.ts';
-import { composeEntryCancellation, openingWindowOf } from './composeEntryCancellation.ts';
+import { composeEntryCancellation } from './composeEntryCancellation.ts';
 import { composeOperatorStripe } from './composeOperatorStripe.ts';
 import { buildServer } from './http/buildServer.ts';
 import { connectToDatabase } from './infrastructure/postgres/database.ts';
@@ -19,6 +19,7 @@ import { PostgresSessionTokenRepository } from './infrastructure/postgres/Postgr
 import { PostgresUserDirectory } from './infrastructure/postgres/PostgresUserDirectory.ts';
 import { StripeCardGateway } from './infrastructure/stripe/StripeCardGateway.ts';
 import { PostgresVehicleRepository } from './infrastructure/postgres/PostgresVehicleRepository.ts';
+import { openingWindowOf } from './domain/gates/OpeningWindow.ts';
 import { systemClock } from './domain/time/Clock.ts';
 import { cancelUnconfirmedEntries, releasePendingHolds } from './domain/entries/unconfirmedEntryCancellation.ts';
 import { purgeEndedSessionTokens } from './domain/sessions/sessionTokens.ts';
@@ -32,7 +33,7 @@ const paymentsSimulation = readPaymentsSimulation(process.env);
 const driverRepository = new PostgresDriverRepository(connection.database);
 const vehicleRepository = new PostgresVehicleRepository(connection.database);
 const sessionTokenRepository = new PostgresSessionTokenRepository(connection.database);
-const openingWindow = openingWindowOf(environment.entryCancellation);
+const openingWindow = openingWindowOf(environment.entryCancellation.confirmationWindowSeconds);
 const entries = composeEntries({
   database: connection.database,
   stripeKey,
@@ -63,7 +64,7 @@ const server = buildServer({
     ledger: new PostgresPassageLedger(connection.database),
     clock: systemClock,
     commands: new PostgresGateCommandFeed(connection.database),
-    openingWindow: entryCancellation.openingWindow,
+    openingWindow,
   },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   entries: entries.routes,
