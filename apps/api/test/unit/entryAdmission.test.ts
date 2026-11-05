@@ -36,9 +36,12 @@ describe('entry admission', () => {
   it('assigns the spot, then holds the daily cap, then opens the barrier', async () => {
     const { journal, admission, log } = admissionWith();
 
-    const response = await admission.admit(julieAtEntreeDemo, log);
+    const admitted = await admission.admit(julieAtEntreeDemo, log);
 
-    expect(response).toEqual({ sessionId: fakeSessionId(1), spot: { number: 'A-1', levelCode: 'P1', aisleCode: 'A' }, barrierOpened: true });
+    expect(admitted).toEqual({
+      kind: 'opened',
+      response: { sessionId: fakeSessionId(1), spot: { number: 'A-1', levelCode: 'P1', aisleCode: 'A' }, barrierOpened: true },
+    });
     expect(journal).toEqual(['open-session', 'authorize', 'attach-intent', 'open-gate']);
   });
 
@@ -178,7 +181,7 @@ describe('entry admission', () => {
     const first = await admission.admit(julieAtEntreeDemo, log);
     const second = await admission.admit(julieAtEntreeDemo, log);
 
-    expect(second).toEqual(first);
+    expect(second).toEqual({ kind: 'replayed', response: first.response });
     expect(payments.authorized).toHaveLength(1);
     expect(gateCommander.opened).toHaveLength(1);
     expect(journal).toEqual(['open-session', 'authorize', 'attach-intent', 'open-gate', 'open-session']);
@@ -195,7 +198,7 @@ describe('entry admission', () => {
 
     await expect(admission.admit(julieAtEntreeDemo, log)).rejects.toMatchObject({ reason: 'CARD_DECLINED' });
 
-    await expect(replay).resolves.toMatchObject({ sessionId: fakeSessionId(1), barrierOpened: true });
+    await expect(replay).resolves.toMatchObject({ kind: 'replayed', response: { sessionId: fakeSessionId(1), barrierOpened: true } });
     expect(payments.authorized).toHaveLength(1);
     expect((await sessions.findForUser(fakeSessionId(1), julie.id))?.state).toBe('CANCELLED');
   });

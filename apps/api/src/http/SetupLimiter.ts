@@ -1,5 +1,7 @@
 export interface SetupLimiter {
   allow(key: string): boolean;
+  // Gives back the key's latest allowed attempt, for a request that turned out to cost nothing.
+  refund(key: string): void;
   readonly trackedKeys: number;
 }
 
@@ -11,17 +13,30 @@ export function createSetupLimiter(limit: number, windowMilliseconds: number): S
     allow(key: string): boolean {
       const now = Date.now();
       sweep(now);
-      const recent = (attempts.get(key) ?? []).filter((time) => now - time < windowMilliseconds);
-      if (recent.length >= limit) {
-        return false;
-      }
-      attempts.set(key, [...recent, now]);
-      return true;
+      return recordAttempt(attempts, key, { now, limit, windowMilliseconds });
+    },
+    refund(key: string): void {
+      attempts.get(key)?.pop();
     },
     get trackedKeys(): number {
       return attempts.size;
     },
   };
+}
+
+interface AttemptRule {
+  readonly now: number;
+  readonly limit: number;
+  readonly windowMilliseconds: number;
+}
+
+function recordAttempt(attempts: Map<string, number[]>, key: string, { now, limit, windowMilliseconds }: AttemptRule): boolean {
+  const recent = (attempts.get(key) ?? []).filter((time) => now - time < windowMilliseconds);
+  if (recent.length >= limit) {
+    return false;
+  }
+  attempts.set(key, [...recent, now]);
+  return true;
 }
 
 // Without this, every address that ever called would stay in the map for the life of the process.

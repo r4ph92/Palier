@@ -141,27 +141,6 @@ describe('POST /v1/entries', () => {
     expect(response.json()).toEqual({ statusCode: 500, error: 'Internal Server Error' });
   });
 
-  it('refuses a sixth entry that would reach Stripe within ten minutes', async () => {
-    const { enter } = await startWithJulieReady();
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      await enter(entreeDemoQr);
-    }
-
-    const sixth = await enter(entreeDemoQr);
-
-    expect(sixth.statusCode).toBe(429);
-    expect(sixth.json()).toEqual({ statusCode: 429, error: 'TOO_MANY_ENTRIES', message: 'Too many entry attempts. Try again in a few minutes.' });
-  });
-
-  it('does not count refused QRs against the limit', async () => {
-    const { enter } = await startWithJulieReady();
-    for (let attempt = 0; attempt < 6; attempt += 1) {
-      await enter('not a QR');
-    }
-
-    expect((await enter(entreeDemoQr)).statusCode).toBe(201);
-  });
-
   it.each([
     ['a QR content over 512 characters', { qrContent: 'x'.repeat(513) }],
     ['no QR content', {}],

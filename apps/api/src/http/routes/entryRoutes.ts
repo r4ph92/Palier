@@ -1,4 +1,4 @@
-import type { EntryRequest, EntryResponse } from '@palier/shared-types';
+import type { EntryRequest } from '@palier/shared-types';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { EntryAdmission } from '../../domain/entries/EntryAdmission.ts';
@@ -57,6 +57,9 @@ async function enter(request: FastifyRequest<EnterRoute>, reply: FastifyReply, {
   if (!limiter.allow(driver.id)) {
     throw new EntryRefusedError('TOO_MANY_ENTRIES');
   }
-  const admitted: EntryResponse = await entries.admission.admit(eligible, request.log);
-  return reply.status(CREATED).send(admitted);
+  const admitted = await entries.admission.admit(eligible, request.log);
+  if (admitted.kind === 'replayed') {
+    limiter.refund(driver.id);
+  }
+  return reply.status(CREATED).send(admitted.response);
 }

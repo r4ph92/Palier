@@ -13,6 +13,12 @@ export interface EntryAdmissionDependencies {
   readonly gateCommander: GateCommander;
 }
 
+// replayed: the driver's same entry handed back, with no new card hold and no new barrier opening.
+export interface AdmittedEntry {
+  readonly kind: SessionOpening['kind'];
+  readonly response: EntryResponse;
+}
+
 interface EntryRun {
   readonly entry: EligibleEntry;
   readonly payments: PaymentAuthorizer;
@@ -32,7 +38,7 @@ export class EntryAdmission {
     this.#dependencies = dependencies;
   }
 
-  async admit(entry: EligibleEntry, log: EntryLog): Promise<EntryResponse> {
+  async admit(entry: EligibleEntry, log: EntryLog): Promise<AdmittedEntry> {
     const { payments } = this.#dependencies;
     if (payments === null) {
       throw new EntryRefusedError('PAYMENTS_UNAVAILABLE');
@@ -42,7 +48,7 @@ export class EntryAdmission {
     if (kind === 'opened') {
       await this.#holdAndOpen({ entry, payments, log }, session.id);
     }
-    return admitted(session);
+    return { kind, response: admitted(session) };
   }
 
   async #holdAndOpen(run: EntryRun, sessionId: string): Promise<void> {

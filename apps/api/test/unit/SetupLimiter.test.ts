@@ -13,6 +13,14 @@ describe('setup limiter', () => {
     expect([limiter.allow('a'), limiter.allow('a'), limiter.allow('a')]).toEqual([true, true, false]);
   });
 
+  it('allows the key again once its latest attempt is refunded', () => {
+    const limiter = createSetupLimiter(1, MINUTE);
+    limiter.allow('a');
+    limiter.refund('a');
+
+    expect(limiter.allow('a')).toBe(true);
+  });
+
   it('counts each key on its own', () => {
     const limiter = createSetupLimiter(1, MINUTE);
     limiter.allow('a');
