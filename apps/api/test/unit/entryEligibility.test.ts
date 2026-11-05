@@ -166,4 +166,16 @@ describe('entry eligibility', () => {
 
     expect(await refusalOf(await eligibilityFor({ gates: [offline] }), entreeDemoQr)).toBe('LOT_NOT_IN_SERVICE');
   });
+
+  it('checks the lot terms before the integration: an unpayable lot with a dry-contact gate names the operator', async () => {
+    const unpayable = { ...entreeDemoGate, integrationKind: 'DRY_CONTACT' as const, lot: { ...entreeDemoGate.lot, operatorStripeAccountId: null } };
+
+    expect(await refusalOf(await eligibilityFor({ gates: [unpayable] }), entreeDemoQr)).toBe('OPERATOR_NOT_PAYABLE');
+  });
+
+  it('checks the lot terms before the room: a full lot without a readable price is not in service', async () => {
+    const fullUnpriced = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 10, pricingPolicy: null } };
+
+    expect(await refusalOf(await eligibilityFor({ gates: [fullUnpriced] }), entreeDemoQr)).toBe('LOT_NOT_IN_SERVICE');
+  });
 });
