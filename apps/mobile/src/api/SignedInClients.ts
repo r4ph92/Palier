@@ -1,3 +1,4 @@
+import type { DeviceLocationClient } from '../deviceLocation/DeviceLocationClient';
 import type { EntryClient } from './EntryClient';
 import type { LotsClient } from './LotsClient';
 import type { ParkingSessionClient } from './ParkingSessionClient';
@@ -18,6 +19,7 @@ export interface SignedInClients {
   readonly vehicles: VehicleClient;
   readonly entry: EntryClient;
   readonly parkingSession: ParkingSessionClient;
+  readonly location: DeviceLocationClient;
 }
 
 export type CreateSignedInClients = (session: SignedInSession) => SignedInClients;

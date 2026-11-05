@@ -11,6 +11,7 @@ import { HttpVehicleClient } from './api/HttpVehicleClient';
 import type { SignedInClients, SignedInSession } from './api/SignedInClients';
 import { secureTokenStore } from './auth/TokenStore';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
+import { ExpoDeviceLocationClient } from './deviceLocation/ExpoDeviceLocationClient';
 import { applyLanguage, deviceLanguage } from './i18n/i18n';
 import { developerTools } from './dev/loadDeveloperTools';
 import { PalierApp } from './PalierApp';
@@ -27,6 +28,7 @@ const testSignInEnabled = process.env.EXPO_PUBLIC_TEST_SIGN_IN === 'true';
 // The publishable key comes from the environment; use a test key (pk_test_…) in local and test builds.
 const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 applyLanguage(deviceLanguage());
+const deviceLocationClient = new ExpoDeviceLocationClient();
 
 function createSignedInClients({ token, onUnauthorized, onConsentRequired }: SignedInSession): SignedInClients {
   return {
@@ -35,6 +37,7 @@ function createSignedInClients({ token, onUnauthorized, onConsentRequired }: Sig
     vehicles: new HttpVehicleClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
     entry: new HttpEntryClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
     parkingSession: new HttpParkingSessionClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
+    location: deviceLocationClient,
   };
 }
 

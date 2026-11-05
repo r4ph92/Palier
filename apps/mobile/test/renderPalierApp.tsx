@@ -5,6 +5,7 @@ import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { PalierApp } from '../src/PalierApp';
 import type { DeveloperEntry } from '../src/screens/DeveloperEntry';
 import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
+import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeEntryClient } from './fakeEntryClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeParkingSessionClient } from './fakeParkingSessionClient';
@@ -39,6 +40,7 @@ export function fakeSignedInClients(): SignedInClients {
     vehicles: new FakeVehicleClient(),
     entry: new FakeEntryClient(),
     parkingSession: new FakeParkingSessionClient(),
+    location: new FakeDeviceLocationClient(),
   };
 }
 
