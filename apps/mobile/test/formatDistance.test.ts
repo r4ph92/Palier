@@ -36,6 +36,6 @@ describe('spokenDistance', () => {
   ] as const)('reads %s %i metres as %s', (language, metres, expected) => {
     applyLanguage(language);
 
-    expect(spokenDistance(metres, language)).toBe(expected);
+    expect(spokenDistance(metres)).toBe(expected);
   });
 });

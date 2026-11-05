@@ -1,4 +1,4 @@
-import { i18n, type SupportedLanguage } from './i18n';
+import { currentLanguage, i18n, type SupportedLanguage } from './i18n';
 import { NO_BREAK_SPACE } from './spaces';
 
 const METRES_PER_KILOMETRE = 1000;
@@ -19,9 +19,9 @@ export function formatDistance(metres: number, language: SupportedLanguage): str
   return `${writtenAmount(amount, language)}${NO_BREAK_SPACE}${UNIT_SYMBOLS[unit]}`;
 }
 
-export function spokenDistance(metres: number, language: SupportedLanguage): string {
+export function spokenDistance(metres: number): string {
   const { amount, unit } = roundedDistance(metres);
-  return i18n.t(`home.distance.${unit}`, { count: amount, amount: writtenAmount(amount, language) });
+  return i18n.t(`home.distance.${unit}`, { count: amount, amount: writtenAmount(amount, currentLanguage()) });
 }
 
 function roundedDistance(metres: number): RoundedDistance {

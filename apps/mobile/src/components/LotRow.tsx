@@ -22,7 +22,7 @@ export function LotRow({ nearbyLot }: LotRowProps) {
   return (
     <View
       accessible
-      accessibilityLabel={lotAccessibilityLabel(nearbyLot, currentLanguage())}
+      accessibilityLabel={lotAccessibilityLabel(nearbyLot)}
       testID={`lot-row-${lot.id}`}
       style={[styles.row, { borderBottomColor: colors.line }]}
     >
