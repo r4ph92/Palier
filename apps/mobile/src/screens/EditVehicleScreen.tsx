@@ -7,6 +7,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
 import { VehicleNeedsFields } from '../components/VehicleNeedsFields';
 import { i18n } from '../i18n/i18n';
+import { LIST_SEPARATOR } from '../i18n/spaces';
 import { useEditVehicle } from '../vehicles/useEditVehicle';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -27,7 +28,7 @@ export function EditVehicleScreen({ client, vehicle, onCancel, onSaved }: EditVe
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader
-          eyebrow={`${vehicle.plate} · ${vehicle.province}`}
+          eyebrow={`${vehicle.plate}${LIST_SEPARATOR}${vehicle.province}`}
           title={i18n.t('vehicles.editTitle')}
           action={<TextButton label={i18n.t('vehicles.cancel')} onPress={onCancel} />}
         />
