@@ -20,7 +20,6 @@ describe.each([1, 1.35, 2.3, 3.1])('HomeScreen at text scale %d', (fontScale) =>
 
     expect(await screen.findByText('Parking Démo')).toBeOnTheScreen();
     expect(screen.getByText('10 places libres')).toBeOnTheScreen();
-    expect(screen.getByText(PARKING_DEMO_CATEGORY_LINE_FR, visibleText)).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Actualiser' })).toBeOnTheScreen();
   });
 
@@ -32,5 +31,21 @@ describe.each([1, 1.35, 2.3, 3.1])('HomeScreen at text scale %d', (fontScale) =>
     expect(screen.getByTestId('header-eyebrow-row')).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
     expect(screen.getByTestId(`lot-summary-${parkingDemoWith(10)[0]?.id}`)).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
     expect(screen.getByTestId(`lot-row-${parkingDemoWith(10)[0]?.id}`)).not.toHaveStyle({ flexDirection: 'row' });
+  });
+
+  it('joins the categories on one line, or gives each its own line at large text sizes', async () => {
+    await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)));
+
+    await screen.findByText('Parking Démo');
+
+    if (fontScale < 1.35) {
+      expect(screen.getByText(PARKING_DEMO_CATEGORY_LINE_FR, visibleText)).toBeOnTheScreen();
+      return;
+    }
+    const nbsp = '\u00A0';
+    for (const line of ['Standard 7', 'Électrique 1', 'Accessible 1', 'Grand gabarit 1']) {
+      expect(screen.getByText(line.replaceAll(' ', nbsp), visibleText)).toBeOnTheScreen();
+    }
+    expect(screen.queryByText(/·/, visibleText)).not.toBeOnTheScreen();
   });
 });

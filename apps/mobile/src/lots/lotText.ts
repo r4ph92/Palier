@@ -7,10 +7,12 @@ import type { NearbyLot } from './nearbyLots';
 
 const SPOKEN_SEPARATOR = ', ';
 
+export function categoryLines(counts: SpotCountByCategory): string[] {
+  return categoryCounts(counts, NO_BREAK_SPACE).map((categoryCount) => categoryCount.replaceAll(' ', NO_BREAK_SPACE));
+}
+
 export function categoryLine(counts: SpotCountByCategory): string {
-  return categoryCounts(counts, NO_BREAK_SPACE)
-    .map((categoryCount) => categoryCount.replaceAll(' ', NO_BREAK_SPACE))
-    .join(LIST_SEPARATOR);
+  return categoryLines(counts).join(LIST_SEPARATOR);
 }
 
 export function lotAccessibilityLabel({ lot, distanceMetres }: NearbyLot): string {
