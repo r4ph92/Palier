@@ -1,8 +1,9 @@
 import { HttpLotsClient } from '../src/api/HttpLotsClient';
 import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
+import { parkingDemo as parkingDemoWithFreeSpots } from './fakeLotsClient';
 
 const BASE_URL = 'http://localhost:3000';
-const parkingDemo = { id: 'lot-1', name: 'Parking Démo', freeSpots: 10 };
+const parkingDemo = parkingDemoWithFreeSpots(10);
 
 function clientAnswering(response: Promise<Response>, timeoutMilliseconds = 8000): HttpLotsClient {
   return new HttpLotsClient({ baseUrl: BASE_URL, fetchFunction: () => response, timeoutMilliseconds });
@@ -45,6 +46,22 @@ describe('HttpLotsClient', () => {
     const wrongShape = jsonResponse([{ id: 'lot-1', name: 'Parking Démo' }]);
 
     await expect(clientAnswering(wrongShape).listLots()).rejects.toBeInstanceOf(PalierUnreachableError);
+  });
+
+  it('accepts a lot without a location', async () => {
+    const withoutLocation = { ...parkingDemo, location: null };
+
+    await expect(clientAnswering(jsonResponse([withoutLocation])).listLots()).resolves.toEqual([withoutLocation]);
+  });
+
+  it.each([
+    ['a missing category count', { ...parkingDemo, freeSpotsByCategory: { standard: 7, electric: 1, accessible: 1 } }],
+    ['a category count that is not an integer', { ...parkingDemo, freeSpotsByCategory: { ...parkingDemo.freeSpotsByCategory, oversize: '1' } }],
+    ['a missing location', { id: parkingDemo.id, name: parkingDemo.name, freeSpots: 10, freeSpotsByCategory: parkingDemo.freeSpotsByCategory }],
+    ['a location without longitude', { ...parkingDemo, location: { latitude: 45.5 } }],
+    ['a latitude that is not a number', { ...parkingDemo, location: { latitude: '45.5', longitude: -73.5 } }],
+  ])('treats a lot with %s as unreachable', async (_case, lot) => {
+    await expect(clientAnswering(jsonResponse([lot])).listLots()).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 
   it('gives up after the timeout', async () => {
