@@ -7,7 +7,7 @@ import {
 } from '../../config/testPersonas.ts';
 import type { appUser } from '../../infrastructure/postgres/schema.ts';
 
-const STRIPE_TEST_VISA = 'pm_card_visa';
+export const STRIPE_TEST_VISA = 'pm_card_visa';
 // Stripe's test token for 4000 0000 0000 0341: the card attaches, but charges to it fail.
 const STRIPE_TEST_CHARGE_FAILS = 'pm_card_chargeCustomerFail';
 

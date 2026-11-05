@@ -1,7 +1,7 @@
 import { readDatabaseUrl } from '../config/environment.ts';
+import { LOCAL_HOST_NAMES, LOCAL_HOSTS } from '../config/localHosts.ts';
 
 const ALLOWED_ENVIRONMENTS = new Set(['development', 'test']);
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1']);
 
 export function databaseUrlAllowedForSeeding(variables: NodeJS.ProcessEnv): string {
   const environment = variables['NODE_ENV'];
@@ -11,7 +11,7 @@ export function databaseUrlAllowedForSeeding(variables: NodeJS.ProcessEnv): stri
   const databaseUrl = readDatabaseUrl(variables);
   const host = new URL(databaseUrl).hostname;
   if (!LOCAL_HOSTS.has(host)) {
-    throw new Error(`Seeding refused: the database host must be localhost or 127.0.0.1, got "${host}".`);
+    throw new Error(`Seeding refused: the database host must be one of ${LOCAL_HOST_NAMES}, got "${host}".`);
   }
   return databaseUrl;
 }

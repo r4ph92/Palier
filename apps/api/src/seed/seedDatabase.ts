@@ -14,7 +14,6 @@ import {
   userConsent,
   vehicle,
 } from '../infrastructure/postgres/schema.ts';
-import { driverPersonas } from './fixtures/drivers.ts';
 import { garageRoyLot } from './fixtures/garageRoy.ts';
 import { gateDeviceKeyFixtures, gateFixtures } from './fixtures/gates.ts';
 import { operatorMemberFixtures, operatorUserFixtures } from './fixtures/operatorUsers.ts';
@@ -26,7 +25,7 @@ import {
   parkingTestPaliersLot,
   parkingTestPaliersSpots,
 } from './fixtures/parkingTestPaliers.ts';
-import { vehicleFixtures } from './fixtures/vehicles.ts';
+import { seededDriverPersonas, seededVehicles } from './fixtures/seededDrivers.ts';
 import type { StripeIds } from './stripeTestCustomers.ts';
 
 export interface SeedStripeIds {
@@ -60,10 +59,10 @@ async function insertLots(transaction: Transaction, demoOperatorAccountId: strin
 }
 
 async function insertDrivers(transaction: Transaction, stripeIds: ReadonlyMap<string, StripeIds>): Promise<void> {
-  await transaction.insert(appUser).values(driverPersonas.map(({ user }) => ({ ...user, ...stripeIds.get(user.email) })));
-  await transaction.insert(vehicle).values([...vehicleFixtures]);
+  await transaction.insert(appUser).values(seededDriverPersonas.map(({ user }) => ({ ...user, ...stripeIds.get(user.email) })));
+  await transaction.insert(vehicle).values([...seededVehicles]);
   // The consent date comes from the notice version in force, so a version bump does not leave the seed behind.
-  const consents = driverPersonas.flatMap(({ user, acceptedNotice }) =>
+  const consents = seededDriverPersonas.flatMap(({ user, acceptedNotice }) =>
     acceptedNotice && user.id !== undefined ? [{ userId: user.id, noticeVersion: PRIVACY_NOTICE_VERSION }] : [],
   );
   await transaction.insert(userConsent).values(consents);

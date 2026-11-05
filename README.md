@@ -140,8 +140,44 @@ réouverture, toucher « Try again ».
 
   Pour revenir au français : `'("fr-CA")'` et `fr_CA`, puis redémarrer de même.
 
-Le seed et `seed:spot-state` refusent de tourner si `NODE_ENV` n'est pas
-`development` ou `test`, ou si la base n'est pas sur `localhost`/`127.0.0.1`.
+Le seed, `seed:spot-state` et `load:entries` refusent de tourner si `NODE_ENV` n'est pas
+`development` ou `test`, ou si la base n'est pas sur `localhost`, `127.0.0.1` ou `[::1]`.
+
+### Charge d'entrées
+
+Vingt conducteurs de charge (« Conducteur Test 01 » à « 20 ») scannent Entrée Démo
+au même instant ; le script vérifie les réponses puis la base (décision 014).
+Sans clé Stripe, lancer l'API avec des autorisations simulées :
+
+```
+npm run seed --workspace @palier/api
+PAYMENTS_SIMULATION=success npm run start --workspace @palier/api
+npm run load:entries --workspace @palier/api        # 20 conducteurs, 10 places
+```
+
+Attendu : `summary entries=20 expected=10 admitted=10 lot_full=10 other=0
+distinct_spots=10 sessions=10 session_spots=10 intents=10 double_booked=0`, puis `OK`.
+La ligne `summary` ne contient que des comptes : après un nouveau seed, une seconde
+exécution donne la même. Le script refuse de tourner tant qu'un conducteur de charge
+a une entrée active (« reseed first ») ; l'API n'admet que 5 entrées par conducteur en
+10 minutes, la redémarrer entre deux séries (`TOO_MANY_ENTRIES`).
+
+Trois conducteurs sur trois places libres, réponse en moins de 3 s :
+
+```
+npm run seed --workspace @palier/api
+for spot in A-1 A-2 A-3 A-4 A-5 B-1 B-2; do
+  npm run seed:spot-state --workspace @palier/api -- --lot "Parking Démo" --spot $spot --state OUT_OF_SERVICE
+done
+# redémarrer l'API (toujours avec PAYMENTS_SIMULATION=success)
+npm run load:entries --workspace @palier/api -- --drivers 3 --max-latency-ms 3000
+```
+
+Le script révoque les jetons de ses conducteurs à la fin, et une erreur (argument, borne
+inconnue, « reseed first ») s'affiche sur une ligne avec le code de sortie 1.
+
+Options : `--api` (adresse locale seulement, défaut `http://127.0.0.1:$PORT`),
+`--drivers` (1 à 20), `--gate` (une borne d'entrée semée), `--max-latency-ms`.
 
 ### Vérifications
 

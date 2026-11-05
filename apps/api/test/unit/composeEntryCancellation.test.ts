@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { composeEntryCancellation } from '../../src/composeEntryCancellation.ts';
+import { openingWindowOf } from '../../src/domain/gates/OpeningWindow.ts';
 import type { Database } from '../../src/infrastructure/postgres/database.ts';
 import { FakePaymentAuthorizer } from './fakes/entryFakes.ts';
 
@@ -7,17 +8,24 @@ import { FakePaymentAuthorizer } from './fakes/entryFakes.ts';
 const unusedDatabase = {} as Database;
 
 describe('composeEntryCancellation', () => {
-  it('hands the gate routes and the job the very same window, from the configured seconds', () => {
-    const composed = composeEntryCancellation({ confirmationWindowSeconds: 60, cancellationPeriodSeconds: 30 }, unusedDatabase, null);
+  it('turns the configured confirmation seconds into the opening window', () => {
+    expect(openingWindowOf(60)).toEqual({ withinMilliseconds: 60_000 });
+  });
 
-    expect(composed.openingWindow).toEqual({ withinMilliseconds: 60_000 });
-    expect(composed.job.openingWindow).toBe(composed.openingWindow);
+  it('hands the job the very window it was given, and the period in milliseconds', () => {
+    const openingWindow = { withinMilliseconds: 60_000 };
+
+    const composed = composeEntryCancellation({ openingWindow, cancellationPeriodSeconds: 30 }, unusedDatabase, null);
+
+    expect(composed.job.openingWindow).toBe(openingWindow);
     expect(composed.periodMilliseconds).toBe(30_000);
   });
 
   it('releases holds through the authorizer the entry routes use', () => {
     const payments = new FakePaymentAuthorizer();
 
-    expect(composeEntryCancellation({ confirmationWindowSeconds: 45, cancellationPeriodSeconds: 15 }, unusedDatabase, payments).job.payments).toBe(payments);
+    const schedule = { openingWindow: { withinMilliseconds: 45_000 }, cancellationPeriodSeconds: 15 };
+
+    expect(composeEntryCancellation(schedule, unusedDatabase, payments).job.payments).toBe(payments);
   });
 });

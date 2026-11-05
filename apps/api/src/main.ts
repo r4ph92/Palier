@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
-import { readDashboardUrl, readServerEnvironment, readSimulateStripeUnreachable, readStripeWebhookSecret } from './config/environment.ts';
+import { readDashboardUrl, readServerEnvironment, readStripeWebhookSecret } from './config/environment.ts';
+import { readPaymentsSimulation } from './config/paymentsSimulation.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { composeEntries } from './composeEntries.ts';
 import { composeEntryCancellation } from './composeEntryCancellation.ts';
@@ -18,6 +19,7 @@ import { PostgresSessionTokenRepository } from './infrastructure/postgres/Postgr
 import { PostgresUserDirectory } from './infrastructure/postgres/PostgresUserDirectory.ts';
 import { StripeCardGateway } from './infrastructure/stripe/StripeCardGateway.ts';
 import { PostgresVehicleRepository } from './infrastructure/postgres/PostgresVehicleRepository.ts';
+import { openingWindowOf } from './domain/gates/OpeningWindow.ts';
 import { systemClock } from './domain/time/Clock.ts';
 import { cancelUnconfirmedEntries, releasePendingHolds } from './domain/entries/unconfirmedEntryCancellation.ts';
 import { purgeEndedSessionTokens } from './domain/sessions/sessionTokens.ts';
@@ -25,21 +27,27 @@ import { startSessionTokenPurge } from './scheduler/startSessionTokenPurge.ts';
 import { startUnconfirmedEntryCancellation } from './scheduler/startUnconfirmedEntryCancellation.ts';
 
 const environment = readServerEnvironment(process.env);
-const connection = connectToDatabase(environment.databaseUrl);
+const connection = connectToDatabase(environment.databaseUrl, environment.databasePoolMax);
 const stripeKey = stripeTestKey(process.env);
-const simulateStripeUnreachable = readSimulateStripeUnreachable(process.env);
+const paymentsSimulation = readPaymentsSimulation(process.env);
 const driverRepository = new PostgresDriverRepository(connection.database);
 const vehicleRepository = new PostgresVehicleRepository(connection.database);
 const sessionTokenRepository = new PostgresSessionTokenRepository(connection.database);
+const openingWindow = openingWindowOf(environment.entryCancellation.confirmationWindowSeconds);
 const entries = composeEntries({
   database: connection.database,
   stripeKey,
   demoMode: environment.demoMode,
-  simulateStripeUnreachable,
+  paymentsSimulation,
   drivers: driverRepository,
   vehicles: vehicleRepository,
+  openingWindow,
 });
-const entryCancellation = composeEntryCancellation(environment.entryCancellation, connection.database, entries.payments);
+const entryCancellation = composeEntryCancellation(
+  { openingWindow, cancellationPeriodSeconds: environment.entryCancellation.cancellationPeriodSeconds },
+  connection.database,
+  entries.payments,
+);
 const server = buildServer({
   repositories: {
     lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
@@ -56,7 +64,7 @@ const server = buildServer({
     ledger: new PostgresPassageLedger(connection.database),
     clock: systemClock,
     commands: new PostgresGateCommandFeed(connection.database),
-    openingWindow: entryCancellation.openingWindow,
+    openingWindow,
   },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   entries: entries.routes,
@@ -78,8 +86,11 @@ const server = buildServer({
 if (environment.demoMode) {
   server.log.warn('DEMO_MODE is on: the demo console is served at /demo/console. Never enable it in production.');
 }
-if (simulateStripeUnreachable) {
-  server.log.warn('SIMULATE_STRIPE_UNREACHABLE is on: every entry hold fails as if Stripe were down.');
+if (paymentsSimulation === 'unreachable') {
+  server.log.warn('PAYMENTS_SIMULATION=unreachable: every entry hold fails as if Stripe were down.');
+}
+if (paymentsSimulation === 'success') {
+  server.log.warn('PAYMENTS_SIMULATION=success: every entry hold succeeds without calling Stripe (pi_sim_ intents).');
 }
 
 const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(sessionTokenRepository, systemClock()), server.log);

@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import type { PassageEntry, PassageLedger, RecordedPassage } from '../../domain/gates/PassageLedger.ts';
 import type { Database, Transaction } from './database.ts';
+import { LOT_LOCK_TRANSACTION } from './lockParkingLot.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
 
 interface VehicleCountRow extends Record<string, unknown> {
@@ -24,7 +25,7 @@ export class PostgresPassageLedger implements PassageLedger {
     return this.#database.transaction(async (tx) => {
       const vehicleCount = await countVehicle(tx, entry);
       return { vehicleCount, confirmedSessionId: await confirmOpening(tx, entry) };
-    });
+    }, LOT_LOCK_TRANSACTION);
   }
 }
 

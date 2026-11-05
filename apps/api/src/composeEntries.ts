@@ -1,14 +1,17 @@
 import Stripe from 'stripe';
+import type { PaymentsSimulation } from './config/paymentsSimulation.ts';
 import type { DriverRepository } from './domain/drivers/DriverRepository.ts';
 import { EntryAdmission } from './domain/entries/EntryAdmission.ts';
 import { EntryEligibility } from './domain/entries/EntryEligibility.ts';
 import type { PaymentAuthorizer } from './domain/entries/PaymentAuthorizer.ts';
+import type { OpeningWindow } from './domain/gates/OpeningWindow.ts';
 import type { VehicleRepository } from './domain/vehicles/VehicleRepository.ts';
 import type { EntryRouteDependencies } from './http/routes/entryRoutes.ts';
 import type { Database } from './infrastructure/postgres/database.ts';
 import { PostgresEntryGateRepository } from './infrastructure/postgres/PostgresEntryGateRepository.ts';
 import { PostgresParkingSessionRepository } from './infrastructure/postgres/PostgresParkingSessionRepository.ts';
 import { SimulatedGateCommander } from './infrastructure/postgres/SimulatedGateCommander.ts';
+import { SimulatedPaymentAuthorizer } from './infrastructure/stripe/SimulatedPaymentAuthorizer.ts';
 import { StripePaymentAuthorizer } from './infrastructure/stripe/StripePaymentAuthorizer.ts';
 import { UnreachablePaymentAuthorizer } from './infrastructure/stripe/UnreachablePaymentAuthorizer.ts';
 
@@ -21,10 +24,11 @@ export interface EntryComposition {
   // Null without STRIPE_SECRET_KEY: QR refusals still answer, an eligible entry gets PAYMENTS_UNAVAILABLE.
   readonly stripeKey: string | null;
   readonly demoMode: boolean;
-  // Test environments only: the entry takes its spot, then the hold fails as if Stripe were down.
-  readonly simulateStripeUnreachable: boolean;
+  // Test environments only: holds fail as if Stripe were down, or succeed without calling it.
+  readonly paymentsSimulation: PaymentsSimulation;
   readonly drivers: DriverRepository;
   readonly vehicles: VehicleRepository;
+  readonly openingWindow: OpeningWindow;
 }
 
 export interface ComposedEntries {
@@ -33,9 +37,9 @@ export interface ComposedEntries {
   readonly payments: PaymentAuthorizer | null;
 }
 
-export function composeEntries({ database, stripeKey, demoMode, simulateStripeUnreachable, drivers, vehicles }: EntryComposition): ComposedEntries {
-  const sessions = new PostgresParkingSessionRepository(database);
-  const payments = paymentAuthorizer(stripeKey, simulateStripeUnreachable);
+export function composeEntries({ database, stripeKey, demoMode, paymentsSimulation, drivers, vehicles, openingWindow }: EntryComposition): ComposedEntries {
+  const sessions = new PostgresParkingSessionRepository(database, openingWindow);
+  const payments = paymentAuthorizer(stripeKey, paymentsSimulation);
   const routes = {
     sessions,
     eligibility: new EntryEligibility({
@@ -49,10 +53,13 @@ export function composeEntries({ database, stripeKey, demoMode, simulateStripeUn
   return { routes, payments };
 }
 
-// Exported for its test: the switch must win over a real key.
-export function paymentAuthorizer(stripeKey: string | null, simulateStripeUnreachable: boolean): PaymentAuthorizer | null {
-  if (simulateStripeUnreachable) {
+// Exported for its test: the unreachable simulation must win over a real key (readPaymentsSimulation refuses success beside one).
+export function paymentAuthorizer(stripeKey: string | null, simulation: PaymentsSimulation): PaymentAuthorizer | null {
+  if (simulation === 'unreachable') {
     return new UnreachablePaymentAuthorizer();
+  }
+  if (simulation === 'success') {
+    return new SimulatedPaymentAuthorizer();
   }
   if (stripeKey === null) {
     return null;

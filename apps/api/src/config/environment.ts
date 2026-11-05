@@ -1,8 +1,10 @@
 import { VERSION_PATTERN } from '@palier/shared-types/appVersion';
+import { readDatabasePoolMax } from './databasePool.ts';
 import { readEntryCancellationTiming, type EntryCancellationTiming } from './entryCancellationTiming.ts';
 
 export interface ServerEnvironment {
   readonly databaseUrl: string;
+  readonly databasePoolMax: number;
   readonly host: string;
   readonly port: number;
   readonly testSignInEnabled: boolean;
@@ -27,6 +29,7 @@ export function readDatabaseUrl(variables: NodeJS.ProcessEnv): string {
 export function readServerEnvironment(variables: NodeJS.ProcessEnv): ServerEnvironment {
   return {
     databaseUrl: readDatabaseUrl(variables),
+    databasePoolMax: readDatabasePoolMax(variables),
     host: variables['HOST'] ?? DEFAULT_HOST,
     port: readPort(variables['PORT']),
     testSignInEnabled: readTestSignInEnabled(variables),
@@ -78,21 +81,6 @@ function readDemoMode(rawDemoMode: string | undefined): boolean {
     return true;
   }
   throw new Error(`DEMO_MODE must be "true" or "false", got "${rawDemoMode}".`);
-}
-
-// Test environments only: every Stripe call at entry fails as if Stripe could not be reached.
-export function readSimulateStripeUnreachable(variables: NodeJS.ProcessEnv): boolean {
-  const rawSwitch = variables['SIMULATE_STRIPE_UNREACHABLE'];
-  if (rawSwitch === undefined || rawSwitch === 'false') {
-    return false;
-  }
-  if (rawSwitch !== 'true') {
-    throw new Error(`SIMULATE_STRIPE_UNREACHABLE must be "true" or "false", got "${rawSwitch}".`);
-  }
-  if (!readTestSignInEnabled(variables)) {
-    throw new Error('SIMULATE_STRIPE_UNREACHABLE is only allowed when NODE_ENV is development or test.');
-  }
-  return true;
 }
 
 const STRIPE_ACCOUNT_PREFIX = 'acct_';

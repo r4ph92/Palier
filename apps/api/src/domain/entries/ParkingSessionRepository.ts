@@ -18,6 +18,12 @@ export interface OpenedSession {
   readonly spot: AssignedSpot;
 }
 
+// opened: a new session on a free spot; replayed: the driver's same entry, still opening, handed back (decideRepeatedScan).
+export interface SessionOpening {
+  readonly kind: 'opened' | 'replayed';
+  readonly session: OpenedSession;
+}
+
 export interface SessionStatus {
   readonly id: string;
   readonly state: EntrySessionState;
@@ -29,10 +35,8 @@ export interface SessionStatus {
 export type HoldAttachment = 'attached' | 'cancelled';
 
 export interface ParkingSessionRepository {
-  // Assigns the lot's first free spot that fits the vehicle's needs and creates the session in one transaction;
-  // null when no spot is free. Throws EntryRefusedError NO_SUITABLE_SPOT when spots are free but none fits.
-  // Throws EntryRefusedError ALREADY_INSIDE when the driver already has an active session.
-  openWithFirstFreeSpot(draft: SessionDraft): Promise<OpenedSession | null>;
+  // Null when no spot is free; refuses NO_SUITABLE_SPOT, ALREADY_INSIDE, or PAYMENTS_UNAVAILABLE when the lot stays locked too long.
+  openOrReplay(draft: SessionDraft): Promise<SessionOpening | null>;
   // Records the hold on a CREATED or CANCELLED session, marking it for release when cancelled; throws for any other state or an unknown id.
   attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment>;
   // The driver's own session only; null for an unknown id or another driver's session.

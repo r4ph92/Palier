@@ -1,4 +1,5 @@
 import type { DriverRepository } from '../drivers/DriverRepository.ts';
+import { hasRoomForAnotherVehicle } from '../occupancy/hasRoomForAnotherVehicle.ts';
 import { parsePricingPolicy, PricingPolicyInvalidError, type PricingPolicy } from '../pricing/PricingPolicy.ts';
 import type { VehicleNeeds, VehicleRepository } from '../vehicles/VehicleRepository.ts';
 import type { EntryGate, EntryGateLot, EntryGateRepository } from './EntryGateRepository.ts';
@@ -86,8 +87,7 @@ export class EntryEligibility {
     if (gate.lot.operatorStripeAccountId === null && !this.#dependencies.policy.allowPlatformChargesWithoutOperatorAccount) {
       throw new EntryRefusedError('OPERATOR_NOT_PAYABLE');
     }
-    // Same count as freeSpotCount: a lot can be full by vehicles inside even while spots look free.
-    if (gate.lot.capacity - gate.lot.vehicleCount <= 0) {
+    if (!hasRoomForAnotherVehicle(gate.lot)) {
       throw new EntryRefusedError('LOT_FULL');
     }
   }

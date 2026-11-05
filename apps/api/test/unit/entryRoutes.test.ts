@@ -109,9 +109,21 @@ describe('POST /v1/entries', () => {
     });
   });
 
-  it('answers 409 ALREADY_INSIDE to a second scan while the first entry is active', async () => {
-    const { enter } = await startWithJulieReady();
+  it('answers a second scan of the same gate with the same entry and spot, holding the card once', async () => {
+    const { enter, entries } = await startWithJulieReady();
+    const first = await enter(entreeDemoQr);
+
+    const second = await enter(entreeDemoQr);
+
+    expect(second.statusCode).toBe(201);
+    expect(second.json()).toEqual(first.json());
+    expect(entries.payments.authorized).toHaveLength(1);
+  });
+
+  it('answers 409 ALREADY_INSIDE to a scan once the first entry is confirmed', async () => {
+    const { enter, entries } = await startWithJulieReady();
     await enter(entreeDemoQr);
+    entries.sessions.confirmEntry(fakeSessionId(1), new Date('2026-11-04T12:00:00Z'));
 
     const second = await enter(entreeDemoQr);
 
@@ -127,27 +139,6 @@ describe('POST /v1/entries', () => {
 
     expect(response.statusCode).toBe(500);
     expect(response.json()).toEqual({ statusCode: 500, error: 'Internal Server Error' });
-  });
-
-  it('refuses a sixth entry that would reach Stripe within ten minutes', async () => {
-    const { enter } = await startWithJulieReady();
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      await enter(entreeDemoQr);
-    }
-
-    const sixth = await enter(entreeDemoQr);
-
-    expect(sixth.statusCode).toBe(429);
-    expect(sixth.json()).toEqual({ statusCode: 429, error: 'TOO_MANY_ENTRIES', message: 'Too many entry attempts. Try again in a few minutes.' });
-  });
-
-  it('does not count refused QRs against the limit', async () => {
-    const { enter } = await startWithJulieReady();
-    for (let attempt = 0; attempt < 6; attempt += 1) {
-      await enter('not a QR');
-    }
-
-    expect((await enter(entreeDemoQr)).statusCode).toBe(201);
   });
 
   it.each([

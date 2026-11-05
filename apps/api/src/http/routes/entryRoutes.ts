@@ -1,4 +1,4 @@
-import type { EntryRequest, EntryResponse } from '@palier/shared-types';
+import type { EntryRequest } from '@palier/shared-types';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { EntryAdmission } from '../../domain/entries/EntryAdmission.ts';
@@ -9,13 +9,11 @@ import { handleEntryError } from '../entries/handleEntryError.ts';
 import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
+import { ENTRY_LIMIT, ENTRY_WINDOW_MILLISECONDS } from '../../domain/entries/entryLimit.ts';
 import { registerEntryStatusRoute } from './entryStatusRoute.ts';
 import { entryRequestSchema, entryResponseSchema } from '../schemas/entrySchemas.ts';
 
 const CREATED = 201;
-// Same window as card setups: it bounds the card holds one driver token can ask Stripe for.
-const ENTRY_LIMIT = 5;
-const ENTRY_WINDOW_MILLISECONDS = 10 * 60 * 1000;
 
 export interface EntryRouteDependencies {
   readonly eligibility: EntryEligibility;
@@ -57,6 +55,9 @@ async function enter(request: FastifyRequest<EnterRoute>, reply: FastifyReply, {
   if (!limiter.allow(driver.id)) {
     throw new EntryRefusedError('TOO_MANY_ENTRIES');
   }
-  const admitted: EntryResponse = await entries.admission.admit(eligible, request.log);
-  return reply.status(CREATED).send(admitted);
+  const admitted = await entries.admission.admit(eligible, request.log);
+  if (admitted.kind === 'replayed') {
+    limiter.refund(driver.id);
+  }
+  return reply.status(CREATED).send(admitted.response);
 }
