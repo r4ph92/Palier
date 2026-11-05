@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { SpotHoldRefusalCode } from '@palier/shared-types';
 import { releaseSpotHold, type SpotHoldReleaseDependencies } from '../../src/domain/spotHolds/releaseSpotHold.ts';
+import { LotBusyError } from '../../src/domain/lots/LotBusyError.ts';
 import { SpotHoldRefusedError } from '../../src/domain/spotHolds/SpotHoldRefusedError.ts';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { julie, marc } from './fakeDriverRepository.ts';
@@ -67,5 +68,15 @@ describe('releaseSpotHold', () => {
 
     expect(await reasonOf(releaseSpotHold(dependencies, { driverId: julie.id, spotHoldId: fakeSpotHoldId(1) }))).toBe('HOLD_EXPIRED');
     expect(spotHolds.releases).toHaveLength(0);
+  });
+
+  it('words a busy lot for the release and keeps the busy lot as its cause', async () => {
+    const { dependencies, spotHolds } = await holdingJulie(AT_14_10);
+    const busy = new LotBusyError(PARKING_DEMO_ID);
+    spotHolds.releaseSpotHold = () => Promise.reject(new SpotHoldRefusedError('HOLD_UNAVAILABLE', { cause: busy }));
+
+    const error: unknown = await releaseSpotHold(dependencies, { driverId: julie.id, spotHoldId: fakeSpotHoldId(1) }).catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({ reason: 'HOLD_UNAVAILABLE', message: 'The hold cannot be released right now.', cause: busy });
   });
 });

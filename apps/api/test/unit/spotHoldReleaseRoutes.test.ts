@@ -118,6 +118,6 @@ describe('DELETE /v1/holds/:id', () => {
     const response = await server.inject({ method: 'DELETE', url: `/v1/holds/${fakeSpotHoldId(1)}`, headers });
 
     expect(response.statusCode).toBe(503);
-    expect(response.json()).toMatchObject({ error: 'HOLD_UNAVAILABLE' });
+    expect(response.json()).toEqual({ statusCode: 503, error: 'HOLD_UNAVAILABLE', message: 'The hold cannot be released right now.' });
   });
 });

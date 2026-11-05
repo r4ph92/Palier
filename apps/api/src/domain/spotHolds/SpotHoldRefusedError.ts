@@ -13,18 +13,21 @@ const MESSAGES: Record<SpotHoldRefusalCode, string> = {
   HOLD_EXPIRED: 'This guarantee has already expired.',
 };
 
-export const RELEASE_UNAVAILABLE_MESSAGE = 'The hold cannot be released right now.';
-
-export interface SpotHoldRefusalOptions extends ErrorOptions {
-  readonly message?: string;
-}
+const RELEASE_UNAVAILABLE_MESSAGE = 'The hold cannot be released right now.';
 
 export class SpotHoldRefusedError extends Error {
   readonly reason: SpotHoldRefusalCode;
 
-  constructor(reason: SpotHoldRefusalCode, options?: SpotHoldRefusalOptions) {
-    super(options?.message ?? MESSAGES[reason], options);
+  constructor(reason: SpotHoldRefusalCode, options?: ErrorOptions) {
+    super(MESSAGES[reason], options);
     this.name = 'SpotHoldRefusedError';
     this.reason = reason;
+  }
+
+  // A busy lot is worded for a release, not for placing a hold.
+  static releaseUnavailable(cause?: unknown): SpotHoldRefusedError {
+    const error = new SpotHoldRefusedError('HOLD_UNAVAILABLE', { cause });
+    error.message = RELEASE_UNAVAILABLE_MESSAGE;
+    return error;
   }
 }

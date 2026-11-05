@@ -4,7 +4,7 @@ import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import { releaseSpotHold } from '../../domain/spotHolds/releaseSpotHold.ts';
 import { requestSpotHold, type SpotHoldRequestDependencies } from '../../domain/spotHolds/requestSpotHold.ts';
 import type { SpotHold } from '../../domain/spotHolds/SpotHold.ts';
-import { RELEASE_UNAVAILABLE_MESSAGE, SpotHoldRefusedError } from '../../domain/spotHolds/SpotHoldRefusedError.ts';
+import { SpotHoldRefusedError } from '../../domain/spotHolds/SpotHoldRefusedError.ts';
 import type { SpotHoldRepository } from '../../domain/spotHolds/SpotHoldRepository.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
@@ -70,8 +70,10 @@ function registerReleaseRoute(scope: FastifyInstance, onRequest: Guards, { servi
     '/v1/holds/:id',
     { onRequest, config: { invalidPathRefusal: 'HOLD_NOT_FOUND' }, schema: { params: spotHoldIdParametersSchema } },
     async (request, reply) => {
-      const { spotHolds } = requireSpotHoldServices(services, RELEASE_UNAVAILABLE_MESSAGE);
-      await releaseSpotHold({ spotHolds, clock }, { driverId: signedInDriver(request).id, spotHoldId: request.params.id });
+      if (services === undefined) {
+        throw SpotHoldRefusedError.releaseUnavailable();
+      }
+      await releaseSpotHold({ spotHolds: services.spotHolds, clock }, { driverId: signedInDriver(request).id, spotHoldId: request.params.id });
       return reply.status(NO_CONTENT).send();
     },
   );
@@ -85,9 +87,9 @@ function registerReadRoute(scope: FastifyInstance, onRequest: Guards, { services
   });
 }
 
-function requireSpotHoldServices(services: SpotHoldServices | undefined, message?: string): SpotHoldServices {
+function requireSpotHoldServices(services: SpotHoldServices | undefined): SpotHoldServices {
   if (services === undefined) {
-    throw new SpotHoldRefusedError('HOLD_UNAVAILABLE', message === undefined ? undefined : { message });
+    throw new SpotHoldRefusedError('HOLD_UNAVAILABLE');
   }
   return services;
 }
