@@ -99,6 +99,16 @@ describe('DELETE /v1/holds/:id', () => {
     expect(spotHolds.releases).toHaveLength(0);
   });
 
+  it('answers 503 HOLD_UNAVAILABLE worded for a release when the lot is busy', async () => {
+    const { release, spotHolds } = await startWithJulieHolding();
+    spotHolds.refusal = 'HOLD_UNAVAILABLE';
+
+    const response = await release();
+
+    expect(response.statusCode).toBe(503);
+    expect(response.json()).toEqual({ statusCode: 503, error: 'HOLD_UNAVAILABLE', message: 'The hold cannot be released right now.' });
+  });
+
   it('answers 503 HOLD_UNAVAILABLE on a server built without spot holds', async () => {
     const driverRepository = new FakeDriverRepository();
     const vehicleRepository = new FakeVehicleRepository();

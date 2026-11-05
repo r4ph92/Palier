@@ -4,6 +4,13 @@ import { SpotHoldRefusedError } from '../../domain/spotHolds/SpotHoldRefusedErro
 import { handleServerError } from '../handleServerError.ts';
 import { logLotRefusalCause } from '../logLotRefusalCause.ts';
 
+declare module 'fastify' {
+  interface FastifyContextConfig {
+    // What a path id that is not a UUID names on this route: a lot, or a hold.
+    readonly invalidPathRefusal?: SpotHoldRefusalCode;
+  }
+}
+
 const STATUS_BY_REASON: Record<SpotHoldRefusalCode, number> = {
   PREREQUISITES_MISSING: 409,
   HOLD_ALREADY_EXISTS: 409,
@@ -33,5 +40,6 @@ function refusalOf(error: FastifyError, request: FastifyRequest): SpotHoldRefuse
   if (error instanceof SpotHoldRefusedError) {
     return error;
   }
-  return error.validation === undefined ? undefined : new SpotHoldRefusedError(request.method === 'DELETE' ? 'HOLD_NOT_FOUND' : 'LOT_NOT_FOUND');
+  const notFound = request.routeOptions.config.invalidPathRefusal;
+  return error.validation === undefined || notFound === undefined ? undefined : new SpotHoldRefusedError(notFound);
 }

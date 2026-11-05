@@ -1,5 +1,5 @@
 import type { Clock } from '../time/Clock.ts';
-import { SpotHoldRefusedError } from './SpotHoldRefusedError.ts';
+import { RELEASE_UNAVAILABLE_MESSAGE, SpotHoldRefusedError } from './SpotHoldRefusedError.ts';
 import type { SpotHoldRepository } from './SpotHoldRepository.ts';
 
 export interface SpotHoldReleaseDependencies {
@@ -22,5 +22,17 @@ export async function releaseSpotHold({ spotHolds, clock }: SpotHoldReleaseDepen
   if (spotHold.expiresAt <= now) {
     throw new SpotHoldRefusedError('HOLD_EXPIRED');
   }
-  await spotHolds.releaseSpotHold({ driverId, spotHoldId, lotId: spotHold.lotId, releasedAt: now });
+  try {
+    await spotHolds.releaseSpotHold({ driverId, spotHoldId, lotId: spotHold.lotId, releasedAt: now });
+  } catch (error) {
+    throw releaseWordingOf(error);
+  }
+}
+
+// A busy lot is worded for a release, not for placing a hold.
+function releaseWordingOf(error: unknown): unknown {
+  if (error instanceof SpotHoldRefusedError && error.reason === 'HOLD_UNAVAILABLE') {
+    return new SpotHoldRefusedError('HOLD_UNAVAILABLE', { cause: error.cause, message: RELEASE_UNAVAILABLE_MESSAGE });
+  }
+  return error;
 }

@@ -1,15 +1,22 @@
 import type { CurrentSpotHoldResponse, SpotHold as SpotHoldBody } from '@palier/shared-types';
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
-import { releaseSpotHold, type SpotHoldReleaseDependencies } from '../../domain/spotHolds/releaseSpotHold.ts';
+import { releaseSpotHold } from '../../domain/spotHolds/releaseSpotHold.ts';
 import { requestSpotHold, type SpotHoldRequestDependencies } from '../../domain/spotHolds/requestSpotHold.ts';
 import type { SpotHold } from '../../domain/spotHolds/SpotHold.ts';
-import { SpotHoldRefusedError } from '../../domain/spotHolds/SpotHoldRefusedError.ts';
+import { RELEASE_UNAVAILABLE_MESSAGE, SpotHoldRefusedError } from '../../domain/spotHolds/SpotHoldRefusedError.ts';
 import type { SpotHoldRepository } from '../../domain/spotHolds/SpotHoldRepository.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
-import { currentSpotHoldResponseSchema, spotHoldPathParametersSchema, spotHoldSchema, type SpotHoldPathParameters } from '../schemas/spotHoldSchemas.ts';
+import {
+  currentSpotHoldResponseSchema,
+  spotHoldIdParametersSchema,
+  spotHoldLotParametersSchema,
+  spotHoldSchema,
+  type SpotHoldIdParameters,
+  type SpotHoldLotParameters,
+} from '../schemas/spotHoldSchemas.ts';
 import { handleSpotHoldError } from '../spotHolds/handleSpotHoldError.ts';
 
 const CREATED = 201;
@@ -25,8 +32,12 @@ export interface SpotHoldRouteDependencies {
   readonly clock: Clock;
 }
 
-interface SpotHoldPathRoute {
-  readonly Params: SpotHoldPathParameters;
+interface PlaceRoute {
+  readonly Params: SpotHoldLotParameters;
+}
+
+interface ReleaseRoute {
+  readonly Params: SpotHoldIdParameters;
 }
 
 // Guards run as onRequest, before the path is validated: a driver without a token or consent learns nothing about lot ids.
@@ -43,57 +54,42 @@ export function registerSpotHoldRoutes(server: FastifyInstance, driverAccess: Dr
 }
 
 function registerPlaceRoute(scope: FastifyInstance, onRequest: Guards, { services, clock }: SpotHoldRouteDependencies): void {
-  const requests = services === undefined ? null : { ...services, clock };
-  scope.post<SpotHoldPathRoute>(
+  scope.post<PlaceRoute>(
     '/v1/lots/:id/holds',
-    { onRequest, schema: { params: spotHoldPathParametersSchema, response: { [CREATED]: spotHoldSchema } } },
-    (request, reply) => holdSpot(requests, request, reply),
+    { onRequest, config: { invalidPathRefusal: 'LOT_NOT_FOUND' }, schema: { params: spotHoldLotParametersSchema, response: { [CREATED]: spotHoldSchema } } },
+    async (request, reply) => {
+      const requests = { ...requireSpotHoldServices(services), clock };
+      const { spotHold, now } = await requestSpotHold(requests, { driverId: signedInDriver(request).id, lotId: request.params.id });
+      return reply.status(CREATED).send(spotHoldBody(spotHold, now));
+    },
   );
 }
 
 function registerReleaseRoute(scope: FastifyInstance, onRequest: Guards, { services, clock }: SpotHoldRouteDependencies): void {
-  const releases = services === undefined ? null : { spotHolds: services.spotHolds, clock };
-  scope.delete<SpotHoldPathRoute>(
+  scope.delete<ReleaseRoute>(
     '/v1/holds/:id',
-    { onRequest, schema: { params: spotHoldPathParametersSchema } },
-    (request, reply) => releaseOwnSpotHold(releases, request, reply),
+    { onRequest, config: { invalidPathRefusal: 'HOLD_NOT_FOUND' }, schema: { params: spotHoldIdParametersSchema } },
+    async (request, reply) => {
+      const { spotHolds } = requireSpotHoldServices(services, RELEASE_UNAVAILABLE_MESSAGE);
+      await releaseSpotHold({ spotHolds, clock }, { driverId: signedInDriver(request).id, spotHoldId: request.params.id });
+      return reply.status(NO_CONTENT).send();
+    },
   );
-}
-
-function registerReadRoute(scope: FastifyInstance, onRequest: Guards, { services, clock }: SpotHoldRouteDependencies): void {
-  scope.get('/v1/me/hold', { onRequest, schema: { response: { 200: currentSpotHoldResponseSchema } } }, (request) =>
-    currentSpotHold({ repository: services?.spotHolds, clock }, request),
-  );
-}
-
-async function holdSpot(requests: SpotHoldRequestDependencies | null, request: FastifyRequest<SpotHoldPathRoute>, reply: FastifyReply) {
-  if (requests === null) {
-    throw new SpotHoldRefusedError('HOLD_UNAVAILABLE');
-  }
-  const { spotHold, now } = await requestSpotHold(requests, { driverId: signedInDriver(request).id, lotId: request.params.id });
-  return reply.status(CREATED).send(spotHoldBody(spotHold, now));
-}
-
-async function releaseOwnSpotHold(releases: SpotHoldReleaseDependencies | null, request: FastifyRequest<SpotHoldPathRoute>, reply: FastifyReply) {
-  if (releases === null) {
-    throw new SpotHoldRefusedError('HOLD_UNAVAILABLE');
-  }
-  await releaseSpotHold(releases, { driverId: signedInDriver(request).id, spotHoldId: request.params.id });
-  return reply.status(NO_CONTENT).send();
-}
-
-interface CurrentSpotHoldSources {
-  readonly repository: SpotHoldRepository | undefined;
-  readonly clock: Clock;
 }
 
 // No hold id in the path: a driver only ever reads their own hold, so there is nothing to probe.
-async function currentSpotHold({ repository, clock }: CurrentSpotHoldSources, request: FastifyRequest): Promise<CurrentSpotHoldResponse> {
-  if (repository === undefined) {
-    throw new SpotHoldRefusedError('HOLD_UNAVAILABLE');
+function registerReadRoute(scope: FastifyInstance, onRequest: Guards, { services, clock }: SpotHoldRouteDependencies): void {
+  scope.get('/v1/me/hold', { onRequest, schema: { response: { 200: currentSpotHoldResponseSchema } } }, async (request): Promise<CurrentSpotHoldResponse> => {
+    const spotHold = await requireSpotHoldServices(services).spotHolds.findActiveSpotHold(signedInDriver(request).id);
+    return { spotHold: spotHold === null ? null : spotHoldBody(spotHold, clock()) };
+  });
+}
+
+function requireSpotHoldServices(services: SpotHoldServices | undefined, message?: string): SpotHoldServices {
+  if (services === undefined) {
+    throw new SpotHoldRefusedError('HOLD_UNAVAILABLE', message === undefined ? undefined : { message });
   }
-  const spotHold = await repository.findActiveSpotHold(signedInDriver(request).id);
-  return { spotHold: spotHold === null ? null : spotHoldBody(spotHold, clock()) };
+  return services;
 }
 
 function spotHoldBody(spotHold: SpotHold, now: Date): SpotHoldBody {
