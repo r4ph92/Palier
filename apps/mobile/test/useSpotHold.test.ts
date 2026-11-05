@@ -65,7 +65,7 @@ describe('useSpotHold', () => {
     client.nextRejection = 'HOLD_QUOTA_REACHED';
     const { result } = await renderSpotHold(client);
     await act(async () => result.current.hold(PARKING_DEMO_ID, () => undefined));
-    expect(result.current.failure).toEqual({ reason: { kind: 'refused', refusal: 'HOLD_QUOTA_REACHED' }, isFresh: true });
+    expect(result.current.failure).toEqual({ lotId: PARKING_DEMO_ID, reason: { kind: 'refused', refusal: 'HOLD_QUOTA_REACHED' }, isFresh: true });
     client.activeHold = julieHoldAtParkingDemo();
 
     await act(async () => result.current.refreshHold());

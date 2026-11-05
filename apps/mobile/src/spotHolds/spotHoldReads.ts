@@ -48,7 +48,7 @@ export async function requestHold(client: SpotHoldClient, lotId: string, updates
   try {
     spotHold = await client.hold(lotId);
   } catch (error) {
-    updates.setFailure(() => freshFailureOf(error));
+    updates.setFailure(() => freshFailureOf(error, lotId));
     if (error instanceof PalierRejectedError && error.code === 'HOLD_ALREADY_EXISTS') {
       await readCurrentHold(client, updates);
     }
@@ -59,7 +59,7 @@ export async function requestHold(client: SpotHoldClient, lotId: string, updates
   updates.onHeld();
 }
 
-function freshFailureOf(error: unknown): SpotHoldFailure | null {
+function freshFailureOf(error: unknown, lotId: string): SpotHoldFailure | null {
   const reason = failureReasonOf(error);
-  return reason === null ? null : { reason, isFresh: true };
+  return reason === null ? null : { lotId, reason, isFresh: true };
 }

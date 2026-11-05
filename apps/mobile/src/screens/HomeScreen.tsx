@@ -7,7 +7,6 @@ import { ErrorState } from '../components/ErrorState';
 import { LotListLoading } from '../components/LotListLoading';
 import { LotRow } from '../components/LotRow';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { SpotHoldButton } from '../components/SpotHoldButton';
 import { TextButton } from '../components/TextButton';
 import { formatClockTime } from '../i18n/formatClockTime';
 import { formatDistance } from '../i18n/formatDistance';
@@ -22,7 +21,7 @@ import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 import { LocationNotice } from './LocationNotice';
 import { SpotHoldBanner } from './SpotHoldBanner';
-import { SpotHoldProblem } from './SpotHoldProblem';
+import { LotSpotHold } from './LotSpotHold';
 
 const NO_LOTS: readonly NearbyLot[] = [];
 
@@ -49,7 +48,7 @@ export function HomeScreen({ firstName, lotsClient, locationClient, spotHold }: 
       <FlatList
         data={controller.state.status === 'loaded' ? controller.state.lots : NO_LOTS}
         keyExtractor={({ lot }) => lot.id}
-        renderItem={({ item }) => <LotRow nearbyLot={item} action={<SpotHoldButton lot={item.lot} spotHold={spotHold} onHeld={controller.refresh} />} />}
+        renderItem={({ item }) => <LotRow nearbyLot={item} action={<LotSpotHold lot={item.lot} spotHold={spotHold} onHeld={controller.refresh} />} />}
         ListHeaderComponent={<HomeHeader controller={controller} firstName={firstName} spotHold={spotHold} />}
         ListEmptyComponent={<HomeStateMessage controller={controller} />}
         refreshControl={<RefreshControl refreshing={controller.isRefreshing} onRefresh={controller.refresh} />}
@@ -71,7 +70,6 @@ function HomeHeader({ controller, firstName, spotHold }: HomeHeaderProps) {
         action={<TextButton label={i18n.t('home.refresh')} onPress={controller.refresh} />}
       />
       {spotHold.held === null ? null : <SpotHoldBanner held={spotHold.held} onFreshHoldShown={spotHold.acknowledgeFreshHold} />}
-      {spotHold.failure === null ? null : <SpotHoldProblem failure={spotHold.failure} onAnnounced={spotHold.acknowledgeFreshFailure} />}
       {controller.state.status === 'loaded' ? <LocationNotice location={controller.state.location} /> : null}
     </View>
   );

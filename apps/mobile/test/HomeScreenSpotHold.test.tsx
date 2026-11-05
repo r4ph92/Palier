@@ -1,4 +1,4 @@
-import { act, screen, userEvent } from '@testing-library/react-native';
+import { act, screen, userEvent, within } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeLotsClient, PARKING_DEMO_ID, parkingDemo, parkingDemoWith, parkingTestPaliers } from './fakeLotsClient';
@@ -149,6 +149,17 @@ describe('HomeScreen spot hold refusals', () => {
     expect(await screen.findByText('Vous avez déjà une place garantie')).toBeOnTheScreen();
     expect(await screen.findByTestId('spot-hold-banner')).toBeOnTheScreen();
     expect(focus).not.toHaveBeenCalled();
+  });
+
+  it('tells the refusal under the button of the lot that was tapped', async () => {
+    const spotHoldClient = new FakeSpotHoldClient();
+    spotHoldClient.nextRejection = 'NO_SUITABLE_SPOT';
+    await renderHomeScreenWith({ lotsClient: new FakeLotsClient([parkingDemo(10), parkingTestPaliers]), locationClient: new FakeDeviceLocationClient(), spotHoldClient });
+
+    await userEvent.setup().press(await screen.findByRole('button', { name: 'Garantir une place 15 min à Parking Test Paliers' }));
+
+    expect(await within(screen.getByTestId(`lot-spot-hold-${parkingTestPaliers.id}`)).findByText('Aucune place disponible')).toBeOnTheScreen();
+    expect(within(screen.getByTestId(`lot-spot-hold-${PARKING_DEMO_ID}`)).queryByText('Aucune place disponible')).not.toBeOnTheScreen();
   });
 
   it('clears a refusal when the list is read again', async () => {
