@@ -66,7 +66,7 @@ function ExpiredLines({ lotName, message }: ExpiredLinesProps) {
   const colors = useColors();
   return (
     <>
-      <StateMark color={colors.muted}>
+      <StateMark color={colors.muted} markTestID="spot-hold-mark">
         <Text testID="spot-hold-expired" style={[typography.bodyStrong, { color: colors.ink }]}>
           {message}
         </Text>
