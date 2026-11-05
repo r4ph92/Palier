@@ -5,7 +5,7 @@ import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient
 import { renderHomeScreenWith } from './renderHomeScreen';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { heldSpotFrom } from '../src/spotHolds/heldSpot';
-import { useSecondsLeft } from '../src/spotHolds/useSecondsLeft';
+import { useHoldCountdown } from '../src/spotHolds/useHoldCountdown';
 import { visibleText } from './visibleText';
 
 jest.mock('@stripe/stripe-react-native', () => ({
@@ -113,7 +113,7 @@ describe('QA spot hold countdown timer', () => {
     const held = heldSpotFrom(julieHoldAtParkingDemo(), Date.now(), false);
     const started = jest.spyOn(globalThis, 'setInterval');
     const cleared = jest.spyOn(globalThis, 'clearInterval');
-    const { unmount } = await renderHook(() => useSecondsLeft(held));
+    const { unmount } = await renderHook(() => useHoldCountdown(held));
     expect(started).toHaveBeenCalledTimes(1);
     expect(started).toHaveBeenCalledWith(expect.any(Function), 1000);
     expect(cleared).not.toHaveBeenCalled();
@@ -127,20 +127,20 @@ describe('QA spot hold countdown timer', () => {
     const held = heldSpotFrom(julieHoldAtParkingDemo({ now: new Date(2026, 10, 4, 14, 40).toISOString() }), Date.now(), false);
     const started = jest.spyOn(globalThis, 'setInterval');
 
-    const { result } = await renderHook(() => useSecondsLeft(held));
+    const { result } = await renderHook(() => useHoldCountdown(held));
 
-    expect(result.current).toBe(0);
+    expect(result.current).toEqual({ kind: 'expired' });
     expect(started).not.toHaveBeenCalled();
   });
 
   it('clears its timer when the countdown reaches 0', async () => {
     const held = heldSpotFrom(julieHoldAtParkingDemo(), Date.now(), false);
     const cleared = jest.spyOn(globalThis, 'clearInterval');
-    const { result } = await renderHook(() => useSecondsLeft(held));
+    const { result } = await renderHook(() => useHoldCountdown(held));
 
     await act(() => jest.advanceTimersByTimeAsync(15 * 60 * 1000));
 
-    expect(result.current).toBe(0);
+    expect(result.current).toEqual({ kind: 'expired' });
     expect(cleared).toHaveBeenCalled();
   });
 });

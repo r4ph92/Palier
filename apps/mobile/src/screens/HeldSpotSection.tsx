@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { HeldSpot } from '../spotHolds/heldSpot';
+import type { HeldSpot, HoldCountdown } from '../spotHolds/heldSpot';
 import type { ReleaseCallbacks } from '../spotHolds/spotHoldRequests';
-import { useExpiredHoldReread } from '../spotHolds/useExpiredHoldReread';
-import { useSecondsLeft } from '../spotHolds/useSecondsLeft';
+import { useExpiredHold } from '../spotHolds/useExpiredHold';
+import { useHoldCountdown } from '../spotHolds/useHoldCountdown';
+import type { SpotHoldFailure } from '../spotHolds/spotHoldFailure';
 import type { SpotHoldController } from '../spotHolds/useSpotHold';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -15,29 +17,61 @@ interface HeldSpotSectionProps {
   readonly onRelease: ReleaseCallbacks;
 }
 
-export function HeldSpotSection({ spotHold, onRelease }: HeldSpotSectionProps) {
-  return spotHold.held === null ? null : <HoldBanner held={spotHold.held} spotHold={spotHold} onRelease={onRelease} />;
+type HoldingController = SpotHoldController & { readonly held: HeldSpot };
+
+function isHolding(spotHold: SpotHoldController): spotHold is HoldingController {
+  return spotHold.held !== null;
 }
 
-interface HoldBannerProps extends HeldSpotSectionProps {
-  readonly held: HeldSpot;
+export function HeldSpotSection({ spotHold, onRelease }: HeldSpotSectionProps) {
+  const countdown = useHoldCountdown(spotHold.held);
+  useExpiredHold(countdown, { refreshHold: spotHold.refreshHold, onEnded: onRelease.onGone });
+  if (!isHolding(spotHold) || countdown === null) {
+    return null;
+  }
+  return <HeldSpotContent spotHold={spotHold} countdown={countdown} onRelease={onRelease} />;
+}
+
+interface HeldSpotContentProps {
+  readonly spotHold: HoldingController;
+  readonly countdown: HoldCountdown;
+  readonly onRelease: ReleaseCallbacks;
 }
 
 // The banner is one accessible group, so the release button and its problem sit beside it, not inside it.
-// An expired hold has nothing left to release: the button goes and the hold is read again until the server has ended it.
-function HoldBanner({ held, spotHold, onRelease }: HoldBannerProps) {
+// An expired hold has nothing left to release, and the refusal that says so would repeat the banner.
+function HeldSpotContent({ spotHold, countdown, onRelease }: HeldSpotContentProps) {
   const colors = useColors();
-  const seconds = useSecondsLeft(held);
-  const isExpired = seconds === 0;
-  useExpiredHoldReread(isExpired, spotHold.refreshHold);
-  const bannerFailure = spotHold.failure?.target.kind === 'heldSpot' ? spotHold.failure : null;
+  const [isConfirming, setIsConfirming] = useState(false);
+  const isExpired = countdown.kind === 'expired';
+  const failure = bannerFailureOf(spotHold.failure, isExpired);
   return (
     <View style={[styles.section, { borderColor: colors.line }]}>
-      <SpotHoldBanner held={held} seconds={seconds} isExpired={isExpired} onFreshHoldShown={spotHold.acknowledgeFreshHold} />
-      {isExpired ? null : <ReleaseSpotHold lotName={held.spotHold.lotName} isReleasing={spotHold.isReleasing} onConfirm={() => spotHold.release(onRelease)} />}
-      {bannerFailure === null ? null : <SpotHoldProblem failure={bannerFailure} onAnnounced={spotHold.acknowledgeFreshFailure} />}
+      <SpotHoldBanner
+        held={spotHold.held}
+        countdown={countdown}
+        takesFocusOnExpiry={isConfirming || spotHold.isReleasing}
+        onFreshHoldShown={spotHold.acknowledgeFreshHold}
+      />
+      {isExpired ? null : (
+        <ReleaseSpotHold
+          lotName={spotHold.held.spotHold.lotName}
+          isReleasing={spotHold.isReleasing}
+          onConfirm={() => spotHold.release(onRelease)}
+          onConfirmingChange={setIsConfirming}
+        />
+      )}
+      {failure === null ? null : <SpotHoldProblem failure={failure} onAnnounced={spotHold.acknowledgeFreshFailure} />}
     </View>
   );
+}
+
+function bannerFailureOf(failure: SpotHoldFailure | null, isExpired: boolean): SpotHoldFailure | null {
+  if (failure?.target.kind !== 'heldSpot') {
+    return null;
+  }
+  const repeatsBanner = isExpired && failure.reason.kind === 'refused' && failure.reason.refusal === 'HOLD_EXPIRED';
+  return repeatsBanner ? null : failure;
 }
 
 const styles = StyleSheet.create({

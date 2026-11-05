@@ -1,19 +1,28 @@
-import { screen } from '@testing-library/react-native';
+import { screen, userEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
 import { renderHomeScreenWith } from './renderHomeScreen';
+import { lightColors } from '../src/theme/tokens';
 import { tick } from './spotHoldScreen';
 
 const EXPIRED_FR = 'Votre place garantie a expiré';
 const EXPIRED_EN = 'Your guaranteed spot has expired';
 const RELEASE_BUTTON = /^Libérer la garantie/;
+const CONFIRM_BUTTON = /^Oui, libérer la garantie/;
 
 async function renderJulieHolding(spotHoldClient: FakeSpotHoldClient, language: 'fr' | 'en' = 'fr') {
+  spotHoldClient.serverClockRuns = true;
   const lotsClient = new FakeLotsClient(parkingDemoWith(9));
   await renderHomeScreenWith({ lotsClient, locationClient: new FakeDeviceLocationClient(), spotHoldClient }, language);
   await screen.findByTestId('spot-hold-banner');
+  return { lotsClient, user: userEvent.setup({ advanceTimers: jest.advanceTimersByTime }) };
+}
+
+async function startReleasing(user: Awaited<ReturnType<typeof renderJulieHolding>>['user']) {
+  await user.press(screen.getByRole('button', { name: RELEASE_BUTTON }));
+  await user.press(screen.getByRole('button', { name: CONFIRM_BUTTON }));
 }
 
 function announcementsOf(message: string): number {
@@ -117,5 +126,76 @@ describe('HomeScreen expired spot hold', () => {
     const readsAfterEnd = spotHoldClient.currentRequests;
     await tick(30);
     expect(spotHoldClient.currentRequests).toBe(readsAfterEnd);
+  });
+
+  it('mutes the mark of the expired banner', async () => {
+    await renderJulieHolding(new FakeSpotHoldClient(julieHoldAtParkingDemo()));
+
+    await tick(15 * 60);
+
+    const mark = screen.getByTestId('spot-hold-expired').parent?.parent?.children[0];
+    expect(mark).toHaveStyle({ backgroundColor: lightColors.muted });
+  });
+
+  it('moves VoiceOver to the banner, without announcing, when the confirmation vanishes at expiry', async () => {
+    const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent');
+    const { user } = await renderJulieHolding(new FakeSpotHoldClient(julieHoldAtParkingDemo()));
+    await user.press(screen.getByRole('button', { name: RELEASE_BUTTON }));
+    focus.mockClear();
+
+    await tick(15 * 60);
+
+    expect(focus).toHaveBeenCalledTimes(1);
+    expect(focus).toHaveBeenCalledWith(expect.anything(), 'focus');
+    expect(announcementsOf(EXPIRED_FR)).toBe(0);
+  });
+
+  it('moves VoiceOver to the banner when the release button vanishes while releasing', async () => {
+    const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent');
+    const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
+    spotHoldClient.releasesAnswer = true;
+    const { user } = await renderJulieHolding(spotHoldClient);
+    await startReleasing(user);
+    focus.mockClear();
+
+    await tick(15 * 60);
+
+    expect(focus).toHaveBeenCalledWith(expect.anything(), 'focus');
+    expect(announcementsOf(EXPIRED_FR)).toBe(0);
+  });
+
+  it('does not move VoiceOver when the driver was not releasing', async () => {
+    const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent');
+    await renderJulieHolding(new FakeSpotHoldClient(julieHoldAtParkingDemo()));
+    focus.mockClear();
+
+    await tick(15 * 60);
+
+    expect(focus).not.toHaveBeenCalled();
+  });
+
+  it('does not repeat the expiry in a refusal once the banner says it', async () => {
+    const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
+    spotHoldClient.nextRejection = 'HOLD_EXPIRED';
+    const { user } = await renderJulieHolding(spotHoldClient);
+    await startReleasing(user);
+    expect(await screen.findByText('Cette garantie a déjà expiré')).toBeOnTheScreen();
+
+    await tick(15 * 60);
+
+    expect(screen.queryByText('Cette garantie a déjà expiré')).not.toBeOnTheScreen();
+    expect(screen.getByText(EXPIRED_FR)).toBeOnTheScreen();
+  });
+
+  it('reads the lots again when the expired banner goes, so the freed spot shows', async () => {
+    const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
+    const { lotsClient } = await renderJulieHolding(spotHoldClient);
+    await tick(15 * 60);
+    const readsBefore = lotsClient.callCount;
+
+    spotHoldClient.activeHold = null;
+    await tick(5);
+
+    expect(lotsClient.callCount).toBe(readsBefore + 1);
   });
 });
