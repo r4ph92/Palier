@@ -21,6 +21,7 @@ describe('readServerEnvironment', () => {
       demoMode: false,
       secureCookies: true,
       entryCancellation: { confirmationWindowSeconds: 60, cancellationPeriodSeconds: 30 },
+      holdExpiryPeriodSeconds: 30,
     });
   });
 
@@ -82,6 +83,25 @@ describe('entry cancellation timing', () => {
 
   it('accepts a window plus period of exactly 110 seconds', () => {
     expect(timingOf({ ENTRY_CONFIRMATION_WINDOW_SECONDS: '80', ENTRY_CANCELLATION_PERIOD_SECONDS: '30' }).cancellationPeriodSeconds).toBe(30);
+  });
+});
+
+describe('hold expiry period', () => {
+  function periodOf(variables: NodeJS.ProcessEnv): number {
+    return readServerEnvironment({ DATABASE_URL: databaseUrl, ...variables }).holdExpiryPeriodSeconds;
+  }
+
+  it('checks every 30 seconds unless told otherwise', () => {
+    expect(periodOf({})).toBe(30);
+    expect(periodOf({ HOLD_EXPIRY_PERIOD_SECONDS: '' })).toBe(30);
+  });
+
+  it('reads the period in seconds', () => {
+    expect(periodOf({ HOLD_EXPIRY_PERIOD_SECONDS: '10' })).toBe(10);
+  });
+
+  it.each(['abc', '0', '-5', '1.5'])('refuses a period of "%s"', (rawSeconds) => {
+    expect(() => periodOf({ HOLD_EXPIRY_PERIOD_SECONDS: rawSeconds })).toThrow(/HOLD_EXPIRY_PERIOD_SECONDS must be a positive whole number/);
   });
 });
 
