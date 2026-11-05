@@ -12,6 +12,8 @@ export interface EntryLoadArguments {
 const USAGE = 'Usage: npm run load:entries -- [--api http://127.0.0.1:3000] [--drivers 20] [--gate "Entrée Démo"] [--max-latency-ms 3000]';
 const DEFAULT_GATE_NAME = 'Entrée Démo';
 const DEFAULT_PORT = '3000';
+// Number() alone would read 1e1, 0x5 or " 3" as numbers.
+const WHOLE_NUMBER = /^\d+$/;
 // The script fires card holds at an API: only a local one, never a shared or hosted server.
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -41,7 +43,7 @@ function localApiUrl(rawUrl: string): URL {
 
 function boundedWholeNumber(name: string, rawValue: string, maximum: number): number {
   const value = Number(rawValue);
-  if (!Number.isInteger(value) || value < 1 || value > maximum) {
+  if (!WHOLE_NUMBER.test(rawValue) || value < 1 || value > maximum) {
     const range = maximum === Infinity ? 'a positive whole number' : `a whole number from 1 to ${maximum}`;
     throw new Error(`${name} must be ${range}, got "${rawValue}". ${USAGE}`);
   }
