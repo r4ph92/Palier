@@ -1,5 +1,4 @@
 import { sql } from 'drizzle-orm';
-import { hasRoomForAnotherVehicle } from '../../domain/occupancy/hasRoomForAnotherVehicle.ts';
 import type { SpotHoldFacts } from '../../domain/spotHolds/decideSpotHoldRequest.ts';
 import { ACTIVE_SPOT_HOLD } from './activeSpotHold.ts';
 import type { Transaction } from './database.ts';
@@ -27,6 +26,6 @@ export async function readSpotHoldFacts(tx: Pick<Transaction, 'execute'>, lot: L
     isLotOnline: lot.is_online,
     ownActiveHold: row.own_active_hold,
     activeHoldsInLot: row.active_holds_in_lot,
-    room: hasRoomForAnotherVehicle({ capacity: lot.capacity, vehicleCount: lot.vehicle_count, heldSpotCount: row.held_spot_count }),
+    occupancy: { capacity: lot.capacity, vehicleCount: lot.vehicle_count, heldSpotCount: row.held_spot_count },
   };
 }
