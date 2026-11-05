@@ -12,7 +12,7 @@ interface LotSpotHoldProps {
 
 // A refused hold is told right under the button that asked, where the driver is looking, even far down the list.
 export function LotSpotHold({ lot, spotHold, onHeld }: LotSpotHoldProps) {
-  const failure = spotHold.failure?.lotId === lot.id ? spotHold.failure : null;
+  const failure = spotHold.failure?.target === lot.id ? spotHold.failure : null;
   return (
     <View testID={`lot-spot-hold-${lot.id}`}>
       <SpotHoldButton lot={lot} spotHold={spotHold} onHeld={onHeld} />

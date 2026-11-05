@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { LotsClient } from '../api/LotsClient';
 import { EmptyState } from '../components/EmptyState';
@@ -20,7 +20,7 @@ import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 import { LocationNotice } from './LocationNotice';
-import { SpotHoldBanner } from './SpotHoldBanner';
+import { HeldSpotSection } from './HeldSpotSection';
 import { LotSpotHold } from './LotSpotHold';
 
 const NO_LOTS: readonly NearbyLot[] = [];
@@ -37,12 +37,14 @@ interface HomeHeaderProps {
   readonly firstName: string;
   readonly spotHold: SpotHoldController;
   readonly onRefresh: () => void;
+  readonly onReleased: () => void;
 }
 
-// A new hold refreshes the list, so the lot's count shows the held spot gone.
+// A new hold or a release refreshes the list, so the lot's count shows the spot gone or back.
 export function HomeScreen({ firstName, lotsClient, locationClient, spotHold }: HomeScreenProps) {
   const controller = useLots(lotsClient, locationClient);
   const refreshByDriver = useHomeRefresh(controller, spotHold);
+  const onReleased = useReleasedHold(controller.refresh);
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
@@ -50,7 +52,7 @@ export function HomeScreen({ firstName, lotsClient, locationClient, spotHold }: 
         data={controller.state.status === 'loaded' ? controller.state.lots : NO_LOTS}
         keyExtractor={({ lot }) => lot.id}
         renderItem={({ item }) => <LotRow nearbyLot={item} action={<LotSpotHold lot={item.lot} spotHold={spotHold} onHeld={controller.refresh} />} />}
-        ListHeaderComponent={<HomeHeader controller={controller} firstName={firstName} spotHold={spotHold} onRefresh={refreshByDriver} />}
+        ListHeaderComponent={<HomeHeader controller={controller} firstName={firstName} spotHold={spotHold} onRefresh={refreshByDriver} onReleased={onReleased} />}
         ListEmptyComponent={<HomeStateMessage controller={controller} />}
         refreshControl={<RefreshControl refreshing={controller.isRefreshing} onRefresh={refreshByDriver} />}
         contentContainerStyle={styles.content}
@@ -60,7 +62,7 @@ export function HomeScreen({ firstName, lotsClient, locationClient, spotHold }: 
   );
 }
 
-function HomeHeader({ controller, firstName, spotHold, onRefresh }: HomeHeaderProps) {
+function HomeHeader({ controller, firstName, spotHold, onRefresh, onReleased }: HomeHeaderProps) {
   const colors = useColors();
   return (
     <View>
@@ -70,7 +72,7 @@ function HomeHeader({ controller, firstName, spotHold, onRefresh }: HomeHeaderPr
         title={i18n.t('home.title')}
         action={<TextButton label={i18n.t('home.refresh')} onPress={onRefresh} />}
       />
-      {spotHold.held === null ? null : <SpotHoldBanner held={spotHold.held} onFreshHoldShown={spotHold.acknowledgeFreshHold} />}
+      <HeldSpotSection spotHold={spotHold} onReleased={onReleased} />
       {controller.state.status === 'loaded' ? <LocationNotice location={controller.state.location} /> : null}
     </View>
   );
@@ -91,6 +93,13 @@ function useHomeRefresh(controller: LotsController, spotHold: SpotHoldController
     refreshHold();
     refresh();
   }, [dismissProblem, refreshHold, refresh]);
+}
+
+function useReleasedHold(refresh: () => void): () => void {
+  return useCallback(() => {
+    AccessibilityInfo.announceForAccessibility(i18n.t('spotHold.released'));
+    refresh();
+  }, [refresh]);
 }
 
 function freshnessStamp(state: LotsState): string {

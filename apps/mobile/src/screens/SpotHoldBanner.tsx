@@ -17,7 +17,6 @@ interface SpotHoldBannerProps {
 
 // VoiceOver reads the banner as one sentence in whole minutes; the ticking digits stay out of its way.
 export function SpotHoldBanner({ held, onFreshHoldShown }: SpotHoldBannerProps) {
-  const colors = useColors();
   const seconds = useSecondsLeft(held);
   const focusRef = useFreshHoldFocus(held.isFresh, onFreshHoldShown);
   const time = formatClockTime(new Date(held.spotHold.expiresAt), currentLanguage());
@@ -27,7 +26,7 @@ export function SpotHoldBanner({ held, onFreshHoldShown }: SpotHoldBannerProps) 
       accessible
       accessibilityLabel={bannerLabel(time, held.spotHold.lotName, seconds)}
       testID="spot-hold-banner"
-      style={[styles.banner, { borderColor: colors.line }]}
+      style={styles.banner}
     >
       <BannerLines time={time} lotName={held.spotHold.lotName} seconds={seconds} />
     </View>
@@ -67,5 +66,5 @@ function bannerLabel(time: string, lotName: string, seconds: number): string {
 }
 
 const styles = StyleSheet.create({
-  banner: { gap: spacing.extraSmall, paddingVertical: spacing.medium, borderBottomWidth: StyleSheet.hairlineWidth },
+  banner: { gap: spacing.extraSmall },
 });
