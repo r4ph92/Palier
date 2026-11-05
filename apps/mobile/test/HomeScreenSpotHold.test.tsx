@@ -4,6 +4,7 @@ import { PalierUnreachableError } from '../src/api/LotsClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeLotsClient, PARKING_DEMO_ID, parkingDemo, parkingDemoWith, parkingTestPaliers } from './fakeLotsClient';
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
+import { lightColors } from '../src/theme/tokens';
 import { typography } from '../src/theme/typography';
 import { renderHomeScreen, renderHomeScreenWith } from './renderHomeScreen';
 import { visibleText } from './visibleText';
@@ -49,11 +50,14 @@ describe('HomeScreen spot hold', () => {
     await holdAtParkingDemo(new FakeLotsClient(parkingDemoWith(10)));
     await screen.findByTestId('spot-hold-countdown');
 
+    expect(screen.getByTestId('spot-hold-countdown')).toHaveStyle({ color: lightColors.ink });
+
     await tick(15 * 60);
     expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('0:00');
     await tick(5);
 
     expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('0:00');
+    expect(screen.getByTestId('spot-hold-countdown')).toHaveStyle({ color: lightColors.muted });
   });
 
   it('reads the banner to VoiceOver in words and moves focus to it once', async () => {

@@ -40,18 +40,20 @@ interface BannerLinesProps {
   readonly seconds: number;
 }
 
+// At 0:00 the hold no longer guarantees anything, so the mark and the digits fade to muted until #8 ends it.
 function BannerLines({ time, lotName, seconds }: BannerLinesProps) {
   const colors = useColors();
+  const isOver = seconds === 0;
   return (
     <>
-      <StateMark color={colors.free}>
+      <StateMark color={isOver ? colors.muted : colors.free}>
         <Text style={[typography.bodyStrong, { color: colors.ink }]}>
           {`${i18n.t('spotHold.guaranteedUntilLead')} `}
           <Text style={typography.figure}>{time}</Text>
         </Text>
       </StateMark>
       <Text style={[typography.body, { color: colors.muted }]}>{lotName}</Text>
-      <Text testID="spot-hold-countdown" style={[typography.countNumber, { color: colors.ink }]}>
+      <Text testID="spot-hold-countdown" style={[typography.countNumber, { color: isOver ? colors.muted : colors.ink }]}>
         {formatCountdown(seconds)}
       </Text>
     </>
