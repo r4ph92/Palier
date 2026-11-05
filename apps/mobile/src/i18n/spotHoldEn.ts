@@ -23,6 +23,8 @@ export const spotHoldEn: Translations['spotHold'] = {
   releaseUnavailable: 'Can’t release the guarantee right now, try again in a moment',
   releaseCancel: 'Cancel',
   released: 'Guarantee released',
+  expired: 'Your guaranteed spot has expired',
+  expiredAccessibilityLabel: '%{expired}, %{lotName}',
   minutesLeft: { one: '%{count} minute left', other: '%{count} minutes left' },
   bannerAccessibilityLabel: '%{guaranteedUntil}, %{lotName}, %{minutesLeft}',
   refusals: {

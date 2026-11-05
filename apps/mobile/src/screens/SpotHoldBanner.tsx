@@ -5,61 +5,86 @@ import { formatCountdown, SECONDS_PER_MINUTE } from '../i18n/formatCountdown';
 import { currentLanguage, i18n } from '../i18n/i18n';
 import type { HeldSpot } from '../spotHolds/heldSpot';
 import { useFreshHoldFocus } from '../spotHolds/useFreshHoldFocus';
-import { useSecondsLeft } from '../spotHolds/useSecondsLeft';
+import { useExpiryAnnouncement } from '../spotHolds/useExpiryAnnouncement';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
 interface SpotHoldBannerProps {
   readonly held: HeldSpot;
+  readonly seconds: number;
+  readonly isExpired: boolean;
   readonly onFreshHoldShown: () => void;
 }
 
 // VoiceOver reads the banner as one sentence in whole minutes; the ticking digits stay out of its way.
-export function SpotHoldBanner({ held, onFreshHoldShown }: SpotHoldBannerProps) {
-  const seconds = useSecondsLeft(held);
+export function SpotHoldBanner({ held, seconds, isExpired, onFreshHoldShown }: SpotHoldBannerProps) {
+  const expiredMessage = i18n.t('spotHold.expired');
+  useExpiryAnnouncement(isExpired, expiredMessage);
   const focusRef = useFreshHoldFocus(held.isFresh, onFreshHoldShown);
   const time = formatClockTime(new Date(held.spotHold.expiresAt), currentLanguage());
   return (
     <View
       ref={focusRef}
       accessible
-      accessibilityLabel={bannerLabel(time, held.spotHold.lotName, seconds)}
+      accessibilityLabel={isExpired ? expiredLabel(held.spotHold.lotName) : countdownLabel(time, held.spotHold.lotName, seconds)}
       testID="spot-hold-banner"
       style={styles.banner}
     >
-      <BannerLines time={time} lotName={held.spotHold.lotName} seconds={seconds} />
+      {isExpired ? <ExpiredLines lotName={held.spotHold.lotName} message={expiredMessage} /> : <CountdownLines time={time} lotName={held.spotHold.lotName} seconds={seconds} />}
     </View>
   );
 }
 
-interface BannerLinesProps {
+interface CountdownLinesProps {
   readonly time: string;
   readonly lotName: string;
   readonly seconds: number;
 }
 
-// At 0:00 the hold no longer guarantees anything, so the mark and the digits fade to muted until #8 ends it.
-function BannerLines({ time, lotName, seconds }: BannerLinesProps) {
+function CountdownLines({ time, lotName, seconds }: CountdownLinesProps) {
   const colors = useColors();
-  const isOver = seconds === 0;
   return (
     <>
-      <StateMark color={isOver ? colors.muted : colors.free}>
+      <StateMark color={colors.free}>
         <Text style={[typography.bodyStrong, { color: colors.ink }]}>
           {`${i18n.t('spotHold.guaranteedUntilLead')} `}
           <Text style={typography.figure}>{time}</Text>
         </Text>
       </StateMark>
       <Text style={[typography.body, { color: colors.muted }]}>{lotName}</Text>
-      <Text testID="spot-hold-countdown" style={[typography.countNumber, { color: isOver ? colors.muted : colors.ink }]}>
+      <Text testID="spot-hold-countdown" style={[typography.countNumber, { color: colors.ink }]}>
         {formatCountdown(seconds)}
       </Text>
     </>
   );
 }
 
-function bannerLabel(time: string, lotName: string, seconds: number): string {
+interface ExpiredLinesProps {
+  readonly lotName: string;
+  readonly message: string;
+}
+
+// The message takes the countdown's place; the mark fades to muted because the hold guarantees nothing any more.
+function ExpiredLines({ lotName, message }: ExpiredLinesProps) {
+  const colors = useColors();
+  return (
+    <>
+      <StateMark color={colors.muted}>
+        <Text testID="spot-hold-expired" style={[typography.bodyStrong, { color: colors.ink }]}>
+          {message}
+        </Text>
+      </StateMark>
+      <Text style={[typography.body, { color: colors.muted }]}>{lotName}</Text>
+    </>
+  );
+}
+
+function expiredLabel(lotName: string): string {
+  return i18n.t('spotHold.expiredAccessibilityLabel', { expired: i18n.t('spotHold.expired'), lotName });
+}
+
+function countdownLabel(time: string, lotName: string, seconds: number): string {
   const guaranteedUntil = i18n.t('spotHold.guaranteedUntil', { time });
   const minutesLeft = i18n.t('spotHold.minutesLeft', { count: Math.ceil(seconds / SECONDS_PER_MINUTE) });
   return i18n.t('spotHold.bannerAccessibilityLabel', { guaranteedUntil, lotName, minutesLeft });

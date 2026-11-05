@@ -34,18 +34,18 @@ describe('HomeScreen spot hold', () => {
     expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('14:58');
   });
 
-  it('stops the countdown at 0:00', async () => {
+  it('counts down in ink, then gives way to the expiry message at 0:00', async () => {
     await holdAtParkingDemo(new FakeLotsClient(parkingDemoWith(10)));
     await screen.findByTestId('spot-hold-countdown');
 
     expect(screen.getByTestId('spot-hold-countdown')).toHaveStyle({ color: lightColors.ink });
 
-    await tick(15 * 60);
-    expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('0:00');
-    await tick(5);
+    await tick(15 * 60 - 1);
+    expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('0:01');
+    await tick(1);
 
-    expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('0:00');
-    expect(screen.getByTestId('spot-hold-countdown')).toHaveStyle({ color: lightColors.muted });
+    expect(screen.queryByTestId('spot-hold-countdown')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('spot-hold-expired')).toHaveTextContent('Votre place garantie a expiré');
   });
 
   it('reads the banner to VoiceOver in words and moves focus to it once', async () => {

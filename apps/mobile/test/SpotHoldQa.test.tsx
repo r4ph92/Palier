@@ -90,11 +90,12 @@ describe('QA spot hold on the lot list', () => {
     expect(screen.getByText('Place garantie jusqu’à 14 h 17', visibleText)).toBeOnTheScreen();
   });
 
-  it('shows 0:00 for a hold read back past its end', async () => {
+  it('shows the expiry message for a hold read back past its end', async () => {
     const lateRead = julieHoldAtParkingDemo({ now: new Date(2026, 10, 4, 14, 40).toISOString() });
     await renderLots(new FakeSpotHoldClient(lateRead));
 
-    expect(await screen.findByTestId('spot-hold-countdown')).toHaveTextContent('0:00');
+    expect(await screen.findByTestId('spot-hold-expired')).toHaveTextContent('Votre place garantie a expiré');
+    expect(screen.queryByTestId('spot-hold-countdown')).not.toBeOnTheScreen();
   });
 });
 
