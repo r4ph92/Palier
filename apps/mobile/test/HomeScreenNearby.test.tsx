@@ -108,9 +108,11 @@ describe('HomeScreen with location denied', () => {
   });
 
   it('counts a failed permission request as denied', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     await renderHomeScreen(new FakeLotsClient([parkingDemo(10)]), 'fr', new FakeDeviceLocationClient('failing'));
 
     expect(await screen.findByText(LOCATION_DENIED_NOTICE_FR)).toBeOnTheScreen();
+    jest.mocked(console.warn).mockRestore();
   });
 });
 

@@ -14,8 +14,13 @@ describe('locateDriver', () => {
     expect(client.positionReads).toBe(0);
   });
 
-  it('counts a failed permission request as denied', async () => {
+  it('counts a failed permission request as denied and logs why', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
     await expect(locateDriver(new FakeDeviceLocationClient('failing'))).resolves.toEqual({ status: 'denied' });
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('permission'), expect.any(Error));
+    warn.mockRestore();
   });
 
   it('says the position is unavailable when the device has none', async () => {
@@ -36,6 +41,10 @@ describe('locateDriver', () => {
       currentPosition: () => Promise.reject(new Error('location services off')),
     };
 
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
     await expect(locateDriver(failingRead)).resolves.toEqual({ status: 'unavailable' });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('position'), expect.any(Error));
+    warn.mockRestore();
   });
 });

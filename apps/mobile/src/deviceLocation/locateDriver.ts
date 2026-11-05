@@ -12,11 +12,17 @@ const UNAVAILABLE: DriverLocation = { status: 'unavailable' };
 
 // A refused or failed permission counts as denied and a failed read as unavailable, so the list still shows in name order.
 export async function locateDriver(client: DeviceLocationClient): Promise<DriverLocation> {
-  const permission = await client.requestWhileInUse().catch((): LocationPermission => 'denied');
+  const permission = await client.requestWhileInUse().catch((error: unknown): LocationPermission => {
+    console.warn('Location permission request failed; lots are sorted by name', error);
+    return 'denied';
+  });
   if (permission === 'denied') {
     return DENIED;
   }
-  const position = await client.currentPosition().catch(() => null);
+  const position = await client.currentPosition().catch((error: unknown) => {
+    console.warn('Reading the device position failed; lots are sorted by name', error);
+    return null;
+  });
   return position === null || !isOnEarth(position) ? UNAVAILABLE : { status: 'located', position };
 }
 
