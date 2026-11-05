@@ -1,7 +1,7 @@
 import { screen, userEvent } from '@testing-library/react-native';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
-import { FakeSpotHoldClient } from './fakeSpotHoldClient';
+import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
 import { renderHomeScreenWith } from './renderHomeScreen';
 import { HOLD_BUTTON_FR, holdAtParkingDemo, tick } from './spotHoldScreen';
 import { visibleText } from './visibleText';
@@ -86,5 +86,17 @@ describe('HomeScreen spot hold across list refreshes', () => {
 
     expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
     expect(screen.queryByText('Trop de places garanties dans ce parking pour le moment')).not.toBeOnTheScreen();
+  });
+
+  it('removes the banner when a read on Actualiser finds no hold any more', async () => {
+    const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
+    await renderHomeScreenWith({ lotsClient: new FakeLotsClient(parkingDemoWith(10)), locationClient: new FakeDeviceLocationClient(), spotHoldClient });
+    await screen.findByTestId('spot-hold-banner');
+    spotHoldClient.activeHold = null;
+
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Actualiser' }));
+
+    expect(await screen.findByRole('button', { name: HOLD_BUTTON_FR })).toBeOnTheScreen();
+    expect(screen.queryByTestId('spot-hold-banner')).not.toBeOnTheScreen();
   });
 });
