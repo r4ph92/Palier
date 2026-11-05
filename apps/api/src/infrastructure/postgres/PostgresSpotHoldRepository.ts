@@ -76,7 +76,7 @@ async function placeUnderLotLock(tx: Transaction, draft: SpotHoldDraft): Promise
   if (decision.kind === 'refuse') {
     throw new SpotHoldRefusedError(decision.reason);
   }
-  const spot = await claimFirstFittingSpot(tx, lot.id, draft.needs, heldSince(draft.createdAt));
+  const spot = await claimFirstFittingSpot(tx, { lotId: lot.id, needs: draft.needs, target: heldSince(draft.createdAt) });
   if (spot === undefined) {
     throw new SpotHoldRefusedError('NO_SUITABLE_SPOT');
   }

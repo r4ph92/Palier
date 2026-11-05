@@ -37,12 +37,13 @@ interface FreeSpotRow extends Record<string, unknown> {
 }
 
 // Only the chosen spot is locked, and a spot another writer holds is skipped rather than waited on (docs/03).
-export async function claimFirstFittingSpot(
-  tx: Pick<Transaction, 'execute'>,
-  lotId: string,
-  needs: VehicleNeeds,
-  target: SpotClaimTarget,
-): Promise<AssignedSpotRow | undefined> {
+export interface SpotClaim {
+  readonly lotId: string;
+  readonly needs: VehicleNeeds;
+  readonly target: SpotClaimTarget;
+}
+
+export async function claimFirstFittingSpot(tx: Pick<Transaction, 'execute'>, { lotId, needs, target }: SpotClaim): Promise<AssignedSpotRow | undefined> {
   let candidates = await readFreeSpots(tx, lotId);
   let chosen = chooseSpotFor(needs, candidates);
   while (chosen !== null) {

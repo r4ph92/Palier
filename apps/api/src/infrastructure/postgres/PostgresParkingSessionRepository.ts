@@ -92,7 +92,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 }
 
 async function openSession(tx: Transaction, draft: SessionDraft): Promise<OpenedSession | null> {
-  const assigned = await claimFirstFittingSpot(tx, draft.lotId, draft.needs, ASSIGNED_TO_ENTRY);
+  const assigned = await claimFirstFittingSpot(tx, { lotId: draft.lotId, needs: draft.needs, target: ASSIGNED_TO_ENTRY });
   return assigned === undefined ? null : insertSession(tx, draft, assigned);
 }
 
