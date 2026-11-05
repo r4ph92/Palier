@@ -116,6 +116,18 @@ describe('placing a spot hold under the lot lock', () => {
     expect(scripted.count('insert-spot-hold')).toBe(0);
   });
 
+  it('refuses NO_SUITABLE_SPOT and inserts nothing when every fitting spot is claimed by another writer first', async () => {
+    const scripted = new ScriptedSql()
+      .answer('lock-lot', [parkingDemoRow])
+      .answer('read-spot-hold-facts', [noHoldYet])
+      .answer('read-free-spots', [freeSpot('A-1'), freeSpot('A-2')])
+      .answer('claim-spot', [], []);
+
+    expect(await refusalOf(scripted)).toBe('NO_SUITABLE_SPOT');
+    expect(scripted.count('claim-spot')).toBe(2);
+    expect(scripted.count('insert-spot-hold')).toBe(0);
+  });
+
   it('refuses NO_SUITABLE_SPOT and inserts nothing when no free spot fits the default vehicle', async () => {
     const scripted = scriptedHold({ spots: [freeSpot('A-5', true)] });
 
