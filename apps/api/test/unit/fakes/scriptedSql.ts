@@ -14,6 +14,8 @@ export type StatementLabel =
   | 'read-spot-hold-facts'
   | 'insert-spot-hold'
   | 'release-spot-hold'
+  | 'find-expired-hold-lots'
+  | 'expire-spot-holds'
   | 'free-held-spot'
   | 'unknown';
 
@@ -39,7 +41,9 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-spot-hold-lot', /join operator on/],
   ['read-spot-hold-facts', /as active_holds_in_lot/],
   ['insert-spot-hold', /insert into spot_hold/],
-  ['release-spot-hold', /update spot_hold set/],
+  ['release-spot-hold', /update spot_hold set status = 'RELEASED'/],
+  ['find-expired-hold-lots', /select distinct lot_id from spot_hold/],
+  ['expire-spot-holds', /update spot_hold set status = 'EXPIRED'/],
   ['free-held-spot', /update spot set/],
 ];
 
