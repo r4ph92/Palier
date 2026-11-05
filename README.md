@@ -141,7 +141,7 @@ réouverture, toucher « Try again ».
   Pour revenir au français : `'("fr-CA")'` et `fr_CA`, puis redémarrer de même.
 
 Le seed, `seed:spot-state` et `load:entries` refusent de tourner si `NODE_ENV` n'est pas
-`development` ou `test`, ou si la base n'est pas sur `localhost`/`127.0.0.1`.
+`development` ou `test`, ou si la base n'est pas sur `localhost`, `127.0.0.1` ou `[::1]`.
 
 ### Charge d'entrées
 
@@ -172,6 +172,9 @@ done
 # redémarrer l'API (toujours avec PAYMENTS_SIMULATION=success)
 npm run load:entries --workspace @palier/api -- --drivers 3 --max-latency-ms 3000
 ```
+
+Le script révoque les jetons de ses conducteurs à la fin, et une erreur (argument, borne
+inconnue, « reseed first ») s'affiche sur une ligne avec le code de sortie 1.
 
 Options : `--api` (adresse locale seulement, défaut `http://127.0.0.1:$PORT`),
 `--drivers` (1 à 20), `--gate` (une borne d'entrée semée), `--max-latency-ms`.
