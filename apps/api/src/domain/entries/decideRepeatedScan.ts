@@ -1,5 +1,6 @@
 import type { ActiveEntrySessionState, AssignedSpot } from '@palier/shared-types';
-import type { OpenedSession } from './ParkingSessionRepository.ts';
+import { EntryRefusedError } from './EntryRefusedError.ts';
+import type { OpenedSession, SessionOpening } from './ParkingSessionRepository.ts';
 
 // What the repository reads, under the lot lock, about the driver's active session, whatever its lot.
 export interface ActiveSessionFacts {
@@ -35,4 +36,16 @@ export function decideRepeatedScan(active: ActiveSessionFacts | null, scan: Scan
 
 function isSameOpeningEntry(active: ActiveSessionFacts, scan: ScannedEntryGate): boolean {
   return active.lotId === scan.lotId && active.entryGateId === scan.entryGateId && active.state === 'CREATED' && active.isWithinOpeningWindow;
+}
+
+// What the decision leads to; openNew assigns a spot and creates the session, null when no spot is free.
+export async function openingFor(decision: RepeatedScanDecision, openNew: () => Promise<OpenedSession | null>): Promise<SessionOpening | null> {
+  if (decision.kind === 'refuse') {
+    throw new EntryRefusedError('ALREADY_INSIDE');
+  }
+  if (decision.kind === 'replay') {
+    return { kind: 'replayed', session: decision.session };
+  }
+  const session = await openNew();
+  return session === null ? null : { kind: 'opened', session };
 }

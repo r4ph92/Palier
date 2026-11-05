@@ -1,8 +1,9 @@
 import type { EntrySessionState } from '@palier/shared-types';
-import { decideRepeatedScan, type ActiveSessionFacts } from '../../../src/domain/entries/decideRepeatedScan.ts';
+import { decideRepeatedScan, openingFor, type ActiveSessionFacts } from '../../../src/domain/entries/decideRepeatedScan.ts';
 import { EntryRefusedError } from '../../../src/domain/entries/EntryRefusedError.ts';
 import type {
   HoldAttachment,
+  OpenedSession,
   ParkingSessionRepository,
   SessionDraft,
   SessionOpening,
@@ -53,16 +54,12 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     return this.#freeSpots;
   }
 
-  // Same rule as the SQL repository under its lot lock: decideRepeatedScan on the driver's active session.
   openOrReplay(draft: SessionDraft): Promise<SessionOpening | null> {
     this.#journal.push('open-session');
-    const decision = decideRepeatedScan(this.#activeSessionOf(draft.driverId), draft);
-    if (decision.kind === 'refuse') {
-      return Promise.reject(new EntryRefusedError('ALREADY_INSIDE'));
-    }
-    if (decision.kind === 'replay') {
-      return Promise.resolve({ kind: 'replayed', session: decision.session });
-    }
+    return openingFor(decideRepeatedScan(this.#activeSessionOf(draft.driverId), draft), () => this.#openNew(draft));
+  }
+
+  #openNew(draft: SessionDraft): Promise<OpenedSession | null> {
     if (this.noSuitableSpot) {
       return Promise.reject(new EntryRefusedError('NO_SUITABLE_SPOT'));
     }
@@ -73,7 +70,7 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     const id = fakeSessionId(this.drafts.push(draft));
     const { driverId, lotId, entryGateId } = draft;
     this.#sessions.set(id, { driverId, lotId, entryGateId, spot, state: 'CREATED', entryConfirmedAt: null, isWithinOpeningWindow: true });
-    return Promise.resolve({ kind: 'opened', session: { id, spot: assignedSpot(spot) } });
+    return Promise.resolve({ id, spot: assignedSpot(spot) });
   }
 
   attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment> {

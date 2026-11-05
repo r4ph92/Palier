@@ -1,7 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
-import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
-import { decideRepeatedScan } from '../../domain/entries/decideRepeatedScan.ts';
+import { decideRepeatedScan, openingFor } from '../../domain/entries/decideRepeatedScan.ts';
 import type {
   HoldAttachment,
   OpenedSession,
@@ -68,14 +67,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 
   async #openUnderLotLock(tx: Transaction, draft: SessionDraft): Promise<SessionOpening | null> {
     const decision = decideRepeatedScan(await findActiveSessionFacts(tx, draft.driverId, this.#openingWindow), draft);
-    if (decision.kind === 'refuse') {
-      throw new EntryRefusedError('ALREADY_INSIDE');
-    }
-    if (decision.kind === 'replay') {
-      return { kind: 'replayed', session: decision.session };
-    }
-    const assigned = await assignFirstFreeSpot(tx, draft.lotId, draft.needs);
-    return assigned === undefined ? null : { kind: 'opened', session: await insertSession(tx, draft, assigned) };
+    return openingFor(decision, () => openSession(tx, draft));
   }
 
   async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment> {
@@ -106,6 +98,11 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   async cancel(sessionId: string): Promise<void> {
     await this.#database.transaction((tx) => cancelCreatedSession(tx, sessionId));
   }
+}
+
+async function openSession(tx: Transaction, draft: SessionDraft): Promise<OpenedSession | null> {
+  const assigned = await assignFirstFreeSpot(tx, draft.lotId, draft.needs);
+  return assigned === undefined ? null : insertSession(tx, draft, assigned);
 }
 
 async function insertSession(tx: Transaction, draft: SessionDraft, assigned: AssignedSpotRow): Promise<OpenedSession> {
