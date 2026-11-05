@@ -1,3 +1,5 @@
+import { uuidSchema } from './uuidSchema.ts';
+
 const driverProfileProperties = {
   id: { type: 'string' },
   firstName: { type: 'string' },
@@ -24,7 +26,7 @@ export const testSignInBodySchema = {
   type: 'object',
   required: ['driverId'],
   additionalProperties: false,
-  properties: { driverId: { type: 'string', format: 'uuid' } },
+  properties: { driverId: uuidSchema },
 } as const;
 
 export const signInResponseSchema = {

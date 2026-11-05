@@ -1,6 +1,7 @@
 import type { GateIdentity, GatePassageRequest, GatePassageResponse } from '@palier/shared-types';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
+import { uuidSchema } from './uuidSchema.ts';
 
 const gateKindSchema = { type: 'string', enum: ['ENTRY', 'EXIT'] } as const;
 
@@ -19,7 +20,7 @@ export const gateIdentitySchema = {
 export const gateIdParametersSchema = {
   type: 'object',
   required: ['id'],
-  properties: { id: { type: 'string', format: 'uuid' } },
+  properties: { id: uuidSchema },
 } as const;
 
 export const passageRequestSchema = {
