@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SpotHoldClient } from '../api/SpotHoldClient';
 import type { HeldSpot } from './heldSpot';
 import type { SpotHoldFailure } from './spotHoldFailure';
-import { readCurrentHold, requestHold, type SpotHoldReadState, type SpotHoldUpdates } from './spotHoldReads';
+import { readCurrentHold, requestHold, type SpotHoldReadState, type SpotHoldUpdates } from './spotHoldRequests';
 
 export interface SpotHoldController {
   readonly held: HeldSpot | null;

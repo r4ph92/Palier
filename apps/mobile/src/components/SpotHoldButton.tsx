@@ -9,8 +9,6 @@ interface SpotHoldButtonProps {
   readonly onHeld: () => void;
 }
 
-// Hidden until Palier has said whether the driver holds a spot, once they hold one (one per driver), and for a full lot.
-// Every button waits while one request runs.
 export function SpotHoldButton({ lot, spotHold, onHeld }: SpotHoldButtonProps) {
   if (spotHold.readState === 'unknown' || spotHold.held !== null || lot.freeSpots === 0) {
     return null;

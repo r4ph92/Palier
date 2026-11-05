@@ -51,7 +51,6 @@ interface HoldRequestUpdates extends SpotHoldUpdates {
   readonly onHeld: () => void;
 }
 
-// Told the driver already holds a spot, the app reads that hold back so its banner shows.
 export async function requestHold(client: SpotHoldClient, lotId: string, updates: HoldRequestUpdates): Promise<void> {
   let spotHold: SpotHold;
   try {
