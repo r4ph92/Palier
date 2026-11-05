@@ -6,6 +6,11 @@ import { FakeLotsClient, PARKING_DEMO_CATEGORY_LINE_FR, parkingDemo, parkingTest
 import { renderHomeScreen } from './renderHomeScreen';
 import { visibleText } from './visibleText';
 
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => ({ width: 402, height: 874, scale: 3, fontScale: 1 }),
+}));
+
 function lotNamesInOrder(): string[] {
   return screen.getAllByTestId(/^lot-row-/).map((row) => row.props.accessibilityLabel.split(', ')[0]);
 }
