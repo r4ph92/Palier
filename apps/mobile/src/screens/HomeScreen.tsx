@@ -1,4 +1,3 @@
-import type { LotSummary } from '@palier/shared-types';
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLotsClient } from '../api/LotsClientContext';
@@ -10,26 +9,29 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
 import { formatClockTime } from '../i18n/formatClockTime';
 import { currentLanguage, i18n } from '../i18n/i18n';
+import type { DeviceLocationClient } from '../deviceLocation/DeviceLocationClient';
+import type { NearbyLot } from '../lots/nearbyLots';
 import { useLots, type LotsController, type LotsState } from '../lots/useLots';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
-const NO_LOTS: readonly LotSummary[] = [];
+const NO_LOTS: readonly NearbyLot[] = [];
 
 interface HomeScreenProps {
   readonly firstName: string;
+  readonly locationClient: DeviceLocationClient;
 }
 
-export function HomeScreen({ firstName }: HomeScreenProps) {
-  const controller = useLots(useLotsClient());
+export function HomeScreen({ firstName, locationClient }: HomeScreenProps) {
+  const controller = useLots(useLotsClient(), locationClient);
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <FlatList
         data={controller.state.status === 'loaded' ? controller.state.lots : NO_LOTS}
-        keyExtractor={(lot) => lot.id}
-        renderItem={({ item }) => <LotRow lot={item} />}
+        keyExtractor={({ lot }) => lot.id}
+        renderItem={({ item }) => <LotRow nearbyLot={item} />}
         ListHeaderComponent={<HomeHeader controller={controller} firstName={firstName} />}
         ListEmptyComponent={<HomeStateMessage controller={controller} />}
         refreshControl={<RefreshControl refreshing={controller.isRefreshing} onRefresh={controller.refresh} />}

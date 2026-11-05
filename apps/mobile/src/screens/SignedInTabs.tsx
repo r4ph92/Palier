@@ -42,7 +42,7 @@ interface TabContentProps extends SignedInTabsProps {
 function TabContent({ firstName, clients, tabs, currentSession, pendingEntry, developerEntry, onSignOut }: TabContentProps) {
   switch (tabs.tab) {
     case 'lots':
-      return <HomeScreen firstName={firstName} />;
+      return <HomeScreen firstName={firstName} locationClient={clients.location} />;
     case 'scan':
       return (
         <ScanTab

@@ -1,16 +1,16 @@
-import type { LotSummary } from '@palier/shared-types';
 import { StyleSheet, Text, View } from 'react-native';
 import { useColors } from '../theme/useColors';
 import { useIsLargeText } from '../theme/useIsLargeText';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
+import type { NearbyLot } from '../lots/nearbyLots';
 import { FreeSpotCount } from './FreeSpotCount';
 
 interface LotRowProps {
-  readonly lot: LotSummary;
+  readonly nearbyLot: NearbyLot;
 }
 
-export function LotRow({ lot }: LotRowProps) {
+export function LotRow({ nearbyLot: { lot } }: LotRowProps) {
   const colors = useColors();
   const layout = useIsLargeText() ? stackedStyles : sideBySideStyles;
   return (
