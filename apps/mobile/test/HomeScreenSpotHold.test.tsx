@@ -116,14 +116,13 @@ describe('HomeScreen spot hold', () => {
     expect(await screen.findByRole('button', { name: HOLD_BUTTON_FR })).toBeOnTheScreen();
   });
 
-  it('keeps « 15 min » on one line in both languages', async () => {
-    const exactly = { normalizer: (text: string) => text };
-    await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)));
-    expect(await screen.findAllByText('Garantir une place 15\u00A0min', exactly)).not.toHaveLength(0);
+  it.each([
+    ['fr', 'Garantir une place 15\u00A0min'],
+    ['en', 'Guarantee a spot for 15\u00A0min'],
+  ] as const)('keeps « 15 min » on one line in %s', async (language, label) => {
+    await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)), language);
 
-    screen.unmount();
-    await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)), 'en');
-    expect(await screen.findAllByText('Guarantee a spot for 15\u00A0min', exactly)).not.toHaveLength(0);
+    expect(await screen.findAllByText(label, { normalizer: (text: string) => text })).not.toHaveLength(0);
   });
 
   it('offers no hold on a full lot', async () => {
