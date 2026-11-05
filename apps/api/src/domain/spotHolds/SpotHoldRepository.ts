@@ -1,12 +1,8 @@
-import type { PricedLot } from '../pricing/PricingPolicy.ts';
+import type { LotTermsInput } from '../lots/lotTerms.ts';
 import type { VehicleNeeds } from '../vehicles/VehicleRepository.ts';
 import type { SpotHold } from './SpotHold.ts';
 
-// What a hold checks before taking the lot lock: the same terms an entry checks.
-export interface SpotHoldLot extends PricedLot {
-  readonly isOnline: boolean;
-  readonly operatorStripeAccountId: string | null;
-}
+export type SpotHoldLot = LotTermsInput;
 
 export interface SpotHoldDraft {
   readonly driverId: string;

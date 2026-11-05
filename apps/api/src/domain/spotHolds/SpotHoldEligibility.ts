@@ -1,7 +1,6 @@
 import { findDriverPrerequisites, type DriverPrerequisiteSources } from '../drivers/driverPrerequisites.ts';
 import type { EntryPolicy } from '../entries/EntryEligibility.ts';
-import { isOperatorPayable } from '../payments/isOperatorPayable.ts';
-import { PricingPolicyInvalidError, readLotPricing } from '../pricing/PricingPolicy.ts';
+import { checkLotTerms } from '../lots/lotTerms.ts';
 import type { VehicleNeeds } from '../vehicles/VehicleRepository.ts';
 import { SpotHoldRefusedError } from './SpotHoldRefusedError.ts';
 import type { SpotHoldLot, SpotHoldRepository } from './SpotHoldRepository.ts';
@@ -46,20 +45,15 @@ export class SpotHoldEligibility {
     return prerequisites.vehicle.needs;
   }
 
-  // A hold promises an entry, so it is refused wherever the entry would be refused for the lot itself.
+  // A hold promises an entry, so any lot term an entry would refuse refuses the hold too.
   #ensureLotTakesSpotHolds(lot: SpotHoldLot | null): void {
     if (lot === null) {
       throw new SpotHoldRefusedError('LOT_NOT_FOUND');
     }
-    if (!lot.isOnline) {
-      throw new SpotHoldRefusedError('LOT_NOT_IN_SERVICE');
-    }
-    const pricing = readLotPricing(lot);
-    if (pricing instanceof PricingPolicyInvalidError) {
-      throw new SpotHoldRefusedError('LOT_NOT_IN_SERVICE', { cause: pricing });
-    }
-    if (!isOperatorPayable(lot.operatorStripeAccountId, this.#dependencies.policy)) {
-      throw new SpotHoldRefusedError('LOT_NOT_IN_SERVICE');
+    const terms = checkLotTerms(lot, this.#dependencies.policy);
+    if (!terms.accepted) {
+      const cause = terms.refusal.kind === 'pricingInvalid' ? { cause: terms.refusal.cause } : undefined;
+      throw new SpotHoldRefusedError('LOT_NOT_IN_SERVICE', cause);
     }
   }
 }

@@ -1,8 +1,8 @@
 import { findDriverPrerequisites, type DriverPrerequisites, type DriverPrerequisiteSources } from '../drivers/driverPrerequisites.ts';
+import { checkLotTerms, type LotTermsRefusal } from '../lots/lotTerms.ts';
 import { hasRoomForAnotherVehicle } from '../occupancy/hasRoomForAnotherVehicle.ts';
-import { isOperatorPayable } from '../payments/isOperatorPayable.ts';
-import { PricingPolicyInvalidError, readLotPricing, type PricingPolicy } from '../pricing/PricingPolicy.ts';
-import type { EntryGate, EntryGateLot, EntryGateRepository } from './EntryGateRepository.ts';
+import type { PricingPolicy } from '../pricing/PricingPolicy.ts';
+import type { EntryGate, EntryGateRepository } from './EntryGateRepository.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import { isSignedWith, readGateToken } from './gateToken.ts';
 
@@ -43,8 +43,7 @@ export class EntryEligibility {
 
   async check({ driverId, qrContent }: EntryAttempt): Promise<EligibleEntry> {
     const gate = await this.#recognizedGate(qrContent);
-    this.#ensureGateAdmitsEntries(gate);
-    const pricing = lotPricing(gate.lot);
+    const pricing = this.#admittingLotPricing(gate);
     const prerequisites = await this.#driverPrerequisites(driverId);
     return {
       driverId,
@@ -70,22 +69,21 @@ export class EntryEligibility {
     return gate;
   }
 
-  #ensureGateAdmitsEntries(gate: EntryGate): void {
+  #admittingLotPricing(gate: EntryGate): PricingPolicy {
     if (gate.kind !== 'ENTRY') {
       throw new EntryRefusedError('NOT_AN_ENTRY_GATE');
     }
-    if (!gate.lot.isOnline) {
-      throw new EntryRefusedError('LOT_NOT_IN_SERVICE');
+    const terms = checkLotTerms(gate.lot, this.#dependencies.policy);
+    if (!terms.accepted) {
+      throw entryRefusalOf(terms.refusal);
     }
     if (gate.integrationKind !== 'SIMULATED') {
       throw new EntryRefusedError('GATE_UNAVAILABLE');
     }
-    if (!isOperatorPayable(gate.lot.operatorStripeAccountId, this.#dependencies.policy)) {
-      throw new EntryRefusedError('OPERATOR_NOT_PAYABLE');
-    }
     if (!hasRoomForAnotherVehicle(gate.lot)) {
       throw new EntryRefusedError('LOT_FULL');
     }
+    return terms.pricing;
   }
 
   async #driverPrerequisites(driverId: string): Promise<DriverPrerequisites> {
@@ -98,10 +96,13 @@ export class EntryEligibility {
 }
 
 // A lot without a usable price cannot bill a session, so it is out of service until its operator fixes the policy.
-function lotPricing(lot: EntryGateLot): PricingPolicy {
-  const pricing = readLotPricing(lot);
-  if (pricing instanceof PricingPolicyInvalidError) {
-    throw new EntryRefusedError('LOT_NOT_IN_SERVICE', { cause: pricing });
+function entryRefusalOf(refusal: LotTermsRefusal): EntryRefusedError {
+  switch (refusal.kind) {
+    case 'offline':
+      return new EntryRefusedError('LOT_NOT_IN_SERVICE');
+    case 'operatorNotPayable':
+      return new EntryRefusedError('OPERATOR_NOT_PAYABLE');
+    case 'pricingInvalid':
+      return new EntryRefusedError('LOT_NOT_IN_SERVICE', { cause: refusal.cause });
   }
-  return pricing;
 }
