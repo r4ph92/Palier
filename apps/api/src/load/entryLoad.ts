@@ -31,7 +31,16 @@ export async function runEntryLoad(setup: EntryLoadSetup): Promise<EntryLoadRepo
   try {
     return await fireAndCheck(setup, { target, driverIds, expectedAdmissions }, await tokens.signIn(driverIds));
   } finally {
+    await revokeWithoutMasking(tokens);
+  }
+}
+
+// A revoke failure must not replace the error of the run it follows.
+async function revokeWithoutMasking(tokens: LoadDriverTokens): Promise<void> {
+  try {
     await tokens.revokeAll();
+  } catch (error) {
+    console.error(`Could not revoke the load-test driver tokens: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
