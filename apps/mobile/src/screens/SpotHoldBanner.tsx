@@ -67,5 +67,5 @@ function bannerLabel(time: string, lotName: string, seconds: number): string {
 }
 
 const styles = StyleSheet.create({
-  banner: { gap: spacing.extraSmall, paddingVertical: spacing.medium, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth },
+  banner: { gap: spacing.extraSmall, paddingVertical: spacing.medium, borderBottomWidth: StyleSheet.hairlineWidth },
 });
