@@ -47,7 +47,7 @@ function useLotsReads({ client, locationClient, lastLocation }: LotSources, mode
   }, [client, locationClient, lastLocation, dispatch, requestNumber, readKind]);
 }
 
-// Starts once the first read settles, so a permission prompt left open never stacks polls behind it.
+// Starts once the first read settles: a permission prompt left open would otherwise queue polls behind it.
 function useLotsPolling(hasSettled: boolean, dispatch: LotsDispatch): void {
   useEffect(() => {
     if (!hasSettled) {

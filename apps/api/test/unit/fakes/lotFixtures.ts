@@ -5,6 +5,8 @@ import type { LotAvailability } from '../../../src/domain/occupancy/LotAvailabil
 import { PARKING_DEMO_ID, parkingDemoLot } from '../../../src/seed/fixtures/parkingDemo.ts';
 
 export const PARKING_DEMO_CATEGORIES: SpotCountByCategory = { standard: 7, electric: 1, accessible: 1, oversize: 1 };
+// Displayed once 8 vehicles are inside while every spot is free: 2 by the counter.
+export const PARKING_DEMO_CATEGORIES_WITH_8_INSIDE: SpotCountByCategory = { standard: 2, electric: 1, accessible: 1, oversize: 1 };
 
 // Parking Démo as seeded: capacity 10, nobody inside, every spot free.
 export function parkingDemoAvailability(overrides: Partial<LotAvailability> = {}): LotAvailability {

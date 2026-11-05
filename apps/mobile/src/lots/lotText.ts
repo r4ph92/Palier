@@ -1,4 +1,4 @@
-import type { SpotCountByCategory } from '@palier/shared-types';
+import type { LotSummary, SpotCountByCategory } from '@palier/shared-types';
 import { SPOT_CATEGORIES } from '@palier/shared-types/lots';
 import { spokenDistance } from '../i18n/formatDistance';
 import { i18n, type SupportedLanguage } from '../i18n/i18n';
@@ -16,12 +16,14 @@ export function categoryLine(counts: SpotCountByCategory): string {
 // « Parking Démo, 350 mètres, 2 places libres, Standard 2, Électrique 1, Accessible 1, Grand gabarit 1 »
 export function lotAccessibilityLabel({ lot, distanceMetres }: NearbyLot, language: SupportedLanguage): string {
   const distance = distanceMetres === null ? [] : [spokenDistance(distanceMetres, language)];
-  const availability = lot.freeSpots > 0 ? [spokenFreeSpots(lot.freeSpots), ...categoryCounts(lot.freeSpotsByCategory, ' ')] : [i18n.t('home.fullAccessibilityLabel')];
-  return [lot.name, ...distance, ...availability].join(SPOKEN_SEPARATOR);
+  return [lot.name, ...distance, ...spokenAvailability(lot)].join(SPOKEN_SEPARATOR);
 }
 
-function spokenFreeSpots(count: number): string {
-  return `${count} ${i18n.t('home.freeSpotsLabel', { count })}`;
+function spokenAvailability({ freeSpots, freeSpotsByCategory }: LotSummary): string[] {
+  if (freeSpots === 0) {
+    return [i18n.t('home.fullAccessibilityLabel')];
+  }
+  return [`${freeSpots} ${i18n.t('home.freeSpotsLabel', { count: freeSpots })}`, ...categoryCounts(freeSpotsByCategory, ' ')];
 }
 
 function categoryCounts(counts: SpotCountByCategory, space: string): string[] {

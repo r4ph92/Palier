@@ -1,11 +1,9 @@
 import { screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
-import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
-import { FakeLotsClient, parkingDemo, parkingTestPaliers } from './fakeLotsClient';
+import { FakeDeviceLocationClient, LOCATION_DENIED_NOTICE_FR } from './fakeDeviceLocationClient';
+import { FakeLotsClient, PARKING_DEMO_CATEGORY_LINE_FR, parkingDemo, parkingTestPaliers } from './fakeLotsClient';
 import { renderHomeScreen } from './renderHomeScreen';
 import { visibleText } from './visibleText';
-
-const PARKING_DEMO_CATEGORIES_FR = 'Standard 7 · Électrique 1 · Accessible 1 · Grand gabarit 1';
 
 function lotNamesInOrder(): string[] {
   return screen.getAllByTestId(/^lot-row-/).map((row) => row.props.accessibilityLabel.split(', ')[0]);
@@ -17,7 +15,7 @@ describe('HomeScreen with location allowed', () => {
 
     expect(await screen.findByText('350 m', visibleText)).toBeOnTheScreen();
     expect(screen.getByText('570 m', visibleText)).toBeOnTheScreen();
-    expect(screen.getByText(PARKING_DEMO_CATEGORIES_FR, visibleText)).toBeOnTheScreen();
+    expect(screen.getByText(PARKING_DEMO_CATEGORY_LINE_FR, visibleText)).toBeOnTheScreen();
     expect(lotNamesInOrder()).toEqual(['Parking Démo', 'Parking Test Paliers']);
   });
 
@@ -69,10 +67,10 @@ describe('HomeScreen with location denied', () => {
   it('keeps the name order, shows no distance and says how to sort by distance', async () => {
     await renderHomeScreen(new FakeLotsClient([parkingDemo(10), parkingTestPaliers]), 'fr', new FakeDeviceLocationClient('denied'));
 
-    expect(await screen.findByText('Activez la localisation pour trier par distance')).toBeOnTheScreen();
+    expect(await screen.findByText(LOCATION_DENIED_NOTICE_FR)).toBeOnTheScreen();
     expect(lotNamesInOrder()).toEqual(['Parking Démo', 'Parking Test Paliers']);
     expect(screen.queryByText(/\d m$/, visibleText)).not.toBeOnTheScreen();
-    expect(screen.getByText(PARKING_DEMO_CATEGORIES_FR, visibleText)).toBeOnTheScreen();
+    expect(screen.getByText(PARKING_DEMO_CATEGORY_LINE_FR, visibleText)).toBeOnTheScreen();
   });
 
   it('lists a lot without coordinates', async () => {
@@ -88,16 +86,16 @@ describe('HomeScreen with location denied', () => {
     announce.mockClear();
 
     await renderHomeScreen(new FakeLotsClient([parkingDemo(10)]), 'fr', new FakeDeviceLocationClient('denied'));
-    await screen.findByText('Activez la localisation pour trier par distance');
+    await screen.findByText(LOCATION_DENIED_NOTICE_FR);
 
-    expect(announce.mock.calls.filter(([message]) => message === 'Activez la localisation pour trier par distance')).toHaveLength(1);
+    expect(announce.mock.calls.filter(([message]) => message === LOCATION_DENIED_NOTICE_FR)).toHaveLength(1);
     announce.mockRestore();
   });
 
   it('counts a failed permission request as denied', async () => {
     await renderHomeScreen(new FakeLotsClient([parkingDemo(10)]), 'fr', new FakeDeviceLocationClient('failing'));
 
-    expect(await screen.findByText('Activez la localisation pour trier par distance')).toBeOnTheScreen();
+    expect(await screen.findByText(LOCATION_DENIED_NOTICE_FR)).toBeOnTheScreen();
   });
 });
 

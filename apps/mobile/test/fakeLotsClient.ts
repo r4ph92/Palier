@@ -45,6 +45,8 @@ export const parkingTestPaliers: LotSummary = {
   location: PARKING_TEST_PALIERS_LOCATION,
 };
 
+export const PARKING_DEMO_CATEGORY_LINE_FR = 'Standard 7 · Électrique 1 · Accessible 1 · Grand gabarit 1';
+
 export function parkingDemoWith(freeSpots: number): LotListResponse {
   return [parkingDemo(freeSpots)];
 }

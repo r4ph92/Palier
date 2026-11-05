@@ -9,7 +9,7 @@ export type LotsState =
 // full: the position is read again before the lots. poll: the 30 s refresh reuses the last position.
 export type ReadKind = 'full' | 'poll';
 
-// isReading covers the whole read, permission prompt included, so a poll never starts beside it.
+// isReading covers the whole read, permission prompt included; a poll requested meanwhile is dropped.
 export interface LotsModel {
   readonly state: LotsState;
   readonly isRefreshing: boolean;

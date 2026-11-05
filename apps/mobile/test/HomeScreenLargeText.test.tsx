@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react-native';
-import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
+import { FakeLotsClient, PARKING_DEMO_CATEGORY_LINE_FR, parkingDemoWith } from './fakeLotsClient';
 import { renderHomeScreen } from './renderHomeScreen';
 import { visibleText } from './visibleText';
 
@@ -20,7 +20,7 @@ describe.each([1, 1.35, 2.3, 3.1])('HomeScreen at text scale %d', (fontScale) =>
 
     expect(await screen.findByText('Parking Démo')).toBeOnTheScreen();
     expect(screen.getByText('10 places libres')).toBeOnTheScreen();
-    expect(screen.getByText('Standard 7 · Électrique 1 · Accessible 1 · Grand gabarit 1', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText(PARKING_DEMO_CATEGORY_LINE_FR, visibleText)).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Actualiser' })).toBeOnTheScreen();
   });
 

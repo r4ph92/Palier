@@ -1,7 +1,7 @@
 import { act, screen, userEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { LOTS_REFRESH_MILLISECONDS } from '../src/lots/useLots';
-import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
+import { FakeDeviceLocationClient, LOCATION_DENIED_NOTICE_FR } from './fakeDeviceLocationClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { renderHomeScreen } from './renderHomeScreen';
 import { visibleText } from './visibleText';
@@ -55,7 +55,7 @@ describe('HomeScreen automatic refresh', () => {
     const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
     announce.mockClear();
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(2)), 'fr', new FakeDeviceLocationClient('denied'));
-    await screen.findByText('Activez la localisation pour trier par distance');
+    await screen.findByText(LOCATION_DENIED_NOTICE_FR);
 
     await waitForRefresh();
 

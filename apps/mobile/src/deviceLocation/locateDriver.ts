@@ -9,7 +9,7 @@ export type DriverLocation =
 const DENIED: DriverLocation = { status: 'denied' };
 const UNAVAILABLE: DriverLocation = { status: 'unavailable' };
 
-// A failure never blocks the list: a refused or failed permission counts as denied, a failed read as unavailable.
+// A refused or failed permission counts as denied and a failed read as unavailable, so the list still shows in name order.
 export async function locateDriver(client: DeviceLocationClient): Promise<DriverLocation> {
   const permission = await client.requestWhileInUse().catch((): LocationPermission => 'denied');
   if (permission === 'denied') {

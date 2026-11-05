@@ -4,7 +4,7 @@ import type { LotAvailabilityRepository } from '../../src/domain/lots/LotAvailab
 import { buildServer } from '../../src/http/buildServer.ts';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
-import { PARKING_DEMO_CATEGORIES, parkingDemoAvailability, parkingDemoOnline, repositoryReturning } from './fakes/lotFixtures.ts';
+import { PARKING_DEMO_CATEGORIES, PARKING_DEMO_CATEGORIES_WITH_8_INSIDE, parkingDemoAvailability, parkingDemoOnline, repositoryReturning } from './fakes/lotFixtures.ts';
 import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
 
 const parkingDemo = parkingDemoOnline();
@@ -42,7 +42,7 @@ describe('GET /v1/lots', () => {
     const response = await listLotsAsJulie(repositoryReturning([parkingDemoOnline(parkingDemoAvailability({ vehicleCount: 8 }))]));
 
     expect(response.json()).toEqual([
-      expect.objectContaining({ freeSpots: 2, freeSpotsByCategory: { standard: 2, electric: 1, accessible: 1, oversize: 1 } }),
+      expect.objectContaining({ freeSpots: 2, freeSpotsByCategory: PARKING_DEMO_CATEGORIES_WITH_8_INSIDE }),
     ]);
   });
 

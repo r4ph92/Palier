@@ -4,6 +4,8 @@ import type { DeviceLocationClient, LocationPermission } from '../src/deviceLoca
 // The custom location the README gives the Simulator: 350 m north of Parking Démo.
 export const SIMULATOR_POSITION: GeoPosition = { latitude: 45.5048, longitude: -73.5673 };
 
+export const LOCATION_DENIED_NOTICE_FR = 'Activez la localisation pour trier par distance';
+
 type FakePermission = LocationPermission | 'failing' | 'pending';
 
 export class FakeDeviceLocationClient implements DeviceLocationClient {

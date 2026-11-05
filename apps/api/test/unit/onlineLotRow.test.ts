@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { onlineLotFromRow, type OnlineLotRow } from '../../src/infrastructure/postgres/onlineLotRow.ts';
 import { PARKING_DEMO_ID, parkingDemoLot } from '../../src/seed/fixtures/parkingDemo.ts';
+import { PARKING_DEMO_CATEGORIES, parkingDemoAvailability } from './fakes/lotFixtures.ts';
 
 const parkingDemoRow: OnlineLotRow = {
   id: PARKING_DEMO_ID,
@@ -10,10 +11,10 @@ const parkingDemoRow: OnlineLotRow = {
   capacity: 10,
   vehicleCount: 0,
   availableSpotCount: 10,
-  availableStandard: 7,
-  availableElectric: 1,
-  availableAccessible: 1,
-  availableOversize: 1,
+  availableStandard: PARKING_DEMO_CATEGORIES.standard,
+  availableElectric: PARKING_DEMO_CATEGORIES.electric,
+  availableAccessible: PARKING_DEMO_CATEGORIES.accessible,
+  availableOversize: PARKING_DEMO_CATEGORIES.oversize,
 };
 
 describe('onlineLotFromRow', () => {
@@ -22,12 +23,7 @@ describe('onlineLotFromRow', () => {
   });
 
   it('groups the counts into the lot availability', () => {
-    expect(onlineLotFromRow(parkingDemoRow).availability).toEqual({
-      capacity: 10,
-      vehicleCount: 0,
-      availableSpotCount: 10,
-      availableByCategory: { standard: 7, electric: 1, accessible: 1, oversize: 1 },
-    });
+    expect(onlineLotFromRow(parkingDemoRow).availability).toEqual(parkingDemoAvailability());
   });
 
   it.each([
