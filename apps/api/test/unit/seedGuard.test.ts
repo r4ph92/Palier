@@ -8,8 +8,8 @@ describe('databaseUrlAllowedForSeeding', () => {
     expect(databaseUrlAllowedForSeeding({ NODE_ENV: environment, DATABASE_URL: localUrl })).toBe(localUrl);
   });
 
-  it('allows 127.0.0.1', () => {
-    const url = 'postgres://palier:palier@127.0.0.1:5433/palier';
+  it.each(['127.0.0.1', '[::1]'])('allows %s', (host) => {
+    const url = `postgres://palier:palier@${host}:5433/palier`;
 
     expect(databaseUrlAllowedForSeeding({ NODE_ENV: 'development', DATABASE_URL: url })).toBe(url);
   });
@@ -24,7 +24,7 @@ describe('databaseUrlAllowedForSeeding', () => {
     const remoteUrl = 'postgres://palier:palier@db.example.com:5432/palier';
 
     expect(() => databaseUrlAllowedForSeeding({ NODE_ENV: 'development', DATABASE_URL: remoteUrl })).toThrow(
-      /must be localhost or 127.0.0.1/,
+      /must be one of localhost, 127.0.0.1, \[::1\]/,
     );
   });
 

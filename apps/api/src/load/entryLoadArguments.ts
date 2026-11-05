@@ -1,5 +1,6 @@
 import { parseArgs } from 'node:util';
 import { LOAD_DRIVER_COUNT } from '../seed/fixtures/loadDrivers.ts';
+import { LOCAL_HOST_NAMES, LOCAL_HOSTS } from '../seed/seedGuard.ts';
 
 export interface EntryLoadArguments {
   readonly apiUrl: URL;
@@ -14,8 +15,6 @@ const DEFAULT_GATE_NAME = 'Entrée Démo';
 const DEFAULT_PORT = '3000';
 // Number() alone would read 1e1, 0x5 or " 3" as numbers.
 const WHOLE_NUMBER = /^\d+$/;
-// The script fires card holds at an API: only a local one, never a shared or hosted server.
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 export function parseEntryLoadArguments(argumentList: readonly string[], variables: NodeJS.ProcessEnv): EntryLoadArguments {
   const { values } = parseArgs({
@@ -35,8 +34,9 @@ function localApiUrl(rawUrl: string): URL {
   if (url === null || (url.protocol !== 'http:' && url.protocol !== 'https:')) {
     throw new Error(`--api must be an http(s) address, got "${rawUrl}". ${USAGE}`);
   }
+  // The script fires card holds at an API: only a local one, never a shared or hosted server.
   if (!LOCAL_HOSTS.has(url.hostname)) {
-    throw new Error(`--api must point at this machine (localhost or 127.0.0.1), got "${url.hostname}".`);
+    throw new Error(`--api must point at this machine (${LOCAL_HOST_NAMES}), got "${url.hostname}".`);
   }
   return url;
 }
