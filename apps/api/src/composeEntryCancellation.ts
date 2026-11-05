@@ -1,10 +1,9 @@
 import type { PaymentAuthorizer } from './domain/entries/PaymentAuthorizer.ts';
 import type { CancellationJob } from './domain/entries/unconfirmedEntryCancellation.ts';
 import type { OpeningWindow } from './domain/gates/OpeningWindow.ts';
+import { SECOND_MILLISECONDS } from './domain/time/seconds.ts';
 import type { Database } from './infrastructure/postgres/database.ts';
 import { PostgresUnconfirmedEntryRepository } from './infrastructure/postgres/PostgresUnconfirmedEntryRepository.ts';
-
-const SECOND_MILLISECONDS = 1000;
 
 export interface EntryCancellationComposition {
   readonly job: CancellationJob;
