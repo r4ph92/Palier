@@ -6,6 +6,7 @@ import { EntryEligibility } from './domain/entries/EntryEligibility.ts';
 import { entryPolicyFor } from './domain/payments/EntryPolicy.ts';
 import type { PaymentAuthorizer } from './domain/entries/PaymentAuthorizer.ts';
 import type { OpeningWindow } from './domain/gates/OpeningWindow.ts';
+import type { Clock } from './domain/time/Clock.ts';
 import type { VehicleRepository } from './domain/vehicles/VehicleRepository.ts';
 import type { EntryRouteDependencies } from './http/routes/entryRoutes.ts';
 import type { Database } from './infrastructure/postgres/database.ts';
@@ -30,6 +31,7 @@ export interface EntryComposition {
   readonly drivers: DriverRepository;
   readonly vehicles: VehicleRepository;
   readonly openingWindow: OpeningWindow;
+  readonly clock: Clock;
 }
 
 export interface ComposedEntries {
@@ -38,8 +40,8 @@ export interface ComposedEntries {
   readonly payments: PaymentAuthorizer | null;
 }
 
-export function composeEntries({ database, stripeKey, demoMode, paymentsSimulation, drivers, vehicles, openingWindow }: EntryComposition): ComposedEntries {
-  const sessions = new PostgresParkingSessionRepository(database, openingWindow);
+export function composeEntries({ database, stripeKey, demoMode, paymentsSimulation, drivers, vehicles, openingWindow, clock }: EntryComposition): ComposedEntries {
+  const sessions = new PostgresParkingSessionRepository(database, openingWindow, clock);
   const payments = paymentAuthorizer(stripeKey, paymentsSimulation);
   const routes = {
     sessions,
@@ -48,6 +50,7 @@ export function composeEntries({ database, stripeKey, demoMode, paymentsSimulati
       vehicles,
       drivers,
       policy: entryPolicyFor(demoMode),
+      clock,
     }),
     admission: new EntryAdmission({ sessions, payments, gateCommander: new SimulatedGateCommander(database) }),
   };

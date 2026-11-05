@@ -22,6 +22,14 @@ export interface EntryGate {
   readonly lot: EntryGateLot;
 }
 
+export interface HoldQuery {
+  readonly driverId: string;
+  readonly lotId: string;
+  readonly now: Date;
+}
+
 export interface EntryGateRepository {
   findGate(gateId: string): Promise<EntryGate | null>;
+  // True when the driver has an active spot hold in this lot that has not reached its end at `now`.
+  holdsRoomIn(query: HoldQuery): Promise<boolean>;
 }

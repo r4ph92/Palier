@@ -10,6 +10,7 @@ import type {
   SessionStatus,
 } from '../../domain/entries/ParkingSessionRepository.ts';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
+import type { Clock } from '../../domain/time/Clock.ts';
 import { findActiveSessionFacts } from './activeSessionFacts.ts';
 import { admissionRefusalOf } from './admissionRefusal.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
@@ -18,6 +19,7 @@ import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
 import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
 import { parkingSession } from './schema.ts';
 import { ASSIGNED_TO_ENTRY, claimFirstFittingSpot, type AssignedSpotRow } from './spotClaim.ts';
+import { useHeldSpot } from './spotHoldUse.ts';
 import { spotOf, type SpotLabelRow } from './spotLabel.ts';
 
 interface SessionStatusRow extends SpotLabelRow {
@@ -38,10 +40,12 @@ function statusOf(row: SessionStatusRow): SessionStatus {
 export class PostgresParkingSessionRepository implements ParkingSessionRepository {
   readonly #database: Database;
   readonly #openingWindow: OpeningWindow;
+  readonly #clock: Clock;
 
-  constructor(database: Database, openingWindow: OpeningWindow) {
+  constructor(database: Database, openingWindow: OpeningWindow, clock: Clock) {
     this.#database = database;
     this.#openingWindow = openingWindow;
+    this.#clock = clock;
   }
 
   async openOrReplay(draft: SessionDraft): Promise<SessionOpening | null> {
@@ -58,7 +62,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 
   async #openUnderLotLock(tx: Transaction, draft: SessionDraft): Promise<SessionOpening | null> {
     const decision = decideRepeatedScan(await findActiveSessionFacts(tx, draft.driverId, this.#openingWindow), draft);
-    return openingFor(decision, () => openSession(tx, draft));
+    return openingFor(decision, () => openSession(tx, draft, this.#clock()));
   }
 
   async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment> {
@@ -91,8 +95,11 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   }
 }
 
-async function openSession(tx: Transaction, draft: SessionDraft): Promise<OpenedSession | null> {
-  const assigned = await claimFirstFittingSpot(tx, { lotId: draft.lotId, needs: draft.needs, target: ASSIGNED_TO_ENTRY });
+// The driver's own held spot comes first, so a lot that filled while she drove still has her spot (decision 016).
+async function openSession(tx: Transaction, draft: SessionDraft, now: Date): Promise<OpenedSession | null> {
+  const assigned =
+    (await useHeldSpot(tx, { driverId: draft.driverId, lotId: draft.lotId, now })) ??
+    (await claimFirstFittingSpot(tx, { lotId: draft.lotId, needs: draft.needs, target: ASSIGNED_TO_ENTRY }));
   return assigned === undefined ? null : insertSession(tx, draft, assigned);
 }
 

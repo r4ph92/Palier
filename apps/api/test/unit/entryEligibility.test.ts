@@ -20,19 +20,23 @@ import {
 } from './fakes/entryFakes.ts';
 import { STRICT_POLICY } from './fakes/entryGateFakes.ts';
 
+const NOW = new Date('2026-11-05T12:00:00Z');
 const entreeDemoQr = gateQrLink(entreeDemoGate.id, ENTREE_DEMO_SECRET);
 
 interface Setup {
   readonly gates?: readonly EntryGate[];
+  readonly holds?: readonly { driverId: string; lotId: string; expiresAt: Date }[];
   readonly policy?: EntryPolicy;
   readonly plate?: boolean;
   readonly card?: boolean;
   readonly needs?: VehicleNeeds;
 }
 
-async function eligibilityFor({ gates, policy = STRICT_POLICY, plate = true, card = true, needs = standardNeeds }: Setup = {}) {
+async function eligibilityFor({ gates: gateList, holds = [], policy = STRICT_POLICY, plate = true, card = true, needs = standardNeeds }: Setup = {}) {
   const drivers = new FakeDriverRepository();
   const vehicles = new FakeVehicleRepository();
+  const gates = new FakeEntryGateRepository(gateList);
+  gates.holds.push(...holds);
   if (plate) {
     await vehicles.saveVehicle(julie.id, { plate: 'ABC 123', plateKey: 'ABC123', province: 'QC', ...needs });
   }
@@ -40,7 +44,7 @@ async function eligibilityFor({ gates, policy = STRICT_POLICY, plate = true, car
     await drivers.saveStripeCustomerIdIfMissing(julie.id, 'cus_julie');
     await drivers.saveSavedCard(julie.id, 'pm_julie', { brand: 'visa', last4: '4242' });
   }
-  return new EntryEligibility({ gates: new FakeEntryGateRepository(gates), vehicles, drivers, policy });
+  return new EntryEligibility({ gates, vehicles, drivers, policy, clock: () => NOW });
 }
 
 async function refusalOf(eligibility: EntryEligibility, qrContent: string): Promise<EntryRefusalCode | undefined> {
@@ -130,6 +134,29 @@ describe('entry eligibility', () => {
     const heldFull = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 7, heldSpotCount: 3 } };
 
     expect(await refusalOf(await eligibilityFor({ gates: [heldFull] }), entreeDemoQr)).toBe('LOT_FULL');
+  });
+
+  describe('a driver holding a spot in a full lot', () => {
+    const heldFull = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 9, heldSpotCount: 1 } };
+    const hold = (lotId: string, expiresAt: Date) => ({ driverId: julie.id, lotId, expiresAt });
+
+    it('is admitted, her hold being her room', async () => {
+      const holds = [hold(entreeDemoGate.lot.id, new Date('2026-11-05T12:10:00Z'))];
+
+      expect(await refusalOf(await eligibilityFor({ gates: [heldFull], holds }), entreeDemoQr)).toBeUndefined();
+    });
+
+    it('is refused LOT_FULL once her hold is past its end, even if the job has not ended it', async () => {
+      const holds = [hold(entreeDemoGate.lot.id, new Date('2026-11-05T11:59:00Z'))];
+
+      expect(await refusalOf(await eligibilityFor({ gates: [heldFull], holds }), entreeDemoQr)).toBe('LOT_FULL');
+    });
+
+    it('is refused LOT_FULL when her hold is in another lot', async () => {
+      const holds = [hold('00000000-0000-4000-8000-000000000299', new Date('2026-11-05T12:10:00Z'))];
+
+      expect(await refusalOf(await eligibilityFor({ gates: [heldFull], holds }), entreeDemoQr)).toBe('LOT_FULL');
+    });
   });
 
   it('admits a driver into a lot with one vehicle space left', async () => {

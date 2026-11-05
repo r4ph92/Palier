@@ -1,6 +1,7 @@
 import type { EntryRefusalCode } from '@palier/shared-types';
 import { EntryAdmission } from '../../../src/domain/entries/EntryAdmission.ts';
 import { EntryEligibility } from '../../../src/domain/entries/EntryEligibility.ts';
+import { systemClock } from '../../../src/domain/time/Clock.ts';
 import type { EntryPolicy } from '../../../src/domain/payments/EntryPolicy.ts';
 import type { EntryGateRepository } from '../../../src/domain/entries/EntryGateRepository.ts';
 import type { EntryLog } from '../../../src/domain/entries/EntryLog.ts';
@@ -91,6 +92,7 @@ export function fakeEntries({ drivers, vehicles, policy, gates, hasPaymentAuthor
     vehicles,
     drivers,
     policy: policy ?? STRICT_POLICY,
+    clock: systemClock,
   });
   const admission = new EntryAdmission({ sessions, payments: hasPaymentAuthorizer ? payments : null, gateCommander });
   return { journal, sessions, payments, gateCommander, dependencies: { eligibility, admission, sessions } };
