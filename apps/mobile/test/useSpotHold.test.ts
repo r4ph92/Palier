@@ -60,18 +60,31 @@ describe('useSpotHold', () => {
     expect(result.current.held?.isFresh).toBe(true);
   });
 
-  it('clears the last problem and reads the hold again on refresh', async () => {
+  it('reads the hold again on refresh and keeps the last problem until it is dismissed', async () => {
     const client = new FakeSpotHoldClient();
     client.nextRejection = 'HOLD_QUOTA_REACHED';
     const { result } = await renderSpotHold(client);
     await act(async () => result.current.hold(PARKING_DEMO_ID, () => undefined));
-    expect(result.current.failure).toEqual({ lotId: PARKING_DEMO_ID, reason: { kind: 'refused', refusal: 'HOLD_QUOTA_REACHED' }, isFresh: true });
     client.activeHold = julieHoldAtParkingDemo();
 
     await act(async () => result.current.refreshHold());
-
-    expect(result.current.failure).toBeNull();
     expect(result.current.held?.isFresh).toBe(false);
+    expect(result.current.failure).toEqual({ lotId: PARKING_DEMO_ID, reason: { kind: 'refused', refusal: 'HOLD_QUOTA_REACHED' }, isFresh: true });
+
+    await act(async () => result.current.dismissProblem());
+    expect(result.current.failure).toBeNull();
+  });
+
+  it('sends no second read while one is on its way', async () => {
+    const client = new FakeSpotHoldClient();
+    const { result } = await renderSpotHold(client);
+
+    await act(async () => {
+      result.current.refreshHold();
+      result.current.refreshHold();
+    });
+
+    expect(client.currentRequests).toBe(2);
   });
 
   it('marks a problem announced once the screen has said it', async () => {

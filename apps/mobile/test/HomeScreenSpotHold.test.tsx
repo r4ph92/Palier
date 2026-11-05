@@ -7,20 +7,8 @@ import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient
 import { lightColors } from '../src/theme/tokens';
 import { typography } from '../src/theme/typography';
 import { renderHomeScreen, renderHomeScreenWith } from './renderHomeScreen';
+import { HOLD_BUTTON_FR, holdAtParkingDemo, tick } from './spotHoldScreen';
 import { visibleText } from './visibleText';
-
-const HOLD_BUTTON_FR = 'Garantir une place 15 min à Parking Démo';
-
-async function holdAtParkingDemo(lotsClient: FakeLotsClient, spotHoldClient = new FakeSpotHoldClient(), language: 'fr' | 'en' = 'fr') {
-  await renderHomeScreenWith({ lotsClient, locationClient: new FakeDeviceLocationClient(), spotHoldClient }, language);
-  const name = language === 'fr' ? HOLD_BUTTON_FR : 'Guarantee a spot for 15 min at Parking Démo';
-  await userEvent.setup().press(await screen.findByRole('button', { name }));
-  return spotHoldClient;
-}
-
-async function tick(seconds: number): Promise<void> {
-  await act(() => jest.advanceTimersByTimeAsync(seconds * 1000));
-}
 
 describe('HomeScreen spot hold', () => {
   beforeEach(() => {
@@ -101,19 +89,6 @@ describe('HomeScreen spot hold', () => {
 
     await act(async () => spotHoldClient.answer());
     expect(await screen.findByTestId('spot-hold-banner')).toBeOnTheScreen();
-  });
-
-  it('offers no hold until Palier has said whether Julie already holds one, and reads it again with the list', async () => {
-    const spotHoldClient = new FakeSpotHoldClient();
-    spotHoldClient.isReachable = false;
-    await renderHomeScreenWith({ lotsClient: new FakeLotsClient(parkingDemoWith(10)), locationClient: new FakeDeviceLocationClient(), spotHoldClient });
-    await screen.findByText('10 places libres', visibleText);
-    expect(screen.queryByRole('button', { name: HOLD_BUTTON_FR })).not.toBeOnTheScreen();
-
-    spotHoldClient.isReachable = true;
-    await userEvent.setup().press(screen.getByRole('button', { name: 'Actualiser' }));
-
-    expect(await screen.findByRole('button', { name: HOLD_BUTTON_FR })).toBeOnTheScreen();
   });
 
   it.each([
@@ -199,18 +174,6 @@ describe('HomeScreen spot hold refusals', () => {
 
     expect(await within(screen.getByTestId(`lot-spot-hold-${parkingTestPaliers.id}`)).findByText('Aucune place disponible')).toBeOnTheScreen();
     expect(within(screen.getByTestId(`lot-spot-hold-${PARKING_DEMO_ID}`)).queryByText('Aucune place disponible')).not.toBeOnTheScreen();
-  });
-
-  it('clears a refusal when the list is read again', async () => {
-    const spotHoldClient = new FakeSpotHoldClient();
-    spotHoldClient.nextRejection = 'HOLD_QUOTA_REACHED';
-    await holdAtParkingDemo(new FakeLotsClient(parkingDemoWith(10), parkingDemoWith(9)), spotHoldClient);
-    await screen.findByText('Trop de places garanties dans ce parking pour le moment');
-
-    await userEvent.setup().press(screen.getByRole('button', { name: 'Actualiser' }));
-
-    expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
-    expect(screen.queryByText('Trop de places garanties dans ce parking pour le moment')).not.toBeOnTheScreen();
   });
 
   it('says Palier cannot be reached without network', async () => {

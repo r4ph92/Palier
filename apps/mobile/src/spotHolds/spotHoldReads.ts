@@ -14,10 +14,12 @@ export interface SpotHoldUpdates {
   readonly setFailure: Dispatch<SetStateAction<SpotHoldFailure | null>>;
   // Counts the holds taken here: a read that started before one was taken answers too late to be shown.
   readonly holdsTaken: RefObject<number>;
+  readonly isReading: RefObject<boolean>;
 }
 
 export async function readCurrentHold(client: SpotHoldClient, updates: SpotHoldUpdates): Promise<void> {
   const holdsTakenBefore = updates.holdsTaken.current;
+  updates.isReading.current = true;
   try {
     const spotHold = await client.current();
     if (updates.holdsTaken.current === holdsTakenBefore) {
@@ -32,6 +34,8 @@ export async function readCurrentHold(client: SpotHoldClient, updates: SpotHoldU
       }
       throw error;
     });
+  } finally {
+    updates.isReading.current = false;
   }
 }
 

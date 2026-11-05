@@ -11,8 +11,9 @@ export interface SpotHoldController {
   // The lot of the request in flight; every hold button waits while it runs.
   readonly requestedLotId: string | null;
   hold(lotId: string, onHeld: () => void): void;
-  // Clears the last problem and reads the hold again; the lot list calls it on every read.
+  // Reads the hold again, unless a read is already on its way.
   refreshHold(): void;
+  dismissProblem(): void;
   acknowledgeFreshHold(): void;
   acknowledgeFreshFailure(): void;
 }
@@ -23,14 +24,17 @@ export function useSpotHold(client: SpotHoldClient): SpotHoldController {
   const [readState, setReadState] = useState<SpotHoldReadState>('unknown');
   const [failure, setFailure] = useState<SpotHoldFailure | null>(null);
   const holdsTaken = useRef(0);
-  const updates = useMemo<SpotHoldUpdates>(() => ({ setHeld, setReadState, setFailure, holdsTaken }), []);
+  const isReading = useRef(false);
+  const updates = useMemo<SpotHoldUpdates>(() => ({ setHeld, setReadState, setFailure, holdsTaken, isReading }), []);
   useEffect(() => void readCurrentHold(client, updates), [client, updates]);
   const { requestedLotId, hold } = useHoldRequest(client, updates);
   const refreshHold = useCallback(() => {
-    setFailure(null);
-    void readCurrentHold(client, updates);
+    if (!isReading.current) {
+      void readCurrentHold(client, updates);
+    }
   }, [client, updates]);
-  return { held, readState, failure, requestedLotId, hold, refreshHold, ...useAcknowledgements(setHeld, setFailure) };
+  const dismissProblem = useCallback(() => setFailure(null), []);
+  return { held, readState, failure, requestedLotId, hold, refreshHold, dismissProblem, ...useAcknowledgements(setHeld, setFailure) };
 }
 
 // The ref refuses a second request while one runs, so a double tap sends one request.
