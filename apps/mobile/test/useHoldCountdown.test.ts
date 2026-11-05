@@ -30,7 +30,7 @@ describe('useHoldCountdown', () => {
 
     await act(() => jest.advanceTimersByTimeAsync(2 * ONE_SECOND));
 
-    expect(result.current).toEqual({ kind: 'counting', secondsLeft: 898 });
+    expect(result.current?.countdown).toEqual({ kind: 'counting', secondsLeft: 898 });
     expect(countdownTimers()).toHaveLength(1);
     expect(isCleared()).toBe(false);
   });
@@ -40,7 +40,7 @@ describe('useHoldCountdown', () => {
 
     await act(() => jest.advanceTimersByTimeAsync(FIFTEEN_MINUTES));
 
-    expect(result.current).toEqual({ kind: 'expired' });
+    expect(result.current?.countdown).toEqual({ kind: 'expired' });
     expect(isCleared()).toBe(true);
   });
 

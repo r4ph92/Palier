@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { HeldSpot, HoldCountdown } from '../spotHolds/heldSpot';
 import type { ReleaseCallbacks } from '../spotHolds/spotHoldRequests';
 import { useExpiredHold } from '../spotHolds/useExpiredHold';
-import { useHoldCountdown } from '../spotHolds/useHoldCountdown';
+import { useHoldCountdown, type RunningHold } from '../spotHolds/useHoldCountdown';
 import type { SpotHoldFailure } from '../spotHolds/spotHoldFailure';
 import type { SpotHoldController } from '../spotHolds/useSpotHold';
 import { useColors } from '../theme/useColors';
@@ -17,30 +16,21 @@ interface HeldSpotSectionProps {
   readonly onRelease: ReleaseCallbacks;
 }
 
-type HoldingController = SpotHoldController & { readonly held: HeldSpot };
-
-function isHolding(spotHold: SpotHoldController): spotHold is HoldingController {
-  return spotHold.held !== null;
-}
-
 export function HeldSpotSection({ spotHold, onRelease }: HeldSpotSectionProps) {
-  const countdown = useHoldCountdown(spotHold.held);
-  useExpiredHold(countdown, { refreshHold: spotHold.refreshHold, onEnded: onRelease.onGone });
-  if (!isHolding(spotHold) || countdown === null) {
-    return null;
-  }
-  return <HeldSpotContent spotHold={spotHold} countdown={countdown} onRelease={onRelease} />;
+  const running = useHoldCountdown(spotHold.held);
+  useExpiredHold(running?.countdown ?? null, { refreshHold: spotHold.refreshHold, onEnded: onRelease.onGone });
+  return running === null ? null : <HeldSpotContent spotHold={spotHold} running={running} onRelease={onRelease} />;
 }
 
 interface HeldSpotContentProps {
-  readonly spotHold: HoldingController;
-  readonly countdown: HoldCountdown;
+  readonly spotHold: SpotHoldController;
+  readonly running: RunningHold;
   readonly onRelease: ReleaseCallbacks;
 }
 
 // The banner is one accessible group, so the release button and its problem sit beside it, not inside it.
 // An expired hold has nothing left to release, and the refusal that says so would repeat the banner.
-function HeldSpotContent({ spotHold, countdown, onRelease }: HeldSpotContentProps) {
+function HeldSpotContent({ spotHold, running: { held, countdown }, onRelease }: HeldSpotContentProps) {
   const colors = useColors();
   const [holdsFocus, setHoldsFocus] = useState(false);
   const isExpired = countdown.kind === 'expired';
@@ -48,27 +38,28 @@ function HeldSpotContent({ spotHold, countdown, onRelease }: HeldSpotContentProp
   return (
     <View style={[styles.section, { borderColor: colors.line }]}>
       <SpotHoldBanner
-        held={spotHold.held}
+        held={held}
         countdown={countdown}
         takesFocusOnExpiry={holdsFocus}
         onFreshHoldShown={spotHold.acknowledgeFreshHold}
       />
-      {isExpired ? null : <ReleaseControl spotHold={spotHold} onRelease={onRelease} onHoldsFocusChange={setHoldsFocus} />}
+      {isExpired ? null : <ReleaseControl spotHold={spotHold} lotName={held.spotHold.lotName} onRelease={onRelease} onHoldsFocusChange={setHoldsFocus} />}
       {failure === null ? null : <SpotHoldProblem failure={failure} onAnnounced={spotHold.acknowledgeFreshFailure} />}
     </View>
   );
 }
 
 interface ReleaseControlProps {
-  readonly spotHold: HoldingController;
+  readonly spotHold: SpotHoldController;
+  readonly lotName: string;
   readonly onRelease: ReleaseCallbacks;
   readonly onHoldsFocusChange: (holdsFocus: boolean) => void;
 }
 
-function ReleaseControl({ spotHold, onRelease, onHoldsFocusChange }: ReleaseControlProps) {
+function ReleaseControl({ spotHold, lotName, onRelease, onHoldsFocusChange }: ReleaseControlProps) {
   return (
     <ReleaseSpotHold
-      lotName={spotHold.held.spotHold.lotName}
+      lotName={lotName}
       isReleasing={spotHold.isReleasing}
       onConfirm={() => spotHold.release(onRelease)}
       onHoldsFocusChange={onHoldsFocusChange}

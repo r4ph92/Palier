@@ -129,7 +129,7 @@ describe('QA spot hold countdown timer', () => {
 
     const { result } = await renderHook(() => useHoldCountdown(held));
 
-    expect(result.current).toEqual({ kind: 'expired' });
+    expect(result.current?.countdown).toEqual({ kind: 'expired' });
     expect(started).not.toHaveBeenCalled();
   });
 
@@ -140,7 +140,7 @@ describe('QA spot hold countdown timer', () => {
 
     await act(() => jest.advanceTimersByTimeAsync(15 * 60 * 1000));
 
-    expect(result.current).toEqual({ kind: 'expired' });
+    expect(result.current?.countdown).toEqual({ kind: 'expired' });
     expect(cleared).toHaveBeenCalled();
   });
 });

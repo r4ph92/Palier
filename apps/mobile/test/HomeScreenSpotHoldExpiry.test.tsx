@@ -133,8 +133,7 @@ describe('HomeScreen expired spot hold', () => {
 
     await tick(15 * 60);
 
-    const mark = screen.getByTestId('spot-hold-expired').parent?.parent?.children[0];
-    expect(mark).toHaveStyle({ backgroundColor: lightColors.muted });
+    expect(screen.getByTestId('spot-hold-mark')).toHaveStyle({ backgroundColor: lightColors.muted });
   });
 
   it('moves VoiceOver to the banner, without announcing, when the confirmation vanishes at expiry', async () => {
@@ -212,5 +211,19 @@ describe('HomeScreen expired spot hold', () => {
     await tick(5);
 
     expect(lotsClient.callCount).toBe(readsBefore + 1);
+  });
+
+  it('announces once when a hold opened expired is read again with time left and then runs out', async () => {
+    const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo({ now: new Date(2026, 10, 4, 14, 40).toISOString() }));
+    await renderJulieHolding(spotHoldClient);
+    expect(screen.getByText(EXPIRED_FR)).toBeOnTheScreen();
+
+    spotHoldClient.activeHold = julieHoldAtParkingDemo();
+    await tick(5);
+    expect(screen.getByTestId('spot-hold-countdown')).toBeOnTheScreen();
+    await tick(15 * 60);
+
+    expect(screen.getByText(EXPIRED_FR)).toBeOnTheScreen();
+    expect(announcementsOf(EXPIRED_FR)).toBe(1);
   });
 });
