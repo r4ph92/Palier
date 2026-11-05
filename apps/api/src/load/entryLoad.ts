@@ -24,8 +24,8 @@ export async function runEntryLoad({ database, options, appVersion }: EntryLoadS
   const tokens = await signInDrivers(database, driverIds);
   const since = await databaseNow(database);
   const outcomes = await fireEntries({ apiUrl: options.apiUrl, qrContent: target.qrContent, appVersion }, tokens);
-  const sessions = await checkRunSessions(database, { lotId: target.lotId, driverIds, since });
-  return reportEntryLoad({ expectedAdmissions, outcomes, database: sessions, maxLatencyMilliseconds: options.maxLatencyMilliseconds });
+  const sessionCheck = await checkRunSessions(database, { lotId: target.lotId, driverIds, since });
+  return reportEntryLoad({ expectedAdmissions, outcomes, sessionCheck, maxLatencyMilliseconds: options.maxLatencyMilliseconds });
 }
 
 // A driver still inside from an earlier run would replay or be refused, not compete for a spot.

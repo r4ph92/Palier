@@ -18,7 +18,7 @@ function twentyDriverRun(overrides: Partial<EntryLoadRun> = {}): EntryLoadRun {
   return {
     expectedAdmissions: 10,
     outcomes: [...tenSpots.map((spot) => admitted(spot)), ...Array.from({ length: 10 }, () => refused('LOT_FULL'))],
-    database: cleanDatabase,
+    sessionCheck: cleanDatabase,
     maxLatencyMilliseconds: null,
     ...overrides,
   };
@@ -45,7 +45,7 @@ describe('reportEntryLoad', () => {
   it('fails when fewer entries are admitted than spots were free', () => {
     const outcomes = [...tenSpots.slice(0, 9).map((spot) => admitted(spot)), ...Array.from({ length: 11 }, () => refused('LOT_FULL'))];
 
-    expect(reportEntryLoad(twentyDriverRun({ outcomes, database: { ...cleanDatabase, sessions: 9, distinctSpots: 9, distinctIntents: 9 } })).failures).toEqual([
+    expect(reportEntryLoad(twentyDriverRun({ outcomes, sessionCheck: { ...cleanDatabase, sessions: 9, distinctSpots: 9, distinctIntents: 9 } })).failures).toEqual([
       '10 entries should have been admitted, 9 were.',
     ]);
   });
@@ -57,9 +57,9 @@ describe('reportEntryLoad', () => {
   });
 
   it('fails when the database disagrees with the answers', () => {
-    const database: SessionCheck = { sessions: 11, distinctSpots: 10, distinctIntents: 9, doubleBookedSpots: 1 };
+    const sessionCheck: SessionCheck = { sessions: 11, distinctSpots: 10, distinctIntents: 9, doubleBookedSpots: 1 };
 
-    expect(reportEntryLoad(twentyDriverRun({ database })).failures).toEqual([
+    expect(reportEntryLoad(twentyDriverRun({ sessionCheck })).failures).toEqual([
       '10 entries were admitted, the database holds 11 new active sessions.',
       '10 entries were admitted with 9 distinct card holds.',
       '1 spots have two active sessions.',
@@ -79,7 +79,7 @@ describe('reportEntryLoad', () => {
   });
 
   it('checks the latency bound only when one is given (AC2)', () => {
-    const threeDrivers = { expectedAdmissions: 3, outcomes: [admitted('A-1', 400), admitted('A-2', 3200), admitted('A-3', 800)], database: { ...cleanDatabase, sessions: 3, distinctSpots: 3, distinctIntents: 3 } };
+    const threeDrivers = { expectedAdmissions: 3, outcomes: [admitted('A-1', 400), admitted('A-2', 3200), admitted('A-3', 800)], sessionCheck: { ...cleanDatabase, sessions: 3, distinctSpots: 3, distinctIntents: 3 } };
 
     expect(reportEntryLoad({ ...threeDrivers, maxLatencyMilliseconds: null }).failures).toEqual([]);
     expect(reportEntryLoad({ ...threeDrivers, maxLatencyMilliseconds: 3000 }).failures).toEqual([

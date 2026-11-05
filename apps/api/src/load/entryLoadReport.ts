@@ -6,7 +6,7 @@ import { ADMITTED, type EntryAnswer, type EntryOutcome } from './fireEntries.ts'
 export interface EntryLoadRun {
   readonly expectedAdmissions: number;
   readonly outcomes: readonly EntryOutcome[];
-  readonly database: SessionCheck;
+  readonly sessionCheck: SessionCheck;
   readonly maxLatencyMilliseconds: number | null;
 }
 
@@ -47,7 +47,7 @@ function tallyOf(outcomes: readonly EntryOutcome[]): Tally {
   };
 }
 
-function summaryOf({ outcomes, expectedAdmissions, database }: EntryLoadRun, tally: Tally): string {
+function summaryOf({ outcomes, expectedAdmissions, sessionCheck }: EntryLoadRun, tally: Tally): string {
   const otherCount = [...tally.others.values()].reduce((sum, count) => sum + count, 0);
   return [
     `entries=${outcomes.length}`,
@@ -56,10 +56,10 @@ function summaryOf({ outcomes, expectedAdmissions, database }: EntryLoadRun, tal
     `lot_full=${tally.lotFull}`,
     `other=${otherCount}`,
     `distinct_spots=${tally.distinctSpots}`,
-    `sessions=${database.sessions}`,
-    `session_spots=${database.distinctSpots}`,
-    `intents=${database.distinctIntents}`,
-    `double_booked=${database.doubleBookedSpots}`,
+    `sessions=${sessionCheck.sessions}`,
+    `session_spots=${sessionCheck.distinctSpots}`,
+    `intents=${sessionCheck.distinctIntents}`,
+    `double_booked=${sessionCheck.doubleBookedSpots}`,
   ].join(' ');
 }
 
@@ -68,10 +68,10 @@ function failuresOf(run: EntryLoadRun, tally: Tally, slowestMilliseconds: number
   const failures = [
     admitted === run.expectedAdmissions ? null : `${run.expectedAdmissions} entries should have been admitted, ${admitted} were.`,
     tally.distinctSpots === admitted ? null : `${admitted} admitted entries share ${tally.distinctSpots} spots.`,
-    run.database.sessions === admitted ? null : `${admitted} entries were admitted, the database holds ${run.database.sessions} new active sessions.`,
-    run.database.distinctSpots === admitted ? null : `the ${run.database.sessions} new sessions hold ${run.database.distinctSpots} distinct spots.`,
-    run.database.distinctIntents === admitted ? null : `${admitted} entries were admitted with ${run.database.distinctIntents} distinct card holds.`,
-    run.database.doubleBookedSpots === 0 ? null : `${run.database.doubleBookedSpots} spots have two active sessions.`,
+    run.sessionCheck.sessions === admitted ? null : `${admitted} entries were admitted, the database holds ${run.sessionCheck.sessions} new active sessions.`,
+    run.sessionCheck.distinctSpots === admitted ? null : `the ${run.sessionCheck.sessions} new sessions hold ${run.sessionCheck.distinctSpots} distinct spots.`,
+    run.sessionCheck.distinctIntents === admitted ? null : `${admitted} entries were admitted with ${run.sessionCheck.distinctIntents} distinct card holds.`,
+    run.sessionCheck.doubleBookedSpots === 0 ? null : `${run.sessionCheck.doubleBookedSpots} spots have two active sessions.`,
     latencyFailure(run.maxLatencyMilliseconds, slowestMilliseconds),
     ...[...tally.others].map(([answer, count]) => unexpectedAnswer(answer, count)),
   ];
