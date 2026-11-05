@@ -1,6 +1,6 @@
 import { findDriverPrerequisites, type DriverPrerequisiteSources } from '../drivers/driverPrerequisites.ts';
-import type { EntryPolicy } from '../entries/EntryEligibility.ts';
 import { checkLotTerms } from '../lots/lotTerms.ts';
+import type { EntryPolicy } from '../payments/EntryPolicy.ts';
 import type { VehicleNeeds } from '../vehicles/VehicleRepository.ts';
 import { SpotHoldRefusedError } from './SpotHoldRefusedError.ts';
 import type { SpotHoldLot, SpotHoldRepository } from './SpotHoldRepository.ts';

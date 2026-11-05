@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
-import { LotBusyError } from '../../src/domain/entries/LotBusyError.ts';
+import { LotBusyError } from '../../src/domain/lots/LotBusyError.ts';
 import { PricingPolicyInvalidError } from '../../src/domain/pricing/PricingPolicy.ts';
 import { SpotHoldRefusedError } from '../../src/domain/spotHolds/SpotHoldRefusedError.ts';
 import { handleSpotHoldError } from '../../src/http/spotHolds/handleSpotHoldError.ts';

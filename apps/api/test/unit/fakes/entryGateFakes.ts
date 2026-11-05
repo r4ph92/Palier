@@ -1,4 +1,4 @@
-import type { EntryPolicy } from '../../../src/domain/entries/EntryEligibility.ts';
+import type { EntryPolicy } from '../../../src/domain/payments/EntryPolicy.ts';
 import type { EntryGate, EntryGateRepository } from '../../../src/domain/entries/EntryGateRepository.ts';
 import { entreeDemo, sortieDemo } from './gateFixtures.ts';
 

@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify';
-import { LotBusyError } from '../domain/entries/LotBusyError.ts';
+import { LotBusyError } from '../domain/lots/LotBusyError.ts';
 import { PricingPolicyInvalidError } from '../domain/pricing/PricingPolicy.ts';
 
 // The driver only sees the refusal; the log says which lot problem was behind it.

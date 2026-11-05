@@ -2,7 +2,8 @@ import Stripe from 'stripe';
 import type { PaymentsSimulation } from './config/paymentsSimulation.ts';
 import type { DriverRepository } from './domain/drivers/DriverRepository.ts';
 import { EntryAdmission } from './domain/entries/EntryAdmission.ts';
-import { EntryEligibility, type EntryPolicy } from './domain/entries/EntryEligibility.ts';
+import { EntryEligibility } from './domain/entries/EntryEligibility.ts';
+import { entryPolicyFor } from './domain/payments/EntryPolicy.ts';
 import type { PaymentAuthorizer } from './domain/entries/PaymentAuthorizer.ts';
 import type { OpeningWindow } from './domain/gates/OpeningWindow.ts';
 import type { VehicleRepository } from './domain/vehicles/VehicleRepository.ts';
@@ -51,11 +52,6 @@ export function composeEntries({ database, stripeKey, demoMode, paymentsSimulati
     admission: new EntryAdmission({ sessions, payments, gateCommander: new SimulatedGateCommander(database) }),
   };
   return { routes, payments };
-}
-
-// Demo mode lets a lot whose operator has no Stripe account take entries and holds anyway, charged on the platform.
-export function entryPolicyFor(demoMode: boolean): EntryPolicy {
-  return { allowPlatformChargesWithoutOperatorAccount: demoMode };
 }
 
 // Exported for its test: the unreachable simulation must win over a real key (readPaymentsSimulation refuses success beside one).

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { EntryRefusalCode } from '@palier/shared-types';
-import { EntryEligibility, type EntryPolicy } from '../../src/domain/entries/EntryEligibility.ts';
+import { EntryEligibility } from '../../src/domain/entries/EntryEligibility.ts';
+import type { EntryPolicy } from '../../src/domain/payments/EntryPolicy.ts';
 import type { EntryGate } from '../../src/domain/entries/EntryGateRepository.ts';
 import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { PricingPolicyInvalidError } from '../../src/domain/pricing/PricingPolicy.ts';

@@ -1,6 +1,5 @@
-import { entryPolicyFor } from './composeEntries.ts';
 import type { DriverPrerequisiteSources } from './domain/drivers/driverPrerequisites.ts';
-import type { EntryPolicy } from './domain/entries/EntryEligibility.ts';
+import { entryPolicyFor, type EntryPolicy } from './domain/payments/EntryPolicy.ts';
 import { SPOT_HOLD_ATTEMPT_LIMIT, SPOT_HOLD_ATTEMPT_WINDOW_MILLISECONDS } from './domain/spotHolds/spotHoldAttemptLimit.ts';
 import { SpotHoldEligibility } from './domain/spotHolds/SpotHoldEligibility.ts';
 import type { SpotHoldRepository } from './domain/spotHolds/SpotHoldRepository.ts';

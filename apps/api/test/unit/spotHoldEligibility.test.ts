@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SpotHoldRefusalCode } from '@palier/shared-types';
-import type { EntryPolicy } from '../../src/domain/entries/EntryEligibility.ts';
+import type { EntryPolicy } from '../../src/domain/payments/EntryPolicy.ts';
 import { PricingPolicyInvalidError } from '../../src/domain/pricing/PricingPolicy.ts';
 import { SpotHoldEligibility } from '../../src/domain/spotHolds/SpotHoldEligibility.ts';
 import { SpotHoldRefusedError } from '../../src/domain/spotHolds/SpotHoldRefusedError.ts';

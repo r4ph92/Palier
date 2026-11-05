@@ -1,5 +1,5 @@
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
-import { LotBusyError } from '../../domain/entries/LotBusyError.ts';
+import { LotBusyError } from '../../domain/lots/LotBusyError.ts';
 import { SpotHoldRefusedError } from '../../domain/spotHolds/SpotHoldRefusedError.ts';
 import { isLockTimeout } from './lockTimeout.ts';
 import { isUniqueViolationOf } from './uniqueViolation.ts';

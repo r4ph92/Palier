@@ -1,4 +1,4 @@
-import type { EntryPolicy } from '../entries/EntryEligibility.ts';
+import type { EntryPolicy } from '../payments/EntryPolicy.ts';
 import { isOperatorPayable } from '../payments/isOperatorPayable.ts';
 import { PricingPolicyInvalidError, readLotPricing, type PricedLot, type PricingPolicy } from '../pricing/PricingPolicy.ts';
 

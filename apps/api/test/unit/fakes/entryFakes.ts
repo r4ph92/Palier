@@ -1,6 +1,7 @@
 import type { EntryRefusalCode } from '@palier/shared-types';
 import { EntryAdmission } from '../../../src/domain/entries/EntryAdmission.ts';
-import { EntryEligibility, type EntryPolicy } from '../../../src/domain/entries/EntryEligibility.ts';
+import { EntryEligibility } from '../../../src/domain/entries/EntryEligibility.ts';
+import type { EntryPolicy } from '../../../src/domain/payments/EntryPolicy.ts';
 import type { EntryGateRepository } from '../../../src/domain/entries/EntryGateRepository.ts';
 import type { EntryLog } from '../../../src/domain/entries/EntryLog.ts';
 import { EntryRefusedError } from '../../../src/domain/entries/EntryRefusedError.ts';

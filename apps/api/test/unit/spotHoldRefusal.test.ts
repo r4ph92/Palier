@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EntryRefusedError } from '../../src/domain/entries/EntryRefusedError.ts';
-import { LotBusyError } from '../../src/domain/entries/LotBusyError.ts';
+import { LotBusyError } from '../../src/domain/lots/LotBusyError.ts';
 import { SpotHoldRefusedError } from '../../src/domain/spotHolds/SpotHoldRefusedError.ts';
 import { spotHoldRefusalOf } from '../../src/infrastructure/postgres/spotHoldRefusal.ts';
 

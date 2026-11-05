@@ -1,14 +1,11 @@
 import { findDriverPrerequisites, type DriverPrerequisites, type DriverPrerequisiteSources } from '../drivers/driverPrerequisites.ts';
 import { checkLotTerms, type LotTermsRefusal } from '../lots/lotTerms.ts';
+import type { EntryPolicy } from '../payments/EntryPolicy.ts';
 import { hasRoomForAnotherVehicle } from '../occupancy/hasRoomForAnotherVehicle.ts';
 import type { PricingPolicy } from '../pricing/PricingPolicy.ts';
 import type { EntryGate, EntryGateRepository } from './EntryGateRepository.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import { isSignedWith, readGateToken } from './gateToken.ts';
-
-export interface EntryPolicy {
-  readonly allowPlatformChargesWithoutOperatorAccount: boolean;
-}
 
 export interface EntryEligibilityDependencies extends DriverPrerequisiteSources {
   readonly gates: EntryGateRepository;
