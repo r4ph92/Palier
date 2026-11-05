@@ -9,7 +9,6 @@ export interface LotSources {
   readonly locationClient: DeviceLocationClient;
 }
 
-// The position comes first, so the list shows once, already sorted.
 export async function readLots(sources: LotSources, knownLocation: DriverLocation | null): Promise<LotsAction> {
   const location = knownLocation ?? (await locateDriver(sources.locationClient));
   try {

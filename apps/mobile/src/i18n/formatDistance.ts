@@ -14,13 +14,11 @@ interface RoundedDistance {
 
 const UNIT_SYMBOLS: Readonly<Record<DistanceUnit, string>> = { metres: 'm', kilometres: 'km' };
 
-// « 350 m » under a kilometre, then « 1,2 km » / « 1.2 km »; a whole number of kilometres shows no decimal.
 export function formatDistance(metres: number, language: SupportedLanguage): string {
   const { amount, unit } = roundedDistance(metres);
   return `${writtenAmount(amount, language)}${NO_BREAK_SPACE}${UNIT_SYMBOLS[unit]}`;
 }
 
-// What VoiceOver reads: « 350 mètres », « 1,2 kilomètres ».
 export function spokenDistance(metres: number, language: SupportedLanguage): string {
   const { amount, unit } = roundedDistance(metres);
   return i18n.t(`home.distance.${unit}`, { count: amount, amount: writtenAmount(amount, language) });
