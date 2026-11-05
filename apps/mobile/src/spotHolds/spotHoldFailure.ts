@@ -1,10 +1,10 @@
 import { PalierUnauthorizedError } from '../api/AuthClient';
 import { PalierStatusError, PalierUnreachableError } from '../api/LotsClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
-import { SPOT_HOLD_REFUSALS, type SpotHoldRefusal } from './spotHoldRefusals';
+import { SPOT_HOLD_REFUSAL_CODES, type SpotHoldRefusalCode } from '@palier/shared-types/spotHolds';
 
 export type SpotHoldFailureReason =
-  | { readonly kind: 'refused'; readonly refusal: SpotHoldRefusal }
+  | { readonly kind: 'refused'; readonly refusal: SpotHoldRefusalCode }
   | { readonly kind: 'notResponding' }
   | { readonly kind: 'unreachable' };
 
@@ -16,6 +16,7 @@ export interface SpotHoldFailure {
   readonly isFresh: boolean;
 }
 
+// Every code the API can answer has its own message; any other reads as "Palier is not responding".
 // A status error is checked before the network error it extends: the API answered, so the connection is fine.
 // A refused token or a missing notice already moves the app off the tabs.
 export function failureReasonOf(error: unknown): SpotHoldFailureReason | null {
@@ -39,6 +40,6 @@ export function isExpectedReadFailure(error: unknown): boolean {
   return error instanceof PalierUnreachableError || error instanceof PalierUnauthorizedError || error instanceof PalierConsentRequiredError;
 }
 
-function isSpotHoldRefusal(code: string): code is SpotHoldRefusal {
-  return (SPOT_HOLD_REFUSALS as readonly string[]).includes(code);
+function isSpotHoldRefusal(code: string): code is SpotHoldRefusalCode {
+  return (SPOT_HOLD_REFUSAL_CODES as readonly string[]).includes(code);
 }

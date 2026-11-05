@@ -17,15 +17,18 @@ export interface CurrentSpotHoldResponse {
   readonly spotHold: SpotHold | null;
 }
 
-export type SpotHoldRefusalCode =
-  | 'PREREQUISITES_MISSING'
-  | 'HOLD_ALREADY_EXISTS'
-  | 'HOLD_QUOTA_REACHED'
-  | 'NO_SUITABLE_SPOT'
-  | 'LOT_NOT_FOUND'
-  | 'LOT_NOT_IN_SERVICE'
-  | 'HOLD_UNAVAILABLE'
-  | 'TOO_MANY_HOLD_ATTEMPTS';
+export const SPOT_HOLD_REFUSAL_CODES = [
+  'PREREQUISITES_MISSING',
+  'HOLD_ALREADY_EXISTS',
+  'HOLD_QUOTA_REACHED',
+  'NO_SUITABLE_SPOT',
+  'LOT_NOT_FOUND',
+  'LOT_NOT_IN_SERVICE',
+  'HOLD_UNAVAILABLE',
+  'TOO_MANY_HOLD_ATTEMPTS',
+] as const;
+
+export type SpotHoldRefusalCode = (typeof SPOT_HOLD_REFUSAL_CODES)[number];
 
 export interface SpotHoldRefusalBody {
   readonly statusCode: number;
