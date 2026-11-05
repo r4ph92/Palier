@@ -8,9 +8,12 @@ export type SpotHoldFailureReason =
   | { readonly kind: 'notResponding' }
   | { readonly kind: 'unreachable' };
 
+// The problem of a release shows under the banner; a lot id is a UUID, so it never collides with this.
+export const BANNER_TARGET = 'banner';
+
 export interface SpotHoldFailure {
-  // The lot whose button was tapped: the problem shows under that button.
-  readonly lotId: string;
+  // The lot whose button was tapped, or BANNER_TARGET: the problem shows under that control.
+  readonly target: string;
   readonly reason: SpotHoldFailureReason;
   // True until VoiceOver has announced it once: a tab return shows it again without a second announcement.
   readonly isFresh: boolean;

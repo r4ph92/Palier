@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SpotHoldClient } from '../api/SpotHoldClient';
 import type { HeldSpot } from './heldSpot';
 import type { SpotHoldFailure } from './spotHoldFailure';
-import { readCurrentHold, requestHold, type SpotHoldReadState, type SpotHoldUpdates } from './spotHoldRequests';
+import { readCurrentHold, releaseHold, requestHold, type SpotHoldReadState, type SpotHoldUpdates } from './spotHoldRequests';
 
 export interface SpotHoldController {
   readonly held: HeldSpot | null;
@@ -11,6 +11,9 @@ export interface SpotHoldController {
   // The lot of the request in flight; every hold button waits while it runs.
   readonly requestedLotId: string | null;
   hold(lotId: string, onHeld: () => void): void;
+  // True while the release of the hold on screen runs.
+  readonly isReleasing: boolean;
+  release(onReleased: () => void): void;
   // Reads the hold again, unless a read is already on its way.
   refreshHold(): void;
   dismissProblem(): void;
@@ -23,18 +26,19 @@ export function useSpotHold(client: SpotHoldClient): SpotHoldController {
   const [held, setHeld] = useState<HeldSpot | null>(null);
   const [readState, setReadState] = useState<SpotHoldReadState>('unknown');
   const [failure, setFailure] = useState<SpotHoldFailure | null>(null);
-  const holdsTaken = useRef(0);
+  const holdChanges = useRef(0);
   const isReading = useRef(false);
-  const updates = useMemo<SpotHoldUpdates>(() => ({ setHeld, setReadState, setFailure, holdsTaken, isReading }), []);
+  const updates = useMemo<SpotHoldUpdates>(() => ({ setHeld, setReadState, setFailure, holdChanges, isReading }), []);
   useEffect(() => void readCurrentHold(client, updates), [client, updates]);
   const { requestedLotId, hold } = useHoldRequest(client, updates);
+  const { isReleasing, release } = useReleaseRequest(client, updates, held);
   const refreshHold = useCallback(() => {
     if (!isReading.current) {
       void readCurrentHold(client, updates);
     }
   }, [client, updates]);
   const dismissProblem = useCallback(() => setFailure(null), []);
-  return { held, readState, failure, requestedLotId, hold, refreshHold, dismissProblem, ...useAcknowledgements(setHeld, setFailure) };
+  return { held, readState, failure, requestedLotId, hold, isReleasing, release, refreshHold, dismissProblem, ...useAcknowledgements(setHeld, setFailure) };
 }
 
 // The ref refuses a second request while one runs, so a double tap sends one request.
@@ -57,6 +61,28 @@ function useHoldRequest(client: SpotHoldClient, updates: SpotHoldUpdates): Pick<
     [client, updates],
   );
   return { requestedLotId, hold };
+}
+
+// The same ref guard as a hold request: a double tap on « Confirmer » sends one release.
+function useReleaseRequest(client: SpotHoldClient, updates: SpotHoldUpdates, held: HeldSpot | null): Pick<SpotHoldController, 'isReleasing' | 'release'> {
+  const [isReleasing, setIsReleasing] = useState(false);
+  const isRequesting = useRef(false);
+  const spotHoldId = held?.spotHold.spotHoldId;
+  const release = useCallback(
+    (onReleased: () => void) => {
+      if (isRequesting.current || spotHoldId === undefined) {
+        return;
+      }
+      isRequesting.current = true;
+      setIsReleasing(true);
+      void releaseHold(client, spotHoldId, { ...updates, onReleased }).finally(() => {
+        isRequesting.current = false;
+        setIsReleasing(false);
+      });
+    },
+    [client, updates, spotHoldId],
+  );
+  return { isReleasing, release };
 }
 
 function useAcknowledgements(
