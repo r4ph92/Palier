@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { heldSpotFrom } from '../src/spotHolds/heldSpot';
-import { useSecondsLeft } from '../src/spotHolds/useSecondsLeft';
+import { useHoldCountdown } from '../src/spotHolds/useHoldCountdown';
 import { julieHoldAtParkingDemo } from './fakeSpotHoldClient';
 
 const ONE_SECOND = 1000;
@@ -11,14 +11,14 @@ async function renderCountdown() {
   const setIntervalSpy = jest.spyOn(globalThis, 'setInterval');
   const clearIntervalSpy = jest.spyOn(globalThis, 'clearInterval');
   const held = heldSpotFrom(julieHoldAtParkingDemo(), Date.now(), true);
-  const rendered = await renderHook(() => useSecondsLeft(held));
+  const rendered = await renderHook(() => useHoldCountdown(held));
   const countdownTimers = () => setIntervalSpy.mock.results.filter((_result, index) => setIntervalSpy.mock.calls[index]?.[1] === ONE_SECOND).map(({ value }) => value);
   const clearedTimers = () => clearIntervalSpy.mock.calls.map(([timer]) => timer);
   const isCleared = () => countdownTimers().every((timer) => clearedTimers().includes(timer));
   return { ...rendered, countdownTimers, isCleared };
 }
 
-describe('useSecondsLeft', () => {
+describe('useHoldCountdown', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => {
     jest.restoreAllMocks();
@@ -30,7 +30,7 @@ describe('useSecondsLeft', () => {
 
     await act(() => jest.advanceTimersByTimeAsync(2 * ONE_SECOND));
 
-    expect(result.current).toBe(898);
+    expect(result.current?.countdown).toEqual({ kind: 'counting', secondsLeft: 898 });
     expect(countdownTimers()).toHaveLength(1);
     expect(isCleared()).toBe(false);
   });
@@ -40,7 +40,7 @@ describe('useSecondsLeft', () => {
 
     await act(() => jest.advanceTimersByTimeAsync(FIFTEEN_MINUTES));
 
-    expect(result.current).toBe(0);
+    expect(result.current?.countdown).toEqual({ kind: 'expired' });
     expect(isCleared()).toBe(true);
   });
 

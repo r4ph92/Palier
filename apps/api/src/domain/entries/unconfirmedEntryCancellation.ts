@@ -1,3 +1,4 @@
+import type { JobLog } from '../JobLog.ts';
 import { assertNever } from '../assertNever.ts';
 import type { OpeningWindow } from '../gates/OpeningWindow.ts';
 import type { HoldRelease, PaymentAuthorizer } from './PaymentAuthorizer.ts';
@@ -13,27 +14,21 @@ export interface CancellationJob {
   readonly openingWindow: OpeningWindow;
 }
 
-export interface CancellationLog {
-  info(details: object, message: string): void;
-  warn(details: object, message: string): void;
-  error(details: object, message: string): void;
-}
-
 interface HoldReleaseRun {
   readonly entries: UnconfirmedEntryRepository;
   readonly payments: PaymentAuthorizer;
-  readonly log: CancellationLog;
+  readonly log: JobLog;
 }
 
 // Never waits on Stripe: the spot is freed here, the hold is released by releasePendingHolds.
-export async function cancelUnconfirmedEntries(job: CancellationJob, log: CancellationLog): Promise<void> {
+export async function cancelUnconfirmedEntries(job: CancellationJob, log: JobLog): Promise<void> {
   const expired = await job.entries.findExpired(job.openingWindow);
   for (const entry of expired) {
     await cancelEntry(job.entries, entry, log);
   }
 }
 
-async function cancelEntry(entries: UnconfirmedEntryRepository, entry: ExpiredEntry, log: CancellationLog): Promise<void> {
+async function cancelEntry(entries: UnconfirmedEntryRepository, entry: ExpiredEntry, log: JobLog): Promise<void> {
   try {
     if (await entries.cancel(entry)) {
       log.info({ sessionId: entry.sessionId }, 'cancelled an entry nobody drove through');
@@ -43,7 +38,7 @@ async function cancelEntry(entries: UnconfirmedEntryRepository, entry: ExpiredEn
   }
 }
 
-export async function releasePendingHolds(job: CancellationJob, log: CancellationLog): Promise<void> {
+export async function releasePendingHolds(job: CancellationJob, log: JobLog): Promise<void> {
   if (job.payments === null) {
     await warnHoldsWaitForStripe(job.entries, log);
     return;
@@ -53,7 +48,7 @@ export async function releasePendingHolds(job: CancellationJob, log: Cancellatio
   await Promise.allSettled(holds.map((hold) => releaseHold(run, hold)));
 }
 
-async function warnHoldsWaitForStripe(entries: UnconfirmedEntryRepository, log: CancellationLog): Promise<void> {
+async function warnHoldsWaitForStripe(entries: UnconfirmedEntryRepository, log: JobLog): Promise<void> {
   const pending = await entries.countPendingReleases();
   if (pending > 0) {
     log.warn({ pending }, 'card holds wait for release: the server has no Stripe key');

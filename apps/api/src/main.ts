@@ -2,8 +2,10 @@ import Stripe from 'stripe';
 import { readDashboardUrl, readServerEnvironment, readStripeWebhookSecret } from './config/environment.ts';
 import { readPaymentsSimulation } from './config/paymentsSimulation.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
+import { composeClock } from './composeClock.ts';
 import { composeEntries } from './composeEntries.ts';
 import { composeEntryCancellation } from './composeEntryCancellation.ts';
+import { composeHoldExpiry } from './composeHoldExpiry.ts';
 import { composeOperatorStripe } from './composeOperatorStripe.ts';
 import { composeSpotHolds } from './composeSpotHolds.ts';
 import { buildServer } from './http/buildServer.ts';
@@ -21,9 +23,11 @@ import { PostgresUserDirectory } from './infrastructure/postgres/PostgresUserDir
 import { StripeCardGateway } from './infrastructure/stripe/StripeCardGateway.ts';
 import { PostgresVehicleRepository } from './infrastructure/postgres/PostgresVehicleRepository.ts';
 import { openingWindowOf } from './domain/gates/OpeningWindow.ts';
+import { expireSpotHolds } from './domain/spotHolds/expireSpotHolds.ts';
 import { systemClock } from './domain/time/Clock.ts';
 import { cancelUnconfirmedEntries, releasePendingHolds } from './domain/entries/unconfirmedEntryCancellation.ts';
 import { purgeEndedSessionTokens } from './domain/sessions/sessionTokens.ts';
+import { SingleRun, stopAll } from './scheduler/SingleRun.ts';
 import { startSessionTokenPurge } from './scheduler/startSessionTokenPurge.ts';
 import { startUnconfirmedEntryCancellation } from './scheduler/startUnconfirmedEntryCancellation.ts';
 
@@ -49,6 +53,8 @@ const entryCancellation = composeEntryCancellation(
   connection.database,
   entries.payments,
 );
+const { testClock, clock } = composeClock(environment.testSignInEnabled);
+const holdExpiry = composeHoldExpiry({ clock, periodSeconds: environment.holdExpiryPeriodSeconds }, connection.database);
 const server = buildServer({
   repositories: {
     lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
@@ -67,6 +73,7 @@ const server = buildServer({
     commands: new PostgresGateCommandFeed(connection.database),
     openingWindow,
   },
+  testClock,
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   entries: entries.routes,
   spotHolds: composeSpotHolds(connection.database, environment.demoMode, { vehicles: vehicleRepository, drivers: driverRepository }),
@@ -105,9 +112,14 @@ const stopEntryCancellation = startUnconfirmedEntryCancellation(
   server.log,
   entryCancellation.periodMilliseconds,
 );
+// Every API instance runs it too: the lot lock and the ACTIVE guard make a second run find nothing to expire.
+const stopHoldExpiry = new SingleRun().startPeriodicTask(() => expireSpotHolds(holdExpiry.job, server.log), {
+  logger: server.log,
+  failureMessage: 'Expiring spot holds failed',
+  periodMilliseconds: holdExpiry.periodMilliseconds,
+});
 server.addHook('onClose', async () => {
-  await stopEntryCancellation();
-  await stopSessionTokenPurge();
+  await stopAll([stopHoldExpiry, stopEntryCancellation, stopSessionTokenPurge]);
   await connection.close();
 });
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

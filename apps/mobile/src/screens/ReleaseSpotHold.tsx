@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { TextButton } from '../components/TextButton';
 import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
@@ -11,14 +11,16 @@ interface ReleaseSpotHoldProps {
   readonly lotName: string;
   readonly isReleasing: boolean;
   readonly onConfirm: () => void;
+  readonly onHoldsFocusChange: (holdsFocus: boolean) => void;
 }
 
 // idle: the button as the banner shows it; confirming: the question; answered: the button again, which takes VoiceOver back.
 type ReleaseStep = 'idle' | 'confirming' | 'answered';
 
 // Giving the spot back cannot be undone, so « Libérer » asks once, in place: an Alert would hide the banner and cannot be tested.
-export function ReleaseSpotHold({ lotName, isReleasing, onConfirm }: ReleaseSpotHoldProps) {
+export function ReleaseSpotHold({ lotName, isReleasing, onConfirm, onHoldsFocusChange }: ReleaseSpotHoldProps) {
   const [step, setStep] = useState<ReleaseStep>('idle');
+  useEffect(() => onHoldsFocusChange(step !== 'idle'), [step, onHoldsFocusChange]);
   if (step === 'confirming') {
     return (
       <ReleaseConfirmation

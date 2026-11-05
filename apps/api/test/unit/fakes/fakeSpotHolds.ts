@@ -1,7 +1,7 @@
 import type { SpotHoldRefusalCode } from '@palier/shared-types';
 import type { SpotHold } from '../../../src/domain/spotHolds/SpotHold.ts';
 import { SpotHoldRefusedError } from '../../../src/domain/spotHolds/SpotHoldRefusedError.ts';
-import type { SpotHoldDraft, SpotHoldLot, SpotHoldRelease, SpotHoldRepository } from '../../../src/domain/spotHolds/SpotHoldRepository.ts';
+import type { SpotHoldDraft, SpotHoldExpiry, SpotHoldLot, SpotHoldRelease, SpotHoldRepository } from '../../../src/domain/spotHolds/SpotHoldRepository.ts';
 import { GARAGE_ROY_ID } from '../../../src/seed/fixtures/garageRoy.ts';
 import { PARKING_DEMO_ID } from '../../../src/seed/fixtures/parkingDemo.ts';
 import { LAVOIE_ACCOUNT, PARKING_DEMO_POLICY } from './entryGateFakes.ts';
@@ -27,6 +27,8 @@ export function fakeSpotHoldId(sequence: number): string {
 export class FakeSpotHoldRepository implements SpotHoldRepository {
   readonly drafts: SpotHoldDraft[] = [];
   readonly releases: SpotHoldRelease[] = [];
+  readonly expiries: { readonly lotId: string; readonly now: Date }[] = [];
+  freedSpots = 0;
   readonly lots: Map<string, SpotHoldLot>;
   refusal: SpotHoldRefusalCode | null = null;
   readonly #active = new Map<string, SpotHold>();
@@ -65,5 +67,19 @@ export class FakeSpotHoldRepository implements SpotHoldRepository {
     }
     this.#active.delete(release.driverId);
     return Promise.resolve();
+  }
+
+  findLotsWithExpiredHolds(now: Date): Promise<string[]> {
+    const lotIds = [...this.#active.values()].filter(({ expiresAt }) => expiresAt <= now).map(({ lotId }) => lotId);
+    return Promise.resolve([...new Set(lotIds)]);
+  }
+
+  // Frees one spot per hold it ends, like the real repository under the lot lock.
+  expireLotSpotHolds(lotId: string, now: Date): Promise<SpotHoldExpiry> {
+    this.expiries.push({ lotId, now });
+    const ended = [...this.#active].filter(([, spotHold]) => spotHold.lotId === lotId && spotHold.expiresAt <= now);
+    ended.forEach(([driverId]) => this.#active.delete(driverId));
+    this.freedSpots += ended.length;
+    return Promise.resolve({ expired: ended.length, freed: ended.length });
   }
 }

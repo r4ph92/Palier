@@ -2,12 +2,13 @@ import { sql, type SQL } from 'drizzle-orm';
 import { decideSpotHoldRequest } from '../../domain/spotHolds/decideSpotHoldRequest.ts';
 import type { SpotHold } from '../../domain/spotHolds/SpotHold.ts';
 import { SpotHoldRefusedError } from '../../domain/spotHolds/SpotHoldRefusedError.ts';
-import type { SpotHoldDraft, SpotHoldLot, SpotHoldRelease, SpotHoldRepository } from '../../domain/spotHolds/SpotHoldRepository.ts';
+import type { SpotHoldDraft, SpotHoldExpiry, SpotHoldLot, SpotHoldRelease, SpotHoldRepository } from '../../domain/spotHolds/SpotHoldRepository.ts';
 import { ACTIVE_SPOT_HOLD } from './activeSpotHold.ts';
 import type { Database, Transaction } from './database.ts';
 import { LOT_LOCK_TRANSACTION, lockParkingLot, type LockedParkingLot } from './lockParkingLot.ts';
 import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
 import { claimFirstFittingSpot, heldSince } from './spotClaim.ts';
+import { findLotsWithExpiredHolds, freeHeldSpots, markSpotHoldsExpired } from './spotExpiry.ts';
 import { freeHeldSpot, markSpotHoldReleased } from './spotRelease.ts';
 import { readSpotHoldFacts } from './spotHoldFacts.ts';
 import { spotHoldRefusalOf } from './spotHoldRefusal.ts';
@@ -84,6 +85,17 @@ export class PostgresSpotHoldRepository implements SpotHoldRepository {
       throw spotHoldRefusalOf(error, release.lotId);
     }
   }
+
+  findLotsWithExpiredHolds(now: Date): Promise<string[]> {
+    return findLotsWithExpiredHolds(this.#database, now);
+  }
+
+  expireLotSpotHolds(lotId: string, now: Date): Promise<SpotHoldExpiry> {
+    return this.#database.transaction(async (tx) => {
+      await tx.execute(LIMIT_LOCK_WAIT);
+      return await expireUnderLotLock(tx, lotId, now);
+    }, LOT_LOCK_TRANSACTION);
+  }
 }
 
 // Same order as placing: the lot first, then the hold, then its spot.
@@ -96,6 +108,12 @@ async function releaseUnderLotLock(tx: Transaction, release: SpotHoldRelease): P
   if (!(await freeHeldSpot(tx, spotId, release.releasedAt))) {
     throw new Error(`Spot ${spotId} of released hold ${release.spotHoldId} was not held.`);
   }
+}
+
+async function expireUnderLotLock(tx: Transaction, lotId: string, now: Date): Promise<SpotHoldExpiry> {
+  await lockParkingLot(tx, lotId);
+  const spotIds = await markSpotHoldsExpired(tx, lotId, now);
+  return { expired: spotIds.length, freed: await freeHeldSpots(tx, spotIds, now) };
 }
 
 async function placeUnderLotLock(tx: Transaction, draft: SpotHoldDraft): Promise<SpotHold> {

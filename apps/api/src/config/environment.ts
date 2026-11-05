@@ -1,6 +1,7 @@
 import { VERSION_PATTERN } from '@palier/shared-types/appVersion';
 import { readDatabasePoolMax } from './databasePool.ts';
 import { readEntryCancellationTiming, type EntryCancellationTiming } from './entryCancellationTiming.ts';
+import { readHoldExpiryPeriodSeconds } from './holdExpiryTiming.ts';
 
 export interface ServerEnvironment {
   readonly databaseUrl: string;
@@ -12,6 +13,7 @@ export interface ServerEnvironment {
   readonly demoMode: boolean;
   readonly secureCookies: boolean;
   readonly entryCancellation: EntryCancellationTiming;
+  readonly holdExpiryPeriodSeconds: number;
 }
 
 const DEFAULT_HOST = '127.0.0.1';
@@ -37,6 +39,7 @@ export function readServerEnvironment(variables: NodeJS.ProcessEnv): ServerEnvir
     demoMode: readDemoMode(variables['DEMO_MODE']),
     secureCookies: readSecureCookies(variables),
     entryCancellation: readEntryCancellationTiming(variables),
+    holdExpiryPeriodSeconds: readHoldExpiryPeriodSeconds(variables),
   };
 }
 

@@ -18,6 +18,13 @@ export function heldSpotFrom(spotHold: SpotHold, receivedAt: number, isFresh: bo
 }
 
 export function secondsLeft(held: HeldSpot, deviceNow: number): number {
-  const millisecondsLeft = held.millisecondsLeftAtReceipt - (deviceNow - held.receivedAt);
+  const millisecondsLeft = held.millisecondsLeftAtReceipt - Math.max(0, deviceNow - held.receivedAt);
   return Math.max(0, Math.ceil(millisecondsLeft / MILLISECONDS_PER_SECOND));
+}
+
+export type HoldCountdown = { readonly kind: 'counting'; readonly secondsLeft: number } | { readonly kind: 'expired' };
+
+export function holdCountdown(held: HeldSpot, deviceNow: number): HoldCountdown {
+  const seconds = secondsLeft(held, deviceNow);
+  return seconds === 0 ? { kind: 'expired' } : { kind: 'counting', secondsLeft: seconds };
 }

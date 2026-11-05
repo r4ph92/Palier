@@ -25,6 +25,8 @@ export const spotHoldFr = {
   releaseUnavailable: 'Impossible de libérer la garantie pour le moment, réessayez dans un instant',
   releaseCancel: 'Annuler',
   released: 'Garantie libérée',
+  expired: 'Votre place garantie a expiré',
+  expiredAccessibilityLabel: '%{expired}, %{lotName}',
   minutesLeft: { one: '%{count} minute restante', other: '%{count} minutes restantes' },
   bannerAccessibilityLabel: '%{guaranteedUntil}, %{lotName}, %{minutesLeft}',
   refusals: {

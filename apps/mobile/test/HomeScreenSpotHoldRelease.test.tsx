@@ -79,12 +79,11 @@ describe('HomeScreen releasing a hold', () => {
     expect(screen.queryByTestId('spot-hold-banner')).not.toBeOnTheScreen();
   });
 
-  it('tells Julie the guarantee has already expired and leaves the banner at 0:00', async () => {
+  it('tells Julie the guarantee has already expired when the server says so before her countdown ends', async () => {
     const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
     const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
     announce.mockClear();
     const { lotsClient, user } = await renderJulieHolding(spotHoldClient);
-    await act(() => jest.advanceTimersByTimeAsync(15 * 60 * 1000));
     const listReadsBefore = lotsClient.callCount;
     spotHoldClient.nextRejection = 'HOLD_EXPIRED';
 
@@ -92,7 +91,7 @@ describe('HomeScreen releasing a hold', () => {
 
     expect(await screen.findByText('Cette garantie a déjà expiré')).toBeOnTheScreen();
     expect(announce.mock.calls.filter(([message]) => message === 'Cette garantie a déjà expiré')).toHaveLength(1);
-    expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('0:00');
+    expect(screen.getByTestId('spot-hold-countdown')).toBeOnTheScreen();
     expect(lotsClient.callCount).toBe(listReadsBefore);
 
     await confirmRelease(user);

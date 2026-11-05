@@ -1,5 +1,5 @@
 import type { EntrySessionState } from '@palier/shared-types';
-import type { CancellationLog } from '../../../src/domain/entries/unconfirmedEntryCancellation.ts';
+import type { JobLog } from '../../../src/domain/JobLog.ts';
 import type { ExpiredEntry, PendingRelease, UnconfirmedEntryRepository } from '../../../src/domain/entries/UnconfirmedEntryRepository.ts';
 import type { OpeningWindow } from '../../../src/domain/gates/OpeningWindow.ts';
 
@@ -89,7 +89,7 @@ export class FakeUnconfirmedEntryRepository implements UnconfirmedEntryRepositor
   }
 }
 
-export function recordingLog(): CancellationLog & { readonly lines: { level: string; details: object; message: string }[] } {
+export function recordingLog(): JobLog & { readonly lines: { level: string; details: object; message: string }[] } {
   const lines: { level: string; details: object; message: string }[] = [];
   const write = (level: string) => (details: object, message: string) => void lines.push({ level, details, message });
   return { lines, info: write('info'), warn: write('warn'), error: write('error') };

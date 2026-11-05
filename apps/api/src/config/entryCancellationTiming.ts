@@ -1,4 +1,4 @@
-import { readPositiveWholeNumber } from './readPositiveWholeNumber.ts';
+import { readSeconds } from './readSeconds.ts';
 
 export interface EntryCancellationTiming {
   readonly confirmationWindowSeconds: number;
@@ -19,18 +19,6 @@ export function readEntryCancellationTiming(variables: NodeJS.ProcessEnv): Entry
   ensurePeriodWithinWindow(cancellationPeriodSeconds, confirmationWindowSeconds);
   ensureCancellationBeforeAppStopsPolling(confirmationWindowSeconds + cancellationPeriodSeconds);
   return { confirmationWindowSeconds, cancellationPeriodSeconds };
-}
-
-function readSeconds(name: string, variables: NodeJS.ProcessEnv, defaultSeconds: number): number {
-  const rawSeconds = variables[name];
-  if (rawSeconds === undefined || rawSeconds === '') {
-    return defaultSeconds;
-  }
-  const seconds = readPositiveWholeNumber(rawSeconds);
-  if (seconds === null) {
-    throw new Error(`${name} must be a positive whole number of seconds, got "${rawSeconds}".`);
-  }
-  return seconds;
 }
 
 function ensureWindowAboveFloor(windowSeconds: number): void {

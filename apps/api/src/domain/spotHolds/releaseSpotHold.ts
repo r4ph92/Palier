@@ -12,7 +12,7 @@ export interface SpotHoldReleaseAttempt {
   readonly spotHoldId: string;
 }
 
-// An expired hold is left alone: its spot comes back with the expiry job (#8), so the free count never moves twice.
+// An expired hold is left alone: its spot comes back with the expiry job (expireSpotHolds), so the free count never moves twice.
 export async function releaseSpotHold({ spotHolds, clock }: SpotHoldReleaseDependencies, { driverId, spotHoldId }: SpotHoldReleaseAttempt): Promise<void> {
   const now = clock();
   const spotHold = await spotHolds.findOwnActiveSpotHold(driverId, spotHoldId);
