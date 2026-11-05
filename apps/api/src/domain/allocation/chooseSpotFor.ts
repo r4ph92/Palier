@@ -1,13 +1,14 @@
 import { EntryRefusedError } from '../entries/EntryRefusedError.ts';
+import { isInCategory } from '../spots/spotCategories.ts';
 import type { VehicleNeeds } from '../vehicles/VehicleRepository.ts';
 import { chooseSpot, type FreeSpot } from './chooseSpot.ts';
 
 type SpotGroup = (spot: FreeSpot) => boolean;
 
-const accessible: SpotGroup = (spot) => spot.isAccessible;
-const electric: SpotGroup = (spot) => spot.isEv;
-const oversize: SpotGroup = (spot) => spot.isOversize;
-const standard: SpotGroup = (spot) => !spot.isEv && !spot.isAccessible && !spot.isOversize;
+const accessible: SpotGroup = (spot) => isInCategory(spot, 'accessible');
+const electric: SpotGroup = (spot) => isInCategory(spot, 'electric');
+const oversize: SpotGroup = (spot) => isInCategory(spot, 'oversize');
+const standard: SpotGroup = (spot) => isInCategory(spot, 'standard');
 
 // Electric and accessible spots go only to a vehicle with that need, even when the spot has another flag too,
 // and an oversize vehicle fits only an oversize spot. Exported for the load script, which counts the spots a vehicle fits.

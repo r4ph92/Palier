@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import type { AvailableSpotGroup } from '../../src/domain/occupancy/availableByCategory.ts';
 import { onlineLotFromRow, type OnlineLotRow } from '../../src/infrastructure/postgres/onlineLotRow.ts';
 import { PARKING_DEMO_ID, parkingDemoLot } from '../../src/seed/fixtures/parkingDemo.ts';
-import { PARKING_DEMO_CATEGORIES, parkingDemoAvailability } from './fakes/lotFixtures.ts';
 
 const parkingDemoRow: OnlineLotRow = {
   id: PARKING_DEMO_ID,
@@ -10,20 +10,27 @@ const parkingDemoRow: OnlineLotRow = {
   longitude: parkingDemoLot.longitude ?? null,
   capacity: 10,
   vehicleCount: 0,
-  availableSpotCount: 10,
-  availableStandard: PARKING_DEMO_CATEGORIES.standard,
-  availableElectric: PARKING_DEMO_CATEGORIES.electric,
-  availableAccessible: PARKING_DEMO_CATEGORIES.accessible,
-  availableOversize: PARKING_DEMO_CATEGORIES.oversize,
 };
+
+const fourThreeTwoOne: readonly AvailableSpotGroup[] = [
+  { isEv: false, isAccessible: false, isOversize: false, count: 4 },
+  { isEv: true, isAccessible: false, isOversize: false, count: 3 },
+  { isEv: false, isAccessible: true, isOversize: false, count: 2 },
+  { isEv: false, isAccessible: false, isOversize: true, count: 1 },
+];
 
 describe('onlineLotFromRow', () => {
   it('reads the numeric coordinates as numbers', () => {
-    expect(onlineLotFromRow(parkingDemoRow).location).toEqual({ latitude: 45.50165, longitude: -73.5673 });
+    expect(onlineLotFromRow(parkingDemoRow, []).location).toEqual({ latitude: 45.50165, longitude: -73.5673 });
   });
 
-  it('groups the counts into the lot availability', () => {
-    expect(onlineLotFromRow(parkingDemoRow).availability).toEqual(parkingDemoAvailability());
+  it('puts each flag combination in its own category and adds them up for the total', () => {
+    expect(onlineLotFromRow(parkingDemoRow, fourThreeTwoOne).availability).toEqual({
+      capacity: 10,
+      vehicleCount: 0,
+      availableSpotCount: 10,
+      availableByCategory: { standard: 4, electric: 3, accessible: 2, oversize: 1 },
+    });
   });
 
   it.each([
@@ -31,6 +38,6 @@ describe('onlineLotFromRow', () => {
     ['a latitude without longitude', parkingDemoRow.latitude, null],
     ['a longitude without latitude', null, parkingDemoRow.longitude],
   ])('gives a lot with %s no location', (_case, latitude, longitude) => {
-    expect(onlineLotFromRow({ ...parkingDemoRow, latitude, longitude }).location).toBeNull();
+    expect(onlineLotFromRow({ ...parkingDemoRow, latitude, longitude }, []).location).toBeNull();
   });
 });

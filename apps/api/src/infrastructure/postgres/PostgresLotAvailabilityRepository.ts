@@ -1,12 +1,18 @@
-import { asc, eq, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, inArray } from 'drizzle-orm';
 import type { LotAvailabilityRepository } from '../../domain/lots/LotAvailabilityRepository.ts';
 import type { OnlineLot } from '../../domain/lots/OnlineLot.ts';
+import type { AvailableSpotGroup } from '../../domain/occupancy/availableByCategory.ts';
 import type { Database } from './database.ts';
 import { onlineLotFromRow } from './onlineLotRow.ts';
 import { parkingLot, spot } from './schema.ts';
 
 export const ONLINE_LOTS_LIMIT = 50;
 
+interface LotSpotGroup extends AvailableSpotGroup {
+  readonly lotId: string;
+}
+
+// Spots are counted by flag combination; which category a combination belongs to is decided in domain/spots/spotCategories.
 export class PostgresLotAvailabilityRepository implements LotAvailabilityRepository {
   readonly #database: Database;
 
@@ -15,34 +21,31 @@ export class PostgresLotAvailabilityRepository implements LotAvailabilityReposit
   }
 
   async findOnlineLots(): Promise<readonly OnlineLot[]> {
-    const rows = await this.#database
-      .select(onlineLotColumns())
+    const lots = await this.#database
+      .select({
+        id: parkingLot.id,
+        name: parkingLot.name,
+        latitude: parkingLot.latitude,
+        longitude: parkingLot.longitude,
+        capacity: parkingLot.capacity,
+        vehicleCount: parkingLot.vehicleCount,
+      })
       .from(parkingLot)
-      .leftJoin(spot, eq(spot.lotId, parkingLot.id))
       .where(eq(parkingLot.isOnline, true))
-      .groupBy(parkingLot.id)
       .orderBy(asc(parkingLot.name))
       .limit(ONLINE_LOTS_LIMIT);
-    return rows.map(onlineLotFromRow);
+    const groups = await this.#availableSpotGroups(lots.map(({ id }) => id));
+    return lots.map((lot) => onlineLotFromRow(lot, groups.filter(({ lotId }) => lotId === lot.id)));
   }
-}
 
-function onlineLotColumns() {
-  return {
-    id: parkingLot.id,
-    name: parkingLot.name,
-    latitude: parkingLot.latitude,
-    longitude: parkingLot.longitude,
-    capacity: parkingLot.capacity,
-    vehicleCount: parkingLot.vehicleCount,
-    availableSpotCount: availableSpotsWhere(sql`true`),
-    availableStandard: availableSpotsWhere(sql`not (${spot.isEv} or ${spot.isAccessible} or ${spot.isOversize})`),
-    availableElectric: availableSpotsWhere(sql`${spot.isEv}`),
-    availableAccessible: availableSpotsWhere(sql`${spot.isAccessible}`),
-    availableOversize: availableSpotsWhere(sql`${spot.isOversize}`),
-  };
-}
-
-function availableSpotsWhere(condition: SQL): SQL<number> {
-  return sql<number>`count(${spot.id}) filter (where ${spot.state} = 'AVAILABLE' and ${condition})`.mapWith(Number);
+  async #availableSpotGroups(lotIds: readonly string[]): Promise<readonly LotSpotGroup[]> {
+    if (lotIds.length === 0) {
+      return [];
+    }
+    return this.#database
+      .select({ lotId: spot.lotId, isEv: spot.isEv, isAccessible: spot.isAccessible, isOversize: spot.isOversize, count: count() })
+      .from(spot)
+      .where(and(inArray(spot.lotId, [...lotIds]), eq(spot.state, 'AVAILABLE')))
+      .groupBy(spot.lotId, spot.isEv, spot.isAccessible, spot.isOversize);
+  }
 }

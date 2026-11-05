@@ -1,7 +1,8 @@
 import type { GeoPosition } from '@palier/shared-types';
 import type { OnlineLot } from '../../domain/lots/OnlineLot.ts';
+import { availableByCategory, availableSpotCount, type AvailableSpotGroup } from '../../domain/occupancy/availableByCategory.ts';
 
-// Postgres numeric columns arrive as strings; counts arrive as numbers through mapWith(Number).
+// Postgres numeric columns arrive as strings.
 export interface OnlineLotRow {
   readonly id: string;
   readonly name: string;
@@ -9,14 +10,9 @@ export interface OnlineLotRow {
   readonly longitude: string | null;
   readonly capacity: number;
   readonly vehicleCount: number;
-  readonly availableSpotCount: number;
-  readonly availableStandard: number;
-  readonly availableElectric: number;
-  readonly availableAccessible: number;
-  readonly availableOversize: number;
 }
 
-export function onlineLotFromRow(row: OnlineLotRow): OnlineLot {
+export function onlineLotFromRow(row: OnlineLotRow, availableSpots: readonly AvailableSpotGroup[]): OnlineLot {
   return {
     id: row.id,
     name: row.name,
@@ -24,13 +20,8 @@ export function onlineLotFromRow(row: OnlineLotRow): OnlineLot {
     availability: {
       capacity: row.capacity,
       vehicleCount: row.vehicleCount,
-      availableSpotCount: row.availableSpotCount,
-      availableByCategory: {
-        standard: row.availableStandard,
-        electric: row.availableElectric,
-        accessible: row.availableAccessible,
-        oversize: row.availableOversize,
-      },
+      availableSpotCount: availableSpotCount(availableSpots),
+      availableByCategory: availableByCategory(availableSpots),
     },
   };
 }
