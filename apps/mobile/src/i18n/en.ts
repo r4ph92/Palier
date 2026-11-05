@@ -27,6 +27,15 @@ export const en: Translations = {
     unreachableHint: 'Check your connection, then try again.',
     retry: 'Try again',
     refresh: 'Refresh',
+    categories: {
+      standard: 'Standard',
+      electric: 'EV',
+      accessible: 'Accessible',
+      oversize: 'Oversize',
+    },
+    locationDenied: 'Turn on location to sort by distance',
+    locationUnavailable: 'Location unavailable: lots sorted by name',
+    emptyNearby: 'No lot online within %{radius}.',
     distance: {
       metres: { one: '%{amount} metre', other: '%{amount} metres' },
       kilometres: { one: '%{amount} kilometre', other: '%{amount} kilometres' },

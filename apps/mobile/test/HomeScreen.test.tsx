@@ -1,7 +1,9 @@
 import { screen, userEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
+import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { renderHomeScreen } from './renderHomeScreen';
+import { visibleText } from './visibleText';
 
 describe('HomeScreen', () => {
   it('greets the signed-in driver by first name', async () => {
@@ -36,8 +38,14 @@ describe('HomeScreen', () => {
     expect(await screen.findByText('9 places libres')).toBeOnTheScreen();
   });
 
-  it('says so when no lot is online', async () => {
+  it('says so when no lot is online within 10 km', async () => {
     await renderHomeScreen(new FakeLotsClient([]));
+
+    expect(await screen.findByText('Aucun stationnement en ligne à moins de 10 km.', visibleText)).toBeOnTheScreen();
+  });
+
+  it('says so when no lot is online and the driver denied location', async () => {
+    await renderHomeScreen(new FakeLotsClient([]), 'fr', new FakeDeviceLocationClient('denied'));
 
     expect(await screen.findByText('Aucun stationnement en ligne.')).toBeOnTheScreen();
   });

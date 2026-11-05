@@ -25,6 +25,15 @@ export const fr = {
     unreachableHint: 'Vérifiez votre connexion, puis réessayez.',
     retry: 'Réessayer',
     refresh: 'Actualiser',
+    categories: {
+      standard: 'Standard',
+      electric: 'Électrique',
+      accessible: 'Accessible',
+      oversize: 'Grand gabarit',
+    },
+    locationDenied: 'Activez la localisation pour trier par distance',
+    locationUnavailable: 'Position introuvable\u00A0: stationnements triés par nom',
+    emptyNearby: 'Aucun stationnement en ligne à moins de %{radius}.',
     distance: {
       metres: { one: '%{amount} mètre', other: '%{amount} mètres' },
       kilometres: { one: '%{amount} kilomètre', other: '%{amount} kilomètres' },

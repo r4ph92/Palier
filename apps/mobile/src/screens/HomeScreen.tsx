@@ -8,13 +8,16 @@ import { LotRow } from '../components/LotRow';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { TextButton } from '../components/TextButton';
 import { formatClockTime } from '../i18n/formatClockTime';
+import { formatDistance } from '../i18n/formatDistance';
 import { currentLanguage, i18n } from '../i18n/i18n';
 import type { DeviceLocationClient } from '../deviceLocation/DeviceLocationClient';
-import type { NearbyLot } from '../lots/nearbyLots';
+import type { DriverLocation } from '../deviceLocation/locateDriver';
+import { NEARBY_RADIUS_METRES, type NearbyLot } from '../lots/nearbyLots';
 import { useLots, type LotsController, type LotsState } from '../lots/useLots';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
+import { LocationNotice } from './LocationNotice';
 
 const NO_LOTS: readonly NearbyLot[] = [];
 
@@ -52,6 +55,7 @@ function HomeHeader({ controller, firstName }: { readonly controller: LotsContro
         title={i18n.t('home.title')}
         action={<TextButton label={i18n.t('home.refresh')} onPress={controller.refresh} />}
       />
+      {controller.state.status === 'loaded' ? <LocationNotice location={controller.state.location} /> : null}
     </View>
   );
 }
@@ -70,8 +74,15 @@ function HomeStateMessage({ controller }: { readonly controller: LotsController 
     case 'error':
       return <ErrorState onRetry={controller.retry} />;
     case 'loaded':
-      return <EmptyState />;
+      return <EmptyState message={emptyMessage(controller.state.location)} />;
   }
+}
+
+function emptyMessage(location: DriverLocation): string {
+  if (location.status !== 'located') {
+    return i18n.t('home.empty');
+  }
+  return i18n.t('home.emptyNearby', { radius: formatDistance(NEARBY_RADIUS_METRES, currentLanguage()) });
 }
 
 const styles = StyleSheet.create({
