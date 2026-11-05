@@ -1,6 +1,6 @@
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLotsClient } from '../api/LotsClientContext';
+import type { LotsClient } from '../api/LotsClient';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { LotListLoading } from '../components/LotListLoading';
@@ -23,11 +23,12 @@ const NO_LOTS: readonly NearbyLot[] = [];
 
 interface HomeScreenProps {
   readonly firstName: string;
+  readonly lotsClient: LotsClient;
   readonly locationClient: DeviceLocationClient;
 }
 
-export function HomeScreen({ firstName, locationClient }: HomeScreenProps) {
-  const controller = useLots(useLotsClient(), locationClient);
+export function HomeScreen({ firstName, lotsClient, locationClient }: HomeScreenProps) {
+  const controller = useLots(lotsClient, locationClient);
   const colors = useColors();
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>

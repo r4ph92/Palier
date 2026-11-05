@@ -1,5 +1,4 @@
 import { StyleSheet, View } from 'react-native';
-import { LotsClientProvider } from '../api/LotsClientContext';
 import type { SignedInClients } from '../api/SignedInClients';
 import { TabBar } from '../components/TabBar';
 import { usePendingEntryWatch, type PendingEntryWatch } from '../entries/usePendingEntryWatch';
@@ -25,9 +24,7 @@ export function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: 
   const content = { firstName, clients, developerEntry, onSignOut, tabs, currentSession, pendingEntry };
   return (
     <View style={styles.app}>
-      <LotsClientProvider client={clients.lots}>
-        <TabContent {...content} />
-      </LotsClientProvider>
+      <TabContent {...content} />
       <TabBar selected={tabs.tab} onSelect={tabs.selectTab} labels={scanTabLabels(currentSession.state)} />
     </View>
   );
@@ -42,7 +39,7 @@ interface TabContentProps extends SignedInTabsProps {
 function TabContent({ firstName, clients, tabs, currentSession, pendingEntry, developerEntry, onSignOut }: TabContentProps) {
   switch (tabs.tab) {
     case 'lots':
-      return <HomeScreen firstName={firstName} locationClient={clients.location} />;
+      return <HomeScreen firstName={firstName} lotsClient={clients.lots} locationClient={clients.location} />;
     case 'scan':
       return (
         <ScanTab

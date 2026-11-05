@@ -2,7 +2,6 @@ import { render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { LotsClient } from '../src/api/LotsClient';
 import type { DeviceLocationClient } from '../src/deviceLocation/DeviceLocationClient';
-import { LotsClientProvider } from '../src/api/LotsClientContext';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { HomeScreen } from '../src/screens/HomeScreen';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
@@ -20,9 +19,7 @@ export async function renderHomeScreen(
   applyLanguage(language);
   return render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <LotsClientProvider client={client}>
-        <HomeScreen firstName="Julie" locationClient={locationClient} />
-      </LotsClientProvider>
+      <HomeScreen firstName="Julie" lotsClient={client} locationClient={locationClient} />
     </SafeAreaProvider>,
   );
 }
