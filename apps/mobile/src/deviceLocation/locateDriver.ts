@@ -1,4 +1,5 @@
 import type { GeoPosition } from '@palier/shared-types';
+import { isOnEarth } from '@palier/shared-types/lots';
 import type { DeviceLocationClient, LocationPermission } from './DeviceLocationClient';
 
 export type DriverLocation =
@@ -16,7 +17,7 @@ export async function locateDriver(client: DeviceLocationClient): Promise<Driver
     return DENIED;
   }
   const position = await client.currentPosition().catch(() => null);
-  return position === null ? UNAVAILABLE : { status: 'located', position };
+  return position === null || !isOnEarth(position) ? UNAVAILABLE : { status: 'located', position };
 }
 
 export function positionOf(location: DriverLocation): GeoPosition | null {

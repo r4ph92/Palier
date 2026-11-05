@@ -60,6 +60,7 @@ describe('HttpLotsClient', () => {
     ['a missing location', { id: parkingDemo.id, name: parkingDemo.name, freeSpots: 10, freeSpotsByCategory: parkingDemo.freeSpotsByCategory }],
     ['a location without longitude', { ...parkingDemo, location: { latitude: 45.5 } }],
     ['a latitude that is not a number', { ...parkingDemo, location: { latitude: '45.5', longitude: -73.5 } }],
+    ['a latitude past the pole', { ...parkingDemo, location: { latitude: 120, longitude: -73.5 } }],
   ])('treats a lot with %s as unreachable', async (_case, lot) => {
     await expect(clientAnswering(jsonResponse([lot])).listLots()).rejects.toBeInstanceOf(PalierUnreachableError);
   });

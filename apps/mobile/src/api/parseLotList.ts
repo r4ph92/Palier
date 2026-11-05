@@ -1,5 +1,5 @@
 import type { GeoPosition, LotListResponse, LotSummary, SpotCountByCategory } from '@palier/shared-types';
-import { SPOT_CATEGORIES } from '@palier/shared-types/lots';
+import { isOnEarth, SPOT_CATEGORIES } from '@palier/shared-types/lots';
 import { asRecord } from './asRecord';
 import { PalierUnreachableError } from './LotsClient';
 
@@ -28,5 +28,5 @@ function isSpotCountByCategory(candidate: unknown): candidate is SpotCountByCate
 
 function isGeoPosition(candidate: unknown): candidate is GeoPosition {
   const { latitude, longitude } = asRecord(candidate);
-  return Number.isFinite(latitude) && Number.isFinite(longitude);
+  return typeof latitude === 'number' && typeof longitude === 'number' && isOnEarth({ latitude, longitude });
 }

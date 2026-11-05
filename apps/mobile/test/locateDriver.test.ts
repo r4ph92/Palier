@@ -22,6 +22,14 @@ describe('locateDriver', () => {
     await expect(locateDriver(new FakeDeviceLocationClient('granted', null))).resolves.toEqual({ status: 'unavailable' });
   });
 
+  it.each([
+    ['NaN', { latitude: NaN, longitude: NaN }],
+    ['infinite', { latitude: Infinity, longitude: 0 }],
+    ['past the pole', { latitude: 91, longitude: 0 }],
+  ])('says the position is unavailable when the device gives one %s', async (_case, position) => {
+    await expect(locateDriver(new FakeDeviceLocationClient('granted', position))).resolves.toEqual({ status: 'unavailable' });
+  });
+
   it('says the position is unavailable when reading it fails', async () => {
     const failingRead: DeviceLocationClient = {
       requestWhileInUse: () => Promise.resolve('granted'),
