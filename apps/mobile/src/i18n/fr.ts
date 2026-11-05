@@ -5,7 +5,7 @@ const LOT_NOT_IN_SERVICE = 'Ce parking n’est pas en service';
 const TOO_MANY_ATTEMPTS = 'Trop de tentatives, réessayez dans quelques minutes';
 const NOT_RESPONDING = 'Palier ne répond pas, réessayez dans un instant';
 // The banner sets the time apart in mono; VoiceOver reads the whole sentence.
-const GUARANTEED_UNTIL = "Place garantie jusqu'à";
+const GUARANTEED_UNTIL = 'Place garantie jusqu’à';
 
 export const fr = {
   app: {

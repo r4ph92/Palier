@@ -33,7 +33,7 @@ describe('HomeScreen spot hold', () => {
     const lotsClient = new FakeLotsClient(parkingDemoWith(10), parkingDemoWith(9));
     const spotHoldClient = await holdAtParkingDemo(lotsClient);
 
-    expect(await screen.findByText("Place garantie jusqu'à 14 h 17", visibleText)).toBeOnTheScreen();
+    expect(await screen.findByText('Place garantie jusqu’à 14 h 17', visibleText)).toBeOnTheScreen();
     expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('15:00');
     expect(screen.getByText('14 h 17', visibleText)).toHaveStyle({ fontFamily: typography.figure.fontFamily });
     expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
@@ -66,7 +66,7 @@ describe('HomeScreen spot hold', () => {
     await holdAtParkingDemo(new FakeLotsClient(parkingDemoWith(10)));
 
     const banner = await screen.findByTestId('spot-hold-banner');
-    expect(banner).toHaveProp('accessibilityLabel', expect.stringMatching(/^Place garantie jusqu'à 14.h.17, Parking Démo, 15 minutes restantes$/));
+    expect(banner).toHaveProp('accessibilityLabel', expect.stringMatching(/^Place garantie jusqu’à 14.h.17, Parking Démo, 15 minutes restantes$/));
     expect(focus).toHaveBeenCalledTimes(1);
 
     await tick(5);
