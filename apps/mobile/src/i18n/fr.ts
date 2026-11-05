@@ -1,4 +1,9 @@
 import type { SpotCategory } from '@palier/shared-types';
+import type { SpotHoldRefusal } from '../spotHolds/useSpotHold';
+
+// Said the same way whether the driver scans at the terminal or holds a spot from the list.
+const LOT_NOT_IN_SERVICE = 'Ce parking n’est pas en service';
+const TOO_MANY_ATTEMPTS = 'Trop de tentatives, réessayez dans quelques minutes';
 
 export const fr = {
   app: {
@@ -40,6 +45,24 @@ export const fr = {
       metres: { one: '%{amount} mètre', other: '%{amount} mètres' },
       kilometres: { one: '%{amount} kilomètre', other: '%{amount} kilomètres' },
     },
+  },
+  spotHold: {
+    hold: 'Garantir une place 15 min',
+    holding: 'Garantie en cours…',
+    holdAccessibilityLabel: 'Garantir une place 15 min à %{lotName}',
+    guaranteedUntil: "Place garantie jusqu'à %{time}",
+    minutesLeft: { one: '%{count} minute restante', other: '%{count} minutes restantes' },
+    bannerAccessibilityLabel: '%{guaranteedUntil}, %{lotName}, %{minutesLeft}',
+    refusals: {
+      PREREQUISITES_MISSING: 'Ajoutez une plaque et une carte avant de garantir une place',
+      HOLD_ALREADY_EXISTS: 'Vous avez déjà une place garantie',
+      HOLD_QUOTA_REACHED: 'Trop de places garanties dans ce parking pour le moment',
+      NO_SUITABLE_SPOT: 'Aucune place disponible',
+      LOT_NOT_FOUND: 'Ce parking n’est plus offert',
+      LOT_NOT_IN_SERVICE,
+      HOLD_UNAVAILABLE: 'Impossible de garantir une place pour le moment, réessayez dans un instant',
+      TOO_MANY_HOLD_ATTEMPTS: TOO_MANY_ATTEMPTS,
+    } satisfies Record<SpotHoldRefusal, string>,
   },
   signIn: {
     title: 'Connexion',
@@ -122,7 +145,7 @@ export const fr = {
     refusals: {
       QR_NOT_RECOGNIZED: 'QR non reconnu',
       NOT_AN_ENTRY_GATE: 'Ce QR n’est pas une borne d’entrée',
-      LOT_NOT_IN_SERVICE: 'Ce parking n’est pas en service',
+      LOT_NOT_IN_SERVICE,
       GATE_UNAVAILABLE: 'Cette borne n’est pas disponible',
       PREREQUISITES_MISSING: 'Ajoutez une plaque et une carte avant d’entrer',
       OPERATOR_NOT_PAYABLE: 'Ce parking n’accepte pas les paiements pour le moment',
@@ -131,7 +154,7 @@ export const fr = {
       ALREADY_INSIDE: 'Vous avez déjà une entrée en cours',
       CARD_DECLINED: 'Carte refusée',
       PAYMENTS_UNAVAILABLE: 'Paiement momentanément indisponible — la barrière reste fermée',
-      TOO_MANY_ENTRIES: 'Trop de tentatives, réessayez dans quelques minutes',
+      TOO_MANY_ENTRIES: TOO_MANY_ATTEMPTS,
     },
   },
   session: {

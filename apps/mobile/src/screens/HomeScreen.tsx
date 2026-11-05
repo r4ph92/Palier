@@ -6,6 +6,7 @@ import { ErrorState } from '../components/ErrorState';
 import { LotListLoading } from '../components/LotListLoading';
 import { LotRow } from '../components/LotRow';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { SpotHoldButton } from '../components/SpotHoldButton';
 import { TextButton } from '../components/TextButton';
 import { formatClockTime } from '../i18n/formatClockTime';
 import { formatDistance } from '../i18n/formatDistance';
@@ -14,10 +15,13 @@ import type { DeviceLocationClient } from '../deviceLocation/DeviceLocationClien
 import type { DriverLocation } from '../deviceLocation/locateDriver';
 import { NEARBY_RADIUS_METRES, type NearbyLot } from '../lots/nearbyLots';
 import { useLots, type LotsController, type LotsState } from '../lots/useLots';
+import type { SpotHoldController } from '../spotHolds/useSpotHold';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 import { LocationNotice } from './LocationNotice';
+import { SpotHoldBanner } from './SpotHoldBanner';
+import { SpotHoldProblem } from './SpotHoldProblem';
 
 const NO_LOTS: readonly NearbyLot[] = [];
 
@@ -25,9 +29,17 @@ interface HomeScreenProps {
   readonly firstName: string;
   readonly lotsClient: LotsClient;
   readonly locationClient: DeviceLocationClient;
+  readonly spotHold: SpotHoldController;
 }
 
-export function HomeScreen({ firstName, lotsClient, locationClient }: HomeScreenProps) {
+interface HomeHeaderProps {
+  readonly controller: LotsController;
+  readonly firstName: string;
+  readonly spotHold: SpotHoldController;
+}
+
+// A new hold refreshes the list, so the lot's count shows the held spot gone.
+export function HomeScreen({ firstName, lotsClient, locationClient, spotHold }: HomeScreenProps) {
   const controller = useLots(lotsClient, locationClient);
   const colors = useColors();
   return (
@@ -35,8 +47,8 @@ export function HomeScreen({ firstName, lotsClient, locationClient }: HomeScreen
       <FlatList
         data={controller.state.status === 'loaded' ? controller.state.lots : NO_LOTS}
         keyExtractor={({ lot }) => lot.id}
-        renderItem={({ item }) => <LotRow nearbyLot={item} />}
-        ListHeaderComponent={<HomeHeader controller={controller} firstName={firstName} />}
+        renderItem={({ item }) => <LotRow nearbyLot={item} action={<SpotHoldButton lot={item.lot} spotHold={spotHold} onHeld={controller.refresh} />} />}
+        ListHeaderComponent={<HomeHeader controller={controller} firstName={firstName} spotHold={spotHold} />}
         ListEmptyComponent={<HomeStateMessage controller={controller} />}
         refreshControl={<RefreshControl refreshing={controller.isRefreshing} onRefresh={controller.refresh} />}
         contentContainerStyle={styles.content}
@@ -46,7 +58,7 @@ export function HomeScreen({ firstName, lotsClient, locationClient }: HomeScreen
   );
 }
 
-function HomeHeader({ controller, firstName }: { readonly controller: LotsController; readonly firstName: string }) {
+function HomeHeader({ controller, firstName, spotHold }: HomeHeaderProps) {
   const colors = useColors();
   return (
     <View>
@@ -56,6 +68,8 @@ function HomeHeader({ controller, firstName }: { readonly controller: LotsContro
         title={i18n.t('home.title')}
         action={<TextButton label={i18n.t('home.refresh')} onPress={controller.refresh} />}
       />
+      {spotHold.held === null ? null : <SpotHoldBanner held={spotHold.held} onFreshHoldShown={spotHold.acknowledgeFreshHold} />}
+      {spotHold.failure === null ? null : <SpotHoldProblem failure={spotHold.failure} />}
       {controller.state.status === 'loaded' ? <LocationNotice location={controller.state.location} /> : null}
     </View>
   );

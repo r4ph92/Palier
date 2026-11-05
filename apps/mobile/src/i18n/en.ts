@@ -1,5 +1,8 @@
 import type { Translations } from './fr';
 
+const LOT_NOT_IN_SERVICE = 'This lot is not in service';
+const TOO_MANY_ATTEMPTS = 'Too many attempts, try again in a few minutes';
+
 export const en: Translations = {
   app: {
     crashed: 'Something unexpected went wrong.',
@@ -39,6 +42,24 @@ export const en: Translations = {
     distance: {
       metres: { one: '%{amount} metre', other: '%{amount} metres' },
       kilometres: { one: '%{amount} kilometre', other: '%{amount} kilometres' },
+    },
+  },
+  spotHold: {
+    hold: 'Guarantee a spot for 15 min',
+    holding: 'Guaranteeing…',
+    holdAccessibilityLabel: 'Guarantee a spot for 15 min at %{lotName}',
+    guaranteedUntil: 'Spot guaranteed until %{time}',
+    minutesLeft: { one: '%{count} minute left', other: '%{count} minutes left' },
+    bannerAccessibilityLabel: '%{guaranteedUntil}, %{lotName}, %{minutesLeft}',
+    refusals: {
+      PREREQUISITES_MISSING: 'Add a plate and a card before guaranteeing a spot',
+      HOLD_ALREADY_EXISTS: 'You already have a guaranteed spot',
+      HOLD_QUOTA_REACHED: 'Too many guaranteed spots in this lot right now',
+      NO_SUITABLE_SPOT: 'No spot available',
+      LOT_NOT_FOUND: 'This lot is no longer offered',
+      LOT_NOT_IN_SERVICE,
+      HOLD_UNAVAILABLE: 'Can’t guarantee a spot right now, try again in a moment',
+      TOO_MANY_HOLD_ATTEMPTS: TOO_MANY_ATTEMPTS,
     },
   },
   signIn: {
@@ -122,7 +143,7 @@ export const en: Translations = {
     refusals: {
       QR_NOT_RECOGNIZED: 'QR not recognized',
       NOT_AN_ENTRY_GATE: 'This QR is not an entry terminal',
-      LOT_NOT_IN_SERVICE: 'This lot is not in service',
+      LOT_NOT_IN_SERVICE,
       GATE_UNAVAILABLE: 'This terminal is not available',
       PREREQUISITES_MISSING: 'Add a plate and a card before entering',
       OPERATOR_NOT_PAYABLE: 'This lot cannot take payments right now',
@@ -131,7 +152,7 @@ export const en: Translations = {
       ALREADY_INSIDE: 'You already have an entry in progress',
       CARD_DECLINED: 'Card declined',
       PAYMENTS_UNAVAILABLE: 'Payment temporarily unavailable — the barrier stays closed',
-      TOO_MANY_ENTRIES: 'Too many attempts, try again in a few minutes',
+      TOO_MANY_ENTRIES: TOO_MANY_ATTEMPTS,
     },
   },
   session: {

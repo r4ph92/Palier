@@ -10,6 +10,7 @@ import { FakeEntryClient } from './fakeEntryClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeParkingSessionClient } from './fakeParkingSessionClient';
 import { FakePaymentMethodClient } from './fakePaymentMethodClient';
+import { FakeSpotHoldClient } from './fakeSpotHoldClient';
 import { FakeVehicleClient } from './fakeVehicleClient';
 
 export const JULIE_TOKEN = `${julie.id}-token`;
@@ -40,6 +41,7 @@ export function fakeSignedInClients(): SignedInClients {
     vehicles: new FakeVehicleClient(),
     entry: new FakeEntryClient(),
     parkingSession: new FakeParkingSessionClient(),
+    spotHold: new FakeSpotHoldClient(),
     location: new FakeDeviceLocationClient(),
   };
 }
