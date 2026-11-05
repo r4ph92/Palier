@@ -4,6 +4,10 @@ export type SpotCategory = (typeof SPOT_CATEGORIES)[number];
 
 export type SpotCountByCategory = Readonly<Record<SpotCategory, number>>;
 
+export function countByCategory(countOf: (category: SpotCategory) => number): SpotCountByCategory {
+  return Object.fromEntries(SPOT_CATEGORIES.map((category) => [category, countOf(category)])) as Record<SpotCategory, number>;
+}
+
 export interface GeoPosition {
   readonly latitude: number;
   readonly longitude: number;

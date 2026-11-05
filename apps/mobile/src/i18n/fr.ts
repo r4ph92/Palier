@@ -1,3 +1,5 @@
+import type { SpotCategory } from '@palier/shared-types';
+
 export const fr = {
   app: {
     crashed: 'Une erreur inattendue est survenue.',
@@ -30,7 +32,7 @@ export const fr = {
       electric: 'Électrique',
       accessible: 'Accessible',
       oversize: 'Grand gabarit',
-    },
+    } satisfies Record<SpotCategory, string>,
     locationDenied: 'Activez la localisation pour trier par distance',
     locationUnavailable: 'Position introuvable\u00A0: stationnements triés par nom',
     emptyNearby: 'Aucun stationnement en ligne à moins de %{radius}.',

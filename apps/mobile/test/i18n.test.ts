@@ -1,4 +1,5 @@
 import { getLocales } from 'expo-localization';
+import { SPOT_CATEGORIES } from '@palier/shared-types/lots';
 import { applyLanguage, deviceLanguage, i18n } from '../src/i18n/i18n';
 
 jest.mock('expo-localization', () => ({ getLocales: jest.fn() }));
@@ -35,5 +36,13 @@ describe('free spot plurals', () => {
     applyLanguage(language);
 
     expect(i18n.t('home.freeSpotsLabel', { count })).toBe(expected);
+  });
+});
+
+describe('spot category labels', () => {
+  it.each(['fr', 'en'] as const)('names every category in %s', (language) => {
+    applyLanguage(language);
+
+    expect(SPOT_CATEGORIES.map((category) => i18n.t(`home.categories.${category}`))).not.toContainEqual(expect.stringMatching(/missing/));
   });
 });
