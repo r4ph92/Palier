@@ -20,10 +20,13 @@ export function parseSpotStateArguments(argumentList: readonly string[]): SpotSt
   return { lotName: values.lot, spotNumber: values.spot, state: parseSpotState(values.state) };
 }
 
+// Only a spot hold sets HELD: a spot moved there by hand would have no hold to release it.
+const SETTABLE_STATES = spotState.enumValues.filter((state) => state !== 'HELD');
+
 function parseSpotState(rawState: string): SpotState {
-  const state = spotState.enumValues.find((candidate) => candidate === rawState);
+  const state = SETTABLE_STATES.find((candidate) => candidate === rawState);
   if (state === undefined) {
-    throw new Error(`Unknown state "${rawState}". Expected one of: ${spotState.enumValues.join(', ')}.`);
+    throw new Error(`Unknown state "${rawState}". Expected one of: ${SETTABLE_STATES.join(', ')}.`);
   }
   return state;
 }

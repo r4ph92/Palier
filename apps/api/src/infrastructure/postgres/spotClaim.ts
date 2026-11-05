@@ -1,9 +1,24 @@
-import { sql } from 'drizzle-orm';
+import { sql, type SQL } from 'drizzle-orm';
 import type { FreeSpot } from '../../domain/allocation/chooseSpot.ts';
 import { chooseSpotFor } from '../../domain/allocation/chooseSpotFor.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Database, Transaction } from './database.ts';
+import type { SpotState } from './lotSchema.ts';
 import type { SpotLabelRow } from './spotLabel.ts';
+
+// The state a claimed spot moves to, and the instant recorded for that change.
+export interface SpotClaimTarget {
+  readonly state: Extract<SpotState, 'ASSIGNED' | 'HELD'>;
+  readonly changedAt: SQL;
+}
+
+// An entry keeps the database clock, like the rest of its steps (decision 013).
+export const ASSIGNED_TO_ENTRY: SpotClaimTarget = { state: 'ASSIGNED', changedAt: sql`now()` };
+
+// A hold records the API's clock reading of its request (decision 016).
+export function heldSince(createdAt: Date): SpotClaimTarget {
+  return { state: 'HELD', changedAt: sql`${createdAt.toISOString()}::timestamptz` };
+}
 
 export interface AssignedSpotRow extends SpotLabelRow {
   readonly id: string;
@@ -22,11 +37,16 @@ interface FreeSpotRow extends Record<string, unknown> {
 }
 
 // Only the chosen spot is locked, and a spot another writer holds is skipped rather than waited on (docs/03).
-export async function assignFirstFreeSpot(tx: Pick<Transaction, 'execute'>, lotId: string, needs: VehicleNeeds): Promise<AssignedSpotRow | undefined> {
+export async function claimFirstFittingSpot(
+  tx: Pick<Transaction, 'execute'>,
+  lotId: string,
+  needs: VehicleNeeds,
+  target: SpotClaimTarget,
+): Promise<AssignedSpotRow | undefined> {
   let candidates = await readFreeSpots(tx, lotId);
   let chosen = chooseSpotFor(needs, candidates);
   while (chosen !== null) {
-    const claimed = await claimSpot(tx, chosen.id);
+    const claimed = await claimSpot(tx, chosen.id, target);
     if (claimed !== undefined) {
       return claimed;
     }
@@ -58,13 +78,13 @@ export async function readFreeSpots(executor: Pick<Database, 'execute'>, lotId: 
   }));
 }
 
-async function claimSpot(tx: Pick<Transaction, 'execute'>, spotId: string): Promise<AssignedSpotRow | undefined> {
+async function claimSpot(tx: Pick<Transaction, 'execute'>, spotId: string, target: SpotClaimTarget): Promise<AssignedSpotRow | undefined> {
   const rows = await tx.execute<AssignedSpotRow>(sql`
     with chosen as (
       select id from spot where id = ${spotId} and state = 'AVAILABLE' for update skip locked
     )
     update spot
-    set state = 'ASSIGNED', state_changed_at = now()
+    set state = ${target.state}::spot_state, state_changed_at = ${target.changedAt}
     from chosen, aisle, level
     where spot.id = chosen.id and aisle.id = spot.aisle_id and level.id = aisle.level_id
     returning spot.id, spot.number, aisle.code as aisle_code, level.code as level_code`);

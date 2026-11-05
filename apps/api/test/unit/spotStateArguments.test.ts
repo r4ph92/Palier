@@ -14,6 +14,10 @@ describe('parseSpotStateArguments', () => {
     );
   });
 
+  it('refuses HELD, which only a spot hold sets', () => {
+    expect(() => parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'A-1', '--state', 'HELD'])).toThrow(/Unknown state "HELD"/);
+  });
+
   it('shows the usage when an argument is missing', () => {
     expect(() => parseSpotStateArguments(['--lot', 'Parking Démo'])).toThrow(/Usage: npm run seed:spot-state/);
   });
