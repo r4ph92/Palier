@@ -59,7 +59,7 @@ describe('expireSpotHolds', () => {
     expect(spotHolds.freedSpots).toBe(2);
   });
 
-  it('frees the spot once when two runs start at the same moment', async () => {
+  it('counts the spot freed once when two overlapping runs meet the fake lot lock', async () => {
     const spotHolds = await holdingJulie();
     const log = logSpy();
 

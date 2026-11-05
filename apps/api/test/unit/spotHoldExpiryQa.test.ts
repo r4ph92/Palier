@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { expireSpotHolds, type HoldExpiryJob } from '../../src/domain/spotHolds/expireSpotHolds.ts';
 import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
-import { startHoldExpiry } from '../../src/scheduler/startHoldExpiry.ts';
+import { SingleRun } from '../../src/scheduler/SingleRun.ts';
 import { configureServer } from './configureServer.ts';
 import { julie, marc } from './fakeDriverRepository.ts';
 import { standardNeeds } from './fakeVehicleRepository.ts';
@@ -140,7 +140,11 @@ describe('QA hold expiry: a lookup that fails', () => {
     const outage = new Error('connection terminated');
     spotHolds.findLotsWithExpiredHolds = vi.fn().mockRejectedValueOnce(outage).mockImplementation(findLots);
     const logger = { ...logSpy(), error: vi.fn() };
-    const stop = startHoldExpiry(() => expireSpotHolds({ spotHolds, clock: () => AT_14_17 }, logger), logger, 30_000);
+    const stop = new SingleRun().startPeriodicTask(() => expireSpotHolds({ spotHolds, clock: () => AT_14_17 }, logger), {
+      logger,
+      failureMessage: 'Expiring spot holds failed',
+      periodMilliseconds: 30_000,
+    });
 
     await vi.advanceTimersByTimeAsync(60_000);
     await stop();

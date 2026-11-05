@@ -9,11 +9,11 @@ export interface HoldExpiryComposition {
   readonly periodMilliseconds: number;
 }
 
-export interface HoldExpirySchedule {
+export interface HoldExpirySettings {
   readonly clock: Clock;
   readonly periodSeconds: number;
 }
 
-export function composeHoldExpiry({ clock, periodSeconds }: HoldExpirySchedule, database: Database): HoldExpiryComposition {
+export function composeHoldExpiry({ clock, periodSeconds }: HoldExpirySettings, database: Database): HoldExpiryComposition {
   return { job: { spotHolds: new PostgresSpotHoldRepository(database), clock }, periodMilliseconds: periodSeconds * SECOND_MILLISECONDS };
 }

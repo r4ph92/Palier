@@ -77,9 +77,6 @@ export class FakeSpotHoldRepository implements SpotHoldRepository {
   // Frees one spot per hold it ends, like the real repository under the lot lock.
   expireLotSpotHolds(lotId: string, now: Date): Promise<SpotHoldExpiry> {
     this.expiries.push({ lotId, now });
-    if (this.refusal !== null) {
-      return Promise.reject(new SpotHoldRefusedError(this.refusal));
-    }
     const ended = [...this.#active].filter(([, spotHold]) => spotHold.lotId === lotId && spotHold.expiresAt <= now);
     ended.forEach(([driverId]) => this.#active.delete(driverId));
     this.freedSpots += ended.length;

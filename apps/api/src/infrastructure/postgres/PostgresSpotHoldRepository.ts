@@ -8,7 +8,7 @@ import type { Database, Transaction } from './database.ts';
 import { LOT_LOCK_TRANSACTION, lockParkingLot, type LockedParkingLot } from './lockParkingLot.ts';
 import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
 import { claimFirstFittingSpot, heldSince } from './spotClaim.ts';
-import { findLotsWithExpiredHolds, markSpotHoldsExpired } from './spotExpiry.ts';
+import { findLotsWithExpiredHolds, freeHeldSpots, markSpotHoldsExpired } from './spotExpiry.ts';
 import { freeHeldSpot, markSpotHoldReleased } from './spotRelease.ts';
 import { readSpotHoldFacts } from './spotHoldFacts.ts';
 import { spotHoldRefusalOf } from './spotHoldRefusal.ts';
@@ -113,11 +113,7 @@ async function releaseUnderLotLock(tx: Transaction, release: SpotHoldRelease): P
 async function expireUnderLotLock(tx: Transaction, lotId: string, now: Date): Promise<SpotHoldExpiry> {
   await lockParkingLot(tx, lotId);
   const spotIds = await markSpotHoldsExpired(tx, lotId, now);
-  let freed = 0;
-  for (const spotId of spotIds) {
-    freed += (await freeHeldSpot(tx, spotId, now)) ? 1 : 0;
-  }
-  return { expired: spotIds.length, freed };
+  return { expired: spotIds.length, freed: await freeHeldSpots(tx, spotIds, now) };
 }
 
 async function placeUnderLotLock(tx: Transaction, draft: SpotHoldDraft): Promise<SpotHold> {
