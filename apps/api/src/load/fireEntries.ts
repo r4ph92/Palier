@@ -20,6 +20,7 @@ export interface EntryOutcome {
 }
 
 const CREATED = 201;
+const REQUEST_TIMEOUT_MILLISECONDS = 10_000;
 
 interface EntryAnswerBody extends Partial<Pick<EntryRefusalBody, 'error'>> {
   readonly spot?: { readonly levelCode?: unknown; readonly number?: unknown };
@@ -36,6 +37,7 @@ function requestFor({ qrContent, appVersion }: EntryRequestTarget, token: string
     method: 'POST',
     headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', [APP_VERSION_HEADER]: appVersion },
     body: JSON.stringify({ qrContent }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MILLISECONDS),
   };
 }
 
