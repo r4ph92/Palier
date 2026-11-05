@@ -11,6 +11,7 @@ type FakePermission = LocationPermission | 'failing' | 'pending';
 export class FakeDeviceLocationClient implements DeviceLocationClient {
   readonly #permission: FakePermission;
   readonly #position: GeoPosition | null;
+  #answerPrompt: (permission: LocationPermission) => void = () => undefined;
   permissionRequests = 0;
   positionReads = 0;
 
@@ -22,12 +23,19 @@ export class FakeDeviceLocationClient implements DeviceLocationClient {
   requestWhileInUse(): Promise<LocationPermission> {
     this.permissionRequests += 1;
     if (this.#permission === 'pending') {
-      return new Promise<LocationPermission>(() => undefined);
+      return new Promise<LocationPermission>((resolve) => {
+        this.#answerPrompt = resolve;
+      });
     }
     if (this.#permission === 'failing') {
       return Promise.reject(new Error('fake permission failure'));
     }
     return Promise.resolve(this.#permission);
+  }
+
+  // Answers a 'pending' prompt, as the driver would after a while.
+  answerPrompt(permission: LocationPermission): void {
+    this.#answerPrompt(permission);
   }
 
   currentPosition(): Promise<GeoPosition | null> {

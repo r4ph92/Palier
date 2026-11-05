@@ -1,13 +1,14 @@
 import { act, screen, userEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
-import { LOTS_REFRESH_MILLISECONDS } from '../src/lots/useLots';
 import { FakeDeviceLocationClient, LOCATION_DENIED_NOTICE_FR } from './fakeDeviceLocationClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { renderHomeScreen } from './renderHomeScreen';
 import { visibleText } from './visibleText';
 
+const THIRTY_SECONDS = 30_000;
+
 async function waitForRefresh(): Promise<void> {
-  await act(() => jest.advanceTimersByTimeAsync(LOTS_REFRESH_MILLISECONDS));
+  await act(() => jest.advanceTimersByTimeAsync(THIRTY_SECONDS));
 }
 
 describe('HomeScreen automatic refresh', () => {
@@ -61,6 +62,21 @@ describe('HomeScreen automatic refresh', () => {
 
     expect(announce).toHaveBeenCalledTimes(1);
     announce.mockRestore();
+  });
+
+  it('polls first 30 seconds after the list shows, not after the screen opens', async () => {
+    const locationClient = new FakeDeviceLocationClient('pending');
+    const client = new FakeLotsClient(parkingDemoWith(2), parkingDemoWith(0));
+    await renderHomeScreen(client, 'fr', locationClient);
+    await act(() => jest.advanceTimersByTimeAsync(20_000));
+    await act(async () => locationClient.answerPrompt('granted'));
+    await screen.findByText('2 places libres', visibleText);
+
+    await act(() => jest.advanceTimersByTimeAsync(THIRTY_SECONDS - 1));
+    expect(client.callCount).toBe(1);
+    await act(() => jest.advanceTimersByTimeAsync(1));
+
+    expect(client.callCount).toBe(2);
   });
 
   it('stops once the screen is gone', async () => {

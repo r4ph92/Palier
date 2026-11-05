@@ -6,50 +6,50 @@ export type LotsState =
   | { readonly status: 'loaded'; readonly lots: readonly NearbyLot[]; readonly location: DriverLocation; readonly updatedAt: Date }
   | { readonly status: 'error' };
 
-// full: the position is read again before the lots. poll: the 30 s refresh reuses the last position.
-export type ReadKind = 'full' | 'poll';
+// The read in flight, permission prompt included; 'none' once it settles.
+export type ReadInFlight = 'none' | 'first' | 'refresh' | 'retry' | 'poll';
 
-// isReading covers the whole read, permission prompt included; a poll requested meanwhile is dropped.
+// knownLocation: the position a poll reuses; null asks the device again.
+export interface LotsRequest {
+  readonly number: number;
+  readonly knownLocation: DriverLocation | null;
+}
+
 export interface LotsModel {
   readonly state: LotsState;
-  readonly isRefreshing: boolean;
-  readonly isReading: boolean;
-  readonly hasSettled: boolean;
-  readonly requestNumber: number;
-  readonly readKind: ReadKind;
+  readonly inFlight: ReadInFlight;
+  readonly request: LotsRequest;
 }
 
 export type LotsAction =
   | { readonly type: 'refreshRequested' }
   | { readonly type: 'retryRequested' }
   | { readonly type: 'pollRequested' }
-  | { readonly type: 'settled'; readonly state: LotsState }
-  | { readonly type: 'pollMissed' };
+  | { readonly type: 'loaded'; readonly state: Extract<LotsState, { readonly status: 'loaded' }> }
+  | { readonly type: 'unreachable' };
 
 export const initialLotsModel: LotsModel = {
   state: { status: 'loading' },
-  isRefreshing: false,
-  isReading: true,
-  hasSettled: false,
-  requestNumber: 0,
-  readKind: 'full',
+  inFlight: 'first',
+  request: { number: 0, knownLocation: null },
 };
 
 export function lotsReducer(model: LotsModel, action: LotsAction): LotsModel {
   switch (action.type) {
     case 'refreshRequested':
-      return model.isRefreshing ? model : nextRead({ ...model, isRefreshing: true }, 'full');
+      return model.inFlight === 'refresh' ? model : nextRead(model, 'refresh');
     case 'retryRequested':
-      return nextRead({ ...model, state: { status: 'loading' } }, 'full');
+      return nextRead({ ...model, state: { status: 'loading' } }, 'retry');
     case 'pollRequested':
-      return model.isReading ? model : nextRead(model, 'poll');
-    case 'settled':
-      return { ...model, state: action.state, isRefreshing: false, isReading: false, hasSettled: true };
-    case 'pollMissed':
-      return { ...model, isReading: false };
+      return model.inFlight === 'none' ? nextRead(model, 'poll') : model;
+    case 'loaded':
+      return { ...model, state: action.state, inFlight: 'none' };
+    case 'unreachable':
+      return { ...model, state: model.inFlight === 'poll' ? model.state : { status: 'error' }, inFlight: 'none' };
   }
 }
 
-function nextRead(model: LotsModel, readKind: ReadKind): LotsModel {
-  return { ...model, isReading: true, readKind, requestNumber: model.requestNumber + 1 };
+function nextRead(model: LotsModel, inFlight: ReadInFlight): LotsModel {
+  const knownLocation = inFlight === 'poll' && model.state.status === 'loaded' ? model.state.location : null;
+  return { ...model, inFlight, request: { number: model.request.number + 1, knownLocation } };
 }
