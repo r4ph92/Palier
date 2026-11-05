@@ -73,6 +73,16 @@ describe('HomeScreen spot hold', () => {
     expect(focus).toHaveBeenCalledTimes(1);
   });
 
+  it('rounds the minutes VoiceOver reads up, so 14:59 left still reads 15 minutes', async () => {
+    await holdAtParkingDemo(new FakeLotsClient(parkingDemoWith(10)));
+    await screen.findByTestId('spot-hold-banner');
+
+    await tick(1);
+
+    expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('14:59');
+    expect(screen.getByTestId('spot-hold-banner')).toHaveProp('accessibilityLabel', expect.stringMatching(/, 15 minutes restantes$/));
+  });
+
   it('hides every hold button once Julie holds a spot', async () => {
     await holdAtParkingDemo(new FakeLotsClient([parkingDemo(10), parkingTestPaliers]));
     await screen.findByTestId('spot-hold-banner');
