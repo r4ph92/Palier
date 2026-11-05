@@ -65,7 +65,6 @@ export async function requestHold(client: SpotHoldClient, lotId: string, updates
   }
   updates.holdsTaken.current += 1;
   updates.setHeld(heldSpotFrom(spotHold, Date.now(), true));
-  updates.setReadState('settled');
   updates.onHeld();
 }
 
