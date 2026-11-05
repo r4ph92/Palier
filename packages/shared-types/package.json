@@ -32,6 +32,10 @@
     "./dashboard": {
       "types": "./src/dashboard.ts",
       "default": "./src/dashboard.ts"
+    },
+    "./spotHolds": {
+      "types": "./src/spotHolds.ts",
+      "default": "./src/spotHolds.ts"
     }
   },
   "scripts": {
