@@ -10,7 +10,7 @@ import type {
 } from '@palier/shared-types';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
-import { uuidSchema } from './uuidSchema.ts';
+import { idPathParametersSchema, uuidSchema } from './uuidSchema.ts';
 
 export const dashboardUserSchema = {
   type: 'object',
@@ -77,11 +77,7 @@ export const stripeOnboardingLinkSchema = {
   properties: { url: { type: 'string' } },
 } as const;
 
-export const lotIdParametersSchema = {
-  type: 'object',
-  required: ['id'],
-  properties: { id: uuidSchema },
-} as const;
+export const lotIdParametersSchema = idPathParametersSchema;
 
 export type StripeOnboardingLinkSchemaMatches = AssertTrue<MutuallyAssignable<FromSchema<typeof stripeOnboardingLinkSchema>, StripeOnboardingLink>>;
 export type UserSchemaMatches = AssertTrue<MutuallyAssignable<FromSchema<typeof dashboardUserSchema>, DashboardUser>>;

@@ -1,7 +1,7 @@
 import type { CurrentSpotHoldResponse, SpotHold } from '@palier/shared-types';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
-import { uuidSchema } from './uuidSchema.ts';
+import { idPathParametersSchema } from './uuidSchema.ts';
 
 // additionalProperties false: the response schema strips any field it does not list, the spot number included.
 export const spotHoldSchema = {
@@ -24,17 +24,9 @@ export const currentSpotHoldResponseSchema = {
   properties: { spotHold: { anyOf: [spotHoldSchema, { type: 'null' }] } },
 } as const;
 
-export const spotHoldLotParametersSchema = {
-  type: 'object',
-  required: ['id'],
-  properties: { id: uuidSchema },
-} as const;
+export const spotHoldLotParametersSchema = idPathParametersSchema;
 
-export const spotHoldIdParametersSchema = {
-  type: 'object',
-  required: ['id'],
-  properties: { id: uuidSchema },
-} as const;
+export const spotHoldIdParametersSchema = idPathParametersSchema;
 
 export type SpotHoldLotParameters = FromSchema<typeof spotHoldLotParametersSchema>;
 export type SpotHoldIdParameters = FromSchema<typeof spotHoldIdParametersSchema>;
