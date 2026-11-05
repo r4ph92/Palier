@@ -10,7 +10,7 @@ const BASE_URL = 'http://localhost:3000';
 const TOKEN = 'julie-token';
 
 function clientAnswering(body: unknown, status = 200, callbacks = { onUnauthorized: jest.fn(), onConsentRequired: jest.fn() }) {
-  const fetchFunction = jest.fn(() => Promise.resolve(new Response(JSON.stringify(body), { status })));
+  const fetchFunction = jest.fn(() => Promise.resolve(new Response(body === undefined ? null : JSON.stringify(body), { status })));
   const client = new HttpSpotHoldClient({ baseUrl: BASE_URL, token: TOKEN, ...callbacks, fetchFunction });
   return { client, fetchFunction, ...callbacks };
 }
@@ -68,6 +68,34 @@ describe('HttpSpotHoldClient', () => {
     ['no server time', { ...julieHoldAtParkingDemo(), now: undefined }],
   ])('treats an answer with %s as Palier being unreachable', async (_case, body: Record<keyof SpotHold, unknown>) => {
     await expect(clientAnswering(body, 201).client.hold(PARKING_DEMO_ID)).rejects.toBeInstanceOf(PalierUnreachableError);
+  });
+
+  it('asks Palier to release the hold by its id with a DELETE and the bearer token', async () => {
+    const { client, fetchFunction } = clientAnswering(undefined, 204);
+
+    await expect(client.release('hold-1')).resolves.toBeUndefined();
+    expect(fetchFunction).toHaveBeenCalledWith(
+      `${BASE_URL}/v1/holds/hold-1`,
+      expect.objectContaining({ method: 'DELETE', headers: { Authorization: `Bearer ${TOKEN}` } }),
+    );
+  });
+
+  it.each([
+    ['HOLD_NOT_FOUND', 404],
+    ['HOLD_EXPIRED', 409],
+    ['HOLD_UNAVAILABLE', 503],
+  ])('reports %s on a release as a refusal with its code', async (code, status) => {
+    const { client } = clientAnswering({ statusCode: status, error: code, message: 'refused' }, status);
+
+    await expect(client.release('hold-1')).rejects.toEqual(new PalierRejectedError(code));
+  });
+
+  it('keeps a hold id with special characters inside the path', async () => {
+    const { client, fetchFunction } = clientAnswering(undefined, 204);
+
+    await client.release('../me/hold');
+
+    expect(fetchFunction).toHaveBeenCalledWith(`${BASE_URL}/v1/holds/..%2Fme%2Fhold`, expect.anything());
   });
 
   it("reads the driver's current hold", async () => {

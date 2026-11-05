@@ -13,10 +13,13 @@ export type StatementLabel =
   | 'read-spot-hold-lot'
   | 'read-spot-hold-facts'
   | 'insert-spot-hold'
+  | 'release-spot-hold'
+  | 'free-held-spot'
   | 'unknown';
 
 export interface ExecutedStatement {
   readonly label: StatementLabel;
+  readonly text: string;
   readonly params: readonly unknown[];
   readonly onTransaction: boolean;
 }
@@ -36,6 +39,8 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-spot-hold-lot', /join operator on/],
   ['read-spot-hold-facts', /as active_holds_in_lot/],
   ['insert-spot-hold', /insert into spot_hold/],
+  ['release-spot-hold', /update spot_hold set/],
+  ['free-held-spot', /update spot set/],
 ];
 
 function labelOf(text: string): StatementLabel {
@@ -47,9 +52,16 @@ export class ScriptedSql {
   readonly statements: ExecutedStatement[] = [];
   readonly isolationLevels: (string | undefined)[] = [];
   readonly #answers = new Map<StatementLabel, Rows[]>();
+  readonly #failures = new Map<StatementLabel, unknown>();
 
   answer(label: StatementLabel, ...rowLists: Rows[]): this {
     this.#answers.set(label, [...(this.#answers.get(label) ?? []), ...rowLists]);
+    return this;
+  }
+
+  // Every statement with this label fails, like Postgres refusing it.
+  fail(label: StatementLabel, error: unknown): this {
+    this.#failures.set(label, error);
     return this;
   }
 
@@ -79,17 +91,21 @@ export class ScriptedSql {
   #transaction() {
     return {
       execute: (query: SQL) => this.#run(query, true),
-      insert: () => ({ values: () => ({ returning: () => this.#record('insert-session', [], true) }) }),
+      insert: () => ({ values: () => ({ returning: () => this.#record({ label: 'insert-session', text: '', params: [], onTransaction: true }) }) }),
     };
   }
 
   #run(query: SQL, onTransaction: boolean): Promise<Rows> {
     const { sql, params } = dialect.sqlToQuery(query);
-    return this.#record(labelOf(sql), params, onTransaction);
+    return this.#record({ label: labelOf(sql), text: sql, params, onTransaction });
   }
 
-  #record(label: StatementLabel, params: readonly unknown[], onTransaction: boolean): Promise<Rows> {
-    this.statements.push({ label, params, onTransaction });
-    return Promise.resolve(this.#answers.get(label)?.shift() ?? []);
+  #record(statement: ExecutedStatement): Promise<Rows> {
+    this.statements.push(statement);
+    const failure = this.#failures.get(statement.label);
+    if (failure !== undefined) {
+      return Promise.reject(failure instanceof Error ? failure : new Error('Failed query', { cause: failure }));
+    }
+    return Promise.resolve(this.#answers.get(statement.label)?.shift() ?? []);
   }
 }

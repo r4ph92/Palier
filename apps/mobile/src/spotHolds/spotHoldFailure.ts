@@ -8,9 +8,11 @@ export type SpotHoldFailureReason =
   | { readonly kind: 'notResponding' }
   | { readonly kind: 'unreachable' };
 
+export type SpotHoldFailureTarget = { readonly kind: 'lot'; readonly lotId: string } | { readonly kind: 'heldSpot' };
+
 export interface SpotHoldFailure {
-  // The lot whose button was tapped: the problem shows under that button.
-  readonly lotId: string;
+  // The control that was tapped: the problem shows under it.
+  readonly target: SpotHoldFailureTarget;
   readonly reason: SpotHoldFailureReason;
   // True until VoiceOver has announced it once: a tab return shows it again without a second announcement.
   readonly isFresh: boolean;

@@ -55,7 +55,7 @@ export interface ServerDependencies {
   readonly spotHolds?: SpotHoldServices | undefined;
   // main.ts always passes it; without it the dashboard cannot connect Stripe.
   readonly operatorStripe?: OperatorStripeDependencies | undefined;
-  // Tests hand one in to move it directly. Used only when test sign-in is enabled, by the current session and spot holds; gates keep their own clock.
+  // Tests hand one in to move it directly. Used only when test sign-in is enabled, by the current session and the spot hold routes (place, read, release); gates keep their own clock.
   readonly testClock?: TestClock | undefined;
   readonly settings?: ServerSettings;
 }

@@ -5,4 +5,6 @@ export interface SpotHoldClient {
   hold(lotId: string): Promise<SpotHold>;
   // The driver's active hold, so a relaunch finds it again; null when there is none.
   current(): Promise<SpotHold | null>;
+  // Gives the spot back; refusals arrive as PalierRejectedError with the API's code.
+  release(spotHoldId: string): Promise<void>;
 }

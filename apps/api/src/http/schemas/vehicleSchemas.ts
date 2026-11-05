@@ -1,3 +1,5 @@
+import { idPathParametersSchema } from './uuidSchema.ts';
+
 const needsProperties = {
   isElectric: { type: 'boolean' },
   hasAccessiblePermit: { type: 'boolean' },
@@ -31,8 +33,4 @@ export const vehicleNeedsBodySchema = {
   properties: needsProperties,
 } as const;
 
-export const vehicleParamsSchema = {
-  type: 'object',
-  required: ['id'],
-  properties: { id: { type: 'string', format: 'uuid' } },
-} as const;
+export const vehicleParamsSchema = idPathParametersSchema;

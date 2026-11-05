@@ -2,6 +2,7 @@ import type { EntryRequest, EntryResponse, EntryStatusResponse, GateCommand } fr
 import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
+import { uuidSchema } from './uuidSchema.ts';
 
 // A printed QR link is under 120 characters; the cap only keeps oversized bodies away from the token parser.
 const QR_CONTENT_MAX_LENGTH = 512;
@@ -46,7 +47,7 @@ export const entryStatusResponseSchema = {
 export const entrySessionParametersSchema = {
   type: 'object',
   required: ['sessionId'],
-  properties: { sessionId: { type: 'string', format: 'uuid' } },
+  properties: { sessionId: uuidSchema },
 } as const;
 
 export type EntrySessionParameters = FromSchema<typeof entrySessionParametersSchema>;
@@ -63,7 +64,7 @@ export const gateCommandListSchema = { type: 'array', items: gateCommandSchema }
 export const gateCommandsQuerySchema = {
   type: 'object',
   additionalProperties: false,
-  properties: { after: { type: 'string', format: 'date-time' }, afterId: { type: 'string', format: 'uuid' } },
+  properties: { after: { type: 'string', format: 'date-time' }, afterId: uuidSchema },
 } as const;
 
 export type GateCommandsQuery = FromSchema<typeof gateCommandsQuerySchema>;

@@ -18,6 +18,7 @@ export const GATED = [
   'GET /v1/me/session',
   'POST /v1/lots/:id/holds',
   'GET /v1/me/hold',
+  'DELETE /v1/holds/:id',
 ];
 
 // The test routes exist only in test environments and take no driver token.

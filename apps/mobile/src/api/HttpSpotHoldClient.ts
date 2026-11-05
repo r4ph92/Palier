@@ -23,6 +23,10 @@ export class HttpSpotHoldClient implements SpotHoldClient {
     return parseSpotHold(await readJson(response));
   }
 
+  async release(spotHoldId: string): Promise<void> {
+    await this.#holdRequester.send(`/v1/holds/${encodeURIComponent(spotHoldId)}`, { method: 'DELETE' });
+  }
+
   async current(): Promise<SpotHold | null> {
     const response = await this.#currentRequester.send('/v1/me/hold', { method: 'GET' });
     return parseCurrentSpotHold(await readJson(response));

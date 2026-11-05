@@ -9,7 +9,11 @@ const MESSAGES: Record<SpotHoldRefusalCode, string> = {
   LOT_NOT_IN_SERVICE: 'This lot is not in service.',
   HOLD_UNAVAILABLE: 'Spots cannot be held right now.',
   TOO_MANY_HOLD_ATTEMPTS: 'Too many attempts. Try again in a few minutes.',
+  HOLD_NOT_FOUND: 'No such hold.',
+  HOLD_EXPIRED: 'This guarantee has already expired.',
 };
+
+const RELEASE_UNAVAILABLE_MESSAGE = 'The hold cannot be released right now.';
 
 export class SpotHoldRefusedError extends Error {
   readonly reason: SpotHoldRefusalCode;
@@ -18,5 +22,12 @@ export class SpotHoldRefusedError extends Error {
     super(MESSAGES[reason], options);
     this.name = 'SpotHoldRefusedError';
     this.reason = reason;
+  }
+
+  // A busy lot is worded for a release, not for placing a hold.
+  static releaseUnavailable(cause?: unknown): SpotHoldRefusedError {
+    const error = new SpotHoldRefusedError('HOLD_UNAVAILABLE', { cause });
+    error.message = RELEASE_UNAVAILABLE_MESSAGE;
+    return error;
   }
 }

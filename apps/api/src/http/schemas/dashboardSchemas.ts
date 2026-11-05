@@ -10,6 +10,7 @@ import type {
 } from '@palier/shared-types';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
+import { idPathParametersSchema, uuidSchema } from './uuidSchema.ts';
 
 export const dashboardUserSchema = {
   type: 'object',
@@ -58,7 +59,7 @@ export const dashboardTestSignInBodySchema = {
   type: 'object',
   required: ['userId'],
   additionalProperties: false,
-  properties: { userId: { type: 'string', format: 'uuid' } },
+  properties: { userId: uuidSchema },
 } as const;
 
 // The length rule applies to the trimmed name in the domain; this bound only keeps huge bodies out.
@@ -76,11 +77,7 @@ export const stripeOnboardingLinkSchema = {
   properties: { url: { type: 'string' } },
 } as const;
 
-export const lotIdParametersSchema = {
-  type: 'object',
-  required: ['id'],
-  properties: { id: { type: 'string', format: 'uuid' } },
-} as const;
+export const lotIdParametersSchema = idPathParametersSchema;
 
 export type StripeOnboardingLinkSchemaMatches = AssertTrue<MutuallyAssignable<FromSchema<typeof stripeOnboardingLinkSchema>, StripeOnboardingLink>>;
 export type UserSchemaMatches = AssertTrue<MutuallyAssignable<FromSchema<typeof dashboardUserSchema>, DashboardUser>>;

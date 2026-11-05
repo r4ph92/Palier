@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SpotHoldClient } from '../api/SpotHoldClient';
 import type { HeldSpot } from './heldSpot';
 import type { SpotHoldFailure } from './spotHoldFailure';
-import { readCurrentHold, requestHold, type SpotHoldReadState, type SpotHoldUpdates } from './spotHoldRequests';
+import { readCurrentHold, releaseHold, requestHold, type ReleaseCallbacks, type SpotHoldReadState, type SpotHoldUpdates } from './spotHoldRequests';
 
 export interface SpotHoldController {
   readonly held: HeldSpot | null;
@@ -11,6 +11,8 @@ export interface SpotHoldController {
   // The lot of the request in flight; every hold button waits while it runs.
   readonly requestedLotId: string | null;
   hold(lotId: string, onHeld: () => void): void;
+  readonly isReleasing: boolean;
+  release(callbacks: ReleaseCallbacks): void;
   // Reads the hold again, unless a read is already on its way.
   refreshHold(): void;
   dismissProblem(): void;
@@ -23,40 +25,65 @@ export function useSpotHold(client: SpotHoldClient): SpotHoldController {
   const [held, setHeld] = useState<HeldSpot | null>(null);
   const [readState, setReadState] = useState<SpotHoldReadState>('unknown');
   const [failure, setFailure] = useState<SpotHoldFailure | null>(null);
-  const holdsTaken = useRef(0);
+  const holdChanges = useRef(0);
   const isReading = useRef(false);
-  const updates = useMemo<SpotHoldUpdates>(() => ({ setHeld, setReadState, setFailure, holdsTaken, isReading }), []);
+  const updates = useMemo<SpotHoldUpdates>(() => ({ setHeld, setReadState, setFailure, holdChanges, isReading }), []);
   useEffect(() => void readCurrentHold(client, updates), [client, updates]);
   const { requestedLotId, hold } = useHoldRequest(client, updates);
+  const { isReleasing, release } = useReleaseRequest(client, updates, held);
   const refreshHold = useCallback(() => {
     if (!isReading.current) {
       void readCurrentHold(client, updates);
     }
   }, [client, updates]);
   const dismissProblem = useCallback(() => setFailure(null), []);
-  return { held, readState, failure, requestedLotId, hold, refreshHold, dismissProblem, ...useAcknowledgements(setHeld, setFailure) };
+  return { held, readState, failure, requestedLotId, hold, isReleasing, release, refreshHold, dismissProblem, ...useAcknowledgements(setHeld, setFailure) };
 }
 
-// The ref refuses a second request while one runs, so a double tap sends one request.
 function useHoldRequest(client: SpotHoldClient, updates: SpotHoldUpdates): Pick<SpotHoldController, 'requestedLotId' | 'hold'> {
-  const [requestedLotId, setRequestedLotId] = useState<string | null>(null);
-  const isRequesting = useRef(false);
+  const { runningKey: requestedLotId, run } = useSingleFlight<string>();
   const hold = useCallback(
     (lotId: string, onHeld: () => void) => {
-      if (isRequesting.current) {
-        return;
-      }
-      isRequesting.current = true;
-      setRequestedLotId(lotId);
-      updates.setFailure(null);
-      void requestHold(client, lotId, { ...updates, onHeld }).finally(() => {
-        isRequesting.current = false;
-        setRequestedLotId(null);
+      run(lotId, () => {
+        updates.setFailure(null);
+        return requestHold(client, lotId, { ...updates, onHeld });
       });
     },
-    [client, updates],
+    [client, updates, run],
   );
   return { requestedLotId, hold };
+}
+
+function useReleaseRequest(client: SpotHoldClient, updates: SpotHoldUpdates, held: HeldSpot | null): Pick<SpotHoldController, 'isReleasing' | 'release'> {
+  const { runningKey, run } = useSingleFlight<string>();
+  const spotHoldId = held?.spotHold.spotHoldId;
+  const release = useCallback(
+    (callbacks: ReleaseCallbacks) => {
+      if (spotHoldId !== undefined) {
+        run(spotHoldId, () => releaseHold(client, spotHoldId, { ...updates, ...callbacks }));
+      }
+    },
+    [client, updates, run, spotHoldId],
+  );
+  return { isReleasing: runningKey !== null, release };
+}
+
+// The ref refuses a second task while one runs, so a double tap sends one request.
+function useSingleFlight<Key>() {
+  const [runningKey, setRunningKey] = useState<Key | null>(null);
+  const isRunning = useRef(false);
+  const run = useCallback((key: Key, task: () => Promise<void>) => {
+    if (isRunning.current) {
+      return;
+    }
+    isRunning.current = true;
+    setRunningKey(key);
+    void task().finally(() => {
+      isRunning.current = false;
+      setRunningKey(null);
+    });
+  }, []);
+  return { runningKey, run };
 }
 
 function useAcknowledgements(

@@ -26,6 +26,8 @@ export const SPOT_HOLD_REFUSAL_CODES = [
   'LOT_NOT_IN_SERVICE',
   'HOLD_UNAVAILABLE',
   'TOO_MANY_HOLD_ATTEMPTS',
+  'HOLD_NOT_FOUND',
+  'HOLD_EXPIRED',
 ] as const;
 
 export type SpotHoldRefusalCode = (typeof SPOT_HOLD_REFUSAL_CODES)[number];

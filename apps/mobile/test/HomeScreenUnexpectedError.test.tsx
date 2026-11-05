@@ -26,6 +26,7 @@ const brokenClient: LotsClient = { listLots: () => Promise.reject(new TypeError(
 const brokenSpotHoldClient: SpotHoldClient = {
   hold: () => Promise.reject(new TypeError('a hold programming error')),
   current: () => Promise.reject(new TypeError('a hold programming error')),
+  release: () => Promise.reject(new TypeError('a hold programming error')),
 };
 const METRICS = { frame: { x: 0, y: 0, width: 393, height: 852 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } };
 

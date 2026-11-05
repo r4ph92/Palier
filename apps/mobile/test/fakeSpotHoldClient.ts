@@ -23,6 +23,8 @@ export class FakeSpotHoldClient implements SpotHoldClient {
   nextFailure: Error | null = null;
   isReachable = true;
   holdsAnswer = false;
+  releasesAnswer = false;
+  readonly releasedIds: string[] = [];
   currentRequests = 0;
   readonly #pending: (() => void)[] = [];
 
@@ -43,20 +45,42 @@ export class FakeSpotHoldClient implements SpotHoldClient {
     return this.isReachable ? Promise.resolve(this.activeHold) : Promise.reject(new PalierUnreachableError('fake'));
   }
 
-  // Answers every hold request still waiting, with whatever the fake is set to answer now.
+  release(spotHoldId: string): Promise<void> {
+    this.releasedIds.push(spotHoldId);
+    if (this.releasesAnswer) {
+      return new Promise((resolve, reject) => this.#pending.push(() => void this.#releaseNow().then(resolve, reject)));
+    }
+    return this.#releaseNow();
+  }
+
+  // Answers every hold or release request still waiting, with whatever the fake is set to answer now.
   answer(): void {
     this.#pending.splice(0).forEach((resolve) => resolve());
   }
 
-  #holdNow(lotId: string): Promise<SpotHold> {
+  #releaseNow(): Promise<void> {
+    const refusal = this.#refusal();
+    if (refusal !== null) {
+      return Promise.reject(refusal);
+    }
+    this.activeHold = null;
+    return Promise.resolve();
+  }
+
+  #refusal(): Error | null {
     if (this.nextFailure !== null) {
-      return Promise.reject(this.nextFailure);
+      return this.nextFailure;
     }
     if (!this.isReachable) {
-      return Promise.reject(new PalierUnreachableError('fake'));
+      return new PalierUnreachableError('fake');
     }
-    if (this.nextRejection !== null) {
-      return Promise.reject(new PalierRejectedError(this.nextRejection));
+    return this.nextRejection === null ? null : new PalierRejectedError(this.nextRejection);
+  }
+
+  #holdNow(lotId: string): Promise<SpotHold> {
+    const refusal = this.#refusal();
+    if (refusal !== null) {
+      return Promise.reject(refusal);
     }
     this.activeHold = julieHoldAtParkingDemo({ lotId });
     return Promise.resolve(this.activeHold);
