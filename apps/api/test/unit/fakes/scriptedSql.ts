@@ -59,7 +59,7 @@ export class ScriptedSql {
     return this;
   }
 
-  // The next statement with this label fails, like Postgres refusing it.
+  // Every statement with this label fails, like Postgres refusing it.
   fail(label: StatementLabel, error: unknown): this {
     this.#failures.set(label, error);
     return this;
