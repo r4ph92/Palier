@@ -10,6 +10,9 @@ import { HOLD_BUTTON_FR } from './spotHoldScreen';
 import { visibleText } from './visibleText';
 
 const RELEASE_FR = 'Libérer la garantie à Parking Démo';
+const RELEASE_EN = 'Release the guarantee at Parking Démo';
+const CONFIRM_FR = 'Oui, libérer la garantie à Parking Démo';
+const CONFIRM_EN = 'Yes, release the guarantee at Parking Démo';
 const HOLD_WORDING_FR = 'Impossible de garantir une place pour le moment, réessayez dans un instant';
 const mockWindow = { width: 402, height: 874, scale: 3, fontScale: 1 };
 
@@ -26,7 +29,7 @@ async function renderJulieHolding(spotHoldClient: FakeSpotHoldClient, lotsClient
 
 async function confirmRelease(user: ReturnType<typeof userEvent.setup>) {
   await user.press(await screen.findByRole('button', { name: RELEASE_FR }));
-  await user.press(await screen.findByRole('button', { name: RELEASE_FR }));
+  await user.press(await screen.findByRole('button', { name: CONFIRM_FR }));
 }
 
 describe('QA HomeScreen releasing a hold', () => {
@@ -44,12 +47,26 @@ describe('QA HomeScreen releasing a hold', () => {
 
     await confirmRelease(user);
 
-    expect(await screen.findByRole('alert')).toBeOnTheScreen();
+    expect(await screen.findByText('Impossible de libérer la garantie pour le moment, réessayez dans un instant')).toBeOnTheScreen();
     expect(screen.queryByText(HOLD_WORDING_FR)).not.toBeOnTheScreen();
     expect(screen.getByTestId('spot-hold-banner')).toBeOnTheScreen();
   });
 
-  it('never leaves a silent stale banner when the release answers not found and the hold cannot be read again', async () => {
+  it('words a busy lot for the release in English too', async () => {
+    const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
+    await renderHomeScreenWith({ lotsClient: new FakeLotsClient(parkingDemoWith(9)), locationClient: new FakeDeviceLocationClient(), spotHoldClient }, 'en');
+    await screen.findByTestId('spot-hold-banner');
+    const user = userEvent.setup();
+    spotHoldClient.nextRejection = 'HOLD_UNAVAILABLE';
+
+    await user.press(screen.getByRole('button', { name: RELEASE_EN }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_EN }));
+
+    expect(await screen.findByText('Can’t release the guarantee right now, try again in a moment')).toBeOnTheScreen();
+    expect(screen.queryByText('Can’t guarantee a spot right now, try again in a moment')).not.toBeOnTheScreen();
+  });
+
+  it('tells Julie « Cette garantie n’existe plus » when the release answers not found and the hold cannot be read again', async () => {
     const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
     const { user } = await renderJulieHolding(spotHoldClient);
     spotHoldClient.nextFailure = new PalierRejectedError('HOLD_NOT_FOUND');
@@ -58,9 +75,25 @@ describe('QA HomeScreen releasing a hold', () => {
     await confirmRelease(user);
     await act(async () => undefined);
 
-    const bannerGone = screen.queryByTestId('spot-hold-banner') === null;
-    const told = screen.queryByRole('alert') !== null;
-    expect(bannerGone || told).toBe(true);
+    expect(await screen.findByText('Cette garantie n’existe plus, actualisez la liste')).toBeOnTheScreen();
+  });
+
+  it('clears « Cette garantie n’existe plus » and the stale banner once Actualiser can read the hold again', async () => {
+    const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
+    const { user } = await renderJulieHolding(spotHoldClient, new FakeLotsClient(parkingDemoWith(9), parkingDemoWith(9), parkingDemoWith(10)));
+    spotHoldClient.nextFailure = new PalierRejectedError('HOLD_NOT_FOUND');
+    spotHoldClient.isReachable = false;
+    await confirmRelease(user);
+    await screen.findByText('Cette garantie n’existe plus, actualisez la liste');
+
+    spotHoldClient.nextFailure = null;
+    spotHoldClient.isReachable = true;
+    spotHoldClient.activeHold = null;
+    await user.press(screen.getByRole('button', { name: 'Actualiser' }));
+    await act(async () => undefined);
+
+    expect(screen.queryByTestId('spot-hold-banner')).not.toBeOnTheScreen();
+    expect(screen.queryByText('Cette garantie n’existe plus, actualisez la liste')).not.toBeOnTheScreen();
   });
 
   it('keeps the busy « Libération… » button from reopening the confirmation while the release runs', async () => {
@@ -126,8 +159,8 @@ describe('QA HomeScreen releasing a hold', () => {
 
     await user.press(screen.getByRole('button', { name: RELEASE_FR }));
 
-    const choices = StyleSheet.flatten(screen.getByRole('button', { name: RELEASE_FR }).parent?.props.style ?? {}) as { flexDirection?: string; flexWrap?: string };
-    expect(screen.getByRole('button', { name: RELEASE_FR }).parent).toContainElement(screen.getByRole('button', { name: 'Annuler' }));
+    const choices = StyleSheet.flatten(screen.getByRole('button', { name: CONFIRM_FR }).parent?.props.style ?? {}) as { flexDirection?: string; flexWrap?: string };
+    expect(screen.getByRole('button', { name: CONFIRM_FR }).parent).toContainElement(screen.getByRole('button', { name: 'Annuler' }));
     expect(choices.flexDirection !== 'row' || choices.flexWrap === 'wrap').toBe(true);
     expect(screen.getByRole('button', { name: 'Annuler' })).toBeOnTheScreen();
   });
