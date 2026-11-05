@@ -1,7 +1,7 @@
-import type { DriverRepository } from '../drivers/DriverRepository.ts';
+import { findDriverPrerequisites, type DriverPrerequisites, type DriverPrerequisiteSources } from '../drivers/driverPrerequisites.ts';
 import { hasRoomForAnotherVehicle } from '../occupancy/hasRoomForAnotherVehicle.ts';
-import { parsePricingPolicy, PricingPolicyInvalidError, type PricingPolicy } from '../pricing/PricingPolicy.ts';
-import type { VehicleNeeds, VehicleRepository } from '../vehicles/VehicleRepository.ts';
+import { isOperatorPayable } from '../payments/isOperatorPayable.ts';
+import { PricingPolicyInvalidError, readLotPricing, type PricingPolicy } from '../pricing/PricingPolicy.ts';
 import type { EntryGate, EntryGateLot, EntryGateRepository } from './EntryGateRepository.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import { isSignedWith, readGateToken } from './gateToken.ts';
@@ -10,10 +10,8 @@ export interface EntryPolicy {
   readonly allowPlatformChargesWithoutOperatorAccount: boolean;
 }
 
-export interface EntryEligibilityDependencies {
+export interface EntryEligibilityDependencies extends DriverPrerequisiteSources {
   readonly gates: EntryGateRepository;
-  readonly vehicles: Pick<VehicleRepository, 'findDefaultVehicle'>;
-  readonly drivers: Pick<DriverRepository, 'findStripeCustomerId' | 'findDefaultPaymentMethodId'>;
   readonly policy: EntryPolicy;
 }
 
@@ -25,7 +23,7 @@ export interface EntryAttempt {
 export interface EligibleEntry {
   readonly driverId: string;
   readonly gate: { readonly id: string; readonly lotId: string };
-  readonly vehicle: { readonly id: string; readonly plate: string; readonly needs: VehicleNeeds };
+  readonly vehicle: DriverPrerequisites['vehicle'];
   readonly payment: {
     readonly customerId: string;
     readonly paymentMethodId: string;
@@ -34,8 +32,6 @@ export interface EligibleEntry {
   };
   readonly pricing: PricingPolicy;
 }
-
-type DriverPrerequisites = Pick<EligibleEntry, 'vehicle'> & { readonly customerId: string; readonly paymentMethodId: string };
 
 // Every check reads only: nothing is written before the entry is known to be possible.
 export class EntryEligibility {
@@ -84,7 +80,7 @@ export class EntryEligibility {
     if (gate.integrationKind !== 'SIMULATED') {
       throw new EntryRefusedError('GATE_UNAVAILABLE');
     }
-    if (gate.lot.operatorStripeAccountId === null && !this.#dependencies.policy.allowPlatformChargesWithoutOperatorAccount) {
+    if (!isOperatorPayable(gate.lot.operatorStripeAccountId, this.#dependencies.policy)) {
       throw new EntryRefusedError('OPERATOR_NOT_PAYABLE');
     }
     if (!hasRoomForAnotherVehicle(gate.lot)) {
@@ -93,29 +89,19 @@ export class EntryEligibility {
   }
 
   async #driverPrerequisites(driverId: string): Promise<DriverPrerequisites> {
-    const { vehicles, drivers } = this.#dependencies;
-    const [vehicle, customerId, paymentMethodId] = await Promise.all([
-      vehicles.findDefaultVehicle(driverId),
-      drivers.findStripeCustomerId(driverId),
-      drivers.findDefaultPaymentMethodId(driverId),
-    ]);
-    if (vehicle === null || customerId === null || paymentMethodId === null) {
+    const prerequisites = await findDriverPrerequisites(this.#dependencies, driverId);
+    if (prerequisites === null) {
       throw new EntryRefusedError('PREREQUISITES_MISSING');
     }
-    const { isElectric, hasAccessiblePermit, isOversize } = vehicle;
-    return { vehicle: { id: vehicle.id, plate: vehicle.plate, needs: { isElectric, hasAccessiblePermit, isOversize } }, customerId, paymentMethodId };
+    return prerequisites;
   }
 }
 
 // A lot without a usable price cannot bill a session, so it is out of service until its operator fixes the policy.
-// The refusal keeps the parse error as its cause, so the route can log it.
 function lotPricing(lot: EntryGateLot): PricingPolicy {
-  try {
-    return parsePricingPolicy(lot.pricingPolicy, lot.dailyCapCents);
-  } catch (error) {
-    if (!(error instanceof PricingPolicyInvalidError)) {
-      throw error;
-    }
-    throw new EntryRefusedError('LOT_NOT_IN_SERVICE', { cause: new PricingPolicyInvalidError(lot.id, { cause: error }) });
+  const pricing = readLotPricing(lot);
+  if (pricing instanceof PricingPolicyInvalidError) {
+    throw new EntryRefusedError('LOT_NOT_IN_SERVICE', { cause: pricing });
   }
+  return pricing;
 }
