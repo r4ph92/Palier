@@ -83,7 +83,7 @@ export const fr = {
     needs: 'Besoins du véhicule',
     isElectric: 'Véhicule électrique',
     hasAccessiblePermit: 'Vignette pour personnes handicapées',
-    isOversize: 'Gabarit large',
+    isOversize: 'Grand gabarit',
     edit: 'Modifier',
     editTitle: 'Modifier le véhicule',
     editLabel: 'Modifier %{plate}',
