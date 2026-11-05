@@ -1,4 +1,4 @@
-const SECONDS_PER_MINUTE = 60;
+export const SECONDS_PER_MINUTE = 60;
 
 // « 14:59 », the same in French and English; read aloud in words, never digit by digit.
 export function formatCountdown(totalSeconds: number): string {

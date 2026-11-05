@@ -2,8 +2,7 @@ import type { SpotHold } from '@palier/shared-types';
 import { PalierUnreachableError } from '../src/api/LotsClient';
 import type { SpotHoldClient } from '../src/api/SpotHoldClient';
 import { PalierRejectedError } from '../src/api/VehicleClient';
-
-export const PARKING_DEMO_ID = '00000000-0000-4000-8000-000000000201';
+import { PARKING_DEMO_ID } from './fakeLotsClient';
 
 // Julie's hold taken at 14 h 02 local time, held until 14 h 17 (story #6, criterion 1).
 export function julieHoldAtParkingDemo(overrides: Partial<SpotHold> = {}): SpotHold {

@@ -1,15 +1,11 @@
 import type { SpotHoldRefusalCode } from '@palier/shared-types';
-import type { EntryPolicy } from '../../../src/domain/entries/EntryEligibility.ts';
 import type { SpotHold } from '../../../src/domain/spotHolds/SpotHold.ts';
 import { SpotHoldRefusedError } from '../../../src/domain/spotHolds/SpotHoldRefusedError.ts';
 import type { SpotHoldDraft, SpotHoldLot, SpotHoldRepository } from '../../../src/domain/spotHolds/SpotHoldRepository.ts';
+import { GARAGE_ROY_ID } from '../../../src/seed/fixtures/garageRoy.ts';
 import { PARKING_DEMO_ID } from '../../../src/seed/fixtures/parkingDemo.ts';
 import { LAVOIE_ACCOUNT, PARKING_DEMO_POLICY } from './entryGateFakes.ts';
 
-// Outside demo mode: a lot whose operator has no Stripe account takes no hold.
-export const STRICT_POLICY: EntryPolicy = { allowPlatformChargesWithoutOperatorAccount: false };
-
-export const GARAGE_ROY_ID = '00000000-0000-4000-8000-000000000202';
 
 export const parkingDemoSpotHoldLot: SpotHoldLot = {
   id: PARKING_DEMO_ID,

@@ -3,7 +3,8 @@ import { PalierUnauthorizedError } from '../src/api/AuthClient';
 import { HttpSpotHoldClient } from '../src/api/HttpSpotHoldClient';
 import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../src/api/VehicleClient';
-import { julieHoldAtParkingDemo, PARKING_DEMO_ID } from './fakeSpotHoldClient';
+import { PARKING_DEMO_ID } from './fakeLotsClient';
+import { julieHoldAtParkingDemo } from './fakeSpotHoldClient';
 
 const BASE_URL = 'http://localhost:3000';
 const TOKEN = 'julie-token';

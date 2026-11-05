@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { StateMark } from '../components/StateMark';
 import { formatClockTime } from '../i18n/formatClockTime';
-import { formatCountdown } from '../i18n/formatCountdown';
+import { formatCountdown, SECONDS_PER_MINUTE } from '../i18n/formatCountdown';
 import { currentLanguage, i18n } from '../i18n/i18n';
 import type { HeldSpot } from '../spotHolds/heldSpot';
 import { useFreshHoldFocus } from '../spotHolds/useFreshHoldFocus';
@@ -9,8 +9,6 @@ import { useSecondsLeft } from '../spotHolds/useSecondsLeft';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
-
-const SECONDS_PER_MINUTE = 60;
 
 interface SpotHoldBannerProps {
   readonly held: HeldSpot;

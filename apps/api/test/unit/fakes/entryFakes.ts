@@ -10,7 +10,7 @@ import type { EntryRouteDependencies } from '../../../src/http/routes/entryRoute
 import type { FakeDriverRepository } from '../fakeDriverRepository.ts';
 import type { FakeVehicleRepository } from '../fakeVehicleRepository.ts';
 
-import { FakeEntryGateRepository } from './entryGateFakes.ts';
+import { FakeEntryGateRepository, STRICT_POLICY } from './entryGateFakes.ts';
 import { FakeParkingSessionRepository, type Journal } from './fakeParkingSessions.ts';
 
 export * from './entryGateFakes.ts';
@@ -89,7 +89,7 @@ export function fakeEntries({ drivers, vehicles, policy, gates, hasPaymentAuthor
     gates: gates ?? new FakeEntryGateRepository(),
     vehicles,
     drivers,
-    policy: policy ?? { allowPlatformChargesWithoutOperatorAccount: false },
+    policy: policy ?? STRICT_POLICY,
   });
   const admission = new EntryAdmission({ sessions, payments: hasPaymentAuthorizer ? payments : null, gateCommander });
   return { journal, sessions, payments, gateCommander, dependencies: { eligibility, admission, sessions } };

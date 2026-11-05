@@ -1,7 +1,7 @@
 import { act, screen, userEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
-import { FakeLotsClient, parkingDemo, parkingDemoWith, parkingTestPaliers } from './fakeLotsClient';
+import { FakeLotsClient, PARKING_DEMO_ID, parkingDemo, parkingDemoWith, parkingTestPaliers } from './fakeLotsClient';
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
 import { renderHomeScreen, renderHomeScreenWith } from './renderHomeScreen';
 import { visibleText } from './visibleText';
@@ -33,7 +33,7 @@ describe('HomeScreen spot hold', () => {
     expect(await screen.findByText("Place garantie jusqu'à 14 h 17", visibleText)).toBeOnTheScreen();
     expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('15:00');
     expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
-    expect(spotHoldClient.heldLots).toEqual([parkingDemo(10).id]);
+    expect(spotHoldClient.heldLots).toEqual([PARKING_DEMO_ID]);
     expect(lotsClient.callCount).toBe(2);
 
     await tick(1);
@@ -97,7 +97,7 @@ describe('HomeScreen spot hold', () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)));
     await screen.findByRole('button', { name: HOLD_BUTTON_FR });
 
-    expect(screen.getByTestId(`lot-row-${parkingDemo(10).id}`)).not.toContainElement(screen.getByRole('button', { name: HOLD_BUTTON_FR }));
+    expect(screen.getByTestId(`lot-row-${PARKING_DEMO_ID}`)).not.toContainElement(screen.getByRole('button', { name: HOLD_BUTTON_FR }));
   });
 
   it('reads Spot guaranteed until 2:17 PM in English', async () => {

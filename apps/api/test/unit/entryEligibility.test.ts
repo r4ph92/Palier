@@ -17,8 +17,8 @@ import {
   SORTIE_DEMO_SECRET,
   sortieDemoGate,
 } from './fakes/entryFakes.ts';
+import { STRICT_POLICY } from './fakes/entryGateFakes.ts';
 
-const STRICT: EntryPolicy = { allowPlatformChargesWithoutOperatorAccount: false };
 const entreeDemoQr = gateQrLink(entreeDemoGate.id, ENTREE_DEMO_SECRET);
 
 interface Setup {
@@ -29,7 +29,7 @@ interface Setup {
   readonly needs?: VehicleNeeds;
 }
 
-async function eligibilityFor({ gates, policy = STRICT, plate = true, card = true, needs = standardNeeds }: Setup = {}) {
+async function eligibilityFor({ gates, policy = STRICT_POLICY, plate = true, card = true, needs = standardNeeds }: Setup = {}) {
   const drivers = new FakeDriverRepository();
   const vehicles = new FakeVehicleRepository();
   if (plate) {

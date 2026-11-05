@@ -3,7 +3,8 @@ import type { SpotHold } from '@palier/shared-types';
 import type { SpotHoldClient } from '../src/api/SpotHoldClient';
 import { PalierStatusError } from '../src/api/LotsClient';
 import { useSpotHold } from '../src/spotHolds/useSpotHold';
-import { FakeSpotHoldClient, julieHoldAtParkingDemo, PARKING_DEMO_ID } from './fakeSpotHoldClient';
+import { PARKING_DEMO_ID } from './fakeLotsClient';
+import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
 
 async function renderSpotHold(client: SpotHoldClient) {
   const rendered = await renderHook(() => useSpotHold(client));

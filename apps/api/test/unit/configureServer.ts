@@ -8,7 +8,8 @@ import { FakeOperatorRepository } from './fakes/fakeOperatorRepository.ts';
 import { fakeOperatorStripe } from './fakes/fakeOperatorStripe.ts';
 import { FakeCurrentParkingSessions } from './fakes/fakeCurrentParkingSessions.ts';
 import { fakeEntries } from './fakes/entryFakes.ts';
-import { FakeSpotHoldRepository, STRICT_POLICY } from './fakes/fakeSpotHolds.ts';
+import { STRICT_POLICY } from './fakes/entryGateFakes.ts';
+import { FakeSpotHoldRepository } from './fakes/fakeSpotHolds.ts';
 import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };

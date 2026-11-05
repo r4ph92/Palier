@@ -5,7 +5,9 @@ import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { configureServer } from './configureServer.ts';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, marc } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
-import { FakeSpotHoldRepository, fakeSpotHoldId, GARAGE_ROY_ID, STRICT_POLICY } from './fakes/fakeSpotHolds.ts';
+import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
+import { STRICT_POLICY } from './fakes/entryGateFakes.ts';
+import { FakeSpotHoldRepository, fakeSpotHoldId } from './fakes/fakeSpotHolds.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 import { fakeRepositories, serverDependencies } from './fakes/serverDependencies.ts';
 

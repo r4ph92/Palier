@@ -8,7 +8,9 @@ import type { SpotHoldLot } from '../../src/domain/spotHolds/SpotHoldRepository.
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { FakeDriverRepository, julie } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository, standardNeeds } from './fakeVehicleRepository.ts';
-import { FakeSpotHoldRepository, GARAGE_ROY_ID, parkingDemoSpotHoldLot, STRICT_POLICY } from './fakes/fakeSpotHolds.ts';
+import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
+import { STRICT_POLICY } from './fakes/entryGateFakes.ts';
+import { FakeSpotHoldRepository, parkingDemoSpotHoldLot } from './fakes/fakeSpotHolds.ts';
 
 const UNKNOWN_LOT_ID = '00000000-0000-4000-8000-000000000299';
 

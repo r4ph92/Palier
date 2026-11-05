@@ -1,3 +1,4 @@
+import type { EntryPolicy } from '../../../src/domain/entries/EntryEligibility.ts';
 import type { EntryGate, EntryGateRepository } from '../../../src/domain/entries/EntryGateRepository.ts';
 import { entreeDemo, sortieDemo } from './gateFixtures.ts';
 
@@ -6,6 +7,8 @@ export const SORTIE_DEMO_SECRET = 'pW-gxvykdybxjEOP6ebx6mGn6K21E1Iu9biLvAvAicQ';
 export const ENTREE_ROY_SECRET = 'Qw34Ic7nOubM0aZdCa0HXmkLJ2kxp2hHq8HBd6unq14';
 export const LAVOIE_ACCOUNT = 'acct_1Lavoie';
 
+// Outside demo mode: a lot whose operator has no Stripe account takes no entry and no hold.
+export const STRICT_POLICY: EntryPolicy = { allowPlatformChargesWithoutOperatorAccount: false };
 export const PARKING_DEMO_POLICY = { incrementCents: 75, incrementMinutes: 15, holdQuota: 3 };
 const parkingDemoLot = {
   id: entreeDemo.lotId,
