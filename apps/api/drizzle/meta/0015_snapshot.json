@@ -1,5 +1,5 @@
 {
-  "id": "68418274-ef26-46af-8049-4150df8ef3a2",
+  "id": "d223ebfb-f536-4682-b232-ba115172f516",
   "prevId": "e7f1b575-aaff-4b5e-a004-524be31709c1",
   "version": "7",
   "dialect": "postgresql",
@@ -850,6 +850,22 @@
           ],
           "isUnique": false,
           "where": "\"spot\".\"state\" = 'AVAILABLE'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "spot_held_by_lot_index": {
+          "name": "spot_held_by_lot_index",
+          "columns": [
+            {
+              "expression": "lot_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"spot\".\"state\" = 'HELD'",
           "concurrently": false,
           "method": "btree",
           "with": {}
