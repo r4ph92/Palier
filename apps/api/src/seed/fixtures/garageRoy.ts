@@ -8,6 +8,8 @@ export const garageRoyLot: typeof parkingLot.$inferInsert = {
   id: GARAGE_ROY_ID,
   operatorId: ROY_OPERATOR_ID,
   name: 'Garage Roy',
+  latitude: '45.520000',
+  longitude: '-73.580000',
   pricingPolicy: SEEDED_PRICING_POLICY,
   dailyCapCents: 2500,
   capacity: 0,
