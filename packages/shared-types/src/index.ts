@@ -44,6 +44,9 @@ export type {
   ParkedSpotAnswerRequest,
   ParkedSpotAnswerResponse,
   PlanAisle,
+  SpotTakenRefusalCode,
+  SpotTakenRequest,
+  SpotTakenResponse,
   TestClockReading,
 } from './parkingSessions.ts';
 export type { PaymentMethodResponse, SavedCard, SavePaymentMethodRequest, SetupIntentResponse } from './paymentMethods.ts';
