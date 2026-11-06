@@ -47,6 +47,25 @@ describe('POST /v1/entries/:sessionId/parked, what the body may hold', () => {
     expect(new Date(response.json<{ parkedAt: string }>().parkedAt).getTime()).toBeGreaterThanOrEqual(entryConfirmedAt.getTime());
   });
 
+  it('records the loop confirmation for a walk the device dates before it', async () => {
+    const { walk, entryConfirmedAt } = await julieConfirmed();
+
+    const response = await walk({ detectedAt: new Date(entryConfirmedAt.getTime() - MINUTE).toISOString() });
+
+    expect(response.json()).toEqual({ state: 'PARKED_PRESUMED', parkedAt: entryConfirmedAt.toISOString() });
+  });
+
+  it('records the server clock for a walk the device dates in the future', async () => {
+    const { walk } = await julieConfirmed();
+    const before = Date.now();
+
+    const response = await walk({ detectedAt: '2030-01-01T00:00:00.000Z' });
+
+    const parkedAt = new Date(response.json<{ parkedAt: string }>().parkedAt).getTime();
+    expect(parkedAt).toBeGreaterThanOrEqual(before);
+    expect(parkedAt).toBeLessThanOrEqual(Date.now());
+  });
+
   it('takes nothing but detectedAt from the body: a state, a driver or an instant sent along change nothing else', async () => {
     const { walk, parkedPresumptions } = await julieConfirmed();
     const detectedAt = new Date(Date.now() - MINUTE).toISOString();

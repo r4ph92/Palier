@@ -60,6 +60,8 @@ describe('presuming the spot occupied when Julie walks away (story #18)', () => 
     expect(await screen.findByText(PARKED_IN_A1, visibleText)).toBeOnTheScreen();
     expect(parkingSession.parkedReports).toHaveLength(1);
     expect(keepAliveCommands()).toEqual([expect.stringMatching(/\(arrêt\)$/)]);
+    expect(screen.queryByText(GO_TO_A1, visibleText)).toBeNull();
+    expect(screen.queryByRole('image', { name: /Plan du niveau/ })).toBeNull();
   });
 
   it('sends nothing again when the same walking signal arrives once the spot is presumed', async () => {
