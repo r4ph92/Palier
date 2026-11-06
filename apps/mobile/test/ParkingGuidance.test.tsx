@@ -97,6 +97,15 @@ describe('ParkingGuidance', () => {
     expect(screen.getByRole('image', { name: 'Plan du niveau P1, vous êtes ici : allée A', ...visibleText })).toBeOnTheScreen();
   });
 
+  it('keeps a level drawn as one long narrow aisle within the screen height', async () => {
+    const narrow = { levelCode: 'P1', aisles: [{ code: 'B', beaconMinor: 2, rectangle: { x: 0, y: 0, width: 10, height: 400 } }] };
+
+    await showGuidance(null, julieAtB3({ levelPlan: narrow }));
+
+    const { maxWidth, aspectRatio } = StyleSheet.flatten(screen.getByRole('image').props.style);
+    expect(Number(maxWidth) / Number(aspectRatio)).toBeLessThanOrEqual(852);
+  });
+
   it('keeps the sentence for a session read without a plan', async () => {
     await showGuidance(null, julieAtB3({ levelPlan: null }));
 

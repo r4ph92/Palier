@@ -1,5 +1,5 @@
 import type { AssignedSpot, PlanAisle } from '@palier/shared-types';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { StateMark } from '../components/StateMark';
 import { i18n } from '../i18n/i18n';
 import { LIST_SEPARATOR } from '../i18n/spaces';
@@ -11,6 +11,8 @@ import { useIsLargeText } from '../theme/useIsLargeText';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
+// A level drawn tall and narrow must not push the amount several screens down.
+const MAXIMUM_SCREEN_SHARE = 0.6;
 const ASSIGNED_BORDER_WIDTH = 3;
 const AISLE_BORDER_WIDTH = 1;
 
@@ -31,7 +33,7 @@ export function LevelPlanDrawing({ geometry, spot, currentAisle }: LevelPlanDraw
   const label = planImageLabel(spot, currentAisle, geometry.frames.map(({ aisle }) => aisle.code));
   return (
     <View style={styles.group}>
-      <View accessible accessibilityRole="image" accessibilityLabel={label} style={[styles.drawing, { aspectRatio: geometry.aspectRatio }]}>
+      <View accessible accessibilityRole="image" accessibilityLabel={label} style={[styles.drawing, useDrawingFrame(geometry.aspectRatio)]}>
         {geometry.frames.map((frame) => (
           <AisleRectangleView key={frame.aisle.code} frame={frame} marking={marking} showsMarkers={!isLargeText} />
         ))}
@@ -39,6 +41,12 @@ export function LevelPlanDrawing({ geometry, spot, currentAisle }: LevelPlanDraw
       {isLargeText ? <PlanLegend {...marking} /> : null}
     </View>
   );
+}
+
+// Full width, unless that would make the drawing taller than its share of the screen: then narrower, same proportions.
+function useDrawingFrame(aspectRatio: number) {
+  const { height } = useWindowDimensions();
+  return { aspectRatio, maxWidth: height * MAXIMUM_SCREEN_SHARE * aspectRatio };
 }
 
 interface AisleRectangleViewProps {
@@ -104,6 +112,6 @@ function aisleName(code: string): string {
 
 const styles = StyleSheet.create({
   group: { gap: spacing.small },
-  drawing: { width: '100%' },
+  drawing: { width: '100%', alignSelf: 'center' },
   aisle: { position: 'absolute', padding: spacing.small, gap: spacing.extraSmall },
 });
