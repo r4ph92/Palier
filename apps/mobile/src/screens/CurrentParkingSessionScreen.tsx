@@ -1,16 +1,16 @@
-import type { CurrentParkingSession } from '@palier/shared-types';
+import type { AssignedSpot, CurrentParkingSession } from '@palier/shared-types';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { SpotWithState } from '../components/SpotLine';
+import { SpotNumberText } from '../components/SpotNumberText';
 import { formatClockTime } from '../i18n/formatClockTime';
 import { formatElapsed } from '../i18n/formatElapsed';
 import { formatMoney } from '../i18n/formatMoney';
 import { currentLanguage, i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionReading, ReadProgress } from '../parkingSessions/useCurrentParkingSession';
 import { isParked } from '../parkingSessions/isParked';
-import { unbrokenSpotNumber } from '../spots/spotNumber';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
@@ -80,14 +80,21 @@ function SessionAmount({ session }: { readonly session: CurrentParkingSession })
 function SessionSpot({ session }: { readonly session: CurrentParkingSession }) {
   const colors = useColors();
   const isWaiting = session.state === 'CREATED';
-  return <SpotWithState spot={session.spot} status={spotStatusOf(session)} markColor={isWaiting ? colors.muted : colors.free} />;
+  const statusContent = isParked(session.state) ? <ParkedIn spot={session.spot} /> : undefined;
+  return <SpotWithState spot={session.spot} status={spotStatusOf(session)} statusContent={statusContent} markColor={isWaiting ? colors.muted : colors.free} />;
 }
 
 function spotStatusOf({ state, spot }: CurrentParkingSession): string {
   if (isParked(state)) {
-    return i18n.t('session.parkedIn', { spot: unbrokenSpotNumber(spot) });
+    return `${i18n.t('session.parkedInLead')}${spot.number}`;
   }
   return i18n.t(state === 'CREATED' ? 'session.pending' : 'scan.entryConfirmed');
+}
+
+// The spot number is a figure inside the sentence, in mono (docs/design.md, gesture 3).
+function ParkedIn({ spot }: { readonly spot: AssignedSpot }) {
+  const colors = useColors();
+  return <SpotNumberText spot={spot} lead={i18n.t('session.parkedInLead')} style={[typography.bodyStrong, { color: colors.ink }]} numberStyle={typography.figureStrong} />;
 }
 
 interface FigureProps {

@@ -96,6 +96,16 @@ describe('presuming the spot occupied when Julie walks away (story #18)', () => 
     expect(parkingSession.parkedReports).toHaveLength(1);
   });
 
+  it('shows the spot number of « Garé en A-1 » in mono, and reads the spot with its state as one stop', async () => {
+    const { walkAway } = await julieWith(julieAtParkingDemo());
+
+    await walkAway();
+
+    const parkedIn = await screen.findByText(PARKED_IN_A1, visibleText);
+    expect(within(parkedIn).getByText('A-1', visibleText)).toHaveStyle({ fontFamily: 'IBMPlexMono_600SemiBold' });
+    expect(screen.getByLabelText('A-1 · Palier P1 · Allée A. Garé en A-1', visibleText)).toBeOnTheScreen();
+  });
+
   it('reads « Parked in A-1 » on an English device', async () => {
     const { walkAway } = await julieWith(julieAtParkingDemo(), 'en');
 
