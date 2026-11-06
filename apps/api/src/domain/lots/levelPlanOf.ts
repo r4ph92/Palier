@@ -10,7 +10,6 @@ export interface StoredLevelAisle {
 
 export interface LevelPlanReading {
   readonly levelPlan: LevelPlan | null;
-  // Aisles whose stored shape was unusable: they are served without a rectangle, and the caller logs them.
   readonly rejectedAisleCodes: readonly string[];
 }
 

@@ -20,7 +20,6 @@ interface CurrentParkingSessionScreenProps {
   readonly progress: ReadProgress;
   readonly onRetry: () => void;
   readonly notice?: ReactNode;
-  // Where to drive: the guidance sentence and the level plan, right under the spot it leads to.
   readonly guidance?: ReactNode;
 }
 

@@ -11,7 +11,6 @@ import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
 import { ScanFrame, ScanScreen } from './ScanScreen';
 import { SessionNotice } from './SessionNotice';
 
-// What the session screen shows besides the session itself, built above the tabs.
 export interface SessionAside {
   readonly detectionNotice: ReactNode;
   readonly guidance: ReactNode;
