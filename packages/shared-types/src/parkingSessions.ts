@@ -22,7 +22,7 @@ export interface CurrentParkingSession {
 // The aisle the device last saw at the walk, with its free spots ordered by number: the likeliest answers come first.
 export interface ParkedQuestion {
   readonly aisleCode: string;
-  readonly freeSpotNumbers: string[];
+  readonly freeSpotNumbers: readonly string[];
 }
 
 // D8: an aisle is drawn as a rectangle on its level's grid; the units mean nothing beyond their proportions.

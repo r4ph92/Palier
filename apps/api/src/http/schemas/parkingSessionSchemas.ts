@@ -11,7 +11,7 @@ import { ACTIVE_ENTRY_SESSION_STATES, WALKED_AWAY_STATES } from '@palier/shared-
 import { SPOT_NUMBER_MAX_LENGTH } from '@palier/shared-types/spotNumber';
 import type { FromSchema } from 'json-schema-to-ts';
 import { assignedSpotSchema } from './entrySchemas.ts';
-import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
+import type { AssertTrue, MutuallyAssignable, WithMutableArrays } from './schemaMatchesType.ts';
 
 const aisleRectangleSchema = {
   type: 'object',
@@ -130,7 +130,7 @@ export const parkedSpotAnswerResponseSchema = {
 } as const;
 
 export type ResponseSchemaMatchesCurrentParkingSession = AssertTrue<
-  MutuallyAssignable<FromSchema<typeof currentParkingSessionResponseSchema>, CurrentParkingSessionResponse>
+  MutuallyAssignable<FromSchema<typeof currentParkingSessionResponseSchema>, WithMutableArrays<CurrentParkingSessionResponse>>
 >;
 export type SchemaMatchesTestClockReading = AssertTrue<MutuallyAssignable<FromSchema<typeof testClockReadingSchema>, TestClockReading>>;
 export type SchemaMatchesBackdateRequest = AssertTrue<
