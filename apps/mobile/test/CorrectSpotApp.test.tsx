@@ -2,9 +2,9 @@ import { screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { PalierRejectedError } from '../src/api/VehicleClient';
 import { julieAtParkingDemo } from './fakeParkingSessionClient';
-import { asSeen, visibleText } from './visibleText';
+import { visibleText } from './visibleText';
 import { julieWith, PARKED_IN_A1 } from './walkAwayRig';
-import { CONFIRM_TYPED, julieCorrecting, juliePresumedInA1, NOT_MY_SPOT } from './whereParkedRig';
+import { CONFIRM_TYPED, expectFocusedSpotWithoutAnnouncement, julieCorrecting, juliePresumedInA1, NOT_MY_SPOT, REFUSAL_MESSAGES } from './whereParkedRig';
 
 const SPOT_NUMBER = 'Numéro de la place où vous êtes garé';
 
@@ -33,8 +33,8 @@ describe('correcting the spot Palier presumed (story #22)', () => {
 
   it('shows « Garé en A-3 » once Julie types A-3 and confirms, and moves VoiceOver to it without announcing it on top', async () => {
     const { user, parkingSession } = await julieCorrecting();
-    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
-    const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
+    jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+    jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
 
     await user.type(screen.getByLabelText(SPOT_NUMBER), 'A-3');
     await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
@@ -42,14 +42,12 @@ describe('correcting the spot Palier presumed (story #22)', () => {
     expect(parkingSession.spotAnswers).toEqual(['A-3']);
     expect(await screen.findByText('Garé en A-3', visibleText)).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: NOT_MY_SPOT })).toBeNull();
-    const spot = screen.getByLabelText('A-3 · Palier P1 · Allée A. Garé en A-3', visibleText);
-    expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ accessibilityLabel: spot.props.accessibilityLabel }) }), 'focus');
-    expect(announce.mock.calls.filter(([message]) => asSeen(message) === 'Garé en A-3')).toHaveLength(0);
+    expectFocusedSpotWithoutAnnouncement('A-3');
   });
 
   it.each([
-    ['UNKNOWN_SPOT', 'Z-99', 'Numéro inconnu dans ce parking'],
-    ['SPOT_TAKEN', 'B-4', 'Cette place est déjà attribuée — vérifiez le numéro au sol'],
+    ['UNKNOWN_SPOT', 'Z-99', REFUSAL_MESSAGES.UNKNOWN_SPOT],
+    ['SPOT_TAKEN', 'B-4', REFUSAL_MESSAGES.SPOT_TAKEN],
   ])('shows the refusal %s of #21 under the field and keeps the form', async (code, typed, message) => {
     const { user, parkingSession } = await julieCorrecting();
     parkingSession.answerFailure = new PalierRejectedError(code);
