@@ -207,3 +207,12 @@ curl -X DELETE localhost:3000/v1/test/clock
 - `FreeSpot` porte `aisleId`. La question de #21 ne liste que les places libres qui conviennent au véhicule de la session (standard sans véhicule). Le passage à pied n'écrit que si la session a encore la place lue avec ses faits, sinon il les relit une fois.
 - App : `screens/ReportSpotTaken.tsx` (« Place prise », confirmation, `useNoneFreeNotice`), `useSpotTakenReport` (un envoi à la fois) et `spotTakenOutcome.ts` (refus → relecture, réseau ou parking occupé → « Impossible de joindre Palier »). `SessionSpot` affiche « Nouvelle place : A-2 » (`useNewSpot`) ; `WhereParkedFraming.notice` porte l'avis « Aucune autre place libre ». `ScanTab` passe `reportSpotTaken` comme `whereParked`.
 - Pour essayer : session `ENTRY_CONFIRMED` sur A-1 (`OCCUPIED`) en SQL, puis « Place prise » ; pour l'avis, occuper toutes les autres places qui conviennent (`seed:spot-state` ou SQL).
+
+## Présomption après 30 minutes de silence (#24)
+
+- Règles et choix : `docs/decisions/023`. Migration 0020 : enum `parking_session_presumption` (`WALK`, `TIMEOUT`), colonne `parking_session.presumed_by` (nulle tant que la session n'est pas présumée, historique après correction), `CHECK parking_session_presumed_has_evidence`. Le passage à pied de #18 écrit `WALK`.
+- Configuration (`apps/api/.env.example`) : `SILENT_SESSION_CHECK_PERIOD_SECONDS` (300 par défaut, entier positif), lu par `config/silentSessionTiming.ts`. Les 30 minutes sont `SILENCE_BEFORE_PRESUMPTION_MILLISECONDS` (`domain/parkingSessions/presumeSilentSessions.ts`).
+- Tâche : `main.ts` lance `presumeSilentSessions` par `SingleRun.startPeriodicTask`, avec l'horloge de `composeClock` (`composeSilentSessionPresumption.ts`) ; `stopAll` l'attend à l'arrêt. Dépôt : `PostgresSilentSessionRepository` et `silentSessionStatements.ts` ; un parking à la fois, verrou du parking, deux `UPDATE` gardés par l'état, aucune écriture de place.
+- Journal : `presumed parked the sessions silent for 30 minutes` (info, `lotId`, `confirmedEntries`, `unansweredQuestions`, jamais de conducteur ni de place), `could not presume the silent sessions of a lot, retried at the next check` (erreur).
+- App : aucun changement. Une question restée sans réponse cède la place à « Garé en A-1 » à la lecture suivante (test dans `WhereParkedEdges.test.tsx`).
+- Pour essayer : `PUT /v1/test/clock` à 30 minutes après l'entrée, attendre la période (ou `SILENT_SESSION_CHECK_PERIOD_SECONDS=5`).
