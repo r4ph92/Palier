@@ -128,3 +128,44 @@ describe('QA #9: the eligibility query for a driver holding room in a full lot',
     expect(statement?.params).toEqual(['driver-julie', 'lot-demo', NOW.toISOString()]);
   });
 });
+
+describe('QA #9 round 2: a held spot that no longer fits the vehicle', () => {
+  const heldAccessibleSpot = { hold_id: 'hold-1', spot_id: 'spot-B-5', is_ev: false, is_accessible: true, is_oversize: false };
+  const freeStandardSpot = { ...freeOversizeSpot, id: 'spot-A-2', number: 'A-2', aisle_code: 'A', is_oversize: false };
+
+  it('leaves the hold active and claims a fitting spot for a vehicle that lost its accessible permit', async () => {
+    const scripted = new ScriptedSql()
+      .answer('read-held-spot', [heldAccessibleSpot])
+      .answer('read-free-spots', [freeStandardSpot])
+      .answer('claim-spot', [{ id: 'spot-A-2', number: 'A-2', aisle_code: 'A', level_code: 'P1' }])
+      .answer('insert-session', [{ id: 'session-1' }]);
+
+    const opening = await openEntry(scripted, draftWith(standardNeeds));
+
+    expect(opening?.session.spot.number).toBe('A-2');
+    expect(scripted.count('use-spot-hold')).toBe(0);
+    expect(scripted.count('assign-held-spot')).toBe(0);
+  });
+
+  it('leaves the hold active and answers full when only the unfitting held spot is left', async () => {
+    const scripted = new ScriptedSql().answer('read-held-spot', [{ ...heldAccessibleSpot, is_accessible: false }]);
+
+    const opening = await openEntry(scripted, draftWith(oversizeNeeds));
+
+    expect(opening).toBeNull();
+    expect(scripted.count('use-spot-hold')).toBe(0);
+  });
+
+  it('still uses an accessible held spot for the permit holder it was held for', async () => {
+    const scripted = new ScriptedSql()
+      .answer('read-held-spot', [heldAccessibleSpot])
+      .answer('use-spot-hold', [{ id: 'hold-1' }])
+      .answer('assign-held-spot', [{ id: 'spot-B-5', number: 'B-5', aisle_code: 'B', level_code: 'P1' }])
+      .answer('insert-session', [{ id: 'session-1' }]);
+
+    const opening = await openEntry(scripted, draftWith({ isElectric: true, hasAccessiblePermit: true, isOversize: false }));
+
+    expect(opening?.session.spot.number).toBe('B-5');
+    expect(scripted.count('read-free-spots')).toBe(0);
+  });
+});
