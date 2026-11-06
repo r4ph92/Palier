@@ -26,6 +26,8 @@ Le contrat nomme la commande sans dire comment la plateforme l'honore.
 - **iOS** : mises à jour de localisation en arrière-plan, qui exigent la permission « Toujours » ; elles s'arrêtent à `until`.
 - **Android** : service de premier plan avec notification persistante, arrêté à `until`.
 
+Le contrat n'a pas de commande d'arrêt : `keepAlive(until)` avec un instant déjà atteint arrête le maintien. L'app l'envoie avec l'instant du passage à pied, une fois la place présumée occupée (#18, `docs/decisions/019`) ; le journal du panneau marque cette ligne « (arrêt) ».
+
 ## Événements (natif vers JS)
 
 | Signature | Paramètres | Déclencheur |
