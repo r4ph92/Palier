@@ -2,6 +2,7 @@ import { VERSION_PATTERN } from '@palier/shared-types/appVersion';
 import { readDatabasePoolMax } from './databasePool.ts';
 import { readEntryCancellationTiming, type EntryCancellationTiming } from './entryCancellationTiming.ts';
 import { readHoldExpiryPeriodSeconds } from './holdExpiryTiming.ts';
+import { readSilentSessionCheckPeriodSeconds } from './silentSessionTiming.ts';
 
 export interface ServerEnvironment {
   readonly databaseUrl: string;
@@ -14,6 +15,7 @@ export interface ServerEnvironment {
   readonly secureCookies: boolean;
   readonly entryCancellation: EntryCancellationTiming;
   readonly holdExpiryPeriodSeconds: number;
+  readonly silentSessionCheckPeriodSeconds: number;
 }
 
 const DEFAULT_HOST = '127.0.0.1';
@@ -40,6 +42,7 @@ export function readServerEnvironment(variables: NodeJS.ProcessEnv): ServerEnvir
     secureCookies: readSecureCookies(variables),
     entryCancellation: readEntryCancellationTiming(variables),
     holdExpiryPeriodSeconds: readHoldExpiryPeriodSeconds(variables),
+    silentSessionCheckPeriodSeconds: readSilentSessionCheckPeriodSeconds(variables),
   };
 }
 
