@@ -5,7 +5,7 @@ import type { ActiveParkingSession, CurrentParkingSessionQuery } from '../../dom
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import type { Database } from './database.ts';
 import { readParkedQuestion } from './parkedQuestion.ts';
-import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './spotClaim.ts';
+import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './vehicleNeedsSql.ts';
 
 interface CurrentSessionRow extends Record<string, unknown>, VehicleNeedsRow {
   readonly id: string;

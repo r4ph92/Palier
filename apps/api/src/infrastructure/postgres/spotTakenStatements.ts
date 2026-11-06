@@ -5,7 +5,7 @@ import type { SpotState } from '../../domain/spots/spotStates.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Transaction } from './database.ts';
 import { requireUpdatedRow } from './requireUpdatedRow.ts';
-import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './spotClaim.ts';
+import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './vehicleNeedsSql.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
 type SessionOfDriver = Pick<SpotTakenReport, 'sessionId' | 'driverId'>;
