@@ -5,11 +5,10 @@ import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Database } from './database.ts';
 import { spotFlagsOf, type SpotFlagsRow } from './spotClaim.ts';
 
-// The flags are null with the number when the aisle has no free spot.
-interface QuestionRow extends Record<string, unknown>, SpotFlagsRow {
+// The left join yields no number, and no flags, when the aisle has no free spot.
+type QuestionRow = Record<string, unknown> & {
   readonly code: string;
-  readonly number: string | null;
-}
+} & ({ readonly number: string } & SpotFlagsRow | { readonly number: null });
 
 export interface QuestionScope {
   readonly aisleId: string;
