@@ -46,6 +46,9 @@ export interface ExecutedStatement {
 
 export type Rows = readonly Record<string, unknown>[];
 
+// What Postgres raises when a lock wait passes lock_timeout.
+export const LOCK_NOT_AVAILABLE = { code: '55P03' };
+
 const dialect = new PgDialect();
 
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
@@ -107,6 +110,11 @@ export class ScriptedSql {
 
   labels(): StatementLabel[] {
     return this.statements.map(({ label }) => label);
+  }
+
+  // The first statement with this label, undefined when none ran.
+  statement(label: StatementLabel): ExecutedStatement | undefined {
+    return this.statements.find((statement) => statement.label === label);
   }
 
   count(label: StatementLabel): number {

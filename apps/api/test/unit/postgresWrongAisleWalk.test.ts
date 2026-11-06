@@ -2,7 +2,7 @@ import type { EntrySessionState } from '@palier/shared-types';
 import { describe, expect, it } from 'vitest';
 import type { WalkingSignal } from '../../src/domain/parkingSessions/ParkedPresumption.ts';
 import { PostgresParkedPresumptionRepository } from '../../src/infrastructure/postgres/PostgresParkedPresumptionRepository.ts';
-import { ScriptedSql } from './fakes/scriptedSql.ts';
+import { LOCK_NOT_AVAILABLE, ScriptedSql } from './fakes/scriptedSql.ts';
 
 const JULIE_ID = '00000000-0000-4000-8000-000000000501';
 const SESSION_ID = '00000000-0000-4000-8000-000000000951';
@@ -12,7 +12,6 @@ const AISLE_B_ID = '00000000-0000-4000-8000-0000000002b1';
 const SPOT_A1_ID = '00000000-0000-4000-8000-0000000003a1';
 const WALKED_AT = new Date('2026-11-04T18:05:00Z');
 const AISLE_B_MINOR = 2;
-const LOCK_NOT_AVAILABLE = { code: '55P03' };
 
 const walkInAisleB: WalkingSignal = { sessionId: SESSION_ID, driverId: JULIE_ID, detectedAt: WALKED_AT, detectedAisleMinor: AISLE_B_MINOR };
 
@@ -32,10 +31,6 @@ function walkWith(sql: ScriptedSql, signal: WalkingSignal = walkInAisleB) {
   return new PostgresParkedPresumptionRepository(sql.database()).presume(signal);
 }
 
-function statementOf(sql: ScriptedSql, label: string) {
-  return sql.statements.find((statement) => statement.label === label);
-}
-
 describe('PostgresParkedPresumptionRepository, a walk in another aisle than the assigned spot (story #21)', () => {
   it('flags A-1 to check and asks where Julie parked in one transaction under the lot lock, session before spot', async () => {
     const sql = julieConfirmedAtA1();
@@ -45,7 +40,7 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
     expect(sql.labels()).toEqual(['read-walk-facts', 'limit-lock-wait', 'lock-lot', 'ask-where-parked', 'flag-assigned-spot']);
     expect(sql.statements.slice(1).every((statement) => statement.onTransaction)).toBe(true);
     expect(sql.isolationLevels).toEqual(['read committed']);
-    expect(statementOf(sql, 'lock-lot')?.params).toEqual([LOT_ID]);
+    expect(sql.statement('lock-lot')?.params).toEqual([LOT_ID]);
   });
 
   it('turns only the confirmed entry of Julie, and keeps the detected aisle and the clamped walking instant', async () => {
@@ -53,7 +48,7 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
 
     await walkWith(sql);
 
-    const update = statementOf(sql, 'ask-where-parked');
+    const update = sql.statement('ask-where-parked');
     expect(update?.text).toMatch(/where id = \$\d+ and user_id = \$\d+ and state = 'ENTRY_CONFIRMED'/);
     expect(update?.text).toMatch(/parked_aisle_id = \$\d+/);
     expect(update?.text).toMatch(/parked_at = greatest\(least\(\$\d+::timestamptz, now\(\)\), entry_confirmed_at\)/);
@@ -65,7 +60,7 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
 
     await walkWith(sql);
 
-    const flag = statementOf(sql, 'flag-assigned-spot');
+    const flag = sql.statement('flag-assigned-spot');
     expect(flag?.text).toMatch(/set state = 'OCCUPIED_UNKNOWN', needs_check = true, state_changed_at = now\(\)/);
     expect(flag?.text).toMatch(/where id = \$\d+ and state = 'OCCUPIED'/);
     expect(flag?.params).toEqual([SPOT_A1_ID]);
@@ -76,7 +71,7 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
 
     await walkWith(sql);
 
-    const facts = statementOf(sql, 'read-walk-facts');
+    const facts = sql.statement('read-walk-facts');
     expect(facts?.text).toMatch(/detected\.lot_id = ps\.lot_id and detected\.beacon_minor = \$\d+ and detected\.is_exit_lane = false/);
     expect(facts?.text).toMatch(/where ps\.id = \$\d+ and ps\.user_id = \$\d+/);
     expect(facts?.params).toEqual([AISLE_B_MINOR, SESSION_ID, JULIE_ID]);

@@ -3,14 +3,13 @@ import { describe, expect, it } from 'vitest';
 import type { SpotAnswer } from '../../src/domain/parkingSessions/ParkedAnswer.ts';
 import type { SpotState } from '../../src/domain/spots/spotStates.ts';
 import { PostgresParkedAnswerRepository } from '../../src/infrastructure/postgres/PostgresParkedAnswerRepository.ts';
-import { ScriptedSql } from './fakes/scriptedSql.ts';
+import { LOCK_NOT_AVAILABLE, ScriptedSql } from './fakes/scriptedSql.ts';
 
 const JULIE_ID = '00000000-0000-4000-8000-000000000501';
 const MARC_ID = '00000000-0000-4000-8000-000000000502';
 const SESSION_ID = '00000000-0000-4000-8000-000000000951';
 const LOT_ID = '00000000-0000-4000-8000-000000000101';
 const SPOT_B3_ID = '00000000-0000-4000-8000-0000000003b3';
-const LOCK_NOT_AVAILABLE = { code: '55P03' };
 const B3 = { number: 'B-3', levelCode: 'P1', aisleCode: 'B' };
 const NO_CONFIRMED_SPOT = { number: null, aisle_code: null, level_code: null };
 
@@ -33,10 +32,6 @@ function answerWith(sql: ScriptedSql, answer: SpotAnswer = julieAnswersB3) {
   return new PostgresParkedAnswerRepository(sql.database()).answer(answer);
 }
 
-function statementOf(sql: ScriptedSql, label: string) {
-  return sql.statements.find((statement) => statement.label === label);
-}
-
 const WRITES = ['occupy-answered-spot', 'confirm-parked-spot'] as const;
 
 describe('PostgresParkedAnswerRepository (story #21)', () => {
@@ -48,7 +43,7 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
     expect(sql.labels()).toEqual(['read-session-lot', 'limit-lock-wait', 'lock-lot', 'lock-answering-session', 'lock-answered-spot', ...WRITES]);
     expect(sql.statements.slice(1).every((statement) => statement.onTransaction)).toBe(true);
     expect(sql.isolationLevels).toEqual(['read committed']);
-    expect(statementOf(sql, 'lock-lot')?.params).toEqual([LOT_ID]);
+    expect(sql.statement('lock-lot')?.params).toEqual([LOT_ID]);
   });
 
   it('locks only her own session, and looks the number up in its lot alone', async () => {
@@ -56,9 +51,9 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
 
     await answerWith(sql);
 
-    expect(statementOf(sql, 'read-session-lot')?.params).toEqual([SESSION_ID, JULIE_ID]);
-    expect(statementOf(sql, 'lock-answering-session')?.text).toMatch(/where ps\.id = \$\d+ and ps\.user_id = \$\d+\s+for update of ps/);
-    const lookup = statementOf(sql, 'lock-answered-spot');
+    expect(sql.statement('read-session-lot')?.params).toEqual([SESSION_ID, JULIE_ID]);
+    expect(sql.statement('lock-answering-session')?.text).toMatch(/where ps\.id = \$\d+ and ps\.user_id = \$\d+\s+for update of ps/);
+    const lookup = sql.statement('lock-answered-spot');
     expect(lookup?.text).toMatch(/where spot\.lot_id = \$\d+ and upper\(regexp_replace\(spot\.number, '\[\[:space:\]–—-\]', '', 'g'\)\) = \$\d+/);
     expect(lookup?.text).toMatch(/order by spot\.number = \$\d+ desc, spot\.number\s+limit 1\s+for update of spot/);
     expect(lookup?.params).toEqual([LOT_ID, 'B3', 'B-3']);
@@ -69,9 +64,9 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
 
     await answerWith(sql);
 
-    const occupy = statementOf(sql, 'occupy-answered-spot');
+    const occupy = sql.statement('occupy-answered-spot');
     expect(occupy?.text).toMatch(/set state = 'OCCUPIED', needs_check = false, state_changed_at = now\(\)\s+where id = \$\d+ and state in \('AVAILABLE', 'OCCUPIED_UNKNOWN'\)/);
-    const confirm = statementOf(sql, 'confirm-parked-spot');
+    const confirm = sql.statement('confirm-parked-spot');
     expect(confirm?.text).toMatch(/set state = 'PARKED_CONFIRMED', confirmed_spot_id = \$\d+, parked_answered_at = now\(\)/);
     expect(confirm?.text).toMatch(/where id = \$\d+ and state = 'PARKED_UNCONFIRMED'/);
     expect(confirm?.params).toEqual([SPOT_B3_ID, SESSION_ID]);

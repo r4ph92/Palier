@@ -16,8 +16,7 @@ describe('the entry status of a session whose driver answered where the car is',
 
     await statusOf(scripted);
 
-    const [statement] = scripted.statements;
-    expect(statement?.label).toBe('read-session-status');
+    const statement = scripted.statement('read-session-status');
     expect(statement?.text).toMatch(/join spot on spot\.id = coalesce\(ps\.confirmed_spot_id, ps\.assigned_spot_id\)/);
     expect(statement?.params).toEqual([SESSION_ID, JULIE_ID]);
   });
