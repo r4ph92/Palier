@@ -60,17 +60,15 @@ describe('QA #9: the hold banner once the entry used the hold', () => {
   });
 
   it('stays while a scan is refused LOT_FULL, the hold being untouched', async () => {
-    const { spotHold, entry, user } = await julieHoldingOnTheScanner();
+    const { entry, user } = await julieHoldingOnTheScanner();
     entry.nextRejection = 'LOT_FULL';
     await user.press(await screen.findByRole('tab', { name: 'Scanner' }));
     await screen.findByText('Aucune session en cours');
-    const readsBeforeScan = spotHold.currentRequests;
     await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
     await user.press(screen.getByRole('button', { name: 'Scanner' }));
     await screen.findByText('Complet — la barrière reste fermée');
     await user.press(screen.getByRole('tab', { name: 'Stationnements' }));
 
-    expect(spotHold.currentRequests).toBe(readsBeforeScan);
     expect(await screen.findByTestId('spot-hold-banner')).toBeOnTheScreen();
   });
 });

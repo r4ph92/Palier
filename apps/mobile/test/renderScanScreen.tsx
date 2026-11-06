@@ -26,7 +26,7 @@ const noSessionToRefresh = () => undefined;
 
 // The scan tab owns the entry and the tabs own its watch; this stands in for both, with Terminé going back to the form.
 function ScanHarness({ client, onAddPlate, onAddCard }: ScanHarnessProps) {
-  const entry = useEntry(client, usePendingEntryWatch(client, noSessionToRefresh));
+  const entry = useEntry(client, usePendingEntryWatch(client, noSessionToRefresh, noSessionToRefresh));
   return <ScanScreen entry={entry} onDone={entry.startOver} onAddPlate={onAddPlate} onAddCard={onAddCard} />;
 }
 

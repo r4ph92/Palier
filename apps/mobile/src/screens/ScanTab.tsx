@@ -15,8 +15,6 @@ interface ScanTabProps {
   readonly entryClient: EntryClient;
   readonly currentSession: CurrentParkingSessionController;
   readonly pendingEntry: PendingEntryWatch;
-  // Reads the spot hold again: an entry made with a hold uses it up.
-  readonly refreshHold: () => void;
   readonly onAddPlate: () => void;
   readonly onAddCard: () => void;
 }
@@ -28,11 +26,10 @@ export function scanTabLabels(state: CurrentParkingSessionState): TabLabels {
 
 // An entry in progress keeps the scan screen, so its spot and announcement are never cut off by a refresh.
 // Otherwise the tab waits for Palier's first answer, then shows the current session or the form.
-export function ScanTab({ entryClient, currentSession, pendingEntry, refreshHold, onAddPlate, onAddCard }: ScanTabProps) {
+export function ScanTab({ entryClient, currentSession, pendingEntry, onAddPlate, onAddCard }: ScanTabProps) {
   const entry = useEntry(entryClient, pendingEntry);
   const { state, refresh, ...progress } = currentSession;
   useRefreshAsEntryProgresses(entry.state, refresh);
-  useRefreshHoldOnceEntered(entry.state, refreshHold);
   const sessionScreen = isEntryInProgress(entry.state) ? null : sessionScreenFor(currentSession);
   if (sessionScreen !== null) {
     return sessionScreen;
@@ -77,15 +74,6 @@ function useRefreshAsEntryProgresses(state: EntryState, refresh: () => void): vo
       refresh();
     }
   }, [progress, refresh]);
-}
-
-function useRefreshHoldOnceEntered(state: EntryState, refreshHold: () => void): void {
-  const sessionId = state.status === 'entered' ? state.sessionId : null;
-  useEffect(() => {
-    if (sessionId !== null) {
-      refreshHold();
-    }
-  }, [sessionId, refreshHold]);
 }
 
 function progressKey(state: EntryState): string | null {

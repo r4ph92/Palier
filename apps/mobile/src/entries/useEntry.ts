@@ -49,13 +49,13 @@ const NOT_RESPONDING: EntryState = { status: 'notResponding' };
 export function useEntry(client: EntryClient, pendingEntry: PendingEntryWatch): EntryController {
   const [state, setState] = useState<EntryState>(IDLE);
   const [qrContent, setQrContent] = useState('');
-  const { followed, watch, clear } = pendingEntry;
+  const { followed, watch, answered, clear } = pendingEntry;
   const submit = useCallback(() => {
     if (qrContent.trim() !== '') {
       clear();
-      void enter(client, qrContent, { setState, watch });
+      void enter(client, qrContent, { setState, watch, answered });
     }
-  }, [client, qrContent, clear, watch]);
+  }, [client, qrContent, clear, watch, answered]);
   const startOver = useCallback(() => {
     setQrContent('');
     setState(IDLE);
@@ -78,9 +78,10 @@ function withFollowedOutcome(state: EntryState, followed: FollowedEntry | null):
 interface EntryUpdates {
   readonly setState: Dispatch<SetStateAction<EntryState>>;
   readonly watch: (sessionId: string) => void;
+  readonly answered: () => void;
 }
 
-async function enter(client: EntryClient, qrContent: string, { setState, watch }: EntryUpdates): Promise<void> {
+async function enter(client: EntryClient, qrContent: string, { setState, watch, answered }: EntryUpdates): Promise<void> {
   setState({ status: 'submitting' });
   try {
     const entry = await client.enter(qrContent);
@@ -89,6 +90,8 @@ async function enter(client: EntryClient, qrContent: string, { setState, watch }
   } catch (error) {
     // Run inside the state update so an unexpected error is thrown during render and reaches the error boundary.
     setState(() => stateAfterFailure(error));
+  } finally {
+    answered();
   }
 }
 

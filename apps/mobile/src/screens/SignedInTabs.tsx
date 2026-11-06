@@ -22,8 +22,8 @@ interface SignedInTabsProps {
 export function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: SignedInTabsProps) {
   const tabs = useTabs();
   const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
-  const pendingEntry = usePendingEntryWatch(clients.entry, currentSession.refresh);
   const spotHold = useSpotHold(clients.spotHold);
+  const pendingEntry = usePendingEntryWatch(clients.entry, currentSession.refresh, spotHold.refreshHold);
   const content = { firstName, clients, developerEntry, onSignOut, tabs, currentSession, pendingEntry, spotHold };
   return (
     <View style={styles.app}>
@@ -50,7 +50,6 @@ function TabContent({ firstName, clients, tabs, currentSession, pendingEntry, sp
           entryClient={clients.entry}
           currentSession={currentSession}
           pendingEntry={pendingEntry}
-          refreshHold={spotHold.refreshHold}
           onAddPlate={() => tabs.openAccountPage('vehicles')}
           onAddCard={() => tabs.openAccountPage('payment')}
         />
