@@ -4,7 +4,7 @@ import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { ParkedPresumption, ParkedPresumptionRepository } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import { isStorableDate } from '../../domain/time/storableDate.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
-import { SESSION_NOT_FOUND_BODY } from './entryStatusRoute.ts';
+import { SESSION_NOT_FOUND_BODY } from '../sessionNotFound.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { entrySessionParametersSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
 import { parkedPresumptionRequestSchema, parkedPresumptionResponseSchema } from '../schemas/parkingSessionSchemas.ts';
@@ -23,7 +23,6 @@ interface Refusal {
   readonly message: string;
 }
 
-// The 404 is GET /v1/entries/:sessionId's, so another driver's session cannot be told from an unknown id.
 const REFUSALS: Record<Exclude<ParkedPresumption['outcome'], 'presumed' | 'already'>, Refusal> = {
   'not-found': SESSION_NOT_FOUND_BODY,
   'entry-not-confirmed': { statusCode: CONFLICT, error: 'ENTRY_NOT_CONFIRMED', message: 'The entry loop has not confirmed this session yet.' },

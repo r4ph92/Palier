@@ -4,7 +4,7 @@ import { configureServer } from './configureServer.ts';
 import { acceptNoticeAs, authorizationFor, julie, marc } from './fakeDriverRepository.ts';
 import { JULIE_SESSION_ID } from './fakes/fakeCurrentParkingSessions.ts';
 import type { StoredWalkingSession } from './fakes/fakeParkedPresumptions.ts';
-import { SESSION_NOT_FOUND_BODY } from '../../src/http/routes/entryStatusRoute.ts';
+import { SESSION_NOT_FOUND_BODY } from '../../src/http/sessionNotFound.ts';
 
 const CONFIRMED_AT = new Date('2026-11-04T18:03:00Z');
 const WALKED_AT = '2026-11-04T18:05:00.000Z';

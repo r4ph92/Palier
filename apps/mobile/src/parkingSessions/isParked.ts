@@ -1,8 +1,6 @@
 import type { EntrySessionState } from '@palier/shared-types';
-import { PARKED_SESSION_STATES } from '@palier/shared-types/entries';
 
-const PARKED_STATES: readonly EntrySessionState[] = PARKED_SESSION_STATES;
-
+// The driver walked away from the car: the spot is taken and the app no longer guides to it (Q36).
 export function isParked(state: EntrySessionState): state is 'PARKED_PRESUMED' {
-  return PARKED_STATES.includes(state);
+  return state === 'PARKED_PRESUMED';
 }

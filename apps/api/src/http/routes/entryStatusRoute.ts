@@ -2,13 +2,11 @@ import type { FastifyInstance } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { ParkingSessionRepository } from '../../domain/entries/ParkingSessionRepository.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
+import { SESSION_NOT_FOUND_BODY } from '../sessionNotFound.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { entrySessionParametersSchema, entryStatusResponseSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
 
 const NOT_FOUND = 404;
-
-// One body for an unknown id and another driver's session, on every route that takes a session id.
-export const SESSION_NOT_FOUND_BODY = { statusCode: NOT_FOUND, error: 'SESSION_NOT_FOUND', message: 'No such entry.' } as const;
 
 interface StatusRoute {
   readonly Params: EntrySessionParameters;

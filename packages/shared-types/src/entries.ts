@@ -24,9 +24,6 @@ export const ACTIVE_ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'PARKE
 
 export type ActiveEntrySessionState = (typeof ACTIVE_ENTRY_SESSION_STATES)[number];
 
-// The driver walked away from the car: the spot is taken and the app no longer guides to it (Q36).
-export const PARKED_SESSION_STATES = ['PARKED_PRESUMED'] as const satisfies readonly ActiveEntrySessionState[];
-
 export interface EntryStatusResponse {
   readonly sessionId: string;
   readonly state: EntrySessionState;
