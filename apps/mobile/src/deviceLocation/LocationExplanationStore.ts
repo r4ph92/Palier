@@ -16,7 +16,7 @@ export function fileLocationExplanationStore(file: File = new File(Paths.documen
   };
 }
 
-// A write that failed still counts as answered until the app closes, wherever the screen is mounted again.
+// A write that failed still counts as answered until sign-out, wherever the screen is mounted again.
 export function rememberingAnswer(store: LocationExplanationStore): LocationExplanationStore {
   let isAnsweredHere = false;
   return {
