@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 import { PalierRejectedError } from '../src/api/VehicleClient';
-import { CONFIRM_A1_TAKEN, julieReportingA1, SPOT_TAKEN } from './spotTakenRig';
+import { CONFIRM_A1_TAKEN, julieReportingA1, KEEP_A1, REPORT_A1, SPOT_TAKEN } from './spotTakenRig';
 import { visibleText } from './visibleText';
 import { PARKED_IN_A1 } from './walkAwayRig';
 
@@ -12,25 +12,25 @@ describe('reporting the assigned spot taken, the edges (story #23)', () => {
   beforeEach(() => jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 10, 4, 18, 5) }));
   afterEach(() => jest.useRealTimers());
 
-  it('goes back to « Place prise » on « Annuler », sending nothing, with VoiceOver on the action again', async () => {
+  it('goes back to « Place prise » on « Garder A-1 », sending nothing, with VoiceOver on the action again', async () => {
     const { user, parkingSession } = await julieReportingA1();
     const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
 
-    await user.press(screen.getByRole('button', { name: 'Annuler' }));
+    await user.press(screen.getByRole('button', { name: KEEP_A1 }));
 
     const action = screen.getByRole('button', { name: SPOT_TAKEN });
     expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ accessibilityLabel: action.props.accessibilityLabel }) }), 'focus');
     expect(parkingSession.spotTakenReports).toEqual([]);
   });
 
-  it('shows « Envoi… » without « Annuler » while the report is in flight, and sends one report for two taps', async () => {
+  it('shows « Envoi… » without « Garder A-1 » while the report is in flight, and sends one report for two taps', async () => {
     const { user, parkingSession } = await julieReportingA1();
     parkingSession.holdsSpotTakenReport = true;
 
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
     await user.press(screen.getByRole('button', { name: 'Envoi…' }));
 
-    expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
+    expect(screen.queryByRole('button', { name: KEEP_A1 })).toBeNull();
     expect(parkingSession.spotTakenReports).toEqual(['A-1']);
   });
 
@@ -42,7 +42,7 @@ describe('reporting the assigned spot taken, the edges (story #23)', () => {
     parkingSession.spotTakenFailure = failure;
     const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
 
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(UNREACHABLE);
     expect(announce).toHaveBeenCalledWith(UNREACHABLE);
@@ -54,7 +54,7 @@ describe('reporting the assigned spot taken, the edges (story #23)', () => {
     parkingSession.spotTakenFailure = new PalierRejectedError('ALREADY_PARKED');
     parkingSession.session = parkingSession.session === null ? null : { ...parkingSession.session, state: 'PARKED_PRESUMED' };
 
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
 
     expect(await screen.findByText(PARKED_IN_A1, visibleText)).toBeOnTheScreen();
     expect(screen.queryByRole('alert')).toBeNull();
@@ -66,7 +66,7 @@ describe('reporting the assigned spot taken, the edges (story #23)', () => {
     parkingSession.spotTakenFailure = new PalierRejectedError('SESSION_CLOSED');
     parkingSession.session = null;
 
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
 
     expect(await screen.findByRole('tab', { name: 'Scanner', selected: true })).toBeOnTheScreen();
     expect(screen.queryByRole('alert')).toBeNull();

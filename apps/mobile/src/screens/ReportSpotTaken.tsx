@@ -9,6 +9,7 @@ import { TextButton } from '../components/TextButton';
 import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
 import { useAnnouncement } from '../components/useAnnouncement';
 import { i18n } from '../i18n/i18n';
+import { unbrokenSpotNumber } from '../spots/spotNumber';
 import { useSpotTakenReport, type SpotTakenReportController } from '../parkingSessions/useSpotTakenReport';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -82,17 +83,18 @@ interface ConfirmReportProps {
 // A report moves the driver to another spot at once, so it is confirmed first; a report in flight cannot be cancelled.
 function ConfirmReport({ spot, reporting, onCancel }: ConfirmReportProps) {
   const cancel = reporting.isSending ? undefined : onCancel;
+  const number = unbrokenSpotNumber(spot);
   return (
     <View style={styles.group} onAccessibilityEscape={cancel}>
       <ConfirmQuestion spot={spot} />
       <ReportProblem isUnreachable={reporting.isUnreachable} attempts={reporting.attempts} />
       <PrimaryButton
-        label={i18n.t('session.spotTaken.confirm')}
+        label={i18n.t('session.spotTaken.confirm', { number })}
         busyLabel={i18n.t('session.spotTaken.sending')}
         busy={reporting.isSending}
         onPress={reporting.report}
       />
-      {cancel === undefined ? null : <TextButton label={i18n.t('session.spotTaken.cancel')} align="start" onPress={cancel} />}
+      {cancel === undefined ? null : <TextButton label={i18n.t('session.spotTaken.cancel', { number })} align="start" onPress={cancel} />}
     </View>
   );
 }

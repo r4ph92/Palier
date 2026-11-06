@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { julieAtParkingDemo, spotB3 } from './fakeParkingSessionClient';
-import { CONFIRM_A1_TAKEN, julieReportingA1, julieThroughTheGate, NONE_FREE, SPOT_TAKEN } from './spotTakenRig';
+import { CONFIRM_A1_TAKEN, julieReportingA1, julieThroughTheGate, NONE_FREE, REPORT_A1, SPOT_TAKEN } from './spotTakenRig';
 import { asSeen, visibleText } from './visibleText';
 import { julieWith, PARKED_IN_A1 } from './walkAwayRig';
 import { CONFIRM_TYPED, WHERE_PARKED } from './whereParkedRig';
@@ -30,7 +30,7 @@ describe('reporting the assigned spot taken (story #23)', () => {
     const question = screen.getByText(CONFIRM_A1_TAKEN, visibleText);
     expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ accessible: true }) }), 'focus');
     expect(question).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Confirmer' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: REPORT_A1 })).toBeOnTheScreen();
     expect(parkingSession.spotTakenReports).toEqual([]);
   });
 
@@ -39,7 +39,7 @@ describe('reporting the assigned spot taken (story #23)', () => {
     const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
     const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
 
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
 
     expect(await screen.findByText(NEW_SPOT_A2, visibleText)).toBeOnTheScreen();
     expect(parkingSession.spotTakenReports).toEqual(['A-1']);
@@ -53,7 +53,7 @@ describe('reporting the assigned spot taken (story #23)', () => {
     const { user, enterAisle } = await julieReportingA1();
     await enterAisle(1);
 
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
 
     expect(await screen.findByText(NEW_SPOT_A2, visibleText)).toBeOnTheScreen();
     expect(screen.getByText('Vous êtes dans la bonne allée', visibleText)).toBeOnTheScreen();
@@ -63,7 +63,7 @@ describe('reporting the assigned spot taken (story #23)', () => {
     const { user, parkingSession } = await julieReportingA1();
     parkingSession.replacementSpot = spotB3;
 
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
 
     expect(await screen.findByText('Nouvelle place : B-3', visibleText)).toBeOnTheScreen();
     expect(screen.getByText('Rendez-vous allée B, place B-3', visibleText)).toBeOnTheScreen();
@@ -74,7 +74,7 @@ describe('reporting the assigned spot taken (story #23)', () => {
     parkingSession.replacementSpot = null;
     const queued = jest.spyOn(AccessibilityInfo, 'announceForAccessibilityWithOptions').mockClear();
 
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
 
     expect(await screen.findByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
     expect(screen.getByText(NONE_FREE, visibleText)).toBeOnTheScreen();
@@ -84,7 +84,7 @@ describe('reporting the assigned spot taken (story #23)', () => {
   it('places Julie where she says once no other spot was free, and drops the notice', async () => {
     const { user, parkingSession } = await julieReportingA1();
     parkingSession.replacementSpot = null;
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
     await screen.findByText(NONE_FREE, visibleText);
 
     await user.type(screen.getByLabelText('Numéro de place'), 'A-5');
@@ -125,14 +125,14 @@ describe('reporting the assigned spot taken (story #23)', () => {
 
     await user.press(screen.getByRole('button', { name: 'Spot taken' }));
     expect(screen.getByText('Confirm that spot A-1 is taken?', visibleText)).toBeOnTheScreen();
-    await user.press(screen.getByRole('button', { name: 'Confirm' }));
+    await user.press(screen.getByRole('button', { name: /^Report A-\u2060?1 taken$/ }));
 
     expect(await screen.findByText('New spot: A-2', visibleText)).toBeOnTheScreen();
   });
 
   it('drops « Nouvelle place » once Julie walks away from A-2, without announcing it again', async () => {
     const { user, walkAway } = await julieReportingA1();
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
     await screen.findByText(NEW_SPOT_A2, visibleText);
     jest.mocked(AccessibilityInfo.announceForAccessibility).mockClear();
 
