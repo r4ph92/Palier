@@ -96,7 +96,7 @@ async function enter(client: EntryClient, qrContent: string, { setState, watch, 
 }
 
 // A refused session or a missing notice already moves the app off this screen, so the form simply goes back to idle.
-// A status error is checked before the network error it extends: the API submissionEnded, so the connection is fine.
+// A status error is checked before the network error it extends: the API answered, so the connection is fine.
 function stateAfterFailure(error: unknown): EntryState {
   if (error instanceof PalierRejectedError) {
     return isEntryRefusal(error.code) ? { status: 'refused', refusal: error.code, authorizedCents: error.authorizedCents } : NOT_RESPONDING;
