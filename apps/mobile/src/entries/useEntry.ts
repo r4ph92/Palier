@@ -49,13 +49,13 @@ const NOT_RESPONDING: EntryState = { status: 'notResponding' };
 export function useEntry(client: EntryClient, pendingEntry: PendingEntryWatch): EntryController {
   const [state, setState] = useState<EntryState>(IDLE);
   const [qrContent, setQrContent] = useState('');
-  const { followed, watch, answered, clear } = pendingEntry;
+  const { followed, watch, submissionEnded, clear } = pendingEntry;
   const submit = useCallback(() => {
     if (qrContent.trim() !== '') {
       clear();
-      void enter(client, qrContent, { setState, watch, answered });
+      void enter(client, qrContent, { setState, watch, submissionEnded });
     }
-  }, [client, qrContent, clear, watch, answered]);
+  }, [client, qrContent, clear, watch, submissionEnded]);
   const startOver = useCallback(() => {
     setQrContent('');
     setState(IDLE);
@@ -78,10 +78,10 @@ function withFollowedOutcome(state: EntryState, followed: FollowedEntry | null):
 interface EntryUpdates {
   readonly setState: Dispatch<SetStateAction<EntryState>>;
   readonly watch: (sessionId: string) => void;
-  readonly answered: () => void;
+  readonly submissionEnded: () => void;
 }
 
-async function enter(client: EntryClient, qrContent: string, { setState, watch, answered }: EntryUpdates): Promise<void> {
+async function enter(client: EntryClient, qrContent: string, { setState, watch, submissionEnded }: EntryUpdates): Promise<void> {
   setState({ status: 'submitting' });
   try {
     const entry = await client.enter(qrContent);
@@ -91,12 +91,12 @@ async function enter(client: EntryClient, qrContent: string, { setState, watch, 
     // Run inside the state update so an unexpected error is thrown during render and reaches the error boundary.
     setState(() => stateAfterFailure(error));
   } finally {
-    answered();
+    submissionEnded();
   }
 }
 
 // A refused session or a missing notice already moves the app off this screen, so the form simply goes back to idle.
-// A status error is checked before the network error it extends: the API answered, so the connection is fine.
+// A status error is checked before the network error it extends: the API submissionEnded, so the connection is fine.
 function stateAfterFailure(error: unknown): EntryState {
   if (error instanceof PalierRejectedError) {
     return isEntryRefusal(error.code) ? { status: 'refused', refusal: error.code, authorizedCents: error.authorizedCents } : NOT_RESPONDING;

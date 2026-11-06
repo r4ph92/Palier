@@ -23,7 +23,7 @@ export function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: 
   const tabs = useTabs();
   const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
   const spotHold = useSpotHold(clients.spotHold);
-  const pendingEntry = usePendingEntryWatch(clients.entry, currentSession.refresh, spotHold.refreshHold);
+  const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: currentSession.refresh, onSubmissionEnded: spotHold.refreshHold });
   const content = { firstName, clients, developerEntry, onSignOut, tabs, currentSession, pendingEntry, spotHold };
   return (
     <View style={styles.app}>

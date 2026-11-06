@@ -9,20 +9,25 @@ export interface FollowedEntry {
   readonly outcome: FollowedEntryOutcome;
 }
 
+export interface PendingEntryCallbacks {
+  readonly onSettled: () => void;
+  readonly onSubmissionEnded: () => void;
+}
+
 export interface PendingEntryWatch {
   // The last entry the barrier opened for and what became of it; null again once the next scan starts.
   readonly followed: FollowedEntry | null;
   watch(sessionId: string): void;
-  // Called when a submission ends, entered or refused: an entry made from a spot hold uses it up.
-  answered(): void;
+  // Called when a submission ends, whether the barrier opened or the entry was refused.
+  submissionEnded(): void;
   clear(): void;
 }
 
 // Owned above the tabs, so the one polling of an entry outlives the scan tab while the driver browses the others.
-export function usePendingEntryWatch(client: EntryClient, onSettled: () => void, onAnswered: () => void): PendingEntryWatch {
+export function usePendingEntryWatch(client: EntryClient, { onSettled, onSubmissionEnded }: PendingEntryCallbacks): PendingEntryWatch {
   const [followed, setFollowed] = useState<FollowedEntry | null>(null);
   const latestOnSettled = useLatest(onSettled);
-  const latestOnAnswered = useLatest(onAnswered);
+  const latestOnSubmissionEnded = useLatest(onSubmissionEnded);
   const settle = useCallback((outcome: FollowedEntryOutcome) => {
     setFollowed(withOutcome(outcome));
     latestOnSettled.current();
@@ -34,8 +39,8 @@ export function usePendingEntryWatch(client: EntryClient, onSettled: () => void,
   useConfirmationPolling(client, waitingEntry(followed), { onConfirmed: confirm, onCancelled: cancel, onUnexpectedError: fail });
   const watch = useCallback((sessionId: string) => setFollowed({ sessionId, outcome: 'waiting' }), []);
   const clear = useCallback(() => setFollowed(null), []);
-  const answered = useCallback(() => latestOnAnswered.current(), [latestOnAnswered]);
-  return { followed, watch, answered, clear };
+  const submissionEnded = useCallback(() => latestOnSubmissionEnded.current(), [latestOnSubmissionEnded]);
+  return { followed, watch, submissionEnded, clear };
 }
 
 function useLatest<T>(value: T): { readonly current: T } {
