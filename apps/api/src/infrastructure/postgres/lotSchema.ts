@@ -1,17 +1,11 @@
 import { sql } from 'drizzle-orm';
 import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { SPOT_STATES } from '../../domain/spots/spotStates.ts';
 
 export const kycStatus = pgEnum('kyc_status', ['NOT_STARTED', 'PENDING', 'ACTION_REQUIRED', 'VERIFIED']);
 export const assignmentStrategy = pgEnum('assignment_strategy', ['AISLE_BY_AISLE']);
 export const occupancySource = pgEnum('occupancy_source', ['DECLARATIVE', 'SENSORS']);
-export const spotState = pgEnum('spot_state', [
-  'AVAILABLE',
-  'HELD',
-  'ASSIGNED',
-  'OCCUPIED',
-  'OCCUPIED_UNKNOWN',
-  'OUT_OF_SERVICE',
-]);
+export const spotState = pgEnum('spot_state', SPOT_STATES);
 export const sensorState = pgEnum('sensor_state', ['FREE', 'OCCUPIED']);
 
 export const operator = pgTable('operator', {
@@ -124,4 +118,4 @@ export const spot = pgTable(
   ],
 );
 
-export type SpotState = (typeof spotState.enumValues)[number];
+export type { SpotState } from '../../domain/spots/spotStates.ts';

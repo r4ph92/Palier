@@ -3,6 +3,8 @@ import type {
   CurrentParkingSessionResponse,
   ParkedPresumptionRequest,
   ParkedPresumptionResponse,
+  ParkedSpotAnswerRequest,
+  ParkedSpotAnswerResponse,
   TestClockReading,
 } from '@palier/shared-types';
 import { ACTIVE_ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
@@ -100,6 +102,23 @@ export const parkedPresumptionResponseSchema = {
   },
 } as const;
 
+// Spot numbers are a few characters (« B-3 »); the cap keeps oversized text away from the normalizer.
+const SPOT_NUMBER_MAX_LENGTH = 16;
+
+export const parkedSpotAnswerRequestSchema = {
+  type: 'object',
+  required: ['spotNumber'],
+  additionalProperties: false,
+  properties: { spotNumber: { type: 'string', minLength: 1, maxLength: SPOT_NUMBER_MAX_LENGTH } },
+} as const;
+
+export const parkedSpotAnswerResponseSchema = {
+  type: 'object',
+  required: ['state', 'spot'],
+  additionalProperties: false,
+  properties: { state: { type: 'string', const: 'PARKED_CONFIRMED' }, spot: assignedSpotSchema },
+} as const;
+
 export type ResponseSchemaMatchesCurrentParkingSession = AssertTrue<
   MutuallyAssignable<FromSchema<typeof currentParkingSessionResponseSchema>, CurrentParkingSessionResponse>
 >;
@@ -112,4 +131,10 @@ export type RequestSchemaMatchesParkedPresumption = AssertTrue<
 >;
 export type ResponseSchemaMatchesParkedPresumption = AssertTrue<
   MutuallyAssignable<FromSchema<typeof parkedPresumptionResponseSchema>, ParkedPresumptionResponse>
+>;
+export type RequestSchemaMatchesParkedSpotAnswer = AssertTrue<
+  MutuallyAssignable<FromSchema<typeof parkedSpotAnswerRequestSchema>, ParkedSpotAnswerRequest>
+>;
+export type ResponseSchemaMatchesParkedSpotAnswer = AssertTrue<
+  MutuallyAssignable<FromSchema<typeof parkedSpotAnswerResponseSchema>, ParkedSpotAnswerResponse>
 >;

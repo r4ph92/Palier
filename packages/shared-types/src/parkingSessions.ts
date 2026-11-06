@@ -65,3 +65,23 @@ export interface ParkedPresumptionResponse {
 }
 
 export type ParkedPresumptionRefusalCode = 'SESSION_NOT_FOUND' | 'ENTRY_NOT_CONFIRMED' | 'SESSION_CLOSED' | 'LOT_BUSY';
+
+// The number the driver read on the ground, as typed: Palier normalizes « b3 » or « B – 3 » to « B-3 ».
+export interface ParkedSpotAnswerRequest {
+  readonly spotNumber: string;
+}
+
+// The same answer when the driver had already answered: spot is then the one first confirmed.
+export interface ParkedSpotAnswerResponse {
+  readonly state: 'PARKED_CONFIRMED';
+  readonly spot: AssignedSpot;
+}
+
+export type ParkedSpotAnswerRefusalCode =
+  | 'SESSION_NOT_FOUND'
+  | 'NOT_ASKED'
+  | 'SESSION_CLOSED'
+  | 'UNKNOWN_SPOT'
+  | 'SPOT_TAKEN'
+  | 'SPOT_OUT_OF_SERVICE'
+  | 'LOT_BUSY';

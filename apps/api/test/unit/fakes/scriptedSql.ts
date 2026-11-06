@@ -26,6 +26,11 @@ export type StatementLabel =
   | 'read-walk-facts'
   | 'ask-where-parked'
   | 'flag-assigned-spot'
+  | 'read-session-lot'
+  | 'lock-answering-session'
+  | 'lock-answered-spot'
+  | 'occupy-answered-spot'
+  | 'confirm-parked-spot'
   | 'unknown';
 
 export interface ExecutedStatement {
@@ -46,6 +51,11 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-walk-facts', /left join aisle detected/],
   ['ask-where-parked', /set state = 'PARKED_UNCONFIRMED'/],
   ['flag-assigned-spot', /set state = 'OCCUPIED_UNKNOWN'/],
+  ['read-session-lot', /select lot_id from parking_session/],
+  ['lock-answering-session', /for update of ps/],
+  ['lock-answered-spot', /for update of spot/],
+  ['occupy-answered-spot', /set state = 'OCCUPIED', needs_check = false/],
+  ['confirm-parked-spot', /set state = 'PARKED_CONFIRMED'/],
   ['read-unchanged-session', /select state, parked_at from parking_session/],
   ['lock-lot', /from parking_lot[\s\S]*for no key update/],
   ['read-active-session', /with active as/],
