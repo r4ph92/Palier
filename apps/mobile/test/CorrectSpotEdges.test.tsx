@@ -1,5 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { SESSION_REFRESH_MILLISECONDS } from '../src/parkingSessions/useCurrentParkingSession';
+import { PalierUnreachableError } from '../src/api/LotsClient';
 import { julieAtParkingDemo } from './fakeParkingSessionClient';
 import { visibleText } from './visibleText';
 import { advance } from './walkAwayRig';
@@ -49,5 +50,27 @@ describe('the correction form at its edges (story #22)', () => {
     expect(await screen.findByText('Garé en A-2', visibleText)).toBeOnTheScreen();
     expect(screen.queryByRole('header', { name: NOT_MY_SPOT })).toBeNull();
     expect(screen.getByRole('button', { name: NOT_MY_SPOT })).toBeOnTheScreen();
+  });
+
+  it('goes back to « Garé en A-1 » on VoiceOver’s escape gesture, sending nothing', async () => {
+    const { parkingSession } = await julieCorrecting();
+
+    await act(async () => fireEvent(screen.getByRole('header', { name: NOT_MY_SPOT }), 'accessibilityEscape'));
+
+    expect(screen.getByText('Garé en A-1', visibleText)).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: NOT_MY_SPOT })).toBeOnTheScreen();
+    expect(parkingSession.spotAnswers).toEqual([]);
+  });
+
+  it('shows no offline notice in the form when the minute read fails, and the details show it again after « Annuler »', async () => {
+    const { user, parkingSession } = await julieCorrecting();
+    parkingSession.failure = new PalierUnreachableError('offline');
+
+    await advance(SESSION_REFRESH_MILLISECONDS);
+
+    expect(screen.getByRole('header', { name: NOT_MY_SPOT })).toBeOnTheScreen();
+    expect(screen.queryByText(/^Hors ligne/)).toBeNull();
+    await user.press(screen.getByRole('button', { name: 'Annuler' }));
+    expect(screen.getByText('Hors ligne, montant au dernier relevé')).toBeOnTheScreen();
   });
 });
