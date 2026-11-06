@@ -3,6 +3,6 @@ import { PARKED_SESSION_STATES } from '@palier/shared-types/entries';
 
 const PARKED_STATES: readonly EntrySessionState[] = PARKED_SESSION_STATES;
 
-export function isParked(state: EntrySessionState): boolean {
+export function isParked(state: EntrySessionState): state is 'PARKED_PRESUMED' {
   return PARKED_STATES.includes(state);
 }

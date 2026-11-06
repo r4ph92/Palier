@@ -99,7 +99,12 @@ function spotStatusOf({ state, spot }: CurrentParkingSession): string {
   if (isParked(state)) {
     return `${i18n.t('session.parkedInLead')}${spot.number}`;
   }
-  return i18n.t(state === 'CREATED' ? 'session.pending' : 'scan.entryConfirmed');
+  switch (state) {
+    case 'CREATED':
+      return i18n.t('session.pending');
+    case 'ENTRY_CONFIRMED':
+      return i18n.t('scan.entryConfirmed');
+  }
 }
 
 // The spot turns parked with no action of the driver, so it is announced once, on that change only:
