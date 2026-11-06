@@ -7,7 +7,7 @@ import { AISLE_B_FREE_SPOTS, FakeParkingSessionClient, julieAtParkingDemo } from
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { asSeen, visibleText } from './visibleText';
 import { GO_TO_A1, PARKED_IN_A1 } from './walkAwayRig';
-import { CONFIRM_TYPED, expectFocusedSpotWithoutAnnouncement, julieAskedInAisleB, REFUSAL_MESSAGES, WHERE_PARKED } from './whereParkedRig';
+import { CONFIRM_TYPED, julieAskedInAisleB, REFUSAL_MESSAGES, watchSpotFocus, WHERE_PARKED } from './whereParkedRig';
 
 const WALKING = 'Stationné (à pied, confiance élevée)';
 
@@ -78,8 +78,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
 
   it('shows « Garé en B-3 » once Julie chooses B-3 and confirms, and moves VoiceOver to it without announcing it on top', async () => {
     const { user, parkingSession } = await julieAskedInAisleB();
-    jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
-    jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
+    const expectFocusedSpot = watchSpotFocus();
 
     await user.press(screen.getByRole('radio', { name: 'B-3' }));
     await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
@@ -87,7 +86,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     expect(parkingSession.spotAnswers).toEqual(['B-3']);
     expect(await screen.findByText('Garé en B-3', visibleText)).toBeOnTheScreen();
     expect(screen.queryByText(WHERE_PARKED, visibleText)).toBeNull();
-    expectFocusedSpotWithoutAnnouncement('B-3');
+    expectFocusedSpot('B-3');
   });
 
   it('sends a number typed in the field as typed, and shows the spot Palier placed the car in', async () => {

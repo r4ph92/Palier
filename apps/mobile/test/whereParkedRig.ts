@@ -17,15 +17,17 @@ export const REFUSAL_MESSAGES = {
   SPOT_OUT_OF_SERVICE: 'Cette place est hors service — vérifiez le numéro au sol',
 } as const;
 
-// The form gave way to « Garé en B-3 »: VoiceOver's focus moves to the spot, with no announcement on top.
-// Both AccessibilityInfo methods must be spied on, and cleared, before the answer.
-export function expectFocusedSpotWithoutAnnouncement(spotNumber: string): void {
-  const parkedIn = `Garé en ${spotNumber}`;
-  const spot = screen.getByLabelText(`${spotNumber} · Palier P1 · Allée ${spotNumber.charAt(0)}. ${parkedIn}`, visibleText);
-  const focusTarget = expect.objectContaining({ props: expect.objectContaining({ accessibilityLabel: spot.props.accessibilityLabel }) });
-  expect(jest.mocked(AccessibilityInfo.sendAccessibilityEvent)).toHaveBeenCalledWith(focusTarget, 'focus');
-  const announcements = jest.mocked(AccessibilityInfo.announceForAccessibility).mock.calls.filter(([message]) => asSeen(message) === parkedIn);
-  expect(announcements).toHaveLength(0);
+// Watches VoiceOver from now on; the returned check says the form gave way to « Garé en B-3 »: the focus moved to the spot,
+// with no announcement on top.
+export function watchSpotFocus(): (spotNumber: string) => void {
+  const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
+  const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+  return (spotNumber) => {
+    const parkedIn = `Garé en ${spotNumber}`;
+    const spot = screen.getByLabelText(`${spotNumber} · Palier P1 · Allée ${spotNumber.charAt(0)}. ${parkedIn}`, visibleText);
+    expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ accessibilityLabel: spot.props.accessibilityLabel }) }), 'focus');
+    expect(announce.mock.calls.filter(([message]) => asSeen(message) === parkedIn)).toHaveLength(0);
+  };
 }
 
 // Julie got A-1, walked into aisle B and walked away from the car there: Palier asks where she parked.

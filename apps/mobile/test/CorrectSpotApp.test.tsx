@@ -4,7 +4,7 @@ import { PalierRejectedError } from '../src/api/VehicleClient';
 import { julieAtParkingDemo } from './fakeParkingSessionClient';
 import { visibleText } from './visibleText';
 import { julieWith, PARKED_IN_A1 } from './walkAwayRig';
-import { CONFIRM_TYPED, expectFocusedSpotWithoutAnnouncement, julieCorrecting, juliePresumedInA1, NOT_MY_SPOT, REFUSAL_MESSAGES } from './whereParkedRig';
+import { CONFIRM_TYPED, julieCorrecting, juliePresumedInA1, NOT_MY_SPOT, REFUSAL_MESSAGES, watchSpotFocus } from './whereParkedRig';
 
 const SPOT_NUMBER = 'Numéro de la place où vous êtes garé';
 
@@ -33,8 +33,7 @@ describe('correcting the spot Palier presumed (story #22)', () => {
 
   it('shows « Garé en A-3 » once Julie types A-3 and confirms, and moves VoiceOver to it without announcing it on top', async () => {
     const { user, parkingSession } = await julieCorrecting();
-    jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
-    jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
+    const expectFocusedSpot = watchSpotFocus();
 
     await user.type(screen.getByLabelText(SPOT_NUMBER), 'A-3');
     await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
@@ -42,7 +41,7 @@ describe('correcting the spot Palier presumed (story #22)', () => {
     expect(parkingSession.spotAnswers).toEqual(['A-3']);
     expect(await screen.findByText('Garé en A-3', visibleText)).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: NOT_MY_SPOT })).toBeNull();
-    expectFocusedSpotWithoutAnnouncement('A-3');
+    expectFocusedSpot('A-3');
   });
 
   it.each([
