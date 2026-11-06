@@ -130,6 +130,7 @@ interface SpotNumberFieldProps {
 function SpotNumberField({ spotNumber, onChange, answering }: SpotNumberFieldProps) {
   const colors = useColors();
   const isBlank = spotNumber.trim() === '';
+  const problem = answering.problem === null ? null : i18n.t(PROBLEM_MESSAGES[answering.problem]);
   const submit = () => {
     if (!isBlank) {
       answering.answer(spotNumber);
@@ -138,8 +139,8 @@ function SpotNumberField({ spotNumber, onChange, answering }: SpotNumberFieldPro
   return (
     <View style={styles.field}>
       <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('session.whereParked.numberLabel')}</Text>
-      <SpotNumberInput value={spotNumber} onChange={onChange} onSubmit={submit} />
-      <AnswerProblem answering={answering} />
+      <SpotNumberInput value={spotNumber} problem={problem} onChange={onChange} onSubmit={submit} />
+      <AnswerProblem message={problem} attempts={answering.attempts} />
       <ConfirmButton spotNumber={spotNumber.trim()} isSending={answering.isSending} onPress={submit} />
     </View>
   );
@@ -169,15 +170,18 @@ function ConfirmButton({ spotNumber, isSending, onPress }: ConfirmButtonProps) {
 
 interface SpotNumberInputProps {
   readonly value: string;
+  // Read again with the field while it shows, since VoiceOver's focus stays on the field.
+  readonly problem: string | null;
   readonly onChange: (value: string) => void;
   readonly onSubmit: () => void;
 }
 
-function SpotNumberInput({ value, onChange, onSubmit }: SpotNumberInputProps) {
+function SpotNumberInput({ value, problem, onChange, onSubmit }: SpotNumberInputProps) {
   const colors = useColors();
   return (
     <TextInput
       accessibilityLabel={i18n.t('session.whereParked.numberLabel')}
+      accessibilityHint={problem ?? undefined}
       maxFontSizeMultiplier={SPOT_NUMBER_MAX_FONT_SCALE}
       autoCapitalize="characters"
       maxLength={SPOT_NUMBER_MAX_LENGTH}
@@ -192,9 +196,8 @@ function SpotNumberInput({ value, onChange, onSubmit }: SpotNumberInputProps) {
 }
 
 // Announced on every refused answer, the same one twice included, since the focus stays on the field.
-function AnswerProblem({ answering }: { readonly answering: ParkedAnswerController }) {
-  const message = answering.problem === null ? null : i18n.t(PROBLEM_MESSAGES[answering.problem]);
-  useAnnouncement(message, answering.attempts);
+function AnswerProblem({ message, attempts }: { readonly message: string | null; readonly attempts: number }) {
+  useAnnouncement(message, attempts);
   return message === null ? null : <FieldError message={message} />;
 }
 

@@ -114,7 +114,14 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message, visibleText);
+    expect(asSeen(screen.getByLabelText('Numéro de place').props.accessibilityHint as string)).toBe(message);
     expect(screen.getByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
+  });
+
+  it('gives the field no hint before a refusal', async () => {
+    await julieAskedInAisleB();
+
+    expect(screen.getByLabelText('Numéro de place')).not.toHaveProp('accessibilityHint', expect.anything());
   });
 
   it('reads « Where are you parked? » and its refusals on an English device', async () => {
