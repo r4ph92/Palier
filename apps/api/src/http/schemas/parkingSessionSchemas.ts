@@ -4,9 +4,34 @@ import type { FromSchema } from 'json-schema-to-ts';
 import { assignedSpotSchema } from './entrySchemas.ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
 
+const aisleRectangleSchema = {
+  type: 'object',
+  required: ['x', 'y', 'width', 'height'],
+  additionalProperties: false,
+  properties: { x: { type: 'number' }, y: { type: 'number' }, width: { type: 'number' }, height: { type: 'number' } },
+} as const;
+
+const planAisleSchema = {
+  type: 'object',
+  required: ['code', 'beaconMinor', 'rectangle'],
+  additionalProperties: false,
+  properties: {
+    code: { type: 'string' },
+    beaconMinor: { type: 'integer' },
+    rectangle: { anyOf: [aisleRectangleSchema, { type: 'null' }] },
+  },
+} as const;
+
+const levelPlanSchema = {
+  type: 'object',
+  required: ['levelCode', 'aisles'],
+  additionalProperties: false,
+  properties: { levelCode: { type: 'string' }, aisles: { type: 'array', items: planAisleSchema } },
+} as const;
+
 const currentParkingSessionSchema = {
   type: 'object',
-  required: ['sessionId', 'state', 'lotName', 'spot', 'enteredAt', 'elapsedMinutes', 'amountCents', 'dailyCapCents'],
+  required: ['sessionId', 'state', 'lotName', 'spot', 'enteredAt', 'elapsedMinutes', 'amountCents', 'dailyCapCents', 'beaconMajor', 'levelPlan'],
   additionalProperties: false,
   properties: {
     sessionId: { type: 'string' },
@@ -17,6 +42,8 @@ const currentParkingSessionSchema = {
     elapsedMinutes: { type: 'integer' },
     amountCents: { type: 'integer' },
     dailyCapCents: { type: 'integer' },
+    beaconMajor: { anyOf: [{ type: 'integer' }, { type: 'null' }] },
+    levelPlan: { anyOf: [levelPlanSchema, { type: 'null' }] },
   },
 } as const;
 
