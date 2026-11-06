@@ -46,6 +46,8 @@ describe('reporting the assigned spot taken (story #23)', () => {
     const spotLine = screen.getByLabelText(`A-2 · Palier P1 · Allée A. ${NEW_SPOT_A2}`, visibleText);
     expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ accessibilityLabel: spotLine.props.accessibilityLabel }) }), 'focus');
     expect(announce.mock.calls.filter(([message]) => asSeen(message) === NEW_SPOT_A2)).toEqual([]);
+    const action = screen.getByRole('button', { name: SPOT_TAKEN });
+    expect(focus).not.toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ accessibilityLabel: action.props.accessibilityLabel }) }), 'focus');
     expect(screen.queryByText(CONFIRM_A1_TAKEN, visibleText)).toBeNull();
   });
 

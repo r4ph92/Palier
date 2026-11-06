@@ -38,7 +38,8 @@ export function useNoneFreeNotice({ sessionId, state }: CurrentParkingSession): 
   return { isShown: shownForSessionId === sessionId, show: () => setShownForSessionId(sessionId) };
 }
 
-// idle: the action as first shown; confirming: the question replaces it; returned: the action again, which takes VoiceOver back.
+// idle: the action without focus, as first shown or once a report settled (the next view takes VoiceOver: the new spot, the question);
+// confirming: the question replaces it; returned: the action after « Garder », which takes VoiceOver back.
 type ReportStep = 'idle' | 'confirming' | 'returned';
 
 interface ReportSpotTakenProps {
@@ -57,7 +58,7 @@ export function ReportSpotTaken({ client, session, onNoneFree, onSettled }: Repo
       if (response?.outcome === 'none-free') {
         onNoneFree();
       }
-      setStep('returned');
+      setStep('idle');
       onSettled();
     },
     [onNoneFree, onSettled],
