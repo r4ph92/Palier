@@ -1,10 +1,11 @@
 import type { AssignedSpot, CurrentParkingSession } from '@palier/shared-types';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { SpotWithState } from '../components/SpotLine';
 import { SpotNumberText } from '../components/SpotNumberText';
+import { useAnnouncement } from '../components/useAnnouncement';
 import { formatClockTime } from '../i18n/formatClockTime';
 import { formatElapsed } from '../i18n/formatElapsed';
 import { formatMoney } from '../i18n/formatMoney';
@@ -81,6 +82,7 @@ function SessionSpot({ session }: { readonly session: CurrentParkingSession }) {
   const colors = useColors();
   const isWaiting = session.state === 'CREATED';
   const statusContent = isParked(session.state) ? <ParkedIn spot={session.spot} /> : undefined;
+  useAnnouncement(useJustParked(session) ? spotStatusOf(session) : null);
   return <SpotWithState spot={session.spot} status={spotStatusOf(session)} statusContent={statusContent} markColor={isWaiting ? colors.muted : colors.free} />;
 }
 
@@ -89,6 +91,16 @@ function spotStatusOf({ state, spot }: CurrentParkingSession): string {
     return `${i18n.t('session.parkedInLead')}${spot.number}`;
   }
   return i18n.t(state === 'CREATED' ? 'session.pending' : 'scan.entryConfirmed');
+}
+
+// The spot turns parked with no action of the driver, so it is announced once, on that change only:
+// not on the minute poll, and not for a screen that opens on a session already parked.
+function useJustParked(session: CurrentParkingSession): boolean {
+  const previousState = useRef(session.state);
+  useEffect(() => {
+    previousState.current = session.state;
+  });
+  return isParked(session.state) && !isParked(previousState.current);
 }
 
 // The spot number is a figure inside the sentence, in mono (docs/design.md, gesture 3).

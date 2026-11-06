@@ -1,4 +1,5 @@
 import { act, screen, userEvent, within } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import { PalierUnreachableError } from '../src/api/LotsClient';
 import { PalierRejectedError } from '../src/api/VehicleClient';
 import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
@@ -7,7 +8,7 @@ import { SESSION_REFRESH_MILLISECONDS } from '../src/parkingSessions/useCurrentP
 import { PositioningCore } from '../src/positioning/PositioningCore';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
-import { visibleText } from './visibleText';
+import { asSeen, visibleText } from './visibleText';
 import { advance, GO_TO_A1, julieWith, PARKED_IN_A1 } from './walkAwayRig';
 
 const WALKING = 'Stationné (à pied, confiance élevée)';
@@ -104,6 +105,29 @@ describe('presuming the spot occupied when Julie walks away (story #18)', () => 
     const parkedIn = await screen.findByText(PARKED_IN_A1, visibleText);
     expect(within(parkedIn).getByText('A-1', visibleText)).toHaveStyle({ fontFamily: 'IBMPlexMono_600SemiBold' });
     expect(screen.getByLabelText('A-1 · Palier P1 · Allée A. Garé en A-1', visibleText)).toBeOnTheScreen();
+  });
+
+  it('announces « Garé en A-1 » once, not again on the minute poll, and moves no focus', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+    const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
+    const { walkAway, parkingSession } = await julieWith(julieAtParkingDemo());
+
+    await walkAway();
+    await screen.findByText(PARKED_IN_A1, visibleText);
+    parkingSession.session = julieAtParkingDemo({ state: 'PARKED_PRESUMED', elapsedMinutes: 196 });
+    await advance(SESSION_REFRESH_MILLISECONDS);
+
+    const parkedAnnouncements = announce.mock.calls.filter(([message]) => asSeen(message) === PARKED_IN_A1);
+    expect(parkedAnnouncements).toHaveLength(1);
+    expect(focus).not.toHaveBeenCalled();
+  });
+
+  it('announces nothing for a session already parked when the app opens', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+
+    await julieWith(julieAtParkingDemo({ state: 'PARKED_PRESUMED' }));
+
+    expect(announce.mock.calls.filter(([message]) => asSeen(message) === PARKED_IN_A1)).toHaveLength(0);
   });
 
   it('reads « Parked in A-1 » on an English device', async () => {
