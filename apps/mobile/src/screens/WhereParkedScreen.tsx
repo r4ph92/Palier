@@ -68,6 +68,7 @@ function WhereParkedQuestion({ question, framing, answering }: WhereParkedQuesti
   const [spotNumber, setSpotNumber] = useState('');
   // An answer in flight decides the screen: cancelling it would only be undone, silently, when it lands.
   const onCancel = answering.isSending ? undefined : framing.onCancel;
+  const listed = listedQuestion(question, framing);
   const changeNumber = (value: string) => {
     setSpotNumber(value);
     answering.clearProblem();
@@ -77,11 +78,19 @@ function WhereParkedQuestion({ question, framing, answering }: WhereParkedQuesti
       <FormTitle title={framing.title} />
       <FramingNotice message={framing.notice ?? null} />
       {framing.offline}
-      {question === null ? null : <FreeSpots question={question} typed={spotNumber} onChoose={changeNumber} />}
+      {listed === null ? null : <FreeSpots question={listed} typed={spotNumber} onChoose={changeNumber} />}
       <SpotNumberField label={framing.numberLabel} spotNumber={spotNumber} onChange={changeNumber} answering={answering} />
       <CancelButton onCancel={onCancel} />
     </View>
   );
+}
+
+// The none-free notice already says no spot is free: an empty list under it would say it twice.
+function listedQuestion(question: ParkedQuestion | null, { notice }: WhereParkedFraming): ParkedQuestion | null {
+  if (question === null) {
+    return null;
+  }
+  return notice !== undefined && question.freeSpotNumbers.length === 0 ? null : question;
 }
 
 function FormTitle({ title }: { readonly title: string }) {

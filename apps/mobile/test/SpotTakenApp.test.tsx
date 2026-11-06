@@ -80,6 +80,7 @@ describe('reporting the assigned spot taken (story #23)', () => {
 
     expect(await screen.findByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
     expect(screen.getByText(NONE_FREE, visibleText)).toBeOnTheScreen();
+    expect(screen.queryByText(/^Aucune place libre dans l’allée A/, visibleText)).toBeNull();
     expect(queued.mock.calls.filter(([message]) => asSeen(message) === NONE_FREE)).toEqual([[expect.any(String), { queue: true }]]);
   });
 
