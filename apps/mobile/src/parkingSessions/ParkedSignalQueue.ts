@@ -39,6 +39,7 @@ export class ParkedSignalQueue {
   readonly #sentListeners = new Set<SentListener>();
   #walks: readonly PendingWalk[] = [];
   readonly #loaded: Promise<void>;
+  #writes: Promise<void> = Promise.resolve();
 
   constructor(storage: QueueStorage) {
     this.#storage = storage;
@@ -73,6 +74,12 @@ export class ParkedSignalQueue {
     await this.#replace(this.#walks.filter((walk) => walk.sessionId !== sessionId));
   }
 
+  // Signing out forgets the walks of the driver who leaves.
+  async clear(): Promise<void> {
+    await this.#loaded;
+    await this.#replace([]);
+  }
+
   subscribe(listener: QueueListener): () => void {
     this.#listeners.add(listener);
     return () => {
@@ -99,11 +106,10 @@ export class ParkedSignalQueue {
     for (const listener of this.#listeners) {
       listener();
     }
-    try {
-      await this.#storage.write(JSON.stringify(walks));
-    } catch (error) {
-      console.error('Saving the waiting walks failed', error);
-    }
+    const saved = JSON.stringify(walks);
+    // One write at a time, oldest first, so a slow older snapshot never lands after a newer one.
+    this.#writes = this.#writes.then(() => this.#storage.write(saved)).catch((error: unknown) => console.error('Saving the waiting walks failed', error));
+    await this.#writes;
   }
 
   async #load(): Promise<void> {

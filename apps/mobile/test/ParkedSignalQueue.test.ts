@@ -72,4 +72,30 @@ describe('the queue of walks waiting for the network (story #26)', () => {
 
     expect(queue.count).toBe(1);
   });
+
+  it('forgets every walk when cleared, and the storage too', async () => {
+    const storage = memoryQueueStorage();
+    const queue = new ParkedSignalQueue(storage);
+    await queue.add(walk);
+
+    await queue.clear();
+
+    expect(queue.count).toBe(0);
+    const relaunched = new ParkedSignalQueue(storage);
+    await relaunched.ready();
+    expect(relaunched.count).toBe(0);
+  });
+
+  it('writes the newest snapshot last even when the storage is slow', async () => {
+    let saved = '';
+    const storage: QueueStorage = {
+      read: () => Promise.resolve(null),
+      write: (value) => new Promise((resolve) => setTimeout(() => resolve(void (saved = value)), value === '[]' ? 0 : 20)),
+    };
+    const queue = new ParkedSignalQueue(storage);
+
+    await Promise.all([queue.add(walk), queue.add({ ...walk, sessionId: 'session-2' }).then(() => queue.remove('session-1'))]);
+
+    expect(JSON.parse(saved)).toEqual([{ ...walk, sessionId: 'session-2' }]);
+  });
 });
