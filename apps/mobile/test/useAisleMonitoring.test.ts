@@ -52,6 +52,14 @@ describe('useAisleMonitoring', () => {
     expect(commands()).toEqual([START_MAJOR_1, 'stopMonitoring', 'startMonitoring uuid=B9407F30 major=3']);
   });
 
+  it('restarts for the next session at the same lot', async () => {
+    const { commands, rerender } = await monitor(julieAtB3());
+
+    await rerender({ current: julieAtB3({ sessionId: 'next-visit' }) });
+
+    expect(commands()).toEqual([START_MAJOR_1, 'stopMonitoring', START_MAJOR_1]);
+  });
+
   it('never monitors a lot without beacons, nor stops what it never started', async () => {
     const { commands, rerender, unmount } = await monitor(julieAtB3({ beaconMajor: null }));
 

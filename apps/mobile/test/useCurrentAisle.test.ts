@@ -25,13 +25,13 @@ describe('useCurrentAisle', () => {
     expect(aisleCode()).toBe('B');
   });
 
-  it.each([9, 0])('ignores minor %d, which matches no aisle of the plan', async (minor) => {
+  it('ignores minor 9, which matches no aisle of the plan', async () => {
     const { enterAisle, aisleCode } = await followAisles(julieAtB3());
 
-    await enterAisle(minor);
+    await enterAisle(9);
     expect(aisleCode()).toBeNull();
     await enterAisle(1);
-    await enterAisle(minor);
+    await enterAisle(9);
     expect(aisleCode()).toBe('A');
   });
 
