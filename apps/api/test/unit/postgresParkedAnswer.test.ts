@@ -235,7 +235,7 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
     expect(CORRECTION_WRITES.map((label) => sql.count(label))).toEqual([0, 0, 0]);
   });
 
-  it('fails, rolling A-3 back, when the presumed A-1 was no longer occupied', async () => {
+  it('throws before confirming the session when the presumed A-1 is no longer occupied', async () => {
     const sql = new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
       .answer('lock-answering-session', [{ state: 'PARKED_PRESUMED', ...NO_CONFIRMED_SPOT }])
