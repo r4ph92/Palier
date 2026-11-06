@@ -8,7 +8,7 @@ import { useTabs, type TabsController } from '../navigation/useTabs';
 import { useCurrentParkingSession, type CurrentParkingSessionController } from '../parkingSessions/useCurrentParkingSession';
 import { useParkedPresumption } from '../parkingSessions/useParkedPresumption';
 import { useAisleFollower } from '../positioning/useAisleFollower';
-import { useSpotHold } from '../spotHolds/useSpotHold';
+import { useSpotHold, type SpotHoldController } from '../spotHolds/useSpotHold';
 import { AccountTab } from './AccountTab';
 import { AutomaticDetectionNotice } from './AutomaticDetectionNotice';
 import type { DeviceTools } from './DeviceTools';
@@ -53,12 +53,7 @@ export function SignedInTabs(props: SignedInTabsProps) {
 function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsProps, tabs: TabsController): TabScreensWithSession {
   const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
   const spotHold = useSpotHold(clients.spotHold);
-  // A cancelled entry gives the driver her hold back, so the hold is read again when an entry settles, not only when a scan ends.
-  const onEntrySettled = () => {
-    currentSession.refresh();
-    spotHold.refreshHold();
-  };
-  const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: onEntrySettled, onSubmissionEnded: spotHold.refreshHold });
+  const pendingEntry = usePendingEntryAndHold(clients, currentSession, spotHold);
   const gateScanner = useScannerGate(clients);
   const guidance = useSessionGuidance({ device, clients }, currentSession);
   const screens: TabScreens = {
@@ -73,6 +68,15 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
     account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut },
   };
   return { currentSession, screens };
+}
+
+// A cancelled entry gives the driver her hold back, so the hold is read again when an entry settles, not only when a scan ends.
+function usePendingEntryAndHold(clients: SignedInClients, currentSession: CurrentParkingSessionController, spotHold: SpotHoldController) {
+  const onSettled = () => {
+    currentSession.refresh();
+    spotHold.refreshHold();
+  };
+  return usePendingEntryWatch(clients.entry, { onSettled, onSubmissionEnded: spotHold.refreshHold });
 }
 
 // The aisle and the walk away are followed above the tabs too, so a driver on another tab never misses them.
