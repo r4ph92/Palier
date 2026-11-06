@@ -45,8 +45,8 @@ export class FakeParkedPresumptions implements ParkedPresumptionRepository {
   }
 
   #clamped(detectedAt: Date, entryConfirmedAt: Date | null): Date {
-    const notBeforeConfirmation = entryConfirmedAt !== null && detectedAt < entryConfirmedAt ? entryConfirmedAt : detectedAt;
     const now = this.#now();
-    return notBeforeConfirmation > now ? now : notBeforeConfirmation;
+    const notAfterNow = detectedAt > now ? now : detectedAt;
+    return entryConfirmedAt !== null && notAfterNow < entryConfirmedAt ? entryConfirmedAt : notAfterNow;
   }
 }

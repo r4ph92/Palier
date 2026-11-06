@@ -6,6 +6,8 @@ import { JULIE_SESSION_ID } from './fakes/fakeCurrentParkingSessions.ts';
 import type { StoredWalkingSession } from './fakes/fakeParkedPresumptions.ts';
 
 const MINUTE = 60_000;
+// PostgresPassageLedger writes the gate's closedAt as entry_confirmed_at, and the gate accepts up to 5 minutes ahead.
+const GATE_CLOCK_AHEAD = 4 * MINUTE;
 
 function confirmedSession(entryConfirmedAt: Date): StoredWalkingSession {
   return { driverId: julie.id, state: 'ENTRY_CONFIRMED', entryConfirmedAt, parkedAt: null };
@@ -34,6 +36,15 @@ describe('POST /v1/entries/:sessionId/parked, what the body may hold', () => {
 
     expect(response.statusCode).toBe(400);
     expect(parkedPresumptions.sessionOf(JULIE_SESSION_ID)).toEqual(confirmedSession(entryConfirmedAt));
+  });
+
+  it('never records the walk before the loop confirmation, even when the gate clock ran ahead of the server', async () => {
+    const { walk, entryConfirmedAt } = await julieConfirmed(new Date(Date.now() + GATE_CLOCK_AHEAD));
+
+    const response = await walk({ detectedAt: new Date().toISOString() });
+
+    expect(response.statusCode).toBe(200);
+    expect(new Date(response.json<{ parkedAt: string }>().parkedAt).getTime()).toBeGreaterThanOrEqual(entryConfirmedAt.getTime());
   });
 
   it('takes nothing but detectedAt from the body: a state, a driver or an instant sent along change nothing else', async () => {

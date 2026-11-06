@@ -34,11 +34,11 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
     return classifyRefusedSignal(await this.#readSessionAfterRefusal(signal));
   }
 
-  // The device clock is trusted only between the loop confirmation and the database clock.
+  // The device clock is trusted only up to the database clock, and never before the loop confirmation, whose gate clock may run ahead.
   async #presumeConfirmedEntry({ sessionId, driverId, detectedAt }: WalkingSignal): Promise<Date | null> {
     const [row] = await this.#database.execute<ParkedAtRow>(sql`
       update parking_session
-      set state = 'PARKED_PRESUMED', parked_at = least(greatest(${detectedAt.toISOString()}::timestamptz, entry_confirmed_at), now())
+      set state = 'PARKED_PRESUMED', parked_at = greatest(least(${detectedAt.toISOString()}::timestamptz, now()), entry_confirmed_at)
       where id = ${sessionId} and user_id = ${driverId} and state = 'ENTRY_CONFIRMED'
       returning parked_at`);
     return row === undefined ? null : new Date(row.parked_at);

@@ -30,12 +30,12 @@ describe('PostgresParkedPresumptionRepository', () => {
     expect(update?.params).toEqual(expect.arrayContaining([SESSION_ID, JULIE_ID]));
   });
 
-  it('keeps the walking instant between the loop confirmation and the database clock', async () => {
+  it('keeps the walking instant at or before the database clock, and never before the loop confirmation', async () => {
     const sql = new ScriptedSql().answer('presume-parked', [{ parked_at: WALKED_AT.toISOString() }]);
 
     await presumeWith(sql);
 
-    expect(sql.statements[0]?.text).toMatch(/parked_at = least\(greatest\(\$\d+::timestamptz, entry_confirmed_at\), now\(\)\)/);
+    expect(sql.statements[0]?.text).toMatch(/parked_at = greatest\(least\(\$\d+::timestamptz, now\(\)\), entry_confirmed_at\)/);
   });
 
   it('answers presumed with the recorded instant, without a second read and without touching the spot', async () => {
