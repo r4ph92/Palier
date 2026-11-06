@@ -59,12 +59,13 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     expect(screen.getByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
   });
 
-  it('sends one answer for two taps before Palier answers', async () => {
+  it('sends one answer for two presses of « Confirmer » before Palier answers', async () => {
     const { user, parkingSession } = await julieAskedInAisleB();
     parkingSession.holdsSpotAnswer = true;
 
-    await user.press(screen.getByRole('button', { name: 'B-3' }));
-    await user.press(screen.getByRole('button', { name: 'B-1' }));
+    await user.press(screen.getByRole('radio', { name: 'B-3' }));
+    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
     await act(async () => parkingSession.answerSpotAnswers());
 
     expect(parkingSession.spotAnswers).toEqual(['B-3']);
@@ -76,8 +77,9 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     const { user, parkingSession } = await julieAskedInAisleB();
     parkingSession.answerFailure = new PalierUnreachableError('offline');
 
-    await user.press(screen.getByRole('button', { name: 'B-3' }));
-    await user.press(screen.getByRole('button', { name: 'B-3' }));
+    await user.press(screen.getByRole('radio', { name: 'B-3' }));
+    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(UNREACHABLE, visibleText);
     expect(announce.mock.calls.filter(([message]) => asSeen(message) === UNREACHABLE)).toHaveLength(2);
@@ -88,7 +90,8 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     parkingSession.answerFailure = new PalierRejectedError(code);
     parkingSession.session = julieAtParkingDemo({ state: 'PARKED_CONFIRMED', spot: spotB3 });
 
-    await user.press(screen.getByRole('button', { name: 'B-1' }));
+    await user.press(screen.getByRole('radio', { name: 'B-1' }));
+    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
 
     expect(await screen.findByText('Garé en B-3', visibleText)).toBeOnTheScreen();
     expect(screen.queryByRole('alert')).toBeNull();

@@ -1,5 +1,5 @@
 import type { CurrentParkingSession, ParkedQuestion } from '@palier/shared-types';
-import { SPOT_NUMBER_MAX_LENGTH } from '@palier/shared-types/spotNumber';
+import { canonicalSpotNumber, SPOT_NUMBER_MAX_LENGTH } from '@palier/shared-types/spotNumber';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
@@ -35,7 +35,7 @@ interface WhereParkedScreenProps {
 }
 
 // Story #21: the driver walked away in another aisle than the assigned spot's, so Palier asks where the car is.
-// The free spots of the aisle seen at the walk come first, a tap answers; the field takes any other number.
+// The free spots of the aisle seen at the walk come first, a tap writes the number in the field; only « Confirmer » sends.
 export function WhereParkedScreen({ client, session, onAnswered }: WhereParkedScreenProps) {
   const answering = useParkedAnswer(client, session.sessionId, onAnswered);
   return <WhereParkedQuestion question={session.question} answering={answering} />;
@@ -50,51 +50,72 @@ interface WhereParkedQuestionProps {
 function WhereParkedQuestion({ question, answering }: WhereParkedQuestionProps) {
   const colors = useColors();
   const titleRef = useAccessibilityFocusOnMount();
+  const [spotNumber, setSpotNumber] = useState('');
   return (
     <View style={styles.section}>
       <Text ref={titleRef} accessibilityRole="header" maxFontSizeMultiplier={BODY_TEXT_MAX_FONT_SCALE} style={[typography.spotLine, { color: colors.ink }]}>
         {i18n.t('session.whereParked.question')}
       </Text>
-      {question === null || question.freeSpotNumbers.length === 0 ? null : <FreeSpotList question={question} answering={answering} />}
-      <SpotNumberField answering={answering} />
+      {question === null || question.freeSpotNumbers.length === 0 ? null : <FreeSpotList question={question} typed={spotNumber} onChoose={setSpotNumber} />}
+      <SpotNumberField spotNumber={spotNumber} onChange={setSpotNumber} answering={answering} />
     </View>
   );
 }
 
-function FreeSpotList({ question, answering }: { readonly question: ParkedQuestion; readonly answering: ParkedAnswerController }) {
+interface FreeSpotListProps {
+  readonly question: ParkedQuestion;
+  // What the field holds: the row showing that number reads as chosen.
+  readonly typed: string;
+  readonly onChoose: (spotNumber: string) => void;
+}
+
+// A radio group like ProvincePicker: a tap only chooses, so a slip of the finger sends nothing.
+function FreeSpotList({ question, typed, onChoose }: FreeSpotListProps) {
   const colors = useColors();
+  const lead = i18n.t('session.whereParked.freeSpotsLead', { aisle: question.aisleCode });
+  const chosen = canonicalSpotNumber(typed);
   return (
-    <View>
-      <Text style={[typography.body, styles.listLead, { color: colors.muted }]}>{i18n.t('session.whereParked.freeSpotsLead', { aisle: question.aisleCode })}</Text>
+    <View accessibilityRole="radiogroup" accessibilityLabel={lead}>
+      <Text style={[typography.body, styles.listLead, { color: colors.muted }]}>{lead}</Text>
       {question.freeSpotNumbers.map((spotNumber) => (
-        <FreeSpotRow key={spotNumber} spotNumber={spotNumber} answering={answering} />
+        <FreeSpotRow key={spotNumber} spotNumber={spotNumber} isChosen={canonicalSpotNumber(spotNumber) === chosen} onChoose={onChoose} />
       ))}
     </View>
   );
 }
 
+interface FreeSpotRowProps {
+  readonly spotNumber: string;
+  readonly isChosen: boolean;
+  readonly onChoose: (spotNumber: string) => void;
+}
+
 // List lines are separated by thin rules, without cards (docs/design.md, gesture 2); the number is a figure in mono (gesture 3).
-function FreeSpotRow({ spotNumber, answering }: { readonly spotNumber: string; readonly answering: ParkedAnswerController }) {
+function FreeSpotRow({ spotNumber, isChosen, onChoose }: FreeSpotRowProps) {
   const colors = useColors();
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole="radio"
       accessibilityLabel={spotNumber}
-      accessibilityHint={i18n.t('session.whereParked.spotHint')}
-      accessibilityState={{ disabled: answering.isSending }}
-      disabled={answering.isSending}
-      onPress={() => answering.answer(spotNumber)}
+      accessibilityState={{ checked: isChosen }}
+      onPress={() => onChoose(spotNumber)}
       style={[styles.row, { borderBottomColor: colors.line }]}
     >
       <Text style={[typography.figureStrong, { color: colors.ink }]}>{unbrokenNumber(spotNumber)}</Text>
+      {isChosen ? <Text style={[typography.bodyStrong, { color: colors.ink }]}>✓</Text> : null}
     </Pressable>
   );
 }
 
-// Any number the free list does not show; an empty field cannot be sent.
-function SpotNumberField({ answering }: { readonly answering: ParkedAnswerController }) {
+interface SpotNumberFieldProps {
+  readonly spotNumber: string;
+  readonly onChange: (spotNumber: string) => void;
+  readonly answering: ParkedAnswerController;
+}
+
+// Any number, typed or chosen in the list; an empty field cannot be sent.
+function SpotNumberField({ spotNumber, onChange, answering }: SpotNumberFieldProps) {
   const colors = useColors();
-  const [spotNumber, setSpotNumber] = useState('');
   const isBlank = spotNumber.trim() === '';
   const submit = () => {
     if (!isBlank) {
@@ -104,7 +125,7 @@ function SpotNumberField({ answering }: { readonly answering: ParkedAnswerContro
   return (
     <View style={styles.field}>
       <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('session.whereParked.numberLabel')}</Text>
-      <SpotNumberInput value={spotNumber} onChange={setSpotNumber} onSubmit={submit} />
+      <SpotNumberInput value={spotNumber} onChange={onChange} onSubmit={submit} />
       <AnswerProblem answering={answering} />
       <PrimaryButton label={i18n.t('session.whereParked.confirm')} onPress={submit} busy={answering.isSending} disabled={isBlank} />
     </View>
@@ -145,7 +166,14 @@ function AnswerProblem({ answering }: { readonly answering: ParkedAnswerControll
 const styles = StyleSheet.create({
   section: { gap: spacing.large },
   listLead: { paddingBottom: spacing.small },
-  row: { minHeight: MINIMUM_TOUCH_TARGET, justifyContent: 'center', paddingVertical: spacing.small, borderBottomWidth: StyleSheet.hairlineWidth },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: MINIMUM_TOUCH_TARGET,
+    paddingVertical: spacing.small,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
   field: { gap: spacing.small },
   input: { minHeight: MINIMUM_TOUCH_TARGET, paddingHorizontal: spacing.medium, borderWidth: 2 },
 });

@@ -31,7 +31,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
 
     expect(parkingSession.parkedReports).toEqual([expect.objectContaining({ aisleMinor: 2 })]);
     expect(await screen.findByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
-    const offered = screen.getAllByRole('button', { name: /^B-\d$/ }).map((row) => row.props.accessibilityLabel as string);
+    const offered = screen.getAllByRole('radio', { name: /^B-\d$/ }).map((row) => row.props.accessibilityLabel as string);
     expect(offered).toEqual(AISLE_B_FREE_SPOTS);
     expect(screen.getByLabelText('Numéro de place')).toBeOnTheScreen();
   });
@@ -55,12 +55,33 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ children: question.props.children }) }), 'focus');
   });
 
-  it('shows « Garé en B-3 » once Julie taps B-3, and moves VoiceOver to it without announcing it on top', async () => {
+  it('writes B-3 in the field on a tap, and sends nothing before « Confirmer »', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB();
+
+    await user.press(screen.getByRole('radio', { name: 'B-3' }));
+
+    expect(screen.getByLabelText('Numéro de place')).toHaveDisplayValue('B-3');
+    expect(screen.getByRole('radio', { name: 'B-3' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'B-1' })).not.toBeChecked();
+    expect(screen.getByLabelText('Places libres dans l’allée B')).toHaveProp('accessibilityRole', 'radiogroup');
+    expect(parkingSession.spotAnswers).toEqual([]);
+  });
+
+  it('checks the row whose number Julie typed, whatever its shape', async () => {
+    const { user } = await julieAskedInAisleB();
+
+    await user.type(screen.getByLabelText('Numéro de place'), 'b3');
+
+    expect(screen.getByRole('radio', { name: 'B-3' })).toBeChecked();
+  });
+
+  it('shows « Garé en B-3 » once Julie chooses B-3 and confirms, and moves VoiceOver to it without announcing it on top', async () => {
     const { user, parkingSession } = await julieAskedInAisleB();
     const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
     const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
 
-    await user.press(screen.getByRole('button', { name: 'B-3' }));
+    await user.press(screen.getByRole('radio', { name: 'B-3' }));
+    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
 
     expect(parkingSession.spotAnswers).toEqual(['B-3']);
     expect(await screen.findByText('Garé en B-3', visibleText)).toBeOnTheScreen();
@@ -99,7 +120,8 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     const { user, parkingSession } = await julieAskedInAisleB('en');
     parkingSession.answerFailure = new PalierRejectedError('SPOT_TAKEN');
 
-    await user.press(screen.getByRole('button', { name: 'B-3' }));
+    await user.press(screen.getByRole('radio', { name: 'B-3' }));
+    await user.press(screen.getByRole('button', { name: 'Confirm' }));
 
     expect(screen.getByRole('header', { name: 'Where are you parked?' })).toBeOnTheScreen();
     expect(screen.getByText('Free spots in aisle B')).toBeOnTheScreen();
