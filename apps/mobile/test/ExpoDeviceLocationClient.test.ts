@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 import {
+  ALWAYS_REQUEST_TIMEOUT_MILLISECONDS,
   CURRENT_POSITION_TIMEOUT_MILLISECONDS,
   ExpoDeviceLocationClient,
   LAST_KNOWN_POSITION_MAX_AGE_MILLISECONDS,
@@ -35,6 +36,7 @@ describe('ExpoDeviceLocationClient permission', () => {
 
 describe('ExpoDeviceLocationClient « Always »', () => {
   const answer = (status: string) => ({ status }) as Location.LocationPermissionResponse;
+  afterEach(() => jest.useRealTimers());
 
   it('asks iOS for the background permission', async () => {
     mockedLocation.requestBackgroundPermissionsAsync.mockResolvedValue(answer('granted'));
@@ -42,6 +44,16 @@ describe('ExpoDeviceLocationClient « Always »', () => {
     await new ExpoDeviceLocationClient().requestAlways();
 
     expect(mockedLocation.requestBackgroundPermissionsAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops waiting for « Always » after 30 seconds when iOS never answers', async () => {
+    jest.useFakeTimers();
+    mockedLocation.requestBackgroundPermissionsAsync.mockReturnValue(new Promise(() => undefined));
+
+    const request = new ExpoDeviceLocationClient().requestAlways();
+    await jest.advanceTimersByTimeAsync(ALWAYS_REQUEST_TIMEOUT_MILLISECONDS);
+
+    await expect(request).resolves.toBeUndefined();
   });
 
   it.each([
