@@ -1,3 +1,4 @@
+import type { Clock } from '../../src/domain/time/Clock.ts';
 import type { FastifyInstance } from 'fastify';
 import { spotHoldServicesOf } from '../../src/composeSpotHolds.ts';
 import { createTestClock } from '../../src/domain/time/TestClock.ts';
@@ -19,13 +20,14 @@ interface ServerOptions {
   readonly testSignInEnabled?: boolean;
   readonly demoMode?: boolean;
   readonly minimumAppVersion?: string;
+  readonly entryClock?: Clock;
 }
 
 // The one place route tests build the real server over fake repositories.
-export function configureServer({ testSignInEnabled = false, demoMode = false, minimumAppVersion }: ServerOptions = {}) {
+export function configureServer({ testSignInEnabled = false, demoMode = false, minimumAppVersion, entryClock }: ServerOptions = {}) {
   const driverRepository = new FakeDriverRepository();
   const vehicleRepository = new FakeVehicleRepository();
-  const entries = fakeEntries({ drivers: driverRepository, vehicles: vehicleRepository });
+  const entries = fakeEntries({ drivers: driverRepository, vehicles: vehicleRepository, ...(entryClock === undefined ? {} : { clock: entryClock }) });
   const parkingSessions = new FakeCurrentParkingSessions();
   const testClock = createTestClock();
   const operatorRepository = new FakeOperatorRepository();

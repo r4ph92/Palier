@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { gateQrLink, signGateToken } from '../../src/domain/entries/gateToken.ts';
+import type { Clock } from '../../src/domain/time/Clock.ts';
 import { configureServer } from './configureServer.ts';
 import { acceptNoticeAs, authorizationFor, marc } from './fakeDriverRepository.ts';
 import {
@@ -21,8 +22,8 @@ describe('POST /v1/entries', () => {
 
   afterEach(() => server.close());
 
-  async function startWithJulieReady() {
-    const configured = configureServer();
+  async function startWithJulieReady(entryClock?: Clock) {
+    const configured = configureServer({ ...(entryClock === undefined ? {} : { entryClock }) });
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
     const enter = (qrContent: unknown) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent } });
@@ -38,6 +39,15 @@ describe('POST /v1/entries', () => {
     expect(response.json()).toEqual({ sessionId: fakeSessionId(1), spot: { number: 'A-1', levelCode: 'P1', aisleCode: 'A' }, barrierOpened: true });
     expect(entries.payments.authorized).toHaveLength(1);
     expect(entries.gateCommander.opened).toHaveLength(1);
+  });
+
+  it('reads the clock once per entry and hands that instant to the session draft', async () => {
+    const instant = new Date('2026-11-05T12:00:00Z');
+    const { enter, entries } = await startWithJulieReady(() => instant);
+
+    await enter(entreeDemoQr);
+
+    expect(entries.sessions.drafts.map(({ now }) => now)).toEqual([instant]);
   });
 
   it('accepts the bare token as well as the printed link', async () => {
