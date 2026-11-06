@@ -1,6 +1,7 @@
 import type { EntrySessionState } from '@palier/shared-types';
 import {
   classifyRefusedSignal,
+  wrongAisleOf,
   type ParkedPresumption,
   type ParkedPresumptionRepository,
   type WalkingSignal,
@@ -66,7 +67,10 @@ export class FakeParkedPresumptions implements ParkedPresumptionRepository {
   }
 }
 
+// The fake's aisles are known by their minor, so the minor stands for the aisle id the real rule compares.
 function wrongAisleMinorOf(session: StoredWalkingSession, detectedAisleMinor: number | null): number | null {
-  const isKnownOtherAisle = detectedAisleMinor !== null && LOT_AISLE_MINORS.has(detectedAisleMinor);
-  return isKnownOtherAisle && detectedAisleMinor !== (session.assignedAisleMinor ?? AISLE_A_MINOR) ? detectedAisleMinor : null;
+  const isKnownAisle = detectedAisleMinor !== null && LOT_AISLE_MINORS.has(detectedAisleMinor);
+  const assignedAisleId = String(session.assignedAisleMinor ?? AISLE_A_MINOR);
+  const wrongAisleId = wrongAisleOf({ assignedAisleId, detectedAisleId: isKnownAisle ? String(detectedAisleMinor) : null });
+  return wrongAisleId === null ? null : Number(wrongAisleId);
 }
