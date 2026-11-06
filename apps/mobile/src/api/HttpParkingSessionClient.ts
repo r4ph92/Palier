@@ -1,6 +1,6 @@
-import type { CurrentParkingSession, ParkedPresumptionResponse } from '@palier/shared-types';
+import type { CurrentParkingSession, ParkedPresumptionRequest, ParkedPresumptionResponse } from '@palier/shared-types';
 import { AuthorizedRequester, readJson, type AuthorizedClientOptions } from './authorizedRequest';
-import type { ParkingSessionClient } from './ParkingSessionClient';
+import type { DetectedWalk, ParkingSessionClient } from './ParkingSessionClient';
 import { parseCurrentParkingSession } from './parseCurrentParkingSession';
 import { parseParkedPresumption } from './parseParkedPresumption';
 
@@ -22,11 +22,12 @@ export class HttpParkingSessionClient implements ParkingSessionClient {
     return parseCurrentParkingSession(await readJson(response));
   }
 
-  async reportParked(sessionId: string, detectedAt: number): Promise<ParkedPresumptionResponse> {
+  async reportParked(sessionId: string, { detectedAt, aisleMinor }: DetectedWalk): Promise<ParkedPresumptionResponse> {
+    const body: ParkedPresumptionRequest = { detectedAt: new Date(detectedAt).toISOString(), ...(aisleMinor === null ? {} : { detectedAisleMinor: aisleMinor }) };
     const response = await this.#parkedRequester.send(`/v1/entries/${encodeURIComponent(sessionId)}/parked`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ detectedAt: new Date(detectedAt).toISOString() }),
+      body: JSON.stringify(body),
     });
     return parseParkedPresumption(await readJson(response));
   }

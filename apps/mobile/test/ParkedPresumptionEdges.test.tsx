@@ -27,17 +27,7 @@ describe('walking signals that presume nothing (story #18)', () => {
     expect(parkingSession.parkedReports).toHaveLength(1);
   });
 
-  it('sends nothing after aisle B was detected, since the spot is in aisle A (story #21)', async () => {
-    const { walkAway, enterAisle, parkingSession } = await julieWith(julieAtParkingDemo());
-    await enterAisle(2);
-
-    await walkAway();
-
-    expect(parkingSession.parkedReports).toHaveLength(0);
-    expect(screen.getByText('Vous êtes dans l’allée B — votre place est dans l’allée A', visibleText)).toBeOnTheScreen();
-  });
-
-  it('sends nothing when aisle B and the walk arrive in the same instant', async () => {
+  it('sends aisle B when aisle B and the walk arrive in the same instant (story #21)', async () => {
     const { simulator, parkingSession } = await julieWith(julieAtParkingDemo());
 
     await act(async () => {
@@ -45,17 +35,17 @@ describe('walking signals that presume nothing (story #18)', () => {
       simulator.detectParked('high');
     });
 
-    expect(parkingSession.parkedReports).toHaveLength(0);
+    expect(parkingSession.parkedReports).toEqual([expect.objectContaining({ aisleMinor: 2 })]);
   });
 
-  it('sends nothing after aisle B then minor 9, which keeps aisle B', async () => {
+  it('sends aisle B after aisle B then minor 9, which keeps aisle B (story #21)', async () => {
     const { walkAway, enterAisle, parkingSession } = await julieWith(julieAtParkingDemo());
     await enterAisle(2);
     await enterAisle(9);
 
     await walkAway();
 
-    expect(parkingSession.parkedReports).toHaveLength(0);
+    expect(parkingSession.parkedReports).toEqual([expect.objectContaining({ aisleMinor: 2 })]);
   });
 
   it('keeps aisle A for a minor that belongs to no aisle, and presumes A-1', async () => {
@@ -65,7 +55,8 @@ describe('walking signals that presume nothing (story #18)', () => {
 
     await walkAway();
 
-    expect(parkingSession.parkedReports).toHaveLength(1);
+    expect(parkingSession.parkedReports).toEqual([expect.objectContaining({ aisleMinor: 1 })]);
+    expect(await screen.findByText(PARKED_IN_A1, visibleText)).toBeOnTheScreen();
   });
 });
 

@@ -94,12 +94,13 @@ describe('HttpParkingSessionClient', () => {
 
 const WALKED_AT = new Date('2026-11-04T23:05:00.000Z');
 const PRESUMED = { state: 'PARKED_PRESUMED', parkedAt: WALKED_AT.toISOString() };
+const WALK = { detectedAt: WALKED_AT.getTime(), aisleMinor: null };
 
 describe('HttpParkingSessionClient, reporting the walk away from the car (story #18)', () => {
   it('posts the walking instant for the session with the bearer token', async () => {
     const { client, fetchFunction } = clientAnswering(PRESUMED);
 
-    await expect(client.reportParked('session-1', WALKED_AT.getTime())).resolves.toEqual(PRESUMED);
+    await expect(client.reportParked('session-1', WALK)).resolves.toEqual(PRESUMED);
     expect(fetchFunction).toHaveBeenCalledWith(
       `${BASE_URL}/v1/entries/session-1/parked`,
       expect.objectContaining({
@@ -110,10 +111,27 @@ describe('HttpParkingSessionClient, reporting the walk away from the car (story 
     );
   });
 
+  it('sends the aisle the device last saw, and reads the question that follows (story #21)', async () => {
+    const unconfirmed = { state: 'PARKED_UNCONFIRMED', parkedAt: WALKED_AT.toISOString() };
+    const { client, fetchFunction } = clientAnswering(unconfirmed);
+
+    await expect(client.reportParked('session-1', { ...WALK, aisleMinor: 2 })).resolves.toEqual(unconfirmed);
+    expect(fetchFunction).toHaveBeenCalledWith(
+      `${BASE_URL}/v1/entries/session-1/parked`,
+      expect.objectContaining({ body: JSON.stringify({ detectedAt: WALKED_AT.toISOString(), detectedAisleMinor: 2 }) }),
+    );
+  });
+
+  it('reads an earlier walk already answered as accepted (story #21)', async () => {
+    const confirmed = { state: 'PARKED_CONFIRMED', parkedAt: WALKED_AT.toISOString() };
+
+    await expect(clientAnswering(confirmed).client.reportParked('session-1', WALK)).resolves.toEqual(confirmed);
+  });
+
   it('escapes the session id in the path', async () => {
     const { client, fetchFunction } = clientAnswering(PRESUMED);
 
-    await client.reportParked('../me', WALKED_AT.getTime());
+    await client.reportParked('../me', WALK);
 
     expect(fetchFunction).toHaveBeenCalledWith(`${BASE_URL}/v1/entries/..%2Fme/parked`, expect.anything());
   });
@@ -125,17 +143,17 @@ describe('HttpParkingSessionClient, reporting the walk away from the car (story 
   ])('turns a %i %s into a rejection carrying the code', async (status, error) => {
     const { client } = clientAnswering({ statusCode: status, error, message: 'refused' }, status);
 
-    await expect(client.reportParked('session-1', WALKED_AT.getTime())).rejects.toEqual(new PalierRejectedError(error));
+    await expect(client.reportParked('session-1', WALK)).rejects.toEqual(new PalierRejectedError(error));
   });
 
   it.each([
     ['another state', { ...PRESUMED, state: 'ENTRY_CONFIRMED' }],
     ['an instant that is not a date', { ...PRESUMED, parkedAt: 'hier' }],
   ])('treats an answer with %s as Palier being unreachable', async (_case, body) => {
-    await expect(clientAnswering(body).client.reportParked('session-1', WALKED_AT.getTime())).rejects.toBeInstanceOf(PalierUnreachableError);
+    await expect(clientAnswering(body).client.reportParked('session-1', WALK)).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 
   it('reports a 500 as a status error', async () => {
-    await expect(clientAnswering({}, 500).client.reportParked('session-1', WALKED_AT.getTime())).rejects.toBeInstanceOf(PalierStatusError);
+    await expect(clientAnswering({}, 500).client.reportParked('session-1', WALK)).rejects.toBeInstanceOf(PalierStatusError);
   });
 });

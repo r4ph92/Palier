@@ -7,7 +7,7 @@ import { useEntry, type EntryController, type EntryState } from '../entries/useE
 import type { PendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionController, CurrentParkingSessionReading, CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
-import { isParked } from '../parkingSessions/isParked';
+import { hasWalkedAway } from '../parkingSessions/isParked';
 import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
 import { ScanFrame, ScanScreen } from './ScanScreen';
 import { SessionNotice } from './SessionNotice';
@@ -77,7 +77,7 @@ function sessionScreenFor(currentSession: CurrentParkingSessionController, choic
   }
 }
 
-// Once parked, « présumée occupée après 30 min » would contradict a spot already presumed taken.
+// Once the driver walked away, « présumée occupée après 30 min » would contradict a spot already presumed taken or asked about.
 function currentSessionScreen(
   reading: CurrentParkingSessionReading,
   { refresh, isReading, missedReads }: CurrentParkingSessionController,
@@ -88,7 +88,7 @@ function currentSessionScreen(
       reading={reading}
       progress={{ isReading, missedReads }}
       onRetry={refresh}
-      notice={isParked(reading.session.state) ? null : aside.detectionNotice}
+      notice={hasWalkedAway(reading.session.state) ? null : aside.detectionNotice}
       guidance={aside.guidance}
       shouldFocusSpotOnArrival={reading.session.sessionId === arrivedParkedSessionId}
     />
@@ -114,7 +114,7 @@ function progressKey(state: EntryState): string | null {
   return state.status === 'entered' ? `${state.sessionId}:${String(state.isConfirmed)}` : null;
 }
 
-// A walk away from the car can come before « Terminé »: the scan result then gives way to the session presumed parked,
+// A walk away from the car can come before « Terminé »: the scan result then gives way to the session parked or asked where it parked,
 // and the entry is over, so a later closed session shows the form rather than this entry's spot.
 function useEndEntryOnceParked(entry: EntryController, state: CurrentParkingSessionState): string | null {
   const parkedEntrySessionId = parkedEntrySessionIdOf(entry.state, state);
@@ -130,7 +130,7 @@ function useEndEntryOnceParked(entry: EntryController, state: CurrentParkingSess
 
 function parkedEntrySessionIdOf(entryState: EntryState, state: CurrentParkingSessionState): string | null {
   const enteredSessionId = entryState.status === 'entered' ? entryState.sessionId : null;
-  const parkedSessionId = state.status === 'current' && isParked(state.session.state) ? state.session.sessionId : null;
+  const parkedSessionId = state.status === 'current' && hasWalkedAway(state.session.state) ? state.session.sessionId : null;
   return enteredSessionId !== null && enteredSessionId === parkedSessionId ? enteredSessionId : null;
 }
 

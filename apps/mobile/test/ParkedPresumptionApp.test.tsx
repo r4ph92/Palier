@@ -43,7 +43,7 @@ describe('presuming the spot occupied when Julie walks away (story #18)', () => 
 
     await pressInPanel(user, WALKING);
 
-    expect(parkingSession.parkedReports).toEqual([{ sessionId: 'session-1', detectedAt: expect.any(Number) }]);
+    expect(parkingSession.parkedReports).toEqual([{ sessionId: 'session-1', detectedAt: expect.any(Number), aisleMinor: 1 }]);
     expect(parkingSession.parkedReports[0]?.detectedAt).toBeGreaterThanOrEqual(beforeWalk);
     expect(within(screen.getByTestId('Journal')).getAllByText(KEEP_ALIVE_STOPPED)).toHaveLength(1);
     await user.press(screen.getByRole('tab', { name: 'Session' }));
