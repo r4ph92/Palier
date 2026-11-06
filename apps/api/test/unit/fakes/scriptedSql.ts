@@ -23,6 +23,9 @@ export type StatementLabel =
   | 'free-held-spot'
   | 'presume-parked'
   | 'read-unchanged-session'
+  | 'read-walk-facts'
+  | 'ask-where-parked'
+  | 'flag-assigned-spot'
   | 'unknown';
 
 export interface ExecutedStatement {
@@ -40,6 +43,9 @@ const dialect = new PgDialect();
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
   ['presume-parked', /set state = 'PARKED_PRESUMED'/],
+  ['read-walk-facts', /left join aisle detected/],
+  ['ask-where-parked', /set state = 'PARKED_UNCONFIRMED'/],
+  ['flag-assigned-spot', /set state = 'OCCUPIED_UNKNOWN'/],
   ['read-unchanged-session', /select state, parked_at from parking_session/],
   ['lock-lot', /from parking_lot[\s\S]*for no key update/],
   ['read-active-session', /with active as/],

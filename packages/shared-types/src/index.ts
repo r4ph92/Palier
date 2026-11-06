@@ -40,6 +40,7 @@ export type {
   ParkedPresumptionResponse,
   PlanAisle,
   TestClockReading,
+  WalkedAwayState,
 } from './parkingSessions.ts';
 export type { PaymentMethodResponse, SavedCard, SavePaymentMethodRequest, SetupIntentResponse } from './paymentMethods.ts';
 export type { CurrentSpotHoldResponse, SpotHold, SpotHoldRefusalBody, SpotHoldRefusalCode, SpotHoldStatus } from './spotHolds.ts';

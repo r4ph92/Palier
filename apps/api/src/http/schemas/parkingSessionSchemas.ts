@@ -77,18 +77,27 @@ export const backdateParkingSessionSchema = {
 // An ISO instant is under 30 characters; the cap keeps oversized text away from the date parser.
 const INSTANT_MAX_LENGTH = 40;
 
+// An iBeacon minor is an unsigned 16-bit number.
+const BEACON_MINOR_MAXIMUM = 65_535;
+
 export const parkedPresumptionRequestSchema = {
   type: 'object',
   required: ['detectedAt'],
   additionalProperties: false,
-  properties: { detectedAt: { type: 'string', format: 'date-time', maxLength: INSTANT_MAX_LENGTH } },
+  properties: {
+    detectedAt: { type: 'string', format: 'date-time', maxLength: INSTANT_MAX_LENGTH },
+    detectedAisleMinor: { type: 'integer', minimum: 0, maximum: BEACON_MINOR_MAXIMUM },
+  },
 } as const;
 
 export const parkedPresumptionResponseSchema = {
   type: 'object',
   required: ['state', 'parkedAt'],
   additionalProperties: false,
-  properties: { state: { type: 'string', const: 'PARKED_PRESUMED' }, parkedAt: { type: 'string' } },
+  properties: {
+    state: { type: 'string', enum: ['PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED'] },
+    parkedAt: { type: 'string' },
+  },
 } as const;
 
 export type ResponseSchemaMatchesCurrentParkingSession = AssertTrue<

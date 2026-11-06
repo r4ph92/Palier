@@ -52,12 +52,16 @@ export interface BackdateParkingSessionRequest {
 
 export interface ParkedPresumptionRequest {
   readonly detectedAt: string;
+  // The beacon minor of the aisle the device last saw, when it knows one: another aisle than the spot's asks the driver where they parked.
+  readonly detectedAisleMinor?: number;
 }
 
-// The same answer when an earlier signal already recorded the walk: parkedAt is then that first instant.
+export type WalkedAwayState = 'PARKED_PRESUMED' | 'PARKED_UNCONFIRMED' | 'PARKED_CONFIRMED';
+
+// The same answer when an earlier signal already recorded the walk: state and parkedAt are then those of that first walk.
 export interface ParkedPresumptionResponse {
-  readonly state: 'PARKED_PRESUMED';
+  readonly state: WalkedAwayState;
   readonly parkedAt: string;
 }
 
-export type ParkedPresumptionRefusalCode = 'SESSION_NOT_FOUND' | 'ENTRY_NOT_CONFIRMED' | 'SESSION_CLOSED';
+export type ParkedPresumptionRefusalCode = 'SESSION_NOT_FOUND' | 'ENTRY_NOT_CONFIRMED' | 'SESSION_CLOSED' | 'LOT_BUSY';

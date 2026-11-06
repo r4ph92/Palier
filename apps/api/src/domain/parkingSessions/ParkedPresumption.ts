@@ -1,16 +1,18 @@
-import type { EntrySessionState } from '@palier/shared-types';
+import type { EntrySessionState, WalkedAwayState } from '@palier/shared-types';
 
 // Q36: the device saw the driver walk away from the car, which is enough to presume the assigned spot taken.
+// detectedAisleMinor: the aisle the device last saw, null when it saw none; another aisle than the spot's asks where the car is (#21).
 export interface WalkingSignal {
   readonly sessionId: string;
   readonly driverId: string;
   readonly detectedAt: Date;
+  readonly detectedAisleMinor: number | null;
 }
 
-// presumed: this signal recorded the walk; already: an earlier signal did, and its instant stands.
+// recorded: this signal recorded the walk; already: an earlier signal did, and its state and instant stand.
 export type ParkedPresumption =
-  | { readonly outcome: 'presumed' | 'already'; readonly parkedAt: Date }
-  | { readonly outcome: 'not-found' | 'entry-not-confirmed' | 'closed' };
+  | { readonly outcome: 'recorded' | 'already'; readonly state: WalkedAwayState; readonly parkedAt: Date }
+  | { readonly outcome: 'not-found' | 'entry-not-confirmed' | 'closed' | 'lot-busy' };
 
 export interface ParkedPresumptionRepository {
   // The driver's own session only: another driver's session is not found, like an unknown id.
@@ -31,11 +33,26 @@ export function classifyRefusedSignal(session: SessionAfterRefusal | null): Park
   if (session.state === 'CANCELLED') {
     return { outcome: 'closed' };
   }
-  if (session.state !== 'PARKED_PRESUMED') {
+  if (!hasWalkedAway(session.state)) {
     return { outcome: 'entry-not-confirmed' };
   }
   if (session.parkedAt === null) {
-    throw new Error('A session presumed parked has no parked_at.');
+    throw new Error('A session parked after a walk has no parked_at.');
   }
-  return { outcome: 'already', parkedAt: session.parkedAt };
+  return { outcome: 'already', state: session.state, parkedAt: session.parkedAt };
+}
+
+function hasWalkedAway(state: EntrySessionState): state is WalkedAwayState {
+  return state === 'PARKED_PRESUMED' || state === 'PARKED_UNCONFIRMED' || state === 'PARKED_CONFIRMED';
+}
+
+export interface WalkAisles {
+  readonly assignedAisleId: string;
+  // The lot's drivable aisle with the signal's minor; null for no minor, an unknown one or an exit lane.
+  readonly detectedAisleId: string | null;
+}
+
+// The aisle to ask about, or null when the walk presumes the assigned spot: no aisle known, or the spot's own aisle.
+export function wrongAisleOf({ assignedAisleId, detectedAisleId }: WalkAisles): string | null {
+  return detectedAisleId === assignedAisleId ? null : detectedAisleId;
 }
