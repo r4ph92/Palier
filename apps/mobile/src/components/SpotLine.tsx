@@ -36,21 +36,20 @@ export function SpotLine({ spot, lead = '' }: SpotLineProps) {
 }
 
 interface SpotWithStateProps extends SpotLineProps {
-  // What VoiceOver reads after the spot; shown as is unless statusContent draws it, as when it holds a spot number.
-  readonly status: string;
+  readonly statusLabel: string;
   readonly statusContent?: ReactNode;
   readonly markColor: string;
   readonly ref?: Ref<HostInstance>;
 }
 
 // Spot and its state are one stop for VoiceOver, on the scan screen and on the session screen alike.
-export function SpotWithState({ spot, lead = '', status, statusContent, markColor, ref }: SpotWithStateProps) {
+export function SpotWithState({ spot, lead = '', statusLabel, statusContent, markColor, ref }: SpotWithStateProps) {
   const colors = useColors();
   return (
-    <View ref={ref} accessible accessibilityLabel={`${spotLabel(spot, lead)}. ${status}`} style={styles.group}>
+    <View ref={ref} accessible accessibilityLabel={`${spotLabel(spot, lead)}. ${statusLabel}`} style={styles.group}>
       <SpotLine spot={spot} lead={lead} />
       <StateMark color={markColor}>
-        {statusContent ?? <Text style={[typography.bodyStrong, { color: colors.ink }]}>{status}</Text>}
+        {statusContent ?? <Text style={[typography.bodyStrong, { color: colors.ink }]}>{statusLabel}</Text>}
       </StateMark>
     </View>
   );

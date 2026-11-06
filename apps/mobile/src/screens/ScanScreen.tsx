@@ -69,7 +69,7 @@ function EnteredSpot({ spot, isConfirmed, onDone }: EnteredSpotProps) {
   useAnnouncement(isConfirmed ? status : null);
   return (
     <View style={styles.section}>
-      <SpotWithState ref={resultRef} spot={spot} lead={i18n.t('scan.spotLead')} status={status} markColor={colors.free} />
+      <SpotWithState ref={resultRef} spot={spot} lead={i18n.t('scan.spotLead')} statusLabel={status} markColor={colors.free} />
       <PrimaryButton label={i18n.t('scan.done')} onPress={onDone} />
     </View>
   );

@@ -93,7 +93,7 @@ function SessionSpot({ session, shouldFocusOnArrival }: SessionSpotProps) {
   const statusContent = isParked(session.state) ? <ParkedIn spot={session.spot} /> : undefined;
   const hasJustParked = useHasJustParked(session);
   useAnnouncement(hasJustParked ? spotStatusOf(session) : null);
-  return <SpotWithState ref={shouldFocusOnArrival ? focusRef : null} spot={session.spot} status={spotStatusOf(session)} statusContent={statusContent} markColor={isWaiting ? colors.muted : colors.free} />;
+  return <SpotWithState ref={shouldFocusOnArrival ? focusRef : null} spot={session.spot} statusLabel={spotStatusOf(session)} statusContent={statusContent} markColor={isWaiting ? colors.muted : colors.free} />;
 }
 
 function spotStatusOf({ state, spot }: CurrentParkingSession): string {
