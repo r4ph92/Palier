@@ -65,7 +65,7 @@ describe('answering where Julie parked, the edges (story #21)', () => {
 
     await user.press(screen.getByRole('radio', { name: 'B-3' }));
     await user.press(screen.getByRole('button', { name: 'Confirmer' }));
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: 'Envoi…' }));
     await act(async () => parkingSession.answerSpotAnswers());
 
     expect(parkingSession.spotAnswers).toEqual(['B-3']);

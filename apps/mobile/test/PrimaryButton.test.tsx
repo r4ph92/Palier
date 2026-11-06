@@ -7,4 +7,17 @@ describe('PrimaryButton', () => {
 
     expect(screen.getByText('Se déconnecter')).toHaveProp('maxFontSizeMultiplier', 2);
   });
+
+  it('reads its busy label while busy', async () => {
+    await render(<PrimaryButton label="Confirmer B-3" busyLabel="Envoi…" busy onPress={() => undefined} />);
+
+    expect(screen.getByRole('button', { name: 'Envoi…' })).toBeDisabled();
+    expect(screen.getByText('Envoi…')).toBeOnTheScreen();
+  });
+
+  it('keeps the width of its longer label while busy', async () => {
+    await render(<PrimaryButton label="Confirmer B-3" busyLabel="Envoi…" busy onPress={() => undefined} />);
+
+    expect(screen.getByText('Confirmer B-3', { includeHiddenElements: true })).toHaveStyle({ opacity: 0 });
+  });
 });

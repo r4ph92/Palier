@@ -127,8 +127,20 @@ function SpotNumberField({ spotNumber, onChange, answering }: SpotNumberFieldPro
       <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('session.whereParked.numberLabel')}</Text>
       <SpotNumberInput value={spotNumber} onChange={onChange} onSubmit={submit} />
       <AnswerProblem answering={answering} />
-      <PrimaryButton label={i18n.t('session.whereParked.confirm')} onPress={submit} busy={answering.isSending} disabled={isBlank} />
+      <ConfirmButton isBlank={isBlank} isSending={answering.isSending} onPress={submit} />
     </View>
+  );
+}
+
+function ConfirmButton({ isBlank, isSending, onPress }: { readonly isBlank: boolean; readonly isSending: boolean; readonly onPress: () => void }) {
+  return (
+    <PrimaryButton
+      label={i18n.t('session.whereParked.confirm')}
+      busyLabel={i18n.t('session.whereParked.sending')}
+      onPress={onPress}
+      busy={isSending}
+      disabled={isBlank}
+    />
   );
 }
 

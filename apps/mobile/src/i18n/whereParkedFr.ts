@@ -4,6 +4,7 @@ export const whereParkedFr = {
   freeSpotsLead: 'Places libres dans l’allée %{aisle}',
   numberLabel: 'Numéro de place',
   confirm: 'Confirmer',
+  sending: 'Envoi…',
   unknownSpot: 'Numéro inconnu dans ce parking',
   spotTaken: 'Cette place est déjà attribuée\u00A0— vérifiez le numéro au sol',
   spotOutOfService: 'Cette place est hors service\u00A0— vérifiez le numéro au sol',
