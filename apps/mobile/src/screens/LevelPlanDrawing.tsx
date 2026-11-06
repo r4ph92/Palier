@@ -56,15 +56,22 @@ function AisleRectangleView({ frame, marking, showsMarkers }: AisleRectangleView
   return (
     <View testID={`PlanAisle-${aisle.code}`} style={[styles.aisle, position, outline]}>
       <Text style={[typography.countLabel, { color: colors.ink }]}>{aisleName(aisle.code)}</Text>
-      {showsMarkers && isAssigned ? <SpotMarker spot={marking.spot} /> : null}
+      {showsMarkers && isAssigned ? <SpotName spot={marking.spot} /> : null}
       {showsMarkers && aisle.code === marking.currentAisle?.code ? <YouAreHere /> : null}
     </View>
   );
 }
 
-function SpotMarker({ spot }: { readonly spot: AssignedSpot }) {
+// « Place » in text, the number in mono (docs/design.md, gesture 3).
+function SpotName({ spot, lead = '' }: { readonly spot: AssignedSpot; readonly lead?: string }) {
   const colors = useColors();
-  return <Text style={[typography.figure, { color: colors.ink }]}>{spotName(spot)}</Text>;
+  return (
+    <Text style={[typography.body, { color: colors.ink }]}>
+      {lead}
+      {i18n.t('session.plan.spotLead')}
+      <Text style={typography.figure}>{unbrokenSpotNumber(spot)}</Text>
+    </Text>
+  );
 }
 
 function YouAreHere() {
@@ -79,27 +86,18 @@ function YouAreHere() {
 // Already in the image label and the sentence, so VoiceOver skips it.
 function PlanLegend({ spot, currentAisle }: PlanMarking) {
   const colors = useColors();
-  const lines = [`${aisleName(spot.aisleCode)}${LIST_SEPARATOR}${spotName(spot)}`];
-  if (currentAisle !== null) {
-    lines.push(`${aisleName(currentAisle.code)}${LIST_SEPARATOR}${i18n.t('session.plan.youAreHere')}`);
-  }
   return (
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      {lines.map((line) => (
-        <Text key={line} style={[typography.body, { color: colors.ink }]}>
-          {line}
-        </Text>
-      ))}
+      <SpotName spot={spot} lead={`${aisleName(spot.aisleCode)}${LIST_SEPARATOR}`} />
+      {currentAisle === null ? null : (
+        <Text style={[typography.body, { color: colors.ink }]}>{`${aisleName(currentAisle.code)}${LIST_SEPARATOR}${i18n.t('session.plan.youAreHere')}`}</Text>
+      )}
     </View>
   );
 }
 
 function aisleName(code: string): string {
   return i18n.t('session.plan.aisle', { aisle: code });
-}
-
-function spotName(spot: AssignedSpot): string {
-  return i18n.t('session.plan.spot', { spot: unbrokenSpotNumber(spot) });
 }
 
 const styles = StyleSheet.create({

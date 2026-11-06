@@ -1,7 +1,8 @@
-import type { CurrentParkingSession, PlanAisle } from '@palier/shared-types';
+import type { AssignedSpot, CurrentParkingSession, PlanAisle } from '@palier/shared-types';
 import { StyleSheet, Text, View } from 'react-native';
 import { useAnnouncement } from '../components/useAnnouncement';
-import { guidanceSentence } from '../parkingSessions/parkingGuidance';
+import { i18n } from '../i18n/i18n';
+import { aisleSentence, unbrokenSpotNumber } from '../parkingSessions/parkingGuidance';
 import { planGeometryOf } from '../parkingSessions/planGeometry';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -16,14 +17,25 @@ interface ParkingGuidanceProps {
 // The sentence guides without the drawing, so it shows even for a level the operator has not drawn.
 export function ParkingGuidance({ session, currentAisle }: ParkingGuidanceProps) {
   const colors = useColors();
-  const sentence = guidanceSentence(session.spot, currentAisle);
-  useAnnouncement(currentAisle === null ? null : sentence, currentAisle?.beaconMinor);
+  const sentence = currentAisle === null ? null : aisleSentence(session.spot, currentAisle);
+  useAnnouncement(sentence, currentAisle?.beaconMinor);
   const geometry = planGeometryOf(session.levelPlan?.aisles ?? []);
   return (
     <View style={styles.group}>
-      <Text style={[typography.bodyStrong, { color: colors.ink }]}>{sentence}</Text>
+      {sentence === null ? <GoToSpot spot={session.spot} /> : <Text style={[typography.bodyStrong, { color: colors.ink }]}>{sentence}</Text>}
       {geometry === null ? null : <LevelPlanDrawing geometry={geometry} spot={session.spot} currentAisle={currentAisle} />}
     </View>
+  );
+}
+
+// The spot number is a figure inside the sentence, in mono (docs/design.md, gesture 3).
+function GoToSpot({ spot }: { readonly spot: AssignedSpot }) {
+  const colors = useColors();
+  return (
+    <Text style={[typography.bodyStrong, { color: colors.ink }]}>
+      {i18n.t('session.plan.goToLead', { aisle: spot.aisleCode })}
+      <Text style={typography.figure}>{unbrokenSpotNumber(spot)}</Text>
+    </Text>
   );
 }
 

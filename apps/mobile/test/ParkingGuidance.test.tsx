@@ -2,6 +2,7 @@ import type { CurrentParkingSession, PlanAisle } from '@palier/shared-types';
 import { render, screen, within } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
+import { fontFamilies } from '../src/theme/tokens';
 import { ParkingGuidance } from '../src/screens/ParkingGuidance';
 import { julieAtB3, parkingDemoP1Plan } from './fakeParkingSessionClient';
 import { visibleText } from './visibleText';
@@ -31,6 +32,16 @@ describe('ParkingGuidance', () => {
     expect(within(screen.getByTestId('PlanAisle-B')).getByText('Allée B')).toBeOnTheScreen();
     expect(within(screen.getByTestId('PlanAisle-B')).getByText('Place B-3', visibleText)).toBeOnTheScreen();
     expect(within(screen.getByTestId('PlanAisle-A')).queryByText('Place B-3', visibleText)).toBeNull();
+  });
+
+  it('sets the spot number in mono, in the sentence and on the aisle, like every figure', async () => {
+    await showGuidance(null);
+
+    const numbers = screen.getAllByText('B-3', visibleText);
+    expect(numbers).toHaveLength(2);
+    for (const number of numbers) {
+      expect(StyleSheet.flatten(number.props.style).fontFamily).toBe(fontFamilies.mono);
+    }
   });
 
   it('marks the highlighted aisle by a thicker border than the others, not by color alone', async () => {

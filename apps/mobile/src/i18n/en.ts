@@ -153,11 +153,11 @@ export const en: Translations = {
     detectionOff: 'Automatic detection is off\u00A0— your spot will be assumed occupied after 30\u00A0min',
     openSettings: 'Open Settings',
     plan: {
-      goTo: 'Go to aisle %{aisle}, spot %{spot}',
+      goToLead: 'Go to aisle %{aisle}, spot ',
       wrongAisle: 'You are in aisle %{current}\u00A0— your spot is in aisle %{assigned}',
       rightAisle: 'You are in the right aisle',
       aisle: 'Aisle %{aisle}',
-      spot: 'Spot %{spot}',
+      spotLead: 'Spot ',
       youAreHere: 'You are here',
       imageLabel: 'Plan of level %{level}: aisle %{aisle} highlighted, spot %{spot}',
       imageHere: ', you are here: aisle %{aisle}',
