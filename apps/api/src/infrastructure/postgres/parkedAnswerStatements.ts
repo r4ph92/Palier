@@ -42,7 +42,7 @@ interface AnsweredSpotRow extends SpotLabelRow {
 }
 
 // Read before the lock, to know which lot to lock; a session never changes lot.
-export async function readSessionLot(database: Database, { sessionId, driverId }: SpotAnswer): Promise<string | null> {
+export async function readSessionLot(database: Database, { sessionId, driverId }: Pick<SpotAnswer, 'sessionId' | 'driverId'>): Promise<string | null> {
   const [row] = await database.execute<SessionLotRow>(sql`select lot_id from parking_session where id = ${sessionId} and user_id = ${driverId}`);
   return row?.lot_id ?? null;
 }

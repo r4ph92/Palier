@@ -7,12 +7,15 @@ import type { SpotState } from './lotSchema.ts';
 import type { SpotLabelRow } from './spotLabel.ts';
 
 export interface SpotClaimTarget {
-  readonly state: Extract<SpotState, 'ASSIGNED' | 'HELD'>;
+  readonly state: Extract<SpotState, 'ASSIGNED' | 'HELD' | 'OCCUPIED'>;
   readonly changedAt: SQL;
 }
 
 // An entry keeps the database clock, like the rest of its steps (decision 013).
 export const ASSIGNED_TO_ENTRY: SpotClaimTarget = { state: 'ASSIGNED', changedAt: sql`now()` };
+
+// A driver who found their spot taken is already in the aisles: the new spot is occupied at once, as the loop does at entry.
+export const OCCUPIED_BY_REPORT: SpotClaimTarget = { state: 'OCCUPIED', changedAt: sql`now()` };
 
 // A hold records the API's clock reading of its request (decision 016).
 export function heldSince(createdAt: Date): SpotClaimTarget {
@@ -36,16 +39,22 @@ interface FreeSpotRow extends Record<string, unknown> {
   readonly is_oversize: boolean;
 }
 
+export type SpotChooser = (needs: VehicleNeeds, freeSpots: readonly FreeSpot[]) => FreeSpot | null;
+
 // Only the chosen spot is locked, and a spot another writer holds is skipped rather than waited on (docs/03).
 export interface SpotClaim {
   readonly lotId: string;
   readonly needs: VehicleNeeds;
   readonly target: SpotClaimTarget;
+  readonly choose?: SpotChooser;
 }
 
-export async function claimFirstFittingSpot(tx: Pick<Transaction, 'execute'>, { lotId, needs, target }: SpotClaim): Promise<AssignedSpotRow | undefined> {
+export async function claimFirstFittingSpot(
+  tx: Pick<Transaction, 'execute'>,
+  { lotId, needs, target, choose = chooseSpotFor }: SpotClaim,
+): Promise<AssignedSpotRow | undefined> {
   let candidates = await readFreeSpots(tx, lotId);
-  let chosen = chooseSpotFor(needs, candidates);
+  let chosen = choose(needs, candidates);
   while (chosen !== null) {
     const claimed = await transitionSpot(tx, { spotId: chosen.id, from: 'AVAILABLE', target });
     if (claimed !== undefined) {
@@ -53,7 +62,7 @@ export async function claimFirstFittingSpot(tx: Pick<Transaction, 'execute'>, { 
     }
     const lostId = chosen.id;
     candidates = candidates.filter((candidate) => candidate.id !== lostId);
-    chosen = chooseSpotFor(needs, candidates);
+    chosen = choose(needs, candidates);
   }
   return undefined;
 }
