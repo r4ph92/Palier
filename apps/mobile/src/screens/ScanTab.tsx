@@ -95,7 +95,7 @@ function currentSessionScreen(
       onRetry={refresh}
       notice={isWalkedAwayState(reading.session.state) ? null : aside.detectionNotice}
       guidance={aside.guidance}
-      whereParked={(offline) => <WhereParkedScreen client={parkingSessionClient} session={reading.session} offline={offline} onAnswered={refresh} />}
+      whereParked={(framing) => <WhereParkedScreen client={parkingSessionClient} session={reading.session} framing={framing} onAnswered={refresh} />}
       shouldFocusSpotOnArrival={reading.session.sessionId === arrivedParkedSessionId}
     />
   );

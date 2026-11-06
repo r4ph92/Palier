@@ -1,4 +1,4 @@
-// The question asked after a walk away from the car in another aisle than the assigned spot's.
+// The question asked after a walk away from the car in another aisle than the assigned spot's, and the correction of a presumed spot.
 export const whereParkedFr = {
   question: 'Où êtes-vous garé\u00A0?',
   freeSpotsLead: 'Places libres dans l’allée %{aisle}',
@@ -13,4 +13,6 @@ export const whereParkedFr = {
   invalidNumber: 'Numéro invalide',
   offline: 'Hors ligne, places libres au dernier relevé',
   unreachable: 'Impossible de joindre Palier. Vérifiez votre connexion, puis réessayez.',
+  notMySpot: 'Ce n’est pas ma place',
+  cancel: 'Annuler',
 };

@@ -14,4 +14,6 @@ export const whereParkedEn: Translations['session']['whereParked'] = {
   invalidNumber: 'Invalid number',
   offline: 'Offline, free spots as of last check',
   unreachable: 'Can’t reach Palier. Check your connection, then try again.',
+  notMySpot: 'This is not my spot',
+  cancel: 'Cancel',
 };

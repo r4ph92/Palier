@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import { FieldError } from '../components/FieldError';
+import { TextButton } from '../components/TextButton';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { BODY_TEXT_MAX_FONT_SCALE } from '../components/ScreenHeader';
 import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
@@ -30,30 +31,38 @@ const PROBLEM_MESSAGES: Readonly<Record<ParkedAnswerProblem, string>> = {
   UNREACHABLE: 'session.whereParked.unreachable',
 };
 
+// How the session screen frames the form: the question after a walk in another aisle, or the correction of a presumed spot.
+export interface WhereParkedFraming {
+  readonly title: string;
+  // The offline notice, or null; it sits under the title so the driver knows the free spots may be old.
+  readonly offline: ReactNode;
+  // Only a correction can be given up: the question has no way around it (decision 020).
+  readonly onCancel?: () => void;
+}
+
 interface WhereParkedScreenProps {
   readonly client: ParkingSessionClient;
   readonly session: CurrentParkingSession;
-  // The offline notice, or null; it sits under the title so the driver knows the free spots may be old.
-  readonly offline: ReactNode;
+  readonly framing: WhereParkedFraming;
   // Reads the session again once the answer is accepted, or the session moved on without it.
   readonly onAnswered: () => void;
 }
 
-// The driver walked away in another aisle than the assigned spot's, so Palier asks where the car is.
+// The driver says where the car is: asked after a walk in another aisle than the assigned spot's, or correcting a presumed spot.
 // The free spots of the aisle seen at the walk come first, a tap writes the number in the field; only « Confirmer » sends.
-export function WhereParkedScreen({ client, session, offline, onAnswered }: WhereParkedScreenProps) {
+export function WhereParkedScreen({ client, session, framing, onAnswered }: WhereParkedScreenProps) {
   const answering = useParkedAnswer(client, session.sessionId, onAnswered);
-  return <WhereParkedQuestion question={session.question} offline={offline} answering={answering} />;
+  return <WhereParkedQuestion question={session.question} framing={framing} answering={answering} />;
 }
 
 interface WhereParkedQuestionProps {
-  // null when Palier sent no usable list: the field alone still takes any number.
+  // null when Palier sent no usable list, or for a correction: the field alone still takes any number.
   readonly question: ParkedQuestion | null;
-  readonly offline: ReactNode;
+  readonly framing: WhereParkedFraming;
   readonly answering: ParkedAnswerController;
 }
 
-function WhereParkedQuestion({ question, offline, answering }: WhereParkedQuestionProps) {
+function WhereParkedQuestion({ question, framing, answering }: WhereParkedQuestionProps) {
   const colors = useColors();
   const titleRef = useAccessibilityFocusOnMount();
   const [spotNumber, setSpotNumber] = useState('');
@@ -62,13 +71,14 @@ function WhereParkedQuestion({ question, offline, answering }: WhereParkedQuesti
     answering.clearProblem();
   };
   return (
-    <View style={styles.section}>
+    <View style={styles.section} onAccessibilityEscape={framing.onCancel}>
       <Text ref={titleRef} accessibilityRole="header" maxFontSizeMultiplier={BODY_TEXT_MAX_FONT_SCALE} style={[typography.spotLine, { color: colors.ink }]}>
-        {i18n.t('session.whereParked.question')}
+        {framing.title}
       </Text>
-      {offline}
+      {framing.offline}
       {question === null ? null : <FreeSpots question={question} typed={spotNumber} onChoose={changeNumber} />}
       <SpotNumberField spotNumber={spotNumber} onChange={changeNumber} answering={answering} />
+      {framing.onCancel === undefined ? null : <TextButton label={i18n.t('session.whereParked.cancel')} align="start" onPress={framing.onCancel} />}
     </View>
   );
 }
