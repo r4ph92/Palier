@@ -1,4 +1,5 @@
 import type { EntrySessionState, WalkedAwayState } from '@palier/shared-types';
+import { WALKED_AWAY_STATES } from '@palier/shared-types/entries';
 
 // Q36: the device saw the driver walk away from the car, which is enough to presume the assigned spot taken.
 // detectedAisleMinor: the aisle the device last saw, null when it saw none; another aisle than the spot's asks where the car is (#21).
@@ -42,8 +43,10 @@ export function classifyRefusedSignal(session: SessionAfterRefusal | null): Park
   return { outcome: 'already', state: session.state, parkedAt: session.parkedAt };
 }
 
+const WALKED_AWAY: readonly EntrySessionState[] = WALKED_AWAY_STATES;
+
 function hasWalkedAway(state: EntrySessionState): state is WalkedAwayState {
-  return state === 'PARKED_PRESUMED' || state === 'PARKED_UNCONFIRMED' || state === 'PARKED_CONFIRMED';
+  return WALKED_AWAY.includes(state);
 }
 
 export interface WalkAisles {

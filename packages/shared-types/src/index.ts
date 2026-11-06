@@ -26,6 +26,7 @@ export type {
   GateCommand,
   GateCommandKind,
   GateCommandListResponse,
+  WalkedAwayState,
 } from './entries.ts';
 export type { GateIdentity, GateKind, GatePassageRequest, GatePassageResponse } from './gates.ts';
 export type { GeoPosition, LotListResponse, LotSummary, SpotCategory, SpotCountByCategory } from './lots.ts';
@@ -44,7 +45,6 @@ export type {
   ParkedSpotAnswerResponse,
   PlanAisle,
   TestClockReading,
-  WalkedAwayState,
 } from './parkingSessions.ts';
 export type { PaymentMethodResponse, SavedCard, SavePaymentMethodRequest, SetupIntentResponse } from './paymentMethods.ts';
 export type { CurrentSpotHoldResponse, SpotHold, SpotHoldRefusalBody, SpotHoldRefusalCode, SpotHoldStatus } from './spotHolds.ts';

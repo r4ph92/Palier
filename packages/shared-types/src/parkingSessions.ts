@@ -1,4 +1,4 @@
-import type { ActiveEntrySessionState, AssignedSpot } from './entries.ts';
+import type { ActiveEntrySessionState, AssignedSpot, WalkedAwayState } from './entries.ts';
 
 // The driver's session in progress, priced by the API's clock: the app shows these figures as they are.
 // spot is the one the driver said they parked in once they answered, the assigned one before.
@@ -64,8 +64,6 @@ export interface ParkedPresumptionRequest {
   // The beacon minor of the aisle the device last saw, when it knows one: another aisle than the spot's asks the driver where they parked.
   readonly detectedAisleMinor?: number;
 }
-
-export type WalkedAwayState = 'PARKED_PRESUMED' | 'PARKED_UNCONFIRMED' | 'PARKED_CONFIRMED';
 
 // The same answer when an earlier signal already recorded the walk: state and parkedAt are then those of that first walk.
 export interface ParkedPresumptionResponse {

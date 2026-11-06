@@ -31,6 +31,11 @@ export const ACTIVE_ENTRY_SESSION_STATES = [
 
 export type ActiveEntrySessionState = (typeof ACTIVE_ENTRY_SESSION_STATES)[number];
 
+// The driver walked away from the car: the spot is presumed, asked about, or answered.
+export const WALKED_AWAY_STATES = ['PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED'] as const satisfies readonly ActiveEntrySessionState[];
+
+export type WalkedAwayState = (typeof WALKED_AWAY_STATES)[number];
+
 export interface EntryStatusResponse {
   readonly sessionId: string;
   readonly state: EntrySessionState;

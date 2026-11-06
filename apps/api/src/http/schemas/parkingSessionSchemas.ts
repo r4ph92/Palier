@@ -7,7 +7,7 @@ import type {
   ParkedSpotAnswerResponse,
   TestClockReading,
 } from '@palier/shared-types';
-import { ACTIVE_ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
+import { ACTIVE_ENTRY_SESSION_STATES, WALKED_AWAY_STATES } from '@palier/shared-types/entries';
 import type { FromSchema } from 'json-schema-to-ts';
 import { assignedSpotSchema } from './entrySchemas.ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
@@ -105,7 +105,7 @@ export const parkedPresumptionResponseSchema = {
   required: ['state', 'parkedAt'],
   additionalProperties: false,
   properties: {
-    state: { type: 'string', enum: ['PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED'] },
+    state: { type: 'string', enum: WALKED_AWAY_STATES },
     parkedAt: { type: 'string' },
   },
 } as const;

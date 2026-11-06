@@ -7,11 +7,11 @@ import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { entrySessionParametersSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
 import { parkedSpotAnswerRequestSchema, parkedSpotAnswerResponseSchema } from '../schemas/parkingSessionSchemas.ts';
+import { LOT_BUSY_BODY, SESSION_CLOSED_BODY } from '../parkedRefusals.ts';
 import { SESSION_NOT_FOUND_BODY } from '../sessionNotFound.ts';
 
 const BAD_REQUEST = 400;
 const CONFLICT = 409;
-const SERVICE_UNAVAILABLE = 503;
 
 interface AnswerRoute {
   readonly Params: EntrySessionParameters;
@@ -27,11 +27,11 @@ interface Refusal {
 const REFUSALS: Record<ParkedAnswerRefusal, Refusal> = {
   'not-found': SESSION_NOT_FOUND_BODY,
   'not-asked': { statusCode: CONFLICT, error: 'NOT_ASKED', message: 'This session is not waiting for a spot number.' },
-  closed: { statusCode: CONFLICT, error: 'SESSION_CLOSED', message: 'This session is closed.' },
+  closed: SESSION_CLOSED_BODY,
   'unknown-spot': { statusCode: CONFLICT, error: 'UNKNOWN_SPOT', message: 'No spot has this number in this parking lot.' },
   'spot-taken': { statusCode: CONFLICT, error: 'SPOT_TAKEN', message: 'This spot is already assigned.' },
   'spot-out-of-service': { statusCode: CONFLICT, error: 'SPOT_OUT_OF_SERVICE', message: 'This spot is out of service.' },
-  'lot-busy': { statusCode: SERVICE_UNAVAILABLE, error: 'LOT_BUSY', message: 'The parking lot is busy; try again.' },
+  'lot-busy': LOT_BUSY_BODY,
 };
 
 // Story #21: the driver walked away in another aisle and says which spot the car is in.

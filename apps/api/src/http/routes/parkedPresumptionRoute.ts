@@ -4,6 +4,7 @@ import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { ParkedPresumption, ParkedPresumptionRepository, WalkingSignal } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import { isStorableDate } from '../../domain/time/storableDate.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
+import { LOT_BUSY_BODY, SESSION_CLOSED_BODY } from '../parkedRefusals.ts';
 import { SESSION_NOT_FOUND_BODY } from '../sessionNotFound.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { entrySessionParametersSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
@@ -11,7 +12,6 @@ import { parkedPresumptionRequestSchema, parkedPresumptionResponseSchema } from 
 
 const BAD_REQUEST = 400;
 const CONFLICT = 409;
-const SERVICE_UNAVAILABLE = 503;
 
 interface ParkedRoute {
   readonly Params: EntrySessionParameters;
@@ -27,8 +27,8 @@ interface Refusal {
 const REFUSALS: Record<Exclude<ParkedPresumption['outcome'], 'recorded' | 'already'>, Refusal> = {
   'not-found': SESSION_NOT_FOUND_BODY,
   'entry-not-confirmed': { statusCode: CONFLICT, error: 'ENTRY_NOT_CONFIRMED', message: 'The entry loop has not confirmed this session yet.' },
-  closed: { statusCode: CONFLICT, error: 'SESSION_CLOSED', message: 'This session is closed.' },
-  'lot-busy': { statusCode: SERVICE_UNAVAILABLE, error: 'LOT_BUSY', message: 'The parking lot is busy; try again.' },
+  closed: SESSION_CLOSED_BODY,
+  'lot-busy': LOT_BUSY_BODY,
 };
 
 export function registerParkedPresumptionRoute(server: FastifyInstance, driverAccess: DriverAccess, presumptions: ParkedPresumptionRepository): void {
