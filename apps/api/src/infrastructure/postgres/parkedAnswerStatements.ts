@@ -6,6 +6,7 @@ import { paintedNumberNamed } from '../../domain/spots/paintedSpotNumber.ts';
 import type { SpotState } from '../../domain/spots/spotStates.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
 import type { Database, Transaction } from './database.ts';
+import { requireUpdatedRow } from './requireUpdatedRow.ts';
 import { spot } from './lotSchema.ts';
 import { spotOf, type SpotLabelRow } from './spotLabel.ts';
 
@@ -92,9 +93,7 @@ export async function occupyAnsweredSpot(tx: Executor, spotId: string): Promise<
     update spot set state = 'OCCUPIED', needs_check = false, state_changed_at = now()
     where id = ${spotId} and state in ('AVAILABLE', 'OCCUPIED_UNKNOWN')
     returning id`);
-  if (rows.length === 0) {
-    throw new Error(`Answered spot ${spotId} could not be occupied.`);
-  }
+  requireUpdatedRow(rows, `Answered spot ${spotId} could not be occupied.`);
 }
 
 // The session is locked and still asked or presumed: a zero-row update is a broken invariant, and rolls the answer back.
@@ -103,9 +102,7 @@ export async function confirmParkedSpot(tx: Executor, sessionId: string, spotId:
     update parking_session set state = 'PARKED_CONFIRMED', confirmed_spot_id = ${spotId}, parked_answered_at = now()
     where id = ${sessionId} and state in ('PARKED_UNCONFIRMED', 'PARKED_PRESUMED')
     returning id`);
-  if (rows.length === 0) {
-    throw new Error(`Session ${sessionId} was no longer waiting for its answer.`);
-  }
+  requireUpdatedRow(rows, `Session ${sessionId} was no longer waiting for its answer.`);
 }
 
 // The loop confirmation made the spot OCCUPIED, and a correction flags it only after reading it OCCUPIED under its row lock;
@@ -115,7 +112,5 @@ export async function flagAssignedSpotToCheck(tx: Executor, spotId: string): Pro
     update spot set state = 'OCCUPIED_UNKNOWN', needs_check = true, state_changed_at = now()
     where id = ${spotId} and state = 'OCCUPIED'
     returning id`);
-  if (rows.length === 0) {
-    throw new Error(`Assigned spot ${spotId} of a session leaving it was not occupied.`);
-  }
+  requireUpdatedRow(rows, `Assigned spot ${spotId} of a session leaving it was not occupied.`);
 }

@@ -111,7 +111,6 @@ function SessionDetails(props: SessionDetailsProps) {
   );
 }
 
-// « Ce n’est pas ma place » once presumed parked, « Place prise » before parking; never both.
 function SpotAction({ reading, correction, noneFree, reportSpotTaken }: SessionDetailsProps) {
   const { state } = reading.session;
   if (canCorrect(state)) {

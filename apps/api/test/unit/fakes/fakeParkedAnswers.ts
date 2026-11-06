@@ -8,7 +8,7 @@ import {
   type SpotAnswer,
   type SpotFacts,
 } from '../../../src/domain/parkingSessions/ParkedAnswer.ts';
-import type { SpotState } from '../../../src/domain/spots/spotStates.ts';
+import { parkingDemoSpots, type StoredDemoSpot } from './parkingDemoSpots.ts';
 
 export interface StoredAnsweringSession {
   readonly driverId: string;
@@ -18,16 +18,7 @@ export interface StoredAnsweringSession {
   answeredAt: Date | null;
 }
 
-export interface StoredSpot {
-  state: SpotState;
-  needsCheck: boolean;
-}
-
-// Parking Démo, level P1, as the seed builds it: A-1 to A-5 in aisle A, B-1 to B-5 in aisle B.
-function parkingDemoSpots(): Map<string, StoredSpot> {
-  const numbers = ['A', 'B'].flatMap((aisle) => [1, 2, 3, 4, 5].map((index) => `${aisle}-${String(index)}`));
-  return new Map(numbers.map((number) => [number, { state: 'AVAILABLE', needsCheck: false }]));
-}
+export type StoredSpot = StoredDemoSpot;
 
 // Mirrors PostgresParkedAnswerRepository over one lot; its SQL is checked on the lane database (docs/decisions/002).
 export class FakeParkedAnswers implements ParkedAnswerRepository {

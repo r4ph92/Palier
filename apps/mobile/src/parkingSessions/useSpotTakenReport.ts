@@ -10,6 +10,8 @@ export interface SpotTakenReportController {
   // Grows with every report Palier did not get, so the same message twice is announced twice.
   readonly attempts: number;
   report(): void;
+  // The message was about the report given up; reopening the question starts clean.
+  clearProblem(): void;
 }
 
 export interface SpotTakenReportTarget {
@@ -42,7 +44,8 @@ export function useSpotTakenReport(
     };
     run('report', () => sendReport(() => client.reportSpotTaken(sessionId, spotNumber), { onReported, onUnreachable }));
   }, [client, sessionId, spotNumber, onReported, run]);
-  return { isSending: runningKey !== null, isUnreachable, attempts, report };
+  const clearProblem = useCallback(() => setIsUnreachable(false), []);
+  return { isSending: runningKey !== null, isUnreachable, attempts, report, clearProblem };
 }
 
 async function sendReport(send: () => Promise<SpotTakenResponse>, { onReported, onUnreachable }: ReportHandlers): Promise<void> {

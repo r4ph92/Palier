@@ -71,4 +71,17 @@ describe('reporting the assigned spot taken, the edges (story #23)', () => {
     expect(await screen.findByRole('tab', { name: 'Scanner', selected: true })).toBeOnTheScreen();
     expect(screen.queryByRole('alert')).toBeNull();
   });
+
+  it('drops the message of a failed report once Julie keeps A-1, so asking again starts clean', async () => {
+    const { user, parkingSession } = await julieReportingA1();
+    parkingSession.spotTakenFailure = new PalierUnreachableError('offline');
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
+    await screen.findByRole('alert');
+
+    await user.press(screen.getByRole('button', { name: KEEP_A1 }));
+    await user.press(screen.getByRole('button', { name: SPOT_TAKEN }));
+
+    expect(screen.getByText(CONFIRM_A1_TAKEN, visibleText)).toBeOnTheScreen();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
 });

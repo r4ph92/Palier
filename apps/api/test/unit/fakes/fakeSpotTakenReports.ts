@@ -2,9 +2,9 @@ import type { EntrySessionState } from '@palier/shared-types';
 import { chooseReplacementSpot } from '../../../src/domain/allocation/chooseReplacementSpot.ts';
 import type { FreeSpot } from '../../../src/domain/allocation/chooseSpot.ts';
 import { reportPlanOf, type SpotTakenOutcome, type SpotTakenReport, type SpotTakenReportRepository } from '../../../src/domain/parkingSessions/SpotTakenReport.ts';
-import type { SpotState } from '../../../src/domain/spots/spotStates.ts';
 import { standardNeeds } from '../fakeVehicleRepository.ts';
 import { freeSpotFixture } from './freeSpotFixture.ts';
+import { parkingDemoSpots, type StoredDemoSpot } from './parkingDemoSpots.ts';
 
 export interface StoredReportingSession {
   readonly driverId: string;
@@ -14,17 +14,7 @@ export interface StoredReportingSession {
   readonly reportedSpotNumbers: string[];
 }
 
-export interface StoredReportSpot {
-  state: SpotState;
-  needsCheck: boolean;
-  readonly isEv?: boolean;
-}
-
-// Parking Démo, level P1, as the seed builds it: A-1 to A-5 in aisle A, B-1 to B-5 in aisle B, each nearer the exit by its index.
-function parkingDemoSpots(): Map<string, StoredReportSpot> {
-  const numbers = ['A', 'B'].flatMap((aisle) => [1, 2, 3, 4, 5].map((index) => `${aisle}-${String(index)}`));
-  return new Map(numbers.map((number) => [number, { state: 'AVAILABLE', needsCheck: false }]));
-}
+export type StoredReportSpot = StoredDemoSpot;
 
 // Mirrors PostgresSpotTakenReportRepository over one lot with standard needs; its SQL is checked by ScriptedSql and on the lane database.
 export class FakeSpotTakenReports implements SpotTakenReportRepository {

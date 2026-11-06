@@ -4,6 +4,7 @@ import type { SpotTakenReport } from '../../domain/parkingSessions/SpotTakenRepo
 import type { SpotState } from '../../domain/spots/spotStates.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Transaction } from './database.ts';
+import { requireUpdatedRow } from './requireUpdatedRow.ts';
 import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './spotClaim.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
@@ -62,9 +63,7 @@ export async function reassignSession(tx: Executor, sessionId: string, spotId: s
     update parking_session set assigned_spot_id = ${spotId}
     where id = ${sessionId} and state = 'ENTRY_CONFIRMED'
     returning id`);
-  if (rows.length === 0) {
-    throw new Error(`Session ${sessionId} was no longer waiting to park.`);
-  }
+  requireUpdatedRow(rows, `Session ${sessionId} was no longer waiting to park.`);
 }
 
 // No other spot fits: the driver parks where they can and says where, the #21 question in the reported spot's aisle.
@@ -73,7 +72,5 @@ export async function askWhereParkedAfterReport(tx: Executor, sessionId: string,
     update parking_session set state = 'PARKED_UNCONFIRMED', parked_aisle_id = ${aisleId}, parked_at = now()
     where id = ${sessionId} and state = 'ENTRY_CONFIRMED'
     returning id`);
-  if (rows.length === 0) {
-    throw new Error(`Session ${sessionId} was no longer waiting to park.`);
-  }
+  requireUpdatedRow(rows, `Session ${sessionId} was no longer waiting to park.`);
 }

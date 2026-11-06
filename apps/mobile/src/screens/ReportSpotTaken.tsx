@@ -15,7 +15,6 @@ import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
-// Only a driver through the gate who has not parked can find the spot taken; once parked, « Ce n’est pas ma place » corrects it.
 export function canReportSpotTaken(state: EntrySessionState): boolean {
   return state === 'ENTRY_CONFIRMED';
 }
@@ -53,7 +52,20 @@ interface ReportSpotTakenProps {
 
 export function ReportSpotTaken({ client, session, onNoneFree, onSettled }: ReportSpotTakenProps) {
   const [step, setStep] = useState<ReportStep>('idle');
-  const onReported = useCallback(
+  const onReported = useSettledReport({ onNoneFree, onSettled }, setStep);
+  const reporting = useSpotTakenReport(client, { sessionId: session.sessionId, spotNumber: session.spot.number }, onReported);
+  if (step !== 'confirming') {
+    return <ReportButton takesFocus={step === 'returned'} onPress={() => setStep('confirming')} />;
+  }
+  const keepSpot = () => {
+    reporting.clearProblem();
+    setStep('returned');
+  };
+  return <ConfirmReport spot={session.spot} reporting={reporting} onCancel={keepSpot} />;
+}
+
+function useSettledReport({ onNoneFree, onSettled }: Pick<ReportSpotTakenProps, 'onNoneFree' | 'onSettled'>, setStep: (step: ReportStep) => void) {
+  return useCallback(
     (response: SpotTakenResponse | null) => {
       if (response?.outcome === 'none-free') {
         onNoneFree();
@@ -61,13 +73,8 @@ export function ReportSpotTaken({ client, session, onNoneFree, onSettled }: Repo
       setStep('idle');
       onSettled();
     },
-    [onNoneFree, onSettled],
+    [onNoneFree, onSettled, setStep],
   );
-  const reporting = useSpotTakenReport(client, { sessionId: session.sessionId, spotNumber: session.spot.number }, onReported);
-  if (step !== 'confirming') {
-    return <ReportButton takesFocus={step === 'returned'} onPress={() => setStep('confirming')} />;
-  }
-  return <ConfirmReport spot={session.spot} reporting={reporting} onCancel={() => setStep('returned')} />;
 }
 
 function ReportButton({ takesFocus, onPress }: { readonly takesFocus: boolean; readonly onPress: () => void }) {

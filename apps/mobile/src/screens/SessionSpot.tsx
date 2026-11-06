@@ -45,7 +45,6 @@ function spotFocusKeyOf({ isNewSpot, spot, focusesArrival }: SpotFocus): string 
   return focusesArrival ? 'arrival' : null;
 }
 
-// The lead of a status that names the spot (« Nouvelle place : », « Garé en »); null for a status without the number.
 function spotLeadOf(state: EntrySessionState, isNewSpot: boolean): string | null {
   if (isNewSpot) {
     return i18n.t('session.spotTaken.newSpotLead');
@@ -65,7 +64,7 @@ interface SeenSpot {
 
 // The spot changed under a session waiting to park: a spot-taken report gave it another one. « Nouvelle place » stays
 // until the session changes state; a session that opens on its spot, or another session, shows it as usual.
-export function useNewSpot({ sessionId, state, spot }: CurrentParkingSession): boolean {
+function useNewSpot({ sessionId, state, spot }: CurrentParkingSession): boolean {
   const sessionKey = `${sessionId}:${state}`;
   const [seen, setSeen] = useState<SeenSpot>({ sessionKey, number: spot.number, isNew: false });
   const next = nextSeenSpot(seen, { sessionKey, number: spot.number, isNew: state === 'ENTRY_CONFIRMED' });
