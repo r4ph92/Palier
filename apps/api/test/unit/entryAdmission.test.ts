@@ -17,6 +17,7 @@ import { julie } from './fakeDriverRepository.ts';
 
 const julieAtEntreeDemo: EligibleEntry = {
   driverId: julie.id,
+  now: new Date('2026-11-05T12:00:00Z'),
   gate: { id: entreeDemo.id, lotId: entreeDemo.lotId },
   vehicle: { id: 'vehicle-julie', plate: 'ABC 123', needs: { isElectric: false, hasAccessiblePermit: false, isOversize: false } },
   payment: { customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },
@@ -51,7 +52,7 @@ describe('entry admission', () => {
     await admission.admit(julieAtEntreeDemo, log);
 
     expect(sessions.drafts).toEqual([
-      { driverId: julie.id, vehicleId: 'vehicle-julie', plate: 'ABC 123', needs: julieAtEntreeDemo.vehicle.needs, lotId: entreeDemo.lotId, entryGateId: entreeDemo.id, authorizedCents: 2500, pricing: julieAtEntreeDemo.pricing },
+      { driverId: julie.id, now: julieAtEntreeDemo.now, vehicleId: 'vehicle-julie', plate: 'ABC 123', needs: julieAtEntreeDemo.vehicle.needs, lotId: entreeDemo.lotId, entryGateId: entreeDemo.id, authorizedCents: 2500, pricing: julieAtEntreeDemo.pricing },
     ]);
     expect(payments.authorized).toEqual([
       { sessionId: fakeSessionId(1), customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },

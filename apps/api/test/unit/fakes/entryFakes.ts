@@ -1,6 +1,7 @@
 import type { EntryRefusalCode } from '@palier/shared-types';
 import { EntryAdmission } from '../../../src/domain/entries/EntryAdmission.ts';
 import { EntryEligibility } from '../../../src/domain/entries/EntryEligibility.ts';
+import { systemClock, type Clock } from '../../../src/domain/time/Clock.ts';
 import type { EntryPolicy } from '../../../src/domain/payments/EntryPolicy.ts';
 import type { EntryGateRepository } from '../../../src/domain/entries/EntryGateRepository.ts';
 import type { EntryLog } from '../../../src/domain/entries/EntryLog.ts';
@@ -11,6 +12,7 @@ import type { EntryRouteDependencies } from '../../../src/http/routes/entryRoute
 import type { FakeDriverRepository } from '../fakeDriverRepository.ts';
 import type { FakeVehicleRepository } from '../fakeVehicleRepository.ts';
 
+import { FakeSpotHoldRepository } from './fakeSpotHolds.ts';
 import { FakeEntryGateRepository, STRICT_POLICY } from './entryGateFakes.ts';
 import { FakeParkingSessionRepository, type Journal } from './fakeParkingSessions.ts';
 
@@ -78,10 +80,12 @@ interface FakeEntriesOptions {
   readonly vehicles: FakeVehicleRepository;
   readonly policy?: EntryPolicy;
   readonly gates?: EntryGateRepository;
+  readonly spotHolds?: FakeSpotHoldRepository;
+  readonly clock?: Clock;
   readonly hasPaymentAuthorizer?: boolean;
 }
 
-export function fakeEntries({ drivers, vehicles, policy, gates, hasPaymentAuthorizer = true }: FakeEntriesOptions): FakeEntries {
+export function fakeEntries({ drivers, vehicles, policy, gates, spotHolds = new FakeSpotHoldRepository(), clock = systemClock, hasPaymentAuthorizer = true }: FakeEntriesOptions): FakeEntries {
   const journal: Journal = [];
   const sessions = new FakeParkingSessionRepository(journal);
   const payments = new FakePaymentAuthorizer(journal);
@@ -91,9 +95,10 @@ export function fakeEntries({ drivers, vehicles, policy, gates, hasPaymentAuthor
     vehicles,
     drivers,
     policy: policy ?? STRICT_POLICY,
+    spotHolds,
   });
   const admission = new EntryAdmission({ sessions, payments: hasPaymentAuthorizer ? payments : null, gateCommander });
-  return { journal, sessions, payments, gateCommander, dependencies: { eligibility, admission, sessions } };
+  return { journal, sessions, payments, gateCommander, dependencies: { eligibility, admission, sessions, clock } };
 }
 
 export function silentLog(): EntryLog & { readonly warnings: unknown[]; readonly errors: unknown[] } {

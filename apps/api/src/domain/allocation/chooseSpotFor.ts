@@ -12,7 +12,7 @@ const standard: SpotGroup = (spot) => isInCategory(spot, 'standard');
 
 // Electric and accessible spots go only to a vehicle with that need, even when the spot has another flag too,
 // and an oversize vehicle fits only an oversize spot. Exported for the load script, which counts the spots a vehicle fits.
-export function spotFits(needs: VehicleNeeds, spot: FreeSpot): boolean {
+export function spotFits(needs: VehicleNeeds, spot: Pick<FreeSpot, 'isEv' | 'isAccessible' | 'isOversize'>): boolean {
   return (!spot.isEv || needs.isElectric) && (!spot.isAccessible || needs.hasAccessiblePermit) && (!needs.isOversize || spot.isOversize);
 }
 

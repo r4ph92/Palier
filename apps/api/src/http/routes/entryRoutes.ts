@@ -10,6 +10,7 @@ import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { ENTRY_LIMIT, ENTRY_WINDOW_MILLISECONDS } from '../../domain/entries/entryLimit.ts';
+import type { Clock } from '../../domain/time/Clock.ts';
 import { registerEntryStatusRoute } from './entryStatusRoute.ts';
 import { entryRequestSchema, entryResponseSchema } from '../schemas/entrySchemas.ts';
 
@@ -19,6 +20,8 @@ export interface EntryRouteDependencies {
   readonly eligibility: EntryEligibility;
   readonly admission: EntryAdmission;
   readonly sessions: ParkingSessionRepository;
+  // Read once per entry request, so the eligibility and the hold use see one instant.
+  readonly clock: Clock;
 }
 
 interface EnterRoute {
@@ -51,7 +54,7 @@ async function enter(request: FastifyRequest<EnterRoute>, reply: FastifyReply, {
     throw new EntryRefusedError('PAYMENTS_UNAVAILABLE');
   }
   const driver = signedInDriver(request);
-  const eligible = await entries.eligibility.check({ driverId: driver.id, qrContent: request.body.qrContent });
+  const eligible = await entries.eligibility.check({ driverId: driver.id, qrContent: request.body.qrContent, now: entries.clock() });
   if (!limiter.allow(driver.id)) {
     throw new EntryRefusedError('TOO_MANY_ENTRIES');
   }

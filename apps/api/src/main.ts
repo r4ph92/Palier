@@ -39,6 +39,7 @@ const driverRepository = new PostgresDriverRepository(connection.database);
 const vehicleRepository = new PostgresVehicleRepository(connection.database);
 const sessionTokenRepository = new PostgresSessionTokenRepository(connection.database);
 const openingWindow = openingWindowOf(environment.entryCancellation.confirmationWindowSeconds);
+const { testClock, clock } = composeClock(environment.testSignInEnabled);
 const entries = composeEntries({
   database: connection.database,
   stripeKey,
@@ -47,13 +48,13 @@ const entries = composeEntries({
   drivers: driverRepository,
   vehicles: vehicleRepository,
   openingWindow,
+  clock,
 });
 const entryCancellation = composeEntryCancellation(
   { openingWindow, cancellationPeriodSeconds: environment.entryCancellation.cancellationPeriodSeconds },
   connection.database,
   entries.payments,
 );
-const { testClock, clock } = composeClock(environment.testSignInEnabled);
 const holdExpiry = composeHoldExpiry({ clock, periodSeconds: environment.holdExpiryPeriodSeconds }, connection.database);
 const server = buildServer({
   repositories: {

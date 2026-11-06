@@ -5,3 +5,8 @@ export interface SpotHold {
   readonly lotName: string;
   readonly expiresAt: Date;
 }
+
+// From its expiry instant a hold is over: release refuses it and entry cannot use it (SQL: spotHoldEndedAt).
+export function hasSpotHoldEnded(spotHold: Pick<SpotHold, 'expiresAt'>, now: Date): boolean {
+  return spotHold.expiresAt <= now;
+}

@@ -1,7 +1,7 @@
 import type { SpotHoldRefusalCode } from '@palier/shared-types';
-import type { SpotHold } from '../../../src/domain/spotHolds/SpotHold.ts';
+import { hasSpotHoldEnded, type SpotHold } from '../../../src/domain/spotHolds/SpotHold.ts';
 import { SpotHoldRefusedError } from '../../../src/domain/spotHolds/SpotHoldRefusedError.ts';
-import type { SpotHoldDraft, SpotHoldExpiry, SpotHoldLot, SpotHoldRelease, SpotHoldRepository } from '../../../src/domain/spotHolds/SpotHoldRepository.ts';
+import type { SpotHoldDraft, SpotHoldExpiry, SpotHoldLot, SpotHoldRelease, SpotHoldRepository, UsableSpotHoldQuery } from '../../../src/domain/spotHolds/SpotHoldRepository.ts';
 import { GARAGE_ROY_ID } from '../../../src/seed/fixtures/garageRoy.ts';
 import { PARKING_DEMO_ID } from '../../../src/seed/fixtures/parkingDemo.ts';
 import { LAVOIE_ACCOUNT, PARKING_DEMO_POLICY } from './entryGateFakes.ts';
@@ -44,6 +44,16 @@ export class FakeSpotHoldRepository implements SpotHoldRepository {
   findOwnActiveSpotHold(driverId: string, spotHoldId: string): Promise<SpotHold | null> {
     const spotHold = this.#active.get(driverId);
     return Promise.resolve(spotHold?.id === spotHoldId ? spotHold : null);
+  }
+
+  hasUsableSpotHold({ driverId, lotId, now }: UsableSpotHoldQuery): Promise<boolean> {
+    const spotHold = this.#active.get(driverId);
+    return Promise.resolve(spotHold?.lotId === lotId && !hasSpotHoldEnded(spotHold, now));
+  }
+
+  // Seeds a hold already taken, as placeSpotHold would have left it.
+  seed(driverId: string, spotHold: SpotHold): void {
+    this.#active.set(driverId, spotHold);
   }
 
   findSpotHoldLot(lotId: string): Promise<SpotHoldLot | null> {

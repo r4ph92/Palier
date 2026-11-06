@@ -4,6 +4,8 @@ import type { VehicleNeeds } from '../vehicles/VehicleRepository.ts';
 
 export interface SessionDraft {
   readonly driverId: string;
+  // The API clock reading of the entry request, against which a spot hold is still running.
+  readonly now: Date;
   readonly vehicleId: string;
   readonly plate: string;
   readonly needs: VehicleNeeds;

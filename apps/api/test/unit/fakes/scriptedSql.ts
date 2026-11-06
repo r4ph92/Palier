@@ -16,6 +16,10 @@ export type StatementLabel =
   | 'release-spot-hold'
   | 'find-expired-hold-lots'
   | 'expire-spot-holds'
+  | 'read-held-spot'
+  | 'use-spot-hold'
+  | 'has-usable-spot-hold'
+  | 'assign-held-spot'
   | 'free-held-spot'
   | 'unknown';
 
@@ -26,7 +30,7 @@ export interface ExecutedStatement {
   readonly onTransaction: boolean;
 }
 
-type Rows = readonly Record<string, unknown>[];
+export type Rows = readonly Record<string, unknown>[];
 
 const dialect = new PgDialect();
 
@@ -35,6 +39,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
   ['lock-lot', /from parking_lot[\s\S]*for no key update/],
   ['read-active-session', /with active as/],
+  ['assign-held-spot', /state = 'HELD' for update skip locked/],
   ['claim-spot', /for update skip locked/],
   ['read-free-spots', /s\.state = 'AVAILABLE'/],
   ['read-active-spot-hold', /from \(select id, lot_id, expires_at from spot_hold/],
@@ -44,6 +49,9 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['release-spot-hold', /update spot_hold set status = 'RELEASED'/],
   ['find-expired-hold-lots', /select distinct lot_id from spot_hold/],
   ['expire-spot-holds', /update spot_hold set status = 'EXPIRED'/],
+  ['use-spot-hold', /update spot_hold set status = 'USED'/],
+  ['read-held-spot', /from \(select id, spot_id from spot_hold/],
+  ['has-usable-spot-hold', /select 1 from spot_hold/],
   ['free-held-spot', /update spot set/],
 ];
 

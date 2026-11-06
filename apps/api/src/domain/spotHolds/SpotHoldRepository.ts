@@ -24,10 +24,17 @@ export interface SpotHoldExpiry {
   readonly freed: number;
 }
 
+export interface UsableSpotHoldQuery {
+  readonly driverId: string;
+  readonly lotId: string;
+  readonly now: Date;
+}
+
 export interface SpotHoldRepository {
   findActiveSpotHold(driverId: string): Promise<SpotHold | null>;
   // Matches the id and the driver in one predicate: another driver's hold is indistinguishable from none.
   findOwnActiveSpotHold(driverId: string, spotHoldId: string): Promise<SpotHold | null>;
+  hasUsableSpotHold(query: UsableSpotHoldQuery): Promise<boolean>;
   findSpotHoldLot(lotId: string): Promise<SpotHoldLot | null>;
   // Under the lot lock; refuses with SpotHoldRefusedError: decideSpotHoldRequest, NO_SUITABLE_SPOT, HOLD_UNAVAILABLE on a lock timeout.
   placeSpotHold(draft: SpotHoldDraft): Promise<SpotHold>;

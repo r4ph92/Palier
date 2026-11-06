@@ -3,6 +3,7 @@ import { checkLotTerms, type LotTermsRefusal } from '../lots/lotTerms.ts';
 import type { EntryPolicy } from '../payments/EntryPolicy.ts';
 import { hasRoomForAnotherVehicle } from '../occupancy/hasRoomForAnotherVehicle.ts';
 import type { PricingPolicy } from '../pricing/PricingPolicy.ts';
+import type { SpotHoldRepository, UsableSpotHoldQuery } from '../spotHolds/SpotHoldRepository.ts';
 import type { EntryGate, EntryGateRepository } from './EntryGateRepository.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import { isSignedWith, readGateToken } from './gateToken.ts';
@@ -10,15 +11,18 @@ import { isSignedWith, readGateToken } from './gateToken.ts';
 export interface EntryEligibilityDependencies extends DriverPrerequisiteSources {
   readonly gates: EntryGateRepository;
   readonly policy: EntryPolicy;
+  readonly spotHolds: Pick<SpotHoldRepository, 'hasUsableSpotHold'>;
 }
 
 export interface EntryAttempt {
   readonly driverId: string;
   readonly qrContent: string;
+  readonly now: Date;
 }
 
 export interface EligibleEntry {
   readonly driverId: string;
+  readonly now: Date;
   readonly gate: { readonly id: string; readonly lotId: string };
   readonly vehicle: DriverPrerequisites['vehicle'];
   readonly payment: {
@@ -38,12 +42,14 @@ export class EntryEligibility {
     this.#dependencies = dependencies;
   }
 
-  async check({ driverId, qrContent }: EntryAttempt): Promise<EligibleEntry> {
+  async check({ driverId, qrContent, now }: EntryAttempt): Promise<EligibleEntry> {
     const gate = await this.#recognizedGate(qrContent);
     const pricing = this.#admittingLotPricing(gate);
+    await this.#requireRoom({ driverId, lotId: gate.lot.id, now }, gate);
     const prerequisites = await this.#driverPrerequisites(driverId);
     return {
       driverId,
+      now,
       gate: { id: gate.id, lotId: gate.lot.id },
       vehicle: prerequisites.vehicle,
       payment: {
@@ -77,10 +83,17 @@ export class EntryEligibility {
     if (gate.integrationKind !== 'SIMULATED') {
       throw new EntryRefusedError('GATE_UNAVAILABLE');
     }
-    if (!hasRoomForAnotherVehicle(gate.lot)) {
+    return terms.pricing;
+  }
+
+  // A live hold already counts in the lot's held spots: it is the driver's room, whatever else filled the lot.
+  async #requireRoom(holder: UsableSpotHoldQuery, gate: EntryGate): Promise<void> {
+    if (hasRoomForAnotherVehicle(gate.lot)) {
+      return;
+    }
+    if (!(await this.#dependencies.spotHolds.hasUsableSpotHold(holder))) {
       throw new EntryRefusedError('LOT_FULL');
     }
-    return terms.pricing;
   }
 
   async #driverPrerequisites(driverId: string): Promise<DriverPrerequisites> {
