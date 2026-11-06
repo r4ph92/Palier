@@ -34,7 +34,7 @@ export function CurrentParkingSessionScreen(props: CurrentParkingSessionScreenPr
   const colors = useColors();
   const { reading, progress, onRetry } = props;
   const arrival = useParkedArrival(reading.session);
-  const correction = useSpotCorrection();
+  const correction = useSpotCorrection(reading.session);
   const offline = reading.isStale ? <OfflineNotice message={offlineMessageOf(reading.session)} progress={progress} onRetry={onRetry} /> : null;
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>

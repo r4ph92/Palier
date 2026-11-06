@@ -1,3 +1,4 @@
+import type { CurrentParkingSession } from '@palier/shared-types';
 import { useState } from 'react';
 import { TextButton } from '../components/TextButton';
 import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
@@ -13,9 +14,15 @@ export interface SpotCorrection {
   cancel(): void;
 }
 
-// Held above the details, which the form unmounts while the driver corrects the spot.
-export function useSpotCorrection(): SpotCorrection {
+// Held above the details, which the form unmounts while the driver corrects the spot; another session, or the same one moved on, starts idle.
+export function useSpotCorrection({ sessionId, state }: CurrentParkingSession): SpotCorrection {
   const [step, setStep] = useState<CorrectionStep>('idle');
+  const sessionKey = `${sessionId}:${state}`;
+  const [stepSessionKey, setStepSessionKey] = useState(sessionKey);
+  if (sessionKey !== stepSessionKey) {
+    setStepSessionKey(sessionKey);
+    setStep('idle');
+  }
   return {
     isCorrecting: step === 'correcting',
     takesFocus: step === 'cancelled',
