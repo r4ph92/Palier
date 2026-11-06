@@ -53,7 +53,12 @@ export function SignedInTabs(props: SignedInTabsProps) {
 function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsProps, tabs: TabsController): TabScreensWithSession {
   const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
   const spotHold = useSpotHold(clients.spotHold);
-  const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: currentSession.refresh, onSubmissionEnded: spotHold.refreshHold });
+  // A cancelled entry gives the driver her hold back, so the hold is read again when an entry settles, not only when a scan ends.
+  const onEntrySettled = () => {
+    currentSession.refresh();
+    spotHold.refreshHold();
+  };
+  const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: onEntrySettled, onSubmissionEnded: spotHold.refreshHold });
   const gateScanner = useScannerGate(clients);
   const guidance = useSessionGuidance({ device, clients }, currentSession);
   const screens: TabScreens = {
