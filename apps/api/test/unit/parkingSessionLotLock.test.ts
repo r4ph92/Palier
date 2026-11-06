@@ -166,7 +166,19 @@ describe('opening an entry for a driver who holds a spot', () => {
     await openEntry(scripted);
 
     expect(scripted.statements.find(({ label }) => label === 'release-spot-hold')?.params).toEqual(['hold-1', draft.driverId]);
-    expect(scripted.statements.find(({ label }) => label === 'free-held-spot')?.params).toContain(NOW.toISOString());
+    expect(scripted.statements.find(({ label }) => label === 'free-held-spot')?.params).toEqual(['spot-B-2', NOW.toISOString()]);
+  });
+
+  it('rolls the entry back when the unfit hold read under the lock is no longer active', async () => {
+    const scripted = scriptedUnfitEntry('is_accessible').answer('release-spot-hold', []);
+
+    await expect(openEntry(scripted)).rejects.toThrow('was not active');
+  });
+
+  it('rolls the entry back when the unfit hold released by the entry had no held spot', async () => {
+    const scripted = scriptedUnfitEntry('is_accessible').answer('free-held-spot', []);
+
+    await expect(openEntry(scripted)).rejects.toThrow('was not held');
   });
 
   it('leaves the hold active when no fitting spot is free', async () => {

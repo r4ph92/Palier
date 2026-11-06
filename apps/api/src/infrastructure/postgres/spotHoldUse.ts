@@ -39,8 +39,11 @@ export async function consumeHeldSpot(tx: Executor, query: UsableSpotHoldQuery, 
 // The driver was seated elsewhere in this lot, so her guarantee ends: she must not count twice (decision 016).
 export async function releaseUnfitHold(tx: Executor, { driverId, lotId, now }: UsableSpotHoldQuery, held: HeldSpotRow): Promise<void> {
   const spotId = await markSpotHoldReleased(tx, { driverId, lotId, spotHoldId: held.hold_id, releasedAt: now });
-  if (spotId !== undefined) {
-    await freeHeldSpot(tx, spotId, now);
+  if (spotId === undefined) {
+    throw new Error(`The hold ${held.hold_id} read under the lot lock was not active: the entry is rolled back.`);
+  }
+  if (!(await freeHeldSpot(tx, spotId, now))) {
+    throw new Error(`The held spot ${spotId} of a released hold was not held: the entry is rolled back.`);
   }
 }
 
