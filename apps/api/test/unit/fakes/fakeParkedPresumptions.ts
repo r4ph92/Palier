@@ -1,6 +1,6 @@
 import type { EntrySessionState } from '@palier/shared-types';
 import {
-  presumptionOfUnchanged,
+  classifyRefusedSignal,
   type ParkedPresumption,
   type ParkedPresumptionRepository,
   type WalkingSignal,
@@ -36,7 +36,7 @@ export class FakeParkedPresumptions implements ParkedPresumptionRepository {
     const session = this.#sessions.get(sessionId);
     const owned = session?.driverId === driverId ? session : null;
     if (owned?.state !== 'ENTRY_CONFIRMED') {
-      return Promise.resolve(presumptionOfUnchanged(owned));
+      return Promise.resolve(classifyRefusedSignal(owned));
     }
     this.writes += 1;
     owned.state = 'PARKED_PRESUMED';

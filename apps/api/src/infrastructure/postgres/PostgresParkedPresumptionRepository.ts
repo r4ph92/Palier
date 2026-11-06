@@ -1,10 +1,10 @@
 import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
 import {
-  presumptionOfUnchanged,
+  classifyRefusedSignal,
   type ParkedPresumption,
   type ParkedPresumptionRepository,
-  type UnchangedSession,
+  type SessionAfterRefusal,
   type WalkingSignal,
 } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import type { Database } from './database.ts';
@@ -13,7 +13,7 @@ interface ParkedAtRow extends Record<string, unknown> {
   readonly parked_at: Date | string;
 }
 
-interface UnchangedSessionRow extends Record<string, unknown> {
+interface SessionAfterRefusalRow extends Record<string, unknown> {
   readonly state: EntrySessionState;
   readonly parked_at: Date | string | null;
 }
@@ -31,7 +31,7 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
     if (parkedAt !== null) {
       return { outcome: 'presumed', parkedAt };
     }
-    return presumptionOfUnchanged(await this.#readUnchanged(signal));
+    return classifyRefusedSignal(await this.#readSessionAfterRefusal(signal));
   }
 
   // The device clock is trusted only between the loop confirmation and the database clock.
@@ -44,8 +44,8 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
     return row === undefined ? null : new Date(row.parked_at);
   }
 
-  async #readUnchanged({ sessionId, driverId }: WalkingSignal): Promise<UnchangedSession | null> {
-    const [row] = await this.#database.execute<UnchangedSessionRow>(sql`
+  async #readSessionAfterRefusal({ sessionId, driverId }: WalkingSignal): Promise<SessionAfterRefusal | null> {
+    const [row] = await this.#database.execute<SessionAfterRefusalRow>(sql`
       select state, parked_at from parking_session where id = ${sessionId} and user_id = ${driverId}`);
     if (row === undefined) {
       return null;

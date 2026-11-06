@@ -17,14 +17,14 @@ export interface ParkedPresumptionRepository {
   presume(signal: WalkingSignal): Promise<ParkedPresumption>;
 }
 
-export interface UnchangedSession {
+export interface SessionAfterRefusal {
   readonly state: EntrySessionState;
   readonly parkedAt: Date | null;
 }
 
 // Why a walking signal changed nothing. ENTRY_CONFIRMED here means the loop committed after the signal was refused:
-// the entry was not confirmed when the signal arrived, and the device sends it again.
-export function presumptionOfUnchanged(session: UnchangedSession | null): ParkedPresumption {
+// the entry was not confirmed when the signal arrived, so the app has to report a later walk.
+export function classifyRefusedSignal(session: SessionAfterRefusal | null): ParkedPresumption {
   if (session === null) {
     return { outcome: 'not-found' };
   }

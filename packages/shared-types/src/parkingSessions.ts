@@ -50,7 +50,6 @@ export interface BackdateParkingSessionRequest {
   readonly enteredAt: string;
 }
 
-// Q36: the app reports the instant the device saw the driver walk away from the car.
 export interface ParkedPresumptionRequest {
   readonly detectedAt: string;
 }

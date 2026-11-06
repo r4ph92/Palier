@@ -7,6 +7,9 @@ import { entrySessionParametersSchema, entryStatusResponseSchema, type EntrySess
 
 const NOT_FOUND = 404;
 
+// One body for an unknown id and another driver's session, on every route that takes a session id.
+export const SESSION_NOT_FOUND_BODY = { statusCode: NOT_FOUND, error: 'SESSION_NOT_FOUND', message: 'No such entry.' } as const;
+
 interface StatusRoute {
   readonly Params: EntrySessionParameters;
 }
@@ -22,7 +25,7 @@ export function registerEntryStatusRoute(
   server.get<StatusRoute>('/v1/entries/:sessionId', { onRequest, schema }, async (request, reply) => {
     const status = await sessions?.findForUser(request.params.sessionId, signedInDriver(request).id);
     if (status === undefined || status === null) {
-      return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'SESSION_NOT_FOUND', message: 'No such entry.' });
+      return reply.status(NOT_FOUND).send(SESSION_NOT_FOUND_BODY);
     }
     return {
       sessionId: status.id,

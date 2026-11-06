@@ -12,7 +12,8 @@ function describeConfidence(confidence: ParkedConfidence): string {
 export const describeCommand = {
   startMonitoring: (uuid: string, major: number): string => `startMonitoring uuid=${String(uuid).slice(0, UUID_PREFIX_LENGTH)} major=${major}`,
   stopMonitoring: (): string => 'stopMonitoring',
-  keepAlive: (until: number, isStop: boolean): string => `keepAlive until=${formatLogTime(new Date(until))}${isStop ? ' (arrêt)' : ''}`,
+  keepAlive: (until: number): string => `keepAlive until=${formatLogTime(new Date(until))}`,
+  keepAliveStop: (until: number): string => `keepAlive until=${formatLogTime(new Date(until))} (arrêt)`,
   flushOfflineQueue: (): string => 'flushOfflineQueue',
 };
 

@@ -21,9 +21,8 @@ export class SimulatedPositioningModule implements PositioningModule {
     this.journal.append(describeCommand.stopMonitoring());
   }
 
-  // The contract has no stop command: a keep-alive until an instant already reached ends it.
   keepAlive(until: number): void {
-    this.journal.append(describeCommand.keepAlive(until, until <= this.now()));
+    this.journal.append(until <= this.now() ? describeCommand.keepAliveStop(until) : describeCommand.keepAlive(until));
   }
 
   flushOfflineQueue(): void {

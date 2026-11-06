@@ -6,6 +6,7 @@ import { TabBar, type Tab } from '../components/TabBar';
 import { usePendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { useTabs, type TabsController } from '../navigation/useTabs';
 import { useCurrentParkingSession } from '../parkingSessions/useCurrentParkingSession';
+import { useParkedPresumption } from '../parkingSessions/useParkedPresumption';
 import { useSpotHold } from '../spotHolds/useSpotHold';
 import { AccountTab } from './AccountTab';
 import { AutomaticDetectionNotice } from './AutomaticDetectionNotice';
@@ -53,7 +54,8 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
   const spotHold = useSpotHold(clients.spotHold);
   const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: currentSession.refresh, onSubmissionEnded: spotHold.refreshHold });
   const gateScanner = useScannerGate(clients);
-  const guidance = useParkingGuidance({ positioning: device.positioning, client: clients.parkingSession }, currentSession);
+  useParkedPresumption({ positioning: device.positioning, client: clients.parkingSession }, currentSession);
+  const guidance = useParkingGuidance(device.positioning, currentSession.state);
   const screens: TabScreens = {
     home: { firstName, lotsClient: clients.lots, locationClient: clients.location, spotHold },
     scan: {

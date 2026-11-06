@@ -3,12 +3,12 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { ParkedPresumption, ParkedPresumptionRepository } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
+import { SESSION_NOT_FOUND_BODY } from './entryStatusRoute.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { entrySessionParametersSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
 import { parkedPresumptionRequestSchema, parkedPresumptionResponseSchema } from '../schemas/parkingSessionSchemas.ts';
 
 const BAD_REQUEST = 400;
-const NOT_FOUND = 404;
 const CONFLICT = 409;
 
 interface ParkedRoute {
@@ -22,14 +22,13 @@ interface Refusal {
   readonly message: string;
 }
 
-// Same body as GET /v1/entries/:sessionId, so another driver's session cannot be told from an unknown id.
+// The 404 is GET /v1/entries/:sessionId's, so another driver's session cannot be told from an unknown id.
 const REFUSALS: Record<Exclude<ParkedPresumption['outcome'], 'presumed' | 'already'>, Refusal> = {
-  'not-found': { statusCode: NOT_FOUND, error: 'SESSION_NOT_FOUND', message: 'No such entry.' },
+  'not-found': SESSION_NOT_FOUND_BODY,
   'entry-not-confirmed': { statusCode: CONFLICT, error: 'ENTRY_NOT_CONFIRMED', message: 'The entry loop has not confirmed this session yet.' },
   closed: { statusCode: CONFLICT, error: 'SESSION_CLOSED', message: 'This session is closed.' },
 };
 
-// The app sends this when the device sees the driver walk away from the car (Q36, decision 019).
 export function registerParkedPresumptionRoute(server: FastifyInstance, driverAccess: DriverAccess, presumptions: ParkedPresumptionRepository): void {
   const onRequest = consentedDriverGuards(driverAccess);
   const schema = { params: entrySessionParametersSchema, body: parkedPresumptionRequestSchema, response: { 200: parkedPresumptionResponseSchema } };

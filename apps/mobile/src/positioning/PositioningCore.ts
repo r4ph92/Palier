@@ -27,6 +27,11 @@ export class PositioningCore {
     this.module.keepAlive(until);
   }
 
+  // The bridge contract has no stop command: a keep-alive until an instant already reached ends it (docs/pont-natif.md).
+  stopKeepAliveAt(instant: number): void {
+    this.module.keepAlive(instant);
+  }
+
   flushOfflineQueue(): void {
     this.module.flushOfflineQueue();
   }
