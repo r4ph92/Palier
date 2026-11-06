@@ -41,7 +41,11 @@ Le contrat n'a pas de commande d'arrêt : `keepAlive(until)` avec un instant dé
 
 En build de développement (`__DEV__`, Expo Go), **Compte > Développeur > Signaux simulés** remplace le module natif par `SimulatedPositioningModule` (`apps/mobile/src/dev/`). Chaque bouton émet l'événement correspondant par la même interface que le module natif ; les commandes envoyées par le cœur apparaissent dans le journal (100 entrées, la plus récente en haut).
 
-« Réseau coupé » et « Réseau rétabli » sont hors contrat natif : ils n'écrivent qu'une ligne dans le journal (`setConnectivity`) ; l'état de connectivité sera ajouté avec la gestion hors ligne (P34, #26).
+« Réseau coupé » et « Réseau rétabli » sont hors contrat natif : ils écrivent une ligne dans le journal (`setConnectivity`) et changent l'état de connectivité du cœur (`PositioningCore.connectivity`).
+
+## File hors ligne (#26)
+
+Quand le conducteur s'éloigne de sa voiture réseau coupé, ou que l'API est injoignable, l'application garde le signal « Stationné » avec l'instant réel de la marche (`ParkedSignalQueue`, une entrée par session, conservée dans le trousseau d'iOS). Elle l'envoie avec cet instant, et non celui de l'envoi, au retour du réseau, au `flushOfflineQueue()` ou au prochain lancement ; la route `POST /v1/entries/:sessionId/parked` répond 200 à une répétition sans rien changer. L'écran de session affiche « Hors ligne — 1 signal en attente » puis, 5 secondes, « 1 signal envoyé ».
 
 Les builds de production exécutent `NullPositioningModule` tant que les modules natifs iOS et Android (#19, #20) n'existent pas.
 

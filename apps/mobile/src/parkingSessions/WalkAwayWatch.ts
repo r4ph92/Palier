@@ -1,12 +1,14 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
 import { PalierUnauthorizedError } from '../api/AuthClient';
 import { PalierUnreachableError } from '../api/LotsClient';
-import type { ParkingSessionClient } from '../api/ParkingSessionClient';
+import type { DetectedWalk, ParkingSessionClient } from '../api/ParkingSessionClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
 import { isWalkedAwayState } from '@palier/shared-types/entries';
+import type { ConnectivityMonitor } from '../positioning/ConnectivityMonitor';
 import type { AisleFollower } from '../positioning/AisleFollower';
 import type { PositioningCore } from '../positioning/PositioningCore';
 import type { ParkedConfidence, PositioningListener } from '../positioning/PositioningModule';
+import type { ParkedSignalQueue, PendingWalk } from './ParkedSignalQueue';
 
 export interface LatestSession {
   readonly session: CurrentParkingSession | null;
@@ -19,6 +21,8 @@ export interface WalkAwayContext {
   readonly client: ParkingSessionClient;
   readonly latest: () => LatestSession;
   readonly aisles: AisleFollower;
+  readonly queue: ParkedSignalQueue;
+  readonly connectivity: ConnectivityMonitor;
 }
 
 interface Walk {
@@ -35,9 +39,15 @@ export class WalkAwayWatch {
   #isSending = false;
   #isReported = false;
   #isActive = true;
+  readonly #stopListening: readonly (() => void)[];
 
   constructor(context: WalkAwayContext) {
     this.#context = context;
+    this.#stopListening = [
+      context.connectivity.subscribe((connectivity) => connectivity === 'online' && void this.flush()),
+      context.positioning.onFlushRequested(() => void this.flush()),
+    ];
+    void context.queue.ready().then(() => this.flush());
     this.listener = {
       onAisleChanged: () => undefined,
       onParkedDetected: (confidence, detectedAt) => void this.#onWalk({ confidence, detectedAt }),
@@ -48,12 +58,51 @@ export class WalkAwayWatch {
 
   stop(): void {
     this.#isActive = false;
+    this.#stopListening.forEach((stopListening) => stopListening());
+  }
+
+  // Sends the walk kept while the network was down, with the instant the driver walked away, not the instant of the send.
+  async flush(): Promise<void> {
+    const { queue, connectivity, sessionId } = this.#context;
+    const walk = queue.walkFor(sessionId);
+    if (walk === undefined || connectivity.current === 'offline' || this.#isSending || this.#isReported || !this.#isActive) {
+      return;
+    }
+    const outcome = await this.#report(walk);
+    if (outcome === 'unreachable') {
+      return;
+    }
+    if (outcome === 'accepted') {
+      queue.announceSent(1);
+      this.#settle(walk);
+    }
   }
 
   async #onWalk(walk: Walk): Promise<void> {
-    if (!this.#isReportable(walk) || !(await this.#report(walk))) {
+    if (!this.#isReportable(walk)) {
       return;
     }
+    const { queue, connectivity, sessionId } = this.#context;
+    await queue.ready();
+    if (queue.walkFor(sessionId) !== undefined) {
+      // The first walk is already kept and says better when the driver left: send that one once the network allows it.
+      return this.flush();
+    }
+    const pending = this.#pendingWalk(walk);
+    const outcome = connectivity.current === 'offline' ? 'unreachable' : await this.#report(pending);
+    if (outcome === 'unreachable') {
+      await queue.add(pending);
+    } else if (outcome === 'accepted') {
+      this.#settle(walk);
+    }
+  }
+
+  #pendingWalk({ detectedAt }: Walk): PendingWalk {
+    const { sessionId, aisles } = this.#context;
+    return { sessionId, detectedAt, aisleMinor: aisles.currentFor(sessionId)?.beaconMinor ?? null };
+  }
+
+  #settle(walk: Pick<Walk, 'detectedAt'>): void {
     try {
       this.#settleAccepted(walk);
     } catch (error) {
@@ -70,23 +119,36 @@ export class WalkAwayWatch {
   }
 
   // Q36: Palier presumes the assigned spot for a walk in its aisle or before any aisle was seen, and asks where
-  // the car is for a walk in another aisle. A refused or lost signal changes nothing: the offline queue (#26) will send it again.
-  async #report(walk: Walk): Promise<boolean> {
+  // the car is for a walk in another aisle. A lost signal is kept by the queue and sent again when the network is back;
+  // a refusal changes nothing and the walk is dropped, since sending it again would be refused the same way.
+  async #report({ detectedAt, aisleMinor }: DetectedWalk): Promise<'accepted' | 'unreachable' | 'refused'> {
     this.#isSending = true;
-    const aisle = this.#context.aisles.currentFor(this.#context.sessionId);
     try {
-      await this.#context.client.reportParked(this.#context.sessionId, { detectedAt: walk.detectedAt, aisleMinor: aisle?.beaconMinor ?? null });
+      await this.#context.client.reportParked(this.#context.sessionId, {
+        detectedAt,
+        aisleMinor,
+      });
       this.#isReported = true;
-      return true;
+      await this.#context.queue.remove(this.#context.sessionId);
+      return 'accepted';
     } catch (error) {
       logUnexpectedFailure(error);
-      return false;
+      return await this.#outcomeAfter(error);
     } finally {
       this.#isSending = false;
     }
   }
 
-  #settleAccepted(walk: Walk): void {
+  // Palier refused the walk: sending it again would be refused the same way, so it leaves the queue.
+  async #outcomeAfter(error: unknown): Promise<'refused' | 'unreachable'> {
+    if (!(error instanceof PalierRejectedError)) {
+      return 'unreachable';
+    }
+    await this.#context.queue.remove(this.#context.sessionId);
+    return 'refused';
+  }
+
+  #settleAccepted(walk: Pick<Walk, 'detectedAt'>): void {
     if (!this.#isActive) {
       return;
     }

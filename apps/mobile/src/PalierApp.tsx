@@ -8,6 +8,7 @@ import type { CreateSignedInClients, SignedInClients } from './api/SignedInClien
 import type { TokenStore } from './auth/TokenStore';
 import { useSession, type SessionController, type SessionState } from './auth/useSession';
 import { ErrorState } from './components/ErrorState';
+import { memoryQueueStorage, ParkedSignalQueue } from './parkingSessions/ParkedSignalQueue';
 import { nullPositioningCore } from './positioning/nullPositioningCore';
 import type { PositioningCore } from './positioning/PositioningCore';
 import type { DeveloperEntry } from './screens/DeveloperEntry';
@@ -26,10 +27,12 @@ export interface PalierAppProps {
   readonly createSignedInClients: CreateSignedInClients;
   readonly developerEntry?: DeveloperEntry | undefined;
   readonly positioning?: PositioningCore | undefined;
+  readonly parkedSignals?: ParkedSignalQueue | undefined;
 }
 
 export function PalierApp(props: PalierAppProps) {
   const [updateRequired, setUpdateRequired] = useState(false);
+  const [fallbackSignals] = useState(() => new ParkedSignalQueue(memoryQueueStorage()));
   useEffect(() => onUpdateRequired(() => setUpdateRequired(true)), []);
   const session = useSession(props.authClient, props.tokenStore);
   const { state } = session;
@@ -44,7 +47,7 @@ export function PalierApp(props: PalierAppProps) {
     case 'signedOut':
       return <SignInScreen testSignInEnabled={props.testSignInEnabled} authClient={props.authClient} onSignIn={session.signIn} />;
     case 'signedIn':
-      return <SignedInApp signedIn={state} session={session} createClients={props.createSignedInClients} device={deviceOf(props)} />;
+      return <SignedInApp signedIn={state} session={session} createClients={props.createSignedInClients} device={deviceOf(props, fallbackSignals)} />;
   }
 }
 
@@ -55,8 +58,8 @@ interface SignedInAppProps {
   readonly device: DeviceTools;
 }
 
-function deviceOf({ developerEntry, positioning }: PalierAppProps): DeviceTools {
-  return { developerEntry, positioning: positioning ?? nullPositioningCore };
+function deviceOf({ developerEntry, positioning, parkedSignals }: PalierAppProps, fallbackSignals: ParkedSignalQueue): DeviceTools {
+  return { developerEntry, positioning: positioning ?? nullPositioningCore, parkedSignals: parkedSignals ?? fallbackSignals };
 }
 
 function SignedInApp({ signedIn, session, createClients, device }: SignedInAppProps) {

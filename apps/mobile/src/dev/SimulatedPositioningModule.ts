@@ -1,6 +1,6 @@
 import type { ParkedConfidence, PositioningListener, PositioningModule } from '../positioning/PositioningModule';
 import { describeCommand, describeConnectivity } from './describeSignal';
-import type { Connectivity } from './Connectivity';
+import type { Connectivity } from '../positioning/Connectivity';
 import type { SignalJournal } from './SignalJournal';
 
 export class SimulatedPositioningModule implements PositioningModule {

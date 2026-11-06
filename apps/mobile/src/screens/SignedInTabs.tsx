@@ -7,12 +7,14 @@ import { usePendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { useTabs, type TabsController } from '../navigation/useTabs';
 import { useCurrentParkingSession, type CurrentParkingSessionController } from '../parkingSessions/useCurrentParkingSession';
 import { useParkedPresumption } from '../parkingSessions/useParkedPresumption';
+import { useParkedSignalBanner } from '../parkingSessions/useParkedSignalBanner';
 import { useAisleFollower } from '../positioning/useAisleFollower';
 import { useSpotHold, type SpotHoldController } from '../spotHolds/useSpotHold';
 import { AccountTab } from './AccountTab';
 import { AutomaticDetectionNotice } from './AutomaticDetectionNotice';
 import type { DeviceTools } from './DeviceTools';
 import { HomeScreen } from './HomeScreen';
+import { ParkedSignalNotice } from './ParkedSignalNotice';
 import { ScannerGate } from './ScannerGate';
 import { ScanTab, scanTabLabels } from './ScanTab';
 import { useParkingGuidance } from './useParkingGuidance';
@@ -50,6 +52,11 @@ export function SignedInTabs(props: SignedInTabsProps) {
   );
 }
 
+function signOutForgettingWalks(device: DeviceTools, onSignOut: () => void): void {
+  void device.parkedSignals.clear();
+  onSignOut();
+}
+
 function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsProps, tabs: TabsController): TabScreensWithSession {
   const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
   const spotHold = useSpotHold(clients.spotHold);
@@ -65,7 +72,7 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
       pendingEntry,
       aside: { detectionNotice: <AutomaticDetectionNotice location={clients.backgroundLocation} />, guidance },
     },
-    account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut },
+    account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut: () => signOutForgettingWalks(device, onSignOut) },
   };
   return { currentSession, screens };
 }
@@ -84,8 +91,15 @@ function useSessionGuidance({ device, clients }: Pick<SignedInTabsProps, 'device
   const { state, refresh } = currentSession;
   const session = state.status === 'current' ? state.session : null;
   const aisles = useAisleFollower(device.positioning, session);
-  useParkedPresumption({ positioning: device.positioning, client: clients.parkingSession, aisles }, session, refresh);
-  return useParkingGuidance(device.positioning, aisles, session);
+  useParkedPresumption({ positioning: device.positioning, client: clients.parkingSession, aisles, queue: device.parkedSignals }, session, refresh);
+  const banner = useParkedSignalBanner(device.parkedSignals, device.positioning.connectivity);
+  const guidance = useParkingGuidance(device.positioning, aisles, session);
+  return (
+    <>
+      <ParkedSignalNotice banner={banner} />
+      {guidance}
+    </>
+  );
 }
 
 function scanTabActions(clients: SignedInClients, tabs: TabsController): ScanTabActions {

@@ -13,7 +13,7 @@ export function createSimulatedToolkit(now: () => number): DeveloperToolkit {
 
   function bind(core: PositioningCore): DeveloperEntry {
     core.subscribe(recordEvents(journal));
-    const signals = signalActions(simulator);
+    const signals = signalActions(simulator, core);
     const commands = commandActions(core, now);
     return {
       label: 'Développeur',
