@@ -2,7 +2,8 @@ import type { AssignedSpot, CurrentParkingSession, PlanAisle } from '@palier/sha
 import { StyleSheet, Text, View } from 'react-native';
 import { useAnnouncement } from '../components/useAnnouncement';
 import { i18n } from '../i18n/i18n';
-import { aisleSentence, unbrokenSpotNumber } from '../parkingSessions/parkingGuidance';
+import { aisleSentence } from '../parkingSessions/parkingGuidance';
+import { unbrokenSpotNumber } from '../spots/spotNumber';
 import { planGeometryOf } from '../parkingSessions/planGeometry';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';

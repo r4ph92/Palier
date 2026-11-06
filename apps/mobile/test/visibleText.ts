@@ -1,5 +1,5 @@
 import { getDefaultNormalizer } from '@testing-library/react-native';
-import { WORD_JOINER } from '../src/components/SpotLine';
+import { WORD_JOINER } from '../src/spots/spotNumber';
 import { NARROW_NO_BREAK_SPACE, NO_BREAK_SPACE } from '../src/i18n/spaces';
 
 const NO_BREAK_SPACES = new RegExp(`[${NO_BREAK_SPACE}${NARROW_NO_BREAK_SPACE}]`, 'g');

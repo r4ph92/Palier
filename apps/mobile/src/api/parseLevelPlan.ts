@@ -1,5 +1,6 @@
 import type { AisleRectangle, LevelPlan, PlanAisle } from '@palier/shared-types';
 import { asRecord } from './asRecord';
+import { isNonNegativeInteger } from './isNonNegativeInteger';
 
 // The plan only guides: anything unexpected reads as no plan, never as a session Palier could not read.
 export function parseLevelPlan(candidate: unknown): LevelPlan | null {
@@ -11,21 +12,17 @@ export function parseLevelPlan(candidate: unknown): LevelPlan | null {
 }
 
 export function parseBeaconMajor(candidate: unknown): number | null {
-  return isBeaconNumber(candidate) ? candidate : null;
+  return isNonNegativeInteger(candidate) ? candidate : null;
 }
 
 function isPlanAisle(candidate: unknown): candidate is PlanAisle {
   const { code, beaconMinor, rectangle } = asRecord(candidate);
-  return typeof code === 'string' && isBeaconNumber(beaconMinor) && (rectangle === null || isRectangle(rectangle));
+  return typeof code === 'string' && isNonNegativeInteger(beaconMinor) && (rectangle === null || isRectangle(rectangle));
 }
 
 function isRectangle(candidate: unknown): candidate is AisleRectangle {
   const { x, y, width, height } = asRecord(candidate);
   return [x, y].every(isPosition) && [width, height].every(isLength);
-}
-
-function isBeaconNumber(candidate: unknown): candidate is number {
-  return Number.isSafeInteger(candidate) && (candidate as number) >= 0;
 }
 
 function isPosition(candidate: unknown): candidate is number {

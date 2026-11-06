@@ -2,13 +2,11 @@ import type { AssignedSpot } from '@palier/shared-types';
 import type { Ref } from 'react';
 import { StyleSheet, Text, View, type HostInstance } from 'react-native';
 import { i18n } from '../i18n/i18n';
+import { unbrokenSpotNumber } from '../spots/spotNumber';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 import { StateMark } from './StateMark';
-
-// After the hyphen of a spot number, so « A-1 » never splits across two lines; it is invisible and not spoken.
-export const WORD_JOINER = '\u2060';
 
 export function spotLabel(spot: AssignedSpot, lead = ''): string {
   return `${lead}${spot.number}${spotPlace(spot)}`;
@@ -29,7 +27,7 @@ export function SpotLine({ spot, lead = '' }: SpotLineProps) {
   return (
     <Text style={[typography.spotLine, { color: colors.ink }]}>
       {lead}
-      <Text style={typography.spotNumber}>{spot.number.replaceAll('-', `-${WORD_JOINER}`)}</Text>
+      <Text style={typography.spotNumber}>{unbrokenSpotNumber(spot)}</Text>
       {spotPlace(spot)}
     </Text>
   );

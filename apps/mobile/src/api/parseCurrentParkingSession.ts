@@ -1,6 +1,7 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
 import { ACTIVE_ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import { isInstant } from './isInstant';
+import { isNonNegativeInteger } from './isNonNegativeInteger';
 import { PalierUnreachableError } from './LotsClient';
 import { isSpot } from './parseEntry';
 import { parseBeaconMajor, parseLevelPlan } from './parseLevelPlan';
@@ -32,10 +33,6 @@ function isCurrentParkingSession(candidate: unknown): candidate is CurrentParkin
     typeof lotName === 'string' &&
     isSpot(spot) &&
     isInstant(enteredAt) &&
-    [elapsedMinutes, amountCents, dailyCapCents].every(isCount)
+    [elapsedMinutes, amountCents, dailyCapCents].every(isNonNegativeInteger)
   );
-}
-
-function isCount(candidate: unknown): candidate is number {
-  return Number.isSafeInteger(candidate) && (candidate as number) >= 0;
 }

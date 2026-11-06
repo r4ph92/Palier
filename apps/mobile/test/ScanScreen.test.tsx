@@ -1,7 +1,8 @@
 import { screen, userEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { applyLanguage, i18n } from '../src/i18n/i18n';
-import { spotLabel, WORD_JOINER } from '../src/components/SpotLine';
+import { spotLabel } from '../src/components/SpotLine';
+import { WORD_JOINER } from '../src/spots/spotNumber';
 import { ENTREE_DEMO_QR, FakeEntryClient, spotA1 } from './fakeEntryClient';
 import { openScanner, scan } from './renderScanScreen';
 import { visibleText } from './visibleText';

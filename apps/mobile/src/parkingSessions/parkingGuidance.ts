@@ -1,5 +1,4 @@
 import type { AssignedSpot, PlanAisle } from '@palier/shared-types';
-import { WORD_JOINER } from '../components/SpotLine';
 import { i18n } from '../i18n/i18n';
 
 // Once an aisle is seen: whether the driver is in the right one.
@@ -14,8 +13,4 @@ export function aisleSentence(spot: AssignedSpot, currentAisle: PlanAisle): stri
 export function planImageLabel(spot: AssignedSpot, currentAisle: PlanAisle | null): string {
   const drawing = i18n.t('session.plan.imageLabel', { level: spot.levelCode, aisle: spot.aisleCode, spot: spot.number });
   return currentAisle === null ? drawing : `${drawing}${i18n.t('session.plan.imageHere', { aisle: currentAisle.code })}`;
-}
-
-export function unbrokenSpotNumber(spot: AssignedSpot): string {
-  return spot.number.replaceAll('-', `-${WORD_JOINER}`);
 }
