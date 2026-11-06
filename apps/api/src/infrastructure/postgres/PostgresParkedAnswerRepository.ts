@@ -70,7 +70,7 @@ function confirmedSpotOf({ confirmedSpot }: AnsweringSession): AssignedSpot {
 }
 
 async function placeCar(tx: Transaction, answer: SpotAnswer, lotId: string): Promise<ParkedAnswer> {
-  const spot = await lockAnsweredSpot(tx, lotId, answer.spotNumber);
+  const spot = await lockAnsweredSpot(tx, { lotId, spotNumber: answer.spotNumber });
   if (spot === null) {
     return { outcome: 'unknown-spot' };
   }

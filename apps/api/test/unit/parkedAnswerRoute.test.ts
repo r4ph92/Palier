@@ -98,16 +98,30 @@ describe('POST /v1/entries/:sessionId/spot (story #21)', () => {
     expect(parkedAnswers.spotOf('B-3')).toEqual({ state: 'AVAILABLE', needsCheck: false });
   });
 
-  it.each([
-    ['b3', 'B-3'],
-    [' b – 3 ', 'B-3'],
-  ])('reads « %s » as %s', async (typed, normalized) => {
+  it.each(['b3', 'B 3', ' b – 3 ', 'B—3'])('places Julie in B-3 when she types « %s »', async (typed) => {
     const { answer, parkedAnswers } = await julieAskedWhereParked();
 
     const response = await answer(typed);
 
     expect(response.statusCode).toBe(200);
-    expect(parkedAnswers.answeredNumbers).toEqual([normalized]);
+    expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toMatchObject({ confirmedSpotNumber: 'B-3' });
+  });
+
+  it('keeps « B-03 » unknown: a zero is part of the painted number', async () => {
+    const { answer } = await julieAskedWhereParked();
+
+    expect((await answer('B-03')).json()).toEqual(UNKNOWN_SPOT_BODY);
+  });
+
+  // The spot number is free text painted on the ground (docs/02), not bound to the seed's « B-3 » shape.
+  it.each(['P1-12', 'B12', 'B-7a'])('places Julie in « %s » when she sends the number exactly as the free list showed it', async (paintedNumber) => {
+    const { answer, parkedAnswers } = await julieAskedWhereParked();
+    parkedAnswers.setSpot(paintedNumber, { state: 'AVAILABLE', needsCheck: false });
+
+    const response = await answer(paintedNumber);
+
+    expect(response.statusCode).toBe(200);
+    expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toMatchObject({ state: 'PARKED_CONFIRMED', confirmedSpotNumber: paintedNumber });
   });
 
   it('answers the first spot again, and writes nothing, when Julie answers twice', async () => {

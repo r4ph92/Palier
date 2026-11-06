@@ -1,4 +1,5 @@
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
+import { canonicalSpotNumber } from '@palier/shared-types/spotNumber';
 import {
   decideSessionAnswer,
   decideSpotAnswer,
@@ -72,9 +73,10 @@ export class FakeParkedAnswers implements ParkedAnswerRepository {
     return this.#placeCar(session, spotNumber);
   }
 
-  #placeCar(session: StoredAnsweringSession, spotNumber: string): ParkedAnswer {
-    const spot = this.#spots.get(spotNumber);
-    if (spot === undefined) {
+  #placeCar(session: StoredAnsweringSession, typedNumber: string): ParkedAnswer {
+    const spotNumber = this.#paintedNumberOf(typedNumber);
+    const spot = spotNumber === undefined ? undefined : this.#spots.get(spotNumber);
+    if (spotNumber === undefined || spot === undefined) {
       return { outcome: 'unknown-spot' };
     }
     const decision = decideSpotAnswer(spot.state);
@@ -85,6 +87,14 @@ export class FakeParkedAnswers implements ParkedAnswerRepository {
     Object.assign(spot, { state: 'OCCUPIED', needsCheck: false });
     Object.assign(session, { state: 'PARKED_CONFIRMED', confirmedSpotNumber: spotNumber, answeredAt: new Date() });
     return { outcome: 'confirmed', spot: labelOf(spotNumber) };
+  }
+
+  // Exact match first, then the same number without case, spaces or dashes, like the repository.
+  #paintedNumberOf(typedNumber: string): string | undefined {
+    if (this.#spots.has(typedNumber)) {
+      return typedNumber;
+    }
+    return [...this.#spots.keys()].find((number) => canonicalSpotNumber(number) === canonicalSpotNumber(typedNumber));
   }
 }
 

@@ -58,8 +58,10 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
 
     expect(statementOf(sql, 'read-session-lot')?.params).toEqual([SESSION_ID, JULIE_ID]);
     expect(statementOf(sql, 'lock-answering-session')?.text).toMatch(/where ps\.id = \$\d+ and ps\.user_id = \$\d+\s+for update of ps/);
-    expect(statementOf(sql, 'lock-answered-spot')?.text).toMatch(/where spot\.lot_id = \$\d+ and spot\.number = \$\d+\s+for update of spot/);
-    expect(statementOf(sql, 'lock-answered-spot')?.params).toEqual([LOT_ID, 'B-3']);
+    const lookup = statementOf(sql, 'lock-answered-spot');
+    expect(lookup?.text).toMatch(/where spot\.lot_id = \$\d+ and upper\(regexp_replace\(spot\.number, '\[\[:space:\]–—-\]', '', 'g'\)\) = \$\d+/);
+    expect(lookup?.text).toMatch(/order by spot\.number = \$\d+ desc, spot\.number\s+limit 1\s+for update of spot/);
+    expect(lookup?.params).toEqual([LOT_ID, 'B3', 'B-3']);
   });
 
   it('makes B-3 occupied without a check flag, and records it as the real spot with the answer time', async () => {

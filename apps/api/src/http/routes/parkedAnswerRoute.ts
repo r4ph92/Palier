@@ -1,8 +1,8 @@
 import type { ParkedSpotAnswerRefusalCode, ParkedSpotAnswerRequest, ParkedSpotAnswerResponse } from '@palier/shared-types';
+import { canonicalSpotNumber } from '@palier/shared-types/spotNumber';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { ParkedAnswerRefusal, ParkedAnswerRepository } from '../../domain/parkingSessions/ParkedAnswer.ts';
-import { normalizeSpotNumber } from '../../domain/spots/normalizeSpotNumber.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { entrySessionParametersSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
@@ -42,8 +42,8 @@ export function registerParkedAnswerRoute(server: FastifyInstance, driverAccess:
 }
 
 async function answer(answers: ParkedAnswerRepository, request: FastifyRequest<AnswerRoute>, reply: FastifyReply): Promise<ParkedSpotAnswerResponse | FastifyReply> {
-  const spotNumber = normalizeSpotNumber(request.body.spotNumber);
-  if (spotNumber === '') {
+  const spotNumber = request.body.spotNumber.trim();
+  if (canonicalSpotNumber(spotNumber) === '') {
     return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'Bad Request', message: 'spotNumber is blank.' });
   }
   const { sessionId } = request.params;

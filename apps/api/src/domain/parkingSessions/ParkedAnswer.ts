@@ -1,7 +1,7 @@
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import type { SpotState } from '../spots/spotStates.ts';
 
-// The driver walked away in another aisle and says where the car is; spotNumber is already normalized.
+// The driver walked away in another aisle and says where the car is; spotNumber is trimmed, otherwise as typed.
 export interface SpotAnswer {
   readonly sessionId: string;
   readonly driverId: string;
