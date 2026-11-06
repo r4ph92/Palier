@@ -1,11 +1,11 @@
 import type { CurrentParkingSession, PlanAisle } from '@palier/shared-types';
 import { render, screen, within } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { fontFamilies } from '../src/theme/tokens';
 import { ParkingGuidance } from '../src/screens/ParkingGuidance';
 import { julieAtB3, parkingDemoP1Plan } from './fakeParkingSessionClient';
-import { visibleText } from './visibleText';
+import { asSeen, visibleText } from './visibleText';
 
 // The jest preset reports a font scale of 2; the markers sit inside the rectangles at the default size.
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
@@ -67,6 +67,17 @@ describe('ParkingGuidance', () => {
 
     expect(screen.getByText('Vous êtes dans la bonne allée')).toBeOnTheScreen();
     expect(within(screen.getByTestId('PlanAisle-B')).getByText('Vous êtes ici')).toBeOnTheScreen();
+  });
+
+  it('announces the new sentence to VoiceOver when an aisle is first seen, and nothing before', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+    await showGuidance(null);
+    expect(announce).not.toHaveBeenCalled();
+
+    await screen.rerender(<ParkingGuidance session={julieAtB3()} currentAisle={aisleA} />);
+
+    expect(announce.mock.calls.map(([message]) => asSeen(message))).toEqual(['Vous êtes dans l’allée A — votre place est dans l’allée B']);
+    announce.mockRestore();
   });
 
   it('keeps the sentence but draws nothing for a level without rectangles', async () => {
