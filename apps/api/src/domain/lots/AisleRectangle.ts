@@ -38,7 +38,7 @@ function hasExactlyRectangleKeys(candidate: unknown): candidate is Record<(typeo
 }
 
 function isGridPosition(candidate: unknown): candidate is number {
-  return typeof candidate === 'number' && Number.isFinite(candidate) && candidate >= 0 && candidate <= AISLE_GRID_LIMIT;
+  return typeof candidate === 'number' && candidate >= 0 && candidate <= AISLE_GRID_LIMIT;
 }
 
 function isGridLength(candidate: unknown): candidate is number {

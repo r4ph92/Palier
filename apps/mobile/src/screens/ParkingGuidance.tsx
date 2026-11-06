@@ -19,7 +19,7 @@ interface ParkingGuidanceProps {
 export function ParkingGuidance({ session, currentAisle }: ParkingGuidanceProps) {
   const colors = useColors();
   const sentence = currentAisle === null ? null : aisleSentence(session.spot, currentAisle);
-  useAnnouncement(sentence, currentAisle?.beaconMinor);
+  useAnnouncement(sentence);
   const geometry = planGeometryOf(session.levelPlan?.aisles ?? []);
   return (
     <View style={styles.group}>
