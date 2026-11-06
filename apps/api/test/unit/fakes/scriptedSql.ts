@@ -21,6 +21,9 @@ export type StatementLabel =
   | 'has-usable-spot-hold'
   | 'assign-held-spot'
   | 'free-held-spot'
+  | 'find-silent-session-lots'
+  | 'presume-silent-entries'
+  | 'presume-silent-questions'
   | 'presume-parked'
   | 'read-unchanged-session'
   | 'read-walk-facts'
@@ -59,6 +62,9 @@ const dialect = new PgDialect();
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
+  ['find-silent-session-lots', /select distinct lot_id from parking_session/],
+  ['presume-silent-entries', /presumed_by = 'TIMEOUT', parked_at/],
+  ['presume-silent-questions', /presumed_by = 'TIMEOUT'\s+where/],
   ['presume-parked', /set state = 'PARKED_PRESUMED'/],
   ['read-walk-facts', /left join aisle detected/],
   ['ask-where-parked', /set state = 'PARKED_UNCONFIRMED'/],
