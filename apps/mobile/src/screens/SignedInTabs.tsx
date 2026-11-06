@@ -72,10 +72,11 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
 
 // The aisle and the walk away are followed above the tabs too, so a driver on another tab never misses them.
 function useSessionGuidance({ device, clients }: Pick<SignedInTabsProps, 'device' | 'clients'>, currentSession: CurrentParkingSessionController): ReactNode {
-  const { state } = currentSession;
-  const aisles = useAisleFollower(device.positioning, state.status === 'current' ? state.session : null);
-  useParkedPresumption({ positioning: device.positioning, client: clients.parkingSession, aisles }, currentSession);
-  return useParkingGuidance(device.positioning, aisles, state);
+  const { state, refresh } = currentSession;
+  const session = state.status === 'current' ? state.session : null;
+  const aisles = useAisleFollower(device.positioning, session);
+  useParkedPresumption({ positioning: device.positioning, client: clients.parkingSession, aisles }, session, refresh);
+  return useParkingGuidance(device.positioning, aisles, session);
 }
 
 function scanTabActions(clients: SignedInClients, tabs: TabsController): ScanTabActions {

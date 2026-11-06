@@ -1,8 +1,8 @@
+import type { CurrentParkingSession } from '@palier/shared-types';
 import { useEffect, useRef } from 'react';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import type { AisleFollower } from '../positioning/AisleFollower';
 import type { PositioningCore } from '../positioning/PositioningCore';
-import type { CurrentParkingSessionController } from './useCurrentParkingSession';
 import { WalkAwayWatch, type LatestSession } from './WalkAwayWatch';
 
 export interface ParkedPresumptionTools {
@@ -12,8 +12,7 @@ export interface ParkedPresumptionTools {
 }
 
 // Never asks the driver anything: the walk alone presumes the spot taken (Q36).
-export function useParkedPresumption({ positioning, client, aisles }: ParkedPresumptionTools, { state, refresh }: CurrentParkingSessionController): void {
-  const session = state.status === 'current' ? state.session : null;
+export function useParkedPresumption({ positioning, client, aisles }: ParkedPresumptionTools, session: CurrentParkingSession | null, refresh: () => void): void {
   const latest = useRef<LatestSession>({ session, refresh });
   useEffect(() => {
     latest.current = { session, refresh };
