@@ -102,12 +102,22 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
-  it('offers only the field when aisle B has no free spot', async () => {
+  it('says aisle B has no free spot, above the field', async () => {
     const parkingSession = new FakeParkingSessionClient(julieAtParkingDemo({ state: 'PARKED_UNCONFIRMED', question: { aisleCode: 'B', freeSpotNumbers: [] } }));
     await renderPalierApp({ ...signedInJulie(), testSignInEnabled: false, clients: () => ({ parkingSession }) });
 
     expect(await screen.findByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
     expect(screen.queryByText(/Places libres/)).toBeNull();
+    expect(screen.getByText('Aucune place libre dans l’allée B')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Numéro de place')).toBeOnTheScreen();
+  });
+
+  it('offers only the field when Palier sent no question', async () => {
+    const parkingSession = new FakeParkingSessionClient(julieAtParkingDemo({ state: 'PARKED_UNCONFIRMED', question: null }));
+    await renderPalierApp({ ...signedInJulie(), testSignInEnabled: false, clients: () => ({ parkingSession }) });
+
+    expect(await screen.findByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
+    expect(screen.queryByText(/Places libres|Aucune place libre/)).toBeNull();
     expect(screen.getByLabelText('Numéro de place')).toBeOnTheScreen();
   });
 

@@ -2,6 +2,7 @@
 export const whereParkedFr = {
   question: 'Où êtes-vous garé\u00A0?',
   freeSpotsLead: 'Places libres dans l’allée %{aisle}',
+  noFreeSpot: 'Aucune place libre dans l’allée %{aisle}',
   numberLabel: 'Numéro de place',
   confirm: 'Confirmer',
   confirmNumber: 'Confirmer\u00A0%{number}',

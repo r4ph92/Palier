@@ -60,7 +60,7 @@ function WhereParkedQuestion({ question, offline, answering }: WhereParkedQuesti
         {i18n.t('session.whereParked.question')}
       </Text>
       {offline}
-      {question === null || question.freeSpotNumbers.length === 0 ? null : <FreeSpotList question={question} typed={spotNumber} onChoose={setSpotNumber} />}
+      {question === null ? null : <FreeSpots question={question} typed={spotNumber} onChoose={setSpotNumber} />}
       <SpotNumberField spotNumber={spotNumber} onChange={setSpotNumber} answering={answering} />
     </View>
   );
@@ -71,6 +71,15 @@ interface FreeSpotListProps {
   // What the field holds: the row showing that number reads as chosen.
   readonly typed: string;
   readonly onChoose: (spotNumber: string) => void;
+}
+
+// An aisle without a free spot says so, so the driver knows the list is not missing.
+function FreeSpots(props: FreeSpotListProps) {
+  const colors = useColors();
+  if (props.question.freeSpotNumbers.length > 0) {
+    return <FreeSpotList {...props} />;
+  }
+  return <Text style={[typography.body, { color: colors.muted }]}>{i18n.t('session.whereParked.noFreeSpot', { aisle: props.question.aisleCode })}</Text>;
 }
 
 // A radio group like ProvincePicker: a tap only chooses, so a slip of the finger sends nothing.

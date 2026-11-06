@@ -3,6 +3,7 @@ import type { Translations } from './fr';
 export const whereParkedEn: Translations['session']['whereParked'] = {
   question: 'Where are you parked?',
   freeSpotsLead: 'Free spots in aisle %{aisle}',
+  noFreeSpot: 'No free spot in aisle %{aisle}',
   numberLabel: 'Spot number',
   confirm: 'Confirm',
   confirmNumber: 'Confirm\u00A0%{number}',
