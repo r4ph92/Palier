@@ -127,15 +127,25 @@ function SpotNumberField({ spotNumber, onChange, answering }: SpotNumberFieldPro
       <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('session.whereParked.numberLabel')}</Text>
       <SpotNumberInput value={spotNumber} onChange={onChange} onSubmit={submit} />
       <AnswerProblem answering={answering} />
-      <ConfirmButton isBlank={isBlank} isSending={answering.isSending} onPress={submit} />
+      <ConfirmButton spotNumber={spotNumber.trim()} isSending={answering.isSending} onPress={submit} />
     </View>
   );
 }
 
-function ConfirmButton({ isBlank, isSending, onPress }: { readonly isBlank: boolean; readonly isSending: boolean; readonly onPress: () => void }) {
+interface ConfirmButtonProps {
+  // Trimmed; blank keeps a plain, disabled « Confirmer ».
+  readonly spotNumber: string;
+  readonly isSending: boolean;
+  readonly onPress: () => void;
+}
+
+// Names the number about to be sent, « Confirmer B-3 », so a slip in the field shows before it is sent.
+function ConfirmButton({ spotNumber, isSending, onPress }: ConfirmButtonProps) {
+  const isBlank = spotNumber === '';
+  const label = isBlank ? i18n.t('session.whereParked.confirm') : i18n.t('session.whereParked.confirmNumber', { number: unbrokenNumber(spotNumber) });
   return (
     <PrimaryButton
-      label={i18n.t('session.whereParked.confirm')}
+      label={label}
       busyLabel={i18n.t('session.whereParked.sending')}
       onPress={onPress}
       busy={isSending}

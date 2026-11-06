@@ -7,7 +7,7 @@ import { AISLE_B_FREE_SPOTS, FakeParkingSessionClient, julieAtParkingDemo } from
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { asSeen, visibleText } from './visibleText';
 import { GO_TO_A1, PARKED_IN_A1 } from './walkAwayRig';
-import { julieAskedInAisleB, WHERE_PARKED } from './whereParkedRig';
+import { CONFIRM_TYPED, julieAskedInAisleB, WHERE_PARKED } from './whereParkedRig';
 
 const WALKING = 'Stationné (à pied, confiance élevée)';
 
@@ -63,6 +63,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     expect(screen.getByLabelText('Numéro de place')).toHaveDisplayValue('B-3');
     expect(screen.getByRole('radio', { name: 'B-3' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'B-1' })).not.toBeChecked();
+    expect(asSeen(screen.getByRole('button', { name: CONFIRM_TYPED }).props.accessibilityLabel as string)).toBe('Confirmer B-3');
     expect(screen.getByLabelText('Places libres dans l’allée B')).toHaveProp('accessibilityRole', 'radiogroup');
     expect(parkingSession.spotAnswers).toEqual([]);
   });
@@ -81,7 +82,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
 
     await user.press(screen.getByRole('radio', { name: 'B-3' }));
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(parkingSession.spotAnswers).toEqual(['B-3']);
     expect(await screen.findByText('Garé en B-3', visibleText)).toBeOnTheScreen();
@@ -95,7 +96,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     const { user, parkingSession } = await julieAskedInAisleB();
 
     await user.type(screen.getByLabelText('Numéro de place'), 'A-1');
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(parkingSession.spotAnswers).toEqual(['A-1']);
     expect(await screen.findByText(PARKED_IN_A1, visibleText)).toBeOnTheScreen();
@@ -110,7 +111,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     parkingSession.answerFailure = new PalierRejectedError(code);
 
     await user.type(screen.getByLabelText('Numéro de place'), typed);
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message, visibleText);
     expect(screen.getByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
@@ -121,11 +122,11 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     parkingSession.answerFailure = new PalierRejectedError('SPOT_TAKEN');
 
     await user.press(screen.getByRole('radio', { name: 'B-3' }));
-    await user.press(screen.getByRole('button', { name: 'Confirm' }));
+    await user.press(screen.getByRole('button', { name: /^Confirm\s/ }));
 
     expect(screen.getByRole('header', { name: 'Where are you parked?' })).toBeOnTheScreen();
     expect(screen.getByText('Free spots in aisle B')).toBeOnTheScreen();
     expect(await screen.findByRole('alert')).toHaveTextContent('This spot is already assigned — check the number on the ground', visibleText);
-    expect(within(screen.getByRole('button', { name: 'Confirm' })).getByText('Confirm')).toBeOnTheScreen();
+    expect(within(screen.getByRole('button', { name: /^Confirm\s/ })).getByText('Confirm B-3', visibleText)).toBeOnTheScreen();
   });
 });

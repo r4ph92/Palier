@@ -12,7 +12,7 @@ import { FakeParkingSessionClient, julieAtParkingDemo, spotB3 } from './fakePark
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { asSeen, visibleText } from './visibleText';
 import { advance, julieWith } from './walkAwayRig';
-import { AISLE_B_MINOR, julieAskedInAisleB, WHERE_PARKED } from './whereParkedRig';
+import { AISLE_B_MINOR, CONFIRM_TYPED, julieAskedInAisleB, WHERE_PARKED } from './whereParkedRig';
 
 const UNREACHABLE = 'Impossible de joindre Palier. Vérifiez votre connexion, puis réessayez.';
 
@@ -43,7 +43,7 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     const { user, parkingSession } = await julieAskedInAisleB();
 
     await user.type(screen.getByLabelText('Numéro de place'), 'B-3 PRES DU PILIER');
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(parkingSession.spotAnswers).toEqual(['B-3 PRES DU PILI']);
   });
@@ -53,7 +53,7 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     parkingSession.answerFailure = new PalierStatusError(400);
 
     await user.type(screen.getByLabelText('Numéro de place'), 'B3!');
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Numéro invalide');
     expect(screen.getByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
@@ -64,7 +64,7 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     parkingSession.holdsSpotAnswer = true;
 
     await user.press(screen.getByRole('radio', { name: 'B-3' }));
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
     await user.press(screen.getByRole('button', { name: 'Envoi…' }));
     await act(async () => parkingSession.answerSpotAnswers());
 
@@ -78,8 +78,8 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     parkingSession.answerFailure = new PalierUnreachableError('offline');
 
     await user.press(screen.getByRole('radio', { name: 'B-3' }));
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(UNREACHABLE, visibleText);
     expect(announce.mock.calls.filter(([message]) => asSeen(message) === UNREACHABLE)).toHaveLength(2);
@@ -91,7 +91,7 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     parkingSession.session = julieAtParkingDemo({ state: 'PARKED_CONFIRMED', spot: spotB3 });
 
     await user.press(screen.getByRole('radio', { name: 'B-1' }));
-    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(await screen.findByText('Garé en B-3', visibleText)).toBeOnTheScreen();
     expect(screen.queryByRole('alert')).toBeNull();

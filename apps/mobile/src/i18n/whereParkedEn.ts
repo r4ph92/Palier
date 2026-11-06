@@ -5,6 +5,7 @@ export const whereParkedEn: Translations['session']['whereParked'] = {
   freeSpotsLead: 'Free spots in aisle %{aisle}',
   numberLabel: 'Spot number',
   confirm: 'Confirm',
+  confirmNumber: 'Confirm\u00A0%{number}',
   sending: 'Sending…',
   unknownSpot: 'Unknown number in this parking lot',
   spotTaken: 'This spot is already assigned\u00A0— check the number on the ground',

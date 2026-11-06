@@ -4,6 +4,9 @@ import { julieAtParkingDemo } from './fakeParkingSessionClient';
 import { visibleText } from './visibleText';
 import { julieWith } from './walkAwayRig';
 
+// « Confirmer » followed by the number in the field.
+export const CONFIRM_TYPED = /^Confirmer\s/;
+
 export const WHERE_PARKED = 'Où êtes-vous garé ?';
 export const AISLE_B_MINOR = 2;
 
