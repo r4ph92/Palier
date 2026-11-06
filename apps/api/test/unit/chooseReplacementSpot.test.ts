@@ -42,4 +42,12 @@ describe('chooseReplacementSpot (story #23)', () => {
   it('never hands back the reported A-1, even freed by an operator and nearest the exit', () => {
     expect(chooseReplacementSpot(standardNeeds, [freeSpotFixture('A-1'), freeSpotFixture('A-3')], AISLE_A)?.number).toBe('A-3');
   });
+
+  it('leaves aisle A for B-2 when the freed reported A-1 is the only free spot of aisle A', () => {
+    expect(chooseReplacementSpot(standardNeeds, [freeSpotFixture('A-1'), freeSpotFixture('B-2')], AISLE_A)?.number).toBe('B-2');
+  });
+
+  it('answers null when the freed reported A-1 is the only free spot of the lot', () => {
+    expect(chooseReplacementSpot(standardNeeds, [freeSpotFixture('A-1')], AISLE_A)).toBeNull();
+  });
 });
