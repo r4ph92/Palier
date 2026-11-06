@@ -60,17 +60,17 @@ function confirmedSpotOf({ confirmedSpot }: AnsweringSession): AssignedSpot {
   return confirmedSpot;
 }
 
-interface PlacingSession {
+interface PlacementScope {
   readonly lotId: string;
   readonly session: AnsweringSession;
 }
 
-async function placeCar(tx: Transaction, answer: SpotAnswer, { lotId, session }: PlacingSession): Promise<ParkedAnswer> {
+async function placeCar(tx: Transaction, answer: SpotAnswer, { lotId, session }: PlacementScope): Promise<ParkedAnswer> {
   const spot = await lockAnsweredSpot(tx, { lotId, spotNumber: answer.spotNumber });
   if (spot === null) {
     return { outcome: 'unknown-spot' };
   }
-  const placement = placementOf({ sessionState: session.state, assignedSpotId: session.assignedSpotId, spotId: spot.id, spotState: spot.state });
+  const placement = placementOf({ sessionState: session.state, assignedSpotId: session.assignedSpotId, answeredSpot: spot });
   if (placement.outcome === 'refused') {
     return { outcome: placement.refusal };
   }

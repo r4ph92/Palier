@@ -80,7 +80,7 @@ export class FakeParkedAnswers implements ParkedAnswerRepository {
     if (spotNumber === undefined || spot === undefined) {
       return { outcome: 'unknown-spot' };
     }
-    const placement = placementOf({ sessionState: session.state, assignedSpotId: session.assignedSpotNumber, spotId: spotNumber, spotState: spot.state });
+    const placement = placementOf({ sessionState: session.state, assignedSpotId: session.assignedSpotNumber, answeredSpot: { id: spotNumber, state: spot.state } });
     if (placement.outcome === 'refused') {
       return { outcome: placement.refusal };
     }

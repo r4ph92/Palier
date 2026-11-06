@@ -51,8 +51,7 @@ export function decideSpotAnswer(state: SpotState): SpotAnswerDecision {
 export interface PlacementFacts {
   readonly sessionState: EntrySessionState;
   readonly assignedSpotId: string;
-  readonly spotId: string;
-  readonly spotState: SpotState;
+  readonly answeredSpot: { readonly id: string; readonly state: SpotState };
 }
 
 // What a placement writes: the answered spot occupied, unless it is the presumed one still occupied; the presumed spot flagged
@@ -61,13 +60,13 @@ export type Placement =
   | { readonly outcome: 'refused'; readonly refusal: Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service'> }
   | { readonly outcome: 'placed'; readonly occupiesAnswered: boolean; readonly flagsAssigned: boolean };
 
-export function placementOf({ sessionState, assignedSpotId, spotId, spotState }: PlacementFacts): Placement {
+export function placementOf({ sessionState, assignedSpotId, answeredSpot }: PlacementFacts): Placement {
   const isPresumed = sessionState === 'PARKED_PRESUMED';
-  const isAssigned = spotId === assignedSpotId;
-  if (isPresumed && isAssigned && spotState === 'OCCUPIED') {
+  const isAssigned = answeredSpot.id === assignedSpotId;
+  if (isPresumed && isAssigned && answeredSpot.state === 'OCCUPIED') {
     return { outcome: 'placed', occupiesAnswered: false, flagsAssigned: false };
   }
-  const decision = decideSpotAnswer(spotState);
+  const decision = decideSpotAnswer(answeredSpot.state);
   if (decision !== 'occupy') {
     return { outcome: 'refused', refusal: decision };
   }
