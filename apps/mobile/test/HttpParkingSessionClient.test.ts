@@ -47,7 +47,9 @@ describe('HttpParkingSessionClient', () => {
   });
 
   it('reads a session from an API older than the plan as one without beacons or plan', async () => {
-    const { beaconMajor: _major, levelPlan: _plan, ...olderSession } = julieAtParkingDemo();
+    const olderSession: Record<string, unknown> = { ...julieAtParkingDemo() };
+    delete olderSession['beaconMajor'];
+    delete olderSession['levelPlan'];
 
     await expect(clientAnswering({ session: olderSession }).client.current()).resolves.toEqual(
       julieAtParkingDemo({ beaconMajor: null, levelPlan: null }),
