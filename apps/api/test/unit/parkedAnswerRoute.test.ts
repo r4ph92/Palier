@@ -124,6 +124,27 @@ describe('POST /v1/entries/:sessionId/spot (story #21)', () => {
     expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toMatchObject({ state: 'PARKED_CONFIRMED', confirmedSpotNumber: paintedNumber });
   });
 
+  // « B12 » and « B1-2 » share the canonical form « B12 »: a typed « b12 » names neither for sure.
+  it.each(['b12', 'B-12', 'B 1 2'])('places no car for « %s » beside B12 and B1-2, and changes nothing', async (typed) => {
+    const { answer, parkedAnswers } = await julieAskedWhereParked();
+    parkedAnswers.setSpot('B1-2', { state: 'AVAILABLE', needsCheck: false });
+    parkedAnswers.setSpot('B12', { state: 'AVAILABLE', needsCheck: false });
+
+    const response = await answer(typed);
+
+    expect(response.json()).toEqual(UNKNOWN_SPOT_BODY);
+    expect(parkedAnswers.writes).toBe(0);
+  });
+
+  it('places Julie in B12 beside B1-2 when she sends « B12 » as painted', async () => {
+    const { answer, parkedAnswers } = await julieAskedWhereParked();
+    parkedAnswers.setSpot('B1-2', { state: 'AVAILABLE', needsCheck: false });
+    parkedAnswers.setSpot('B12', { state: 'AVAILABLE', needsCheck: false });
+
+    expect((await answer('B12')).statusCode).toBe(200);
+    expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toMatchObject({ confirmedSpotNumber: 'B12' });
+  });
+
   it('answers the first spot again, and writes nothing, when Julie answers twice', async () => {
     const { answer, parkedAnswers } = await julieAskedWhereParked();
     await answer('B-3');

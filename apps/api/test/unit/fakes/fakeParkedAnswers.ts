@@ -1,5 +1,5 @@
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
-import { canonicalSpotNumber } from '@palier/shared-types/spotNumber';
+import { paintedNumberNamed } from '../../../src/domain/spots/paintedSpotNumber.ts';
 import {
   decideSessionAnswer,
   decideSpotAnswer,
@@ -91,10 +91,7 @@ export class FakeParkedAnswers implements ParkedAnswerRepository {
 
   // Exact match first, then the same number without case, spaces or dashes, like the repository.
   #paintedNumberOf(typedNumber: string): string | undefined {
-    if (this.#spots.has(typedNumber)) {
-      return typedNumber;
-    }
-    return [...this.#spots.keys()].find((number) => canonicalSpotNumber(number) === canonicalSpotNumber(typedNumber));
+    return paintedNumberNamed([...this.#spots.keys()], typedNumber);
   }
 }
 

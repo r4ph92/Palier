@@ -15,15 +15,19 @@ const NO_CONFIRMED_SPOT = { number: null, aisle_code: null, level_code: null };
 
 const julieAnswersB3: SpotAnswer = { sessionId: SESSION_ID, driverId: JULIE_ID, spotNumber: 'B-3' };
 
-function spotRow(state: SpotState) {
-  return { id: SPOT_B3_ID, state, number: 'B-3', aisle_code: 'B', level_code: 'P1' };
+function spotRow(state: SpotState, number = 'B-3') {
+  return { id: SPOT_B3_ID, state, number, aisle_code: number.charAt(0), level_code: 'P1' };
 }
 
 function asked(spotState: SpotState | null = 'AVAILABLE', sessionState: EntrySessionState = 'PARKED_UNCONFIRMED') {
+  return askedAmong(spotState === null ? [] : [spotRow(spotState)], sessionState);
+}
+
+function askedAmong(spotRows: readonly ReturnType<typeof spotRow>[], sessionState: EntrySessionState = 'PARKED_UNCONFIRMED') {
   return new ScriptedSql()
     .answer('read-session-lot', [{ lot_id: LOT_ID }])
     .answer('lock-answering-session', [{ state: sessionState, ...NO_CONFIRMED_SPOT }])
-    .answer('lock-answered-spot', spotState === null ? [] : [spotRow(spotState)])
+    .answer('lock-answered-spot', spotRows)
     .answer('occupy-answered-spot', [{ id: SPOT_B3_ID }])
     .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
 }
@@ -54,9 +58,24 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
     expect(sql.statement('read-session-lot')?.params).toEqual([SESSION_ID, JULIE_ID]);
     expect(sql.statement('lock-answering-session')?.text).toMatch(/where ps\.id = \$\d+ and ps\.user_id = \$\d+\s+for update of ps/);
     const lookup = sql.statement('lock-answered-spot');
-    expect(lookup?.text).toMatch(/where spot\.lot_id = \$\d+ and upper\(regexp_replace\(spot\.number, '\[\[:space:\]–—-\]', '', 'g'\)\) = \$\d+/);
-    expect(lookup?.text).toMatch(/order by spot\.number = \$\d+ desc, spot\.number\s+limit 1\s+for update of spot/);
-    expect(lookup?.params).toEqual([LOT_ID, 'B3', 'B-3']);
+    expect(lookup?.text).toMatch(/where spot\.lot_id = \$\d+ and upper\(regexp_replace\("spot"\."number", '\[\[:space:\]–—-\]', '', 'g'\)\) = \$\d+/);
+    expect(lookup?.text).toMatch(/order by spot\.number\s+for update of spot/);
+    expect(lookup?.text).not.toMatch(/limit/);
+    expect(lookup?.params).toEqual([LOT_ID, 'B3']);
+  });
+
+  it('places no car for « b12 » between B12 and B1-2, both free, and writes nothing', async () => {
+    const sql = askedAmong([spotRow('AVAILABLE', 'B1-2'), spotRow('AVAILABLE', 'B12')]);
+
+    await expect(answerWith(sql, { ...julieAnswersB3, spotNumber: 'b12' })).resolves.toEqual({ outcome: 'unknown-spot' });
+    expect(sql.count('occupy-answered-spot')).toBe(0);
+    expect(sql.count('confirm-parked-spot')).toBe(0);
+  });
+
+  it('places Julie in B12 between B12 and B1-2 when she sends « B12 » as painted', async () => {
+    const sql = askedAmong([spotRow('AVAILABLE', 'B1-2'), spotRow('AVAILABLE', 'B12')]);
+
+    await expect(answerWith(sql, { ...julieAnswersB3, spotNumber: 'B12' })).resolves.toMatchObject({ outcome: 'confirmed', spot: { number: 'B12' } });
   });
 
   it('makes B-3 occupied without a check flag, and records it as the real spot with the answer time', async () => {
@@ -73,7 +92,7 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
   });
 
   it('takes back her own assigned spot A-1, occupied-unknown since the walk, through the same path', async () => {
-    const sql = asked('OCCUPIED_UNKNOWN');
+    const sql = askedAmong([spotRow('OCCUPIED_UNKNOWN', 'A-1')]);
 
     await expect(answerWith(sql, { ...julieAnswersB3, spotNumber: 'A-1' })).resolves.toMatchObject({ outcome: 'confirmed' });
     expect(sql.count('occupy-answered-spot')).toBe(1);
