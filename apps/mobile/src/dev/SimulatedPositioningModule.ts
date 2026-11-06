@@ -22,7 +22,7 @@ export class SimulatedPositioningModule implements PositioningModule {
   }
 
   keepAlive(until: number): void {
-    this.journal.append(describeCommand.keepAlive(until));
+    this.journal.append(until <= this.now() ? describeCommand.keepAliveStop(until) : describeCommand.keepAlive(until));
   }
 
   flushOfflineQueue(): void {

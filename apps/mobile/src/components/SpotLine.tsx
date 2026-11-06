@@ -1,5 +1,5 @@
 import type { AssignedSpot } from '@palier/shared-types';
-import type { Ref } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { StyleSheet, Text, View, type HostInstance } from 'react-native';
 import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
@@ -36,19 +36,20 @@ export function SpotLine({ spot, lead = '' }: SpotLineProps) {
 }
 
 interface SpotWithStateProps extends SpotLineProps {
-  readonly status: string;
+  readonly statusLabel: string;
+  readonly statusContent?: ReactNode;
   readonly markColor: string;
   readonly ref?: Ref<HostInstance>;
 }
 
 // Spot and its state are one stop for VoiceOver, on the scan screen and on the session screen alike.
-export function SpotWithState({ spot, lead = '', status, markColor, ref }: SpotWithStateProps) {
+export function SpotWithState({ spot, lead = '', statusLabel, statusContent, markColor, ref }: SpotWithStateProps) {
   const colors = useColors();
   return (
-    <View ref={ref} accessible accessibilityLabel={`${spotLabel(spot, lead)}. ${status}`} style={styles.group}>
+    <View ref={ref} accessible accessibilityLabel={`${spotLabel(spot, lead)}. ${statusLabel}`} style={styles.group}>
       <SpotLine spot={spot} lead={lead} />
       <StateMark color={markColor}>
-        <Text style={[typography.bodyStrong, { color: colors.ink }]}>{status}</Text>
+        {statusContent ?? <Text style={[typography.bodyStrong, { color: colors.ink }]}>{statusLabel}</Text>}
       </StateMark>
     </View>
   );

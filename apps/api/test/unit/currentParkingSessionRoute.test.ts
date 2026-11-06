@@ -58,6 +58,16 @@ describe('GET /v1/me/session', () => {
     expect((await readSession()).json()).toMatchObject({ session: { amountCents } });
   });
 
+  it('serves a session presumed parked (story #18)', async () => {
+    const { readSession, parkingSessions } = await julieInsideAt(new Date(2026, 10, 4, 21, 17));
+    parkingSessions.add(julie.id, { ...julieAtParkingDemo(enteredAt), state: 'PARKED_PRESUMED' });
+
+    const response = await readSession();
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ session: { sessionId: JULIE_SESSION_ID, state: 'PARKED_PRESUMED', spot: { number: 'A-1' } } });
+  });
+
   it('answers no session to a driver who has none', async () => {
     const { readSession, parkingSessions } = await julieInsideAt(new Date(2026, 10, 4, 21, 17));
     parkingSessions.cancel(JULIE_SESSION_ID);

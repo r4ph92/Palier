@@ -32,6 +32,7 @@ export const parkingSession = pgTable(
     pricingDailyCapCents: integer('pricing_daily_cap_cents').notNull(),
     entryScanAt: timestamp('entry_scan_at', { withTimezone: true }).notNull().defaultNow(),
     entryConfirmedAt: timestamp('entry_confirmed_at', { withTimezone: true }),
+    parkedAt: timestamp('parked_at', { withTimezone: true }),
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
     // Set with the cancellation when a card hold exists; cleared once Stripe confirms the release, so a failed release is retried.
     holdReleasePending: boolean('hold_release_pending').notNull().default(false),

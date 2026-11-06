@@ -2,10 +2,9 @@ import type { FastifyInstance } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { ParkingSessionRepository } from '../../domain/entries/ParkingSessionRepository.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
+import { SESSION_NOT_FOUND_BODY } from '../sessionNotFound.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { entrySessionParametersSchema, entryStatusResponseSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
-
-const NOT_FOUND = 404;
 
 interface StatusRoute {
   readonly Params: EntrySessionParameters;
@@ -22,7 +21,7 @@ export function registerEntryStatusRoute(
   server.get<StatusRoute>('/v1/entries/:sessionId', { onRequest, schema }, async (request, reply) => {
     const status = await sessions?.findForUser(request.params.sessionId, signedInDriver(request).id);
     if (status === undefined || status === null) {
-      return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'SESSION_NOT_FOUND', message: 'No such entry.' });
+      return reply.status(SESSION_NOT_FOUND_BODY.statusCode).send(SESSION_NOT_FOUND_BODY);
     }
     return {
       sessionId: status.id,

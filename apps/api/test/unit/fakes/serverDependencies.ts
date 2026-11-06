@@ -6,6 +6,7 @@ import { FakeDriverRepository } from '../fakeDriverRepository.ts';
 import { FakeVehicleRepository } from '../fakeVehicleRepository.ts';
 import { FakeCurrentParkingSessions } from './fakeCurrentParkingSessions.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
+import { FakeParkedPresumptions } from './fakeParkedPresumptions.ts';
 import { FakeGateCommandFeed, FakeGateDeviceKeyRepository, FakePassageLedger } from './gateFixtures.ts';
 
 export const NOW = new Date('2026-10-27T22:02:00Z');
@@ -21,6 +22,7 @@ interface FakeRepositoryChoices {
   readonly lotAvailabilityRepository?: LotAvailabilityRepository;
   readonly operatorRepository?: FakeOperatorRepository;
   readonly parkingSessions?: FakeCurrentParkingSessions;
+  readonly parkedPresumptions?: FakeParkedPresumptions;
 }
 
 // Session tokens come from the driver fake, so a token a test saves for Julie is the one the server reads.
@@ -30,6 +32,7 @@ export function fakeRepositories({
   lotAvailabilityRepository = { findOnlineLots: () => Promise.resolve([]) },
   operatorRepository = new FakeOperatorRepository(),
   parkingSessions = new FakeCurrentParkingSessions(),
+  parkedPresumptions = new FakeParkedPresumptions(),
 }: FakeRepositoryChoices = {}): ServerDependencies['repositories'] {
   return {
     lotAvailabilityRepository,
@@ -40,6 +43,7 @@ export function fakeRepositories({
     operatorRepository,
     currentParkingSessions: parkingSessions,
     parkingSessionBackdater: parkingSessions,
+    parkedPresumptions,
   };
 }
 

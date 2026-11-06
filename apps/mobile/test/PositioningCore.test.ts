@@ -40,6 +40,35 @@ describe('PositioningCore commands', () => {
   });
 });
 
+describe('PositioningCore stopping the keep-alive (story #18)', () => {
+  it.each([
+    ['now', CLOCK.getTime()],
+    ['an instant already past', CLOCK.getTime() - 60_000],
+  ])('marks a keep-alive until %s as stopping it', (_case, until) => {
+    const { journal, core } = createRig();
+
+    core.keepAlive(until);
+
+    expect(texts(journal)[0]).toMatch(/^keepAlive until=\d{1,2} h \d{2} min \d{2} s \(arrêt\)$/);
+  });
+
+  it('stops the keep-alive at the instant given, through the keepAlive command', () => {
+    const { journal, core } = createRig();
+
+    core.stopKeepAliveAt(CLOCK.getTime());
+
+    expect(texts(journal)).toEqual(['keepAlive until=18 h 02 min 05 s (arrêt)']);
+  });
+
+  it('keeps a keep-alive one second ahead a plain extension', () => {
+    const { journal, core } = createRig();
+
+    core.keepAlive(CLOCK.getTime() + 1000);
+
+    expect(texts(journal)).toEqual(['keepAlive until=18 h 02 min 06 s']);
+  });
+});
+
 describe('PositioningCore events', () => {
   it('fans each module event out to every subscriber with its arguments', () => {
     const { simulator, core } = createRig();

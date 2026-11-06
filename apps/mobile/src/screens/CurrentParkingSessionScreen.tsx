@@ -1,14 +1,18 @@
-import type { CurrentParkingSession } from '@palier/shared-types';
-import type { ReactNode } from 'react';
+import type { AssignedSpot, CurrentParkingSession } from '@palier/shared-types';
+import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { SpotWithState } from '../components/SpotLine';
+import { SpotNumberText } from '../components/SpotNumberText';
+import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
+import { useAnnouncement } from '../components/useAnnouncement';
 import { formatClockTime } from '../i18n/formatClockTime';
 import { formatElapsed } from '../i18n/formatElapsed';
 import { formatMoney } from '../i18n/formatMoney';
 import { currentLanguage, i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionReading, ReadProgress } from '../parkingSessions/useCurrentParkingSession';
+import { isParked } from '../parkingSessions/isParked';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
@@ -21,17 +25,19 @@ interface CurrentParkingSessionScreenProps {
   readonly onRetry: () => void;
   readonly notice?: ReactNode;
   readonly guidance?: ReactNode;
+  // The scan result holding VoiceOver's focus gave way to this screen: the focus moves to the spot.
+  readonly shouldFocusSpotOnArrival?: boolean;
 }
 
 // Everything shown comes from the API, priced by its clock; the screen never counts time on its own.
-export function CurrentParkingSessionScreen({ reading, progress, onRetry, notice, guidance }: CurrentParkingSessionScreenProps) {
+export function CurrentParkingSessionScreen({ reading, progress, onRetry, notice, guidance, shouldFocusSpotOnArrival = false }: CurrentParkingSessionScreenProps) {
   const colors = useColors();
   const { session, readAt } = reading;
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader eyebrow={i18n.t('session.eyebrow')} title={session.lotName} />
-        <SessionSpot session={session} />
+        <SessionSpot session={session} shouldFocusOnArrival={shouldFocusSpotOnArrival} />
         {guidance}
         {reading.isStale ? <OfflineNotice progress={progress} onRetry={onRetry} /> : null}
         {notice}
@@ -75,11 +81,49 @@ function SessionAmount({ session }: { readonly session: CurrentParkingSession })
   );
 }
 
-function SessionSpot({ session }: { readonly session: CurrentParkingSession }) {
+interface SessionSpotProps {
+  readonly session: CurrentParkingSession;
+  readonly shouldFocusOnArrival: boolean;
+}
+
+function SessionSpot({ session, shouldFocusOnArrival }: SessionSpotProps) {
   const colors = useColors();
-  const isConfirmed = session.state === 'ENTRY_CONFIRMED';
-  const status = i18n.t(isConfirmed ? 'scan.entryConfirmed' : 'session.pending');
-  return <SpotWithState spot={session.spot} status={status} markColor={isConfirmed ? colors.free : colors.muted} />;
+  const focusRef = useAccessibilityFocusOnMount();
+  const isWaiting = session.state === 'CREATED';
+  const statusContent = isParked(session.state) ? <ParkedIn spot={session.spot} /> : undefined;
+  const hasJustParked = useHasJustParked(session);
+  useAnnouncement(hasJustParked ? spotStatusOf(session) : null);
+  return <SpotWithState ref={shouldFocusOnArrival ? focusRef : null} spot={session.spot} statusLabel={spotStatusOf(session)} statusContent={statusContent} markColor={isWaiting ? colors.muted : colors.free} />;
+}
+
+function spotStatusOf({ state, spot }: CurrentParkingSession): string {
+  if (isParked(state)) {
+    return `${i18n.t('session.parkedInLead')}${spot.number}`;
+  }
+  switch (state) {
+    case 'CREATED':
+      return i18n.t('session.pending');
+    case 'ENTRY_CONFIRMED':
+      return i18n.t('scan.entryConfirmed');
+  }
+}
+
+// The spot turns parked with no action of the driver, so it is announced once, on that change only:
+// not on the minute poll, and not for a screen that opens on a session already parked.
+function useHasJustParked({ state }: CurrentParkingSession): boolean {
+  const [previousState, setPreviousState] = useState(state);
+  const [hasJustParked, setHasJustParked] = useState(false);
+  if (state !== previousState) {
+    setPreviousState(state);
+    setHasJustParked(isParked(state) && !isParked(previousState));
+  }
+  return hasJustParked;
+}
+
+// The spot number is a figure inside the sentence, in mono (docs/design.md, gesture 3).
+function ParkedIn({ spot }: { readonly spot: AssignedSpot }) {
+  const colors = useColors();
+  return <SpotNumberText spot={spot} lead={i18n.t('session.parkedInLead')} style={[typography.bodyStrong, { color: colors.ink }]} numberStyle={typography.figureStrong} />;
 }
 
 interface FigureProps {

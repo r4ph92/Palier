@@ -1,14 +1,23 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
 import { act, renderHook } from '@testing-library/react-native';
+import { useAisleFollower } from '../src/positioning/useAisleFollower';
 import { useCurrentAisle } from '../src/positioning/useCurrentAisle';
 import { julieAtB3 } from './fakeParkingSessionClient';
 import { positioningRig } from './positioningRig';
 
 async function followAisles(session: CurrentParkingSession | null) {
   const rig = positioningRig();
-  const hook = await renderHook(({ current }: { readonly current: CurrentParkingSession | null }) => useCurrentAisle(rig.core, current), { initialProps: { current: session } });
+  const rendered: (string | null)[] = [];
+  const hook = await renderHook(
+    ({ current }: { readonly current: CurrentParkingSession | null }) => {
+      const aisle = useCurrentAisle(useAisleFollower(rig.core, current), current?.sessionId ?? null);
+      rendered.push(aisle?.code ?? null);
+      return aisle;
+    },
+    { initialProps: { current: session } },
+  );
   const enterAisle = (minor: number) => act(async () => rig.simulator.enterAisle(minor));
-  return { ...hook, enterAisle, aisleCode: () => hook.result.current?.code ?? null };
+  return { ...hook, enterAisle, rendered, aisleCode: () => hook.result.current?.code ?? null };
 }
 
 describe('useCurrentAisle', () => {
@@ -42,6 +51,17 @@ describe('useCurrentAisle', () => {
     await rerender({ current: julieAtB3({ elapsedMinutes: 196 }) });
 
     expect(aisleCode()).toBe('A');
+  });
+
+  it('never renders the last session\'s aisle for the next one, not even on its first render', async () => {
+    const { enterAisle, rerender, rendered } = await followAisles(julieAtB3());
+    await enterAisle(2);
+    rendered.length = 0;
+
+    await rerender({ current: julieAtB3({ sessionId: 'session-2' }) });
+
+    expect(rendered).not.toContain('B');
+    expect(rendered.at(-1)).toBeNull();
   });
 
   it('forgets the aisle when another session starts', async () => {

@@ -16,6 +16,7 @@ export const GATED = [
   'POST /v1/entries',
   'GET /v1/entries/:sessionId',
   'GET /v1/me/session',
+  'POST /v1/entries/:sessionId/parked',
   'POST /v1/lots/:id/holds',
   'GET /v1/me/hold',
   'DELETE /v1/holds/:id',
