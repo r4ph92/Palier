@@ -14,8 +14,7 @@ import { findActiveSessionFacts } from './activeSessionFacts.ts';
 import { admissionRefusalOf } from './admissionRefusal.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
-import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
-import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
+import { inLotLock } from './lockParkingLot.ts';
 import { parkingSession } from './schema.ts';
 import { ASSIGNED_TO_ENTRY, claimFirstFittingSpot, type AssignedSpotRow } from './spotClaim.ts';
 import { consumeHeldSpot, heldSpotFits, readHeldSpot, releaseUnfitHold } from './spotHoldUse.ts';
@@ -47,11 +46,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 
   async openOrReplay(draft: SessionDraft): Promise<SessionOpening | null> {
     try {
-      return await this.#database.transaction(async (tx) => {
-        await tx.execute(LIMIT_LOCK_WAIT);
-        await lockParkingLot(tx, draft.lotId);
-        return await this.#openUnderLotLock(tx, draft);
-      }, LOT_LOCK_TRANSACTION);
+      return await inLotLock(this.#database, draft.lotId, (tx) => this.#openUnderLotLock(tx, draft));
     } catch (error) {
       throw admissionRefusalOf(error, draft.lotId);
     }
@@ -75,11 +70,12 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
     return state === 'CANCELLED' ? 'cancelled' : 'attached';
   }
 
+  // The spot is the one the driver answered, once they did.
   async findForUser(sessionId: string, userId: string): Promise<SessionStatus | null> {
     const rows = await this.#database.execute<SessionStatusRow>(sql`
       select ps.id, ps.state, ps.entry_confirmed_at, spot.number, aisle.code as aisle_code, level.code as level_code
       from parking_session ps
-      join spot on spot.id = ps.assigned_spot_id
+      join spot on spot.id = coalesce(ps.confirmed_spot_id, ps.assigned_spot_id)
       join aisle on aisle.id = spot.aisle_id
       join level on level.id = aisle.level_id
       where ps.id = ${sessionId} and ps.user_id = ${userId}`);

@@ -1,17 +1,12 @@
 import { sql } from 'drizzle-orm';
 import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { SPOT_STATES } from '../../domain/spots/spotStates.ts';
+import { canonicalNumberOf } from './canonicalNumberSql.ts';
 
 export const kycStatus = pgEnum('kyc_status', ['NOT_STARTED', 'PENDING', 'ACTION_REQUIRED', 'VERIFIED']);
 export const assignmentStrategy = pgEnum('assignment_strategy', ['AISLE_BY_AISLE']);
 export const occupancySource = pgEnum('occupancy_source', ['DECLARATIVE', 'SENSORS']);
-export const spotState = pgEnum('spot_state', [
-  'AVAILABLE',
-  'HELD',
-  'ASSIGNED',
-  'OCCUPIED',
-  'OCCUPIED_UNKNOWN',
-  'OUT_OF_SERVICE',
-]);
+export const spotState = pgEnum('spot_state', SPOT_STATES);
 export const sensorState = pgEnum('sensor_state', ['FREE', 'OCCUPIED']);
 
 export const operator = pgTable('operator', {
@@ -113,6 +108,7 @@ export const spot = pgTable(
       foreignColumns: [aisle.id, aisle.lotId],
     }),
     unique('spot_lot_id_number_unique').on(table.lotId, table.number),
+    index('spot_lot_id_canonical_number_index').on(table.lotId, canonicalNumberOf(table.number)),
     unique('spot_id_lot_id_unique').on(table.id, table.lotId),
     index('spot_aisle_id_lot_id_index').on(table.aisleId, table.lotId),
     index('spot_available_by_aisle_index')
@@ -124,4 +120,4 @@ export const spot = pgTable(
   ],
 );
 
-export type SpotState = (typeof spotState.enumValues)[number];
+export type { SpotState } from '../../domain/spots/spotStates.ts';

@@ -1,6 +1,7 @@
 import type { EntrySessionState } from '@palier/shared-types';
 import {
   classifyRefusedSignal,
+  wrongAisleOf,
   type ParkedPresumption,
   type ParkedPresumptionRepository,
   type WalkingSignal,
@@ -11,11 +12,20 @@ export interface StoredWalkingSession {
   state: EntrySessionState;
   entryConfirmedAt: Date | null;
   parkedAt: Date | null;
+  // The minor of the assigned spot's aisle, aisle A of Parking Démo unless a test says otherwise.
+  readonly assignedAisleMinor?: number;
+  parkedAisleMinor?: number | null;
+  isAssignedSpotFlagged?: boolean;
 }
 
-// Mirrors the guarded UPDATE of PostgresParkedPresumptionRepository; its SQL is checked on the lane database (docs/decisions/002).
+// Parking Démo's drivable aisles: A (minor 1) and B (minor 2).
+const LOT_AISLE_MINORS: ReadonlySet<number> = new Set([1, 2]);
+const AISLE_A_MINOR = 1;
+
+// Mirrors PostgresParkedPresumptionRepository; its SQL is checked on the lane database (docs/decisions/002).
 export class FakeParkedPresumptions implements ParkedPresumptionRepository {
   writes = 0;
+  isLotBusy = false;
   readonly #sessions = new Map<string, StoredWalkingSession>();
   readonly #now: () => Date;
 
@@ -32,16 +42,22 @@ export class FakeParkedPresumptions implements ParkedPresumptionRepository {
     return session === undefined ? undefined : { ...session };
   }
 
-  presume({ sessionId, driverId, detectedAt }: WalkingSignal): Promise<ParkedPresumption> {
+  presume({ sessionId, driverId, detectedAt, detectedAisleMinor }: WalkingSignal): Promise<ParkedPresumption> {
     const session = this.#sessions.get(sessionId);
     const owned = session?.driverId === driverId ? session : null;
     if (owned?.state !== 'ENTRY_CONFIRMED') {
       return Promise.resolve(classifyRefusedSignal(owned));
     }
+    const wrongAisleMinor = wrongAisleMinorOf(owned, detectedAisleMinor);
+    if (wrongAisleMinor !== null && this.isLotBusy) {
+      return Promise.resolve({ outcome: 'lot-busy' });
+    }
     this.writes += 1;
-    owned.state = 'PARKED_PRESUMED';
     owned.parkedAt = this.#clamped(detectedAt, owned.entryConfirmedAt);
-    return Promise.resolve({ outcome: 'presumed', parkedAt: owned.parkedAt });
+    owned.state = wrongAisleMinor === null ? 'PARKED_PRESUMED' : 'PARKED_UNCONFIRMED';
+    owned.parkedAisleMinor = wrongAisleMinor;
+    owned.isAssignedSpotFlagged = wrongAisleMinor !== null;
+    return Promise.resolve({ outcome: 'recorded', state: owned.state, parkedAt: owned.parkedAt });
   }
 
   #clamped(detectedAt: Date, entryConfirmedAt: Date | null): Date {
@@ -49,4 +65,12 @@ export class FakeParkedPresumptions implements ParkedPresumptionRepository {
     const notAfterNow = detectedAt > now ? now : detectedAt;
     return entryConfirmedAt !== null && notAfterNow < entryConfirmedAt ? entryConfirmedAt : notAfterNow;
   }
+}
+
+// The fake's aisles are known by their minor, so the minor stands for the aisle id the real rule compares.
+function wrongAisleMinorOf(session: StoredWalkingSession, detectedAisleMinor: number | null): number | null {
+  const isKnownAisle = detectedAisleMinor !== null && LOT_AISLE_MINORS.has(detectedAisleMinor);
+  const assignedAisleId = String(session.assignedAisleMinor ?? AISLE_A_MINOR);
+  const wrongAisleId = wrongAisleOf({ assignedAisleId, detectedAisleId: isKnownAisle ? String(detectedAisleMinor) : null });
+  return wrongAisleId === null ? null : Number(wrongAisleId);
 }

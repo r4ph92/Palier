@@ -21,6 +21,7 @@ export function julieAtParkingDemo(enteredAt = new Date(2026, 10, 4, 18, 2)): Ac
     pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 },
     beaconMajor: 1,
     levelAisles: PARKING_DEMO_P1_AISLES,
+    question: null,
   };
 }
 

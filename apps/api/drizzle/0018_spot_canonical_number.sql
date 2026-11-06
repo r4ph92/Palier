@@ -1,0 +1,1 @@
+CREATE INDEX "spot_lot_id_canonical_number_index" ON "spot" USING btree ("lot_id",upper(regexp_replace("number", '[[:space:]–—-]', '', 'g')));

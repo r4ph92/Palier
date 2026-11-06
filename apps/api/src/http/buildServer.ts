@@ -6,10 +6,11 @@ import type { DriverAccess } from '../domain/drivers/driverSessions.ts';
 import type { CardGateway } from '../domain/payments/CardGateway.ts';
 import type { LotAvailabilityRepository } from '../domain/lots/LotAvailabilityRepository.ts';
 import type { CurrentParkingSessionQuery } from '../domain/parkingSessions/ActiveParkingSession.ts';
+import type { ParkedAnswerRepository } from '../domain/parkingSessions/ParkedAnswer.ts';
 import type { ParkedPresumptionRepository } from '../domain/parkingSessions/ParkedPresumption.ts';
 import type { ParkingSessionBackdater } from '../domain/parkingSessions/ParkingSessionBackdater.ts';
 import type { SessionTokenRepository } from '../domain/sessions/SessionTokenRepository.ts';
-import { systemClock } from '../domain/time/Clock.ts';
+import { systemClock, type Clock } from '../domain/time/Clock.ts';
 import type { TestClock } from '../domain/time/TestClock.ts';
 import type { UserDirectory } from '../domain/sessions/UserDirectory.ts';
 import type { VehicleRepository } from '../domain/vehicles/VehicleRepository.ts';
@@ -23,6 +24,7 @@ import { registerDriverRoutes } from './routes/driverRoutes.ts';
 import { registerEntryRoutes, type EntryRouteDependencies } from './routes/entryRoutes.ts';
 import { registerGateRoutes, type GateRouteDependencies } from './routes/gateRoutes.ts';
 import { registerLotsRoutes } from './routes/lotsRoutes.ts';
+import { registerParkedAnswerRoute } from './routes/parkedAnswerRoute.ts';
 import { registerParkedPresumptionRoute } from './routes/parkedPresumptionRoute.ts';
 import { registerStripeWebhookRoute } from './routes/stripeWebhookRoute.ts';
 import { registerPaymentMethodRoutes } from './routes/paymentMethodRoutes.ts';
@@ -49,6 +51,7 @@ export interface ServerDependencies {
     readonly currentParkingSessions: CurrentParkingSessionQuery;
     readonly parkingSessionBackdater: ParkingSessionBackdater;
     readonly parkedPresumptions: ParkedPresumptionRepository;
+    readonly parkedAnswers: ParkedAnswerRepository;
   };
   readonly gates: GateRouteDependencies;
   readonly cardGateway?: CardGateway | undefined;
@@ -116,13 +119,24 @@ function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway,
   registerDriverRoutes(server, driverAccess);
   registerPaymentMethodRoutes(server, driverAccess, cardGateway);
   registerEntryRoutes(server, driverAccess, entries);
-  registerCurrentParkingSessionRoute(server, driverAccess, { sessions: repositories.currentParkingSessions, clock });
-  registerParkedPresumptionRoute(server, driverAccess, repositories.parkedPresumptions);
+  registerParkingSessionRoutes(server, driverAccess, { repositories, clock });
   registerSpotHoldRoutes(server, driverAccess, { services: spotHolds, clock });
   if (testTools !== null) {
     registerTestSignInRoutes(server, { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository });
     registerTestClockRoutes(server, testTools);
   }
+}
+
+interface ParkingSessionRouteDependencies {
+  readonly repositories: ServerDependencies['repositories'];
+  readonly clock: Clock;
+}
+
+// The session in progress, and what the driver tells about it once walking away from the car.
+function registerParkingSessionRoutes(server: FastifyInstance, driverAccess: DriverAccess, { repositories, clock }: ParkingSessionRouteDependencies): void {
+  registerCurrentParkingSessionRoute(server, driverAccess, { sessions: repositories.currentParkingSessions, clock });
+  registerParkedPresumptionRoute(server, driverAccess, repositories.parkedPresumptions);
+  registerParkedAnswerRoute(server, driverAccess, repositories.parkedAnswers);
 }
 
 type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock' | 'operatorStripe'> & Pick<ServerDependencies, 'testClock'>;

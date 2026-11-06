@@ -1,5 +1,5 @@
-import type { AssignedSpot, CurrentParkingSession, LevelPlan, ParkedPresumptionResponse } from '@palier/shared-types';
-import type { ParkingSessionClient } from '../src/api/ParkingSessionClient';
+import type { AssignedSpot, CurrentParkingSession, LevelPlan, ParkedPresumptionResponse, ParkedSpotAnswerResponse } from '@palier/shared-types';
+import type { DetectedWalk, ParkingSessionClient } from '../src/api/ParkingSessionClient';
 import { spotA1 } from './fakeEntryClient';
 
 export const spotB3: AssignedSpot = { number: 'B-3', levelCode: 'P1', aisleCode: 'B' };
@@ -26,6 +26,7 @@ export function julieAtParkingDemo(overrides: Partial<CurrentParkingSession> = {
     dailyCapCents: 2500,
     beaconMajor: 1,
     levelPlan: parkingDemoP1Plan,
+    question: null,
     ...overrides,
   };
 }
@@ -35,10 +36,12 @@ export function julieAtB3(overrides: Partial<CurrentParkingSession> = {}): Curre
   return julieAtParkingDemo({ spot: spotB3, ...overrides });
 }
 
-export interface ParkedReport {
+export interface ParkedReport extends DetectedWalk {
   readonly sessionId: string;
-  readonly detectedAt: number;
 }
+
+// The free spots of Parking Démo's aisle B as the seed leaves them, Marc's B-4 aside.
+export const AISLE_B_FREE_SPOTS = ['B-1', 'B-2', 'B-3', 'B-5'];
 
 export class FakeParkingSessionClient implements ParkingSessionClient {
   session: CurrentParkingSession | null;
@@ -48,6 +51,10 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
   readonly parkedReports: ParkedReport[] = [];
   parkedFailure: Error | null = null;
   holdsParkedAnswer = false;
+  readonly spotAnswers: string[] = [];
+  answerFailure: Error | null = null;
+  holdsSpotAnswer = false;
+  readonly #pendingSpotAnswers: (() => void)[] = [];
   readonly #pending: (() => void)[] = [];
   readonly #pendingParked: (() => void)[] = [];
 
@@ -63,13 +70,27 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
     return this.#answerNow();
   }
 
-  // Like the API: the walk turns the matching ENTRY_CONFIRMED session, and the next read shows it presumed parked.
-  reportParked(sessionId: string, detectedAt: number): Promise<ParkedPresumptionResponse> {
-    this.parkedReports.push({ sessionId, detectedAt });
+  // Like the API: the walk turns the matching session, and the next read shows it presumed parked, or asked where it parked
+  // when the walk came from another aisle of its plan.
+  reportParked(sessionId: string, walk: DetectedWalk): Promise<ParkedPresumptionResponse> {
+    this.parkedReports.push({ sessionId, ...walk });
     if (this.holdsParkedAnswer) {
-      return new Promise((resolve, reject) => this.#pendingParked.push(() => void this.#presumeNow(sessionId, detectedAt).then(resolve, reject)));
+      return new Promise((resolve, reject) => this.#pendingParked.push(() => void this.#presumeNow(sessionId, walk).then(resolve, reject)));
     }
-    return this.#presumeNow(sessionId, detectedAt);
+    return this.#presumeNow(sessionId, walk);
+  }
+
+  // Like the API: an answer places the car in that spot, and the next read shows it parked there.
+  answerParkedSpot(sessionId: string, spotNumber: string): Promise<ParkedSpotAnswerResponse> {
+    this.spotAnswers.push(spotNumber);
+    if (this.holdsSpotAnswer) {
+      return new Promise((resolve, reject) => this.#pendingSpotAnswers.push(() => void this.#confirmNow(sessionId, spotNumber).then(resolve, reject)));
+    }
+    return this.#confirmNow(sessionId, spotNumber);
+  }
+
+  answerSpotAnswers(): void {
+    this.#pendingSpotAnswers.splice(0).forEach((resolve) => resolve());
   }
 
   answerParked(): void {
@@ -81,17 +102,36 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
     this.#pending.splice(0).forEach((resolve) => resolve());
   }
 
-  #presumeNow(sessionId: string, detectedAt: number): Promise<ParkedPresumptionResponse> {
+  #presumeNow(sessionId: string, { detectedAt, aisleMinor }: DetectedWalk): Promise<ParkedPresumptionResponse> {
     if (this.parkedFailure !== null) {
       return Promise.reject(this.parkedFailure);
     }
+    const wrongAisleCode = this.session === null ? null : wrongAisleCodeOf(this.session, aisleMinor);
+    const state = wrongAisleCode === null ? 'PARKED_PRESUMED' : 'PARKED_UNCONFIRMED';
     if (this.session?.sessionId === sessionId) {
-      this.session = { ...this.session, state: 'PARKED_PRESUMED' };
+      const question = wrongAisleCode === null ? null : { aisleCode: wrongAisleCode, freeSpotNumbers: [...AISLE_B_FREE_SPOTS] };
+      this.session = { ...this.session, state, question };
     }
-    return Promise.resolve({ state: 'PARKED_PRESUMED', parkedAt: new Date(detectedAt).toISOString() });
+    return Promise.resolve({ state, parkedAt: new Date(detectedAt).toISOString() });
+  }
+
+  #confirmNow(sessionId: string, spotNumber: string): Promise<ParkedSpotAnswerResponse> {
+    if (this.answerFailure !== null) {
+      return Promise.reject(this.answerFailure);
+    }
+    const spot: AssignedSpot = { number: spotNumber, levelCode: 'P1', aisleCode: spotNumber.slice(0, 1) };
+    if (this.session?.sessionId === sessionId) {
+      this.session = { ...this.session, state: 'PARKED_CONFIRMED', spot, question: null };
+    }
+    return Promise.resolve({ state: 'PARKED_CONFIRMED', spot });
   }
 
   #answerNow(): Promise<CurrentParkingSession | null> {
     return this.failure === null ? Promise.resolve(this.session) : Promise.reject(this.failure);
   }
+}
+
+function wrongAisleCodeOf(session: CurrentParkingSession, aisleMinor: number | null): string | null {
+  const aisle = session.levelPlan?.aisles.find(({ beaconMinor }) => beaconMinor === aisleMinor);
+  return aisle === undefined || aisle.code === session.spot.aisleCode ? null : aisle.code;
 }

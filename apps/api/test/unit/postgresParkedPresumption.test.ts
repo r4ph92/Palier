@@ -9,7 +9,7 @@ const SESSION_ID = '00000000-0000-4000-8000-000000000951';
 const WALKED_AT = new Date('2026-11-04T18:05:00Z');
 const EARLIER_WALK = '2026-11-04T18:04:00.000Z';
 
-const signal: WalkingSignal = { sessionId: SESSION_ID, driverId: JULIE_ID, detectedAt: WALKED_AT };
+const signal: WalkingSignal = { sessionId: SESSION_ID, driverId: JULIE_ID, detectedAt: WALKED_AT, detectedAisleMinor: null };
 
 function presumeWith(sql: ScriptedSql) {
   return new PostgresParkedPresumptionRepository(sql.database()).presume(signal);
@@ -19,7 +19,7 @@ function unchanged(state: EntrySessionState, parkedAt: string | null = null) {
   return new ScriptedSql().answer('read-unchanged-session', [{ state, parked_at: parkedAt }]);
 }
 
-describe('PostgresParkedPresumptionRepository', () => {
+describe('PostgresParkedPresumptionRepository, a walk without an aisle', () => {
   it('turns the session in one statement guarded by its id, its driver and the confirmed entry', async () => {
     const sql = new ScriptedSql().answer('presume-parked', [{ parked_at: WALKED_AT.toISOString() }]);
 
@@ -41,7 +41,7 @@ describe('PostgresParkedPresumptionRepository', () => {
   it('answers presumed with the recorded instant, without a second read and without touching the spot', async () => {
     const sql = new ScriptedSql().answer('presume-parked', [{ parked_at: WALKED_AT.toISOString() }]);
 
-    await expect(presumeWith(sql)).resolves.toEqual({ outcome: 'presumed', parkedAt: WALKED_AT });
+    await expect(presumeWith(sql)).resolves.toEqual({ outcome: 'recorded', state: 'PARKED_PRESUMED', parkedAt: WALKED_AT });
     expect(sql.labels()).toEqual(['presume-parked']);
   });
 
@@ -55,7 +55,11 @@ describe('PostgresParkedPresumptionRepository', () => {
   });
 
   it('answers already with the first walk when the session was presumed parked before', async () => {
-    await expect(presumeWith(unchanged('PARKED_PRESUMED', EARLIER_WALK))).resolves.toEqual({ outcome: 'already', parkedAt: new Date(EARLIER_WALK) });
+    await expect(presumeWith(unchanged('PARKED_PRESUMED', EARLIER_WALK))).resolves.toEqual({
+      outcome: 'already',
+      state: 'PARKED_PRESUMED',
+      parkedAt: new Date(EARLIER_WALK),
+    });
   });
 
   it.each([

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { configureServer } from './configureServer.ts';
 import { acceptNoticeAs, authorizationFor, julie, marc } from './fakeDriverRepository.ts';
-import { JULIE_SESSION_ID, julieAtParkingDemo } from './fakes/fakeCurrentParkingSessions.ts';
+import { JULIE_SESSION_ID, julieAtB3WithPlan, julieAtParkingDemo } from './fakes/fakeCurrentParkingSessions.ts';
 
 const enteredAt = new Date(2026, 10, 4, 18, 2);
 
@@ -45,6 +45,7 @@ describe('GET /v1/me/session', () => {
             { code: 'B', beaconMinor: 2, rectangle: { x: 0, y: 50, width: 100, height: 40 } },
           ],
         },
+        question: null,
       },
     });
   });
@@ -66,6 +67,25 @@ describe('GET /v1/me/session', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ session: { sessionId: JULIE_SESSION_ID, state: 'PARKED_PRESUMED', spot: { number: 'A-1' } } });
+  });
+
+  it('asks Julie where she parked, with the free spots of aisle B, after a walk there (story #21)', async () => {
+    const { readSession, parkingSessions } = await julieInsideAt(new Date(2026, 10, 4, 21, 17));
+    const question = { aisleCode: 'B', freeSpotNumbers: ['B-1', 'B-2', 'B-3', 'B-5'] };
+    parkingSessions.add(julie.id, { ...julieAtParkingDemo(enteredAt), state: 'PARKED_UNCONFIRMED', question });
+
+    const response = await readSession();
+
+    expect(response.json()).toMatchObject({ session: { state: 'PARKED_UNCONFIRMED', spot: { number: 'A-1' }, question } });
+  });
+
+  it('serves the spot Julie answered once she is parked-confirmed (story #21)', async () => {
+    const { readSession, parkingSessions } = await julieInsideAt(new Date(2026, 10, 4, 21, 17));
+    parkingSessions.add(julie.id, { ...julieAtB3WithPlan(enteredAt), state: 'PARKED_CONFIRMED' });
+
+    const response = await readSession();
+
+    expect(response.json()).toMatchObject({ session: { state: 'PARKED_CONFIRMED', spot: { number: 'B-3', aisleCode: 'B' }, question: null } });
   });
 
   it('answers no session to a driver who has none', async () => {

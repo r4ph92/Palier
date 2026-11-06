@@ -24,7 +24,7 @@ interface SignedInTabsProps {
   readonly onSignOut: () => void;
 }
 
-type ScanTabActions = Pick<ComponentProps<typeof ScanTab>, 'entryClient' | 'onAddPlate' | 'onAddCard'>;
+type ScanTabActions = Pick<ComponentProps<typeof ScanTab>, 'entryClient' | 'parkingSessionClient' | 'onAddPlate' | 'onAddCard'>;
 
 interface TabScreensWithSession {
   readonly currentSession: ReturnType<typeof useCurrentParkingSession>;
@@ -82,6 +82,7 @@ function useSessionGuidance({ device, clients }: Pick<SignedInTabsProps, 'device
 function scanTabActions(clients: SignedInClients, tabs: TabsController): ScanTabActions {
   return {
     entryClient: clients.entry,
+    parkingSessionClient: clients.parkingSession,
     onAddPlate: () => tabs.openAccountPage('vehicles'),
     onAddCard: () => tabs.openAccountPage('payment'),
   };

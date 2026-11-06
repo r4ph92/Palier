@@ -11,7 +11,7 @@ export interface ParkedPresumptionTools {
   readonly aisles: AisleFollower;
 }
 
-// Never asks the driver anything: the walk alone presumes the spot taken (Q36).
+// The walk alone presumes the spot taken (Q36); only a walk in another aisle has Palier ask where the car is.
 export function useParkedPresumption({ positioning, client, aisles }: ParkedPresumptionTools, session: CurrentParkingSession | null, refresh: () => void): void {
   const latest = useRef<LatestSession>({ session, refresh });
   useEffect(() => {

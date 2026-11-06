@@ -1,9 +1,10 @@
 import { sql } from 'drizzle-orm';
-import type { ActiveEntrySessionState } from '@palier/shared-types';
+import type { ActiveEntrySessionState, ParkedQuestion } from '@palier/shared-types';
 import type { StoredLevelAisle } from '../../domain/lots/levelPlanOf.ts';
 import type { ActiveParkingSession, CurrentParkingSessionQuery } from '../../domain/parkingSessions/ActiveParkingSession.ts';
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import type { Database } from './database.ts';
+import { readParkedQuestion } from './parkedQuestion.ts';
 
 interface CurrentSessionRow extends Record<string, unknown> {
   readonly id: string;
@@ -18,6 +19,7 @@ interface CurrentSessionRow extends Record<string, unknown> {
   readonly level_code: string;
   readonly level_id: string;
   readonly beacon_major: number | null;
+  readonly parked_aisle_id: string | null;
 }
 
 interface LevelAisleRow extends Record<string, unknown> {
@@ -34,17 +36,29 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
   }
 
   // The inner select keeps the index predicate's exact text, so the per-driver partial unique index serves it.
+  // The spot is the one the driver answered, once they did.
   async findCurrentParkingSessionForUser(userId: string): Promise<ActiveParkingSession | null> {
     const rows = await this.#database.execute<CurrentSessionRow>(sql`
       select ps.id, ps.state, ps.entry_scan_at, ps.pricing_increment_cents, ps.pricing_increment_minutes, ps.pricing_daily_cap_cents,
-        lot.name as lot_name, lot.beacon_major, spot.number, aisle.code as aisle_code, level.code as level_code, aisle.level_id
+        ps.parked_aisle_id, lot.name as lot_name, lot.beacon_major, spot.number, aisle.code as aisle_code, level.code as level_code, aisle.level_id
       from (select * from parking_session where user_id = ${userId} and ${ACTIVE_SESSION}) ps
       join parking_lot lot on lot.id = ps.lot_id
-      join spot on spot.id = ps.assigned_spot_id
+      join spot on spot.id = coalesce(ps.confirmed_spot_id, ps.assigned_spot_id)
       join aisle on aisle.id = spot.aisle_id
       join level on level.id = aisle.level_id`);
     const row = rows[0];
-    return row === undefined ? null : activeSessionOf(row, await this.#levelAisles(row.level_id));
+    if (row === undefined) {
+      return null;
+    }
+    const [levelAisles, question] = await Promise.all([this.#levelAisles(row.level_id), this.#questionOf(row)]);
+    return activeSessionOf(row, { levelAisles, question });
+  }
+
+  #questionOf({ state, parked_aisle_id }: CurrentSessionRow): Promise<ParkedQuestion | null> {
+    if (state !== 'PARKED_UNCONFIRMED' || parked_aisle_id === null) {
+      return Promise.resolve(null);
+    }
+    return readParkedQuestion(this.#database, parked_aisle_id);
   }
 
   async #levelAisles(levelId: string): Promise<StoredLevelAisle[]> {
@@ -56,7 +70,9 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
   }
 }
 
-function activeSessionOf(row: CurrentSessionRow, levelAisles: readonly StoredLevelAisle[]): ActiveParkingSession {
+type SessionSurroundings = Pick<ActiveParkingSession, 'levelAisles' | 'question'>;
+
+function activeSessionOf(row: CurrentSessionRow, { levelAisles, question }: SessionSurroundings): ActiveParkingSession {
   return {
     id: row.id,
     state: row.state,
@@ -70,5 +86,6 @@ function activeSessionOf(row: CurrentSessionRow, levelAisles: readonly StoredLev
     },
     beaconMajor: row.beacon_major,
     levelAisles,
+    question,
   };
 }

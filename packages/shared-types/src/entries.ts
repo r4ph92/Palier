@@ -15,14 +15,32 @@ export interface EntryResponse {
   readonly barrierOpened: true;
 }
 
-export const ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'CANCELLED'] as const;
+export const ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED', 'CANCELLED'] as const;
 
 export type EntrySessionState = (typeof ENTRY_SESSION_STATES)[number];
 
 // A driver has at most one session in these states: the one the app shows as current.
-export const ACTIVE_ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED'] as const satisfies readonly EntrySessionState[];
+// PARKED_UNCONFIRMED: the driver walked away in another aisle and is asked where they parked; PARKED_CONFIRMED: they answered.
+export const ACTIVE_ENTRY_SESSION_STATES = [
+  'CREATED',
+  'ENTRY_CONFIRMED',
+  'PARKED_PRESUMED',
+  'PARKED_UNCONFIRMED',
+  'PARKED_CONFIRMED',
+] as const satisfies readonly EntrySessionState[];
 
 export type ActiveEntrySessionState = (typeof ACTIVE_ENTRY_SESSION_STATES)[number];
+
+// The driver walked away from the car: the spot is presumed, asked about, or answered.
+export const WALKED_AWAY_STATES = ['PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED'] as const satisfies readonly ActiveEntrySessionState[];
+
+export type WalkedAwayState = (typeof WALKED_AWAY_STATES)[number];
+
+const WALKED_AWAY: readonly unknown[] = WALKED_AWAY_STATES;
+
+export function isWalkedAwayState(candidate: unknown): candidate is WalkedAwayState {
+  return WALKED_AWAY.includes(candidate);
+}
 
 export interface EntryStatusResponse {
   readonly sessionId: string;

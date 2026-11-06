@@ -36,6 +36,10 @@
     "./spotHolds": {
       "types": "./src/spotHolds.ts",
       "default": "./src/spotHolds.ts"
+    },
+    "./spotNumber": {
+      "types": "./src/spotNumber.ts",
+      "default": "./src/spotNumber.ts"
     }
   },
   "scripts": {

@@ -23,6 +23,18 @@ export type StatementLabel =
   | 'free-held-spot'
   | 'presume-parked'
   | 'read-unchanged-session'
+  | 'read-walk-facts'
+  | 'ask-where-parked'
+  | 'flag-assigned-spot'
+  | 'read-session-lot'
+  | 'lock-answering-session'
+  | 'lock-answered-spot'
+  | 'occupy-answered-spot'
+  | 'confirm-parked-spot'
+  | 'read-current-session'
+  | 'read-level-aisles'
+  | 'read-parked-question'
+  | 'read-session-status'
   | 'unknown';
 
 export interface ExecutedStatement {
@@ -34,12 +46,27 @@ export interface ExecutedStatement {
 
 export type Rows = readonly Record<string, unknown>[];
 
+// What Postgres raises when a lock wait passes lock_timeout.
+export const LOCK_NOT_AVAILABLE = { code: '55P03' };
+
 const dialect = new PgDialect();
 
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
   ['presume-parked', /set state = 'PARKED_PRESUMED'/],
+  ['read-walk-facts', /left join aisle detected/],
+  ['ask-where-parked', /set state = 'PARKED_UNCONFIRMED'/],
+  ['flag-assigned-spot', /set state = 'OCCUPIED_UNKNOWN'/],
+  ['read-session-lot', /select lot_id from parking_session/],
+  ['lock-answering-session', /for update of ps/],
+  ['lock-answered-spot', /for update of spot/],
+  ['occupy-answered-spot', /set state = 'OCCUPIED', needs_check = false/],
+  ['confirm-parked-spot', /set state = 'PARKED_CONFIRMED'/],
+  ['read-current-session', /from \(select \* from parking_session/],
+  ['read-level-aisles', /from aisle\s+where level_id/],
+  ['read-parked-question', /left join spot on spot\.aisle_id = aisle\.id/],
+  ['read-session-status', /select ps\.id, ps\.state, ps\.entry_confirmed_at/],
   ['read-unchanged-session', /select state, parked_at from parking_session/],
   ['lock-lot', /from parking_lot[\s\S]*for no key update/],
   ['read-active-session', /with active as/],
@@ -83,6 +110,11 @@ export class ScriptedSql {
 
   labels(): StatementLabel[] {
     return this.statements.map(({ label }) => label);
+  }
+
+  // The first statement with this label, undefined when none ran.
+  statement(label: StatementLabel): ExecutedStatement | undefined {
+    return this.statements.find((statement) => statement.label === label);
   }
 
   count(label: StatementLabel): number {

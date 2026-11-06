@@ -3,12 +3,15 @@ import type {
   CurrentParkingSessionResponse,
   ParkedPresumptionRequest,
   ParkedPresumptionResponse,
+  ParkedSpotAnswerRequest,
+  ParkedSpotAnswerResponse,
   TestClockReading,
 } from '@palier/shared-types';
-import { ACTIVE_ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
+import { ACTIVE_ENTRY_SESSION_STATES, WALKED_AWAY_STATES } from '@palier/shared-types/entries';
+import { SPOT_NUMBER_MAX_LENGTH } from '@palier/shared-types/spotNumber';
 import type { FromSchema } from 'json-schema-to-ts';
 import { assignedSpotSchema } from './entrySchemas.ts';
-import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
+import type { AssertTrue, MutuallyAssignable, WithMutableArrays } from './schemaMatchesType.ts';
 
 const aisleRectangleSchema = {
   type: 'object',
@@ -35,9 +38,16 @@ const levelPlanSchema = {
   properties: { levelCode: { type: 'string' }, aisles: { type: 'array', items: planAisleSchema } },
 } as const;
 
+const parkedQuestionSchema = {
+  type: 'object',
+  required: ['aisleCode', 'freeSpotNumbers'],
+  additionalProperties: false,
+  properties: { aisleCode: { type: 'string' }, freeSpotNumbers: { type: 'array', items: { type: 'string' } } },
+} as const;
+
 const currentParkingSessionSchema = {
   type: 'object',
-  required: ['sessionId', 'state', 'lotName', 'spot', 'enteredAt', 'elapsedMinutes', 'amountCents', 'dailyCapCents', 'beaconMajor', 'levelPlan'],
+  required: ['sessionId', 'state', 'lotName', 'spot', 'enteredAt', 'elapsedMinutes', 'amountCents', 'dailyCapCents', 'beaconMajor', 'levelPlan', 'question'],
   additionalProperties: false,
   properties: {
     sessionId: { type: 'string' },
@@ -50,6 +60,7 @@ const currentParkingSessionSchema = {
     dailyCapCents: { type: 'integer' },
     beaconMajor: { anyOf: [{ type: 'integer' }, { type: 'null' }] },
     levelPlan: { anyOf: [levelPlanSchema, { type: 'null' }] },
+    question: { anyOf: [parkedQuestionSchema, { type: 'null' }] },
   },
 } as const;
 
@@ -77,22 +88,49 @@ export const backdateParkingSessionSchema = {
 // An ISO instant is under 30 characters; the cap keeps oversized text away from the date parser.
 const INSTANT_MAX_LENGTH = 40;
 
+// An iBeacon minor is an unsigned 16-bit number.
+const BEACON_MINOR_MAXIMUM = 65_535;
+
 export const parkedPresumptionRequestSchema = {
   type: 'object',
   required: ['detectedAt'],
   additionalProperties: false,
-  properties: { detectedAt: { type: 'string', format: 'date-time', maxLength: INSTANT_MAX_LENGTH } },
+  properties: {
+    detectedAt: { type: 'string', format: 'date-time', maxLength: INSTANT_MAX_LENGTH },
+    detectedAisleMinor: { type: 'integer', minimum: 0, maximum: BEACON_MINOR_MAXIMUM },
+  },
 } as const;
 
 export const parkedPresumptionResponseSchema = {
   type: 'object',
   required: ['state', 'parkedAt'],
   additionalProperties: false,
-  properties: { state: { type: 'string', const: 'PARKED_PRESUMED' }, parkedAt: { type: 'string' } },
+  properties: {
+    state: { type: 'string', enum: WALKED_AWAY_STATES },
+    parkedAt: { type: 'string' },
+  },
+} as const;
+
+// Spot numbers are a few characters (« B-3 »); the cap keeps oversized text away from the normalizer.
+// Postgres text cannot hold U+0000, and no painted number has a control character.
+const WITHOUT_CONTROL_CHARACTERS = '^[^\\u0000-\\u001F\\u007F]*$';
+
+export const parkedSpotAnswerRequestSchema = {
+  type: 'object',
+  required: ['spotNumber'],
+  additionalProperties: false,
+  properties: { spotNumber: { type: 'string', minLength: 1, maxLength: SPOT_NUMBER_MAX_LENGTH, pattern: WITHOUT_CONTROL_CHARACTERS } },
+} as const;
+
+export const parkedSpotAnswerResponseSchema = {
+  type: 'object',
+  required: ['state', 'spot'],
+  additionalProperties: false,
+  properties: { state: { type: 'string', const: 'PARKED_CONFIRMED' }, spot: assignedSpotSchema },
 } as const;
 
 export type ResponseSchemaMatchesCurrentParkingSession = AssertTrue<
-  MutuallyAssignable<FromSchema<typeof currentParkingSessionResponseSchema>, CurrentParkingSessionResponse>
+  MutuallyAssignable<FromSchema<typeof currentParkingSessionResponseSchema>, WithMutableArrays<CurrentParkingSessionResponse>>
 >;
 export type SchemaMatchesTestClockReading = AssertTrue<MutuallyAssignable<FromSchema<typeof testClockReadingSchema>, TestClockReading>>;
 export type SchemaMatchesBackdateRequest = AssertTrue<
@@ -103,4 +141,10 @@ export type RequestSchemaMatchesParkedPresumption = AssertTrue<
 >;
 export type ResponseSchemaMatchesParkedPresumption = AssertTrue<
   MutuallyAssignable<FromSchema<typeof parkedPresumptionResponseSchema>, ParkedPresumptionResponse>
+>;
+export type RequestSchemaMatchesParkedSpotAnswer = AssertTrue<
+  MutuallyAssignable<FromSchema<typeof parkedSpotAnswerRequestSchema>, ParkedSpotAnswerRequest>
+>;
+export type ResponseSchemaMatchesParkedSpotAnswer = AssertTrue<
+  MutuallyAssignable<FromSchema<typeof parkedSpotAnswerResponseSchema>, ParkedSpotAnswerResponse>
 >;

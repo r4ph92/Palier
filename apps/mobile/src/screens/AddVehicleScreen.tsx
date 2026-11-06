@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { VehicleClient } from '../api/VehicleClient';
+import { FieldError } from '../components/FieldError';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ProvincePicker } from '../components/ProvincePicker';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -69,15 +70,6 @@ function ProvinceField({ form }: { readonly form: AddVehicleController }) {
       <ProvincePicker selected={form.province} onSelect={form.setProvince} />
       {form.errors.province ? <FieldError message={form.errors.province} /> : null}
     </View>
-  );
-}
-
-function FieldError({ message }: { readonly message: string }) {
-  const colors = useColors();
-  return (
-    <Text accessibilityRole="alert" style={[typography.body, { color: colors.danger }]}>
-      {message}
-    </Text>
   );
 }
 

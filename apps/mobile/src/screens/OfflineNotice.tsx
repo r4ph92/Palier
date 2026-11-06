@@ -8,14 +8,15 @@ import { useColors } from '../theme/useColors';
 import { typography } from '../theme/typography';
 
 interface OfflineNoticeProps {
+  // Says which figures are those of the last read.
+  readonly message: string;
   readonly progress: ReadProgress;
   readonly onRetry: () => void;
 }
 
 // On the session screen after a missed refresh: the figures stay, marked as those of the last read.
-export function OfflineNotice({ progress, onRetry }: OfflineNoticeProps) {
+export function OfflineNotice({ message, progress, onRetry }: OfflineNoticeProps) {
   const colors = useColors();
-  const message = i18n.t('session.offline');
   useAnnouncement(message, progress.missedReads);
   return (
     <NoticeWithAction
