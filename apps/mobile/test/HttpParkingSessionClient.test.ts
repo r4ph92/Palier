@@ -202,3 +202,40 @@ describe('HttpParkingSessionClient, answering where the car is (story #21)', () 
     await expect(clientAnswering(body).client.answerParkedSpot('session-1', 'B-3')).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 });
+
+describe('HttpParkingSessionClient, reporting the assigned spot taken (story #23)', () => {
+  const A2 = { number: 'A-2', levelCode: 'P1', aisleCode: 'A' };
+
+  it('posts the shown spot number and reads the new spot', async () => {
+    const { client, fetchFunction } = clientAnswering({ outcome: 'reassigned', spot: A2 });
+
+    await expect(client.reportSpotTaken('session-1', 'A-1')).resolves.toEqual({ outcome: 'reassigned', spot: A2 });
+    expect(fetchFunction).toHaveBeenCalledWith(
+      `${BASE_URL}/v1/entries/session-1/spot-taken`,
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ spotNumber: 'A-1' }) }),
+    );
+  });
+
+  it('reads that no other spot is free', async () => {
+    await expect(clientAnswering({ outcome: 'none-free' }).client.reportSpotTaken('session-1', 'A-1')).resolves.toEqual({ outcome: 'none-free' });
+  });
+
+  it.each([
+    [404, 'SESSION_NOT_FOUND'],
+    [409, 'ALREADY_PARKED'],
+    [409, 'SPOT_NOT_ASSIGNED'],
+  ])('rejects a %i with the code %s', async (status, error) => {
+    await expect(clientAnswering({ statusCode: status, error }, status).client.reportSpotTaken('session-1', 'A-1')).rejects.toEqual(new PalierRejectedError(error));
+  });
+
+  it('rejects LOT_BUSY by its status, like no answer', async () => {
+    await expect(clientAnswering({ error: 'LOT_BUSY' }, 503).client.reportSpotTaken('session-1', 'A-1')).rejects.toBeInstanceOf(PalierStatusError);
+  });
+
+  it.each([
+    ['an unknown outcome', { outcome: 'moved' }],
+    ['a reassignment without a spot', { outcome: 'reassigned' }],
+  ])('treats %s as no answer', async (_case, body) => {
+    await expect(clientAnswering(body).client.reportSpotTaken('session-1', 'A-1')).rejects.toBeInstanceOf(PalierUnreachableError);
+  });
+});

@@ -4,12 +4,15 @@ import type {
   ParkedPresumptionResponse,
   ParkedSpotAnswerRequest,
   ParkedSpotAnswerResponse,
+  SpotTakenRequest,
+  SpotTakenResponse,
 } from '@palier/shared-types';
 import { AuthorizedRequester, readJson, type AuthorizedClientOptions } from './authorizedRequest';
 import type { DetectedWalk, ParkingSessionClient } from './ParkingSessionClient';
 import { parseCurrentParkingSession } from './parseCurrentParkingSession';
 import { parseParkedAnswer } from './parseParkedAnswer';
 import { parseParkedPresumption } from './parseParkedPresumption';
+import { parseSpotTaken } from './parseSpotTaken';
 
 const NOT_FOUND = 404;
 const CONFLICT = 409;
@@ -51,5 +54,15 @@ export class HttpParkingSessionClient implements ParkingSessionClient {
       body: JSON.stringify(body),
     });
     return parseParkedAnswer(await readJson(response));
+  }
+
+  async reportSpotTaken(sessionId: string, spotNumber: string): Promise<SpotTakenResponse> {
+    const body: SpotTakenRequest = { spotNumber };
+    const response = await this.#answerRequester.send(`/v1/entries/${encodeURIComponent(sessionId)}/spot-taken`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return parseSpotTaken(await readJson(response));
   }
 }

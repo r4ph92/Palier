@@ -1,8 +1,9 @@
-import type { AssignedSpot, CurrentParkingSession, LevelPlan, ParkedPresumptionResponse, ParkedSpotAnswerResponse } from '@palier/shared-types';
+import type { AssignedSpot, CurrentParkingSession, LevelPlan, ParkedPresumptionResponse, ParkedSpotAnswerResponse, SpotTakenResponse } from '@palier/shared-types';
 import type { DetectedWalk, ParkingSessionClient } from '../src/api/ParkingSessionClient';
 import { spotA1 } from './fakeEntryClient';
 
 export const spotB3: AssignedSpot = { number: 'B-3', levelCode: 'P1', aisleCode: 'B' };
+export const spotA2: AssignedSpot = { number: 'A-2', levelCode: 'P1', aisleCode: 'A' };
 
 // Level P1 of Parking Démo as the seed draws it: aisle A above aisle B.
 export const parkingDemoP1Plan: LevelPlan = {
@@ -54,6 +55,12 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
   readonly spotAnswers: string[] = [];
   answerFailure: Error | null = null;
   holdsSpotAnswer = false;
+  readonly spotTakenReports: string[] = [];
+  spotTakenFailure: Error | null = null;
+  holdsSpotTakenReport = false;
+  // The spot Palier gives after a spot-taken report; null when no other spot fits the vehicle.
+  replacementSpot: AssignedSpot | null = spotA2;
+  readonly #pendingSpotTakenReports: (() => void)[] = [];
   readonly #pendingSpotAnswers: (() => void)[] = [];
   readonly #pending: (() => void)[] = [];
   readonly #pendingParked: (() => void)[] = [];
@@ -87,6 +94,19 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
       return new Promise((resolve, reject) => this.#pendingSpotAnswers.push(() => void this.#confirmNow(sessionId, spotNumber).then(resolve, reject)));
     }
     return this.#confirmNow(sessionId, spotNumber);
+  }
+
+  // Like the API: the session gets the replacement spot, or is asked where it parked in the reported spot's aisle.
+  reportSpotTaken(sessionId: string, spotNumber: string): Promise<SpotTakenResponse> {
+    this.spotTakenReports.push(spotNumber);
+    if (this.holdsSpotTakenReport) {
+      return new Promise((resolve, reject) => this.#pendingSpotTakenReports.push(() => void this.#reassignNow(sessionId).then(resolve, reject)));
+    }
+    return this.#reassignNow(sessionId);
+  }
+
+  answerSpotTakenReports(): void {
+    this.#pendingSpotTakenReports.splice(0).forEach((resolve) => resolve());
   }
 
   answerSpotAnswers(): void {
@@ -124,6 +144,22 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
       this.session = { ...this.session, state: 'PARKED_CONFIRMED', spot, question: null };
     }
     return Promise.resolve({ state: 'PARKED_CONFIRMED', spot });
+  }
+
+  #reassignNow(sessionId: string): Promise<SpotTakenResponse> {
+    if (this.spotTakenFailure !== null) {
+      return Promise.reject(this.spotTakenFailure);
+    }
+    if (this.session?.sessionId !== sessionId) {
+      return Promise.resolve({ outcome: 'none-free' });
+    }
+    const spot = this.replacementSpot;
+    if (spot === null) {
+      this.session = { ...this.session, state: 'PARKED_UNCONFIRMED', question: { aisleCode: this.session.spot.aisleCode, freeSpotNumbers: [] } };
+      return Promise.resolve({ outcome: 'none-free' });
+    }
+    this.session = { ...this.session, spot };
+    return Promise.resolve({ outcome: 'reassigned', spot });
   }
 
   #answerNow(): Promise<CurrentParkingSession | null> {
