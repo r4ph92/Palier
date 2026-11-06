@@ -18,6 +18,8 @@ import { typography } from '../theme/typography';
 
 // Past this scale a spot number stops fitting its field; the cap keeps « B-12 » whole.
 const SPOT_NUMBER_MAX_FONT_SCALE = 2;
+// Wide enough for « P1-12 » at that scale; a full-width field would ask for a sentence, not a number.
+const SPOT_FIELD_MIN_WIDTH = 160;
 
 const PROBLEM_MESSAGES: Readonly<Record<ParkedAnswerProblem, string>> = {
   UNKNOWN_SPOT: 'session.whereParked.unknownSpot',
@@ -213,5 +215,5 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   field: { gap: spacing.small },
-  input: { minHeight: MINIMUM_TOUCH_TARGET, paddingHorizontal: spacing.medium, borderWidth: 2 },
+  input: { alignSelf: 'flex-start', minWidth: SPOT_FIELD_MIN_WIDTH, minHeight: MINIMUM_TOUCH_TARGET, paddingHorizontal: spacing.medium, borderWidth: 2 },
 });

@@ -118,6 +118,12 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     expect(screen.getByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
   });
 
+  it('sizes the field for a number, not the full width', async () => {
+    await julieAskedInAisleB();
+
+    expect(screen.getByLabelText('Numéro de place')).toHaveStyle({ alignSelf: 'flex-start', minWidth: 160 });
+  });
+
   it('gives the field no hint before a refusal', async () => {
     await julieAskedInAisleB();
 
