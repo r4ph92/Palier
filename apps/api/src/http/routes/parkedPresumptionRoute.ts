@@ -2,6 +2,7 @@ import type { ParkedPresumptionRefusalCode, ParkedPresumptionRequest, ParkedPres
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { ParkedPresumption, ParkedPresumptionRepository } from '../../domain/parkingSessions/ParkedPresumption.ts';
+import { isStorableDate } from '../../domain/time/storableDate.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { SESSION_NOT_FOUND_BODY } from './entryStatusRoute.ts';
 import { signedInDriver } from '../requireDriver.ts';
@@ -41,8 +42,8 @@ async function presume(
   reply: FastifyReply,
 ): Promise<ParkedPresumptionResponse | FastifyReply> {
   const detectedAt = new Date(request.body.detectedAt);
-  // The schema's date-time format admits a leap second, which Date cannot hold.
-  if (Number.isNaN(detectedAt.getTime())) {
+  // The schema's date-time format admits a leap second, which Date cannot hold, and year 0000, which Postgres cannot.
+  if (!isStorableDate(detectedAt)) {
     return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'Bad Request', message: 'detectedAt is not a valid date.' });
   }
   const presumption = await presumptions.presume({ sessionId: request.params.sessionId, driverId: signedInDriver(request).id, detectedAt });

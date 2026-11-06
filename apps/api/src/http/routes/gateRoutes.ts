@@ -1,4 +1,5 @@
 import type { GateIdentity, GatePassageRequest, GatePassageResponse } from '@palier/shared-types';
+import { isStorableDate } from '../../domain/time/storableDate.ts';
 import type { FastifyInstance } from 'fastify';
 import type { GateCommandCursor, GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
 import type { GateDeviceKeyRepository } from '../../domain/gates/GateDeviceKeyRepository.ts';
@@ -26,7 +27,6 @@ export interface GateRouteDependencies {
 }
 
 const BAD_REQUEST = 400;
-const FIRST_STORABLE_YEAR = 1;
 
 interface CommandsRoute {
   Querystring: GateCommandsQuery;
@@ -93,9 +93,4 @@ function cursorOf({ after, afterId }: GateCommandsQuery): CommandsCursor {
   }
   const issuedAt = new Date(after);
   return isStorableDate(issuedAt) ? { kind: 'after', after: { issuedAt, id: afterId } } : { kind: 'invalid' };
-}
-
-// Also false for an invalid date, whose year is NaN.
-function isStorableDate(date: Date): boolean {
-  return date.getUTCFullYear() >= FIRST_STORABLE_YEAR;
 }

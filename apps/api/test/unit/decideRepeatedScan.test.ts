@@ -27,6 +27,7 @@ describe('decideRepeatedScan', () => {
     ['another entry gate of the same lot', openingAtEntreeDemo, { ...entreeDemo, entryGateId: 'gate-entree-2' }],
     ['the entry gate of another lot', openingAtEntreeDemo, { lotId: 'lot-roy', entryGateId: 'gate-entree-roy' }],
     ['an entry the loop already confirmed', { ...openingAtEntreeDemo, state: 'ENTRY_CONFIRMED' }, entreeDemo],
+    ['a spot presumed taken once the driver walked away (story #18)', { ...openingAtEntreeDemo, state: 'PARKED_PRESUMED' }, entreeDemo],
     ['an entry past its opening window', { ...openingAtEntreeDemo, isWithinOpeningWindow: false }, entreeDemo],
   ])('refuses a scan of %s', (_case, active, scan) => {
     expect(decideRepeatedScan(active, scan)).toEqual({ kind: 'refuse' });
