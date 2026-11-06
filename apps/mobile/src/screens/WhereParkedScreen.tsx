@@ -56,14 +56,18 @@ function WhereParkedQuestion({ question, offline, answering }: WhereParkedQuesti
   const colors = useColors();
   const titleRef = useAccessibilityFocusOnMount();
   const [spotNumber, setSpotNumber] = useState('');
+  const changeNumber = (value: string) => {
+    setSpotNumber(value);
+    answering.clearProblem();
+  };
   return (
     <View style={styles.section}>
       <Text ref={titleRef} accessibilityRole="header" maxFontSizeMultiplier={BODY_TEXT_MAX_FONT_SCALE} style={[typography.spotLine, { color: colors.ink }]}>
         {i18n.t('session.whereParked.question')}
       </Text>
       {offline}
-      {question === null ? null : <FreeSpots question={question} typed={spotNumber} onChoose={setSpotNumber} />}
-      <SpotNumberField spotNumber={spotNumber} onChange={setSpotNumber} answering={answering} />
+      {question === null ? null : <FreeSpots question={question} typed={spotNumber} onChoose={changeNumber} />}
+      <SpotNumberField spotNumber={spotNumber} onChange={changeNumber} answering={answering} />
     </View>
   );
 }

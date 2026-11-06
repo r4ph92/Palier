@@ -9,6 +9,8 @@ export interface ParkedAnswerController {
   // Grows with every refused answer, so the same problem twice is announced twice.
   readonly attempts: number;
   answer(spotNumber: string): void;
+  // A refusal was about the number sent; once the driver changes it, the message no longer applies.
+  clearProblem(): void;
 }
 
 interface AnswerState {
@@ -32,7 +34,8 @@ export function useParkedAnswer(client: ParkingSessionClient, sessionId: string,
     },
     [client, sessionId, onSettled, run],
   );
-  return { isSending: runningKey !== null, problem: state.problem, attempts: state.attempts, answer };
+  const clearProblem = useCallback(() => setState((previous) => (previous.problem === null ? previous : { ...previous, problem: null })), []);
+  return { isSending: runningKey !== null, problem: state.problem, attempts: state.attempts, answer, clearProblem };
 }
 
 async function sendAnswer(send: () => Promise<unknown>, { onSettled, onProblem }: AnswerHandlers): Promise<void> {

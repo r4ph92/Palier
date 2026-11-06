@@ -124,6 +124,22 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     expect(screen.getByLabelText('Numéro de place')).toHaveStyle({ alignSelf: 'flex-start', minWidth: 160 });
   });
 
+  it.each([
+    ['choosing another row', async (user: ReturnType<typeof userEvent.setup>) => user.press(screen.getByRole('radio', { name: 'B-1' }))],
+    ['typing in the field', async (user: ReturnType<typeof userEvent.setup>) => user.type(screen.getByLabelText('Numéro de place'), '1')],
+  ])('clears the refusal, under the field and in its hint, on %s', async (_case, change) => {
+    const { user, parkingSession } = await julieAskedInAisleB();
+    parkingSession.answerFailure = new PalierRejectedError('SPOT_TAKEN');
+    await user.press(screen.getByRole('radio', { name: 'B-3' }));
+    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
+    await screen.findByRole('alert');
+
+    await change(user);
+
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByLabelText('Numéro de place')).not.toHaveProp('accessibilityHint', expect.anything());
+  });
+
   it('gives the field no hint before a refusal', async () => {
     await julieAskedInAisleB();
 
