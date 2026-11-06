@@ -8,7 +8,7 @@ import { useEntry, type EntryController, type EntryState } from '../entries/useE
 import type { PendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionController, CurrentParkingSessionReading, CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
-import { hasWalkedAway } from '../parkingSessions/isParked';
+import { isWalkedAwayState } from '@palier/shared-types/entries';
 import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
 import { ScanFrame, ScanScreen } from './ScanScreen';
 import { SessionNotice } from './SessionNotice';
@@ -93,7 +93,7 @@ function currentSessionScreen(
       reading={reading}
       progress={{ isReading, missedReads }}
       onRetry={refresh}
-      notice={hasWalkedAway(reading.session.state) ? null : aside.detectionNotice}
+      notice={isWalkedAwayState(reading.session.state) ? null : aside.detectionNotice}
       guidance={aside.guidance}
       whereParked={(offline) => <WhereParkedScreen client={parkingSessionClient} session={reading.session} offline={offline} onAnswered={refresh} />}
       shouldFocusSpotOnArrival={reading.session.sessionId === arrivedParkedSessionId}
@@ -136,7 +136,7 @@ function useEndEntryOnceParked(entry: EntryController, state: CurrentParkingSess
 
 function parkedEntrySessionIdOf(entryState: EntryState, state: CurrentParkingSessionState): string | null {
   const enteredSessionId = entryState.status === 'entered' ? entryState.sessionId : null;
-  const parkedSessionId = state.status === 'current' && hasWalkedAway(state.session.state) ? state.session.sessionId : null;
+  const parkedSessionId = state.status === 'current' && isWalkedAwayState(state.session.state) ? state.session.sessionId : null;
   return enteredSessionId !== null && enteredSessionId === parkedSessionId ? enteredSessionId : null;
 }
 

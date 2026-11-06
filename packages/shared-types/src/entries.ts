@@ -36,6 +36,12 @@ export const WALKED_AWAY_STATES = ['PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PAR
 
 export type WalkedAwayState = (typeof WALKED_AWAY_STATES)[number];
 
+const WALKED_AWAY: readonly unknown[] = WALKED_AWAY_STATES;
+
+export function isWalkedAwayState(candidate: unknown): candidate is WalkedAwayState {
+  return WALKED_AWAY.includes(candidate);
+}
+
 export interface EntryStatusResponse {
   readonly sessionId: string;
   readonly state: EntrySessionState;

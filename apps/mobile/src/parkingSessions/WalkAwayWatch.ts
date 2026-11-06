@@ -3,7 +3,7 @@ import { PalierUnauthorizedError } from '../api/AuthClient';
 import { PalierUnreachableError } from '../api/LotsClient';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
-import { hasWalkedAway } from './isParked';
+import { isWalkedAwayState } from '@palier/shared-types/entries';
 import type { AisleFollower } from '../positioning/AisleFollower';
 import type { PositioningCore } from '../positioning/PositioningCore';
 import type { ParkedConfidence, PositioningListener } from '../positioning/PositioningModule';
@@ -63,7 +63,7 @@ export class WalkAwayWatch {
 
   #isReportable(walk: Walk): boolean {
     const session = this.#context.latest().session;
-    if (session?.sessionId !== this.#context.sessionId || hasWalkedAway(session.state)) {
+    if (session?.sessionId !== this.#context.sessionId || isWalkedAwayState(session.state)) {
       return false;
     }
     return walk.confidence !== 'low' && !this.#isSending && !this.#isReported;

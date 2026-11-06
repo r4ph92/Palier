@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { CurrentParkingSession } from '@palier/shared-types';
 import type { AisleFollower } from '../positioning/AisleFollower';
 import type { PositioningCore } from '../positioning/PositioningCore';
-import { hasWalkedAway } from '../parkingSessions/isParked';
+import { isWalkedAwayState } from '@palier/shared-types/entries';
 import { useAisleMonitoring } from '../positioning/useAisleMonitoring';
 import { useCurrentAisle } from '../positioning/useCurrentAisle';
 import { ParkingGuidance } from './ParkingGuidance';
@@ -12,7 +12,7 @@ import { ParkingGuidance } from './ParkingGuidance';
 export function useParkingGuidance(positioning: PositioningCore, aisles: AisleFollower, session: CurrentParkingSession | null): ReactNode {
   useAisleMonitoring(positioning, session);
   const currentAisle = useCurrentAisle(aisles, session?.sessionId ?? null);
-  if (session === null || hasWalkedAway(session.state)) {
+  if (session === null || isWalkedAwayState(session.state)) {
     return null;
   }
   return <ParkingGuidance session={session} currentAisle={currentAisle} />;
