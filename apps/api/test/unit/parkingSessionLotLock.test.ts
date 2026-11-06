@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SessionDraft } from '../../src/domain/entries/ParkingSessionRepository.ts';
 import { PostgresParkingSessionRepository } from '../../src/infrastructure/postgres/PostgresParkingSessionRepository.ts';
 import { PostgresUnconfirmedEntryRepository } from '../../src/infrastructure/postgres/PostgresUnconfirmedEntryRepository.ts';
-import { ScriptedSql } from './fakes/scriptedSql.ts';
+import { ScriptedSql, type Rows } from './fakes/scriptedSql.ts';
 
 const NOW = new Date('2026-11-05T12:00:00Z');
 const draft: SessionDraft = {
@@ -139,13 +139,18 @@ describe('opening an entry for a driver who holds a spot', () => {
     expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-free-spots']);
   });
 
-  function scriptedUnfitEntry(unfitFlag: string): ScriptedSql {
+  interface UnfitAnswers {
+    readonly released?: Rows;
+    readonly freed?: Rows;
+  }
+
+  function scriptedUnfitEntry(unfitFlag: string, answers: UnfitAnswers = {}): ScriptedSql {
     return new ScriptedSql()
       .answer('read-held-spot', [{ ...heldSpotRow, [unfitFlag]: true }])
       .answer('read-free-spots', [freeSpot])
       .answer('claim-spot', [{ id: 'spot-A-1', number: 'A-1', aisle_code: 'A', level_code: 'P1' }])
-      .answer('release-spot-hold', [{ spot_id: 'spot-B-2' }])
-      .answer('free-held-spot', [{ id: 'spot-B-2' }])
+      .answer('release-spot-hold', answers.released ?? [{ spot_id: 'spot-B-2' }])
+      .answer('free-held-spot', answers.freed ?? [{ id: 'spot-B-2' }])
       .answer('insert-session', [{ id: 'session-1' }]);
   }
 
@@ -166,17 +171,17 @@ describe('opening an entry for a driver who holds a spot', () => {
     await openEntry(scripted);
 
     expect(scripted.statements.find(({ label }) => label === 'release-spot-hold')?.params).toEqual(['hold-1', draft.driverId]);
-    expect(scripted.statements.find(({ label }) => label === 'free-held-spot')?.params).toEqual(['spot-B-2', NOW.toISOString()]);
+    expect(scripted.statements.find(({ label }) => label === 'free-held-spot')?.params).toEqual([NOW.toISOString(), 'spot-B-2']);
   });
 
   it('rolls the entry back when the unfit hold read under the lock is no longer active', async () => {
-    const scripted = scriptedUnfitEntry('is_accessible').answer('release-spot-hold', []);
+    const scripted = scriptedUnfitEntry('is_accessible', { released: [] });
 
     await expect(openEntry(scripted)).rejects.toThrow('was not active');
   });
 
   it('rolls the entry back when the unfit hold released by the entry had no held spot', async () => {
-    const scripted = scriptedUnfitEntry('is_accessible').answer('free-held-spot', []);
+    const scripted = scriptedUnfitEntry('is_accessible', { freed: [] });
 
     await expect(openEntry(scripted)).rejects.toThrow('was not held');
   });

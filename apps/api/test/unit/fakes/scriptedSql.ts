@@ -30,7 +30,7 @@ export interface ExecutedStatement {
   readonly onTransaction: boolean;
 }
 
-type Rows = readonly Record<string, unknown>[];
+export type Rows = readonly Record<string, unknown>[];
 
 const dialect = new PgDialect();
 
