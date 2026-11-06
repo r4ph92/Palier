@@ -20,6 +20,9 @@ interface CurrentSessionRow extends Record<string, unknown> {
   readonly level_id: string;
   readonly beacon_major: number | null;
   readonly parked_aisle_id: string | null;
+  readonly is_electric: boolean;
+  readonly has_accessible_permit: boolean;
+  readonly is_oversize: boolean;
 }
 
 interface LevelAisleRow extends Record<string, unknown> {
@@ -40,9 +43,12 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
   async findCurrentParkingSessionForUser(userId: string): Promise<ActiveParkingSession | null> {
     const rows = await this.#database.execute<CurrentSessionRow>(sql`
       select ps.id, ps.state, ps.entry_scan_at, ps.pricing_increment_cents, ps.pricing_increment_minutes, ps.pricing_daily_cap_cents,
-        ps.parked_aisle_id, lot.name as lot_name, lot.beacon_major, spot.number, aisle.code as aisle_code, level.code as level_code, aisle.level_id
+        ps.parked_aisle_id, lot.name as lot_name, lot.beacon_major, spot.number, aisle.code as aisle_code, level.code as level_code, aisle.level_id,
+        coalesce(vehicle.is_electric, false) as is_electric, coalesce(vehicle.has_accessible_permit, false) as has_accessible_permit,
+        coalesce(vehicle.is_oversize, false) as is_oversize
       from (select * from parking_session where user_id = ${userId} and ${ACTIVE_SESSION}) ps
       join parking_lot lot on lot.id = ps.lot_id
+      left join vehicle on vehicle.id = ps.vehicle_id
       join spot on spot.id = coalesce(ps.confirmed_spot_id, ps.assigned_spot_id)
       join aisle on aisle.id = spot.aisle_id
       join level on level.id = aisle.level_id`);
@@ -54,11 +60,13 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
     return activeSessionOf(row, { levelAisles, question });
   }
 
-  #questionOf({ state, parked_aisle_id }: CurrentSessionRow): Promise<ParkedQuestion | null> {
-    if (state !== 'PARKED_UNCONFIRMED' || parked_aisle_id === null) {
+  // A session whose vehicle was deleted is asked with standard needs.
+  #questionOf(row: CurrentSessionRow): Promise<ParkedQuestion | null> {
+    if (row.state !== 'PARKED_UNCONFIRMED' || row.parked_aisle_id === null) {
       return Promise.resolve(null);
     }
-    return readParkedQuestion(this.#database, parked_aisle_id);
+    const needs = { isElectric: row.is_electric, hasAccessiblePermit: row.has_accessible_permit, isOversize: row.is_oversize };
+    return readParkedQuestion(this.#database, { aisleId: row.parked_aisle_id, needs });
   }
 
   async #levelAisles(levelId: string): Promise<StoredLevelAisle[]> {
