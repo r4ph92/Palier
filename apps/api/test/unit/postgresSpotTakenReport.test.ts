@@ -203,7 +203,7 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
     expect(read?.text).toMatch(/where \(holder\.assigned_spot_id = s\.id or holder\.confirmed_spot_id = s\.id\) and holder\.state in \('CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED'\)/);
   });
 
-  it('asks where Julie parked, without claiming, when the only AVAILABLE spot is still another active session\'s', async () => {
+  it('asks where Julie parked, without claiming, when the read returns no free spot', async () => {
     const sql = reportOn(lockedSession(), []);
 
     await expect(reportWith(sql)).resolves.toEqual({ outcome: 'none-free' });
