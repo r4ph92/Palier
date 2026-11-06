@@ -20,6 +20,7 @@ import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import { appUser, vehicle } from './driverSchema.ts';
 import { gate } from './gateSchema.ts';
 import { aisle, parkingLot, spot } from './lotSchema.ts';
+import { spotHold } from './spotHoldSchema.ts';
 
 interface SameLotTarget {
   readonly id: AnyPgColumn;
@@ -49,6 +50,8 @@ export const parkingSession = pgTable(
     assignedSpotId: uuid('assigned_spot_id').notNull(),
     entryGateId: uuid('entry_gate_id').notNull(),
     state: parkingSessionState('state').notNull().default('CREATED'),
+    // The hold this entry used, put back by the cancellation when the driver never drove through (decision 016).
+    consumedSpotHoldId: uuid('consumed_spot_hold_id').references(() => spotHold.id),
     paymentIntentId: text('payment_intent_id'),
     authorizedCents: integer('authorized_cents').notNull(),
     // The lot's pricing at entry (D1): a later change to the lot never reprices a session already inside.

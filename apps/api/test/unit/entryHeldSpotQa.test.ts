@@ -40,7 +40,7 @@ const freeOversizeSpot = {
 };
 
 function openEntry(scripted: ScriptedSql, draft: SessionDraft) {
-  const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 });
+  const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 }, () => new Date());
   return repository.openOrReplay(draft);
 }
 

@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { ExpiredEntry, PendingRelease, UnconfirmedEntryRepository } from '../../domain/entries/UnconfirmedEntryRepository.ts';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
+import type { Clock } from '../../domain/time/Clock.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database } from './database.ts';
 import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
@@ -22,9 +23,11 @@ interface PendingCountRow extends Record<string, unknown> {
 
 export class PostgresUnconfirmedEntryRepository implements UnconfirmedEntryRepository {
   readonly #database: Database;
+  readonly #clock: Clock;
 
-  constructor(database: Database) {
+  constructor(database: Database, clock: Clock) {
     this.#database = database;
+    this.#clock = clock;
   }
 
   async findExpired(window: OpeningWindow): Promise<readonly ExpiredEntry[]> {
@@ -40,7 +43,7 @@ export class PostgresUnconfirmedEntryRepository implements UnconfirmedEntryRepos
   cancel(entry: ExpiredEntry): Promise<boolean> {
     return this.#database.transaction(async (tx) => {
       await lockParkingLot(tx, entry.lotId);
-      return cancelCreatedSession(tx, entry.sessionId);
+      return cancelCreatedSession(tx, entry.sessionId, this.#clock());
     }, LOT_LOCK_TRANSACTION);
   }
 

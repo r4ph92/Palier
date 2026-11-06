@@ -37,7 +37,7 @@ function scriptedEntry(): ScriptedSql {
 }
 
 async function openEntry(scripted: ScriptedSql) {
-  const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 });
+  const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 }, () => new Date());
   return repository.openOrReplay(draft);
 }
 
@@ -237,7 +237,7 @@ describe('opening an entry for a driver who holds a spot', () => {
 describe('cancelling an unconfirmed entry under the lot lock', () => {
   it('locks the lot first, in a READ COMMITTED transaction', async () => {
     const scripted = new ScriptedSql();
-    const repository = new PostgresUnconfirmedEntryRepository(scripted.database());
+    const repository = new PostgresUnconfirmedEntryRepository(scripted.database(), () => new Date());
 
     await repository.cancel({ sessionId: 'session-1', lotId: draft.lotId });
 

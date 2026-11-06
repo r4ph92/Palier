@@ -141,6 +141,13 @@
       "when": 1793983065687,
       "tag": "0019_reported_spot",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794008077215,
+      "tag": "0020_consumed_spot_hold",
+      "breakpoints": true
     }
   ]
 }

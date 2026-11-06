@@ -42,7 +42,7 @@ export interface ComposedEntries {
 }
 
 export function composeEntries({ database, stripeKey, demoMode, paymentsSimulation, drivers, vehicles, openingWindow, clock }: EntryComposition): ComposedEntries {
-  const sessions = new PostgresParkingSessionRepository(database, openingWindow);
+  const sessions = new PostgresParkingSessionRepository(database, openingWindow, clock);
   const payments = paymentAuthorizer(stripeKey, paymentsSimulation);
   const routes = {
     sessions,

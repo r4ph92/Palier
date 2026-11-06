@@ -54,7 +54,7 @@ const entries = composeEntries({
   clock,
 });
 const entryCancellation = composeEntryCancellation(
-  { openingWindow, cancellationPeriodSeconds: environment.entryCancellation.cancellationPeriodSeconds },
+  { openingWindow, cancellationPeriodSeconds: environment.entryCancellation.cancellationPeriodSeconds, clock },
   connection.database,
   entries.payments,
 );
