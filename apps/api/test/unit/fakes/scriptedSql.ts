@@ -27,6 +27,8 @@ export type StatementLabel =
   | 'ask-where-parked'
   | 'flag-assigned-spot'
   | 'read-session-lot'
+  | 'cancel-session'
+  | 'restore-spot-hold'
   | 'lock-answering-session'
   | 'lock-reporting-session'
   | 'record-reported-spot'
@@ -61,6 +63,8 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-walk-facts', /left join aisle detected/],
   ['ask-where-parked', /set state = 'PARKED_UNCONFIRMED'/],
   ['flag-assigned-spot', /set state = 'OCCUPIED_UNKNOWN'/],
+  ['cancel-session', /set state = 'CANCELLED'/],
+  ['restore-spot-hold', /update spot_hold set status = 'ACTIVE'/],
   ['read-session-lot', /select lot_id from parking_session/],
   ['lock-reporting-session', /left join vehicle[\s\S]*for update of ps/],
   ['lock-answering-session', /for update of ps/],
@@ -100,6 +104,7 @@ function labelOf(text: string): StatementLabel {
 export class ScriptedSql {
   readonly statements: ExecutedStatement[] = [];
   readonly isolationLevels: (string | undefined)[] = [];
+  readonly insertedSessions: unknown[] = [];
   readonly #answers = new Map<StatementLabel, Rows[]>();
   readonly #failures = new Map<StatementLabel, unknown>();
 
@@ -145,7 +150,12 @@ export class ScriptedSql {
   #transaction() {
     return {
       execute: (query: SQL) => this.#run(query, true),
-      insert: () => ({ values: () => ({ returning: () => this.#record({ label: 'insert-session', text: '', params: [], onTransaction: true }) }) }),
+      insert: () => ({
+        values: (values: unknown) => {
+          this.insertedSessions.push(values);
+          return { returning: () => this.#record({ label: 'insert-session', text: '', params: [], onTransaction: true }) };
+        },
+      }),
     };
   }
 

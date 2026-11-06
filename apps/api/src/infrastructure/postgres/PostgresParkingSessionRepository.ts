@@ -10,11 +10,12 @@ import type {
   SessionStatus,
 } from '../../domain/entries/ParkingSessionRepository.ts';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
+import type { Clock } from '../../domain/time/Clock.ts';
 import { findActiveSessionFacts } from './activeSessionFacts.ts';
 import { admissionRefusalOf } from './admissionRefusal.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
-import { inLotLock } from './lockParkingLot.ts';
+import { inLotLock, LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
 import { parkingSession } from './schema.ts';
 import { ASSIGNED_TO_ENTRY, claimFirstFittingSpot, type AssignedSpotRow } from './spotClaim.ts';
 import { consumeHeldSpot, heldSpotFits, readHeldSpot, releaseUnfitHold } from './spotHoldUse.ts';
@@ -38,10 +39,12 @@ function statusOf(row: SessionStatusRow): SessionStatus {
 export class PostgresParkingSessionRepository implements ParkingSessionRepository {
   readonly #database: Database;
   readonly #openingWindow: OpeningWindow;
+  readonly #clock: Clock;
 
-  constructor(database: Database, openingWindow: OpeningWindow) {
+  constructor(database: Database, openingWindow: OpeningWindow, clock: Clock) {
     this.#database = database;
     this.#openingWindow = openingWindow;
+    this.#clock = clock;
   }
 
   async openOrReplay(draft: SessionDraft): Promise<SessionOpening | null> {
@@ -84,7 +87,13 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   }
 
   async cancel(sessionId: string): Promise<void> {
-    await this.#database.transaction((tx) => cancelCreatedSession(tx, sessionId));
+    await this.#database.transaction(async (tx) => {
+      const lotId = await lotOfSession(tx, sessionId);
+      if (lotId !== undefined) {
+        await lockParkingLot(tx, lotId);
+      }
+      await cancelCreatedSession(tx, sessionId, this.#clock());
+    }, LOT_LOCK_TRANSACTION);
   }
 }
 
@@ -93,7 +102,7 @@ async function openSession(tx: Transaction, draft: SessionDraft): Promise<Opened
   const query = { driverId: draft.driverId, lotId: draft.lotId, now: draft.now };
   const held = await readHeldSpot(tx, query);
   if (heldSpotFits(draft.needs, held)) {
-    return insertSession(tx, draft, await consumeHeldSpot(tx, query, held));
+    return insertSession(tx, draft, { assigned: await consumeHeldSpot(tx, query, held), consumedSpotHoldId: held.hold_id });
   }
   const assigned = await claimFirstFittingSpot(tx, { lotId: draft.lotId, needs: draft.needs, target: ASSIGNED_TO_ENTRY });
   if (assigned === undefined) {
@@ -102,11 +111,22 @@ async function openSession(tx: Transaction, draft: SessionDraft): Promise<Opened
   if (held !== undefined) {
     await releaseUnfitHold(tx, query, held);
   }
-  return insertSession(tx, draft, assigned);
+  return insertSession(tx, draft, { assigned, consumedSpotHoldId: null });
 }
 
-async function insertSession(tx: Transaction, draft: SessionDraft, assigned: AssignedSpotRow): Promise<OpenedSession> {
-  const [session] = await tx.insert(parkingSession).values(sessionValues(draft, assigned.id)).returning({ id: parkingSession.id });
+// Read before the lot lock, which needs the lot; the lot of a session never changes.
+async function lotOfSession(tx: Transaction, sessionId: string): Promise<string | undefined> {
+  const rows = await tx.execute<{ lot_id: string }>(sql`select lot_id from parking_session where id = ${sessionId}`);
+  return rows[0]?.lot_id;
+}
+
+interface Seat {
+  readonly assigned: AssignedSpotRow;
+  readonly consumedSpotHoldId: string | null;
+}
+
+async function insertSession(tx: Transaction, draft: SessionDraft, { assigned, consumedSpotHoldId }: Seat): Promise<OpenedSession> {
+  const [session] = await tx.insert(parkingSession).values({ ...sessionValues(draft, assigned.id), consumedSpotHoldId }).returning({ id: parkingSession.id });
   if (session === undefined) {
     throw new Error('The parking session was not created.');
   }

@@ -6,7 +6,7 @@ const SESSION_ID = 'session-julie';
 const JULIE_ID = 'driver-julie';
 
 async function statusOf(scripted: ScriptedSql) {
-  const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 });
+  const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 }, () => new Date());
   return repository.findForUser(SESSION_ID, JULIE_ID);
 }
 

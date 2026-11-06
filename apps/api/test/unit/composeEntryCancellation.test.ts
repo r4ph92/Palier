@@ -15,7 +15,7 @@ describe('composeEntryCancellation', () => {
   it('hands the job the very window it was given, and the period in milliseconds', () => {
     const openingWindow = { withinMilliseconds: 60_000 };
 
-    const composed = composeEntryCancellation({ openingWindow, cancellationPeriodSeconds: 30 }, unusedDatabase, null);
+    const composed = composeEntryCancellation({ openingWindow, cancellationPeriodSeconds: 30, clock: () => new Date() }, unusedDatabase, null);
 
     expect(composed.job.openingWindow).toBe(openingWindow);
     expect(composed.periodMilliseconds).toBe(30_000);
@@ -24,7 +24,7 @@ describe('composeEntryCancellation', () => {
   it('releases holds through the authorizer the entry routes use', () => {
     const payments = new FakePaymentAuthorizer();
 
-    const schedule = { openingWindow: { withinMilliseconds: 45_000 }, cancellationPeriodSeconds: 15 };
+    const schedule = { openingWindow: { withinMilliseconds: 45_000 }, cancellationPeriodSeconds: 15, clock: () => new Date() };
 
     expect(composeEntryCancellation(schedule, unusedDatabase, payments).job.payments).toBe(payments);
   });
