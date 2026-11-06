@@ -22,6 +22,8 @@ interface SessionAfterRefusalRow extends Record<string, unknown> {
   readonly parked_at: Date | string | null;
 }
 
+const MAX_WALK_ATTEMPTS = 2;
+
 // The walk in the spot's aisle writes no spot and takes no lot lock: the loop confirmation already made the spot OCCUPIED (decision 019).
 // A walk in another aisle flags that spot under the lot lock and asks the driver where they parked (decision 020).
 export class PostgresParkedPresumptionRepository implements ParkedPresumptionRepository {
@@ -35,8 +37,13 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
     if (signal.detectedAisleMinor === null) {
       return this.#recordedOrRefused(signal, await this.#presumeConfirmedEntry(signal, null));
     }
-    const walk = (await this.#walkOnFacts(signal)) ?? (await this.#walkOnFacts(signal));
-    return walk ?? classifyRefusedSignal(await this.#readSessionAfterRefusal(signal));
+    for (let attempt = 0; attempt < MAX_WALK_ATTEMPTS; attempt += 1) {
+      const walk = await this.#walkOnFacts(signal);
+      if (walk !== null) {
+        return walk;
+      }
+    }
+    return classifyRefusedSignal(await this.#readSessionAfterRefusal(signal));
   }
 
   // Null when the write found the session changed since its facts were read, a spot-taken report in between: the caller reads them again.
