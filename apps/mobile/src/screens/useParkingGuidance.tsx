@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
 import type { PositioningCore } from '../positioning/PositioningCore';
+import { isParked } from '../parkingSessions/isParked';
 import { useAisleMonitoring } from '../positioning/useAisleMonitoring';
 import { useCurrentAisle } from '../positioning/useCurrentAisle';
 import { ParkingGuidance } from './ParkingGuidance';
@@ -11,7 +12,7 @@ export function useParkingGuidance(positioning: PositioningCore, state: CurrentP
   const session = state.status === 'current' ? state.session : null;
   useAisleMonitoring(positioning, session);
   const currentAisle = useCurrentAisle(positioning, session);
-  if (session === null || session.state === 'PARKED_PRESUMED') {
+  if (session === null || isParked(session.state)) {
     return null;
   }
   return <ParkingGuidance session={session} currentAisle={currentAisle} />;

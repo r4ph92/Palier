@@ -3,6 +3,7 @@ import { PalierUnauthorizedError } from '../api/AuthClient';
 import { PalierUnreachableError } from '../api/LotsClient';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
+import { isParked } from './isParked';
 import { aisleWithMinor } from '../positioning/aisleWithMinor';
 import type { PositioningCore } from '../positioning/PositioningCore';
 import type { ParkedConfidence, PositioningListener } from '../positioning/PositioningModule';
@@ -69,7 +70,7 @@ export class WalkAwayWatch {
   // Q36: any walk in the assigned aisle, or before any aisle was seen, presumes the spot; another aisle is left to #21.
   #isPresumable(walk: Walk): boolean {
     const session = this.#context.latest().session;
-    if (session?.sessionId !== this.#context.sessionId || session.state === 'PARKED_PRESUMED') {
+    if (session?.sessionId !== this.#context.sessionId || isParked(session.state)) {
       return false;
     }
     if (walk.confidence === 'low' || this.#isSending || this.#isReported) {

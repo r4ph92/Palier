@@ -9,6 +9,7 @@ import { formatElapsed } from '../i18n/formatElapsed';
 import { formatMoney } from '../i18n/formatMoney';
 import { currentLanguage, i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionReading, ReadProgress } from '../parkingSessions/useCurrentParkingSession';
+import { isParked } from '../parkingSessions/isParked';
 import { unbrokenSpotNumber } from '../spots/spotNumber';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -83,14 +84,10 @@ function SessionSpot({ session }: { readonly session: CurrentParkingSession }) {
 }
 
 function spotStatusOf({ state, spot }: CurrentParkingSession): string {
-  switch (state) {
-    case 'CREATED':
-      return i18n.t('session.pending');
-    case 'ENTRY_CONFIRMED':
-      return i18n.t('scan.entryConfirmed');
-    case 'PARKED_PRESUMED':
-      return i18n.t('session.parkedIn', { spot: unbrokenSpotNumber(spot) });
+  if (isParked(state)) {
+    return i18n.t('session.parkedIn', { spot: unbrokenSpotNumber(spot) });
   }
+  return i18n.t(state === 'CREATED' ? 'session.pending' : 'scan.entryConfirmed');
 }
 
 interface FigureProps {

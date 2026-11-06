@@ -7,6 +7,7 @@ import { useEntry, type EntryController, type EntryState } from '../entries/useE
 import type { PendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionController, CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
+import { isParked } from '../parkingSessions/isParked';
 import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
 import { ScanFrame, ScanScreen } from './ScanScreen';
 import { SessionNotice } from './SessionNotice';
@@ -92,7 +93,7 @@ function progressKey(state: EntryState): string | null {
 // and the entry is over, so a later closed session shows the form rather than this entry's spot.
 function useEndEntryOnceParked(entry: EntryController, state: CurrentParkingSessionState): void {
   const enteredSessionId = entry.state.status === 'entered' ? entry.state.sessionId : null;
-  const parkedSessionId = state.status === 'current' && state.session.state === 'PARKED_PRESUMED' ? state.session.sessionId : null;
+  const parkedSessionId = state.status === 'current' && isParked(state.session.state) ? state.session.sessionId : null;
   const { startOver } = entry;
   useEffect(() => {
     if (enteredSessionId !== null && enteredSessionId === parkedSessionId) {
