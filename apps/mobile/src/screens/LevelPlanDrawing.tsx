@@ -1,10 +1,10 @@
 import type { AssignedSpot, PlanAisle } from '@palier/shared-types';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { SpotNumberText } from '../components/SpotNumberText';
 import { StateMark } from '../components/StateMark';
 import { i18n } from '../i18n/i18n';
 import { LIST_SEPARATOR } from '../i18n/spaces';
 import { planImageLabel } from '../parkingSessions/parkingGuidance';
-import { unbrokenSpotNumber } from '../spots/spotNumber';
 import type { AisleFrame, PlanGeometry } from '../parkingSessions/planGeometry';
 import { useColors } from '../theme/useColors';
 import { useIsLargeText } from '../theme/useIsLargeText';
@@ -76,11 +76,12 @@ function AisleRectangleView({ frame, marking, showsMarkers }: AisleRectangleView
 function SpotName({ spot, lead = '' }: { readonly spot: AssignedSpot; readonly lead?: string }) {
   const colors = useColors();
   return (
-    <Text style={[typography.body, { color: colors.ink }]}>
-      {lead}
-      {i18n.t('session.plan.spotLead')}
-      <Text style={typography.figure}>{unbrokenSpotNumber(spot)}</Text>
-    </Text>
+    <SpotNumberText
+      spot={spot}
+      lead={`${lead}${i18n.t('session.plan.spotLead')}`}
+      style={[typography.body, { color: colors.ink }]}
+      numberStyle={typography.figure}
+    />
   );
 }
 

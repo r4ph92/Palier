@@ -12,6 +12,7 @@ export const typography = StyleSheet.create({
   spotNumber: { fontFamily: fontFamilies.monoSemiBold, fontSize: 36, fontVariant: ['tabular-nums'] },
   // A figure inside a sentence of body text: same size, mono with tabular digits.
   figure: { fontFamily: fontFamilies.mono, fontSize: 16, lineHeight: 22, fontVariant: ['tabular-nums'] },
+  figureStrong: { fontFamily: fontFamilies.monoSemiBold, fontSize: 17, fontVariant: ['tabular-nums'] },
   countLabel: { fontFamily: fontFamilies.mono, fontSize: 14, lineHeight: 18 },
   body: { fontFamily: fontFamilies.text, fontSize: 16 },
   bodyStrong: { fontFamily: fontFamilies.textSemiBold, fontSize: 17 },

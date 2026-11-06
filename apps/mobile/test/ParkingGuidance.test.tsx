@@ -37,11 +37,9 @@ describe('ParkingGuidance', () => {
   it('sets the spot number in mono, in the sentence and on the aisle, like every figure', async () => {
     await showGuidance(null);
 
-    const numbers = screen.getAllByText('B-3', visibleText);
-    expect(numbers).toHaveLength(2);
-    for (const number of numbers) {
-      expect(StyleSheet.flatten(number.props.style).fontFamily).toBe(fontFamilies.mono);
-    }
+    const [inSentence, onAisle] = screen.getAllByText('B-3', visibleText);
+    expect(StyleSheet.flatten(inSentence?.props.style).fontFamily).toBe(fontFamilies.monoSemiBold);
+    expect(StyleSheet.flatten(onAisle?.props.style).fontFamily).toBe(fontFamilies.mono);
   });
 
   it('marks the highlighted aisle by a thicker border than the others, not by color alone', async () => {

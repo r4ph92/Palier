@@ -2,10 +2,10 @@ import type { AssignedSpot } from '@palier/shared-types';
 import type { Ref } from 'react';
 import { StyleSheet, Text, View, type HostInstance } from 'react-native';
 import { i18n } from '../i18n/i18n';
-import { unbrokenSpotNumber } from '../spots/spotNumber';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
+import { SpotNumberText } from './SpotNumberText';
 import { StateMark } from './StateMark';
 
 export function spotLabel(spot: AssignedSpot, lead = ''): string {
@@ -25,11 +25,13 @@ interface SpotLineProps {
 export function SpotLine({ spot, lead = '' }: SpotLineProps) {
   const colors = useColors();
   return (
-    <Text style={[typography.spotLine, { color: colors.ink }]}>
-      {lead}
-      <Text style={typography.spotNumber}>{unbrokenSpotNumber(spot)}</Text>
-      {spotPlace(spot)}
-    </Text>
+    <SpotNumberText
+      spot={spot}
+      lead={lead}
+      style={[typography.spotLine, { color: colors.ink }]}
+      numberStyle={typography.spotNumber}
+      trail={spotPlace(spot)}
+    />
   );
 }
 

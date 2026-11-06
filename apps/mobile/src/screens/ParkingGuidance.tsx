@@ -1,9 +1,9 @@
 import type { AssignedSpot, CurrentParkingSession, PlanAisle } from '@palier/shared-types';
 import { StyleSheet, Text, View } from 'react-native';
+import { SpotNumberText } from '../components/SpotNumberText';
 import { useAnnouncement } from '../components/useAnnouncement';
 import { i18n } from '../i18n/i18n';
 import { aisleSentence } from '../parkingSessions/parkingGuidance';
-import { unbrokenSpotNumber } from '../spots/spotNumber';
 import { planGeometryOf } from '../parkingSessions/planGeometry';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -33,10 +33,12 @@ export function ParkingGuidance({ session, currentAisle }: ParkingGuidanceProps)
 function GoToSpot({ spot }: { readonly spot: AssignedSpot }) {
   const colors = useColors();
   return (
-    <Text style={[typography.bodyStrong, { color: colors.ink }]}>
-      {i18n.t('session.plan.goToLead', { aisle: spot.aisleCode })}
-      <Text style={typography.figure}>{unbrokenSpotNumber(spot)}</Text>
-    </Text>
+    <SpotNumberText
+      spot={spot}
+      lead={i18n.t('session.plan.goToLead', { aisle: spot.aisleCode })}
+      style={[typography.bodyStrong, { color: colors.ink }]}
+      numberStyle={typography.figureStrong}
+    />
   );
 }
 
