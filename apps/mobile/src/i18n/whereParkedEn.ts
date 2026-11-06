@@ -11,5 +11,6 @@ export const whereParkedEn: Translations['session']['whereParked'] = {
   spotTaken: 'This spot is already assigned\u00A0— check the number on the ground',
   spotOutOfService: 'This spot is out of service\u00A0— check the number on the ground',
   invalidNumber: 'Invalid number',
+  offline: 'Offline, free spots as of last check',
   unreachable: 'Can’t reach Palier. Check your connection, then try again.',
 };

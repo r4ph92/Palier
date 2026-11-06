@@ -14,6 +14,11 @@ import { asSeen, visibleText } from './visibleText';
 import { advance, julieWith } from './walkAwayRig';
 import { AISLE_B_MINOR, CONFIRM_TYPED, julieAskedInAisleB, WHERE_PARKED } from './whereParkedRig';
 
+// The question's title, the offline notice and the free list's lead, in the order the screen shows them.
+function readingOrder(): string[] {
+  return screen.getAllByText(/^(Où êtes-vous garé|Hors ligne|Places libres)/).map((element) => asSeen(String(element.props.children)));
+}
+
 const UNREACHABLE = 'Impossible de joindre Palier. Vérifiez votre connexion, puis réessayez.';
 
 describe('answering where Julie parked, the edges (story #21)', () => {
@@ -121,7 +126,8 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     await advance(SESSION_REFRESH_MILLISECONDS);
 
     expect(screen.getByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
-    expect(screen.getByText('Hors ligne, montant au dernier relevé')).toBeOnTheScreen();
+    expect(screen.queryByText('Hors ligne, montant au dernier relevé')).toBeNull();
+    expect(readingOrder()).toEqual([WHERE_PARKED, 'Hors ligne, places libres au dernier relevé', 'Places libres dans l’allée B']);
   });
 });
 

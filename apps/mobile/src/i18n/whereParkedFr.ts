@@ -10,5 +10,6 @@ export const whereParkedFr = {
   spotTaken: 'Cette place est déjà attribuée\u00A0— vérifiez le numéro au sol',
   spotOutOfService: 'Cette place est hors service\u00A0— vérifiez le numéro au sol',
   invalidNumber: 'Numéro invalide',
+  offline: 'Hors ligne, places libres au dernier relevé',
   unreachable: 'Impossible de joindre Palier. Vérifiez votre connexion, puis réessayez.',
 };

@@ -21,8 +21,8 @@ interface CurrentParkingSessionScreenProps {
   readonly onRetry: () => void;
   readonly notice?: ReactNode;
   readonly guidance?: ReactNode;
-  // Story #21: asked where the car is, shown in place of the assigned spot while the session is PARKED_UNCONFIRMED.
-  readonly whereParked?: ReactNode;
+  // Asks where the car is in place of the assigned spot while the session is PARKED_UNCONFIRMED; it places the offline notice.
+  readonly whereParked?: (offline: ReactNode) => ReactNode;
   // The scan result holding VoiceOver's focus gave way to this screen: the focus moves to the spot.
   readonly shouldFocusSpotOnArrival?: boolean;
 }
@@ -32,7 +32,7 @@ export function CurrentParkingSessionScreen(props: CurrentParkingSessionScreenPr
   const colors = useColors();
   const { reading, progress, onRetry } = props;
   const arrival = useParkedArrival(reading.session);
-  const offline = reading.isStale ? <OfflineNotice progress={progress} onRetry={onRetry} /> : null;
+  const offline = reading.isStale ? <OfflineNotice message={offlineMessageOf(reading.session)} progress={progress} onRetry={onRetry} /> : null;
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -53,12 +53,12 @@ function SessionBody(props: SessionDetailsProps) {
   if (props.reading.session.state !== 'PARKED_UNCONFIRMED') {
     return <SessionDetails {...props} />;
   }
-  return (
-    <>
-      {props.whereParked}
-      {props.offline}
-    </>
-  );
+  return <>{props.whereParked?.(props.offline)}</>;
+}
+
+// The question shows free spots, not an amount: its notice says which figures are old.
+function offlineMessageOf(session: CurrentParkingSession): string {
+  return i18n.t(session.state === 'PARKED_UNCONFIRMED' ? 'session.whereParked.offline' : 'session.offline');
 }
 
 function SessionDetails({ reading, offline, arrival, notice, guidance, shouldFocusSpotOnArrival = false }: SessionDetailsProps) {

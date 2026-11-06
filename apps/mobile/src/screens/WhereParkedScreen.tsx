@@ -1,6 +1,6 @@
 import type { CurrentParkingSession, ParkedQuestion } from '@palier/shared-types';
 import { canonicalSpotNumber, SPOT_NUMBER_MAX_LENGTH } from '@palier/shared-types/spotNumber';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import { FieldError } from '../components/FieldError';
@@ -30,24 +30,27 @@ const PROBLEM_MESSAGES: Readonly<Record<ParkedAnswerProblem, string>> = {
 interface WhereParkedScreenProps {
   readonly client: ParkingSessionClient;
   readonly session: CurrentParkingSession;
+  // The offline notice, or null; it sits under the title so the driver knows the free spots may be old.
+  readonly offline: ReactNode;
   // Reads the session again once the answer is accepted, or the session moved on without it.
   readonly onAnswered: () => void;
 }
 
 // Story #21: the driver walked away in another aisle than the assigned spot's, so Palier asks where the car is.
 // The free spots of the aisle seen at the walk come first, a tap writes the number in the field; only « Confirmer » sends.
-export function WhereParkedScreen({ client, session, onAnswered }: WhereParkedScreenProps) {
+export function WhereParkedScreen({ client, session, offline, onAnswered }: WhereParkedScreenProps) {
   const answering = useParkedAnswer(client, session.sessionId, onAnswered);
-  return <WhereParkedQuestion question={session.question} answering={answering} />;
+  return <WhereParkedQuestion question={session.question} offline={offline} answering={answering} />;
 }
 
 interface WhereParkedQuestionProps {
   // null when Palier sent no usable list: the field alone still takes any number.
   readonly question: ParkedQuestion | null;
+  readonly offline: ReactNode;
   readonly answering: ParkedAnswerController;
 }
 
-function WhereParkedQuestion({ question, answering }: WhereParkedQuestionProps) {
+function WhereParkedQuestion({ question, offline, answering }: WhereParkedQuestionProps) {
   const colors = useColors();
   const titleRef = useAccessibilityFocusOnMount();
   const [spotNumber, setSpotNumber] = useState('');
@@ -56,6 +59,7 @@ function WhereParkedQuestion({ question, answering }: WhereParkedQuestionProps) 
       <Text ref={titleRef} accessibilityRole="header" maxFontSizeMultiplier={BODY_TEXT_MAX_FONT_SCALE} style={[typography.spotLine, { color: colors.ink }]}>
         {i18n.t('session.whereParked.question')}
       </Text>
+      {offline}
       {question === null || question.freeSpotNumbers.length === 0 ? null : <FreeSpotList question={question} typed={spotNumber} onChoose={setSpotNumber} />}
       <SpotNumberField spotNumber={spotNumber} onChange={setSpotNumber} answering={answering} />
     </View>
