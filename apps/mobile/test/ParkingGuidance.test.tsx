@@ -89,6 +89,14 @@ describe('ParkingGuidance', () => {
     expect(screen.queryByRole('image')).toBeNull();
   });
 
+  it('names in the image only the aisles that are drawn', async () => {
+    const levelPlan = { ...parkingDemoP1Plan, aisles: [aisleA, { ...aisleB, rectangle: null }] };
+
+    await showGuidance(aisleA, julieAtB3({ levelPlan }));
+
+    expect(screen.getByRole('image', { name: 'Plan du niveau P1, vous êtes ici : allée A', ...visibleText })).toBeOnTheScreen();
+  });
+
   it('keeps the sentence for a session read without a plan', async () => {
     await showGuidance(null, julieAtB3({ levelPlan: null }));
 

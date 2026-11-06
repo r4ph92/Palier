@@ -28,9 +28,10 @@ interface LevelPlanDrawingProps extends PlanMarking {
 export function LevelPlanDrawing({ geometry, spot, currentAisle }: LevelPlanDrawingProps) {
   const isLargeText = useIsLargeText();
   const marking = { spot, currentAisle };
+  const label = planImageLabel(spot, currentAisle, geometry.frames.map(({ aisle }) => aisle.code));
   return (
     <View style={styles.group}>
-      <View accessible accessibilityRole="image" accessibilityLabel={planImageLabel(spot, currentAisle)} style={[styles.drawing, { aspectRatio: geometry.aspectRatio }]}>
+      <View accessible accessibilityRole="image" accessibilityLabel={label} style={[styles.drawing, { aspectRatio: geometry.aspectRatio }]}>
         {geometry.frames.map((frame) => (
           <AisleRectangleView key={frame.aisle.code} frame={frame} marking={marking} showsMarkers={!isLargeText} />
         ))}

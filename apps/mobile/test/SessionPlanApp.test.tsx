@@ -4,7 +4,7 @@ import type { SimulatedPositioningModule } from '../src/dev/SimulatedPositioning
 import type { SupportedLanguage } from '../src/i18n/i18n';
 import { SESSION_REFRESH_MILLISECONDS } from '../src/parkingSessions/useCurrentParkingSession';
 import { PositioningCore } from '../src/positioning/PositioningCore';
-import { FakeParkingSessionClient, julieAtB3 } from './fakeParkingSessionClient';
+import { FakeParkingSessionClient, julieAtB3, parkingDemoP1Plan } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { visibleText } from './visibleText';
 
@@ -18,10 +18,10 @@ const GO_TO_B3 = 'Rendez-vous allée B, place B-3';
 const IN_AISLE_A = 'Vous êtes dans l’allée A — votre place est dans l’allée B';
 
 // Same wiring as App.tsx: the panel's simulated module feeds the core the session screen listens to.
-async function relaunchAtB3(language: SupportedLanguage = 'fr') {
+async function relaunchAtB3(language: SupportedLanguage = 'fr', session = julieAtB3()) {
   const toolkit = createSimulatedToolkit(() => Date.now());
   const positioning = new PositioningCore(toolkit.module);
-  const parkingSession = new FakeParkingSessionClient(julieAtB3());
+  const parkingSession = new FakeParkingSessionClient(session);
   await renderPalierApp({ ...signedInJulie(), testSignInEnabled: false, language, developerEntry: toolkit.bind(positioning), positioning, clients: () => ({ parkingSession }) });
   await screen.findByRole('tab', { name: 'Session', selected: true });
   const simulator = toolkit.module as SimulatedPositioningModule;
@@ -96,6 +96,15 @@ describe('the level plan on the Session screen (story #17)', () => {
 
     expect(screen.getByText('Montant à ce jour : 10,50 $', visibleText)).toBeOnTheScreen();
     expect(screen.getByText(IN_AISLE_A, visibleText)).toBeOnTheScreen();
+  });
+
+  it('does not tell VoiceOver that aisle B is highlighted when the operator has not drawn aisle B', async () => {
+    const levelPlan = { ...parkingDemoP1Plan, aisles: parkingDemoP1Plan.aisles.map((planAisle) => (planAisle.code === 'B' ? { ...planAisle, rectangle: null } : planAisle)) };
+
+    await relaunchAtB3('fr', julieAtB3({ levelPlan }));
+
+    expect(screen.queryByTestId('PlanAisle-B')).toBeNull();
+    expect(screen.getByRole('image', { name: 'Plan du niveau P1', ...visibleText })).toBeOnTheScreen();
   });
 
   it('reads « Go to aisle B, spot B-3 » on an English device', async () => {
