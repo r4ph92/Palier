@@ -1,4 +1,4 @@
-import type { CurrentParkingSession } from '@palier/shared-types';
+import type { CurrentParkingSession, EntrySessionState } from '@palier/shared-types';
 import { useState } from 'react';
 import { TextButton } from '../components/TextButton';
 import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
@@ -29,6 +29,11 @@ export function useSpotCorrection({ sessionId, state }: CurrentParkingSession): 
     start: () => setStep('correcting'),
     cancel: () => setStep('cancelled'),
   };
+}
+
+// Only a presumed spot can be corrected: an answered one is final (decision 021).
+export function canCorrect(state: EntrySessionState): boolean {
+  return state === 'PARKED_PRESUMED';
 }
 
 export function CorrectSpotButton({ correction }: { readonly correction: SpotCorrection }) {

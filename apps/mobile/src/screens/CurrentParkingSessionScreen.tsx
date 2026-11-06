@@ -1,4 +1,4 @@
-import type { CurrentParkingSession } from '@palier/shared-types';
+import type { CurrentParkingSession, EntrySessionState } from '@palier/shared-types';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,7 +11,7 @@ import type { CurrentParkingSessionReading, ReadProgress } from '../parkingSessi
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
-import { CorrectSpotButton, useSpotCorrection, type SpotCorrection } from './CorrectSpot';
+import { canCorrect, CorrectSpotButton, useSpotCorrection, type SpotCorrection } from './CorrectSpot';
 import { OfflineNotice } from './OfflineNotice';
 import { SessionSpot, useParkedArrival, type ParkedArrival } from './SessionSpot';
 import type { WhereParkedFraming } from './WhereParkedScreen';
@@ -52,22 +52,35 @@ interface SessionDetailsProps extends CurrentParkingSessionScreenProps {
   readonly correction: SpotCorrection;
 }
 
+type SessionView = 'question' | 'correction' | 'details';
+
 // The form replaces the details: A-1, its guidance and the figures would pull the driver away from the one answer asked.
-// A correction has no free spot list nor amount, so the offline notice of either would speak of something not shown.
-function SessionBody(props: SessionDetailsProps) {
-  const { state } = props.reading.session;
+function sessionViewOf(state: EntrySessionState, isCorrecting: boolean): SessionView {
   if (state === 'PARKED_UNCONFIRMED') {
-    return <>{props.whereParked?.({ title: i18n.t('session.whereParked.question'), numberLabel: i18n.t('session.whereParked.numberLabel'), offline: props.offline })}</>;
+    return 'question';
   }
-  if (state === 'PARKED_PRESUMED' && props.correction.isCorrecting) {
-    return <>{props.whereParked?.({
-      title: i18n.t('session.whereParked.notMySpot'),
-      numberLabel: i18n.t('session.whereParked.correctedNumberLabel'),
-      offline: null,
-      onCancel: props.correction.cancel,
-    })}</>;
+  return canCorrect(state) && isCorrecting ? 'correction' : 'details';
+}
+
+function SessionBody(props: SessionDetailsProps) {
+  const view = sessionViewOf(props.reading.session.state, props.correction.isCorrecting);
+  if (view === 'details') {
+    return <SessionDetails {...props} />;
   }
-  return <SessionDetails {...props} />;
+  return <>{props.whereParked?.(framingOf(view, props))}</>;
+}
+
+// A correction has no free spot list nor amount, so the offline notice of either would speak of something not shown.
+function framingOf(view: Exclude<SessionView, 'details'>, { offline, correction }: SessionDetailsProps): WhereParkedFraming {
+  if (view === 'question') {
+    return { title: i18n.t('session.whereParked.question'), numberLabel: i18n.t('session.whereParked.numberLabel'), offline };
+  }
+  return {
+    title: i18n.t('session.whereParked.notMySpot'),
+    numberLabel: i18n.t('session.whereParked.correctedNumberLabel'),
+    offline: null,
+    onCancel: correction.cancel,
+  };
 }
 
 // The question shows free spots, not an amount: its notice says which figures are old.
@@ -80,7 +93,7 @@ function SessionDetails({ reading, offline, arrival, correction, notice, guidanc
   return (
     <>
       <SessionSpot session={session} arrival={arrival} shouldFocusOnArrival={shouldFocusSpotOnArrival} />
-      {session.state === 'PARKED_PRESUMED' ? <CorrectSpotButton correction={correction} /> : null}
+      {canCorrect(session.state) ? <CorrectSpotButton correction={correction} /> : null}
       {guidance}
       {offline}
       {notice}
