@@ -57,7 +57,8 @@ describe('correcting the spot Palier presumed (story #22)', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message, visibleText);
     expect(screen.getByRole('header', { name: NOT_MY_SPOT })).toBeOnTheScreen();
-    expect(parkingSession.session?.state).toBe('PARKED_PRESUMED');
+    expect(screen.queryByText(PARKED_IN_A1, visibleText)).toBeNull();
+    expect(parkingSession.spotAnswers).toEqual([typed]);
   });
 
   it('goes back to « Garé en A-1 » on « Annuler », sending nothing, with VoiceOver on the action again', async () => {
