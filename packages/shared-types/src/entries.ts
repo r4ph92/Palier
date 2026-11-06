@@ -15,12 +15,19 @@ export interface EntryResponse {
   readonly barrierOpened: true;
 }
 
-export const ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'CANCELLED'] as const;
+export const ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED', 'CANCELLED'] as const;
 
 export type EntrySessionState = (typeof ENTRY_SESSION_STATES)[number];
 
 // A driver has at most one session in these states: the one the app shows as current.
-export const ACTIVE_ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED'] as const satisfies readonly EntrySessionState[];
+// PARKED_UNCONFIRMED: the driver walked away in another aisle and is asked where they parked; PARKED_CONFIRMED: they answered.
+export const ACTIVE_ENTRY_SESSION_STATES = [
+  'CREATED',
+  'ENTRY_CONFIRMED',
+  'PARKED_PRESUMED',
+  'PARKED_UNCONFIRMED',
+  'PARKED_CONFIRMED',
+] as const satisfies readonly EntrySessionState[];
 
 export type ActiveEntrySessionState = (typeof ACTIVE_ENTRY_SESSION_STATES)[number];
 

@@ -104,6 +104,7 @@ function spotStatusOf({ state, spot }: CurrentParkingSession): string {
     case 'CREATED':
       return i18n.t('session.pending');
     case 'ENTRY_CONFIRMED':
+    case 'PARKED_UNCONFIRMED':
       return i18n.t('scan.entryConfirmed');
   }
 }

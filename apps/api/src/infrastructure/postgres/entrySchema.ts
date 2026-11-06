@@ -1,10 +1,20 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, type AnyPgColumn, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import { appUser, vehicle } from './driverSchema.ts';
 import { gate } from './gateSchema.ts';
-import { parkingLot, spot } from './lotSchema.ts';
+import { aisle, parkingLot, spot } from './lotSchema.ts';
+
+interface SameLotTarget {
+  readonly id: AnyPgColumn;
+  readonly lotId: AnyPgColumn;
+}
+
+// The referenced row must belong to the session's own lot, which a plain foreign key on the id alone would not check.
+function sameLotForeignKey(name: string, columns: [AnyPgColumn, AnyPgColumn], target: SameLotTarget) {
+  return foreignKey({ name, columns, foreignColumns: [target.id, target.lotId] });
+}
 
 export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION_STATES);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
@@ -33,28 +43,34 @@ export const parkingSession = pgTable(
     entryScanAt: timestamp('entry_scan_at', { withTimezone: true }).notNull().defaultNow(),
     entryConfirmedAt: timestamp('entry_confirmed_at', { withTimezone: true }),
     parkedAt: timestamp('parked_at', { withTimezone: true }),
+    // The aisle the device last saw at the walk, when it was not the assigned spot's: the driver is asked where they parked.
+    parkedAisleId: uuid('parked_aisle_id'),
+    // The spot the driver said they parked in; the assigned spot stays as the history of the entry.
+    confirmedSpotId: uuid('confirmed_spot_id'),
+    parkedAnsweredAt: timestamp('parked_answered_at', { withTimezone: true }),
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
     // Set with the cancellation when a card hold exists; cleared once Stripe confirms the release, so a failed release is retried.
     holdReleasePending: boolean('hold_release_pending').notNull().default(false),
     holdReleaseAttemptedAt: timestamp('hold_release_attempted_at', { withTimezone: true }),
   },
   (table) => [
-    foreignKey({
-      name: 'parking_session_entry_gate_in_same_lot_fk',
-      columns: [table.entryGateId, table.lotId],
-      foreignColumns: [gate.id, gate.lotId],
-    }),
-    foreignKey({
-      name: 'parking_session_spot_in_same_lot_fk',
-      columns: [table.assignedSpotId, table.lotId],
-      foreignColumns: [spot.id, spot.lotId],
-    }),
+    sameLotForeignKey('parking_session_entry_gate_in_same_lot_fk', [table.entryGateId, table.lotId], gate),
+    sameLotForeignKey('parking_session_spot_in_same_lot_fk', [table.assignedSpotId, table.lotId], spot),
+    sameLotForeignKey('parking_session_confirmed_spot_in_same_lot_fk', [table.confirmedSpotId, table.lotId], spot),
+    sameLotForeignKey('parking_session_parked_aisle_in_same_lot_fk', [table.parkedAisleId, table.lotId], aisle),
+    // Compared as text: a check on the enum itself would block the next migration that recreates the enum.
+    check('parking_session_unconfirmed_has_aisle', sql`${table.state}::text <> 'PARKED_UNCONFIRMED' or ${table.parkedAisleId} is not null`),
+    check(
+      'parking_session_confirmed_has_spot',
+      sql`${table.state}::text <> 'PARKED_CONFIRMED' or (${table.confirmedSpotId} is not null and ${table.parkedAnsweredAt} is not null)`,
+    ),
     check(
       'parking_session_pricing_positive',
       sql`${table.pricingIncrementCents} > 0 and ${table.pricingIncrementMinutes} > 0 and ${table.pricingDailyCapCents} > 0`,
     ),
     uniqueIndex('parking_session_one_active_per_user_index').on(table.userId).where(ACTIVE_SESSION),
     uniqueIndex('parking_session_one_active_per_spot_index').on(table.assignedSpotId).where(ACTIVE_SESSION),
+    uniqueIndex('parking_session_one_active_per_confirmed_spot_index').on(table.confirmedSpotId).where(ACTIVE_SESSION),
     index('parking_session_hold_release_pending_index').on(table.holdReleaseAttemptedAt.asc().nullsFirst(), table.id).where(sql`${table.holdReleasePending}`),
   ],
 );
