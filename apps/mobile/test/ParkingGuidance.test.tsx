@@ -3,6 +3,7 @@ import { render, screen, within } from '@testing-library/react-native';
 import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { fontFamilies } from '../src/theme/tokens';
+import { MAXIMUM_SCREEN_SHARE } from '../src/screens/LevelPlanDrawing';
 import { ParkingGuidance } from '../src/screens/ParkingGuidance';
 import { julieAtB3, parkingDemoP1Plan } from './fakeParkingSessionClient';
 import { asSeen, visibleText } from './visibleText';
@@ -95,13 +96,31 @@ describe('ParkingGuidance', () => {
     expect(screen.getByRole('image', { name: 'Plan du niveau P1, vous êtes ici : allée A', ...visibleText })).toBeOnTheScreen();
   });
 
+  it('does not say « vous êtes ici » for a current aisle that is not drawn', async () => {
+    const levelPlan = { ...parkingDemoP1Plan, aisles: [{ ...aisleA, rectangle: null }, aisleB] };
+
+    await showGuidance(aisleA, julieAtB3({ levelPlan }));
+
+    expect(screen.queryByRole('image', { name: /vous êtes ici : allée A/, ...visibleText })).toBeNull();
+    expect(screen.getByRole('image', { name: 'Plan du niveau P1 : allée B en surbrillance, place B-3', ...visibleText })).toBeOnTheScreen();
+  });
+
   it('keeps a level drawn as one long narrow aisle within the screen height', async () => {
     const narrow = { levelCode: 'P1', aisles: [{ code: 'B', beaconMinor: 2, rectangle: { x: 0, y: 0, width: 10, height: 400 } }] };
 
     await showGuidance(null, julieAtB3({ levelPlan: narrow }));
 
     const { maxWidth, aspectRatio } = StyleSheet.flatten(screen.getByRole('image').props.style);
-    expect(Number(maxWidth) / Number(aspectRatio)).toBeLessThanOrEqual(852);
+    expect(Number(maxWidth) / Number(aspectRatio)).toBeCloseTo(852 * MAXIMUM_SCREEN_SHARE, 5);
+  });
+
+  it('moves the markers under a drawing too narrow to hold them, leaving only the aisle name inside', async () => {
+    const narrow = { levelCode: 'P1', aisles: [{ code: 'B', beaconMinor: 2, rectangle: { x: 0, y: 0, width: 10, height: 400 } }] };
+
+    await showGuidance(null, julieAtB3({ levelPlan: narrow }));
+
+    expect(within(screen.getByTestId('PlanAisle-B')).getByText('Allée B')).toBeOnTheScreen();
+    expect(within(screen.getByTestId('PlanAisle-B')).queryByText('Place B-3', visibleText)).toBeNull();
   });
 
   it('keeps the sentence for a session read without a plan', async () => {

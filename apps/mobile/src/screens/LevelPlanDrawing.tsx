@@ -12,7 +12,9 @@ import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
 // A level drawn tall and narrow must not push the amount several screens down.
-const MAXIMUM_SCREEN_SHARE = 0.6;
+export const MAXIMUM_SCREEN_SHARE = 0.6;
+// Below this width an aisle name would wrap letter by letter, so the markers move under the drawing.
+const MINIMUM_DRAWING_WIDTH = 120;
 const ASSIGNED_BORDER_WIDTH = 3;
 const AISLE_BORDER_WIDTH = 1;
 
@@ -25,28 +27,34 @@ interface LevelPlanDrawingProps extends PlanMarking {
   readonly geometry: PlanGeometry;
 }
 
-// One image for VoiceOver; the aisles inside are drawn for the eye. With large text the markers move under the
+// One image for VoiceOver; the aisles inside are drawn for the eye. With large text or a drawing too narrow for them the markers move under the
 // drawing, where they can wrap, and only the aisle names stay inside the rectangles.
 export function LevelPlanDrawing({ geometry, spot, currentAisle }: LevelPlanDrawingProps) {
-  const isLargeText = useIsLargeText();
+  const frame: DrawingFrame = useDrawingFrame(geometry.aspectRatio);
+  const showsMarkers = !useIsLargeText() && frame.width >= MINIMUM_DRAWING_WIDTH;
   const marking = { spot, currentAisle };
   const label = planImageLabel(spot, currentAisle, geometry.frames.map(({ aisle }) => aisle.code));
   return (
     <View style={styles.group}>
-      <View accessible accessibilityRole="image" accessibilityLabel={label} style={[styles.drawing, useDrawingFrame(geometry.aspectRatio)]}>
+      <View accessible accessibilityRole="image" accessibilityLabel={label} style={[styles.drawing, { aspectRatio: frame.aspectRatio, maxWidth: frame.width }]}>
         {geometry.frames.map((frame) => (
-          <AisleRectangleView key={frame.aisle.code} frame={frame} marking={marking} showsMarkers={!isLargeText} />
+          <AisleRectangleView key={frame.aisle.code} frame={frame} marking={marking} showsMarkers={showsMarkers} />
         ))}
       </View>
-      {isLargeText ? <PlanLegend {...marking} /> : null}
+      {showsMarkers ? null : <PlanLegend {...marking} />}
     </View>
   );
 }
 
+interface DrawingFrame {
+  readonly aspectRatio: number;
+  readonly width: number;
+}
+
 // Full width, unless that would make the drawing taller than its share of the screen: then narrower, same proportions.
-function useDrawingFrame(aspectRatio: number) {
-  const { height } = useWindowDimensions();
-  return { aspectRatio, maxWidth: height * MAXIMUM_SCREEN_SHARE * aspectRatio };
+function useDrawingFrame(aspectRatio: number): DrawingFrame {
+  const { width, height } = useWindowDimensions();
+  return { aspectRatio, width: Math.min(width, height * MAXIMUM_SCREEN_SHARE * aspectRatio) };
 }
 
 interface AisleRectangleViewProps {
