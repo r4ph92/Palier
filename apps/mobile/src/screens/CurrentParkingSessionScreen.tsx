@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { SpotWithState } from '../components/SpotLine';
 import { SpotNumberText } from '../components/SpotNumberText';
+import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
 import { useAnnouncement } from '../components/useAnnouncement';
 import { formatClockTime } from '../i18n/formatClockTime';
 import { formatElapsed } from '../i18n/formatElapsed';
@@ -24,17 +25,19 @@ interface CurrentParkingSessionScreenProps {
   readonly onRetry: () => void;
   readonly notice?: ReactNode;
   readonly guidance?: ReactNode;
+  // The scan result holding VoiceOver's focus gave way to this screen: the focus moves to the spot.
+  readonly focusSpotOnArrival?: boolean;
 }
 
 // Everything shown comes from the API, priced by its clock; the screen never counts time on its own.
-export function CurrentParkingSessionScreen({ reading, progress, onRetry, notice, guidance }: CurrentParkingSessionScreenProps) {
+export function CurrentParkingSessionScreen({ reading, progress, onRetry, notice, guidance, focusSpotOnArrival = false }: CurrentParkingSessionScreenProps) {
   const colors = useColors();
   const { session, readAt } = reading;
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader eyebrow={i18n.t('session.eyebrow')} title={session.lotName} />
-        <SessionSpot session={session} />
+        <SessionSpot session={session} focusOnArrival={focusSpotOnArrival} />
         {guidance}
         {reading.isStale ? <OfflineNotice progress={progress} onRetry={onRetry} /> : null}
         {notice}
@@ -78,12 +81,18 @@ function SessionAmount({ session }: { readonly session: CurrentParkingSession })
   );
 }
 
-function SessionSpot({ session }: { readonly session: CurrentParkingSession }) {
+interface SessionSpotProps {
+  readonly session: CurrentParkingSession;
+  readonly focusOnArrival: boolean;
+}
+
+function SessionSpot({ session, focusOnArrival }: SessionSpotProps) {
   const colors = useColors();
+  const focusRef = useAccessibilityFocusOnMount();
   const isWaiting = session.state === 'CREATED';
   const statusContent = isParked(session.state) ? <ParkedIn spot={session.spot} /> : undefined;
   useAnnouncement(useJustParked(session) ? spotStatusOf(session) : null);
-  return <SpotWithState spot={session.spot} status={spotStatusOf(session)} statusContent={statusContent} markColor={isWaiting ? colors.muted : colors.free} />;
+  return <SpotWithState ref={focusOnArrival ? focusRef : null} spot={session.spot} status={spotStatusOf(session)} statusContent={statusContent} markColor={isWaiting ? colors.muted : colors.free} />;
 }
 
 function spotStatusOf({ state, spot }: CurrentParkingSession): string {

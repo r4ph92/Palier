@@ -1,4 +1,5 @@
 import { act, screen, userEvent } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import type { SimulatedPositioningModule } from '../src/dev/SimulatedPositioningModule';
 import { ENTRY_STATUS_POLL_MILLISECONDS } from '../src/entries/useConfirmationPolling';
@@ -8,7 +9,7 @@ import { PositioningCore } from '../src/positioning/PositioningCore';
 import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
-import { visibleText } from './visibleText';
+import { asSeen, visibleText } from './visibleText';
 import { advance, julieWith, PARKED_IN_A1 } from './walkAwayRig';
 
 describe('walking signals that presume nothing (story #18)', () => {
@@ -98,6 +99,18 @@ describe('walking away right after the scan, without « Terminé » (story #18)'
     await act(async () => simulator.detectParked('high'));
 
     expect(await screen.findByText(parkedText, visibleText)).toBeOnTheScreen();
+  });
+
+  it('moves VoiceOver to the parked spot instead of announcing it, once the scan result gives way', async () => {
+    const { simulator } = await scanAndConfirmAtA1('fr');
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+    const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
+
+    await act(async () => simulator.detectParked('high'));
+
+    const spot = await screen.findByLabelText('A-1 · Palier P1 · Allée A. Garé en A-1', visibleText);
+    expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ accessibilityLabel: spot.props.accessibilityLabel }) }), 'focus');
+    expect(announce.mock.calls.filter(([message]) => asSeen(message) === PARKED_IN_A1)).toHaveLength(0);
   });
 
   it('shows the scan form, not A-1, once the session is closed after the walk', async () => {

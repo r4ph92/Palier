@@ -1,4 +1,4 @@
-import { useEffect, type ReactElement, type ReactNode } from 'react';
+import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import { assertNever } from '../assertNever';
 import type { EntryClient } from '../api/EntryClient';
 import { LoadingState } from '../components/LoadingState';
@@ -6,7 +6,7 @@ import type { TabLabels } from '../components/TabBar';
 import { useEntry, type EntryController, type EntryState } from '../entries/useEntry';
 import type { PendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { i18n } from '../i18n/i18n';
-import type { CurrentParkingSessionController, CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
+import type { CurrentParkingSessionController, CurrentParkingSessionReading, CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
 import { isParked } from '../parkingSessions/isParked';
 import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
 import { ScanFrame, ScanScreen } from './ScanScreen';
@@ -38,8 +38,8 @@ export function ScanTab({ entryClient, gateScanner, aside, currentSession, pendi
   const entry = useEntry(entryClient, pendingEntry);
   const { state, refresh, ...progress } = currentSession;
   useRefreshAsEntryProgresses(entry.state, refresh);
-  useEndEntryOnceParked(entry, state);
-  const sessionScreen = isEntryInProgress(entry.state) ? null : sessionScreenFor(currentSession, aside);
+  const arrivedParkedSessionId = useEndEntryOnceParked(entry, state);
+  const sessionScreen = isEntryInProgress(entry.state) ? null : sessionScreenFor(currentSession, { aside, arrivedParkedSessionId });
   if (sessionScreen !== null) {
     return sessionScreen;
   }
@@ -52,7 +52,14 @@ export function ScanTab({ entryClient, gateScanner, aside, currentSession, pendi
 }
 
 // What replaces the scan form: nothing yet known, or a current session.
-function sessionScreenFor({ state, refresh, ...progress }: CurrentParkingSessionController, aside: SessionAside): ReactElement | null {
+interface SessionScreenChoice {
+  readonly aside: SessionAside;
+  // The session the scan result gave way to, whose spot then takes VoiceOver's focus.
+  readonly arrivedParkedSessionId: string | null;
+}
+
+function sessionScreenFor(currentSession: CurrentParkingSessionController, choice: SessionScreenChoice): ReactElement | null {
+  const { state } = currentSession;
   switch (state.status) {
     case 'loading':
       return (
@@ -61,13 +68,30 @@ function sessionScreenFor({ state, refresh, ...progress }: CurrentParkingSession
         </ScanFrame>
       );
     case 'current':
-      return <CurrentParkingSessionScreen reading={state} progress={progress} onRetry={refresh} notice={aside.detectionNotice} guidance={aside.guidance} />;
+      return currentSessionScreen(state, currentSession, choice);
     case 'none':
     case 'unknown':
       return null;
     default:
       return assertNever(state);
   }
+}
+
+function currentSessionScreen(
+  reading: CurrentParkingSessionReading,
+  { refresh, isReading, missedReads }: CurrentParkingSessionController,
+  { aside, arrivedParkedSessionId }: SessionScreenChoice,
+): ReactElement {
+  return (
+    <CurrentParkingSessionScreen
+      reading={reading}
+      progress={{ isReading, missedReads }}
+      onRetry={refresh}
+      notice={aside.detectionNotice}
+      guidance={aside.guidance}
+      focusSpotOnArrival={reading.session.sessionId === arrivedParkedSessionId}
+    />
+  );
 }
 
 // A cancelled entry keeps the scan screen too: its message stays on the form, whatever the session read answers.
@@ -91,13 +115,19 @@ function progressKey(state: EntryState): string | null {
 
 // A walk away from the car can come before « Terminé »: the scan result then gives way to the session presumed parked,
 // and the entry is over, so a later closed session shows the form rather than this entry's spot.
-function useEndEntryOnceParked(entry: EntryController, state: CurrentParkingSessionState): void {
+function useEndEntryOnceParked(entry: EntryController, state: CurrentParkingSessionState): string | null {
+  const [arrivedParkedSessionId, setArrivedParkedSessionId] = useState<string | null>(null);
   const enteredSessionId = entry.state.status === 'entered' ? entry.state.sessionId : null;
   const parkedSessionId = state.status === 'current' && isParked(state.session.state) ? state.session.sessionId : null;
+  const hasArrivedParked = enteredSessionId !== null && enteredSessionId === parkedSessionId;
+  if (hasArrivedParked && arrivedParkedSessionId !== enteredSessionId) {
+    setArrivedParkedSessionId(enteredSessionId);
+  }
   const { startOver } = entry;
   useEffect(() => {
-    if (enteredSessionId !== null && enteredSessionId === parkedSessionId) {
+    if (hasArrivedParked) {
       startOver();
     }
-  }, [enteredSessionId, parkedSessionId, startOver]);
+  }, [hasArrivedParked, startOver]);
+  return arrivedParkedSessionId;
 }
