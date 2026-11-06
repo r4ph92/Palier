@@ -129,6 +129,17 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     expect(parkingSession.parkedReports).toHaveLength(1);
   });
 
+  it('drops the unanswered question for the presumed spot when the minute read finds the 30 minutes of silence passed', async () => {
+    const { parkingSession } = await julieAskedInAisleB();
+    parkingSession.session = julieAtParkingDemo({ state: 'PARKED_PRESUMED' });
+
+    await advance(SESSION_REFRESH_MILLISECONDS);
+
+    expect(screen.queryByRole('header', { name: WHERE_PARKED })).toBeNull();
+    expect(screen.getByText(/^Garé en /, visibleText)).toBeOnTheScreen();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('keeps the question, with the offline notice, when the minute read fails', async () => {
     const { parkingSession } = await julieAskedInAisleB();
     parkingSession.failure = new PalierUnreachableError('offline');
