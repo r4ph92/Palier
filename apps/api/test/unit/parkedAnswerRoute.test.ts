@@ -162,6 +162,8 @@ describe('POST /v1/entries/:sessionId/spot (story #21)', () => {
     ['a number past 16 characters', 'B-'.padEnd(17, '3')],
     ['a number given as a number', 3],
     ['no number', undefined],
+    ['a NUL character, which Postgres text cannot hold', 'B\u00003'],
+    ['a line break', 'B-3\n'],
   ])('answers 400 to %s, and changes nothing', async (_case, spotNumber) => {
     const { answer, parkedAnswers } = await julieAskedWhereParked();
 

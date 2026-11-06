@@ -112,12 +112,14 @@ export const parkedPresumptionResponseSchema = {
 
 // Spot numbers are a few characters (« B-3 »); the cap keeps oversized text away from the normalizer.
 const SPOT_NUMBER_MAX_LENGTH = 16;
+// Postgres text cannot hold U+0000, and no painted number has a control character.
+const WITHOUT_CONTROL_CHARACTERS = '^[^\\u0000-\\u001F\\u007F]*$';
 
 export const parkedSpotAnswerRequestSchema = {
   type: 'object',
   required: ['spotNumber'],
   additionalProperties: false,
-  properties: { spotNumber: { type: 'string', minLength: 1, maxLength: SPOT_NUMBER_MAX_LENGTH } },
+  properties: { spotNumber: { type: 'string', minLength: 1, maxLength: SPOT_NUMBER_MAX_LENGTH, pattern: WITHOUT_CONTROL_CHARACTERS } },
 } as const;
 
 export const parkedSpotAnswerResponseSchema = {
