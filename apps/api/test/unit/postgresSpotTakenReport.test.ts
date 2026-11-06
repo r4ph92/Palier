@@ -195,4 +195,11 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
 
     await expect(reportWith(sql)).rejects.toThrow(`Session ${SESSION_ID} was no longer waiting to park.`);
   });
+
+  it('never hands Julie back A-1, the spot she reported, even freed by an operator and nearest the exit', async () => {
+    const sql = reportOn(lockedSession('ENTRY_CONFIRMED', 'AVAILABLE'), [{ ...freeSpot('A-1', AISLE_A_ID, 5), id: SPOT_A1_ID }, A2_FREE]);
+
+    await expect(reportWith(sql)).resolves.toMatchObject({ outcome: 'reassigned', spot: { number: 'A-2' } });
+    expect(sql.statement('claim-spot')?.params[0]).toBe(SPOT_A2_ID);
+  });
 });

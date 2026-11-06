@@ -48,7 +48,7 @@ interface DriverToMove {
 
 async function moveDriver(tx: Transaction, { sessionId, lotId, session }: DriverToMove): Promise<SpotTakenOutcome> {
   const { needs, assignedSpot } = session;
-  const choose: SpotChooser = (vehicleNeeds, freeSpots) => chooseReplacementSpot(vehicleNeeds, freeSpots, assignedSpot.aisleId);
+  const choose: SpotChooser = (vehicleNeeds, freeSpots) => chooseReplacementSpot(vehicleNeeds, freeSpots, assignedSpot);
   const claimed = await claimFirstFittingSpot(tx, { lotId, needs, target: OCCUPIED_BY_REPORT, choose });
   if (claimed === undefined) {
     await askWhereParkedAfterReport(tx, sessionId, assignedSpot.aisleId);

@@ -74,7 +74,7 @@ export class FakeSpotTakenReports implements SpotTakenReportRepository {
 
   #moveDriver(session: StoredReportingSession): SpotTakenOutcome {
     const aisleCode = aisleOf(session.assignedSpotNumber);
-    const chosen = chooseReplacementSpot(standardNeeds, this.#freeSpots(), aisleCode);
+    const chosen = chooseReplacementSpot(standardNeeds, this.#freeSpots(), { id: session.assignedSpotNumber, aisleId: aisleCode });
     if (chosen === null) {
       Object.assign(session, { state: 'PARKED_UNCONFIRMED', parkedAisleCode: aisleCode });
       return { outcome: 'none-free' };

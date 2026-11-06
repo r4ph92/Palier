@@ -22,7 +22,7 @@ function spot(number: string, feature: Feature = {}): FreeSpot {
   };
 }
 
-const AISLE_A = 'aisle-A';
+const AISLE_A = { id: 'A-1', aisleId: 'aisle-A' };
 const electricCar = { ...standardNeeds, isElectric: true };
 
 describe('chooseReplacementSpot (story #23)', () => {
@@ -56,5 +56,9 @@ describe('chooseReplacementSpot (story #23)', () => {
 
   it('answers null when no spot is free in the lot', () => {
     expect(chooseReplacementSpot(standardNeeds, [], AISLE_A)).toBeNull();
+  });
+
+  it('never hands back the reported A-1, even freed by an operator and nearest the exit', () => {
+    expect(chooseReplacementSpot(standardNeeds, [spot('A-1'), spot('A-3')], AISLE_A)?.number).toBe('A-3');
   });
 });
