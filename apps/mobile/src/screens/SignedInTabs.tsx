@@ -48,6 +48,8 @@ function TabContent({ firstName, clients, tabs, currentSession, pendingEntry, sp
       return (
         <ScanTab
           entryClient={clients.entry}
+          location={clients.backgroundLocation}
+          locationExplanation={clients.locationExplanation}
           currentSession={currentSession}
           pendingEntry={pendingEntry}
           onAddPlate={() => tabs.openAccountPage('vehicles')}

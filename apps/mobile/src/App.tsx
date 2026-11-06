@@ -12,6 +12,7 @@ import { HttpVehicleClient } from './api/HttpVehicleClient';
 import type { SignedInClients, SignedInSession } from './api/SignedInClients';
 import { secureTokenStore } from './auth/TokenStore';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
+import { secureLocationExplanationStore } from './deviceLocation/LocationExplanationStore';
 import { ExpoDeviceLocationClient } from './deviceLocation/ExpoDeviceLocationClient';
 import { applyLanguage, deviceLanguage } from './i18n/i18n';
 import { developerTools } from './dev/loadDeveloperTools';
@@ -40,6 +41,8 @@ function createSignedInClients({ token, onUnauthorized, onConsentRequired }: Sig
     parkingSession: new HttpParkingSessionClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
     spotHold: new HttpSpotHoldClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
     location: deviceLocationClient,
+    backgroundLocation: deviceLocationClient,
+    locationExplanation: secureLocationExplanationStore,
   };
 }
 

@@ -150,6 +150,18 @@ export const en: Translations = {
     pending: 'Entry awaiting confirmation',
     updatedAtLead: 'Updated ',
     offline: 'Offline, amount as of last check',
+    detectionOff: 'Automatic detection is off — your spot will be assumed occupied after 30\u00A0min',
+    openSettings: 'Open Settings',
+  },
+  locationExplanation: {
+    eyebrow: 'Location',
+    title: 'Why “Always”?',
+    awake: 'With “Always”, Palier stays awake for 2 to 3 minutes after your scan to detect where you park.',
+    indicator: 'During that time, the blue location indicator shows on your phone.',
+    refusal: 'If you refuse, entry, exit and billing still work, but automatic detection of your spot is lost.',
+    continue: 'Continue',
+    continueWithout: 'Continue without',
+    continueWithoutLabel: 'Continue without “Always”',
   },
   tabs: {
     lots: 'Parking lots',

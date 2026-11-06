@@ -1,4 +1,6 @@
+import type { BackgroundLocationClient } from '../deviceLocation/BackgroundLocationClient';
 import type { DeviceLocationClient } from '../deviceLocation/DeviceLocationClient';
+import type { LocationExplanationStore } from '../deviceLocation/LocationExplanationStore';
 import type { EntryClient } from './EntryClient';
 import type { LotsClient } from './LotsClient';
 import type { ParkingSessionClient } from './ParkingSessionClient';
@@ -22,6 +24,8 @@ export interface SignedInClients {
   readonly parkingSession: ParkingSessionClient;
   readonly spotHold: SpotHoldClient;
   readonly location: DeviceLocationClient;
+  readonly backgroundLocation: BackgroundLocationClient;
+  readonly locationExplanation: LocationExplanationStore;
 }
 
 export type CreateSignedInClients = (session: SignedInSession) => SignedInClients;
