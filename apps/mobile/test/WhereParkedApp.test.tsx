@@ -7,7 +7,7 @@ import { AISLE_B_FREE_SPOTS, FakeParkingSessionClient, julieAtParkingDemo } from
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { asSeen, visibleText } from './visibleText';
 import { GO_TO_A1, PARKED_IN_A1 } from './walkAwayRig';
-import { CONFIRM_TYPED, julieAskedInAisleB, WHERE_PARKED } from './whereParkedRig';
+import { CONFIRM_TYPED, julieAskedInAisleB, REFUSAL_MESSAGES, watchSpotFocus, WHERE_PARKED } from './whereParkedRig';
 
 const WALKING = 'Stationné (à pied, confiance élevée)';
 
@@ -78,8 +78,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
 
   it('shows « Garé en B-3 » once Julie chooses B-3 and confirms, and moves VoiceOver to it without announcing it on top', async () => {
     const { user, parkingSession } = await julieAskedInAisleB();
-    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
-    const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
+    const expectFocusedSpot = watchSpotFocus();
 
     await user.press(screen.getByRole('radio', { name: 'B-3' }));
     await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
@@ -87,9 +86,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     expect(parkingSession.spotAnswers).toEqual(['B-3']);
     expect(await screen.findByText('Garé en B-3', visibleText)).toBeOnTheScreen();
     expect(screen.queryByText(WHERE_PARKED, visibleText)).toBeNull();
-    const spot = screen.getByLabelText('B-3 · Palier P1 · Allée B. Garé en B-3', visibleText);
-    expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ accessibilityLabel: spot.props.accessibilityLabel }) }), 'focus');
-    expect(announce.mock.calls.filter(([message]) => asSeen(message) === 'Garé en B-3')).toHaveLength(0);
+    expectFocusedSpot('B-3');
   });
 
   it('sends a number typed in the field as typed, and shows the spot Palier placed the car in', async () => {
@@ -103,9 +100,9 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
   });
 
   it.each([
-    ['UNKNOWN_SPOT', 'Z-99', 'Numéro inconnu dans ce parking'],
-    ['SPOT_TAKEN', 'B-4', 'Cette place est déjà attribuée — vérifiez le numéro au sol'],
-    ['SPOT_OUT_OF_SERVICE', 'B-5', 'Cette place est hors service — vérifiez le numéro au sol'],
+    ['UNKNOWN_SPOT', 'Z-99', REFUSAL_MESSAGES.UNKNOWN_SPOT],
+    ['SPOT_TAKEN', 'B-4', REFUSAL_MESSAGES.SPOT_TAKEN],
+    ['SPOT_OUT_OF_SERVICE', 'B-5', REFUSAL_MESSAGES.SPOT_OUT_OF_SERVICE],
   ])('shows the refusal %s under the field and keeps the question', async (code, typed, message) => {
     const { user, parkingSession } = await julieAskedInAisleB();
     parkingSession.answerFailure = new PalierRejectedError(code);

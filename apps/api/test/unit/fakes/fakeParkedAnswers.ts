@@ -2,15 +2,17 @@ import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import { paintedNumberNamed } from '../../../src/domain/spots/paintedSpotNumber.ts';
 import {
   decideSessionAnswer,
-  decideSpotAnswer,
+  placementOf,
   type ParkedAnswer,
   type ParkedAnswerRepository,
   type SpotAnswer,
+  type SpotFacts,
 } from '../../../src/domain/parkingSessions/ParkedAnswer.ts';
 import type { SpotState } from '../../../src/domain/spots/spotStates.ts';
 
 export interface StoredAnsweringSession {
   readonly driverId: string;
+  readonly assignedSpotNumber: string;
   state: EntrySessionState;
   confirmedSpotNumber: string | null;
   answeredAt: Date | null;
@@ -79,14 +81,36 @@ export class FakeParkedAnswers implements ParkedAnswerRepository {
     if (spotNumber === undefined || spot === undefined) {
       return { outcome: 'unknown-spot' };
     }
-    const decision = decideSpotAnswer(spot.state);
-    if (decision !== 'occupy') {
-      return { outcome: decision };
+    const placement = placementOf({ sessionState: session.state, assignedSpot: this.#factsOf(session.assignedSpotNumber), answeredSpot: { id: spotNumber, state: spot.state } });
+    if (placement.outcome === 'refused') {
+      return { outcome: placement.refusal };
     }
     this.writes += 1;
-    Object.assign(spot, { state: 'OCCUPIED', needsCheck: false });
+    if (placement.occupiesAnswered) {
+      Object.assign(spot, { state: 'OCCUPIED', needsCheck: false });
+    }
+    if (placement.flagsAssigned) {
+      this.#flagToCheck(session.assignedSpotNumber);
+    }
     Object.assign(session, { state: 'PARKED_CONFIRMED', confirmedSpotNumber: spotNumber, answeredAt: new Date() });
     return { outcome: 'confirmed', spot: labelOf(spotNumber) };
+  }
+
+  #factsOf(spotNumber: string): SpotFacts {
+    const spot = this.#spots.get(spotNumber);
+    if (spot === undefined) {
+      throw new Error(`Parking Démo has no spot ${spotNumber}.`);
+    }
+    return { id: spotNumber, state: spot.state };
+  }
+
+  // Like the SQL guard: only an occupied presumed spot can be flagged, anything else is a broken invariant.
+  #flagToCheck(spotNumber: string): void {
+    const spot = this.#spots.get(spotNumber);
+    if (spot?.state !== 'OCCUPIED') {
+      throw new Error(`Assigned spot ${spotNumber} of a session leaving it was not occupied.`);
+    }
+    Object.assign(spot, { state: 'OCCUPIED_UNKNOWN', needsCheck: true });
   }
 
   // Exact match first, then the same number without case, spaces or dashes, like the repository.

@@ -1,4 +1,4 @@
-import type { CurrentParkingSession } from '@palier/shared-types';
+import type { CurrentParkingSession, EntrySessionState } from '@palier/shared-types';
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,8 +11,10 @@ import type { CurrentParkingSessionReading, ReadProgress } from '../parkingSessi
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
+import { canCorrect, CorrectSpotButton, useSpotCorrection, type SpotCorrection } from './CorrectSpot';
 import { OfflineNotice } from './OfflineNotice';
 import { SessionSpot, useParkedArrival, type ParkedArrival } from './SessionSpot';
+import type { WhereParkedFraming } from './WhereParkedScreen';
 
 interface CurrentParkingSessionScreenProps {
   // Carries when the app last heard from Palier, so a driver without signal knows how old the amount is.
@@ -21,8 +23,8 @@ interface CurrentParkingSessionScreenProps {
   readonly onRetry: () => void;
   readonly notice?: ReactNode;
   readonly guidance?: ReactNode;
-  // Asks where the car is in place of the assigned spot while the session is PARKED_UNCONFIRMED; it places the offline notice.
-  readonly whereParked?: (offline: ReactNode) => ReactNode;
+  // Asks where the car is in place of the details: while the session is PARKED_UNCONFIRMED, or while the driver corrects a presumed spot.
+  readonly whereParked?: (framing: WhereParkedFraming) => ReactNode;
   // The scan result holding VoiceOver's focus gave way to this screen: the focus moves to the spot.
   readonly shouldFocusSpotOnArrival?: boolean;
 }
@@ -32,12 +34,13 @@ export function CurrentParkingSessionScreen(props: CurrentParkingSessionScreenPr
   const colors = useColors();
   const { reading, progress, onRetry } = props;
   const arrival = useParkedArrival(reading.session);
+  const correction = useSpotCorrection(reading.session);
   const offline = reading.isStale ? <OfflineNotice message={offlineMessageOf(reading.session)} progress={progress} onRetry={onRetry} /> : null;
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ScreenHeader eyebrow={i18n.t('session.eyebrow')} title={reading.session.lotName} />
-        <SessionBody {...props} offline={offline} arrival={arrival} />
+        <SessionBody {...props} offline={offline} arrival={arrival} correction={correction} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -46,14 +49,38 @@ export function CurrentParkingSessionScreen(props: CurrentParkingSessionScreenPr
 interface SessionDetailsProps extends CurrentParkingSessionScreenProps {
   readonly offline: ReactNode;
   readonly arrival: ParkedArrival;
+  readonly correction: SpotCorrection;
 }
 
-// The question replaces the details: A-1, its guidance and the figures would pull the driver away from the one answer asked.
+type SessionView = 'question' | 'correction' | 'details';
+
+// The form replaces the details: A-1, its guidance and the figures would pull the driver away from the one answer asked.
+function sessionViewOf(state: EntrySessionState, isCorrecting: boolean): SessionView {
+  if (state === 'PARKED_UNCONFIRMED') {
+    return 'question';
+  }
+  return canCorrect(state) && isCorrecting ? 'correction' : 'details';
+}
+
 function SessionBody(props: SessionDetailsProps) {
-  if (props.reading.session.state !== 'PARKED_UNCONFIRMED') {
+  const view = sessionViewOf(props.reading.session.state, props.correction.isCorrecting);
+  if (view === 'details') {
     return <SessionDetails {...props} />;
   }
-  return <>{props.whereParked?.(props.offline)}</>;
+  return <>{props.whereParked?.(framingOf(view, props))}</>;
+}
+
+// A correction has no free spot list nor amount, so the offline notice of either would speak of something not shown.
+function framingOf(view: Exclude<SessionView, 'details'>, { offline, correction }: SessionDetailsProps): WhereParkedFraming {
+  if (view === 'question') {
+    return { title: i18n.t('session.whereParked.question'), numberLabel: i18n.t('session.whereParked.numberLabel'), offline };
+  }
+  return {
+    title: i18n.t('session.whereParked.notMySpot'),
+    numberLabel: i18n.t('session.whereParked.correctedNumberLabel'),
+    offline: null,
+    onCancel: correction.cancel,
+  };
 }
 
 // The question shows free spots, not an amount: its notice says which figures are old.
@@ -61,11 +88,12 @@ function offlineMessageOf(session: CurrentParkingSession): string {
   return i18n.t(session.state === 'PARKED_UNCONFIRMED' ? 'session.whereParked.offline' : 'session.offline');
 }
 
-function SessionDetails({ reading, offline, arrival, notice, guidance, shouldFocusSpotOnArrival = false }: SessionDetailsProps) {
+function SessionDetails({ reading, offline, arrival, correction, notice, guidance, shouldFocusSpotOnArrival = false }: SessionDetailsProps) {
   const { session, readAt } = reading;
   return (
     <>
       <SessionSpot session={session} arrival={arrival} shouldFocusOnArrival={shouldFocusSpotOnArrival} />
+      {canCorrect(session.state) ? <CorrectSpotButton correction={correction} /> : null}
       {guidance}
       {offline}
       {notice}

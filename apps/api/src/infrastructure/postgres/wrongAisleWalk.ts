@@ -4,6 +4,7 @@ import type { SessionAfterRefusal, WalkAisles, WalkingSignal } from '../../domai
 import { clampedParkedAt } from './clampedParkedAt.ts';
 import type { Database, Transaction } from './database.ts';
 import { inLotLock } from './lockParkingLot.ts';
+import { flagAssignedSpotToCheck } from './parkedAnswerStatements.ts';
 
 export interface WalkFacts extends SessionAfterRefusal, WalkAisles {
   readonly lotId: string;
@@ -62,15 +63,4 @@ async function markSessionUnconfirmed(tx: Transaction, { signal, aisleId }: Wron
     where id = ${signal.sessionId} and user_id = ${signal.driverId} and state = 'ENTRY_CONFIRMED'
     returning parked_at, assigned_spot_id`);
   return row;
-}
-
-// The loop confirmation made the spot OCCUPIED in its own transaction; any other state is a broken invariant, and rolls the session back.
-async function flagAssignedSpotToCheck(tx: Transaction, spotId: string): Promise<void> {
-  const rows = await tx.execute(sql`
-    update spot set state = 'OCCUPIED_UNKNOWN', needs_check = true, state_changed_at = now()
-    where id = ${spotId} and state = 'OCCUPIED'
-    returning id`);
-  if (rows.length === 0) {
-    throw new Error(`Assigned spot ${spotId} of a session walking away was not occupied.`);
-  }
 }

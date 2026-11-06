@@ -9,7 +9,7 @@ import { isParked } from '../parkingSessions/isParked';
 import { useColors } from '../theme/useColors';
 import { typography } from '../theme/typography';
 
-// walked: the walk alone parked the car; answered: the driver answered where it is, and the question gave way to the spot.
+// walked: the walk alone parked the car; answered: the driver answered where it is, or corrected the presumed spot, and the form gave way to the spot.
 export type ParkedArrival = 'walked' | 'answered' | null;
 
 interface SessionSpotProps {
@@ -55,6 +55,9 @@ export function useParkedArrival({ state }: CurrentParkingSession): ParkedArriva
 }
 
 function parkedArrivalOf(previousState: EntrySessionState, state: EntrySessionState): ParkedArrival {
+  if (previousState === 'PARKED_PRESUMED' && state === 'PARKED_CONFIRMED') {
+    return 'answered';
+  }
   if (!isParked(state) || isParked(previousState)) {
     return null;
   }

@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import { FieldError } from '../components/FieldError';
+import { TextButton } from '../components/TextButton';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { BODY_TEXT_MAX_FONT_SCALE } from '../components/ScreenHeader';
 import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
@@ -30,57 +31,79 @@ const PROBLEM_MESSAGES: Readonly<Record<ParkedAnswerProblem, string>> = {
   UNREACHABLE: 'session.whereParked.unreachable',
 };
 
+export interface WhereParkedFraming {
+  readonly title: string;
+  readonly numberLabel: string;
+  // The offline notice, or null; it sits under the title so the driver knows the free spots may be old.
+  readonly offline: ReactNode;
+  // Only a correction can be given up: the question has no way around it (decision 020).
+  readonly onCancel?: () => void;
+}
+
 interface WhereParkedScreenProps {
   readonly client: ParkingSessionClient;
   readonly session: CurrentParkingSession;
-  // The offline notice, or null; it sits under the title so the driver knows the free spots may be old.
-  readonly offline: ReactNode;
+  readonly framing: WhereParkedFraming;
   // Reads the session again once the answer is accepted, or the session moved on without it.
   readonly onAnswered: () => void;
 }
 
-// The driver walked away in another aisle than the assigned spot's, so Palier asks where the car is.
+// The driver says where the car is: asked after a walk in another aisle than the assigned spot's, or correcting a presumed spot.
 // The free spots of the aisle seen at the walk come first, a tap writes the number in the field; only « Confirmer » sends.
-export function WhereParkedScreen({ client, session, offline, onAnswered }: WhereParkedScreenProps) {
+export function WhereParkedScreen({ client, session, framing, onAnswered }: WhereParkedScreenProps) {
   const answering = useParkedAnswer(client, session.sessionId, onAnswered);
-  return <WhereParkedQuestion question={session.question} offline={offline} answering={answering} />;
+  return <WhereParkedQuestion question={session.question} framing={framing} answering={answering} />;
 }
 
 interface WhereParkedQuestionProps {
-  // null when Palier sent no usable list: the field alone still takes any number.
+  // null when Palier sent no usable list, or for a correction: the field alone still takes any number.
   readonly question: ParkedQuestion | null;
-  readonly offline: ReactNode;
+  readonly framing: WhereParkedFraming;
   readonly answering: ParkedAnswerController;
 }
 
-function WhereParkedQuestion({ question, offline, answering }: WhereParkedQuestionProps) {
-  const colors = useColors();
-  const titleRef = useAccessibilityFocusOnMount();
+function WhereParkedQuestion({ question, framing, answering }: WhereParkedQuestionProps) {
   const [spotNumber, setSpotNumber] = useState('');
+  // An answer in flight decides the screen: cancelling it would only be undone, silently, when it lands.
+  const onCancel = answering.isSending ? undefined : framing.onCancel;
   const changeNumber = (value: string) => {
     setSpotNumber(value);
     answering.clearProblem();
   };
   return (
-    <View style={styles.section}>
-      <Text ref={titleRef} accessibilityRole="header" maxFontSizeMultiplier={BODY_TEXT_MAX_FONT_SCALE} style={[typography.spotLine, { color: colors.ink }]}>
-        {i18n.t('session.whereParked.question')}
-      </Text>
-      {offline}
+    <View style={styles.section} onAccessibilityEscape={onCancel}>
+      <FormTitle title={framing.title} />
+      {framing.offline}
       {question === null ? null : <FreeSpots question={question} typed={spotNumber} onChoose={changeNumber} />}
-      <SpotNumberField spotNumber={spotNumber} onChange={changeNumber} answering={answering} />
+      <SpotNumberField label={framing.numberLabel} spotNumber={spotNumber} onChange={changeNumber} answering={answering} />
+      <CancelButton onCancel={onCancel} />
     </View>
   );
 }
 
+function FormTitle({ title }: { readonly title: string }) {
+  const colors = useColors();
+  const titleRef = useAccessibilityFocusOnMount();
+  return (
+    <Text ref={titleRef} accessibilityRole="header" maxFontSizeMultiplier={BODY_TEXT_MAX_FONT_SCALE} style={[typography.spotLine, { color: colors.ink }]}>
+      {title}
+    </Text>
+  );
+}
+
+function CancelButton({ onCancel }: { readonly onCancel: (() => void) | undefined }) {
+  return onCancel === undefined ? null : <TextButton label={i18n.t('session.whereParked.cancel')} align="start" onPress={onCancel} />;
+}
+
 interface SpotNumberFieldProps {
+  readonly label: string;
   readonly spotNumber: string;
   readonly onChange: (spotNumber: string) => void;
   readonly answering: ParkedAnswerController;
 }
 
 // Any number, typed or chosen in the list; an empty field cannot be sent.
-function SpotNumberField({ spotNumber, onChange, answering }: SpotNumberFieldProps) {
+function SpotNumberField({ label, spotNumber, onChange, answering }: SpotNumberFieldProps) {
   const colors = useColors();
   const isBlank = spotNumber.trim() === '';
   const problem = answering.problem === null ? null : i18n.t(PROBLEM_MESSAGES[answering.problem]);
@@ -91,8 +114,8 @@ function SpotNumberField({ spotNumber, onChange, answering }: SpotNumberFieldPro
   };
   return (
     <View style={styles.field}>
-      <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('session.whereParked.numberLabel')}</Text>
-      <SpotNumberInput value={spotNumber} problem={problem} onChange={onChange} onSubmit={submit} />
+      <Text style={[typography.bodyStrong, { color: colors.ink }]}>{label}</Text>
+      <SpotNumberInput label={label} value={spotNumber} problem={problem} onChange={onChange} onSubmit={submit} />
       <AnswerProblem message={problem} attempts={answering.attempts} />
       <ConfirmButton spotNumber={spotNumber.trim()} isSending={answering.isSending} onPress={submit} />
     </View>
@@ -122,6 +145,7 @@ function ConfirmButton({ spotNumber, isSending, onPress }: ConfirmButtonProps) {
 }
 
 interface SpotNumberInputProps {
+  readonly label: string;
   readonly value: string;
   // Read again with the field while it shows, since VoiceOver's focus stays on the field.
   readonly problem: string | null;
@@ -129,11 +153,11 @@ interface SpotNumberInputProps {
   readonly onSubmit: () => void;
 }
 
-function SpotNumberInput({ value, problem, onChange, onSubmit }: SpotNumberInputProps) {
+function SpotNumberInput({ label, value, problem, onChange, onSubmit }: SpotNumberInputProps) {
   const colors = useColors();
   return (
     <TextInput
-      accessibilityLabel={i18n.t('session.whereParked.numberLabel')}
+      accessibilityLabel={label}
       accessibilityHint={problem ?? undefined}
       maxFontSizeMultiplier={SPOT_NUMBER_MAX_FONT_SCALE}
       autoCapitalize="characters"

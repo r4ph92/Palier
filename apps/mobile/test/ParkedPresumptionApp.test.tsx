@@ -49,7 +49,8 @@ describe('presuming the spot occupied when Julie walks away (story #18)', () => 
     await user.press(screen.getByRole('tab', { name: 'Session' }));
     expect(await screen.findByText(PARKED_IN_A1, visibleText)).toBeOnTheScreen();
     expect(screen.queryByText(GO_TO_A1, visibleText)).toBeNull();
-    expect(screen.queryByRole('button', { name: /garé|place/i })).toBeNull();
+    const spotButtons = screen.queryAllByRole('button', { name: /garé|place/i }).map((button) => button.props.accessibilityLabel as string);
+    expect(spotButtons).toEqual(['Ce n’est pas ma place']);
   });
 
   it('presumes A-1 the same way when no aisle was detected yet', async () => {

@@ -1,15 +1,17 @@
 import type { AssignedSpot } from '@palier/shared-types';
 import {
   decideSessionAnswer,
-  decideSpotAnswer,
+  placementOf,
   type ParkedAnswer,
   type ParkedAnswerRepository,
+  type SpotWrites,
   type SpotAnswer,
 } from '../../domain/parkingSessions/ParkedAnswer.ts';
 import type { Database, Transaction } from './database.ts';
 import { inLotLock, orLotBusy } from './lockParkingLot.ts';
 import {
   confirmParkedSpot,
+  flagAssignedSpotToCheck,
   lockAnsweredSpot,
   lockAnsweringSession,
   occupyAnsweredSpot,
@@ -17,7 +19,7 @@ import {
   type AnsweringSession,
 } from './parkedAnswerStatements.ts';
 
-// Lot, then session, then spot (decision 014); the spot is decided from its state read under the lock, then written (decision 020).
+// Lot, then session, then spot (decision 014); the spot is decided from its state read under the lock, then written (decisions 020, 021).
 export class PostgresParkedAnswerRepository implements ParkedAnswerRepository {
   readonly #database: Database;
 
@@ -46,7 +48,7 @@ async function answerUnderLotLock(tx: Transaction, answer: SpotAnswer, lotId: st
   if (decision !== 'take-spot') {
     return { outcome: decision };
   }
-  return placeCar(tx, answer, lotId);
+  return placeCar(tx, answer, { lotId, session });
 }
 
 // parking_session_confirmed_has_spot guarantees it.
@@ -57,16 +59,35 @@ function confirmedSpotOf({ confirmedSpot }: AnsweringSession): AssignedSpot {
   return confirmedSpot;
 }
 
-async function placeCar(tx: Transaction, answer: SpotAnswer, lotId: string): Promise<ParkedAnswer> {
+interface PlacementScope {
+  readonly lotId: string;
+  readonly session: AnsweringSession;
+}
+
+async function placeCar(tx: Transaction, answer: SpotAnswer, { lotId, session }: PlacementScope): Promise<ParkedAnswer> {
   const spot = await lockAnsweredSpot(tx, { lotId, spotNumber: answer.spotNumber });
   if (spot === null) {
     return { outcome: 'unknown-spot' };
   }
-  const decision = decideSpotAnswer(spot.state);
-  if (decision !== 'occupy') {
-    return { outcome: decision };
+  const placement = placementOf({ sessionState: session.state, assignedSpot: session.assignedSpot, answeredSpot: spot });
+  if (placement.outcome === 'refused') {
+    return { outcome: placement.refusal };
   }
-  await occupyAnsweredSpot(tx, spot.id);
+  await writeSpots(tx, placement, { answeredSpotId: spot.id, assignedSpotId: session.assignedSpot.id });
   await confirmParkedSpot(tx, answer.sessionId, spot.id);
   return { outcome: 'confirmed', spot: spot.label };
+}
+
+interface PlacedSpotIds {
+  readonly answeredSpotId: string;
+  readonly assignedSpotId: string;
+}
+
+async function writeSpots(tx: Transaction, { occupiesAnswered, flagsAssigned }: SpotWrites, { answeredSpotId, assignedSpotId }: PlacedSpotIds): Promise<void> {
+  if (occupiesAnswered) {
+    await occupyAnsweredSpot(tx, answeredSpotId);
+  }
+  if (flagsAssigned) {
+    await flagAssignedSpotToCheck(tx, assignedSpotId);
+  }
 }
