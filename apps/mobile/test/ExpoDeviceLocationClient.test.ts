@@ -50,10 +50,19 @@ describe('ExpoDeviceLocationClient « Always »', () => {
     jest.useFakeTimers();
     mockedLocation.requestBackgroundPermissionsAsync.mockReturnValue(new Promise(() => undefined));
 
-    const request = new ExpoDeviceLocationClient().requestAlways();
-    await jest.advanceTimersByTimeAsync(ALWAYS_REQUEST_TIMEOUT_MILLISECONDS);
+    let settled = false;
+    const request = new ExpoDeviceLocationClient()
+      .requestAlways()
+      .then(() => {
+        settled = true;
+      });
 
+    await jest.advanceTimersByTimeAsync(ALWAYS_REQUEST_TIMEOUT_MILLISECONDS - 1);
+    expect(settled).toBe(false);
+
+    await jest.advanceTimersByTimeAsync(1);
     await expect(request).resolves.toBeUndefined();
+    expect(ALWAYS_REQUEST_TIMEOUT_MILLISECONDS).toBe(30_000);
   });
 
   it.each([
