@@ -35,6 +35,9 @@ export type {
   CurrentParkingSession,
   CurrentParkingSessionResponse,
   LevelPlan,
+  ParkedPresumptionRefusalCode,
+  ParkedPresumptionRequest,
+  ParkedPresumptionResponse,
   PlanAisle,
   TestClockReading,
 } from './parkingSessions.ts';

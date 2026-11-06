@@ -49,3 +49,16 @@ export interface TestClockReading {
 export interface BackdateParkingSessionRequest {
   readonly enteredAt: string;
 }
+
+// Q36: the app reports the instant the device saw the driver walk away from the car.
+export interface ParkedPresumptionRequest {
+  readonly detectedAt: string;
+}
+
+// The same answer when an earlier signal already recorded the walk: parkedAt is then that first instant.
+export interface ParkedPresumptionResponse {
+  readonly state: 'PARKED_PRESUMED';
+  readonly parkedAt: string;
+}
+
+export type ParkedPresumptionRefusalCode = 'SESSION_NOT_FOUND' | 'ENTRY_NOT_CONFIRMED' | 'SESSION_CLOSED';

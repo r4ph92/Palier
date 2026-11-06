@@ -16,6 +16,7 @@ import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateC
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
 import { PostgresOperatorRepository } from './infrastructure/postgres/PostgresOperatorRepository.ts';
+import { PostgresParkedPresumptionRepository } from './infrastructure/postgres/PostgresParkedPresumptionRepository.ts';
 import { PostgresParkingSessionBackdater } from './infrastructure/postgres/PostgresParkingSessionBackdater.ts';
 import { PostgresPassageLedger } from './infrastructure/postgres/PostgresPassageLedger.ts';
 import { PostgresSessionTokenRepository } from './infrastructure/postgres/PostgresSessionTokenRepository.ts';
@@ -66,6 +67,7 @@ const server = buildServer({
     operatorRepository: new PostgresOperatorRepository(connection.database),
     currentParkingSessions: new PostgresCurrentParkingSessionQuery(connection.database),
     parkingSessionBackdater: new PostgresParkingSessionBackdater(connection.database),
+    parkedPresumptions: new PostgresParkedPresumptionRepository(connection.database),
   },
   gates: {
     deviceKeys: new PostgresGateDeviceKeyRepository(connection.database),

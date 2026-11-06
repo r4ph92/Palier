@@ -9,14 +9,14 @@ import {
 } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import type { Database } from './database.ts';
 
-type ParkedAtRow = {
+interface ParkedAtRow extends Record<string, unknown> {
   readonly parked_at: Date | string;
-};
+}
 
-type UnchangedSessionRow = {
+interface UnchangedSessionRow extends Record<string, unknown> {
   readonly state: EntrySessionState;
   readonly parked_at: Date | string | null;
-};
+}
 
 // No spot write and no lot lock: the loop confirmation already made the spot OCCUPIED, and nothing is allocated (decision 019).
 export class PostgresParkedPresumptionRepository implements ParkedPresumptionRepository {

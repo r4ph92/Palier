@@ -6,6 +6,7 @@ import type { DriverAccess } from '../domain/drivers/driverSessions.ts';
 import type { CardGateway } from '../domain/payments/CardGateway.ts';
 import type { LotAvailabilityRepository } from '../domain/lots/LotAvailabilityRepository.ts';
 import type { CurrentParkingSessionQuery } from '../domain/parkingSessions/ActiveParkingSession.ts';
+import type { ParkedPresumptionRepository } from '../domain/parkingSessions/ParkedPresumption.ts';
 import type { ParkingSessionBackdater } from '../domain/parkingSessions/ParkingSessionBackdater.ts';
 import type { SessionTokenRepository } from '../domain/sessions/SessionTokenRepository.ts';
 import { systemClock } from '../domain/time/Clock.ts';
@@ -22,6 +23,7 @@ import { registerDriverRoutes } from './routes/driverRoutes.ts';
 import { registerEntryRoutes, type EntryRouteDependencies } from './routes/entryRoutes.ts';
 import { registerGateRoutes, type GateRouteDependencies } from './routes/gateRoutes.ts';
 import { registerLotsRoutes } from './routes/lotsRoutes.ts';
+import { registerParkedPresumptionRoute } from './routes/parkedPresumptionRoute.ts';
 import { registerStripeWebhookRoute } from './routes/stripeWebhookRoute.ts';
 import { registerPaymentMethodRoutes } from './routes/paymentMethodRoutes.ts';
 import { registerSpotHoldRoutes, type SpotHoldServices } from './routes/spotHoldRoutes.ts';
@@ -46,6 +48,7 @@ export interface ServerDependencies {
     readonly operatorRepository: OperatorRepository;
     readonly currentParkingSessions: CurrentParkingSessionQuery;
     readonly parkingSessionBackdater: ParkingSessionBackdater;
+    readonly parkedPresumptions: ParkedPresumptionRepository;
   };
   readonly gates: GateRouteDependencies;
   readonly cardGateway?: CardGateway | undefined;
@@ -114,6 +117,7 @@ function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway,
   registerPaymentMethodRoutes(server, driverAccess, cardGateway);
   registerEntryRoutes(server, driverAccess, entries);
   registerCurrentParkingSessionRoute(server, driverAccess, { sessions: repositories.currentParkingSessions, clock });
+  registerParkedPresumptionRoute(server, driverAccess, repositories.parkedPresumptions);
   registerSpotHoldRoutes(server, driverAccess, { services: spotHolds, clock });
   if (testTools !== null) {
     registerTestSignInRoutes(server, { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository });
