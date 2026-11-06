@@ -2,23 +2,12 @@ import { describe, expect, it } from 'vitest';
 import type { FreeSpot } from '../../src/domain/allocation/chooseSpot.ts';
 import { chooseSpotFor } from '../../src/domain/allocation/chooseSpotFor.ts';
 import type { VehicleNeeds } from '../../src/domain/vehicles/VehicleRepository.ts';
+import { freeSpotFixture } from './fakes/freeSpotFixture.ts';
 
 type Feature = Partial<Pick<FreeSpot, 'isEv' | 'isAccessible' | 'isOversize'>>;
 
 function spot(number: string, feature: Feature = {}, levelOrder = 1): FreeSpot {
-  const [aisleCode = '', position = '0'] = number.split('-');
-  return {
-    id: number,
-    number,
-    levelOrder,
-    aisleCode,
-    distanceToExit: Number(position) * 5,
-    needsCheck: false,
-    isEv: false,
-    isAccessible: false,
-    isOversize: false,
-    ...feature,
-  };
+  return freeSpotFixture(number, { levelOrder, ...feature });
 }
 
 // Entrée Démo's spots: A-5 electric, B-4 oversize, B-5 accessible, the others standard.

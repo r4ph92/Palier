@@ -64,7 +64,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     expect(screen.getByRole('radio', { name: 'B-3' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'B-1' })).not.toBeChecked();
     expect(asSeen(screen.getByRole('button', { name: CONFIRM_TYPED }).props.accessibilityLabel as string)).toBe('Confirmer B-3');
-    expect(screen.getByLabelText('Places libres dans l’allée B')).toHaveProp('accessibilityRole', 'radiogroup');
+    expect(screen.getByLabelText('Places libres dans l’allée B pour votre véhicule')).toHaveProp('accessibilityRole', 'radiogroup');
     expect(parkingSession.spotAnswers).toEqual([]);
   });
 
@@ -151,7 +151,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     await user.press(screen.getByRole('button', { name: /^Confirm\s/ }));
 
     expect(screen.getByRole('header', { name: 'Where are you parked?' })).toBeOnTheScreen();
-    expect(screen.getByText('Free spots in aisle B')).toBeOnTheScreen();
+    expect(screen.getByText('Free spots in aisle B for your vehicle')).toBeOnTheScreen();
     expect(await screen.findByRole('alert')).toHaveTextContent('This spot is already assigned — check the number on the ground', visibleText);
     expect(within(screen.getByRole('button', { name: /^Confirm\s/ })).getByText('Confirm B-3', visibleText)).toBeOnTheScreen();
   });

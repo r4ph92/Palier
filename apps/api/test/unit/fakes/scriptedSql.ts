@@ -28,6 +28,9 @@ export type StatementLabel =
   | 'flag-assigned-spot'
   | 'read-session-lot'
   | 'lock-answering-session'
+  | 'lock-reporting-session'
+  | 'record-reported-spot'
+  | 'reassign-spot'
   | 'lock-answered-spot'
   | 'occupy-answered-spot'
   | 'confirm-parked-spot'
@@ -59,7 +62,10 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['ask-where-parked', /set state = 'PARKED_UNCONFIRMED'/],
   ['flag-assigned-spot', /set state = 'OCCUPIED_UNKNOWN'/],
   ['read-session-lot', /select lot_id from parking_session/],
+  ['lock-reporting-session', /left join vehicle[\s\S]*for update of ps/],
   ['lock-answering-session', /for update of ps/],
+  ['record-reported-spot', /insert into parking_session_reported_spot/],
+  ['reassign-spot', /update parking_session set assigned_spot_id/],
   ['lock-answered-spot', /for update of spot/],
   ['occupy-answered-spot', /set state = 'OCCUPIED', needs_check = false/],
   ['confirm-parked-spot', /set state = 'PARKED_CONFIRMED'/],

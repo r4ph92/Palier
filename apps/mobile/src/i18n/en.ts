@@ -1,5 +1,6 @@
 import type { Translations } from './fr';
 import { spotHoldEn } from './spotHoldEn';
+import { spotTakenEn } from './spotTakenEn';
 import { whereParkedEn } from './whereParkedEn';
 import { LOT_NOT_IN_SERVICE, NOT_RESPONDING, TOO_MANY_ATTEMPTS } from './sharedEn';
 
@@ -166,6 +167,7 @@ export const en: Translations = {
       imageHere: ', you are here: aisle %{aisle}',
     },
     whereParked: whereParkedEn,
+    spotTaken: spotTakenEn,
   },
   locationExplanation: {
     eyebrow: 'Location',

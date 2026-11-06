@@ -8,6 +8,7 @@ import type { LotAvailabilityRepository } from '../domain/lots/LotAvailabilityRe
 import type { CurrentParkingSessionQuery } from '../domain/parkingSessions/ActiveParkingSession.ts';
 import type { ParkedAnswerRepository } from '../domain/parkingSessions/ParkedAnswer.ts';
 import type { ParkedPresumptionRepository } from '../domain/parkingSessions/ParkedPresumption.ts';
+import type { SpotTakenReportRepository } from '../domain/parkingSessions/SpotTakenReport.ts';
 import type { ParkingSessionBackdater } from '../domain/parkingSessions/ParkingSessionBackdater.ts';
 import type { SessionTokenRepository } from '../domain/sessions/SessionTokenRepository.ts';
 import { systemClock, type Clock } from '../domain/time/Clock.ts';
@@ -26,6 +27,7 @@ import { registerGateRoutes, type GateRouteDependencies } from './routes/gateRou
 import { registerLotsRoutes } from './routes/lotsRoutes.ts';
 import { registerParkedAnswerRoute } from './routes/parkedAnswerRoute.ts';
 import { registerParkedPresumptionRoute } from './routes/parkedPresumptionRoute.ts';
+import { registerSpotTakenRoute } from './routes/spotTakenRoute.ts';
 import { registerStripeWebhookRoute } from './routes/stripeWebhookRoute.ts';
 import { registerPaymentMethodRoutes } from './routes/paymentMethodRoutes.ts';
 import { registerSpotHoldRoutes, type SpotHoldServices } from './routes/spotHoldRoutes.ts';
@@ -52,6 +54,7 @@ export interface ServerDependencies {
     readonly parkingSessionBackdater: ParkingSessionBackdater;
     readonly parkedPresumptions: ParkedPresumptionRepository;
     readonly parkedAnswers: ParkedAnswerRepository;
+    readonly spotTakenReports: SpotTakenReportRepository;
   };
   readonly gates: GateRouteDependencies;
   readonly cardGateway?: CardGateway | undefined;
@@ -137,6 +140,7 @@ function registerParkingSessionRoutes(server: FastifyInstance, driverAccess: Dri
   registerCurrentParkingSessionRoute(server, driverAccess, { sessions: repositories.currentParkingSessions, clock });
   registerParkedPresumptionRoute(server, driverAccess, repositories.parkedPresumptions);
   registerParkedAnswerRoute(server, driverAccess, repositories.parkedAnswers);
+  registerSpotTakenRoute(server, driverAccess, repositories.spotTakenReports);
 }
 
 type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock' | 'operatorStripe'> & Pick<ServerDependencies, 'testClock'>;

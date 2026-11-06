@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { chooseSpot, type FreeSpot } from '../../src/domain/allocation/chooseSpot.ts';
+import { freeSpotFixture } from './fakes/freeSpotFixture.ts';
 
 function spot(number: string, levelOrder: number, distanceToExit: number): FreeSpot {
-  return { id: number, number, levelOrder, aisleCode: number.split('-')[0] ?? '', distanceToExit, needsCheck: false, isEv: false, isAccessible: false, isOversize: false };
+  return freeSpotFixture(number, { levelOrder, distanceToExit });
 }
 
 const A2 = spot('A-2', 1, 10);

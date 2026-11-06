@@ -12,6 +12,7 @@ import { isWalkedAwayState } from '@palier/shared-types/entries';
 import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
 import { ScanFrame, ScanScreen } from './ScanScreen';
 import { SessionNotice } from './SessionNotice';
+import { ReportSpotTaken } from './ReportSpotTaken';
 import { WhereParkedScreen } from './WhereParkedScreen';
 
 export interface SessionAside {
@@ -96,6 +97,9 @@ function currentSessionScreen(
       notice={isWalkedAwayState(reading.session.state) ? null : aside.detectionNotice}
       guidance={aside.guidance}
       whereParked={(framing) => <WhereParkedScreen client={parkingSessionClient} session={reading.session} framing={framing} onAnswered={refresh} />}
+      reportSpotTaken={(onNoneFree) => (
+        <ReportSpotTaken key={reading.session.sessionId} client={parkingSessionClient} session={reading.session} onNoneFree={onNoneFree} onSettled={refresh} />
+      )}
       shouldFocusSpotOnArrival={reading.session.sessionId === arrivedParkedSessionId}
     />
   );

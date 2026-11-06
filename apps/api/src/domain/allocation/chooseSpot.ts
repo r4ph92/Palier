@@ -2,6 +2,7 @@ export interface FreeSpot {
   readonly id: string;
   readonly number: string;
   readonly levelOrder: number;
+  readonly aisleId: string;
   readonly aisleCode: string;
   readonly distanceToExit: number;
   readonly needsCheck: boolean;

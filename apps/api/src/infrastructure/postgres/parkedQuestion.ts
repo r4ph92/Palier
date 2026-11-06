@@ -1,16 +1,25 @@
 import { sql } from 'drizzle-orm';
 import type { ParkedQuestion } from '@palier/shared-types';
+import { spotFits } from '../../domain/allocation/chooseSpotFor.ts';
+import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Database } from './database.ts';
+import { spotFlagsOf, type SpotFlagsRow } from './spotClaim.ts';
 
-interface QuestionRow extends Record<string, unknown> {
+// The left join yields no number, and no flags, when the aisle has no free spot.
+type QuestionRow = Record<string, unknown> & {
   readonly code: string;
-  readonly number: string | null;
+} & ({ readonly number: string } & SpotFlagsRow | { readonly number: null });
+
+export interface QuestionScope {
+  readonly aisleId: string;
+  readonly needs: VehicleNeeds;
 }
 
-// The free spots of the aisle seen at the walk, in natural order (B-2 before B-10); the aisle is in the session's lot by its foreign key.
-export async function readParkedQuestion(database: Database, aisleId: string): Promise<ParkedQuestion | null> {
+// The free spots of the aisle seen at the walk that fit the session's vehicle, in natural order (B-2 before B-10);
+// the aisle is in the session's lot by its foreign key.
+export async function readParkedQuestion(database: Database, { aisleId, needs }: QuestionScope): Promise<ParkedQuestion | null> {
   const rows = await database.execute<QuestionRow>(sql`
-    select aisle.code, spot.number
+    select aisle.code, spot.number, spot.is_ev, spot.is_accessible, spot.is_oversize
     from aisle
     left join spot on spot.aisle_id = aisle.id and spot.state = 'AVAILABLE'
     where aisle.id = ${aisleId}
@@ -19,5 +28,6 @@ export async function readParkedQuestion(database: Database, aisleId: string): P
   if (first === undefined) {
     return null;
   }
-  return { aisleCode: first.code, freeSpotNumbers: rows.flatMap(({ number }) => (number === null ? [] : [number])) };
+  const freeSpotNumbers = rows.flatMap((row) => (row.number !== null && spotFits(needs, spotFlagsOf(row)) ? [row.number] : []));
+  return { aisleCode: first.code, freeSpotNumbers };
 }

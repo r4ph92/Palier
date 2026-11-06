@@ -13,6 +13,7 @@ import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 import { canCorrect, CorrectSpotButton, useSpotCorrection, type SpotCorrection } from './CorrectSpot';
 import { OfflineNotice } from './OfflineNotice';
+import { canReportSpotTaken, useNoneFreeNotice, type NoneFreeNotice } from './ReportSpotTaken';
 import { SessionSpot, useParkedArrival, type ParkedArrival } from './SessionSpot';
 import type { WhereParkedFraming } from './WhereParkedScreen';
 
@@ -25,6 +26,8 @@ interface CurrentParkingSessionScreenProps {
   readonly guidance?: ReactNode;
   // Asks where the car is in place of the details: while the session is PARKED_UNCONFIRMED, or while the driver corrects a presumed spot.
   readonly whereParked?: (framing: WhereParkedFraming) => ReactNode;
+  // « Place prise » while the driver has not parked; onNoneFree shows why the question follows when no other spot is free.
+  readonly reportSpotTaken?: (onNoneFree: () => void) => ReactNode;
   // The scan result holding VoiceOver's focus gave way to this screen: the focus moves to the spot.
   readonly shouldFocusSpotOnArrival?: boolean;
 }
@@ -35,12 +38,13 @@ export function CurrentParkingSessionScreen(props: CurrentParkingSessionScreenPr
   const { reading, progress, onRetry } = props;
   const arrival = useParkedArrival(reading.session);
   const correction = useSpotCorrection(reading.session);
+  const noneFree = useNoneFreeNotice(reading.session);
   const offline = reading.isStale ? <OfflineNotice message={offlineMessageOf(reading.session)} progress={progress} onRetry={onRetry} /> : null;
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <ScreenHeader eyebrow={i18n.t('session.eyebrow')} title={reading.session.lotName} />
-        <SessionBody {...props} offline={offline} arrival={arrival} correction={correction} />
+        <SessionBody {...props} offline={offline} arrival={arrival} correction={correction} noneFree={noneFree} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -50,6 +54,7 @@ interface SessionDetailsProps extends CurrentParkingSessionScreenProps {
   readonly offline: ReactNode;
   readonly arrival: ParkedArrival;
   readonly correction: SpotCorrection;
+  readonly noneFree: NoneFreeNotice;
 }
 
 type SessionView = 'question' | 'correction' | 'details';
@@ -71,9 +76,10 @@ function SessionBody(props: SessionDetailsProps) {
 }
 
 // A correction has no free spot list nor amount, so the offline notice of either would speak of something not shown.
-function framingOf(view: Exclude<SessionView, 'details'>, { offline, correction }: SessionDetailsProps): WhereParkedFraming {
+function framingOf(view: Exclude<SessionView, 'details'>, { offline, correction, noneFree }: SessionDetailsProps): WhereParkedFraming {
   if (view === 'question') {
-    return { title: i18n.t('session.whereParked.question'), numberLabel: i18n.t('session.whereParked.numberLabel'), offline };
+    const notice = noneFree.isShown ? i18n.t('session.spotTaken.noneFree') : undefined;
+    return { title: i18n.t('session.whereParked.question'), numberLabel: i18n.t('session.whereParked.numberLabel'), offline, notice };
   }
   return {
     title: i18n.t('session.whereParked.notMySpot'),
@@ -88,12 +94,13 @@ function offlineMessageOf(session: CurrentParkingSession): string {
   return i18n.t(session.state === 'PARKED_UNCONFIRMED' ? 'session.whereParked.offline' : 'session.offline');
 }
 
-function SessionDetails({ reading, offline, arrival, correction, notice, guidance, shouldFocusSpotOnArrival = false }: SessionDetailsProps) {
+function SessionDetails(props: SessionDetailsProps) {
+  const { reading, offline, arrival, notice, guidance, shouldFocusSpotOnArrival = false } = props;
   const { session, readAt } = reading;
   return (
     <>
       <SessionSpot session={session} arrival={arrival} shouldFocusOnArrival={shouldFocusSpotOnArrival} />
-      {canCorrect(session.state) ? <CorrectSpotButton correction={correction} /> : null}
+      <SpotAction {...props} />
       {guidance}
       {offline}
       {notice}
@@ -102,6 +109,14 @@ function SessionDetails({ reading, offline, arrival, correction, notice, guidanc
       <UpdatedAt readAt={readAt} />
     </>
   );
+}
+
+function SpotAction({ reading, correction, noneFree, reportSpotTaken }: SessionDetailsProps) {
+  const { state } = reading.session;
+  if (canCorrect(state)) {
+    return <CorrectSpotButton correction={correction} />;
+  }
+  return canReportSpotTaken(state) ? <>{reportSpotTaken?.(noneFree.show)}</> : null;
 }
 
 function SessionTimes({ session }: { readonly session: CurrentParkingSession }) {

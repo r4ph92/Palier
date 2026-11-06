@@ -108,7 +108,7 @@ describe('answering where Julie parked, the edges (story #21)', () => {
 
     expect(await screen.findByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
     expect(screen.queryByText(/Places libres/)).toBeNull();
-    expect(screen.getByText('Aucune place libre dans l’allée B')).toBeOnTheScreen();
+    expect(screen.getByText('Aucune place libre dans l’allée B pour votre véhicule')).toBeOnTheScreen();
     expect(screen.getByLabelText('Numéro de place')).toBeOnTheScreen();
   });
 
@@ -137,7 +137,7 @@ describe('answering where Julie parked, the edges (story #21)', () => {
 
     expect(screen.getByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
     expect(screen.queryByText('Hors ligne, montant au dernier relevé')).toBeNull();
-    expect(readingOrder()).toEqual([WHERE_PARKED, 'Hors ligne, places libres au dernier relevé', 'Places libres dans l’allée B']);
+    expect(readingOrder()).toEqual([WHERE_PARKED, 'Hors ligne, places libres au dernier relevé', 'Places libres dans l’allée B pour votre véhicule']);
   });
 });
 

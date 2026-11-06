@@ -75,4 +75,12 @@ describe('claiming the first free spot under the lot lock', () => {
 
     expect(scripted.statements.find(({ label }) => label === 'claim-spot')?.params).toEqual(['spot-A-1', 'HELD', '2026-11-04T19:02:00.000Z']);
   });
+
+  it('keeps the entry read of free spots without the active-session check of a spot-taken report', async () => {
+    const scripted = new ScriptedSql().answer('read-free-spots', freeSpotRows).answer('claim-spot', [claimedRow('A-1')]);
+
+    await claimFirstFittingSpot(scripted.executor(), { lotId: LOT_ID, needs: STANDARD_CAR, target: ASSIGNED_TO_ENTRY });
+
+    expect(scripted.statement('read-free-spots')?.text).not.toMatch(/parking_session/);
+  });
 });

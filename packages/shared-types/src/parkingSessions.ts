@@ -92,3 +92,19 @@ export type ParkedSpotAnswerRefusalCode =
   | 'SPOT_TAKEN'
   | 'SPOT_OUT_OF_SERVICE'
   | 'LOT_BUSY';
+
+// The number of the spot the driver found taken, as the app showed it: a report naming a spot that is no longer theirs changes nothing.
+export interface SpotTakenRequest {
+  readonly spotNumber: string;
+}
+
+// none-free: the reported spot is flagged and the driver is asked where they parked, like a walk in another aisle.
+export type SpotTakenResponse = { readonly outcome: 'reassigned'; readonly spot: AssignedSpot } | { readonly outcome: 'none-free' };
+
+export type SpotTakenRefusalCode =
+  | 'SESSION_NOT_FOUND'
+  | 'ENTRY_NOT_CONFIRMED'
+  | 'ALREADY_PARKED'
+  | 'SESSION_CLOSED'
+  | 'SPOT_NOT_ASSIGNED'
+  | 'LOT_BUSY';

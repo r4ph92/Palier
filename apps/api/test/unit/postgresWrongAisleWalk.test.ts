@@ -15,8 +15,10 @@ const AISLE_B_MINOR = 2;
 
 const walkInAisleB: WalkingSignal = { sessionId: SESSION_ID, driverId: JULIE_ID, detectedAt: WALKED_AT, detectedAisleMinor: AISLE_B_MINOR };
 
+const SPOT_A2_ID = '00000000-0000-4000-8000-0000000003a2';
+
 function factsRow(state: EntrySessionState, detectedAisleId: string | null = AISLE_B_ID, parkedAt: string | null = null) {
-  return { state, parked_at: parkedAt, lot_id: LOT_ID, assigned_aisle_id: AISLE_A_ID, detected_aisle_id: detectedAisleId };
+  return { state, parked_at: parkedAt, lot_id: LOT_ID, assigned_spot_id: SPOT_A1_ID, assigned_aisle_id: AISLE_A_ID, detected_aisle_id: detectedAisleId };
 }
 
 function julieConfirmedAtA1(detectedAisleId: string | null = AISLE_B_ID) {
@@ -101,10 +103,9 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
     expect(sql.labels()).toEqual(['read-walk-facts']);
   });
 
-  it('writes no spot when the session left ENTRY_CONFIRMED before the lock, and classifies it as read back', async () => {
+  it('writes no spot when the session left ENTRY_CONFIRMED before the lock, and classifies it from its facts read again', async () => {
     const sql = new ScriptedSql()
-      .answer('read-walk-facts', [factsRow('ENTRY_CONFIRMED')])
-      .answer('read-unchanged-session', [{ state: 'PARKED_PRESUMED', parked_at: WALKED_AT.toISOString() }]);
+      .answer('read-walk-facts', [factsRow('ENTRY_CONFIRMED')], [factsRow('PARKED_PRESUMED', AISLE_B_ID, WALKED_AT.toISOString())]);
 
     await expect(walkWith(sql)).resolves.toEqual({ outcome: 'already', state: 'PARKED_PRESUMED', parkedAt: WALKED_AT });
     expect(sql.count('flag-assigned-spot')).toBe(0);
@@ -123,5 +124,50 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
 
     await expect(walkWith(sql)).resolves.toEqual({ outcome: 'lot-busy' });
     expect(sql.count('ask-where-parked')).toBe(0);
+  });
+});
+
+describe('a walk racing a spot-taken report (story #23)', () => {
+  it('writes only while the session is still on the spot its facts were read with', async () => {
+    const sql = julieConfirmedAtA1();
+
+    await walkWith(sql);
+
+    expect(sql.statement('read-walk-facts')?.text).toMatch(/select ps\.state, ps\.parked_at, ps\.lot_id, ps\.assigned_spot_id/);
+    const update = sql.statement('ask-where-parked');
+    expect(update?.text).toMatch(/and state = 'ENTRY_CONFIRMED' and assigned_spot_id = \$\d+/);
+    expect(update?.params).toContain(SPOT_A1_ID);
+  });
+
+  it('presumes the same-aisle spot only while the session is still on it', async () => {
+    const sql = julieConfirmedAtA1(AISLE_A_ID);
+
+    await walkWith(sql);
+
+    const presume = sql.statement('presume-parked');
+    expect(presume?.text).toMatch(/and state = 'ENTRY_CONFIRMED' and assigned_spot_id = \$\d+/);
+    expect(presume?.params).toContain(SPOT_A1_ID);
+  });
+
+  it('reads the facts again and asks about A-2 when a report moved Julie from A-1 between the read and the write', async () => {
+    const sql = new ScriptedSql()
+      .answer('read-walk-facts', [factsRow('ENTRY_CONFIRMED')], [{ ...factsRow('ENTRY_CONFIRMED'), assigned_spot_id: SPOT_A2_ID }])
+      .answer('ask-where-parked', [], [{ parked_at: WALKED_AT.toISOString(), assigned_spot_id: SPOT_A2_ID }])
+      .answer('flag-assigned-spot', [{ id: SPOT_A2_ID }]);
+
+    await expect(walkWith(sql)).resolves.toEqual({ outcome: 'recorded', state: 'PARKED_UNCONFIRMED', parkedAt: WALKED_AT });
+
+    expect(sql.count('read-walk-facts')).toBe(2);
+    expect(sql.statements.filter(({ label }) => label === 'ask-where-parked')[1]?.params).toContain(SPOT_A2_ID);
+    expect(sql.statement('flag-assigned-spot')?.params).toEqual([SPOT_A2_ID]);
+  });
+
+  it('reads the facts twice at most, then classifies the session as read back', async () => {
+    const sql = new ScriptedSql()
+      .answer('read-walk-facts', [factsRow('ENTRY_CONFIRMED', AISLE_A_ID)], [factsRow('ENTRY_CONFIRMED', AISLE_A_ID)])
+      .answer('read-unchanged-session', [{ state: 'ENTRY_CONFIRMED', parked_at: null }]);
+
+    await expect(walkWith(sql)).resolves.toEqual({ outcome: 'entry-not-confirmed' });
+    expect(sql.labels()).toEqual(['read-walk-facts', 'presume-parked', 'read-walk-facts', 'presume-parked', 'read-unchanged-session']);
   });
 });

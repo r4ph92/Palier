@@ -2,18 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { FreeSpot } from '../../src/domain/allocation/chooseSpot.ts';
 import { admissibleSpotCount } from '../../src/load/admissibleSpotCount.ts';
 import { standardNeeds } from './fakeVehicleRepository.ts';
+import { freeSpotFixture } from './fakes/freeSpotFixture.ts';
 
-const spot = (number: string, isEv = false): FreeSpot => ({
-  id: `spot-${number}`,
-  number,
-  levelOrder: 1,
-  aisleCode: 'A',
-  distanceToExit: 5,
-  needsCheck: false,
-  isEv,
-  isAccessible: false,
-  isOversize: false,
-});
+const spot = (number: string, isEv = false): FreeSpot => freeSpotFixture(number, { id: `spot-${number}`, aisleId: 'aisle-A', aisleCode: 'A', distanceToExit: 5, isEv });
 
 const freeSpots = [spot('A-1'), spot('A-2'), spot('A-3', true)];
 

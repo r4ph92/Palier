@@ -134,6 +134,13 @@
       "when": 1793976536274,
       "tag": "0018_spot_canonical_number",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793983065687,
+      "tag": "0019_reported_spot",
+      "breakpoints": true
     }
   ]
 }
