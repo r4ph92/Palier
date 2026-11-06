@@ -38,6 +38,8 @@ export interface WhereParkedFraming {
   readonly offline: ReactNode;
   // Only a correction can be given up: the question has no way around it (decision 020).
   readonly onCancel?: () => void;
+  // Why Palier asks: no other spot was free after a spot-taken report (decision 022).
+  readonly notice?: string | undefined;
 }
 
 interface WhereParkedScreenProps {
@@ -73,6 +75,7 @@ function WhereParkedQuestion({ question, framing, answering }: WhereParkedQuesti
   return (
     <View style={styles.section} onAccessibilityEscape={onCancel}>
       <FormTitle title={framing.title} />
+      <FramingNotice message={framing.notice ?? null} />
       {framing.offline}
       {question === null ? null : <FreeSpots question={question} typed={spotNumber} onChoose={changeNumber} />}
       <SpotNumberField label={framing.numberLabel} spotNumber={spotNumber} onChange={changeNumber} answering={answering} />
@@ -89,6 +92,13 @@ function FormTitle({ title }: { readonly title: string }) {
       {title}
     </Text>
   );
+}
+
+// The title takes VoiceOver's focus, so the notice waits for it to be read.
+function FramingNotice({ message }: { readonly message: string | null }) {
+  const colors = useColors();
+  useAnnouncement(message, 0, { queued: true });
+  return message === null ? null : <Text style={[typography.bodyStrong, { color: colors.ink }]}>{message}</Text>;
 }
 
 function CancelButton({ onCancel }: { readonly onCancel: (() => void) | undefined }) {
