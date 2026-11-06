@@ -52,6 +52,11 @@ export function SignedInTabs(props: SignedInTabsProps) {
   );
 }
 
+function signOutForgettingWalks(device: DeviceTools, onSignOut: () => void): void {
+  void device.parkedSignals.clear();
+  onSignOut();
+}
+
 function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsProps, tabs: TabsController): TabScreensWithSession {
   const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
   const spotHold = useSpotHold(clients.spotHold);
@@ -67,7 +72,7 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
       pendingEntry,
       aside: { detectionNotice: <AutomaticDetectionNotice location={clients.backgroundLocation} />, guidance },
     },
-    account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut },
+    account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut: () => signOutForgettingWalks(device, onSignOut) },
   };
   return { currentSession, screens };
 }
