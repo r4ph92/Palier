@@ -30,7 +30,7 @@ describe('a correction form left open while the session moves on (story #22, QA)
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTimeAsync });
     await screen.findByText(PARKED_IN_A1, visibleText);
     await user.press(screen.getByRole('button', { name: NOT_MY_SPOT }));
-    await user.type(screen.getByLabelText('Numéro de place'), 'A-3');
+    await user.type(screen.getByLabelText('Numéro de la place où vous êtes garé'), 'A-3');
     await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
     expect(await screen.findByText('Garé en A-3', visibleText)).toBeOnTheScreen();
 

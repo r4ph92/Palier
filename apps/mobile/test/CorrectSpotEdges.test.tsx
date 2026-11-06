@@ -2,7 +2,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native';
 import { visibleText } from './visibleText';
 import { CONFIRM_TYPED, julieCorrecting, NOT_MY_SPOT } from './whereParkedRig';
 
-const SPOT_NUMBER = 'Numéro de place';
+const SPOT_NUMBER = 'Numéro de la place où vous êtes garé';
 
 describe('the correction form at its edges (story #22)', () => {
   beforeEach(() => jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 10, 4, 18, 5) }));

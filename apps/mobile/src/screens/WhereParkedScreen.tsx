@@ -33,6 +33,7 @@ const PROBLEM_MESSAGES: Readonly<Record<ParkedAnswerProblem, string>> = {
 
 export interface WhereParkedFraming {
   readonly title: string;
+  readonly numberLabel: string;
   // The offline notice, or null; it sits under the title so the driver knows the free spots may be old.
   readonly offline: ReactNode;
   // Only a correction can be given up: the question has no way around it (decision 020).
@@ -74,7 +75,7 @@ function WhereParkedQuestion({ question, framing, answering }: WhereParkedQuesti
       <FormTitle title={framing.title} />
       {framing.offline}
       {question === null ? null : <FreeSpots question={question} typed={spotNumber} onChoose={changeNumber} />}
-      <SpotNumberField spotNumber={spotNumber} onChange={changeNumber} answering={answering} />
+      <SpotNumberField label={framing.numberLabel} spotNumber={spotNumber} onChange={changeNumber} answering={answering} />
       <CancelButton onCancel={onCancel} />
     </View>
   );
@@ -95,13 +96,14 @@ function CancelButton({ onCancel }: { readonly onCancel: (() => void) | undefine
 }
 
 interface SpotNumberFieldProps {
+  readonly label: string;
   readonly spotNumber: string;
   readonly onChange: (spotNumber: string) => void;
   readonly answering: ParkedAnswerController;
 }
 
 // Any number, typed or chosen in the list; an empty field cannot be sent.
-function SpotNumberField({ spotNumber, onChange, answering }: SpotNumberFieldProps) {
+function SpotNumberField({ label, spotNumber, onChange, answering }: SpotNumberFieldProps) {
   const colors = useColors();
   const isBlank = spotNumber.trim() === '';
   const problem = answering.problem === null ? null : i18n.t(PROBLEM_MESSAGES[answering.problem]);
@@ -112,8 +114,8 @@ function SpotNumberField({ spotNumber, onChange, answering }: SpotNumberFieldPro
   };
   return (
     <View style={styles.field}>
-      <Text style={[typography.bodyStrong, { color: colors.ink }]}>{i18n.t('session.whereParked.numberLabel')}</Text>
-      <SpotNumberInput value={spotNumber} problem={problem} onChange={onChange} onSubmit={submit} />
+      <Text style={[typography.bodyStrong, { color: colors.ink }]}>{label}</Text>
+      <SpotNumberInput label={label} value={spotNumber} problem={problem} onChange={onChange} onSubmit={submit} />
       <AnswerProblem message={problem} attempts={answering.attempts} />
       <ConfirmButton spotNumber={spotNumber.trim()} isSending={answering.isSending} onPress={submit} />
     </View>
@@ -143,6 +145,7 @@ function ConfirmButton({ spotNumber, isSending, onPress }: ConfirmButtonProps) {
 }
 
 interface SpotNumberInputProps {
+  readonly label: string;
   readonly value: string;
   // Read again with the field while it shows, since VoiceOver's focus stays on the field.
   readonly problem: string | null;
@@ -150,11 +153,11 @@ interface SpotNumberInputProps {
   readonly onSubmit: () => void;
 }
 
-function SpotNumberInput({ value, problem, onChange, onSubmit }: SpotNumberInputProps) {
+function SpotNumberInput({ label, value, problem, onChange, onSubmit }: SpotNumberInputProps) {
   const colors = useColors();
   return (
     <TextInput
-      accessibilityLabel={i18n.t('session.whereParked.numberLabel')}
+      accessibilityLabel={label}
       accessibilityHint={problem ?? undefined}
       maxFontSizeMultiplier={SPOT_NUMBER_MAX_FONT_SCALE}
       autoCapitalize="characters"

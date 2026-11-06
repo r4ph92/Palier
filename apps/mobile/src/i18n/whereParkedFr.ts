@@ -14,5 +14,6 @@ export const whereParkedFr = {
   offline: 'Hors ligne, places libres au dernier relevé',
   unreachable: 'Impossible de joindre Palier. Vérifiez votre connexion, puis réessayez.',
   notMySpot: 'Ce n’est pas ma place',
+  correctedNumberLabel: 'Numéro de la place où vous êtes garé',
   cancel: 'Annuler',
 };

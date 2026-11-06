@@ -57,10 +57,15 @@ interface SessionDetailsProps extends CurrentParkingSessionScreenProps {
 function SessionBody(props: SessionDetailsProps) {
   const { state } = props.reading.session;
   if (state === 'PARKED_UNCONFIRMED') {
-    return <>{props.whereParked?.({ title: i18n.t('session.whereParked.question'), offline: props.offline })}</>;
+    return <>{props.whereParked?.({ title: i18n.t('session.whereParked.question'), numberLabel: i18n.t('session.whereParked.numberLabel'), offline: props.offline })}</>;
   }
   if (state === 'PARKED_PRESUMED' && props.correction.isCorrecting) {
-    return <>{props.whereParked?.({ title: i18n.t('session.whereParked.notMySpot'), offline: null, onCancel: props.correction.cancel })}</>;
+    return <>{props.whereParked?.({
+      title: i18n.t('session.whereParked.notMySpot'),
+      numberLabel: i18n.t('session.whereParked.correctedNumberLabel'),
+      offline: null,
+      onCancel: props.correction.cancel,
+    })}</>;
   }
   return <SessionDetails {...props} />;
 }
