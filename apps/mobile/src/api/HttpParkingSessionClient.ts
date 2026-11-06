@@ -11,11 +11,10 @@ import { parseCurrentParkingSession } from './parseCurrentParkingSession';
 import { parseParkedAnswer } from './parseParkedAnswer';
 import { parseParkedPresumption } from './parseParkedPresumption';
 
-const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const CONFLICT = 409;
 const PARKED_REFUSAL_STATUSES = new Set([NOT_FOUND, CONFLICT]);
-const ANSWER_REFUSAL_STATUSES = new Set([BAD_REQUEST, NOT_FOUND, CONFLICT]);
+const ANSWER_REFUSAL_STATUSES = new Set([NOT_FOUND, CONFLICT]);
 
 export class HttpParkingSessionClient implements ParkingSessionClient {
   readonly #requester: AuthorizedRequester;
@@ -25,6 +24,7 @@ export class HttpParkingSessionClient implements ParkingSessionClient {
   constructor(options: AuthorizedClientOptions) {
     this.#requester = new AuthorizedRequester(options, new Set());
     this.#parkedRequester = new AuthorizedRequester(options, PARKED_REFUSAL_STATUSES);
+    // A 400 is the schema check's FST_ERR_VALIDATION, read by its status.
     this.#answerRequester = new AuthorizedRequester(options, ANSWER_REFUSAL_STATUSES);
   }
 

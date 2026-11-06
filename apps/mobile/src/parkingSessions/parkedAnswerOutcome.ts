@@ -1,5 +1,5 @@
 import { PalierUnauthorizedError } from '../api/AuthClient';
-import { PalierUnreachableError } from '../api/LotsClient';
+import { PalierStatusError, PalierUnreachableError } from '../api/LotsClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
 
 export type ParkedAnswerProblem = 'UNKNOWN_SPOT' | 'SPOT_TAKEN' | 'SPOT_OUT_OF_SERVICE' | 'INVALID_NUMBER' | 'UNREACHABLE';
@@ -12,8 +12,9 @@ const PROBLEM_CODES: Readonly<Record<string, ParkedAnswerProblem>> = {
   UNKNOWN_SPOT: 'UNKNOWN_SPOT',
   SPOT_TAKEN: 'SPOT_TAKEN',
   SPOT_OUT_OF_SERVICE: 'SPOT_OUT_OF_SERVICE',
-  'Bad Request': 'INVALID_NUMBER',
 };
+
+const BAD_REQUEST = 400;
 
 export function parkedAnswerOutcomeOf(error: unknown): ParkedAnswerOutcome {
   if (error instanceof PalierRejectedError) {
@@ -22,6 +23,9 @@ export function parkedAnswerOutcomeOf(error: unknown): ParkedAnswerOutcome {
   }
   if (error instanceof PalierUnauthorizedError || error instanceof PalierConsentRequiredError) {
     return { kind: 'silent' };
+  }
+  if (error instanceof PalierStatusError && error.status === BAD_REQUEST) {
+    return { kind: 'problem', problem: 'INVALID_NUMBER' };
   }
   if (!(error instanceof PalierUnreachableError)) {
     console.error('Answering where the car is parked failed', error);

@@ -179,11 +179,16 @@ describe('HttpParkingSessionClient, answering where the car is (story #21)', () 
     [409, 'UNKNOWN_SPOT'],
     [409, 'SPOT_TAKEN'],
     [404, 'SESSION_NOT_FOUND'],
-    [400, 'Bad Request'],
   ])('turns a %i %s into a rejection carrying the code', async (status, error) => {
     const { client } = clientAnswering({ statusCode: status, error, message: 'refused' }, status);
 
     await expect(client.answerParkedSpot('session-1', 'B-3')).rejects.toEqual(new PalierRejectedError(error));
+  });
+
+  it('reports the 400 FST_ERR_VALIDATION of the schema check by its status', async () => {
+    const answer = clientAnswering({ statusCode: 400, code: 'FST_ERR_VALIDATION', error: 'Bad Request', message: 'body/spotNumber' }, 400).client.answerParkedSpot('session-1', 'B-3');
+
+    await expect(answer).rejects.toEqual(new PalierStatusError(400));
   });
 
   it('reports a 503 LOT_BUSY as a status error', async () => {

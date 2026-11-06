@@ -1,6 +1,6 @@
 import { act, screen, userEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
-import { PalierUnreachableError } from '../src/api/LotsClient';
+import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 import { PalierRejectedError } from '../src/api/VehicleClient';
 import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import type { SimulatedPositioningModule } from '../src/dev/SimulatedPositioningModule';
@@ -37,6 +37,26 @@ describe('answering where Julie parked, the edges (story #21)', () => {
 
     expect(screen.getByRole('button', { name: 'Confirmer' })).toBeDisabled();
     expect(parkingSession.spotAnswers).toEqual([]);
+  });
+
+  it('takes at most 16 characters in the field, the length Palier accepts', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB();
+
+    await user.type(screen.getByLabelText('Numéro de place'), 'B-3 PRES DU PILIER');
+    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+
+    expect(parkingSession.spotAnswers).toEqual(['B-3 PRES DU PILI']);
+  });
+
+  it('says the number is invalid when Palier refuses it with a 400', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB();
+    parkingSession.answerFailure = new PalierStatusError(400);
+
+    await user.type(screen.getByLabelText('Numéro de place'), 'B3!');
+    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Numéro invalide');
+    expect(screen.getByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
   });
 
   it('sends one answer for two taps before Palier answers', async () => {

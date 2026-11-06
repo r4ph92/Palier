@@ -8,6 +8,7 @@ import type {
   TestClockReading,
 } from '@palier/shared-types';
 import { ACTIVE_ENTRY_SESSION_STATES, WALKED_AWAY_STATES } from '@palier/shared-types/entries';
+import { SPOT_NUMBER_MAX_LENGTH } from '@palier/shared-types/spotNumber';
 import type { FromSchema } from 'json-schema-to-ts';
 import { assignedSpotSchema } from './entrySchemas.ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
@@ -111,7 +112,6 @@ export const parkedPresumptionResponseSchema = {
 } as const;
 
 // Spot numbers are a few characters (« B-3 »); the cap keeps oversized text away from the normalizer.
-const SPOT_NUMBER_MAX_LENGTH = 16;
 // Postgres text cannot hold U+0000, and no painted number has a control character.
 const WITHOUT_CONTROL_CHARACTERS = '^[^\\u0000-\\u001F\\u007F]*$';
 

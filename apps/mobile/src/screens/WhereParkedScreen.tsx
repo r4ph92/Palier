@@ -1,4 +1,5 @@
 import type { CurrentParkingSession, ParkedQuestion } from '@palier/shared-types';
+import { SPOT_NUMBER_MAX_LENGTH } from '@palier/shared-types/spotNumber';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
@@ -123,6 +124,7 @@ function SpotNumberInput({ value, onChange, onSubmit }: SpotNumberInputProps) {
       accessibilityLabel={i18n.t('session.whereParked.numberLabel')}
       maxFontSizeMultiplier={SPOT_NUMBER_MAX_FONT_SCALE}
       autoCapitalize="characters"
+      maxLength={SPOT_NUMBER_MAX_LENGTH}
       autoCorrect={false}
       returnKeyType="done"
       value={value}

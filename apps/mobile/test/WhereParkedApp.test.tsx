@@ -84,7 +84,6 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     ['UNKNOWN_SPOT', 'Z-99', 'Numéro inconnu dans ce parking'],
     ['SPOT_TAKEN', 'B-4', 'Cette place est déjà attribuée — vérifiez le numéro au sol'],
     ['SPOT_OUT_OF_SERVICE', 'B-5', 'Cette place est hors service — vérifiez le numéro au sol'],
-    ['Bad Request', '?', 'Numéro invalide'],
   ])('shows the refusal %s under the field and keeps the question', async (code, typed, message) => {
     const { user, parkingSession } = await julieAskedInAisleB();
     parkingSession.answerFailure = new PalierRejectedError(code);

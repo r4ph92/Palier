@@ -1,3 +1,5 @@
+export const SPOT_NUMBER_MAX_LENGTH = 16;
+
 const SEPARATORS = /[\s–—-]/g;
 
 // The painted number with case, spaces and dashes set aside: « b3 », « B 3 », « B – 3 » and « B-3 » all read « B3 »,
