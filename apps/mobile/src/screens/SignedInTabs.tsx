@@ -46,10 +46,10 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
   const spotHold = useSpotHold(clients.spotHold);
   const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: currentSession.refresh, onSubmissionEnded: spotHold.refreshHold });
   const gateScanner = useScannerGate(clients);
-  const plan = useParkingGuidance(device.positioning, currentSession.state);
+  const guidance = useParkingGuidance(device.positioning, currentSession.state);
   const screens: TabScreens = {
     home: { firstName, lotsClient: clients.lots, locationClient: clients.location, spotHold },
-    scan: { ...scanTabActions(clients, tabs), gateScanner, currentSession, pendingEntry, aside: { detectionNotice: <AutomaticDetectionNotice location={clients.backgroundLocation} />, plan } },
+    scan: { ...scanTabActions(clients, tabs), gateScanner, currentSession, pendingEntry, aside: { detectionNotice: <AutomaticDetectionNotice location={clients.backgroundLocation} />, guidance } },
     account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut },
   };
   return { currentSession, screens };

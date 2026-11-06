@@ -14,7 +14,7 @@ import { SessionNotice } from './SessionNotice';
 // What the session screen shows besides the session itself, built above the tabs.
 export interface SessionAside {
   readonly detectionNotice: ReactNode;
-  readonly plan: ReactNode;
+  readonly guidance: ReactNode;
 }
 
 interface ScanTabProps {
@@ -60,7 +60,7 @@ function sessionScreenFor({ state, refresh, ...progress }: CurrentParkingSession
         </ScanFrame>
       );
     case 'current':
-      return <CurrentParkingSessionScreen reading={state} progress={progress} onRetry={refresh} notice={aside.detectionNotice} plan={aside.plan} />;
+      return <CurrentParkingSessionScreen reading={state} progress={progress} onRetry={refresh} notice={aside.detectionNotice} guidance={aside.guidance} />;
     case 'none':
     case 'unknown':
       return null;

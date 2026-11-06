@@ -40,12 +40,12 @@ function currentParkingSessionAt(session: ActiveParkingSession, now: Date, log: 
     amountCents,
     dailyCapCents: session.pricing.dailyCapCents,
     beaconMajor: session.beaconMajor,
-    levelPlan: levelPlanFor(session, log),
+    levelPlan: levelPlanWarningOnRejectedShapes(session, log),
   };
 }
 
 // An unusable shape never costs the driver their session: the aisle is served undrawn and the operator's data is logged.
-function levelPlanFor(session: ActiveParkingSession, log: FastifyBaseLogger): CurrentParkingSession['levelPlan'] {
+function levelPlanWarningOnRejectedShapes(session: ActiveParkingSession, log: FastifyBaseLogger): CurrentParkingSession['levelPlan'] {
   const { levelPlan, rejectedAisleCodes } = levelPlanOf(session.spot.levelCode, session.levelAisles);
   for (const aisleCode of rejectedAisleCodes) {
     log.warn({ sessionId: session.id, levelCode: session.spot.levelCode, aisleCode }, 'Aisle map_polygon is not a usable rectangle');
