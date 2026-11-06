@@ -3,6 +3,7 @@ import { ACTIVE_ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import { isInstant } from './isInstant';
 import { PalierUnreachableError } from './LotsClient';
 import { isSpot } from './parseEntry';
+import { parseBeaconMajor, parseLevelPlan } from './parseLevelPlan';
 
 const ACTIVE_STATES: readonly unknown[] = ACTIVE_ENTRY_SESSION_STATES;
 
@@ -15,9 +16,11 @@ export function parseCurrentParkingSession(body: unknown): CurrentParkingSession
     throw new PalierUnreachableError('unexpected response body');
   }
   const { sessionId, state, lotName, spot, enteredAt, elapsedMinutes, amountCents, dailyCapCents } = session;
-  return { sessionId, state, lotName, spot, enteredAt, elapsedMinutes, amountCents, dailyCapCents };
+  const guidance = { beaconMajor: parseBeaconMajor(session.beaconMajor), levelPlan: parseLevelPlan(session.levelPlan) };
+  return { sessionId, state, lotName, spot, enteredAt, elapsedMinutes, amountCents, dailyCapCents, ...guidance };
 }
 
+// beaconMajor and levelPlan are left out on purpose: an older API or a bad plan still gives the driver their session.
 function isCurrentParkingSession(candidate: unknown): candidate is CurrentParkingSession {
   if (typeof candidate !== 'object' || candidate === null) {
     return false;
