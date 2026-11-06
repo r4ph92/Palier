@@ -72,7 +72,6 @@ export class WalkAwayWatch {
     if (outcome === 'unreachable') {
       return;
     }
-    await queue.remove(sessionId);
     if (outcome === 'accepted') {
       queue.announceSent(1);
       this.#settle(walk);
@@ -84,16 +83,13 @@ export class WalkAwayWatch {
       return;
     }
     const { queue, connectivity, sessionId } = this.#context;
+    await queue.ready();
     if (queue.walkFor(sessionId) !== undefined) {
       // The first walk is already kept and says better when the driver left: send that one once the network allows it.
       return this.flush();
     }
     const pending = this.#pendingWalk(walk);
-    if (connectivity.current === 'offline') {
-      await queue.add(pending);
-      return;
-    }
-    const outcome = await this.#report(pending);
+    const outcome = connectivity.current === 'offline' ? 'unreachable' : await this.#report(pending);
     if (outcome === 'unreachable') {
       await queue.add(pending);
     } else if (outcome === 'accepted') {
@@ -133,13 +129,23 @@ export class WalkAwayWatch {
         aisleMinor,
       });
       this.#isReported = true;
+      await this.#context.queue.remove(this.#context.sessionId);
       return 'accepted';
     } catch (error) {
       logUnexpectedFailure(error);
-      return error instanceof PalierRejectedError ? 'refused' : 'unreachable';
+      return await this.#outcomeAfter(error);
     } finally {
       this.#isSending = false;
     }
+  }
+
+  // Palier refused the walk: sending it again would be refused the same way, so it leaves the queue.
+  async #outcomeAfter(error: unknown): Promise<'refused' | 'unreachable'> {
+    if (!(error instanceof PalierRejectedError)) {
+      return 'unreachable';
+    }
+    await this.#context.queue.remove(this.#context.sessionId);
+    return 'refused';
   }
 
   #settleAccepted(walk: Pick<Walk, 'detectedAt'>): void {
