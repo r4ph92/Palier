@@ -1,7 +1,7 @@
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import type { SpotState } from '../spots/spotStates.ts';
 
-// The driver walked away in another aisle and says where the car is; spotNumber is trimmed, otherwise as typed.
+// The driver says where the car is: asked after walking away in another aisle, or correcting a presumed spot; spotNumber is trimmed, otherwise as typed.
 export interface SpotAnswer {
   readonly sessionId: string;
   readonly driverId: string;
@@ -20,9 +20,9 @@ export interface ParkedAnswerRepository {
 
 export type SessionAnswerDecision = 'take-spot' | 'already' | Extract<ParkedAnswerRefusal, 'not-asked' | 'closed'>;
 
-// Only a session waiting for the question takes an answer; one that already answered keeps its spot.
+// A session asked where it parked, or presumed parked, takes an answer; one that already answered keeps its spot (decision 021).
 export function decideSessionAnswer(state: EntrySessionState): SessionAnswerDecision {
-  if (state === 'PARKED_UNCONFIRMED') {
+  if (state === 'PARKED_UNCONFIRMED' || state === 'PARKED_PRESUMED') {
     return 'take-spot';
   }
   if (state === 'PARKED_CONFIRMED') {
@@ -46,4 +46,25 @@ const SPOT_ANSWER_DECISIONS: Readonly<Record<SpotState, SpotAnswerDecision>> = {
 
 export function decideSpotAnswer(state: SpotState): SpotAnswerDecision {
   return SPOT_ANSWER_DECISIONS[state];
+}
+
+export interface PlacementFacts {
+  readonly sessionState: EntrySessionState;
+  readonly assignedSpotId: string;
+  readonly spotId: string;
+  readonly spotState: SpotState;
+}
+
+// keep-presumed: the presumed spot was right; move-from-presumed: the car is elsewhere, and the presumed spot is flagged to check.
+export type PlacementDecision = 'occupy' | 'keep-presumed' | 'move-from-presumed' | Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service'>;
+
+export function decidePlacement({ sessionState, assignedSpotId, spotId, spotState }: PlacementFacts): PlacementDecision {
+  if (sessionState !== 'PARKED_PRESUMED') {
+    return decideSpotAnswer(spotState);
+  }
+  if (spotId === assignedSpotId) {
+    return 'keep-presumed';
+  }
+  const decision = decideSpotAnswer(spotState);
+  return decision === 'occupy' ? 'move-from-presumed' : decision;
 }

@@ -10,8 +10,9 @@ const MARC_ID = '00000000-0000-4000-8000-000000000502';
 const SESSION_ID = '00000000-0000-4000-8000-000000000951';
 const LOT_ID = '00000000-0000-4000-8000-000000000101';
 const SPOT_B3_ID = '00000000-0000-4000-8000-0000000003b3';
+const SPOT_A1_ID = '00000000-0000-4000-8000-0000000003a1';
 const B3 = { number: 'B-3', levelCode: 'P1', aisleCode: 'B' };
-const NO_CONFIRMED_SPOT = { number: null, aisle_code: null, level_code: null };
+const NO_CONFIRMED_SPOT = { assigned_spot_id: SPOT_A1_ID, number: null, aisle_code: null, level_code: null };
 
 const julieAnswersB3: SpotAnswer = { sessionId: SESSION_ID, driverId: JULIE_ID, spotNumber: 'B-3' };
 
@@ -87,7 +88,7 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
     expect(occupy?.text).toMatch(/set state = 'OCCUPIED', needs_check = false, state_changed_at = now\(\)\s+where id = \$\d+ and state in \('AVAILABLE', 'OCCUPIED_UNKNOWN'\)/);
     const confirm = sql.statement('confirm-parked-spot');
     expect(confirm?.text).toMatch(/set state = 'PARKED_CONFIRMED', confirmed_spot_id = \$\d+, parked_answered_at = now\(\)/);
-    expect(confirm?.text).toMatch(/where id = \$\d+ and state = 'PARKED_UNCONFIRMED'/);
+    expect(confirm?.text).toMatch(/where id = \$\d+ and state in \('PARKED_UNCONFIRMED', 'PARKED_PRESUMED'\)/);
     expect(confirm?.params).toEqual([SPOT_B3_ID, SESSION_ID]);
   });
 
@@ -133,7 +134,7 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
   it('answers the first spot again, without a spot read, once Julie already answered', async () => {
     const sql = new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
-      .answer('lock-answering-session', [{ state: 'PARKED_CONFIRMED', number: 'B-3', aisle_code: 'B', level_code: 'P1' }]);
+      .answer('lock-answering-session', [{ state: 'PARKED_CONFIRMED', assigned_spot_id: SPOT_A1_ID, number: 'B-3', aisle_code: 'B', level_code: 'P1' }]);
 
     await expect(answerWith(sql, { ...julieAnswersB3, spotNumber: 'B-5' })).resolves.toEqual({ outcome: 'already', spot: B3 });
     expect(sql.count('lock-answered-spot')).toBe(0);
@@ -141,7 +142,7 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
 
   it.each([
     ['still waiting for its loop', 'CREATED', 'not-asked'],
-    ['presumed in its assigned spot', 'PARKED_PRESUMED', 'not-asked'],
+    ['confirmed at the entry only', 'ENTRY_CONFIRMED', 'not-asked'],
     ['cancelled', 'CANCELLED', 'closed'],
   ] as const)('refuses a session %s without a spot read', async (_case, sessionState, outcome) => {
     const sql = asked('AVAILABLE', sessionState);
@@ -173,6 +174,64 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
       .answer('lock-answered-spot', [spotRow('AVAILABLE')]);
 
     await expect(answerWith(sql)).rejects.toThrow(`Answered spot ${SPOT_B3_ID} could not be occupied.`);
+    expect(sql.count('confirm-parked-spot')).toBe(0);
+  });
+});
+
+describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)', () => {
+  const SPOT_A3_ID = '00000000-0000-4000-8000-0000000003a3';
+  const julieCorrectsToA3: SpotAnswer = { ...julieAnswersB3, spotNumber: 'A-3' };
+  const CORRECTION_WRITES = ['occupy-answered-spot', 'flag-assigned-spot', 'confirm-parked-spot'] as const;
+
+  function presumedNaming(spot: { readonly id: string; readonly state: SpotState; readonly number: string }) {
+    return new ScriptedSql()
+      .answer('read-session-lot', [{ lot_id: LOT_ID }])
+      .answer('lock-answering-session', [{ state: 'PARKED_PRESUMED', ...NO_CONFIRMED_SPOT }])
+      .answer('lock-answered-spot', [{ ...spot, aisle_code: 'A', level_code: 'P1' }])
+      .answer('occupy-answered-spot', [{ id: spot.id }])
+      .answer('flag-assigned-spot', [{ id: SPOT_A1_ID }])
+      .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
+  }
+
+  it('moves Julie from A-1 to A-3 in one transaction: lot, session, A-3 locked and occupied, A-1 flagged, then the session', async () => {
+    const sql = presumedNaming({ id: SPOT_A3_ID, state: 'AVAILABLE', number: 'A-3' });
+
+    await expect(answerWith(sql, julieCorrectsToA3)).resolves.toEqual({ outcome: 'confirmed', spot: { number: 'A-3', levelCode: 'P1', aisleCode: 'A' } });
+
+    expect(sql.labels()).toEqual(['read-session-lot', 'limit-lock-wait', 'lock-lot', 'lock-answering-session', 'lock-answered-spot', ...CORRECTION_WRITES]);
+    expect(sql.statements.slice(1).every((statement) => statement.onTransaction)).toBe(true);
+    expect(sql.statement('lock-answering-session')?.text).toMatch(/select ps\.state, ps\.assigned_spot_id/);
+    expect(sql.statement('occupy-answered-spot')?.params).toEqual([SPOT_A3_ID]);
+    expect(sql.statement('flag-assigned-spot')?.text).toMatch(/set state = 'OCCUPIED_UNKNOWN', needs_check = true[\s\S]*where id = \$\d+ and state = 'OCCUPIED'/);
+    expect(sql.statement('flag-assigned-spot')?.params).toEqual([SPOT_A1_ID]);
+    expect(sql.statement('confirm-parked-spot')?.params).toEqual([SPOT_A3_ID, SESSION_ID]);
+  });
+
+  it('confirms the presumption on A-1, without any spot write, when Julie names A-1 itself', async () => {
+    const sql = presumedNaming({ id: SPOT_A1_ID, state: 'OCCUPIED', number: 'A-1' });
+
+    await expect(answerWith(sql, { ...julieAnswersB3, spotNumber: 'A-1' })).resolves.toMatchObject({ outcome: 'confirmed', spot: { number: 'A-1' } });
+
+    expect(sql.count('occupy-answered-spot')).toBe(0);
+    expect(sql.count('flag-assigned-spot')).toBe(0);
+    expect(sql.statement('confirm-parked-spot')?.params).toEqual([SPOT_A1_ID, SESSION_ID]);
+  });
+
+  it('refuses A-3 occupied by another driver without any write', async () => {
+    const sql = presumedNaming({ id: SPOT_A3_ID, state: 'OCCUPIED', number: 'A-3' });
+
+    await expect(answerWith(sql, julieCorrectsToA3)).resolves.toEqual({ outcome: 'spot-taken' });
+    expect(CORRECTION_WRITES.map((label) => sql.count(label))).toEqual([0, 0, 0]);
+  });
+
+  it('fails, rolling A-3 back, when the presumed A-1 was no longer occupied', async () => {
+    const sql = new ScriptedSql()
+      .answer('read-session-lot', [{ lot_id: LOT_ID }])
+      .answer('lock-answering-session', [{ state: 'PARKED_PRESUMED', ...NO_CONFIRMED_SPOT }])
+      .answer('lock-answered-spot', [{ id: SPOT_A3_ID, state: 'AVAILABLE', number: 'A-3', aisle_code: 'A', level_code: 'P1' }])
+      .answer('occupy-answered-spot', [{ id: SPOT_A3_ID }]);
+
+    await expect(answerWith(sql, julieCorrectsToA3)).rejects.toThrow(`Assigned spot ${SPOT_A1_ID} of a session leaving it was not occupied.`);
     expect(sql.count('confirm-parked-spot')).toBe(0);
   });
 });

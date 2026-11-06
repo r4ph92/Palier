@@ -10,7 +10,7 @@ const UNKNOWN_SPOT_BODY = { statusCode: 409, error: 'UNKNOWN_SPOT', message: 'No
 const SPOT_TAKEN_BODY = { statusCode: 409, error: 'SPOT_TAKEN', message: 'This spot is already assigned.' };
 
 function julieAsked(): StoredAnsweringSession {
-  return { driverId: julie.id, state: 'PARKED_UNCONFIRMED', confirmedSpotNumber: null, answeredAt: null };
+  return { driverId: julie.id, assignedSpotNumber: 'A-1', state: 'PARKED_UNCONFIRMED', confirmedSpotNumber: null, answeredAt: null };
 }
 
 describe('POST /v1/entries/:sessionId/spot (story #21)', () => {
@@ -156,7 +156,7 @@ describe('POST /v1/entries/:sessionId/spot (story #21)', () => {
   });
 
   it.each([
-    ['a session that was not asked', 'PARKED_PRESUMED', 'NOT_ASKED'],
+    ['a session still waiting for its loop', 'ENTRY_CONFIRMED', 'NOT_ASKED'],
     ['a cancelled session', 'CANCELLED', 'SESSION_CLOSED'],
   ] as const)('refuses %s with %s', async (_case, state, error) => {
     const { answer } = await julieAskedWhereParked({ ...julieAsked(), state });

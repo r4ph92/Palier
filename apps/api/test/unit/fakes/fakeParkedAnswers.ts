@@ -1,8 +1,8 @@
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import { paintedNumberNamed } from '../../../src/domain/spots/paintedSpotNumber.ts';
 import {
+  decidePlacement,
   decideSessionAnswer,
-  decideSpotAnswer,
   type ParkedAnswer,
   type ParkedAnswerRepository,
   type SpotAnswer,
@@ -11,6 +11,7 @@ import type { SpotState } from '../../../src/domain/spots/spotStates.ts';
 
 export interface StoredAnsweringSession {
   readonly driverId: string;
+  readonly assignedSpotNumber: string;
   state: EntrySessionState;
   confirmedSpotNumber: string | null;
   answeredAt: Date | null;
@@ -79,14 +80,23 @@ export class FakeParkedAnswers implements ParkedAnswerRepository {
     if (spotNumber === undefined || spot === undefined) {
       return { outcome: 'unknown-spot' };
     }
-    const decision = decideSpotAnswer(spot.state);
-    if (decision !== 'occupy') {
+    const decision = decidePlacement({ sessionState: session.state, assignedSpotId: session.assignedSpotNumber, spotId: spotNumber, spotState: spot.state });
+    if (decision === 'spot-taken' || decision === 'spot-out-of-service') {
       return { outcome: decision };
     }
     this.writes += 1;
-    Object.assign(spot, { state: 'OCCUPIED', needsCheck: false });
+    if (decision !== 'keep-presumed') {
+      Object.assign(spot, { state: 'OCCUPIED', needsCheck: false });
+    }
+    if (decision === 'move-from-presumed') {
+      this.#flagToCheck(session.assignedSpotNumber);
+    }
     Object.assign(session, { state: 'PARKED_CONFIRMED', confirmedSpotNumber: spotNumber, answeredAt: new Date() });
     return { outcome: 'confirmed', spot: labelOf(spotNumber) };
+  }
+
+  #flagToCheck(spotNumber: string): void {
+    Object.assign(this.#spots.get(spotNumber) ?? {}, { state: 'OCCUPIED_UNKNOWN', needsCheck: true });
   }
 
   // Exact match first, then the same number without case, spaces or dashes, like the repository.

@@ -1,7 +1,7 @@
 import type { AssignedSpot } from '@palier/shared-types';
 import {
+  decidePlacement,
   decideSessionAnswer,
-  decideSpotAnswer,
   type ParkedAnswer,
   type ParkedAnswerRepository,
   type SpotAnswer,
@@ -10,14 +10,16 @@ import type { Database, Transaction } from './database.ts';
 import { inLotLock, orLotBusy } from './lockParkingLot.ts';
 import {
   confirmParkedSpot,
+  flagAssignedSpotToCheck,
   lockAnsweredSpot,
   lockAnsweringSession,
   occupyAnsweredSpot,
   readSessionLot,
+  type AnsweredSpot,
   type AnsweringSession,
 } from './parkedAnswerStatements.ts';
 
-// Lot, then session, then spot (decision 014); the spot is decided from its state read under the lock, then written (decision 020).
+// Lot, then session, then spot (decision 014); the spot is decided from its state read under the lock, then written (decisions 020, 021).
 export class PostgresParkedAnswerRepository implements ParkedAnswerRepository {
   readonly #database: Database;
 
@@ -46,7 +48,7 @@ async function answerUnderLotLock(tx: Transaction, answer: SpotAnswer, lotId: st
   if (decision !== 'take-spot') {
     return { outcome: decision };
   }
-  return placeCar(tx, answer, lotId);
+  return placeCar(tx, answer, { lotId, session });
 }
 
 // parking_session_confirmed_has_spot guarantees it.
@@ -57,16 +59,30 @@ function confirmedSpotOf({ confirmedSpot }: AnsweringSession): AssignedSpot {
   return confirmedSpot;
 }
 
-async function placeCar(tx: Transaction, answer: SpotAnswer, lotId: string): Promise<ParkedAnswer> {
+interface PlacingSession {
+  readonly lotId: string;
+  readonly session: AnsweringSession;
+}
+
+async function placeCar(tx: Transaction, answer: SpotAnswer, { lotId, session }: PlacingSession): Promise<ParkedAnswer> {
   const spot = await lockAnsweredSpot(tx, { lotId, spotNumber: answer.spotNumber });
   if (spot === null) {
     return { outcome: 'unknown-spot' };
   }
-  const decision = decideSpotAnswer(spot.state);
-  if (decision !== 'occupy') {
+  const decision = decidePlacement({ sessionState: session.state, assignedSpotId: session.assignedSpotId, spotId: spot.id, spotState: spot.state });
+  if (decision === 'spot-taken' || decision === 'spot-out-of-service') {
     return { outcome: decision };
   }
-  await occupyAnsweredSpot(tx, spot.id);
-  await confirmParkedSpot(tx, answer.sessionId, spot.id);
+  if (decision !== 'keep-presumed') {
+    await occupyAnsweredSpot(tx, spot.id);
+  }
+  if (decision === 'move-from-presumed') {
+    await flagAssignedSpotToCheck(tx, session.assignedSpotId);
+  }
+  return confirmPlacement(tx, answer.sessionId, spot);
+}
+
+async function confirmPlacement(tx: Transaction, sessionId: string, spot: AnsweredSpot): Promise<ParkedAnswer> {
+  await confirmParkedSpot(tx, sessionId, spot.id);
   return { outcome: 'confirmed', spot: spot.label };
 }

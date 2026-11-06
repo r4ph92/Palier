@@ -13,6 +13,7 @@ type Executor = Pick<Transaction, 'execute'>;
 
 export interface AnsweringSession {
   readonly state: EntrySessionState;
+  readonly assignedSpotId: string;
   readonly confirmedSpot: AssignedSpot | null;
 }
 
@@ -28,6 +29,7 @@ interface SessionLotRow extends Record<string, unknown> {
 
 interface AnsweringSessionRow extends Record<string, unknown> {
   readonly state: EntrySessionState;
+  readonly assigned_spot_id: string;
   readonly number: string | null;
   readonly aisle_code: string | null;
   readonly level_code: string | null;
@@ -46,7 +48,7 @@ export async function readSessionLot(database: Database, { sessionId, driverId }
 
 export async function lockAnsweringSession(tx: Executor, { sessionId, driverId }: SpotAnswer): Promise<AnsweringSession | null> {
   const [row] = await tx.execute<AnsweringSessionRow>(sql`
-    select ps.state, spot.number, aisle.code as aisle_code, level.code as level_code
+    select ps.state, ps.assigned_spot_id, spot.number, aisle.code as aisle_code, level.code as level_code
     from parking_session ps
     left join spot on spot.id = ps.confirmed_spot_id
     left join aisle on aisle.id = spot.aisle_id
@@ -58,7 +60,7 @@ export async function lockAnsweringSession(tx: Executor, { sessionId, driverId }
   }
   const { number, aisle_code, level_code } = row;
   const confirmedSpot = number === null || aisle_code === null || level_code === null ? null : spotOf({ number, aisle_code, level_code });
-  return { state: row.state, confirmedSpot };
+  return { state: row.state, assignedSpotId: row.assigned_spot_id, confirmedSpot };
 }
 
 export interface SpotNumberInLot {
@@ -93,12 +95,24 @@ export async function occupyAnsweredSpot(tx: Executor, spotId: string): Promise<
   }
 }
 
+// The session is locked and still asked or presumed: a zero-row update is a broken invariant, and rolls the answer back.
 export async function confirmParkedSpot(tx: Executor, sessionId: string, spotId: string): Promise<void> {
   const rows = await tx.execute(sql`
     update parking_session set state = 'PARKED_CONFIRMED', confirmed_spot_id = ${spotId}, parked_answered_at = now()
-    where id = ${sessionId} and state = 'PARKED_UNCONFIRMED'
+    where id = ${sessionId} and state in ('PARKED_UNCONFIRMED', 'PARKED_PRESUMED')
     returning id`);
   if (rows.length === 0) {
     throw new Error(`Session ${sessionId} was no longer waiting for its answer.`);
+  }
+}
+
+// The loop confirmation made the spot OCCUPIED in its own transaction; any other state is a broken invariant, and rolls the session back.
+export async function flagAssignedSpotToCheck(tx: Executor, spotId: string): Promise<void> {
+  const rows = await tx.execute(sql`
+    update spot set state = 'OCCUPIED_UNKNOWN', needs_check = true, state_changed_at = now()
+    where id = ${spotId} and state = 'OCCUPIED'
+    returning id`);
+  if (rows.length === 0) {
+    throw new Error(`Assigned spot ${spotId} of a session leaving it was not occupied.`);
   }
 }

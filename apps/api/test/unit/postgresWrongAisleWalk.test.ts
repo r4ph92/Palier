@@ -115,7 +115,7 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
       .answer('read-walk-facts', [factsRow('ENTRY_CONFIRMED')])
       .answer('ask-where-parked', [{ parked_at: WALKED_AT.toISOString(), assigned_spot_id: SPOT_A1_ID }]);
 
-    await expect(walkWith(sql)).rejects.toThrow(`Assigned spot ${SPOT_A1_ID} of a session walking away was not occupied.`);
+    await expect(walkWith(sql)).rejects.toThrow(`Assigned spot ${SPOT_A1_ID} of a session leaving it was not occupied.`);
   });
 
   it('answers lot-busy when the lot stays locked past the lock timeout', async () => {
