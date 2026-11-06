@@ -148,6 +148,7 @@ export const fr = {
     amountLead: 'Montant à ce jour\u00A0: ',
     capLead: 'Plafond\u00A0: ',
     pending: 'Entrée en attente de confirmation',
+    parkedIn: 'Garé en %{spot}',
     updatedAtLead: 'Mis à jour à ',
     offline: 'Hors ligne, montant au dernier relevé',
     detectionOff: 'Détection automatique désactivée\u00A0— votre place sera présumée occupée après 30\u00A0min',

@@ -148,6 +148,7 @@ export const en: Translations = {
     amountLead: 'Amount so far: ',
     capLead: 'Daily cap: ',
     pending: 'Entry awaiting confirmation',
+    parkedIn: 'Parked in %{spot}',
     updatedAtLead: 'Updated ',
     offline: 'Offline, amount as of last check',
     detectionOff: 'Automatic detection is off\u00A0— your spot will be assumed occupied after 30\u00A0min',

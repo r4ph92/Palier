@@ -1,5 +1,6 @@
 import type { CurrentParkingSession, PlanAisle } from '@palier/shared-types';
 import { useEffect, useRef, useState, type RefObject } from 'react';
+import { aisleWithMinor } from './aisleWithMinor';
 import type { PositioningCore } from './PositioningCore';
 import type { PositioningListener } from './PositioningModule';
 
@@ -42,8 +43,4 @@ function useAisleSighting(positioning: PositioningCore, sessionId: string | null
     return positioning.subscribe({ ...IGNORED_SIGNALS, onAisleChanged });
   }, [positioning, sessionId, aisles]);
   return sighting;
-}
-
-function aisleWithMinor(aisles: readonly PlanAisle[], minor: number): PlanAisle | null {
-  return aisles.find((aisle) => aisle.beaconMinor === minor) ?? null;
 }

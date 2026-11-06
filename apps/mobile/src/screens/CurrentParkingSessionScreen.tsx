@@ -9,6 +9,7 @@ import { formatElapsed } from '../i18n/formatElapsed';
 import { formatMoney } from '../i18n/formatMoney';
 import { currentLanguage, i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionReading, ReadProgress } from '../parkingSessions/useCurrentParkingSession';
+import { unbrokenSpotNumber } from '../spots/spotNumber';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
@@ -77,9 +78,19 @@ function SessionAmount({ session }: { readonly session: CurrentParkingSession })
 
 function SessionSpot({ session }: { readonly session: CurrentParkingSession }) {
   const colors = useColors();
-  const isConfirmed = session.state === 'ENTRY_CONFIRMED';
-  const status = i18n.t(isConfirmed ? 'scan.entryConfirmed' : 'session.pending');
-  return <SpotWithState spot={session.spot} status={status} markColor={isConfirmed ? colors.free : colors.muted} />;
+  const isWaiting = session.state === 'CREATED';
+  return <SpotWithState spot={session.spot} status={spotStatusOf(session)} markColor={isWaiting ? colors.muted : colors.free} />;
+}
+
+function spotStatusOf({ state, spot }: CurrentParkingSession): string {
+  switch (state) {
+    case 'CREATED':
+      return i18n.t('session.pending');
+    case 'ENTRY_CONFIRMED':
+      return i18n.t('scan.entryConfirmed');
+    case 'PARKED_PRESUMED':
+      return i18n.t('session.parkedIn', { spot: unbrokenSpotNumber(spot) });
+  }
 }
 
 interface FigureProps {

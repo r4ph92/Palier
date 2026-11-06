@@ -1,4 +1,4 @@
-import type { AssignedSpot, CurrentParkingSession, LevelPlan } from '@palier/shared-types';
+import type { AssignedSpot, CurrentParkingSession, LevelPlan, ParkedPresumptionResponse } from '@palier/shared-types';
 import type { ParkingSessionClient } from '../src/api/ParkingSessionClient';
 import { spotA1 } from './fakeEntryClient';
 
@@ -35,12 +35,21 @@ export function julieAtB3(overrides: Partial<CurrentParkingSession> = {}): Curre
   return julieAtParkingDemo({ spot: spotB3, ...overrides });
 }
 
+export interface ParkedReport {
+  readonly sessionId: string;
+  readonly detectedAt: number;
+}
+
 export class FakeParkingSessionClient implements ParkingSessionClient {
   session: CurrentParkingSession | null;
   failure: Error | null = null;
   requests = 0;
   holdsAnswer = false;
+  readonly parkedReports: ParkedReport[] = [];
+  parkedFailure: Error | null = null;
+  holdsParkedAnswer = false;
   readonly #pending: (() => void)[] = [];
+  readonly #pendingParked: (() => void)[] = [];
 
   constructor(session: CurrentParkingSession | null = null) {
     this.session = session;
@@ -54,9 +63,32 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
     return this.#answerNow();
   }
 
+  // Like the API: the walk turns the matching ENTRY_CONFIRMED session, and the next read shows it presumed parked.
+  reportParked(sessionId: string, detectedAt: number): Promise<ParkedPresumptionResponse> {
+    this.parkedReports.push({ sessionId, detectedAt });
+    if (this.holdsParkedAnswer) {
+      return new Promise((resolve, reject) => this.#pendingParked.push(() => void this.#presumeNow(sessionId, detectedAt).then(resolve, reject)));
+    }
+    return this.#presumeNow(sessionId, detectedAt);
+  }
+
+  answerParked(): void {
+    this.#pendingParked.splice(0).forEach((resolve) => resolve());
+  }
+
   // Answers every request still waiting, with whatever the fake holds now.
   answer(): void {
     this.#pending.splice(0).forEach((resolve) => resolve());
+  }
+
+  #presumeNow(sessionId: string, detectedAt: number): Promise<ParkedPresumptionResponse> {
+    if (this.parkedFailure !== null) {
+      return Promise.reject(this.parkedFailure);
+    }
+    if (this.session?.sessionId === sessionId) {
+      this.session = { ...this.session, state: 'PARKED_PRESUMED' };
+    }
+    return Promise.resolve({ state: 'PARKED_PRESUMED', parkedAt: new Date(detectedAt).toISOString() });
   }
 
   #answerNow(): Promise<CurrentParkingSession | null> {

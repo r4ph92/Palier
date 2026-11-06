@@ -3,7 +3,7 @@ import { assertNever } from '../assertNever';
 import type { EntryClient } from '../api/EntryClient';
 import { LoadingState } from '../components/LoadingState';
 import type { TabLabels } from '../components/TabBar';
-import { useEntry, type EntryState } from '../entries/useEntry';
+import { useEntry, type EntryController, type EntryState } from '../entries/useEntry';
 import type { PendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionController, CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
@@ -37,6 +37,7 @@ export function ScanTab({ entryClient, gateScanner, aside, currentSession, pendi
   const entry = useEntry(entryClient, pendingEntry);
   const { state, refresh, ...progress } = currentSession;
   useRefreshAsEntryProgresses(entry.state, refresh);
+  useEndEntryOnceParked(entry, state);
   const sessionScreen = isEntryInProgress(entry.state) ? null : sessionScreenFor(currentSession, aside);
   if (sessionScreen !== null) {
     return sessionScreen;
@@ -85,4 +86,17 @@ function useRefreshAsEntryProgresses(state: EntryState, refresh: () => void): vo
 
 function progressKey(state: EntryState): string | null {
   return state.status === 'entered' ? `${state.sessionId}:${String(state.isConfirmed)}` : null;
+}
+
+// A walk away from the car can come before « Terminé »: the scan result then gives way to the session presumed parked,
+// and the entry is over, so a later closed session shows the form rather than this entry's spot.
+function useEndEntryOnceParked(entry: EntryController, state: CurrentParkingSessionState): void {
+  const enteredSessionId = entry.state.status === 'entered' ? entry.state.sessionId : null;
+  const parkedSessionId = state.status === 'current' && state.session.state === 'PARKED_PRESUMED' ? state.session.sessionId : null;
+  const { startOver } = entry;
+  useEffect(() => {
+    if (enteredSessionId !== null && enteredSessionId === parkedSessionId) {
+      startOver();
+    }
+  }, [enteredSessionId, parkedSessionId, startOver]);
 }

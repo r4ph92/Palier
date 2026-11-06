@@ -53,7 +53,7 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
   const spotHold = useSpotHold(clients.spotHold);
   const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: currentSession.refresh, onSubmissionEnded: spotHold.refreshHold });
   const gateScanner = useScannerGate(clients);
-  const guidance = useParkingGuidance(device.positioning, currentSession.state);
+  const guidance = useParkingGuidance({ positioning: device.positioning, client: clients.parkingSession }, currentSession);
   const screens: TabScreens = {
     home: { firstName, lotsClient: clients.lots, locationClient: clients.location, spotHold },
     scan: {

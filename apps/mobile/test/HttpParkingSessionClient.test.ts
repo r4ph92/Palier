@@ -1,6 +1,7 @@
 import { PalierUnauthorizedError } from '../src/api/AuthClient';
 import { HttpParkingSessionClient } from '../src/api/HttpParkingSessionClient';
 import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
+import { PalierRejectedError } from '../src/api/VehicleClient';
 import { julieAtParkingDemo } from './fakeParkingSessionClient';
 
 const BASE_URL = 'http://localhost:3000';
@@ -72,5 +73,53 @@ describe('HttpParkingSessionClient', () => {
 
   it('reports a 500 as a status error', async () => {
     await expect(clientAnswering({}, 500).client.current()).rejects.toBeInstanceOf(PalierStatusError);
+  });
+});
+
+const WALKED_AT = new Date('2026-11-04T23:05:00.000Z');
+const PRESUMED = { state: 'PARKED_PRESUMED', parkedAt: WALKED_AT.toISOString() };
+
+describe('HttpParkingSessionClient, reporting the walk away from the car (story #18)', () => {
+  it('posts the walking instant for the session with the bearer token', async () => {
+    const { client, fetchFunction } = clientAnswering(PRESUMED);
+
+    await expect(client.reportParked('session-1', WALKED_AT.getTime())).resolves.toEqual(PRESUMED);
+    expect(fetchFunction).toHaveBeenCalledWith(
+      `${BASE_URL}/v1/entries/session-1/parked`,
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
+        body: JSON.stringify({ detectedAt: WALKED_AT.toISOString() }),
+      }),
+    );
+  });
+
+  it('escapes the session id in the path', async () => {
+    const { client, fetchFunction } = clientAnswering(PRESUMED);
+
+    await client.reportParked('../me', WALKED_AT.getTime());
+
+    expect(fetchFunction).toHaveBeenCalledWith(`${BASE_URL}/v1/entries/..%2Fme/parked`, expect.anything());
+  });
+
+  it.each([
+    [409, 'ENTRY_NOT_CONFIRMED'],
+    [409, 'SESSION_CLOSED'],
+    [404, 'SESSION_NOT_FOUND'],
+  ])('turns a %i %s into a rejection carrying the code', async (status, error) => {
+    const { client } = clientAnswering({ statusCode: status, error, message: 'refused' }, status);
+
+    await expect(client.reportParked('session-1', WALKED_AT.getTime())).rejects.toEqual(new PalierRejectedError(error));
+  });
+
+  it.each([
+    ['another state', { ...PRESUMED, state: 'ENTRY_CONFIRMED' }],
+    ['an instant that is not a date', { ...PRESUMED, parkedAt: 'hier' }],
+  ])('treats an answer with %s as Palier being unreachable', async (_case, body) => {
+    await expect(clientAnswering(body).client.reportParked('session-1', WALKED_AT.getTime())).rejects.toBeInstanceOf(PalierUnreachableError);
+  });
+
+  it('reports a 500 as a status error', async () => {
+    await expect(clientAnswering({}, 500).client.reportParked('session-1', WALKED_AT.getTime())).rejects.toBeInstanceOf(PalierStatusError);
   });
 });
