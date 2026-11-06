@@ -18,4 +18,6 @@ export const whereParkedEn: Translations['session']['whereParked'] = {
   notMySpot: 'This is not my spot',
   correctedNumberLabel: 'Number of the spot you parked in',
   cancel: 'Cancel',
+  signalsWaiting: { one: 'Offline — %{count} signal waiting', other: 'Offline — %{count} signals waiting' },
+  signalsSent: { one: '%{count} signal sent', other: '%{count} signals sent' },
 };

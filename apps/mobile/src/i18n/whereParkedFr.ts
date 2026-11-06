@@ -18,4 +18,6 @@ export const whereParkedFr = {
   notMySpot: 'Ce n’est pas ma place',
   correctedNumberLabel: 'Numéro de la place où vous êtes garé',
   cancel: 'Annuler',
+  signalsWaiting: { one: 'Hors ligne — %{count} signal en attente', other: 'Hors ligne — %{count} signaux en attente' },
+  signalsSent: { one: '%{count} signal envoyé', other: '%{count} signaux envoyés' },
 };
