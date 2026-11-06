@@ -8,22 +8,34 @@ import { CONFIRM_TYPED, CORRECTED_SPOT_NUMBER, julieCorrecting, NOT_MY_SPOT } fr
 
 const A2 = { number: 'A-2', levelCode: 'P1', aisleCode: 'A' };
 
+// Julie confirms A-3 while Palier holds its answer: the form shows « Envoi… ».
+async function julieSendingA3() {
+  const rig = await julieCorrecting();
+  rig.parkingSession.holdsSpotAnswer = true;
+  await rig.user.type(screen.getByLabelText(CORRECTED_SPOT_NUMBER), 'A-3');
+  await rig.user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
+  await screen.findByText('Envoi…', visibleText);
+  return rig;
+}
+
 describe('the correction form at its edges (story #22)', () => {
   beforeEach(() => jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 10, 4, 18, 5) }));
   afterEach(() => jest.useRealTimers());
 
-  it('offers no way back, button or escape, while « Envoi… » is in flight, then shows « Garé en A-3 »', async () => {
-    const { user, parkingSession } = await julieCorrecting();
-    parkingSession.holdsSpotAnswer = true;
+  it('offers no way back, button or escape, while « Envoi… » is in flight', async () => {
+    await julieSendingA3();
 
-    await user.type(screen.getByLabelText(CORRECTED_SPOT_NUMBER), 'A-3');
-    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
-
-    expect(await screen.findByText('Envoi…', visibleText)).toBeOnTheScreen();
-    expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
     await act(async () => fireEvent(screen.getByRole('header', { name: NOT_MY_SPOT }), 'accessibilityEscape'));
+
+    expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull();
     expect(screen.getByRole('header', { name: NOT_MY_SPOT })).toBeOnTheScreen();
-    parkingSession.answerSpotAnswers();
+  });
+
+  it('shows « Garé en A-3 » once the held answer lands', async () => {
+    const { parkingSession } = await julieSendingA3();
+
+    await act(async () => parkingSession.answerSpotAnswers());
+
     expect(await screen.findByText('Garé en A-3', visibleText)).toBeOnTheScreen();
   });
 
