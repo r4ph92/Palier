@@ -37,9 +37,16 @@ const levelPlanSchema = {
   properties: { levelCode: { type: 'string' }, aisles: { type: 'array', items: planAisleSchema } },
 } as const;
 
+const parkedQuestionSchema = {
+  type: 'object',
+  required: ['aisleCode', 'freeSpotNumbers'],
+  additionalProperties: false,
+  properties: { aisleCode: { type: 'string' }, freeSpotNumbers: { type: 'array', items: { type: 'string' } } },
+} as const;
+
 const currentParkingSessionSchema = {
   type: 'object',
-  required: ['sessionId', 'state', 'lotName', 'spot', 'enteredAt', 'elapsedMinutes', 'amountCents', 'dailyCapCents', 'beaconMajor', 'levelPlan'],
+  required: ['sessionId', 'state', 'lotName', 'spot', 'enteredAt', 'elapsedMinutes', 'amountCents', 'dailyCapCents', 'beaconMajor', 'levelPlan', 'question'],
   additionalProperties: false,
   properties: {
     sessionId: { type: 'string' },
@@ -52,6 +59,7 @@ const currentParkingSessionSchema = {
     dailyCapCents: { type: 'integer' },
     beaconMajor: { anyOf: [{ type: 'integer' }, { type: 'null' }] },
     levelPlan: { anyOf: [levelPlanSchema, { type: 'null' }] },
+    question: { anyOf: [parkedQuestionSchema, { type: 'null' }] },
   },
 } as const;
 

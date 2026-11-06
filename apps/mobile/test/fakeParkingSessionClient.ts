@@ -26,6 +26,7 @@ export function julieAtParkingDemo(overrides: Partial<CurrentParkingSession> = {
     dailyCapCents: 2500,
     beaconMajor: 1,
     levelPlan: parkingDemoP1Plan,
+    question: null,
     ...overrides,
   };
 }

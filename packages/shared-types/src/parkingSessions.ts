@@ -1,6 +1,7 @@
 import type { ActiveEntrySessionState, AssignedSpot } from './entries.ts';
 
 // The driver's session in progress, priced by the API's clock: the app shows these figures as they are.
+// spot is the one the driver said they parked in once they answered, the assigned one before.
 export interface CurrentParkingSession {
   readonly sessionId: string;
   readonly state: ActiveEntrySessionState;
@@ -14,6 +15,14 @@ export interface CurrentParkingSession {
   // The lot's beacon major, which the app monitors while the session lasts; null for a lot without beacons.
   readonly beaconMajor: number | null;
   readonly levelPlan: LevelPlan | null;
+  // PARKED_UNCONFIRMED only: the driver walked away in another aisle, and is asked where they parked.
+  readonly question: ParkedQuestion | null;
+}
+
+// The aisle the device last saw at the walk, with its free spots ordered by number: the likeliest answers come first.
+export interface ParkedQuestion {
+  readonly aisleCode: string;
+  readonly freeSpotNumbers: string[];
 }
 
 // D8: an aisle is drawn as a rectangle on its level's grid; the units mean nothing beyond their proportions.

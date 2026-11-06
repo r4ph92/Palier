@@ -30,6 +30,22 @@ describe('HttpParkingSessionClient', () => {
     await expect(clientAnswering({ session: parked }).client.current()).resolves.toEqual(parked);
   });
 
+  it('reads the question of a session asked where it parked (story #21)', async () => {
+    const asked = julieAtParkingDemo({ state: 'PARKED_UNCONFIRMED', question: { aisleCode: 'B', freeSpotNumbers: ['B-1', 'B-3'] } });
+
+    await expect(clientAnswering({ session: asked }).client.current()).resolves.toEqual(asked);
+  });
+
+  it.each([
+    ['a question whose numbers are not text', { aisleCode: 'B', freeSpotNumbers: [3] }],
+    ['a question without its aisle', { freeSpotNumbers: ['B-3'] }],
+    ['no question field, from an older API', undefined],
+  ])('keeps the session but reads %s as no question', async (_case, question) => {
+    const { client } = clientAnswering({ session: { ...julieAtParkingDemo({ state: 'PARKED_UNCONFIRMED' }), question } });
+
+    await expect(client.current()).resolves.toEqual(julieAtParkingDemo({ state: 'PARKED_UNCONFIRMED', question: null }));
+  });
+
   it('answers null when the driver has no session', async () => {
     await expect(clientAnswering({ session: null }).client.current()).resolves.toBeNull();
   });

@@ -41,6 +41,7 @@ function currentParkingSessionAt(session: ActiveParkingSession, now: Date, log: 
     dailyCapCents: session.pricing.dailyCapCents,
     beaconMajor: session.beaconMajor,
     levelPlan: levelPlanWarningOnRejectedShapes(session, log),
+    question: session.question,
   };
 }
 

@@ -38,6 +38,7 @@ export type {
   ParkedPresumptionRefusalCode,
   ParkedPresumptionRequest,
   ParkedPresumptionResponse,
+  ParkedQuestion,
   ParkedSpotAnswerRefusalCode,
   ParkedSpotAnswerRequest,
   ParkedSpotAnswerResponse,

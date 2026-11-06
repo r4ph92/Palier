@@ -75,11 +75,12 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
     return state === 'CANCELLED' ? 'cancelled' : 'attached';
   }
 
+  // The spot is the one the driver answered, once they did (story #21).
   async findForUser(sessionId: string, userId: string): Promise<SessionStatus | null> {
     const rows = await this.#database.execute<SessionStatusRow>(sql`
       select ps.id, ps.state, ps.entry_confirmed_at, spot.number, aisle.code as aisle_code, level.code as level_code
       from parking_session ps
-      join spot on spot.id = ps.assigned_spot_id
+      join spot on spot.id = coalesce(ps.confirmed_spot_id, ps.assigned_spot_id)
       join aisle on aisle.id = spot.aisle_id
       join level on level.id = aisle.level_id
       where ps.id = ${sessionId} and ps.user_id = ${userId}`);
