@@ -50,7 +50,8 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
     if (row === undefined) {
       return null;
     }
-    return activeSessionOf(row, { levelAisles: await this.#levelAisles(row.level_id), question: await this.#questionOf(row) });
+    const [levelAisles, question] = await Promise.all([this.#levelAisles(row.level_id), this.#questionOf(row)]);
+    return activeSessionOf(row, { levelAisles, question });
   }
 
   #questionOf({ state, parked_aisle_id }: CurrentSessionRow): Promise<ParkedQuestion | null> {
