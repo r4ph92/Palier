@@ -1,17 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { configureServer } from './configureServer.ts';
 import { acceptNoticeAs, authorizationFor, julie, marc } from './fakeDriverRepository.ts';
 import { JULIE_SESSION_ID } from './fakes/fakeCurrentParkingSessions.ts';
-import type { StoredAnsweringSession } from './fakes/fakeParkedAnswers.ts';
+import { julieSessionIn, julieWithAnsweringSession, SPOT_TAKEN_BODY, UNKNOWN_SPOT_BODY } from './parkedAnswerRig.ts';
 import { SESSION_NOT_FOUND_BODY } from '../../src/http/sessionNotFound.ts';
 
-const UNKNOWN_SPOT_BODY = { statusCode: 409, error: 'UNKNOWN_SPOT', message: 'No spot has this number in this parking lot.' };
-const SPOT_TAKEN_BODY = { statusCode: 409, error: 'SPOT_TAKEN', message: 'This spot is already assigned.' };
-
-function julieAsked(): StoredAnsweringSession {
-  return { driverId: julie.id, assignedSpotNumber: 'A-1', state: 'PARKED_UNCONFIRMED', confirmedSpotNumber: null, answeredAt: null };
-}
+const julieAsked = () => julieSessionIn('PARKED_UNCONFIRMED');
 
 describe('POST /v1/entries/:sessionId/spot (story #21)', () => {
   let server: FastifyInstance;
@@ -20,18 +14,12 @@ describe('POST /v1/entries/:sessionId/spot (story #21)', () => {
 
   // A-1 is Julie's assigned spot, occupied-unknown since she walked away in aisle B; B-4 is assigned to Marc.
   async function julieAskedWhereParked(session = julieAsked()) {
-    const configured = configureServer();
-    server = configured.server;
-    const { parkedAnswers } = configured;
-    parkedAnswers.add(JULIE_SESSION_ID, session);
-    parkedAnswers.setSpot('A-1', { state: 'OCCUPIED_UNKNOWN', needsCheck: true });
-    parkedAnswers.setSpot('B-4', { state: 'ASSIGNED', needsCheck: false });
-    await acceptNoticeAs(configured.driverRepository, julie);
-    await acceptNoticeAs(configured.driverRepository, marc);
-    const julieHeaders = await authorizationFor(configured.driverRepository, julie);
-    const answer = (spotNumber: unknown, headers: Record<string, string> = julieHeaders) =>
-      server.inject({ method: 'POST', url: `/v1/entries/${JULIE_SESSION_ID}/spot`, headers, payload: { spotNumber } });
-    return { ...configured, answer };
+    const rig = await julieWithAnsweringSession(session, {
+      'A-1': { state: 'OCCUPIED_UNKNOWN', needsCheck: true },
+      'B-4': { state: 'ASSIGNED', needsCheck: false },
+    });
+    server = rig.server;
+    return rig;
   }
 
   it('places Julie in B-3: B-3 occupied, the session parked-confirmed on it with the answer time', async () => {

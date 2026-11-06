@@ -1,16 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { configureServer } from './configureServer.ts';
-import { acceptNoticeAs, authorizationFor, julie } from './fakeDriverRepository.ts';
 import { JULIE_SESSION_ID } from './fakes/fakeCurrentParkingSessions.ts';
-import type { StoredAnsweringSession } from './fakes/fakeParkedAnswers.ts';
+import { julieSessionIn, julieWithAnsweringSession, SPOT_TAKEN_BODY, UNKNOWN_SPOT_BODY } from './parkedAnswerRig.ts';
 
-const UNKNOWN_SPOT_BODY = { statusCode: 409, error: 'UNKNOWN_SPOT', message: 'No spot has this number in this parking lot.' };
-const SPOT_TAKEN_BODY = { statusCode: 409, error: 'SPOT_TAKEN', message: 'This spot is already assigned.' };
-
-function juliePresumedInA1(): StoredAnsweringSession {
-  return { driverId: julie.id, assignedSpotNumber: 'A-1', state: 'PARKED_PRESUMED', confirmedSpotNumber: null, answeredAt: null };
-}
+const juliePresumedInA1 = () => julieSessionIn('PARKED_PRESUMED');
 
 describe('POST /v1/entries/:sessionId/spot correcting a presumed spot (story #22)', () => {
   let server: FastifyInstance;
@@ -19,16 +12,12 @@ describe('POST /v1/entries/:sessionId/spot correcting a presumed spot (story #22
 
   // Julie walked away in aisle A: A-1 is presumed and occupied; B-4 is assigned to Marc.
   async function juliePresumed(session = juliePresumedInA1()) {
-    const configured = configureServer();
-    server = configured.server;
-    const { parkedAnswers } = configured;
-    parkedAnswers.add(JULIE_SESSION_ID, session);
-    parkedAnswers.setSpot('A-1', { state: 'OCCUPIED', needsCheck: false });
-    parkedAnswers.setSpot('B-4', { state: 'ASSIGNED', needsCheck: false });
-    await acceptNoticeAs(configured.driverRepository, julie);
-    const headers = await authorizationFor(configured.driverRepository, julie);
-    const correct = (spotNumber: string) => server.inject({ method: 'POST', url: `/v1/entries/${JULIE_SESSION_ID}/spot`, headers, payload: { spotNumber } });
-    return { parkedAnswers, correct };
+    const rig = await julieWithAnsweringSession(session, {
+      'A-1': { state: 'OCCUPIED', needsCheck: false },
+      'B-4': { state: 'ASSIGNED', needsCheck: false },
+    });
+    server = rig.server;
+    return { parkedAnswers: rig.parkedAnswers, correct: rig.answer };
   }
 
   it('moves Julie to A-3: A-3 occupied, A-1 occupied-unknown and flagged to check, the session parked-confirmed on A-3', async () => {
