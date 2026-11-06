@@ -1,14 +1,14 @@
 import type { StoredLevelAisle } from '../../../src/domain/lots/levelPlanOf.ts';
+import { parkingDemoAisles } from '../../../src/seed/fixtures/parkingDemo.ts';
 import type { ActiveParkingSession, CurrentParkingSessionQuery } from '../../../src/domain/parkingSessions/ActiveParkingSession.ts';
 import type { ParkingSessionBackdater } from '../../../src/domain/parkingSessions/ParkingSessionBackdater.ts';
 
 export const JULIE_SESSION_ID = '00000000-0000-4000-8000-000000000951';
 
 // Level P1 of Parking Démo as the seed draws it; the exit lane is left out by the query.
-export const PARKING_DEMO_P1_AISLES: readonly StoredLevelAisle[] = [
-  { code: 'A', beaconMinor: 1, mapPolygon: { x: 0, y: 0, width: 100, height: 40 } },
-  { code: 'B', beaconMinor: 2, mapPolygon: { x: 0, y: 50, width: 100, height: 40 } },
-];
+export const PARKING_DEMO_P1_AISLES: readonly StoredLevelAisle[] = parkingDemoAisles
+  .filter(({ isExitLane }) => isExitLane !== true)
+  .map(({ code, beaconMinor, mapPolygon }) => ({ code, beaconMinor, mapPolygon }));
 
 // Julie scanned at Entrée Démo at 18 h 02 local time and got A-1 (story #38, criterion 1).
 export function julieAtParkingDemo(enteredAt = new Date(2026, 10, 4, 18, 2)): ActiveParkingSession {
