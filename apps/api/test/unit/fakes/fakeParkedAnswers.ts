@@ -6,6 +6,7 @@ import {
   type ParkedAnswer,
   type ParkedAnswerRepository,
   type SpotAnswer,
+  type SpotFacts,
 } from '../../../src/domain/parkingSessions/ParkedAnswer.ts';
 import type { SpotState } from '../../../src/domain/spots/spotStates.ts';
 
@@ -80,7 +81,7 @@ export class FakeParkedAnswers implements ParkedAnswerRepository {
     if (spotNumber === undefined || spot === undefined) {
       return { outcome: 'unknown-spot' };
     }
-    const placement = placementOf({ sessionState: session.state, assignedSpotId: session.assignedSpotNumber, answeredSpot: { id: spotNumber, state: spot.state } });
+    const placement = placementOf({ sessionState: session.state, assignedSpot: this.#factsOf(session.assignedSpotNumber), answeredSpot: { id: spotNumber, state: spot.state } });
     if (placement.outcome === 'refused') {
       return { outcome: placement.refusal };
     }
@@ -93,6 +94,14 @@ export class FakeParkedAnswers implements ParkedAnswerRepository {
     }
     Object.assign(session, { state: 'PARKED_CONFIRMED', confirmedSpotNumber: spotNumber, answeredAt: new Date() });
     return { outcome: 'confirmed', spot: labelOf(spotNumber) };
+  }
+
+  #factsOf(spotNumber: string): SpotFacts {
+    const spot = this.#spots.get(spotNumber);
+    if (spot === undefined) {
+      throw new Error(`Parking Démo has no spot ${spotNumber}.`);
+    }
+    return { id: spotNumber, state: spot.state };
   }
 
   // Like the SQL guard: only an occupied presumed spot can be flagged, anything else is a broken invariant.

@@ -70,7 +70,7 @@ async function placeCar(tx: Transaction, answer: SpotAnswer, { lotId, session }:
   if (spot === null) {
     return { outcome: 'unknown-spot' };
   }
-  const placement = placementOf({ sessionState: session.state, assignedSpotId: session.assignedSpotId, answeredSpot: spot });
+  const placement = placementOf({ sessionState: session.state, assignedSpot: session.assignedSpot, answeredSpot: spot });
   if (placement.outcome === 'refused') {
     return { outcome: placement.refusal };
   }
@@ -89,6 +89,6 @@ async function writeSpots(tx: Transaction, { occupiesAnswered, flagsAssigned }: 
     await occupyAnsweredSpot(tx, spot.id);
   }
   if (flagsAssigned) {
-    await flagAssignedSpotToCheck(tx, session.assignedSpotId);
+    await flagAssignedSpotToCheck(tx, session.assignedSpot.id);
   }
 }

@@ -32,6 +32,17 @@ describe('POST /v1/entries/:sessionId/spot correcting a presumed spot (story #22
     expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toMatchObject({ state: 'PARKED_CONFIRMED', confirmedSpotNumber: 'A-3', answeredAt: expect.any(Date) });
   });
 
+  it('moves Julie to A-3 and leaves A-1 alone when an operator freed A-1 first', async () => {
+    const { correct, parkedAnswers } = await juliePresumed();
+    parkedAnswers.setSpot('A-1', { state: 'AVAILABLE', needsCheck: false });
+
+    const response = await correct('A-3');
+
+    expect(response.statusCode).toBe(200);
+    expect(parkedAnswers.spotOf('A-1')).toEqual({ state: 'AVAILABLE', needsCheck: false });
+    expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toMatchObject({ state: 'PARKED_CONFIRMED', confirmedSpotNumber: 'A-3' });
+  });
+
   it('confirms the presumption, A-1 left occupied, when Julie names A-1 itself', async () => {
     const { correct, parkedAnswers } = await juliePresumed();
 

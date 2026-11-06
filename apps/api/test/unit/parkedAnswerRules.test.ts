@@ -44,10 +44,20 @@ describe('where a presumed session goes once it names its spot (story #22)', () 
     { naming: 'a spot assigned to someone else', spotId: 'spot-b4', spotState: 'ASSIGNED', placement: { outcome: 'refused', refusal: 'spot-taken' } },
     { naming: 'an out-of-service spot', spotId: 'spot-b5', spotState: 'OUT_OF_SERVICE', placement: { outcome: 'refused', refusal: 'spot-out-of-service' } },
   ] as const)('naming $naming', ({ spotId, spotState, placement }) => {
-    expect(placementOf({ sessionState: 'PARKED_PRESUMED', assignedSpotId: A1, answeredSpot: { id: spotId, state: spotState } })).toEqual(placement);
+    const assignedSpot = { id: A1, state: spotId === A1 ? spotState : 'OCCUPIED' } as const;
+
+    expect(placementOf({ sessionState: 'PARKED_PRESUMED', assignedSpot, answeredSpot: { id: spotId, state: spotState } })).toEqual(placement);
+  });
+
+  it('naming a free spot after an operator freed the presumed one occupies it without flagging the freed spot', () => {
+    const assignedSpot = { id: A1, state: 'AVAILABLE' } as const;
+
+    expect(placementOf({ sessionState: 'PARKED_PRESUMED', assignedSpot, answeredSpot: { id: 'spot-a3', state: 'AVAILABLE' } })).toEqual(OCCUPY);
   });
 
   it('an asked session naming its own assigned spot occupies it again, as in #21', () => {
-    expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', assignedSpotId: A1, answeredSpot: { id: A1, state: 'OCCUPIED_UNKNOWN' } })).toEqual(OCCUPY);
+    const assignedSpot = { id: A1, state: 'OCCUPIED_UNKNOWN' } as const;
+
+    expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', assignedSpot, answeredSpot: assignedSpot })).toEqual(OCCUPY);
   });
 });

@@ -48,21 +48,27 @@ export function decideSpotAnswer(state: SpotState): SpotAnswerDecision {
   return SPOT_ANSWER_DECISIONS[state];
 }
 
+export interface SpotFacts {
+  readonly id: string;
+  readonly state: SpotState;
+}
+
 export interface PlacementFacts {
   readonly sessionState: EntrySessionState;
-  readonly assignedSpotId: string;
-  readonly answeredSpot: { readonly id: string; readonly state: SpotState };
+  readonly assignedSpot: SpotFacts;
+  readonly answeredSpot: SpotFacts;
 }
 
 // What a placement writes: the answered spot occupied, unless it is the presumed one still occupied; the presumed spot flagged
-// to check when the car turns out to be elsewhere. A presumed spot moved out of OCCUPIED meanwhile is named like any other spot.
+// to check when the car turns out to be elsewhere. A presumed spot moved out of OCCUPIED meanwhile (an operator freed it) is no
+// longer the driver's: it is named like any other spot, and left unflagged when the car is elsewhere.
 export type Placement =
   | { readonly outcome: 'refused'; readonly refusal: Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service'> }
   | { readonly outcome: 'placed'; readonly occupiesAnswered: boolean; readonly flagsAssigned: boolean };
 
-export function placementOf({ sessionState, assignedSpotId, answeredSpot }: PlacementFacts): Placement {
+export function placementOf({ sessionState, assignedSpot, answeredSpot }: PlacementFacts): Placement {
   const isPresumed = sessionState === 'PARKED_PRESUMED';
-  const isAssigned = answeredSpot.id === assignedSpotId;
+  const isAssigned = answeredSpot.id === assignedSpot.id;
   if (isPresumed && isAssigned && answeredSpot.state === 'OCCUPIED') {
     return { outcome: 'placed', occupiesAnswered: false, flagsAssigned: false };
   }
@@ -70,5 +76,5 @@ export function placementOf({ sessionState, assignedSpotId, answeredSpot }: Plac
   if (decision !== 'occupy') {
     return { outcome: 'refused', refusal: decision };
   }
-  return { outcome: 'placed', occupiesAnswered: true, flagsAssigned: isPresumed && !isAssigned };
+  return { outcome: 'placed', occupiesAnswered: true, flagsAssigned: isPresumed && !isAssigned && assignedSpot.state === 'OCCUPIED' };
 }
