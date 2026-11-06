@@ -1,15 +1,18 @@
 import { screen, userEvent } from '@testing-library/react-native';
 import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
+import type { CurrentParkingSession } from '@palier/shared-types';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { visibleText } from './visibleText';
 
-async function scanAtEntreeDemo(parkingSession: FakeParkingSessionClient) {
+const NEW_SESSION = julieAtParkingDemo({ state: 'CREATED', elapsedMinutes: 0, amountCents: 75 });
+
+async function scanAtEntreeDemo(parkingSession: FakeParkingSessionClient, readAfterScan: CurrentParkingSession = NEW_SESSION) {
   await renderPalierApp({ ...signedInJulie(), testSignInEnabled: false, clients: () => ({ entry: new FakeEntryClient(), parkingSession }) });
   const user = userEvent.setup();
   await user.press(await screen.findByRole('tab', { name: 'Scanner' }));
   await screen.findByText('Aucune session en cours');
-  parkingSession.session = julieAtParkingDemo({ state: 'CREATED', elapsedMinutes: 0, amountCents: 75 });
+  parkingSession.session = readAfterScan;
   await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
   await user.press(screen.getByRole('button', { name: 'Scanner' }));
   return user;
@@ -35,5 +38,15 @@ describe('the scan tab once the barrier opens', () => {
 
     expect(await screen.findByText('Montant à ce jour : 0,75 $', visibleText)).toBeOnTheScreen();
     expect(screen.getByText('Entrée en attente de confirmation')).toBeOnTheScreen();
+  });
+
+  it('keeps the scan result while the read still shows an earlier session presumed parked', async () => {
+    const parkingSession = new FakeParkingSessionClient(null);
+
+    await scanAtEntreeDemo(parkingSession, julieAtParkingDemo({ sessionId: 'session-0', state: 'PARKED_PRESUMED' }));
+
+    expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();
+    expect(screen.getByText('Votre place : A-1 · Palier P1 · Allée A', visibleText)).toBeOnTheScreen();
+    expect(screen.queryByText('Garé en A-1', visibleText)).toBeNull();
   });
 });
