@@ -1,0 +1,11 @@
+# 018 — Plan de niveau en rectangles et suivi de l'allée
+
+**Contexte.** #17 montre au conducteur le plan du niveau de sa place, son allée et l'allée où il roule. D8 décrit les allées comme des rectangles sur une grille de niveau ; la colonne `aisle.map_polygon` (jsonb, nulle) existe depuis la migration 0000 sans avoir jamais été lue. P55 (dessin du niveau par l'opérateur) en héritera.
+
+**Décision.**
+- **Forme** : `aisle.map_polygon` garde `{ "x", "y", "width", "height" }` en unités de grille sans échelle (seules les proportions comptent). Pas de migration ni de renommage : la colonne est réservée à une forme depuis 0000, le rectangle en est la première, P55 pourra ajouter des sommets. Validation à la lecture (`domain/lots/AisleRectangle.ts`) : quatre clés exactement, nombres finis, x et y ≥ 0, largeur et hauteur > 0, tout ≤ 10 000. Une forme absente donne `rectangle: null` sans bruit ; une forme rejetée donne aussi `null`, et l'API journalise un avertissement (`aisleCode`) à chaque lecture.
+- **Voie de sortie filtrée en SQL** (`is_exit_lane = false`, tri par code) : le plan ne liste que les allées où l'on se gare. L'app n'a donc aucune règle propre au minor 0 : comme le minor 9, il ne correspond à aucune allée et ne change rien.
+- **Surveillance indexée sur `sessionId` + `beaconMajor`** : `startMonitoring` part quand une session en cours d'un parking avec un major apparaît, jamais à chaque relecture ; `stopMonitoring` quand la session disparaît ou à la déconnexion, seulement si la surveillance avait démarré. L'UUID est la constante de développement (`positioning/developmentBeacon.ts`) jusqu'aux vraies balises (#19).
+- **Délai hors ligne accepté** : plan et surveillance attendent la lecture de session qui suit l'ouverture de la barrière ; sans réseau, ou à la fermeture de la session, jusqu'à une minute de retard (la relecture de `useCurrentParkingSession`). `EntryResponse` ne change pas.
+
+**Conséquences.** Le format jsonb devient le contrat de P55 et n'a pas de contrainte en base. Un parking sans rectangles affiche la phrase de guidage sans dessin. La bonne réception des balises réelles reste à prouver dans un build de développement (#19).
