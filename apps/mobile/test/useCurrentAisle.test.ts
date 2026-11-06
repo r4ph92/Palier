@@ -1,6 +1,7 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
 import { act, renderHook } from '@testing-library/react-native';
-import { useAisleFollower, useCurrentAisle } from '../src/positioning/useCurrentAisle';
+import { useAisleFollower } from '../src/positioning/useAisleFollower';
+import { useCurrentAisle } from '../src/positioning/useCurrentAisle';
 import { julieAtB3 } from './fakeParkingSessionClient';
 import { positioningRig } from './positioningRig';
 
@@ -9,7 +10,7 @@ async function followAisles(session: CurrentParkingSession | null) {
   const rendered: (string | null)[] = [];
   const hook = await renderHook(
     ({ current }: { readonly current: CurrentParkingSession | null }) => {
-      const aisle = useCurrentAisle(useAisleFollower(rig.core, current === null ? { status: 'none' } : { status: 'current', session: current, readAt: new Date(), isStale: false }), current?.sessionId ?? null);
+      const aisle = useCurrentAisle(useAisleFollower(rig.core, current), current?.sessionId ?? null);
       rendered.push(aisle?.code ?? null);
       return aisle;
     },

@@ -7,7 +7,7 @@ import { usePendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { useTabs, type TabsController } from '../navigation/useTabs';
 import { useCurrentParkingSession, type CurrentParkingSessionController } from '../parkingSessions/useCurrentParkingSession';
 import { useParkedPresumption } from '../parkingSessions/useParkedPresumption';
-import { useAisleFollower } from '../positioning/useCurrentAisle';
+import { useAisleFollower } from '../positioning/useAisleFollower';
 import { useSpotHold } from '../spotHolds/useSpotHold';
 import { AccountTab } from './AccountTab';
 import { AutomaticDetectionNotice } from './AutomaticDetectionNotice';
@@ -72,9 +72,10 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
 
 // The aisle and the walk away are followed above the tabs too, so a driver on another tab never misses them.
 function useSessionPositioning({ device, clients }: Pick<SignedInTabsProps, 'device' | 'clients'>, currentSession: CurrentParkingSessionController): ReactNode {
-  const aisles = useAisleFollower(device.positioning, currentSession.state);
+  const { state } = currentSession;
+  const aisles = useAisleFollower(device.positioning, state.status === 'current' ? state.session : null);
   useParkedPresumption({ positioning: device.positioning, client: clients.parkingSession, aisles }, currentSession);
-  return useParkingGuidance(device.positioning, aisles, currentSession.state);
+  return useParkingGuidance(device.positioning, aisles, state);
 }
 
 function scanTabActions(clients: SignedInClients, tabs: TabsController): ScanTabActions {
