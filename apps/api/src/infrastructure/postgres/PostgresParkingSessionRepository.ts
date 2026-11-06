@@ -14,8 +14,7 @@ import { findActiveSessionFacts } from './activeSessionFacts.ts';
 import { admissionRefusalOf } from './admissionRefusal.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
-import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
-import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
+import { inLotLock } from './lockParkingLot.ts';
 import { parkingSession } from './schema.ts';
 import { ASSIGNED_TO_ENTRY, claimFirstFittingSpot, type AssignedSpotRow } from './spotClaim.ts';
 import { consumeHeldSpot, heldSpotFits, readHeldSpot, releaseUnfitHold } from './spotHoldUse.ts';
@@ -47,11 +46,7 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 
   async openOrReplay(draft: SessionDraft): Promise<SessionOpening | null> {
     try {
-      return await this.#database.transaction(async (tx) => {
-        await tx.execute(LIMIT_LOCK_WAIT);
-        await lockParkingLot(tx, draft.lotId);
-        return await this.#openUnderLotLock(tx, draft);
-      }, LOT_LOCK_TRANSACTION);
+      return await inLotLock(this.#database, draft.lotId, (tx) => this.#openUnderLotLock(tx, draft));
     } catch (error) {
       throw admissionRefusalOf(error, draft.lotId);
     }

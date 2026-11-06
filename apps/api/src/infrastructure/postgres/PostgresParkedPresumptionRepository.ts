@@ -9,7 +9,7 @@ import {
   type WalkingSignal,
 } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import type { Database } from './database.ts';
-import { isLockTimeout } from './lockTimeout.ts';
+import { orLotBusy } from './lockParkingLot.ts';
 import { askWhereParked, readWalkFacts, type WalkFacts } from './wrongAisleWalk.ts';
 
 interface ParkedAtRow extends Record<string, unknown> {
@@ -51,18 +51,11 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
   }
 
   async #askWhereParked(signal: WalkingSignal, { lotId }: WalkFacts, aisleId: string): Promise<ParkedPresumption> {
-    try {
-      const parkedAt = await askWhereParked(this.#database, { signal, lotId, aisleId });
-      if (parkedAt !== null) {
-        return { outcome: 'recorded', state: 'PARKED_UNCONFIRMED', parkedAt };
-      }
+    const parkedAt = await orLotBusy(askWhereParked(this.#database, { signal, lotId, aisleId }));
+    if (parkedAt === null) {
       return classifyRefusedSignal(await this.#readSessionAfterRefusal(signal));
-    } catch (error) {
-      if (isLockTimeout(error)) {
-        return { outcome: 'lot-busy' };
-      }
-      throw error;
     }
+    return parkedAt instanceof Date ? { outcome: 'recorded', state: 'PARKED_UNCONFIRMED', parkedAt } : parkedAt;
   }
 
   // The device clock is trusted only up to the database clock, and never before the loop confirmation, whose gate clock may run ahead.

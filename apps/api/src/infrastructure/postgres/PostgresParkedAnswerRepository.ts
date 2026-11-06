@@ -7,8 +7,7 @@ import {
   type SpotAnswer,
 } from '../../domain/parkingSessions/ParkedAnswer.ts';
 import type { Database, Transaction } from './database.ts';
-import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
-import { isLockTimeout, LIMIT_LOCK_WAIT } from './lockTimeout.ts';
+import { inLotLock, orLotBusy } from './lockParkingLot.ts';
 import {
   confirmParkedSpot,
   lockAnsweredSpot,
@@ -31,18 +30,7 @@ export class PostgresParkedAnswerRepository implements ParkedAnswerRepository {
     if (lotId === null) {
       return { outcome: 'not-found' };
     }
-    try {
-      return await this.#database.transaction(async (tx) => {
-        await tx.execute(LIMIT_LOCK_WAIT);
-        await lockParkingLot(tx, lotId);
-        return await answerUnderLotLock(tx, answer, lotId);
-      }, LOT_LOCK_TRANSACTION);
-    } catch (error) {
-      if (isLockTimeout(error)) {
-        return { outcome: 'lot-busy' };
-      }
-      throw error;
-    }
+    return orLotBusy(inLotLock(this.#database, lotId, (tx) => answerUnderLotLock(tx, answer, lotId)));
   }
 }
 

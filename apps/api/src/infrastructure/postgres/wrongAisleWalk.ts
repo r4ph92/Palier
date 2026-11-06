@@ -2,8 +2,7 @@ import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
 import type { SessionAfterRefusal, WalkAisles, WalkingSignal } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import type { Database, Transaction } from './database.ts';
-import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
-import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
+import { inLotLock } from './lockParkingLot.ts';
 
 export interface WalkFacts extends SessionAfterRefusal, WalkAisles {
   readonly lotId: string;
@@ -45,16 +44,14 @@ export async function readWalkFacts(database: Database, { sessionId, driverId, d
 
 // Two writes under the lot lock (docs/03, sequence B): the session waits for the driver's answer, and its assigned spot is flagged to check.
 export function askWhereParked(database: Database, walk: WrongAisleWalk): Promise<Date | null> {
-  return database.transaction(async (tx) => {
-    await tx.execute(LIMIT_LOCK_WAIT);
-    await lockParkingLot(tx, walk.lotId);
+  return inLotLock(database, walk.lotId, async (tx) => {
     const unconfirmed = await markSessionUnconfirmed(tx, walk);
     if (unconfirmed === undefined) {
       return null;
     }
     await flagAssignedSpotToCheck(tx, unconfirmed.assigned_spot_id);
     return new Date(unconfirmed.parked_at);
-  }, LOT_LOCK_TRANSACTION);
+  });
 }
 
 // Clamped like the presumed walk (decision 019).
