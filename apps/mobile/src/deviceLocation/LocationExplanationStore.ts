@@ -9,10 +9,9 @@ export interface LocationExplanationStore {
 // « Reset Location & Privacy » in iOS Settings resets the prompts without removing the file, so the explanation is not shown again after it.
 export function fileLocationExplanationStore(file: File = new File(Paths.document, 'location-explanation-answered')): LocationExplanationStore {
   return {
-    wasAnswered: () => Promise.resolve(file.exists),
-    markAnswered: () => {
+    wasAnswered: async () => file.exists,
+    markAnswered: async () => {
       file.create({ overwrite: true });
-      return Promise.resolve();
     },
   };
 }

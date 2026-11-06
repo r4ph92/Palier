@@ -4,6 +4,7 @@ import { MemoryLocationExplanationStore } from './fakeLocationExplanationStore';
 
 const mockFiles = new Set<string>();
 const mockCreate = jest.fn();
+let mockCreateFails = false;
 
 jest.mock('expo-file-system', () => ({
   Paths: { document: 'file:///documents/' },
@@ -17,6 +18,9 @@ jest.mock('expo-file-system', () => ({
     }
     create(options: unknown) {
       mockCreate(options);
+      if (mockCreateFails) {
+        throw new Error('fake disk full');
+      }
       mockFiles.add(this.uri);
     }
   },
@@ -25,6 +29,7 @@ jest.mock('expo-file-system', () => ({
 beforeEach(() => {
   mockFiles.clear();
   mockCreate.mockClear();
+  mockCreateFails = false;
 });
 
 describe('the device flag in a file of the app sandbox', () => {
@@ -45,6 +50,16 @@ describe('the device flag in a file of the app sandbox', () => {
     await store.markAnswered();
 
     expect(mockCreate).toHaveBeenCalledWith({ overwrite: true });
+  });
+
+  it('rejects instead of throwing when the file cannot be written, and still counts as answered in memory', async () => {
+    mockCreateFails = true;
+    const store = rememberingAnswer(fileLocationExplanationStore());
+
+    await expect(store.markAnswered()).rejects.toThrow('fake disk full');
+
+    await expect(store.wasAnswered()).resolves.toBe(true);
+    await expect(fileLocationExplanationStore().wasAnswered()).resolves.toBe(false);
   });
 });
 
