@@ -183,13 +183,13 @@ describe('the explanation is shown once per device', () => {
     expect(warn).toHaveBeenCalled();
   });
 
-  it('opens the scanner when the flag cannot be saved, and keeps the explanation away until sign-out', async () => {
+  it.each(['Continuer', 'Continuer sans « Toujours »'])('opens the scanner after « %s » when the flag cannot be saved, and keeps the explanation away after leaving the tab', async (buttonName) => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const store = new MemoryLocationExplanationStore(false);
     store.writeMode = 'failing';
     const { user } = await signInAndOpenScanner({ store });
 
-    await user.press(await screen.findByRole('button', { name: 'Continuer' }));
+    await user.press(await screen.findByRole('button', { name: buttonName }));
     expect(await screen.findByLabelText('Contenu du QR')).toBeOnTheScreen();
     expect(warn).toHaveBeenCalled();
 
