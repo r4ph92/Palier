@@ -35,12 +35,20 @@ export class FailingStatusLocationClient extends FakeBackgroundLocationClient {
   }
 }
 
+// iOS has not yet said whether « Always » is granted.
+export class UnansweredStatusLocationClient extends FakeBackgroundLocationClient {
+  override hasAlways(): Promise<boolean> {
+    return new Promise(() => undefined);
+  }
+}
+
 export interface Harness {
   readonly location?: FakeBackgroundLocationClient;
   readonly store?: MemoryLocationExplanationStore;
   readonly parkingSession?: FakeParkingSessionClient;
   readonly homeLocation?: FakeDeviceLocationClient;
   readonly language?: SupportedLanguage;
+  readonly testSignInEnabled?: boolean;
 }
 
 export async function signInAndOpenScanner(harness: Harness = {}) {
@@ -51,11 +59,12 @@ export async function signInAndOpenScanner(harness: Harness = {}) {
   const entry = new FakeEntryClient();
   await renderPalierApp({
     ...signedInJulie(),
-    testSignInEnabled: false,
+    testSignInEnabled: harness.testSignInEnabled ?? false,
     language: harness.language ?? 'fr',
     clients: () => ({ backgroundLocation: location, locationExplanation: store, parkingSession, location: homeLocation, entry }),
   });
   const user = userEvent.setup();
+  // A session already underway opens its tab by itself.
   if (parkingSession.session === null) {
     await user.press(await screen.findByRole('tab', { name: harness.language === 'en' ? 'Scan' : 'Scanner' }));
   }
