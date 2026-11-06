@@ -8,6 +8,8 @@ import type { CreateSignedInClients, SignedInClients } from './api/SignedInClien
 import type { TokenStore } from './auth/TokenStore';
 import { useSession, type SessionController, type SessionState } from './auth/useSession';
 import { ErrorState } from './components/ErrorState';
+import { nullPositioningCore } from './positioning/nullPositioningCore';
+import type { PositioningCore } from './positioning/PositioningCore';
 import type { DeveloperEntry } from './screens/DeveloperEntry';
 import { AppUpdateRequiredScreen } from './screens/AppUpdateRequiredScreen';
 import { PrivacyNoticeScreen } from './screens/PrivacyNoticeScreen';
@@ -22,6 +24,7 @@ export interface PalierAppProps {
   readonly testSignInEnabled: boolean;
   readonly createSignedInClients: CreateSignedInClients;
   readonly developerEntry?: DeveloperEntry | undefined;
+  readonly positioning?: PositioningCore | undefined;
 }
 
 export function PalierApp(props: PalierAppProps) {
@@ -40,7 +43,7 @@ export function PalierApp(props: PalierAppProps) {
     case 'signedOut':
       return <SignInScreen testSignInEnabled={props.testSignInEnabled} authClient={props.authClient} onSignIn={session.signIn} />;
     case 'signedIn':
-      return <SignedInApp signedIn={state} session={session} createClients={props.createSignedInClients} developerEntry={props.developerEntry} />;
+      return <SignedInApp signedIn={state} session={session} createClients={props.createSignedInClients} device={deviceOf(props)} />;
   }
 }
 
@@ -48,16 +51,26 @@ interface SignedInAppProps {
   readonly signedIn: Extract<SessionState, { status: 'signedIn' }>;
   readonly session: SessionController;
   readonly createClients: CreateSignedInClients;
-  readonly developerEntry: DeveloperEntry | undefined;
+  readonly device: DeviceTools;
 }
 
-function SignedInApp({ signedIn, session, createClients, developerEntry }: SignedInAppProps) {
+// What the device brings besides the API: the developer panel in development builds, and beacon positioning.
+interface DeviceTools {
+  readonly developerEntry: DeveloperEntry | undefined;
+  readonly positioning: PositioningCore;
+}
+
+function deviceOf({ developerEntry, positioning }: PalierAppProps): DeviceTools {
+  return { developerEntry, positioning: positioning ?? nullPositioningCore };
+}
+
+function SignedInApp({ signedIn, session, createClients, device }: SignedInAppProps) {
   const { driver } = signedIn;
   const clients = useSignedInClients(signedIn.token, session, createClients);
   if (driver.acceptedNoticeVersion !== PRIVACY_NOTICE_VERSION) {
     return <PrivacyNoticeScreen onAccept={session.acceptNotice} onSignOut={session.signOut} />;
   }
-  return <SignedInTabs firstName={driver.firstName} clients={clients} developerEntry={developerEntry} onSignOut={session.signOut} />;
+  return <SignedInTabs firstName={driver.firstName} clients={clients} {...device} onSignOut={session.signOut} />;
 }
 
 function useSignedInClients(token: string, session: SessionController, createClients: CreateSignedInClients): SignedInClients {
