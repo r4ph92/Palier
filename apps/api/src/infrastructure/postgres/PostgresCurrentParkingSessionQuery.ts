@@ -5,8 +5,9 @@ import type { ActiveParkingSession, CurrentParkingSessionQuery } from '../../dom
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import type { Database } from './database.ts';
 import { readParkedQuestion } from './parkedQuestion.ts';
+import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './spotClaim.ts';
 
-interface CurrentSessionRow extends Record<string, unknown> {
+interface CurrentSessionRow extends Record<string, unknown>, VehicleNeedsRow {
   readonly id: string;
   readonly state: ActiveEntrySessionState;
   readonly entry_scan_at: Date | string;
@@ -20,9 +21,6 @@ interface CurrentSessionRow extends Record<string, unknown> {
   readonly level_id: string;
   readonly beacon_major: number | null;
   readonly parked_aisle_id: string | null;
-  readonly is_electric: boolean;
-  readonly has_accessible_permit: boolean;
-  readonly is_oversize: boolean;
 }
 
 interface LevelAisleRow extends Record<string, unknown> {
@@ -44,8 +42,7 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
     const rows = await this.#database.execute<CurrentSessionRow>(sql`
       select ps.id, ps.state, ps.entry_scan_at, ps.pricing_increment_cents, ps.pricing_increment_minutes, ps.pricing_daily_cap_cents,
         ps.parked_aisle_id, lot.name as lot_name, lot.beacon_major, spot.number, aisle.code as aisle_code, level.code as level_code, aisle.level_id,
-        coalesce(vehicle.is_electric, false) as is_electric, coalesce(vehicle.has_accessible_permit, false) as has_accessible_permit,
-        coalesce(vehicle.is_oversize, false) as is_oversize
+        ${vehicleNeedsColumns}
       from (select * from parking_session where user_id = ${userId} and ${ACTIVE_SESSION}) ps
       join parking_lot lot on lot.id = ps.lot_id
       left join vehicle on vehicle.id = ps.vehicle_id
@@ -60,13 +57,11 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
     return activeSessionOf(row, { levelAisles, question });
   }
 
-  // A session whose vehicle was deleted is asked with standard needs.
   #questionOf(row: CurrentSessionRow): Promise<ParkedQuestion | null> {
     if (row.state !== 'PARKED_UNCONFIRMED' || row.parked_aisle_id === null) {
       return Promise.resolve(null);
     }
-    const needs = { isElectric: row.is_electric, hasAccessiblePermit: row.has_accessible_permit, isOversize: row.is_oversize };
-    return readParkedQuestion(this.#database, { aisleId: row.parked_aisle_id, needs });
+    return readParkedQuestion(this.#database, { aisleId: row.parked_aisle_id, needs: vehicleNeedsOf(row) });
   }
 
   async #levelAisles(levelId: string): Promise<StoredLevelAisle[]> {

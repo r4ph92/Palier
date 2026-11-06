@@ -4,6 +4,7 @@ import type { SpotTakenReport } from '../../domain/parkingSessions/SpotTakenRepo
 import type { SpotState } from '../../domain/spots/spotStates.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Transaction } from './database.ts';
+import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './spotClaim.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
 type SessionOfDriver = Pick<SpotTakenReport, 'sessionId' | 'driverId'>;
@@ -14,23 +15,18 @@ export interface ReportingSession {
   readonly needs: VehicleNeeds;
 }
 
-interface ReportingSessionRow extends Record<string, unknown> {
+interface ReportingSessionRow extends Record<string, unknown>, VehicleNeedsRow {
   readonly state: EntrySessionState;
   readonly assigned_spot_id: string;
   readonly assigned_spot_number: string;
   readonly assigned_spot_state: SpotState;
   readonly assigned_aisle_id: string;
-  readonly is_electric: boolean;
-  readonly has_accessible_permit: boolean;
-  readonly is_oversize: boolean;
 }
 
-// A session whose vehicle was deleted keeps standard needs, as an entry without a vehicle would have.
 export async function lockReportingSession(tx: Executor, { sessionId, driverId }: SessionOfDriver): Promise<ReportingSession | null> {
   const [row] = await tx.execute<ReportingSessionRow>(sql`
     select ps.state, ps.assigned_spot_id, assigned.number as assigned_spot_number, assigned.state as assigned_spot_state,
-      assigned.aisle_id as assigned_aisle_id, coalesce(vehicle.is_electric, false) as is_electric,
-      coalesce(vehicle.has_accessible_permit, false) as has_accessible_permit, coalesce(vehicle.is_oversize, false) as is_oversize
+      assigned.aisle_id as assigned_aisle_id, ${vehicleNeedsColumns}
     from parking_session ps
     join spot assigned on assigned.id = ps.assigned_spot_id
     left join vehicle on vehicle.id = ps.vehicle_id
@@ -43,7 +39,7 @@ function reportingSessionOf(row: ReportingSessionRow): ReportingSession {
   return {
     state: row.state,
     assignedSpot: { id: row.assigned_spot_id, number: row.assigned_spot_number, state: row.assigned_spot_state, aisleId: row.assigned_aisle_id },
-    needs: { isElectric: row.is_electric, hasAccessiblePermit: row.has_accessible_permit, isOversize: row.is_oversize },
+    needs: vehicleNeedsOf(row),
   };
 }
 
