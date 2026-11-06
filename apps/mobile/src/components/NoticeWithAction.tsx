@@ -7,7 +7,6 @@ interface NoticeWithActionProps {
   readonly action: TextButtonProps;
 }
 
-// A message with one text button below it, lined up at the start.
 export function NoticeWithAction({ message, action }: NoticeWithActionProps) {
   return (
     <View style={styles.withAction}>
