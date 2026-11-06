@@ -42,6 +42,10 @@ export function inLotLock<T>(database: Database, lotId: string, work: (tx: Trans
 
 export const LOT_BUSY = { outcome: 'lot-busy' } as const;
 
+export function isLotBusy(result: unknown): result is typeof LOT_BUSY {
+  return result === LOT_BUSY;
+}
+
 // A lock wait past the limit is a retryable refusal, the lot being busy; any other failure stays one.
 export async function orLotBusy<T>(work: Promise<T>): Promise<T | typeof LOT_BUSY> {
   try {

@@ -10,7 +10,7 @@ import {
 } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import { clampedParkedAt } from './clampedParkedAt.ts';
 import type { Database } from './database.ts';
-import { orLotBusy } from './lockParkingLot.ts';
+import { isLotBusy, orLotBusy } from './lockParkingLot.ts';
 import { askWhereParked, readWalkFacts, type WalkFacts } from './wrongAisleWalk.ts';
 
 interface ParkedAtRow extends Record<string, unknown> {
@@ -52,11 +52,14 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
   }
 
   async #askWhereParked(signal: WalkingSignal, { lotId }: WalkFacts, aisleId: string): Promise<ParkedPresumption> {
-    const parkedAt = await orLotBusy(askWhereParked(this.#database, { signal, lotId, aisleId }));
-    if (parkedAt === null) {
+    const walk = await orLotBusy(askWhereParked(this.#database, { signal, lotId, aisleId }));
+    if (isLotBusy(walk)) {
+      return walk;
+    }
+    if (walk === null) {
       return classifyRefusedSignal(await this.#readSessionAfterRefusal(signal));
     }
-    return parkedAt instanceof Date ? { outcome: 'recorded', state: 'PARKED_UNCONFIRMED', parkedAt } : parkedAt;
+    return { outcome: 'recorded', state: 'PARKED_UNCONFIRMED', parkedAt: walk };
   }
 
   async #presumeConfirmedEntry({ sessionId, driverId, detectedAt }: WalkingSignal): Promise<Date | null> {
