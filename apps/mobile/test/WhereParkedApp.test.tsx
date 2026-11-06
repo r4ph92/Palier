@@ -1,0 +1,110 @@
+import { screen, userEvent, within } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
+import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
+import { PositioningCore } from '../src/positioning/PositioningCore';
+import { PalierRejectedError } from '../src/api/VehicleClient';
+import { AISLE_B_FREE_SPOTS, FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
+import { renderPalierApp, signedInJulie } from './renderPalierApp';
+import { asSeen, visibleText } from './visibleText';
+import { GO_TO_A1, PARKED_IN_A1 } from './walkAwayRig';
+import { julieAskedInAisleB, WHERE_PARKED } from './whereParkedRig';
+
+const WALKING = 'Stationné (à pied, confiance élevée)';
+
+describe('asking where Julie parked after a walk in another aisle (story #21)', () => {
+  beforeEach(() => jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 10, 4, 18, 5) }));
+  afterEach(() => jest.useRealTimers());
+
+  it('asks « Où êtes-vous garé ? » with the free spots of aisle B after « Allée 2 » then « Stationné » in the panel', async () => {
+    const toolkit = createSimulatedToolkit(() => Date.now());
+    const positioning = new PositioningCore(toolkit.module);
+    const parkingSession = new FakeParkingSessionClient(julieAtParkingDemo());
+    await renderPalierApp({ ...signedInJulie(), testSignInEnabled: false, developerEntry: toolkit.bind(positioning), positioning, clients: () => ({ parkingSession }) });
+    await screen.findByText(GO_TO_A1, visibleText);
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTimeAsync });
+    await user.press(screen.getByRole('tab', { name: 'Compte' }));
+    await user.press(await screen.findByRole('button', { name: 'Développeur' }));
+    await user.press(await screen.findByRole('button', { name: 'Allée 2' }));
+
+    await user.press(await screen.findByRole('button', { name: WALKING }));
+    await user.press(screen.getByRole('tab', { name: 'Session' }));
+
+    expect(parkingSession.parkedReports).toEqual([expect.objectContaining({ aisleMinor: 2 })]);
+    expect(await screen.findByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
+    const offered = screen.getAllByRole('button', { name: /^B-\d$/ }).map((row) => row.props.accessibilityLabel as string);
+    expect(offered).toEqual(AISLE_B_FREE_SPOTS);
+    expect(screen.getByLabelText('Numéro de place')).toBeOnTheScreen();
+  });
+
+  it('shows only the question: no A-1, no guidance, no amount, no « Garé en »', async () => {
+    await julieAskedInAisleB();
+
+    expect(screen.queryByText(/A-1/, visibleText)).toBeNull();
+    expect(screen.queryByText(GO_TO_A1, visibleText)).toBeNull();
+    expect(screen.queryByText(/Montant à ce jour/, visibleText)).toBeNull();
+    expect(screen.queryByText(/Garé en/, visibleText)).toBeNull();
+    expect(screen.getByRole('header', { name: 'Parking Démo' })).toBeOnTheScreen();
+  });
+
+  it('moves VoiceOver to the question when it appears', async () => {
+    const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
+
+    await julieAskedInAisleB();
+
+    const question = screen.getByRole('header', { name: WHERE_PARKED });
+    expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ children: question.props.children }) }), 'focus');
+  });
+
+  it('shows « Garé en B-3 » once Julie taps B-3, and moves VoiceOver to it without announcing it on top', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB();
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+    const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
+
+    await user.press(screen.getByRole('button', { name: 'B-3' }));
+
+    expect(parkingSession.spotAnswers).toEqual(['B-3']);
+    expect(await screen.findByText('Garé en B-3', visibleText)).toBeOnTheScreen();
+    expect(screen.queryByText(WHERE_PARKED, visibleText)).toBeNull();
+    const spot = screen.getByLabelText('B-3 · Palier P1 · Allée B. Garé en B-3', visibleText);
+    expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ accessibilityLabel: spot.props.accessibilityLabel }) }), 'focus');
+    expect(announce.mock.calls.filter(([message]) => asSeen(message) === 'Garé en B-3')).toHaveLength(0);
+  });
+
+  it('sends a number typed in the field as typed, and shows the spot Palier placed the car in', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB();
+
+    await user.type(screen.getByLabelText('Numéro de place'), 'A-1');
+    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+
+    expect(parkingSession.spotAnswers).toEqual(['A-1']);
+    expect(await screen.findByText(PARKED_IN_A1, visibleText)).toBeOnTheScreen();
+  });
+
+  it.each([
+    ['UNKNOWN_SPOT', 'Z-99', 'Numéro inconnu dans ce parking'],
+    ['SPOT_TAKEN', 'B-4', 'Cette place est déjà attribuée — vérifiez le numéro au sol'],
+    ['SPOT_OUT_OF_SERVICE', 'B-5', 'Cette place est hors service — vérifiez le numéro au sol'],
+    ['Bad Request', '?', 'Numéro invalide'],
+  ])('shows the refusal %s under the field and keeps the question', async (code, typed, message) => {
+    const { user, parkingSession } = await julieAskedInAisleB();
+    parkingSession.answerFailure = new PalierRejectedError(code);
+
+    await user.type(screen.getByLabelText('Numéro de place'), typed);
+    await user.press(screen.getByRole('button', { name: 'Confirmer' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(message, visibleText);
+    expect(screen.getByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
+  });
+
+  it('reads « Where are you parked? » and its refusals on an English device', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB('en');
+    parkingSession.answerFailure = new PalierRejectedError('SPOT_TAKEN');
+
+    await user.press(screen.getByRole('button', { name: 'B-3' }));
+
+    expect(screen.getByRole('header', { name: 'Where are you parked?' })).toBeOnTheScreen();
+    expect(screen.getByText('Free spots in aisle B')).toBeOnTheScreen();
+    expect(await screen.findByRole('alert')).toHaveTextContent('This spot is already assigned — check the number on the ground', visibleText);
+    expect(within(screen.getByRole('button', { name: 'Confirm' })).getByText('Confirm')).toBeOnTheScreen();
+  });
+});

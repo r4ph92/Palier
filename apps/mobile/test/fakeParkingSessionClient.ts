@@ -1,4 +1,4 @@
-import type { AssignedSpot, CurrentParkingSession, LevelPlan, ParkedPresumptionResponse } from '@palier/shared-types';
+import type { AssignedSpot, CurrentParkingSession, LevelPlan, ParkedPresumptionResponse, ParkedSpotAnswerResponse } from '@palier/shared-types';
 import type { DetectedWalk, ParkingSessionClient } from '../src/api/ParkingSessionClient';
 import { spotA1 } from './fakeEntryClient';
 
@@ -51,6 +51,10 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
   readonly parkedReports: ParkedReport[] = [];
   parkedFailure: Error | null = null;
   holdsParkedAnswer = false;
+  readonly spotAnswers: string[] = [];
+  answerFailure: Error | null = null;
+  holdsSpotAnswer = false;
+  readonly #pendingSpotAnswers: (() => void)[] = [];
   readonly #pending: (() => void)[] = [];
   readonly #pendingParked: (() => void)[] = [];
 
@@ -76,6 +80,19 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
     return this.#presumeNow(sessionId, walk);
   }
 
+  // Like the API: an answer places the car in that spot, and the next read shows it parked there.
+  answerParkedSpot(sessionId: string, spotNumber: string): Promise<ParkedSpotAnswerResponse> {
+    this.spotAnswers.push(spotNumber);
+    if (this.holdsSpotAnswer) {
+      return new Promise((resolve, reject) => this.#pendingSpotAnswers.push(() => void this.#confirmNow(sessionId, spotNumber).then(resolve, reject)));
+    }
+    return this.#confirmNow(sessionId, spotNumber);
+  }
+
+  answerSpotAnswers(): void {
+    this.#pendingSpotAnswers.splice(0).forEach((resolve) => resolve());
+  }
+
   answerParked(): void {
     this.#pendingParked.splice(0).forEach((resolve) => resolve());
   }
@@ -96,6 +113,17 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
       this.session = { ...this.session, state, question };
     }
     return Promise.resolve({ state, parkedAt: new Date(detectedAt).toISOString() });
+  }
+
+  #confirmNow(sessionId: string, spotNumber: string): Promise<ParkedSpotAnswerResponse> {
+    if (this.answerFailure !== null) {
+      return Promise.reject(this.answerFailure);
+    }
+    const spot: AssignedSpot = { number: spotNumber, levelCode: 'P1', aisleCode: spotNumber.slice(0, 1) };
+    if (this.session?.sessionId === sessionId) {
+      this.session = { ...this.session, state: 'PARKED_CONFIRMED', spot, question: null };
+    }
+    return Promise.resolve({ state: 'PARKED_CONFIRMED', spot });
   }
 
   #answerNow(): Promise<CurrentParkingSession | null> {

@@ -157,3 +157,43 @@ describe('HttpParkingSessionClient, reporting the walk away from the car (story 
     await expect(clientAnswering({}, 500).client.reportParked('session-1', WALK)).rejects.toBeInstanceOf(PalierStatusError);
   });
 });
+
+describe('HttpParkingSessionClient, answering where the car is (story #21)', () => {
+  const CONFIRMED = { state: 'PARKED_CONFIRMED', spot: { number: 'B-3', levelCode: 'P1', aisleCode: 'B' } };
+
+  it('posts the typed number for the session with the bearer token', async () => {
+    const { client, fetchFunction } = clientAnswering(CONFIRMED);
+
+    await expect(client.answerParkedSpot('session-1', 'b3')).resolves.toEqual(CONFIRMED);
+    expect(fetchFunction).toHaveBeenCalledWith(
+      `${BASE_URL}/v1/entries/session-1/spot`,
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
+        body: JSON.stringify({ spotNumber: 'b3' }),
+      }),
+    );
+  });
+
+  it.each([
+    [409, 'UNKNOWN_SPOT'],
+    [409, 'SPOT_TAKEN'],
+    [404, 'SESSION_NOT_FOUND'],
+    [400, 'Bad Request'],
+  ])('turns a %i %s into a rejection carrying the code', async (status, error) => {
+    const { client } = clientAnswering({ statusCode: status, error, message: 'refused' }, status);
+
+    await expect(client.answerParkedSpot('session-1', 'B-3')).rejects.toEqual(new PalierRejectedError(error));
+  });
+
+  it('reports a 503 LOT_BUSY as a status error', async () => {
+    await expect(clientAnswering({ error: 'LOT_BUSY' }, 503).client.answerParkedSpot('session-1', 'B-3')).rejects.toBeInstanceOf(PalierStatusError);
+  });
+
+  it.each([
+    ['another state', { ...CONFIRMED, state: 'PARKED_PRESUMED' }],
+    ['no spot', { state: 'PARKED_CONFIRMED' }],
+  ])('treats an answer with %s as Palier being unreachable', async (_case, body) => {
+    await expect(clientAnswering(body).client.answerParkedSpot('session-1', 'B-3')).rejects.toBeInstanceOf(PalierUnreachableError);
+  });
+});

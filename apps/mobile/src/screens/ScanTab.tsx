@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import { assertNever } from '../assertNever';
 import type { EntryClient } from '../api/EntryClient';
+import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import { LoadingState } from '../components/LoadingState';
 import type { TabLabels } from '../components/TabBar';
 import { useEntry, type EntryController, type EntryState } from '../entries/useEntry';
@@ -11,6 +12,7 @@ import { hasWalkedAway } from '../parkingSessions/isParked';
 import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
 import { ScanFrame, ScanScreen } from './ScanScreen';
 import { SessionNotice } from './SessionNotice';
+import { WhereParkedScreen } from './WhereParkedScreen';
 
 export interface SessionAside {
   readonly detectionNotice: ReactNode;
@@ -19,6 +21,7 @@ export interface SessionAside {
 
 interface ScanTabProps {
   readonly entryClient: EntryClient;
+  readonly parkingSessionClient: ParkingSessionClient;
   readonly gateScanner: (scanner: ReactElement) => ReactElement;
   readonly aside: SessionAside;
   readonly currentSession: CurrentParkingSessionController;
@@ -34,12 +37,13 @@ export function scanTabLabels(state: CurrentParkingSessionState): TabLabels {
 
 // An entry in progress keeps the scan screen, so its spot and announcement are never cut off by a refresh.
 // Otherwise the tab waits for Palier's first answer, then shows the current session or the form.
-export function ScanTab({ entryClient, gateScanner, aside, currentSession, pendingEntry, onAddPlate, onAddCard }: ScanTabProps) {
+export function ScanTab({ entryClient, parkingSessionClient, gateScanner, aside, currentSession, pendingEntry, onAddPlate, onAddCard }: ScanTabProps) {
   const entry = useEntry(entryClient, pendingEntry);
   const { state, refresh, ...progress } = currentSession;
   useRefreshAsEntryProgresses(entry.state, refresh);
   const arrivedParkedSessionId = useEndEntryOnceParked(entry, state);
-  const sessionScreen = isEntryInProgress(entry.state) ? null : sessionScreenFor(currentSession, { aside, arrivedParkedSessionId });
+  const choice = { aside, arrivedParkedSessionId, parkingSessionClient };
+  const sessionScreen = isEntryInProgress(entry.state) ? null : sessionScreenFor(currentSession, choice);
   if (sessionScreen !== null) {
     return sessionScreen;
   }
@@ -55,6 +59,7 @@ interface SessionScreenChoice {
   readonly aside: SessionAside;
   // The session the scan result gave way to, whose spot then takes VoiceOver's focus.
   readonly arrivedParkedSessionId: string | null;
+  readonly parkingSessionClient: ParkingSessionClient;
 }
 
 // What replaces the scan form: nothing yet known, or a current session.
@@ -81,7 +86,7 @@ function sessionScreenFor(currentSession: CurrentParkingSessionController, choic
 function currentSessionScreen(
   reading: CurrentParkingSessionReading,
   { refresh, isReading, missedReads }: CurrentParkingSessionController,
-  { aside, arrivedParkedSessionId }: SessionScreenChoice,
+  { aside, arrivedParkedSessionId, parkingSessionClient }: SessionScreenChoice,
 ): ReactElement {
   return (
     <CurrentParkingSessionScreen
@@ -90,6 +95,7 @@ function currentSessionScreen(
       onRetry={refresh}
       notice={hasWalkedAway(reading.session.state) ? null : aside.detectionNotice}
       guidance={aside.guidance}
+      whereParked={<WhereParkedScreen client={parkingSessionClient} session={reading.session} onAnswered={refresh} />}
       shouldFocusSpotOnArrival={reading.session.sessionId === arrivedParkedSessionId}
     />
   );

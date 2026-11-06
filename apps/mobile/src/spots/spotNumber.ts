@@ -4,5 +4,9 @@ import type { AssignedSpot } from '@palier/shared-types';
 export const WORD_JOINER = '\u2060';
 
 export function unbrokenSpotNumber(spot: AssignedSpot): string {
-  return spot.number.replaceAll('-', `-${WORD_JOINER}`);
+  return unbrokenNumber(spot.number);
+}
+
+export function unbrokenNumber(spotNumber: string): string {
+  return spotNumber.replaceAll('-', `-${WORD_JOINER}`);
 }

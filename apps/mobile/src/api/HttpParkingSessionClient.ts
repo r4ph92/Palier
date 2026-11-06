@@ -1,20 +1,31 @@
-import type { CurrentParkingSession, ParkedPresumptionRequest, ParkedPresumptionResponse } from '@palier/shared-types';
+import type {
+  CurrentParkingSession,
+  ParkedPresumptionRequest,
+  ParkedPresumptionResponse,
+  ParkedSpotAnswerRequest,
+  ParkedSpotAnswerResponse,
+} from '@palier/shared-types';
 import { AuthorizedRequester, readJson, type AuthorizedClientOptions } from './authorizedRequest';
 import type { DetectedWalk, ParkingSessionClient } from './ParkingSessionClient';
 import { parseCurrentParkingSession } from './parseCurrentParkingSession';
+import { parseParkedAnswer } from './parseParkedAnswer';
 import { parseParkedPresumption } from './parseParkedPresumption';
 
+const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const CONFLICT = 409;
 const PARKED_REFUSAL_STATUSES = new Set([NOT_FOUND, CONFLICT]);
+const ANSWER_REFUSAL_STATUSES = new Set([BAD_REQUEST, NOT_FOUND, CONFLICT]);
 
 export class HttpParkingSessionClient implements ParkingSessionClient {
   readonly #requester: AuthorizedRequester;
   readonly #parkedRequester: AuthorizedRequester;
+  readonly #answerRequester: AuthorizedRequester;
 
   constructor(options: AuthorizedClientOptions) {
     this.#requester = new AuthorizedRequester(options, new Set());
     this.#parkedRequester = new AuthorizedRequester(options, PARKED_REFUSAL_STATUSES);
+    this.#answerRequester = new AuthorizedRequester(options, ANSWER_REFUSAL_STATUSES);
   }
 
   async current(): Promise<CurrentParkingSession | null> {
@@ -30,5 +41,15 @@ export class HttpParkingSessionClient implements ParkingSessionClient {
       body: JSON.stringify(body),
     });
     return parseParkedPresumption(await readJson(response));
+  }
+
+  async answerParkedSpot(sessionId: string, spotNumber: string): Promise<ParkedSpotAnswerResponse> {
+    const body: ParkedSpotAnswerRequest = { spotNumber };
+    const response = await this.#answerRequester.send(`/v1/entries/${encodeURIComponent(sessionId)}/spot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return parseParkedAnswer(await readJson(response));
   }
 }
