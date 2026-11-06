@@ -129,15 +129,17 @@ describe('QA #9: the eligibility query for a driver holding room in a full lot',
   });
 });
 
-describe('QA #9 round 2: a held spot that no longer fits the vehicle', () => {
+describe('QA #9 rounds 2-3: a held spot that no longer fits the vehicle', () => {
   const heldAccessibleSpot = { hold_id: 'hold-1', spot_id: 'spot-B-5', is_ev: false, is_accessible: true, is_oversize: false };
   const freeStandardSpot = { ...freeOversizeSpot, id: 'spot-A-2', number: 'A-2', aisle_code: 'A', is_oversize: false };
 
-  it('leaves the hold active and claims a fitting spot for a vehicle that lost its accessible permit', async () => {
+  it('claims a fitting spot for a vehicle that lost its accessible permit, then releases the unfit hold and frees its spot', async () => {
     const scripted = new ScriptedSql()
       .answer('read-held-spot', [heldAccessibleSpot])
       .answer('read-free-spots', [freeStandardSpot])
       .answer('claim-spot', [{ id: 'spot-A-2', number: 'A-2', aisle_code: 'A', level_code: 'P1' }])
+      .answer('release-spot-hold', [{ spot_id: 'spot-B-5' }])
+      .answer('free-held-spot', [{ id: 'spot-B-5' }])
       .answer('insert-session', [{ id: 'session-1' }]);
 
     const opening = await openEntry(scripted, draftWith(standardNeeds));
@@ -145,6 +147,11 @@ describe('QA #9 round 2: a held spot that no longer fits the vehicle', () => {
     expect(opening?.session.spot.number).toBe('A-2');
     expect(scripted.count('use-spot-hold')).toBe(0);
     expect(scripted.count('assign-held-spot')).toBe(0);
+    const labels = scripted.labels();
+    expect(labels.indexOf('claim-spot')).toBeLessThan(labels.indexOf('release-spot-hold'));
+    expect(labels.indexOf('release-spot-hold')).toBeLessThan(labels.indexOf('free-held-spot'));
+    expect(scripted.statements.find(({ label }) => label === 'release-spot-hold')?.params).toEqual(expect.arrayContaining(['hold-1', 'driver-julie']));
+    expect(scripted.statements.filter(({ label }) => label === 'release-spot-hold' || label === 'free-held-spot').every(({ onTransaction }) => onTransaction)).toBe(true);
   });
 
   it('leaves the hold active and answers full when only the unfitting held spot is left', async () => {
@@ -154,6 +161,8 @@ describe('QA #9 round 2: a held spot that no longer fits the vehicle', () => {
 
     expect(opening).toBeNull();
     expect(scripted.count('use-spot-hold')).toBe(0);
+    expect(scripted.count('release-spot-hold')).toBe(0);
+    expect(scripted.count('free-held-spot')).toBe(0);
   });
 
   it('still uses an accessible held spot for the permit holder it was held for', async () => {
