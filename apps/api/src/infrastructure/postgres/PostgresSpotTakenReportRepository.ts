@@ -4,7 +4,7 @@ import type { Database, Transaction } from './database.ts';
 import { inLotLock, orLotBusy } from './lockParkingLot.ts';
 import { flagAssignedSpotToCheck, readSessionLot } from './parkedAnswerStatements.ts';
 import { spotOf } from './spotLabel.ts';
-import { claimFirstFittingSpot, OCCUPIED_BY_REPORT, type SpotChooser } from './spotClaim.ts';
+import { claimFirstFittingSpot, OCCUPIED_BY_REPORT, readFreeSpotsNoSessionHolds, type SpotChooser } from './spotClaim.ts';
 import { askWhereParkedAfterReport, lockReportingSession, reassignSession, recordReportedSpot, type ReportingSession } from './spotTakenStatements.ts';
 
 // Lot, then session with its spot, then the new spot, in one transaction (docs/03, decision 022).
@@ -49,7 +49,7 @@ interface DriverToMove {
 async function moveDriver(tx: Transaction, { sessionId, lotId, session }: DriverToMove): Promise<SpotTakenOutcome> {
   const { needs, assignedSpot } = session;
   const choose: SpotChooser = (vehicleNeeds, freeSpots) => chooseReplacementSpot(vehicleNeeds, freeSpots, assignedSpot);
-  const claimed = await claimFirstFittingSpot(tx, { lotId, needs, target: OCCUPIED_BY_REPORT, choose });
+  const claimed = await claimFirstFittingSpot(tx, { lotId, needs, target: OCCUPIED_BY_REPORT, choose, readCandidates: readFreeSpotsNoSessionHolds });
   if (claimed === undefined) {
     await askWhereParkedAfterReport(tx, sessionId, assignedSpot.aisleId);
     return { outcome: 'none-free' };

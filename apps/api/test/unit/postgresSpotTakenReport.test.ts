@@ -202,4 +202,22 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
     await expect(reportWith(sql)).resolves.toMatchObject({ outcome: 'reassigned', spot: { number: 'A-2' } });
     expect(sql.statement('claim-spot')?.params[0]).toBe(SPOT_A2_ID);
   });
+
+  it('reads only free spots no active session holds as assigned or confirmed, which an operator may have set AVAILABLE', async () => {
+    const sql = reportOn();
+
+    await reportWith(sql);
+
+    const read = sql.statement('read-free-spots');
+    expect(read?.text).toMatch(/s\.state = 'AVAILABLE' and not exists \(/);
+    expect(read?.text).toMatch(/where \(holder\.assigned_spot_id = s\.id or holder\.confirmed_spot_id = s\.id\) and holder\.state in \('CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED'\)/);
+  });
+
+  it('asks where Julie parked, without claiming, when the only AVAILABLE spot is still another active session\'s', async () => {
+    const sql = reportOn(lockedSession(), []);
+
+    await expect(reportWith(sql)).resolves.toEqual({ outcome: 'none-free' });
+    expect(sql.count('claim-spot')).toBe(0);
+    expect(sql.count('reassign-spot')).toBe(0);
+  });
 });

@@ -2,6 +2,7 @@ import { sql, type SQL } from 'drizzle-orm';
 import type { FreeSpot } from '../../domain/allocation/chooseSpot.ts';
 import { chooseSpotFor } from '../../domain/allocation/chooseSpotFor.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
+import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import type { Database, Transaction } from './database.ts';
 import type { SpotState } from './lotSchema.ts';
 import type { SpotLabelRow } from './spotLabel.ts';
@@ -40,6 +41,7 @@ interface FreeSpotRow extends Record<string, unknown> {
 }
 
 export type SpotChooser = (needs: VehicleNeeds, freeSpots: readonly FreeSpot[]) => FreeSpot | null;
+export type FreeSpotReader = (executor: Pick<Database, 'execute'>, lotId: string) => Promise<FreeSpot[]>;
 
 // Only the chosen spot is locked, and a spot another writer holds is skipped rather than waited on (docs/03).
 export interface SpotClaim {
@@ -47,13 +49,14 @@ export interface SpotClaim {
   readonly needs: VehicleNeeds;
   readonly target: SpotClaimTarget;
   readonly choose?: SpotChooser;
+  readonly readCandidates?: FreeSpotReader;
 }
 
 export async function claimFirstFittingSpot(
   tx: Pick<Transaction, 'execute'>,
-  { lotId, needs, target, choose = chooseSpotFor }: SpotClaim,
+  { lotId, needs, target, choose = chooseSpotFor, readCandidates = readFreeSpots }: SpotClaim,
 ): Promise<AssignedSpotRow | undefined> {
-  let candidates = await readFreeSpots(tx, lotId);
+  let candidates = await readCandidates(tx, lotId);
   let chosen = choose(needs, candidates);
   while (chosen !== null) {
     const claimed = await transitionSpot(tx, { spotId: chosen.id, from: 'AVAILABLE', target });
@@ -67,14 +70,31 @@ export async function claimFirstFittingSpot(
   return undefined;
 }
 
-export async function readFreeSpots(executor: Pick<Database, 'execute'>, lotId: string): Promise<FreeSpot[]> {
+export function readFreeSpots(executor: Pick<Database, 'execute'>, lotId: string): Promise<FreeSpot[]> {
+  return readFreeSpotsWhere(executor, lotId, sql.empty());
+}
+
+// An operator may set AVAILABLE a spot an active session still holds as assigned or confirmed; claiming it would break the
+// one-session-per-spot indexes. Entries keep the plain read, which the lot lock and the spot states already guard.
+export function readFreeSpotsNoSessionHolds(executor: Pick<Database, 'execute'>, lotId: string): Promise<FreeSpot[]> {
+  return readFreeSpotsWhere(
+    executor,
+    lotId,
+    sql` and not exists (
+      select 1 from parking_session holder
+      where (holder.assigned_spot_id = s.id or holder.confirmed_spot_id = s.id) and holder.${ACTIVE_SESSION}
+    )`,
+  );
+}
+
+async function readFreeSpotsWhere(executor: Pick<Database, 'execute'>, lotId: string, condition: SQL): Promise<FreeSpot[]> {
   const rows = await executor.execute<FreeSpotRow>(sql`
     select s.id, s.number, l.display_order as level_order, s.aisle_id, a.code as aisle_code, s.distance_to_exit, s.needs_check,
       s.is_ev, s.is_accessible, s.is_oversize
     from spot s
     join aisle a on a.id = s.aisle_id
     join level l on l.id = a.level_id
-    where s.lot_id = ${lotId} and s.state = 'AVAILABLE'`);
+    where s.lot_id = ${lotId} and s.state = 'AVAILABLE'${condition}`);
   return rows.map((row) => ({
     id: row.id,
     number: row.number,
