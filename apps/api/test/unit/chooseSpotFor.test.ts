@@ -11,6 +11,7 @@ function spot(number: string, feature: Feature = {}, levelOrder = 1): FreeSpot {
     id: number,
     number,
     levelOrder,
+    aisleId: `aisle-${aisleCode}`,
     aisleCode,
     distanceToExit: Number(position) * 5,
     needsCheck: false,

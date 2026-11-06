@@ -7,6 +7,7 @@ const spot = (number: string, isEv = false): FreeSpot => ({
   id: `spot-${number}`,
   number,
   levelOrder: 1,
+  aisleId: 'aisle-A',
   aisleCode: 'A',
   distanceToExit: 5,
   needsCheck: false,

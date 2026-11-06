@@ -40,6 +40,7 @@ describe('seeded load-test drivers', () => {
       id: `spot-${index}`,
       number: spot.number,
       levelOrder: 1,
+      aisleId: `aisle-${spot.number.slice(0, 1)}`,
       aisleCode: spot.number.slice(0, 1),
       distanceToExit: spot.distanceToExit,
       needsCheck: false,

@@ -27,6 +27,7 @@ interface FreeSpotRow extends Record<string, unknown> {
   readonly id: string;
   readonly number: string;
   readonly level_order: number;
+  readonly aisle_id: string;
   readonly aisle_code: string;
   readonly distance_to_exit: number;
   readonly needs_check: boolean;
@@ -59,7 +60,7 @@ export async function claimFirstFittingSpot(tx: Pick<Transaction, 'execute'>, { 
 
 export async function readFreeSpots(executor: Pick<Database, 'execute'>, lotId: string): Promise<FreeSpot[]> {
   const rows = await executor.execute<FreeSpotRow>(sql`
-    select s.id, s.number, l.display_order as level_order, a.code as aisle_code, s.distance_to_exit, s.needs_check,
+    select s.id, s.number, l.display_order as level_order, s.aisle_id, a.code as aisle_code, s.distance_to_exit, s.needs_check,
       s.is_ev, s.is_accessible, s.is_oversize
     from spot s
     join aisle a on a.id = s.aisle_id
@@ -69,6 +70,7 @@ export async function readFreeSpots(executor: Pick<Database, 'execute'>, lotId: 
     id: row.id,
     number: row.number,
     levelOrder: row.level_order,
+    aisleId: row.aisle_id,
     aisleCode: row.aisle_code,
     distanceToExit: row.distance_to_exit,
     needsCheck: row.needs_check,
