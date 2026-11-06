@@ -1,3 +1,4 @@
+import type { Connectivity } from '../positioning/Connectivity';
 import { DEVELOPMENT_BEACON_UUID } from '../positioning/developmentBeacon';
 import type { PositioningCore } from '../positioning/PositioningCore';
 import { describeConnectivity } from './describeSignal';
@@ -11,16 +12,21 @@ export interface PanelAction {
 const DEVELOPMENT_MAJOR = 1;
 const KEEP_ALIVE_MILLISECONDS = 10 * 60 * 1000;
 
-export function signalActions(simulator: SimulatedPositioningModule): readonly PanelAction[] {
+export function signalActions(simulator: SimulatedPositioningModule, core: PositioningCore): readonly PanelAction[] {
   return [
     { label: 'Allée 1', run: () => simulator.enterAisle(1) },
     { label: 'Allée 2', run: () => simulator.enterAisle(2) },
     { label: 'Voie de sortie (minor 0)', run: () => simulator.enterAisle(0) },
     { label: 'Sortie de la région du parking', run: () => simulator.exitLot() },
     { label: 'Stationné (à pied, confiance élevée)', run: () => simulator.detectParked('high') },
-    { label: describeConnectivity('offline'), run: () => simulator.setConnectivity('offline') },
-    { label: describeConnectivity('online'), run: () => simulator.setConnectivity('online') },
+    { label: describeConnectivity('offline'), run: () => setConnectivity(simulator, core, 'offline') },
+    { label: describeConnectivity('online'), run: () => setConnectivity(simulator, core, 'online') },
   ];
+}
+
+function setConnectivity(simulator: SimulatedPositioningModule, core: PositioningCore, connectivity: Connectivity): void {
+  simulator.setConnectivity(connectivity);
+  core.connectivity.set(connectivity);
 }
 
 export function commandActions(core: PositioningCore, now: () => number): readonly PanelAction[] {

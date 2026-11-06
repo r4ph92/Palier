@@ -1,8 +1,11 @@
+import { ConnectivityMonitor } from './ConnectivityMonitor';
 import type { PositioningListener, PositioningModule } from './PositioningModule';
 
 export class PositioningCore {
   private readonly module: PositioningModule;
   private readonly subscribers = new Set<PositioningListener>();
+  private readonly flushRequests = new Set<() => void>();
+  readonly connectivity = new ConnectivityMonitor();
   private readonly fanOut: PositioningListener = {
     onAisleChanged: (minor, ts) => this.notify((subscriber) => subscriber.onAisleChanged(minor, ts)),
     onLotExit: (ts) => this.notify((subscriber) => subscriber.onLotExit(ts)),
@@ -34,6 +37,17 @@ export class PositioningCore {
 
   flushOfflineQueue(): void {
     this.module.flushOfflineQueue();
+    for (const request of this.flushRequests) {
+      request();
+    }
+  }
+
+  // Runs when flushOfflineQueue() is sent: the app's queue of walks waiting for the network sends them then.
+  onFlushRequested(request: () => void): () => void {
+    this.flushRequests.add(request);
+    return () => {
+      this.flushRequests.delete(request);
+    };
   }
 
   subscribe(listener: PositioningListener): () => void {
