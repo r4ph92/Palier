@@ -62,9 +62,14 @@ export interface PlacementFacts {
 // What a placement writes: the answered spot occupied, unless it is the presumed one still occupied; the presumed spot flagged
 // to check when the car turns out to be elsewhere. A presumed spot moved out of OCCUPIED meanwhile (an operator freed it) is no
 // longer the driver's: it is named like any other spot, and left unflagged when the car is elsewhere.
+export interface SpotWrites {
+  readonly occupiesAnswered: boolean;
+  readonly flagsAssigned: boolean;
+}
+
 export type Placement =
   | { readonly outcome: 'refused'; readonly refusal: Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service'> }
-  | { readonly outcome: 'placed'; readonly occupiesAnswered: boolean; readonly flagsAssigned: boolean };
+  | ({ readonly outcome: 'placed' } & SpotWrites);
 
 export function placementOf({ sessionState, assignedSpot, answeredSpot }: PlacementFacts): Placement {
   const isPresumed = sessionState === 'PARKED_PRESUMED';

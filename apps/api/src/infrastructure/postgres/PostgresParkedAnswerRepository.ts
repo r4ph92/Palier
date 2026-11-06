@@ -4,7 +4,7 @@ import {
   placementOf,
   type ParkedAnswer,
   type ParkedAnswerRepository,
-  type Placement,
+  type SpotWrites,
   type SpotAnswer,
 } from '../../domain/parkingSessions/ParkedAnswer.ts';
 import type { Database, Transaction } from './database.ts';
@@ -16,7 +16,6 @@ import {
   lockAnsweringSession,
   occupyAnsweredSpot,
   readSessionLot,
-  type AnsweredSpot,
   type AnsweringSession,
 } from './parkedAnswerStatements.ts';
 
@@ -74,21 +73,21 @@ async function placeCar(tx: Transaction, answer: SpotAnswer, { lotId, session }:
   if (placement.outcome === 'refused') {
     return { outcome: placement.refusal };
   }
-  await writeSpots(tx, placement, { spot, session });
+  await writeSpots(tx, placement, { answeredSpotId: spot.id, assignedSpotId: session.assignedSpot.id });
   await confirmParkedSpot(tx, answer.sessionId, spot.id);
   return { outcome: 'confirmed', spot: spot.label };
 }
 
-interface PlacedSpots {
-  readonly spot: AnsweredSpot;
-  readonly session: AnsweringSession;
+interface PlacedSpotIds {
+  readonly answeredSpotId: string;
+  readonly assignedSpotId: string;
 }
 
-async function writeSpots(tx: Transaction, { occupiesAnswered, flagsAssigned }: Extract<Placement, { outcome: 'placed' }>, { spot, session }: PlacedSpots): Promise<void> {
+async function writeSpots(tx: Transaction, { occupiesAnswered, flagsAssigned }: SpotWrites, { answeredSpotId, assignedSpotId }: PlacedSpotIds): Promise<void> {
   if (occupiesAnswered) {
-    await occupyAnsweredSpot(tx, spot.id);
+    await occupyAnsweredSpot(tx, answeredSpotId);
   }
   if (flagsAssigned) {
-    await flagAssignedSpotToCheck(tx, session.assignedSpot.id);
+    await flagAssignedSpotToCheck(tx, assignedSpotId);
   }
 }
