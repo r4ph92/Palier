@@ -32,9 +32,13 @@ describe('where a presumed session goes once it names its spot (story #22)', () 
 
   const KEEP = { outcome: 'placed', occupiesAnswered: false, flagsAssigned: false };
   const MOVE = { outcome: 'placed', occupiesAnswered: true, flagsAssigned: true };
+  const OCCUPY = { outcome: 'placed', occupiesAnswered: true, flagsAssigned: false };
 
   it.each([
     { naming: 'its own presumed spot', spotId: A1, spotState: 'OCCUPIED', placement: KEEP },
+    { naming: 'its own presumed spot, occupied-unknown and flagged to check', spotId: A1, spotState: 'OCCUPIED_UNKNOWN', placement: OCCUPY },
+    { naming: 'its own presumed spot, set available by hand', spotId: A1, spotState: 'AVAILABLE', placement: OCCUPY },
+    { naming: 'its own presumed spot, set out of service by hand', spotId: A1, spotState: 'OUT_OF_SERVICE', placement: { outcome: 'refused', refusal: 'spot-out-of-service' } },
     { naming: 'a free spot', spotId: 'spot-a3', spotState: 'AVAILABLE', placement: MOVE },
     { naming: 'a spot left by a driver who walked elsewhere', spotId: 'spot-a3', spotState: 'OCCUPIED_UNKNOWN', placement: MOVE },
     { naming: 'a spot assigned to someone else', spotId: 'spot-b4', spotState: 'ASSIGNED', placement: { outcome: 'refused', refusal: 'spot-taken' } },
@@ -44,10 +48,6 @@ describe('where a presumed session goes once it names its spot (story #22)', () 
   });
 
   it('an asked session naming its own assigned spot occupies it again, as in #21', () => {
-    expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', assignedSpotId: A1, spotId: A1, spotState: 'OCCUPIED_UNKNOWN' })).toEqual({
-      outcome: 'placed',
-      occupiesAnswered: true,
-      flagsAssigned: false,
-    });
+    expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', assignedSpotId: A1, spotId: A1, spotState: 'OCCUPIED_UNKNOWN' })).toEqual(OCCUPY);
   });
 });

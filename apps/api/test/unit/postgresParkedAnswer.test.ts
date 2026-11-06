@@ -217,6 +217,17 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
     expect(sql.statement('confirm-parked-spot')?.params).toEqual([SPOT_A1_ID, SESSION_ID]);
   });
 
+  // A presumed spot moved out of OCCUPIED by hand must not be confirmed as is, or a later driver naming it fails on the confirmed-spot index.
+  it('occupies A-1 again, clearing its check flag, before confirming Julie on it when it left OCCUPIED', async () => {
+    const sql = presumedNaming({ id: SPOT_A1_ID, state: 'OCCUPIED_UNKNOWN', number: 'A-1' });
+
+    await expect(answerWith(sql, { ...julieAnswersB3, spotNumber: 'A-1' })).resolves.toMatchObject({ outcome: 'confirmed', spot: { number: 'A-1' } });
+
+    expect(sql.labels().slice(-2)).toEqual(['occupy-answered-spot', 'confirm-parked-spot']);
+    expect(sql.statement('occupy-answered-spot')?.params).toEqual([SPOT_A1_ID]);
+    expect(sql.count('flag-assigned-spot')).toBe(0);
+  });
+
   it('refuses A-3 occupied by another driver without any write', async () => {
     const sql = presumedNaming({ id: SPOT_A3_ID, state: 'OCCUPIED', number: 'A-3' });
 
