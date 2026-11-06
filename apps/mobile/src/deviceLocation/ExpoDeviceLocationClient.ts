@@ -1,6 +1,6 @@
 import type { GeoPosition } from '@palier/shared-types';
 import * as Location from 'expo-location';
-import type { BackgroundLocationClient, BackgroundLocationStatus } from './BackgroundLocationClient';
+import type { BackgroundLocationClient } from './BackgroundLocationClient';
 import type { DeviceLocationClient, LocationPermission } from './DeviceLocationClient';
 
 export const LAST_KNOWN_POSITION_MAX_AGE_MILLISECONDS = 60_000;
@@ -17,13 +17,9 @@ export class ExpoDeviceLocationClient implements DeviceLocationClient, Backgroun
     await Location.requestBackgroundPermissionsAsync();
   }
 
-  async backgroundStatus(): Promise<BackgroundLocationStatus> {
-    const background = await Location.getBackgroundPermissionsAsync();
-    if (background.status === Location.PermissionStatus.GRANTED) {
-      return 'always';
-    }
-    const foreground = await Location.getForegroundPermissionsAsync();
-    return foreground.status === Location.PermissionStatus.GRANTED ? 'limited' : 'denied';
+  async hasAlways(): Promise<boolean> {
+    const { status } = await Location.getBackgroundPermissionsAsync();
+    return status === Location.PermissionStatus.GRANTED;
   }
 
   async currentPosition(): Promise<GeoPosition | null> {
