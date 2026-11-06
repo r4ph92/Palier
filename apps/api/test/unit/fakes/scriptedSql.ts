@@ -21,6 +21,8 @@ export type StatementLabel =
   | 'has-usable-spot-hold'
   | 'assign-held-spot'
   | 'free-held-spot'
+  | 'presume-parked'
+  | 'read-unchanged-session'
   | 'unknown';
 
 export interface ExecutedStatement {
@@ -37,6 +39,8 @@ const dialect = new PgDialect();
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
+  ['presume-parked', /set state = 'PARKED_PRESUMED'/],
+  ['read-unchanged-session', /select state, parked_at from parking_session/],
   ['lock-lot', /from parking_lot[\s\S]*for no key update/],
   ['read-active-session', /with active as/],
   ['assign-held-spot', /state = 'HELD' for update skip locked/],
