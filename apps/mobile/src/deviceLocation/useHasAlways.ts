@@ -11,7 +11,12 @@ export function useHasAlways(client: BackgroundLocationClient): boolean | null {
 
 function watchHasAlways(client: BackgroundLocationClient, onAnswer: (hasAlways: boolean) => void): () => void {
   let isCurrent = true;
-  const read = () => readHasAlways(client, (answer) => isCurrent && onAnswer(answer));
+  const read = () =>
+    readHasAlways(client, (answer) => {
+      if (isCurrent) {
+        onAnswer(answer);
+      }
+    });
   read();
   const subscription = AppState.addEventListener('change', (next) => {
     if (next === 'active') {
