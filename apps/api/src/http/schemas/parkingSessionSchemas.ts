@@ -5,6 +5,8 @@ import type {
   ParkedPresumptionResponse,
   ParkedSpotAnswerRequest,
   ParkedSpotAnswerResponse,
+  SpotTakenRequest,
+  SpotTakenResponse,
   TestClockReading,
 } from '@palier/shared-types';
 import { ACTIVE_ENTRY_SESSION_STATES, WALKED_AWAY_STATES } from '@palier/shared-types/entries';
@@ -129,6 +131,26 @@ export const parkedSpotAnswerResponseSchema = {
   properties: { state: { type: 'string', const: 'PARKED_CONFIRMED' }, spot: assignedSpotSchema },
 } as const;
 
+// The app sends the number it showed, exactly; the same limits as an answer keep the comparison on a few characters.
+export const spotTakenRequestSchema = parkedSpotAnswerRequestSchema;
+
+export const spotTakenResponseSchema = {
+  oneOf: [
+    {
+      type: 'object',
+      required: ['outcome', 'spot'],
+      additionalProperties: false,
+      properties: { outcome: { type: 'string', const: 'reassigned' }, spot: assignedSpotSchema },
+    },
+    {
+      type: 'object',
+      required: ['outcome'],
+      additionalProperties: false,
+      properties: { outcome: { type: 'string', const: 'none-free' } },
+    },
+  ],
+} as const;
+
 export type ResponseSchemaMatchesCurrentParkingSession = AssertTrue<
   MutuallyAssignable<FromSchema<typeof currentParkingSessionResponseSchema>, WithMutableArrays<CurrentParkingSessionResponse>>
 >;
@@ -148,3 +170,5 @@ export type RequestSchemaMatchesParkedSpotAnswer = AssertTrue<
 export type ResponseSchemaMatchesParkedSpotAnswer = AssertTrue<
   MutuallyAssignable<FromSchema<typeof parkedSpotAnswerResponseSchema>, ParkedSpotAnswerResponse>
 >;
+export type RequestSchemaMatchesSpotTaken = AssertTrue<MutuallyAssignable<FromSchema<typeof spotTakenRequestSchema>, SpotTakenRequest>>;
+export type ResponseSchemaMatchesSpotTaken = AssertTrue<MutuallyAssignable<FromSchema<typeof spotTakenResponseSchema>, SpotTakenResponse>>;
