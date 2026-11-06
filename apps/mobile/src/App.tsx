@@ -18,6 +18,7 @@ import { applyLanguage, deviceLanguage } from './i18n/i18n';
 import { developerTools } from './dev/loadDeveloperTools';
 import { PalierApp } from './PalierApp';
 import { NullPositioningModule } from './positioning/NullPositioningModule';
+import { ParkedSignalQueue, secureQueueStorage } from './parkingSessions/ParkedSignalQueue';
 import { PositioningCore } from './positioning/PositioningCore';
 import { fontAssets } from './theme/fonts';
 
@@ -47,6 +48,7 @@ function createSignedInClients({ token, onUnauthorized, onConsentRequired }: Sig
 }
 
 const positioningCore = new PositioningCore(developerTools?.module ?? new NullPositioningModule());
+const parkedSignals = new ParkedSignalQueue(secureQueueStorage);
 const developerEntry = developerTools?.bind(positioningCore);
 
 const palierApp = (
@@ -58,6 +60,7 @@ const palierApp = (
       createSignedInClients={createSignedInClients}
       developerEntry={developerEntry}
       positioning={positioningCore}
+      parkedSignals={parkedSignals}
     />
   </StripeProvider>
 );

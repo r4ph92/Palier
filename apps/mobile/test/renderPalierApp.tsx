@@ -3,6 +3,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { SignedInClients, SignedInSession } from '../src/api/SignedInClients';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { PalierApp } from '../src/PalierApp';
+import type { ParkedSignalQueue } from '../src/parkingSessions/ParkedSignalQueue';
 import type { PositioningCore } from '../src/positioning/PositioningCore';
 import type { DeveloperEntry } from '../src/screens/DeveloperEntry';
 import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
@@ -34,6 +35,7 @@ export interface PalierAppOptions {
   readonly metrics?: typeof IPHONE_15_METRICS;
   readonly developerEntry?: DeveloperEntry | undefined;
   readonly positioning?: PositioningCore | undefined;
+  readonly parkedSignals?: ParkedSignalQueue | undefined;
   // Only the clients a test cares about; the others are working fakes.
   readonly clients?: (session: SignedInSession) => Partial<SignedInClients>;
 }
@@ -70,6 +72,7 @@ export async function renderPalierApp(options: PalierAppOptions = {}) {
         createSignedInClients={createSignedInClients}
         developerEntry={options.developerEntry}
         positioning={options.positioning}
+        parkedSignals={options.parkedSignals}
       />
     </SafeAreaProvider>,
   );
