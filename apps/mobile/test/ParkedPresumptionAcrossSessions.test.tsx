@@ -1,4 +1,5 @@
 import { act, screen } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import { PalierUnreachableError } from '../src/api/LotsClient';
 import { SESSION_REFRESH_MILLISECONDS } from '../src/parkingSessions/useCurrentParkingSession';
 import { julieAtB3, julieAtParkingDemo } from './fakeParkingSessionClient';
@@ -69,6 +70,18 @@ describe('walking away across sessions and aisles (story #18)', () => {
 
     expect(keepAliveCommands()).toEqual([]);
     expect(screen.getByText(GO_TO_A1, visibleText)).toBeOnTheScreen();
+  });
+
+  it('announces no aisle for the next session from the sighting of the last one', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+    const { enterAisle, parkingSession } = await julieWith(julieAtParkingDemo());
+    await enterAisle(2);
+    parkingSession.session = julieAtB3({ sessionId: 'session-2' });
+
+    await advance(SESSION_REFRESH_MILLISECONDS);
+
+    expect(await screen.findByText('Rendez-vous allée B, place B-3', visibleText)).toBeOnTheScreen();
+    expect(announce.mock.calls.filter(([message]) => message === 'Vous êtes dans la bonne allée')).toHaveLength(0);
   });
 
   it('reports the walk of the next session once the presumed one has ended', async () => {

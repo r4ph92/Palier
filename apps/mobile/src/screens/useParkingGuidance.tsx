@@ -12,7 +12,7 @@ import { ParkingGuidance } from './ParkingGuidance';
 export function useParkingGuidance(positioning: PositioningCore, aisles: AisleFollower, state: CurrentParkingSessionState): ReactNode {
   const session = state.status === 'current' ? state.session : null;
   useAisleMonitoring(positioning, session);
-  const currentAisle = useCurrentAisle(aisles);
+  const currentAisle = useCurrentAisle(aisles, session?.sessionId ?? null);
   if (session === null || isParked(session.state)) {
     return null;
   }

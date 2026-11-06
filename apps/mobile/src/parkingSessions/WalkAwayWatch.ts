@@ -70,7 +70,7 @@ export class WalkAwayWatch {
     if (walk.confidence === 'low' || this.#isSending || this.#isReported) {
       return false;
     }
-    const aisle = this.#context.aisles.current();
+    const aisle = this.#context.aisles.currentFor(this.#context.sessionId);
     return aisle === null || aisle.code === session.spot.aisleCode;
   }
 

@@ -17,6 +17,6 @@ export function useAisleFollower(positioning: PositioningCore, state: CurrentPar
   return follower;
 }
 
-export function useCurrentAisle(follower: AisleFollower): PlanAisle | null {
-  return useSyncExternalStore(follower.subscribe, follower.current);
+export function useCurrentAisle(follower: AisleFollower, sessionId: string | null): PlanAisle | null {
+  return useSyncExternalStore(follower.subscribe, () => follower.currentFor(sessionId));
 }

@@ -27,12 +27,13 @@ export class AisleFollower {
     this.#notify();
   }
 
-  readonly current = (): PlanAisle | null => {
-    if (this.#session === null || this.#sightedMinor === null) {
+  // A render can come before follow() is told of a new session: it then reads nothing, never the last session's aisle.
+  currentFor(sessionId: string | null): PlanAisle | null {
+    if (this.#session === null || this.#session.sessionId !== sessionId || this.#sightedMinor === null) {
       return null;
     }
     return aisleWithMinor(this.#session.aisles, this.#sightedMinor);
-  };
+  }
 
   readonly subscribe = (onChange: () => void): (() => void) => {
     this.#onChange.add(onChange);
