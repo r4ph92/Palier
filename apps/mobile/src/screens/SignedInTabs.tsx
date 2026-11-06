@@ -55,7 +55,7 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
   const spotHold = useSpotHold(clients.spotHold);
   const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: currentSession.refresh, onSubmissionEnded: spotHold.refreshHold });
   const gateScanner = useScannerGate(clients);
-  const guidance = useSessionPositioning({ device, clients }, currentSession);
+  const guidance = useSessionGuidance({ device, clients }, currentSession);
   const screens: TabScreens = {
     home: { firstName, lotsClient: clients.lots, locationClient: clients.location, spotHold },
     scan: {
@@ -71,7 +71,7 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
 }
 
 // The aisle and the walk away are followed above the tabs too, so a driver on another tab never misses them.
-function useSessionPositioning({ device, clients }: Pick<SignedInTabsProps, 'device' | 'clients'>, currentSession: CurrentParkingSessionController): ReactNode {
+function useSessionGuidance({ device, clients }: Pick<SignedInTabsProps, 'device' | 'clients'>, currentSession: CurrentParkingSessionController): ReactNode {
   const { state } = currentSession;
   const aisles = useAisleFollower(device.positioning, state.status === 'current' ? state.session : null);
   useParkedPresumption({ positioning: device.positioning, client: clients.parkingSession, aisles }, currentSession);
