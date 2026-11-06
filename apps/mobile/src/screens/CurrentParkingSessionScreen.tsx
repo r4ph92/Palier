@@ -1,5 +1,5 @@
 import type { AssignedSpot, CurrentParkingSession } from '@palier/shared-types';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -95,12 +95,14 @@ function spotStatusOf({ state, spot }: CurrentParkingSession): string {
 
 // The spot turns parked with no action of the driver, so it is announced once, on that change only:
 // not on the minute poll, and not for a screen that opens on a session already parked.
-function useJustParked(session: CurrentParkingSession): boolean {
-  const previousState = useRef(session.state);
-  useEffect(() => {
-    previousState.current = session.state;
-  });
-  return isParked(session.state) && !isParked(previousState.current);
+function useJustParked({ state }: CurrentParkingSession): boolean {
+  const [previousState, setPreviousState] = useState(state);
+  const [justParked, setJustParked] = useState(false);
+  if (state !== previousState) {
+    setPreviousState(state);
+    setJustParked(isParked(state) && !isParked(previousState));
+  }
+  return justParked;
 }
 
 // The spot number is a figure inside the sentence, in mono (docs/design.md, gesture 3).
