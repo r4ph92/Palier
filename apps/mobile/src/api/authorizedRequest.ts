@@ -1,4 +1,5 @@
 import { palierFetch } from './appUpdate';
+import { isNonNegativeInteger } from './isNonNegativeInteger';
 import { PalierUnauthorizedError } from './AuthClient';
 import { PalierStatusError, PalierUnreachableError } from './LotsClient';
 import { PalierConsentRequiredError, PalierRejectedError } from './VehicleClient';
@@ -88,13 +89,9 @@ async function errorBody(response: Response): Promise<ErrorBody> {
     const { error, authorizedCents } = (await response.json()) as { error?: unknown; authorizedCents?: unknown };
     return {
       error: typeof error === 'string' ? error : undefined,
-      authorizedCents: wholeCents(authorizedCents),
+      authorizedCents: isNonNegativeInteger(authorizedCents) ? authorizedCents : null,
     };
   } catch {
     return { error: undefined, authorizedCents: null };
   }
-}
-
-function wholeCents(value: unknown): number | null {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
 }

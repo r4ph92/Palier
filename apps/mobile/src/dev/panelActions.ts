@@ -1,3 +1,4 @@
+import { DEVELOPMENT_BEACON_UUID } from '../positioning/developmentBeacon';
 import type { PositioningCore } from '../positioning/PositioningCore';
 import { describeConnectivity } from './describeSignal';
 import type { SimulatedPositioningModule } from './SimulatedPositioningModule';
@@ -7,7 +8,6 @@ export interface PanelAction {
   readonly run: () => void;
 }
 
-const DEVELOPMENT_BEACON_UUID = 'B9407F30-F5F8-466E-AFF9-25556B57FE6D';
 const DEVELOPMENT_MAJOR = 1;
 const KEEP_ALIVE_MILLISECONDS = 10 * 60 * 1000;
 

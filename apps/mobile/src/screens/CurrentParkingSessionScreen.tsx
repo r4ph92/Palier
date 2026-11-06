@@ -20,10 +20,11 @@ interface CurrentParkingSessionScreenProps {
   readonly progress: ReadProgress;
   readonly onRetry: () => void;
   readonly notice?: ReactNode;
+  readonly guidance?: ReactNode;
 }
 
 // Everything shown comes from the API, priced by its clock; the screen never counts time on its own.
-export function CurrentParkingSessionScreen({ reading, progress, onRetry, notice }: CurrentParkingSessionScreenProps) {
+export function CurrentParkingSessionScreen({ reading, progress, onRetry, notice, guidance }: CurrentParkingSessionScreenProps) {
   const colors = useColors();
   const { session, readAt } = reading;
   return (
@@ -31,6 +32,7 @@ export function CurrentParkingSessionScreen({ reading, progress, onRetry, notice
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader eyebrow={i18n.t('session.eyebrow')} title={session.lotName} />
         <SessionSpot session={session} />
+        {guidance}
         {reading.isStale ? <OfflineNotice progress={progress} onRetry={onRetry} /> : null}
         {notice}
         <SessionAmount session={session} />

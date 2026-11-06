@@ -14,9 +14,9 @@ partir, où le chiffre des places libres est l'information principale.
 | Jeton | Clair | Sombre | Usage |
 |---|---|---|---|
 | `canvas` | `#F8F9F6` | `#121513` | Fond d'écran |
-| `sunken` | `#E4E6E0` | `#242925` | Squelettes de chargement |
+| `sunken` | `#E4E6E0` | `#242925` | Squelettes de chargement, fond de l'allée assignée sur le plan du niveau |
 | `ink` | `#191C1A` | `#E7EAE4` | Texte, bouton principal |
-| `muted` | `#4B534D` | `#AEB6AE` | Texte secondaire, surtitres |
+| `muted` | `#4B534D` | `#AEB6AE` | Texte secondaire, surtitres, bordure de 1 pt des allées du plan |
 | `line` | `#D2D6CE` | `#2C322D` | Filets entre les lignes (décoratif) |
 | `free` | `#2E7D4F` | `#63B487` | Carré « places libres » (jamais en texte sur fond clair : 4,3:1) |
 | `danger` | `#9C3A2A` | `#D9705E` | Carré « complet » |

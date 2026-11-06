@@ -11,10 +11,15 @@ import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
 import { ScanFrame, ScanScreen } from './ScanScreen';
 import { SessionNotice } from './SessionNotice';
 
+export interface SessionAside {
+  readonly detectionNotice: ReactNode;
+  readonly guidance: ReactNode;
+}
+
 interface ScanTabProps {
   readonly entryClient: EntryClient;
   readonly gateScanner: (scanner: ReactElement) => ReactElement;
-  readonly detectionNotice: ReactNode;
+  readonly aside: SessionAside;
   readonly currentSession: CurrentParkingSessionController;
   readonly pendingEntry: PendingEntryWatch;
   readonly onAddPlate: () => void;
@@ -28,11 +33,11 @@ export function scanTabLabels(state: CurrentParkingSessionState): TabLabels {
 
 // An entry in progress keeps the scan screen, so its spot and announcement are never cut off by a refresh.
 // Otherwise the tab waits for Palier's first answer, then shows the current session or the form.
-export function ScanTab({ entryClient, gateScanner, detectionNotice, currentSession, pendingEntry, onAddPlate, onAddCard }: ScanTabProps) {
+export function ScanTab({ entryClient, gateScanner, aside, currentSession, pendingEntry, onAddPlate, onAddCard }: ScanTabProps) {
   const entry = useEntry(entryClient, pendingEntry);
   const { state, refresh, ...progress } = currentSession;
   useRefreshAsEntryProgresses(entry.state, refresh);
-  const sessionScreen = isEntryInProgress(entry.state) ? null : sessionScreenFor(currentSession, detectionNotice);
+  const sessionScreen = isEntryInProgress(entry.state) ? null : sessionScreenFor(currentSession, aside);
   if (sessionScreen !== null) {
     return sessionScreen;
   }
@@ -45,7 +50,7 @@ export function ScanTab({ entryClient, gateScanner, detectionNotice, currentSess
 }
 
 // What replaces the scan form: nothing yet known, or a current session.
-function sessionScreenFor({ state, refresh, ...progress }: CurrentParkingSessionController, detectionNotice: ReactNode): ReactElement | null {
+function sessionScreenFor({ state, refresh, ...progress }: CurrentParkingSessionController, aside: SessionAside): ReactElement | null {
   switch (state.status) {
     case 'loading':
       return (
@@ -54,7 +59,7 @@ function sessionScreenFor({ state, refresh, ...progress }: CurrentParkingSession
         </ScanFrame>
       );
     case 'current':
-      return <CurrentParkingSessionScreen reading={state} progress={progress} onRetry={refresh} notice={detectionNotice} />;
+      return <CurrentParkingSessionScreen reading={state} progress={progress} onRetry={refresh} notice={aside.detectionNotice} guidance={aside.guidance} />;
     case 'none':
     case 'unknown':
       return null;

@@ -11,6 +11,30 @@ export interface CurrentParkingSession {
   readonly elapsedMinutes: number;
   readonly amountCents: number;
   readonly dailyCapCents: number;
+  // The lot's beacon major, which the app monitors while the session lasts; null for a lot without beacons.
+  readonly beaconMajor: number | null;
+  readonly levelPlan: LevelPlan | null;
+}
+
+// D8: an aisle is drawn as a rectangle on its level's grid; the units mean nothing beyond their proportions.
+export interface AisleRectangle {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+// rectangle is null for an aisle the operator has not drawn; its code and minor still guide the driver.
+export interface PlanAisle {
+  readonly code: string;
+  readonly beaconMinor: number;
+  readonly rectangle: AisleRectangle | null;
+}
+
+// The level of the assigned spot, with its aisles the driver can drive in (exit lanes left out), ordered by code.
+export interface LevelPlan {
+  readonly levelCode: string;
+  readonly aisles: PlanAisle[];
 }
 
 export interface CurrentParkingSessionResponse {

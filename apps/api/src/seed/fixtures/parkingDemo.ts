@@ -41,9 +41,10 @@ export const parkingDemoLevels: (typeof level.$inferInsert)[] = [
   { id: LEVEL_P1_ID, lotId: PARKING_DEMO_ID, code: 'P1', displayOrder: 1 },
 ];
 
+// Aisle A above aisle B on level P1's grid (decision 018); the exit lane is not drawn.
 export const parkingDemoAisles: (typeof aisle.$inferInsert)[] = [
-  { id: AISLE_A_ID, levelId: LEVEL_P1_ID, lotId: PARKING_DEMO_ID, code: 'A', beaconMinor: 1 },
-  { id: AISLE_B_ID, levelId: LEVEL_P1_ID, lotId: PARKING_DEMO_ID, code: 'B', beaconMinor: 2 },
+  { id: AISLE_A_ID, levelId: LEVEL_P1_ID, lotId: PARKING_DEMO_ID, code: 'A', beaconMinor: 1, mapPolygon: { x: 0, y: 0, width: 100, height: 40 } },
+  { id: AISLE_B_ID, levelId: LEVEL_P1_ID, lotId: PARKING_DEMO_ID, code: 'B', beaconMinor: 2, mapPolygon: { x: 0, y: 50, width: 100, height: 40 } },
   { id: EXIT_LANE_ID, levelId: LEVEL_P1_ID, lotId: PARKING_DEMO_ID, code: 'Sortie', beaconMinor: 0, isExitLane: true },
 ];
 

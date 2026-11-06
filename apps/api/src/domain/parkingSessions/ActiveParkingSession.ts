@@ -1,4 +1,5 @@
 import type { ActiveEntrySessionState, AssignedSpot } from '@palier/shared-types';
+import type { StoredLevelAisle } from '../lots/levelPlanOf.ts';
 import type { PricingPolicy } from '../pricing/PricingPolicy.ts';
 
 export interface ActiveParkingSession {
@@ -9,6 +10,9 @@ export interface ActiveParkingSession {
   // The entry scan, not the loop confirmation: billing and the shown entry time both start there.
   readonly enteredAt: Date;
   readonly pricing: PricingPolicy;
+  readonly beaconMajor: number | null;
+  // Every aisle of the spot's level the driver can drive in, ordered by code; the level plan is drawn from them.
+  readonly levelAisles: readonly StoredLevelAisle[];
 }
 
 export interface CurrentParkingSessionQuery {

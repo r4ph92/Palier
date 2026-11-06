@@ -57,6 +57,7 @@ const palierApp = (
       testSignInEnabled={testSignInEnabled}
       createSignedInClients={createSignedInClients}
       developerEntry={developerEntry}
+      positioning={positioningCore}
     />
   </StripeProvider>
 );

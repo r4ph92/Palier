@@ -5,10 +5,8 @@ import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
+import { SpotNumberText } from './SpotNumberText';
 import { StateMark } from './StateMark';
-
-// After the hyphen of a spot number, so « A-1 » never splits across two lines; it is invisible and not spoken.
-export const WORD_JOINER = '\u2060';
 
 export function spotLabel(spot: AssignedSpot, lead = ''): string {
   return `${lead}${spot.number}${spotPlace(spot)}`;
@@ -27,11 +25,13 @@ interface SpotLineProps {
 export function SpotLine({ spot, lead = '' }: SpotLineProps) {
   const colors = useColors();
   return (
-    <Text style={[typography.spotLine, { color: colors.ink }]}>
-      {lead}
-      <Text style={typography.spotNumber}>{spot.number.replaceAll('-', `-${WORD_JOINER}`)}</Text>
-      {spotPlace(spot)}
-    </Text>
+    <SpotNumberText
+      spot={spot}
+      lead={lead}
+      style={[typography.spotLine, { color: colors.ink }]}
+      numberStyle={typography.spotNumber}
+      trail={spotPlace(spot)}
+    />
   );
 }
 

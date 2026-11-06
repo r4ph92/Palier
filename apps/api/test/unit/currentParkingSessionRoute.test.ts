@@ -37,6 +37,14 @@ describe('GET /v1/me/session', () => {
         elapsedMinutes: 195,
         amountCents: 975,
         dailyCapCents: 2500,
+        beaconMajor: 1,
+        levelPlan: {
+          levelCode: 'P1',
+          aisles: [
+            { code: 'A', beaconMinor: 1, rectangle: { x: 0, y: 0, width: 100, height: 40 } },
+            { code: 'B', beaconMinor: 2, rectangle: { x: 0, y: 50, width: 100, height: 40 } },
+          ],
+        },
       },
     });
   });

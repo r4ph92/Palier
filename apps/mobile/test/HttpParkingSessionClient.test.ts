@@ -36,6 +36,27 @@ describe('HttpParkingSessionClient', () => {
     await expect(clientAnswering(body).client.current()).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 
+  it.each([
+    ['a plan whose aisle has a text minor', { levelCode: 'P1', aisles: [{ code: 'A', beaconMinor: '1', rectangle: null }] }],
+    ['a plan with a negative width', { levelCode: 'P1', aisles: [{ code: 'A', beaconMinor: 1, rectangle: { x: 0, y: 0, width: -1, height: 4 } }] }],
+    ['a plan with a negative x', { levelCode: 'P1', aisles: [{ code: 'A', beaconMinor: 1, rectangle: { x: -1, y: 0, width: 4, height: 4 } }] }],
+    ['a plan that is not an object', 'P1'],
+  ])('keeps the session but drops %s', async (_case, levelPlan) => {
+    const { client } = clientAnswering({ session: { ...julieAtParkingDemo(), levelPlan } });
+
+    await expect(client.current()).resolves.toEqual(julieAtParkingDemo({ levelPlan: null }));
+  });
+
+  it('reads a session from an API older than the plan as one without beacons or plan', async () => {
+    const olderSession: Record<string, unknown> = { ...julieAtParkingDemo() };
+    delete olderSession['beaconMajor'];
+    delete olderSession['levelPlan'];
+
+    await expect(clientAnswering({ session: olderSession }).client.current()).resolves.toEqual(
+      julieAtParkingDemo({ beaconMajor: null, levelPlan: null }),
+    );
+  });
+
   it('signs the driver out on a 401', async () => {
     const onUnauthorized = jest.fn();
 
