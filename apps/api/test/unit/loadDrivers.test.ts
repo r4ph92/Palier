@@ -4,6 +4,7 @@ import { chooseSpotFor } from '../../src/domain/allocation/chooseSpotFor.ts';
 import { LOAD_DRIVER_IDS, LOAD_VEHICLE_NEEDS, loadDriverPersonas, loadDriverVehicles } from '../../src/seed/fixtures/loadDrivers.ts';
 import { parkingDemoSpots } from '../../src/seed/fixtures/parkingDemo.ts';
 import { seededDriverPersonas, seededVehicles } from '../../src/seed/fixtures/seededDrivers.ts';
+import { freeSpotFixture } from './fakes/freeSpotFixture.ts';
 
 describe('seeded load-test drivers', () => {
   it('seeds Conducteur Test 01 to 20 with ids 0521 to 0540, each having consented', () => {
@@ -36,18 +37,15 @@ describe('seeded load-test drivers', () => {
   });
 
   it('gives them a vehicle that fits every Parking Démo spot, so all ten count toward a load run', () => {
-    const demoSpots = parkingDemoSpots.map((spot, index) => ({
-      id: `spot-${index}`,
-      number: spot.number,
-      levelOrder: 1,
-      aisleId: `aisle-${spot.number.slice(0, 1)}`,
-      aisleCode: spot.number.slice(0, 1),
-      distanceToExit: spot.distanceToExit,
-      needsCheck: false,
-      isEv: spot.isEv ?? false,
-      isAccessible: spot.isAccessible ?? false,
-      isOversize: spot.isOversize ?? false,
-    }));
+    const demoSpots = parkingDemoSpots.map((spot, index) =>
+      freeSpotFixture(spot.number, {
+        id: `spot-${String(index)}`,
+        distanceToExit: spot.distanceToExit,
+        isEv: spot.isEv ?? false,
+        isAccessible: spot.isAccessible ?? false,
+        isOversize: spot.isOversize ?? false,
+      }),
+    );
 
     for (const spot of demoSpots) {
       expect(chooseSpotFor(LOAD_VEHICLE_NEEDS, [spot])).toBe(spot);

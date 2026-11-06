@@ -4,6 +4,7 @@ import type { FreeSpot } from '../../../src/domain/allocation/chooseSpot.ts';
 import { reportPlanOf, type SpotTakenOutcome, type SpotTakenReport, type SpotTakenReportRepository } from '../../../src/domain/parkingSessions/SpotTakenReport.ts';
 import type { SpotState } from '../../../src/domain/spots/spotStates.ts';
 import { standardNeeds } from '../fakeVehicleRepository.ts';
+import { freeSpotFixture } from './freeSpotFixture.ts';
 
 export interface StoredReportingSession {
   readonly driverId: string;
@@ -105,8 +106,5 @@ function aisleOf(number: string): string {
 
 // The aisle code stands for the aisle id here: one level, aisles named once.
 function freeSpotOf(number: string, spot: StoredReportSpot): FreeSpot {
-  const aisleCode = aisleOf(number);
-  const distanceToExit = Number(number.slice(2)) * 5;
-  const flags = { isEv: spot.isEv ?? false, isAccessible: false, isOversize: false };
-  return { id: number, number, levelOrder: 1, aisleId: aisleCode, aisleCode, distanceToExit, needsCheck: spot.needsCheck, ...flags };
+  return freeSpotFixture(number, { aisleId: aisleOf(number), needsCheck: spot.needsCheck, isEv: spot.isEv ?? false });
 }

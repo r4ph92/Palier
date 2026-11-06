@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { SpotTakenReport } from '../../src/domain/parkingSessions/SpotTakenReport.ts';
 import type { SpotState } from '../../src/domain/spots/spotStates.ts';
 import { PostgresSpotTakenReportRepository } from '../../src/infrastructure/postgres/PostgresSpotTakenReportRepository.ts';
+import { freeSpotFixture, freeSpotRowOf } from './fakes/freeSpotFixture.ts';
 import { LOCK_NOT_AVAILABLE, ScriptedSql } from './fakes/scriptedSql.ts';
 
 const JULIE_ID = '00000000-0000-4000-8000-000000000501';
@@ -30,18 +31,7 @@ function lockedSession(state: EntrySessionState = 'ENTRY_CONFIRMED', assignedSpo
 }
 
 function freeSpot(number: string, aisleId: string, distanceToExit: number) {
-  return {
-    id: `spot-${number}`,
-    number,
-    level_order: 1,
-    aisle_id: aisleId,
-    aisle_code: number.charAt(0),
-    distance_to_exit: distanceToExit,
-    needs_check: false,
-    is_ev: false,
-    is_accessible: false,
-    is_oversize: false,
-  };
+  return freeSpotRowOf(freeSpotFixture(number, { id: `spot-${number}`, aisleId, distanceToExit }));
 }
 
 const A2_FREE = { ...freeSpot('A-2', AISLE_A_ID, 10), id: SPOT_A2_ID };
