@@ -2,7 +2,7 @@ import type { AssignedSpot, CurrentParkingSession, EntrySessionState } from '@pa
 import { useState } from 'react';
 import { SpotWithState } from '../components/SpotLine';
 import { SpotNumberText } from '../components/SpotNumberText';
-import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocusOnMount';
+import { useAccessibilityFocusOn } from '../components/useAccessibilityFocusOn';
 import { useAnnouncement } from '../components/useAnnouncement';
 import { i18n } from '../i18n/i18n';
 import { isParked } from '../parkingSessions/isParked';
@@ -19,18 +19,30 @@ interface SessionSpotProps {
 }
 
 // After an answer the focused field is gone, so the focus moves to the spot, which reads « Garé en B-3 » without an announcement on top.
-// A new spot after a spot-taken report is announced once: VoiceOver stays on « Place prise ».
+// A new spot after a spot-taken report takes the focus the same way: its line reads « Nouvelle place : A-2 ».
 export function SessionSpot({ session, arrival, shouldFocusOnArrival }: SessionSpotProps) {
   const colors = useColors();
-  const focusRef = useAccessibilityFocusOnMount();
   const isNewSpot = useNewSpot(session);
+  const ref = useAccessibilityFocusOn(spotFocusKeyOf({ isNewSpot, spot: session.spot, focusesArrival: shouldFocusOnArrival || arrival === 'answered' }));
   const spotLead = spotLeadOf(session.state, isNewSpot);
   const status = spotLead === null ? waitingStatusOf(session.state) : `${spotLead}${session.spot.number}`;
-  useAnnouncement(arrival === 'walked' || isNewSpot ? status : null);
-  const ref = shouldFocusOnArrival || arrival === 'answered' ? focusRef : null;
+  useAnnouncement(arrival === 'walked' ? status : null);
   const statusContent = spotLead === null ? undefined : <SpotStatus spot={session.spot} lead={spotLead} />;
   const markColor = session.state === 'CREATED' ? colors.muted : colors.free;
   return <SpotWithState ref={ref} spot={session.spot} statusLabel={status} statusContent={statusContent} markColor={markColor} />;
+}
+
+interface SpotFocus {
+  readonly isNewSpot: boolean;
+  readonly spot: AssignedSpot;
+  readonly focusesArrival: boolean;
+}
+
+function spotFocusKeyOf({ isNewSpot, spot, focusesArrival }: SpotFocus): string | null {
+  if (isNewSpot) {
+    return `new:${spot.number}`;
+  }
+  return focusesArrival ? 'arrival' : null;
 }
 
 // The lead of a status that names the spot (« Nouvelle place : », « Garé en »); null for a status without the number.

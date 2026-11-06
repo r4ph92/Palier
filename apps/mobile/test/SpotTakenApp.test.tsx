@@ -34,7 +34,7 @@ describe('reporting the assigned spot taken (story #23)', () => {
     expect(parkingSession.spotTakenReports).toEqual([]);
   });
 
-  it('shows « Nouvelle place : A-2 » once Julie confirms, announced once, and gives VoiceOver back to « Place prise »', async () => {
+  it('shows « Nouvelle place : A-2 » once Julie confirms, and moves VoiceOver to the spot line without announcing it on top', async () => {
     const { user, parkingSession } = await julieReportingA1();
     const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
     const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockClear();
@@ -43,9 +43,9 @@ describe('reporting the assigned spot taken (story #23)', () => {
 
     expect(await screen.findByText(NEW_SPOT_A2, visibleText)).toBeOnTheScreen();
     expect(parkingSession.spotTakenReports).toEqual(['A-1']);
-    expect(announce.mock.calls.filter(([message]) => asSeen(message) === NEW_SPOT_A2)).toHaveLength(1);
-    const action = screen.getByRole('button', { name: SPOT_TAKEN });
-    expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ accessibilityLabel: action.props.accessibilityLabel }) }), 'focus');
+    const spotLine = screen.getByLabelText(`A-2 · Palier P1 · Allée A. ${NEW_SPOT_A2}`, visibleText);
+    expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ accessibilityLabel: spotLine.props.accessibilityLabel }) }), 'focus');
+    expect(announce.mock.calls.filter(([message]) => asSeen(message) === NEW_SPOT_A2)).toEqual([]);
     expect(screen.queryByText(CONFIRM_A1_TAKEN, visibleText)).toBeNull();
   });
 
