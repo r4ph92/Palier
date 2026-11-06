@@ -107,5 +107,6 @@ function aisleOf(number: string): string {
 function freeSpotOf(number: string, spot: StoredReportSpot): FreeSpot {
   const aisleCode = aisleOf(number);
   const distanceToExit = Number(number.slice(2)) * 5;
-  return { id: number, number, levelOrder: 1, aisleId: aisleCode, aisleCode, distanceToExit, needsCheck: spot.needsCheck, isEv: spot.isEv ?? false, isAccessible: false, isOversize: false };
+  const flags = { isEv: spot.isEv ?? false, isAccessible: false, isOversize: false };
+  return { id: number, number, levelOrder: 1, aisleId: aisleCode, aisleCode, distanceToExit, needsCheck: spot.needsCheck, ...flags };
 }

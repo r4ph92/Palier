@@ -42,7 +42,9 @@ export interface ReportFacts {
 
 // flagsReported: the spot is OCCUPIED_UNKNOWN to check only when it was still OCCUPIED for the driver; an operator may have
 // moved it meanwhile, and the driver gets another spot anyway (as in decision 021).
-export type ReportPlan = { readonly outcome: 'refused'; readonly refusal: SessionRefusal | 'spot-not-assigned' } | { readonly outcome: 'report'; readonly flagsReported: boolean };
+export type ReportPlan =
+  | { readonly outcome: 'refused'; readonly refusal: SessionRefusal | 'spot-not-assigned' }
+  | { readonly outcome: 'report'; readonly flagsReported: boolean };
 
 export function reportPlanOf({ sessionState, assignedSpot, reportedNumber }: ReportFacts): ReportPlan {
   const sessionRefusal = SESSION_REFUSALS[sessionState];

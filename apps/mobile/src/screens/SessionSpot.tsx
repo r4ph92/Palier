@@ -24,34 +24,25 @@ export function SessionSpot({ session, arrival, shouldFocusOnArrival }: SessionS
   const colors = useColors();
   const focusRef = useAccessibilityFocusOnMount();
   const isNewSpot = useNewSpot(session);
-  const isWaiting = session.state === 'CREATED';
-  const status = spotStatusOf(session, isNewSpot);
+  const spotLead = spotLeadOf(session.state, isNewSpot);
+  const status = spotLead === null ? waitingStatusOf(session.state) : `${spotLead}${session.spot.number}`;
   useAnnouncement(arrival === 'walked' || isNewSpot ? status : null);
   const ref = shouldFocusOnArrival || arrival === 'answered' ? focusRef : null;
-  return <SpotWithState ref={ref} spot={session.spot} statusLabel={status} statusContent={statusContentOf(session, isNewSpot)} markColor={isWaiting ? colors.muted : colors.free} />;
+  const statusContent = spotLead === null ? undefined : <SpotStatus spot={session.spot} lead={spotLead} />;
+  const markColor = session.state === 'CREATED' ? colors.muted : colors.free;
+  return <SpotWithState ref={ref} spot={session.spot} statusLabel={status} statusContent={statusContent} markColor={markColor} />;
 }
 
-function statusContentOf({ state, spot }: CurrentParkingSession, isNewSpot: boolean) {
+// The lead of a status that names the spot (« Nouvelle place : », « Garé en »); null for a status without the number.
+function spotLeadOf(state: EntrySessionState, isNewSpot: boolean): string | null {
   if (isNewSpot) {
-    return <SpotStatus spot={spot} lead={i18n.t('session.spotTaken.newSpotLead')} />;
+    return i18n.t('session.spotTaken.newSpotLead');
   }
-  return isParked(state) ? <SpotStatus spot={spot} lead={i18n.t('session.parkedInLead')} /> : undefined;
+  return isParked(state) ? i18n.t('session.parkedInLead') : null;
 }
 
-function spotStatusOf({ state, spot }: CurrentParkingSession, isNewSpot: boolean): string {
-  if (isNewSpot) {
-    return `${i18n.t('session.spotTaken.newSpotLead')}${spot.number}`;
-  }
-  if (isParked(state)) {
-    return `${i18n.t('session.parkedInLead')}${spot.number}`;
-  }
-  switch (state) {
-    case 'CREATED':
-      return i18n.t('session.pending');
-    case 'ENTRY_CONFIRMED':
-    case 'PARKED_UNCONFIRMED':
-      return i18n.t('scan.entryConfirmed');
-  }
+function waitingStatusOf(state: EntrySessionState): string {
+  return state === 'CREATED' ? i18n.t('session.pending') : i18n.t('scan.entryConfirmed');
 }
 
 interface SeenSpot {

@@ -25,7 +25,11 @@ interface ReportHandlers {
 
 // One report at a time; any answer that settles it reads the session again (the new spot, or the question).
 // onReported gets null when the session moved on without this report.
-export function useSpotTakenReport(client: ParkingSessionClient, target: SpotTakenReportTarget, onReported: (response: SpotTakenResponse | null) => void): SpotTakenReportController {
+export function useSpotTakenReport(
+  client: ParkingSessionClient,
+  target: SpotTakenReportTarget,
+  onReported: (response: SpotTakenResponse | null) => void,
+): SpotTakenReportController {
   const [attempts, setAttempts] = useState(0);
   const [isUnreachable, setIsUnreachable] = useState(false);
   const { runningKey, run } = useSingleFlight<'report'>();
