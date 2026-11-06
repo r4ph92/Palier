@@ -16,6 +16,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
+import { PRESUMPTION_EVIDENCES } from '../../domain/parkingSessions/PresumptionEvidence.ts';
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import { appUser, vehicle } from './driverSchema.ts';
 import { gate } from './gateSchema.ts';
@@ -32,6 +33,7 @@ function sameLotForeignKey(name: string, columns: [AnyPgColumn, AnyPgColumn], ta
 }
 
 export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION_STATES);
+export const parkingSessionPresumption = pgEnum('parking_session_presumption', PRESUMPTION_EVIDENCES);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
 
 export const parkingSession = pgTable(
@@ -58,6 +60,8 @@ export const parkingSession = pgTable(
     entryScanAt: timestamp('entry_scan_at', { withTimezone: true }).notNull().defaultNow(),
     entryConfirmedAt: timestamp('entry_confirmed_at', { withTimezone: true }),
     parkedAt: timestamp('parked_at', { withTimezone: true }),
+    // Why the session is presumed parked; kept as history when the driver later corrects the spot.
+    presumedBy: parkingSessionPresumption('presumed_by'),
     // The aisle the device last saw at the walk, when it was not the assigned spot's: the driver is asked where they parked.
     parkedAisleId: uuid('parked_aisle_id'),
     // The spot the driver said they parked in; the assigned spot stays as the history of the entry.
@@ -76,6 +80,7 @@ export const parkingSession = pgTable(
     sameLotForeignKey('parking_session_parked_aisle_in_same_lot_fk', [table.parkedAisleId, table.lotId], aisle),
     // Compared as text: a check on the enum itself would block the next migration that recreates the enum.
     check('parking_session_unconfirmed_has_aisle', sql`${table.state}::text <> 'PARKED_UNCONFIRMED' or ${table.parkedAisleId} is not null`),
+    check('parking_session_presumed_has_evidence', sql`${table.state}::text <> 'PARKED_PRESUMED' or ${table.presumedBy} is not null`),
     check(
       'parking_session_confirmed_has_spot',
       sql`${table.state}::text <> 'PARKED_CONFIRMED' or (${table.confirmedSpotId} is not null and ${table.parkedAnsweredAt} is not null)`,
