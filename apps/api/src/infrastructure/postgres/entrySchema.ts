@@ -32,6 +32,17 @@ function sameLotForeignKey(name: string, columns: [AnyPgColumn, AnyPgColumn], ta
   return foreignKey({ name, columns, foreignColumns: [target.id, target.lotId] });
 }
 
+function presumedHasEvidence(table: { readonly state: AnyPgColumn; readonly presumedBy: AnyPgColumn }) {
+  return check('parking_session_presumed_has_evidence', sql`${table.state}::text <> 'PARKED_PRESUMED' or ${table.presumedBy} is not null`);
+}
+
+function confirmedHasSpot(table: { readonly state: AnyPgColumn; readonly confirmedSpotId: AnyPgColumn; readonly parkedAnsweredAt: AnyPgColumn }) {
+  return check(
+    'parking_session_confirmed_has_spot',
+    sql`${table.state}::text <> 'PARKED_CONFIRMED' or (${table.confirmedSpotId} is not null and ${table.parkedAnsweredAt} is not null)`,
+  );
+}
+
 export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION_STATES);
 export const parkingSessionPresumption = pgEnum('parking_session_presumption', PRESUMPTION_EVIDENCES);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
@@ -80,11 +91,8 @@ export const parkingSession = pgTable(
     sameLotForeignKey('parking_session_parked_aisle_in_same_lot_fk', [table.parkedAisleId, table.lotId], aisle),
     // Compared as text: a check on the enum itself would block the next migration that recreates the enum.
     check('parking_session_unconfirmed_has_aisle', sql`${table.state}::text <> 'PARKED_UNCONFIRMED' or ${table.parkedAisleId} is not null`),
-    check('parking_session_presumed_has_evidence', sql`${table.state}::text <> 'PARKED_PRESUMED' or ${table.presumedBy} is not null`),
-    check(
-      'parking_session_confirmed_has_spot',
-      sql`${table.state}::text <> 'PARKED_CONFIRMED' or (${table.confirmedSpotId} is not null and ${table.parkedAnsweredAt} is not null)`,
-    ),
+    presumedHasEvidence(table),
+    confirmedHasSpot(table),
     check(
       'parking_session_pricing_positive',
       sql`${table.pricingIncrementCents} > 0 and ${table.pricingIncrementMinutes} > 0 and ${table.pricingDailyCapCents} > 0`,

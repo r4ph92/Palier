@@ -31,11 +31,11 @@ export async function presumeSilentSessions({ silentSessions, clock }: SilentSes
   const now = clock();
   const cutoff = new Date(now.getTime() - SILENCE_BEFORE_PRESUMPTION_MILLISECONDS);
   for (const lotId of await silentSessions.findLotsWithSilentSessions(cutoff)) {
-    await presumeLot(silentSessions, lotId, { cutoff, now }, log);
+    await presumeLot(silentSessions, { lotId, cutoff, now }, log);
   }
 }
 
-async function presumeLot(silentSessions: SilentSessionRepository, lotId: string, silence: SilenceCheck, log: JobLog): Promise<void> {
+async function presumeLot(silentSessions: SilentSessionRepository, { lotId, ...silence }: SilenceCheck & { readonly lotId: string }, log: JobLog): Promise<void> {
   try {
     const { confirmedEntries, unansweredQuestions } = await silentSessions.presumeLotSilentSessions(lotId, silence);
     if (confirmedEntries + unansweredQuestions > 0) {
