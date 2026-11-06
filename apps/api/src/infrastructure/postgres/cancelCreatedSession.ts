@@ -20,7 +20,7 @@ export async function cancelCreatedSession(tx: Transaction, sessionId: string, n
   }
   const holdId = cancelled.consumed_spot_hold_id;
   const restored = holdId !== null && (await restoreSpotHold(tx, holdId, now));
-  const moved = await setSpotState(tx, cancelled.assigned_spot_id, restored ? 'HELD' : 'AVAILABLE', now);
+  const moved = await setSpotState(tx, { spotId: cancelled.assigned_spot_id, state: restored ? 'HELD' : 'AVAILABLE', now });
   if (restored && !moved) {
     // The spot left ASSIGNED meanwhile: a hold must never be active on a spot that is not held.
     await tx.execute(sql`update spot_hold set status = 'USED' where id = ${holdId}`);
@@ -44,7 +44,13 @@ async function restoreSpotHold(tx: Transaction, spotHoldId: string, now: Date): 
   return false;
 }
 
-async function setSpotState(tx: Transaction, spotId: string, state: 'HELD' | 'AVAILABLE', now: Date): Promise<boolean> {
+interface SpotChange {
+  readonly spotId: string;
+  readonly state: 'HELD' | 'AVAILABLE';
+  readonly now: Date;
+}
+
+async function setSpotState(tx: Transaction, { spotId, state, now }: SpotChange): Promise<boolean> {
   const rows = await tx.execute(sql`
     update spot set state = ${state}, state_changed_at = ${now.toISOString()}::timestamptz
     where id = ${spotId} and state = 'ASSIGNED'
