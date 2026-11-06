@@ -18,7 +18,7 @@ partir, où le chiffre des places libres est l'information principale.
 | `ink` | `#191C1A` | `#E7EAE4` | Texte, bouton principal |
 | `muted` | `#4B534D` | `#AEB6AE` | Texte secondaire, surtitres, bordure de 1 pt des allées du plan |
 | `line` | `#D2D6CE` | `#2C322D` | Filets entre les lignes (décoratif) |
-| `free` | `#2E7D4F` | `#63B487` | Carré « places libres » (jamais en texte sur fond clair : 4,3:1) |
+| `free` | `#2E7D4F` | `#63B487` | Carré « places libres », et carré d’un état favorable de la session du conducteur (« Entrée confirmée », « Garé en A-1 ») ; jamais en texte sur fond clair : 4,3:1 |
 | `danger` | `#9C3A2A` | `#D9705E` | Carré « complet » |
 
 Polices : **Archivo** (texte, titres en 600) et **IBM Plex Mono** (surtitres et
