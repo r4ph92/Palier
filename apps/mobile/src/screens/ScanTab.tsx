@@ -90,7 +90,7 @@ function currentSessionScreen(
       onRetry={refresh}
       notice={isParked(reading.session.state) ? null : aside.detectionNotice}
       guidance={aside.guidance}
-      focusSpotOnArrival={reading.session.sessionId === arrivedParkedSessionId}
+      shouldFocusSpotOnArrival={reading.session.sessionId === arrivedParkedSessionId}
     />
   );
 }
