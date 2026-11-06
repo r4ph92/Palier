@@ -1,5 +1,20 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, type AnyPgColumn, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  type AnyPgColumn,
+  foreignKey,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  unique,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import { appUser, vehicle } from './driverSchema.ts';
@@ -54,6 +69,7 @@ export const parkingSession = pgTable(
     holdReleaseAttemptedAt: timestamp('hold_release_attempted_at', { withTimezone: true }),
   },
   (table) => [
+    unique('parking_session_id_lot_id_unique').on(table.id, table.lotId),
     sameLotForeignKey('parking_session_entry_gate_in_same_lot_fk', [table.entryGateId, table.lotId], gate),
     sameLotForeignKey('parking_session_spot_in_same_lot_fk', [table.assignedSpotId, table.lotId], spot),
     sameLotForeignKey('parking_session_confirmed_spot_in_same_lot_fk', [table.confirmedSpotId, table.lotId], spot),
@@ -72,6 +88,22 @@ export const parkingSession = pgTable(
     uniqueIndex('parking_session_one_active_per_spot_index').on(table.assignedSpotId).where(ACTIVE_SESSION),
     uniqueIndex('parking_session_one_active_per_confirmed_spot_index').on(table.confirmedSpotId).where(ACTIVE_SESSION),
     index('parking_session_hold_release_pending_index').on(table.holdReleaseAttemptedAt.asc().nullsFirst(), table.id).where(sql`${table.holdReleasePending}`),
+  ],
+);
+
+// Every spot the driver reported taken before parking, kept flagged to check; the exit releases them (decision 022).
+export const parkingSessionReportedSpot = pgTable(
+  'parking_session_reported_spot',
+  {
+    sessionId: uuid('session_id').notNull(),
+    spotId: uuid('spot_id').notNull(),
+    lotId: uuid('lot_id').notNull(),
+    reportedAt: timestamp('reported_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ name: 'parking_session_reported_spot_pk', columns: [table.sessionId, table.spotId] }),
+    sameLotForeignKey('parking_session_reported_spot_session_in_same_lot_fk', [table.sessionId, table.lotId], parkingSession),
+    sameLotForeignKey('parking_session_reported_spot_spot_in_same_lot_fk', [table.spotId, table.lotId], spot),
   ],
 );
 
