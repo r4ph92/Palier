@@ -10,7 +10,6 @@ type Executor = Pick<Transaction, 'execute'>;
 
 export interface AnsweringSession {
   readonly state: EntrySessionState;
-  // Set once the driver answered.
   readonly confirmedSpot: AssignedSpot | null;
 }
 

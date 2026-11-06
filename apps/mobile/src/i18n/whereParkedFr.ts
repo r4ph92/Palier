@@ -1,4 +1,4 @@
-// Story #21: the question asked after a walk away from the car in another aisle than the assigned spot's.
+// The question asked after a walk away from the car in another aisle than the assigned spot's.
 export const whereParkedFr = {
   question: 'Où êtes-vous garé\u00A0?',
   freeSpotsLead: 'Places libres dans l’allée %{aisle}',

@@ -34,7 +34,7 @@ const REFUSALS: Record<ParkedAnswerRefusal, Refusal> = {
   'lot-busy': LOT_BUSY_BODY,
 };
 
-// Story #21: the driver walked away in another aisle and says which spot the car is in.
+// The driver walked away in another aisle and says which spot the car is in.
 export function registerParkedAnswerRoute(server: FastifyInstance, driverAccess: DriverAccess, answers: ParkedAnswerRepository): void {
   const onRequest = consentedDriverGuards(driverAccess);
   const schema = { params: entrySessionParametersSchema, body: parkedSpotAnswerRequestSchema, response: { 200: parkedSpotAnswerResponseSchema } };

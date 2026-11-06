@@ -36,7 +36,7 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
   }
 
   // The inner select keeps the index predicate's exact text, so the per-driver partial unique index serves it.
-  // The spot is the one the driver answered, once they did (story #21).
+  // The spot is the one the driver answered, once they did.
   async findCurrentParkingSessionForUser(userId: string): Promise<ActiveParkingSession | null> {
     const rows = await this.#database.execute<CurrentSessionRow>(sql`
       select ps.id, ps.state, ps.entry_scan_at, ps.pricing_increment_cents, ps.pricing_increment_minutes, ps.pricing_daily_cap_cents,

@@ -38,7 +38,7 @@ interface WhereParkedScreenProps {
   readonly onAnswered: () => void;
 }
 
-// Story #21: the driver walked away in another aisle than the assigned spot's, so Palier asks where the car is.
+// The driver walked away in another aisle than the assigned spot's, so Palier asks where the car is.
 // The free spots of the aisle seen at the walk come first, a tap writes the number in the field; only « Confirmer » sends.
 export function WhereParkedScreen({ client, session, offline, onAnswered }: WhereParkedScreenProps) {
   const answering = useParkedAnswer(client, session.sessionId, onAnswered);

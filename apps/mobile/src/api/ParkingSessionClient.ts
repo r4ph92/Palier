@@ -11,6 +11,6 @@ export interface ParkingSessionClient {
   current(): Promise<CurrentParkingSession | null>;
   // Q36: the device saw the driver walk away from the car. A 404 or 409 rejects with the API's code.
   reportParked(sessionId: string, walk: DetectedWalk): Promise<ParkedPresumptionResponse>;
-  // Story #21: the spot number the driver read on the ground. A 400, 404 or 409 rejects with the API's code.
+  // The spot number the driver read on the ground. A 404 or 409 rejects with the API's code, a 400 with its status.
   answerParkedSpot(sessionId: string, spotNumber: string): Promise<ParkedSpotAnswerResponse>;
 }

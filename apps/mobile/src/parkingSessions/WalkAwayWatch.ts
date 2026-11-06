@@ -69,7 +69,7 @@ export class WalkAwayWatch {
     return walk.confidence !== 'low' && !this.#isSending && !this.#isReported;
   }
 
-  // Q36 and #21: Palier presumes the assigned spot for a walk in its aisle or before any aisle was seen, and asks where
+  // Q36: Palier presumes the assigned spot for a walk in its aisle or before any aisle was seen, and asks where
   // the car is for a walk in another aisle. A refused or lost signal changes nothing: the offline queue (#26) will send it again.
   async #report(walk: Walk): Promise<boolean> {
     this.#isSending = true;

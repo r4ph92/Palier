@@ -2,7 +2,7 @@ import type { EntrySessionState, WalkedAwayState } from '@palier/shared-types';
 import { isWalkedAwayState } from '@palier/shared-types/entries';
 
 // Q36: the device saw the driver walk away from the car, which is enough to presume the assigned spot taken.
-// detectedAisleMinor: the aisle the device last saw, null when it saw none; another aisle than the spot's asks where the car is (#21).
+// detectedAisleMinor: the aisle the device last saw, null when it saw none; another aisle than the spot's asks where the car is.
 export interface WalkingSignal {
   readonly sessionId: string;
   readonly driverId: string;
