@@ -10,6 +10,9 @@ jest.mock('expo-location', () => ({
   PermissionStatus: { GRANTED: 'granted', DENIED: 'denied', UNDETERMINED: 'undetermined' },
   Accuracy: { Balanced: 3 },
   requestForegroundPermissionsAsync: jest.fn(),
+  getForegroundPermissionsAsync: jest.fn(),
+  requestBackgroundPermissionsAsync: jest.fn(),
+  getBackgroundPermissionsAsync: jest.fn(),
   getLastKnownPositionAsync: jest.fn(),
   getCurrentPositionAsync: jest.fn(),
 }));
@@ -28,6 +31,30 @@ describe('ExpoDeviceLocationClient permission', () => {
     mockedLocation.requestForegroundPermissionsAsync.mockResolvedValue({ status } as Location.LocationPermissionResponse);
 
     await expect(new ExpoDeviceLocationClient().requestWhileInUse()).resolves.toBe(expected);
+  });
+});
+
+describe('ExpoDeviceLocationClient « Always »', () => {
+  const answer = (status: string) => ({ status }) as Location.LocationPermissionResponse;
+
+  it('asks iOS for the background permission', async () => {
+    mockedLocation.requestBackgroundPermissionsAsync.mockResolvedValue(answer('granted'));
+
+    await new ExpoDeviceLocationClient().requestAlways();
+
+    expect(mockedLocation.requestBackgroundPermissionsAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['granted', 'granted', 'always'],
+    ['denied', 'granted', 'limited'],
+    ['denied', 'denied', 'denied'],
+    ['undetermined', 'undetermined', 'denied'],
+  ])('maps background %s and foreground %s to %s', async (background, foreground, expected) => {
+    mockedLocation.getBackgroundPermissionsAsync.mockResolvedValue(answer(background));
+    mockedLocation.getForegroundPermissionsAsync.mockResolvedValue(answer(foreground));
+
+    await expect(new ExpoDeviceLocationClient().backgroundStatus()).resolves.toBe(expected);
   });
 });
 
