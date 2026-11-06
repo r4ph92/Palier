@@ -1,8 +1,8 @@
 // The question asked after a walk away from the car in another aisle than the assigned spot's, and the correction of a presumed spot.
 export const whereParkedFr = {
   question: 'Où êtes-vous garé\u00A0?',
-  freeSpotsLead: 'Places libres dans l’allée %{aisle}',
-  noFreeSpot: 'Aucune place libre dans l’allée %{aisle}',
+  freeSpotsLead: 'Places libres dans l’allée %{aisle} pour votre véhicule',
+  noFreeSpot: 'Aucune place libre dans l’allée %{aisle} pour votre véhicule',
   numberLabel: 'Numéro de place',
   confirm: 'Confirmer',
   confirmNumber: 'Confirmer\u00A0%{number}',
