@@ -5,8 +5,10 @@ import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { PalierApp } from '../src/PalierApp';
 import type { DeveloperEntry } from '../src/screens/DeveloperEntry';
 import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
+import { FakeBackgroundLocationClient } from './fakeBackgroundLocationClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeEntryClient } from './fakeEntryClient';
+import { MemoryLocationExplanationStore } from './fakeLocationExplanationStore';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeParkingSessionClient } from './fakeParkingSessionClient';
 import { FakePaymentMethodClient } from './fakePaymentMethodClient';
@@ -43,6 +45,8 @@ export function fakeSignedInClients(): SignedInClients {
     parkingSession: new FakeParkingSessionClient(),
     spotHold: new FakeSpotHoldClient(),
     location: new FakeDeviceLocationClient(),
+    backgroundLocation: new FakeBackgroundLocationClient(),
+    locationExplanation: new MemoryLocationExplanationStore(),
   };
 }
 

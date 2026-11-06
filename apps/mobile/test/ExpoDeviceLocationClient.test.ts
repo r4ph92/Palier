@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 import {
+  ALWAYS_REQUEST_TIMEOUT_MILLISECONDS,
   CURRENT_POSITION_TIMEOUT_MILLISECONDS,
   ExpoDeviceLocationClient,
   LAST_KNOWN_POSITION_MAX_AGE_MILLISECONDS,
@@ -10,6 +11,8 @@ jest.mock('expo-location', () => ({
   PermissionStatus: { GRANTED: 'granted', DENIED: 'denied', UNDETERMINED: 'undetermined' },
   Accuracy: { Balanced: 3 },
   requestForegroundPermissionsAsync: jest.fn(),
+  requestBackgroundPermissionsAsync: jest.fn(),
+  getBackgroundPermissionsAsync: jest.fn(),
   getLastKnownPositionAsync: jest.fn(),
   getCurrentPositionAsync: jest.fn(),
 }));
@@ -28,6 +31,48 @@ describe('ExpoDeviceLocationClient permission', () => {
     mockedLocation.requestForegroundPermissionsAsync.mockResolvedValue({ status } as Location.LocationPermissionResponse);
 
     await expect(new ExpoDeviceLocationClient().requestWhileInUse()).resolves.toBe(expected);
+  });
+});
+
+describe('ExpoDeviceLocationClient « Always »', () => {
+  const answer = (status: string) => ({ status }) as Location.LocationPermissionResponse;
+  afterEach(() => jest.useRealTimers());
+
+  it('asks iOS for the background permission', async () => {
+    mockedLocation.requestBackgroundPermissionsAsync.mockResolvedValue(answer('granted'));
+
+    await new ExpoDeviceLocationClient().requestAlways();
+
+    expect(mockedLocation.requestBackgroundPermissionsAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops waiting for « Always » after 30 seconds when iOS never answers', async () => {
+    jest.useFakeTimers();
+    mockedLocation.requestBackgroundPermissionsAsync.mockReturnValue(new Promise(() => undefined));
+
+    let settled = false;
+    const request = new ExpoDeviceLocationClient()
+      .requestAlways()
+      .then(() => {
+        settled = true;
+      });
+
+    await jest.advanceTimersByTimeAsync(ALWAYS_REQUEST_TIMEOUT_MILLISECONDS - 1);
+    expect(settled).toBe(false);
+
+    await jest.advanceTimersByTimeAsync(1);
+    await expect(request).resolves.toBeUndefined();
+    expect(ALWAYS_REQUEST_TIMEOUT_MILLISECONDS).toBe(30_000);
+  });
+
+  it.each([
+    ['granted', true],
+    ['denied', false],
+    ['undetermined', false],
+  ])('answers %s from the system as hasAlways %s', async (status, expected) => {
+    mockedLocation.getBackgroundPermissionsAsync.mockResolvedValue(answer(status));
+
+    await expect(new ExpoDeviceLocationClient().hasAlways()).resolves.toBe(expected);
   });
 });
 

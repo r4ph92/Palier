@@ -1,4 +1,5 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
+import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -18,12 +19,12 @@ interface CurrentParkingSessionScreenProps {
   readonly reading: CurrentParkingSessionReading;
   readonly progress: ReadProgress;
   readonly onRetry: () => void;
+  readonly notice?: ReactNode;
 }
 
 // Everything shown comes from the API, priced by its clock; the screen never counts time on its own.
-export function CurrentParkingSessionScreen({ reading, progress, onRetry }: CurrentParkingSessionScreenProps) {
+export function CurrentParkingSessionScreen({ reading, progress, onRetry, notice }: CurrentParkingSessionScreenProps) {
   const colors = useColors();
-  const language = currentLanguage();
   const { session, readAt } = reading;
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
@@ -31,14 +32,22 @@ export function CurrentParkingSessionScreen({ reading, progress, onRetry }: Curr
         <ScreenHeader eyebrow={i18n.t('session.eyebrow')} title={session.lotName} />
         <SessionSpot session={session} />
         {reading.isStale ? <OfflineNotice progress={progress} onRetry={onRetry} /> : null}
+        {notice}
         <SessionAmount session={session} />
-        <View>
-          <FigureRow lead={i18n.t('session.enteredLead')} value={formatClockTime(new Date(session.enteredAt), language)} />
-          <FigureRow lead={i18n.t('session.elapsedLead')} value={formatElapsed(session.elapsedMinutes, language)} />
-        </View>
+        <SessionTimes session={session} />
         <UpdatedAt readAt={readAt} />
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function SessionTimes({ session }: { readonly session: CurrentParkingSession }) {
+  const language = currentLanguage();
+  return (
+    <View>
+      <FigureRow lead={i18n.t('session.enteredLead')} value={formatClockTime(new Date(session.enteredAt), language)} />
+      <FigureRow lead={i18n.t('session.elapsedLead')} value={formatElapsed(session.elapsedMinutes, language)} />
+    </View>
   );
 }
 
