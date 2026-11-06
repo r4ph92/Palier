@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
 import type { SessionAfterRefusal, WalkAisles, WalkingSignal } from '../../domain/parkingSessions/ParkedPresumption.ts';
+import { clampedParkedAt } from './clampedParkedAt.ts';
 import type { Database, Transaction } from './database.ts';
 import { inLotLock } from './lockParkingLot.ts';
 
@@ -54,12 +55,10 @@ export function askWhereParked(database: Database, walk: WrongAisleWalk): Promis
   });
 }
 
-// Clamped like the presumed walk (decision 019).
 async function markSessionUnconfirmed(tx: Transaction, { signal, aisleId }: WrongAisleWalk): Promise<UnconfirmedWalkRow | undefined> {
   const [row] = await tx.execute<UnconfirmedWalkRow>(sql`
     update parking_session
-    set state = 'PARKED_UNCONFIRMED', parked_aisle_id = ${aisleId},
-      parked_at = greatest(least(${signal.detectedAt.toISOString()}::timestamptz, now()), entry_confirmed_at)
+    set state = 'PARKED_UNCONFIRMED', parked_aisle_id = ${aisleId}, parked_at = ${clampedParkedAt(signal.detectedAt)}
     where id = ${signal.sessionId} and user_id = ${signal.driverId} and state = 'ENTRY_CONFIRMED'
     returning parked_at, assigned_spot_id`);
   return row;

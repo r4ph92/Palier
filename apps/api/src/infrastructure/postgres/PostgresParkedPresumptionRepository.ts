@@ -8,6 +8,7 @@ import {
   type SessionAfterRefusal,
   type WalkingSignal,
 } from '../../domain/parkingSessions/ParkedPresumption.ts';
+import { clampedParkedAt } from './clampedParkedAt.ts';
 import type { Database } from './database.ts';
 import { orLotBusy } from './lockParkingLot.ts';
 import { askWhereParked, readWalkFacts, type WalkFacts } from './wrongAisleWalk.ts';
@@ -58,11 +59,10 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
     return parkedAt instanceof Date ? { outcome: 'recorded', state: 'PARKED_UNCONFIRMED', parkedAt } : parkedAt;
   }
 
-  // The device clock is trusted only up to the database clock, and never before the loop confirmation, whose gate clock may run ahead.
   async #presumeConfirmedEntry({ sessionId, driverId, detectedAt }: WalkingSignal): Promise<Date | null> {
     const [row] = await this.#database.execute<ParkedAtRow>(sql`
       update parking_session
-      set state = 'PARKED_PRESUMED', parked_at = greatest(least(${detectedAt.toISOString()}::timestamptz, now()), entry_confirmed_at)
+      set state = 'PARKED_PRESUMED', parked_at = ${clampedParkedAt(detectedAt)}
       where id = ${sessionId} and user_id = ${driverId} and state = 'ENTRY_CONFIRMED'
       returning parked_at`);
     return row === undefined ? null : new Date(row.parked_at);
