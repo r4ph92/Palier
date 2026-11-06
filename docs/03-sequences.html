@@ -264,7 +264,7 @@
 <path class="msg" d="M1300,814 H528" marker-end="url(#sq)"/>
 <text class="t-msg" x="914" y="805" text-anchor="middle">tap « Place prise » avant de se garer</text>
 <path class="msg" d="M528,902 H712" marker-end="url(#sq)"/>
-<text class="t-msg" x="620" y="893" text-anchor="middle">POST /v1/sessions/{id}/spot-taken</text>
+<text class="t-msg" x="620" y="893" text-anchor="middle">POST /v1/entries/{id}/spot-taken</text>
 <path class="msg" d="M724,948 H908" marker-end="url(#sq)"/>
 <text class="t-msg" x="816" y="939" text-anchor="middle">TX : 2-12 → OCCUPIED_UNKNOWN · 2-14 → ASSIGNED</text>
 <path class="ret" d="M712,994 H528" marker-end="url(#sq)"/>
@@ -292,7 +292,7 @@
 <text class="t-ps" x="1306" y="65" text-anchor="middle"></text>
 </svg></div><figcaption>Les trois branches du fragment : présomption silencieuse, allée contradictoire, place prise. Seules les deux dernières font apparaître l'usager.</figcaption></div></figure>
 <div class="note"><b>Les deux branches d'exception sont des opérations à deux écritures.</b>
-  Quand l'allée détectée contredit l'assignation, la place assignée passe à <code>OCCUPIED_UNKNOWN</code> avant même que l'usager réponde, et la place qu'il désigne passe à <code>OCCUPIED</code> ensuite. Quand il signale une place prise, la place signalée passe à <code>OCCUPIED_UNKNOWN</code> et une nouvelle place à <code>ASSIGNED</code> dans la même transaction. Hors transaction, une coupure réseau entre les deux laisse une place fantôme, réservée pour personne et invisible à l'inventaire.</div>
+  Quand l'allée détectée contredit l'assignation, la place assignée passe à <code>OCCUPIED_UNKNOWN</code> avant même que l'usager réponde, et la place qu'il désigne passe à <code>OCCUPIED</code> ensuite. Quand il signale une place prise, la place signalée passe à <code>OCCUPIED_UNKNOWN</code> et une nouvelle place à <code>OCCUPIED</code> dans la même transaction (décision 022). Hors transaction, une coupure réseau entre les deux laisse une place fantôme, réservée pour personne et invisible à l'inventaire.</div>
 <div class="note warn"><b>La présomption est une décision, pas une approximation.</b>
   Le système écrit <code>PARKED_PRESUMED</code> et <code>OCCUPIED</code> sur la seule foi du signal <em>walking</em> dans la bonne allée. Le risque accepté : un usager qui change d'allée après la transition sans être détecté. Le compteur de passages borne l'erreur cumulée, et la tâche <code>reconcile_counts</code> la rend visible. L'alternative — demander un tap à chaque stationnement — coûtait un geste à tout le monde pour corriger une erreur rare.</div>
 </section>

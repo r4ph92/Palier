@@ -488,7 +488,7 @@
         <tr><td>GET /v1/sessions/current</td><td>Session en cours, place assignée, cible de guidage, allée attendue</td></tr>
         <tr><td>POST /v1/sessions/{id}/walking</td><td>Transition « à pied » avec le <code>minor</code> de l'allée détectée par <em>ranging</em> ; allée conforme → place présumée occupée, sans autre geste</td></tr>
         <tr><td>POST /v1/sessions/{id}/parked</td><td>Réponse à « Où êtes-vous garé ? » : confirme la place assignée ou en désigne une autre par <code>spot_id</code></td></tr>
-        <tr><td>POST /v1/sessions/{id}/spot-taken</td><td>La place assignée est prise : réassignation immédiate, dans la même allée si possible ; la place signalée passe à <code>OCCUPIED_UNKNOWN</code></td></tr>
+        <tr><td>POST /v1/entries/{id}/spot-taken</td><td>La place assignée est prise : réassignation immédiate, dans la même allée si possible, la nouvelle place passe à <code>OCCUPIED</code> ; la place signalée passe à <code>OCCUPIED_UNKNOWN</code> (décision 022)</td></tr>
         <tr><td>POST /v1/sessions/{id}/at-exit</td><td>L'app voit la balise de la voie de sortie ; si elle est la seule candidate et qu'un véhicule est sur la boucle, l'API capture et ouvre sans geste</td></tr>
         <tr><td>POST /v1/sessions/{id}/exit</td><td>Tap « Ouvrir » de repli quand le véhicule n'a pas été identifié sans geste</td></tr>
         <tr><td>GET /v1/sessions/{id}/receipt</td><td>Durée, tarif appliqué, montant capturé</td></tr>
