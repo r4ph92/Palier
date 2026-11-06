@@ -1,8 +1,8 @@
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import { paintedNumberNamed } from '../../../src/domain/spots/paintedSpotNumber.ts';
 import {
-  decidePlacement,
   decideSessionAnswer,
+  placementOf,
   type ParkedAnswer,
   type ParkedAnswerRepository,
   type SpotAnswer,
@@ -80,23 +80,28 @@ export class FakeParkedAnswers implements ParkedAnswerRepository {
     if (spotNumber === undefined || spot === undefined) {
       return { outcome: 'unknown-spot' };
     }
-    const decision = decidePlacement({ sessionState: session.state, assignedSpotId: session.assignedSpotNumber, spotId: spotNumber, spotState: spot.state });
-    if (decision === 'spot-taken' || decision === 'spot-out-of-service') {
-      return { outcome: decision };
+    const placement = placementOf({ sessionState: session.state, assignedSpotId: session.assignedSpotNumber, spotId: spotNumber, spotState: spot.state });
+    if (placement.outcome === 'refused') {
+      return { outcome: placement.refusal };
     }
     this.writes += 1;
-    if (decision !== 'keep-presumed') {
+    if (placement.occupiesAnswered) {
       Object.assign(spot, { state: 'OCCUPIED', needsCheck: false });
     }
-    if (decision === 'move-from-presumed') {
+    if (placement.flagsAssigned) {
       this.#flagToCheck(session.assignedSpotNumber);
     }
     Object.assign(session, { state: 'PARKED_CONFIRMED', confirmedSpotNumber: spotNumber, answeredAt: new Date() });
     return { outcome: 'confirmed', spot: labelOf(spotNumber) };
   }
 
+  // Like the SQL guard: only an occupied presumed spot can be flagged, anything else is a broken invariant.
   #flagToCheck(spotNumber: string): void {
-    Object.assign(this.#spots.get(spotNumber) ?? {}, { state: 'OCCUPIED_UNKNOWN', needsCheck: true });
+    const spot = this.#spots.get(spotNumber);
+    if (spot?.state !== 'OCCUPIED') {
+      throw new Error(`Assigned spot ${spotNumber} of a session leaving it was not occupied.`);
+    }
+    Object.assign(spot, { state: 'OCCUPIED_UNKNOWN', needsCheck: true });
   }
 
   // Exact match first, then the same number without case, spaces or dashes, like the repository.

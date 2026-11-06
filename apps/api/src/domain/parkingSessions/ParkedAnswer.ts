@@ -55,16 +55,21 @@ export interface PlacementFacts {
   readonly spotState: SpotState;
 }
 
-// keep-presumed: the presumed spot was right; move-from-presumed: the car is elsewhere, and the presumed spot is flagged to check.
-export type PlacementDecision = 'occupy' | 'keep-presumed' | 'move-from-presumed' | Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service'>;
+// What a placement writes: the answered spot occupied, unless it is the presumed one already occupied; the presumed spot flagged
+// to check when the car turns out to be elsewhere.
+export type Placement =
+  | { readonly outcome: 'refused'; readonly refusal: Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service'> }
+  | { readonly outcome: 'placed'; readonly occupiesAnswered: boolean; readonly flagsAssigned: boolean };
 
-export function decidePlacement({ sessionState, assignedSpotId, spotId, spotState }: PlacementFacts): PlacementDecision {
-  if (sessionState !== 'PARKED_PRESUMED') {
-    return decideSpotAnswer(spotState);
-  }
-  if (spotId === assignedSpotId) {
-    return 'keep-presumed';
+export function placementOf({ sessionState, assignedSpotId, spotId, spotState }: PlacementFacts): Placement {
+  const isPresumed = sessionState === 'PARKED_PRESUMED';
+  const isAssigned = spotId === assignedSpotId;
+  if (isPresumed && isAssigned) {
+    return { outcome: 'placed', occupiesAnswered: false, flagsAssigned: false };
   }
   const decision = decideSpotAnswer(spotState);
-  return decision === 'occupy' ? 'move-from-presumed' : decision;
+  if (decision !== 'occupy') {
+    return { outcome: 'refused', refusal: decision };
+  }
+  return { outcome: 'placed', occupiesAnswered: true, flagsAssigned: isPresumed && !isAssigned };
 }

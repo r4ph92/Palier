@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decidePlacement, decideSessionAnswer, decideSpotAnswer } from '../../src/domain/parkingSessions/ParkedAnswer.ts';
+import { decideSessionAnswer, decideSpotAnswer, placementOf } from '../../src/domain/parkingSessions/ParkedAnswer.ts';
 
 describe('which session takes a spot answer', () => {
   it.each([
@@ -30,17 +30,24 @@ describe('which spot the answer may name (D9)', () => {
 describe('where a presumed session goes once it names its spot (story #22)', () => {
   const A1 = 'spot-a1';
 
+  const KEEP = { outcome: 'placed', occupiesAnswered: false, flagsAssigned: false };
+  const MOVE = { outcome: 'placed', occupiesAnswered: true, flagsAssigned: true };
+
   it.each([
-    { naming: 'its own presumed spot', spotId: A1, spotState: 'OCCUPIED', decision: 'keep-presumed' },
-    { naming: 'a free spot', spotId: 'spot-a3', spotState: 'AVAILABLE', decision: 'move-from-presumed' },
-    { naming: 'a spot left by a driver who walked elsewhere', spotId: 'spot-a3', spotState: 'OCCUPIED_UNKNOWN', decision: 'move-from-presumed' },
-    { naming: 'a spot assigned to someone else', spotId: 'spot-b4', spotState: 'ASSIGNED', decision: 'spot-taken' },
-    { naming: 'an out-of-service spot', spotId: 'spot-b5', spotState: 'OUT_OF_SERVICE', decision: 'spot-out-of-service' },
-  ] as const)('naming $naming: $decision', ({ spotId, spotState, decision }) => {
-    expect(decidePlacement({ sessionState: 'PARKED_PRESUMED', assignedSpotId: A1, spotId, spotState })).toBe(decision);
+    { naming: 'its own presumed spot', spotId: A1, spotState: 'OCCUPIED', placement: KEEP },
+    { naming: 'a free spot', spotId: 'spot-a3', spotState: 'AVAILABLE', placement: MOVE },
+    { naming: 'a spot left by a driver who walked elsewhere', spotId: 'spot-a3', spotState: 'OCCUPIED_UNKNOWN', placement: MOVE },
+    { naming: 'a spot assigned to someone else', spotId: 'spot-b4', spotState: 'ASSIGNED', placement: { outcome: 'refused', refusal: 'spot-taken' } },
+    { naming: 'an out-of-service spot', spotId: 'spot-b5', spotState: 'OUT_OF_SERVICE', placement: { outcome: 'refused', refusal: 'spot-out-of-service' } },
+  ] as const)('naming $naming', ({ spotId, spotState, placement }) => {
+    expect(placementOf({ sessionState: 'PARKED_PRESUMED', assignedSpotId: A1, spotId, spotState })).toEqual(placement);
   });
 
   it('an asked session naming its own assigned spot occupies it again, as in #21', () => {
-    expect(decidePlacement({ sessionState: 'PARKED_UNCONFIRMED', assignedSpotId: A1, spotId: A1, spotState: 'OCCUPIED_UNKNOWN' })).toBe('occupy');
+    expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', assignedSpotId: A1, spotId: A1, spotState: 'OCCUPIED_UNKNOWN' })).toEqual({
+      outcome: 'placed',
+      occupiesAnswered: true,
+      flagsAssigned: false,
+    });
   });
 });

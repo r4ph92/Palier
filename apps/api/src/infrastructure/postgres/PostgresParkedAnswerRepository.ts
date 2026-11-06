@@ -1,9 +1,10 @@
 import type { AssignedSpot } from '@palier/shared-types';
 import {
-  decidePlacement,
   decideSessionAnswer,
+  placementOf,
   type ParkedAnswer,
   type ParkedAnswerRepository,
+  type Placement,
   type SpotAnswer,
 } from '../../domain/parkingSessions/ParkedAnswer.ts';
 import type { Database, Transaction } from './database.ts';
@@ -69,20 +70,25 @@ async function placeCar(tx: Transaction, answer: SpotAnswer, { lotId, session }:
   if (spot === null) {
     return { outcome: 'unknown-spot' };
   }
-  const decision = decidePlacement({ sessionState: session.state, assignedSpotId: session.assignedSpotId, spotId: spot.id, spotState: spot.state });
-  if (decision === 'spot-taken' || decision === 'spot-out-of-service') {
-    return { outcome: decision };
+  const placement = placementOf({ sessionState: session.state, assignedSpotId: session.assignedSpotId, spotId: spot.id, spotState: spot.state });
+  if (placement.outcome === 'refused') {
+    return { outcome: placement.refusal };
   }
-  if (decision !== 'keep-presumed') {
-    await occupyAnsweredSpot(tx, spot.id);
-  }
-  if (decision === 'move-from-presumed') {
-    await flagAssignedSpotToCheck(tx, session.assignedSpotId);
-  }
-  return confirmPlacement(tx, answer.sessionId, spot);
+  await writeSpots(tx, placement, { spot, session });
+  await confirmParkedSpot(tx, answer.sessionId, spot.id);
+  return { outcome: 'confirmed', spot: spot.label };
 }
 
-async function confirmPlacement(tx: Transaction, sessionId: string, spot: AnsweredSpot): Promise<ParkedAnswer> {
-  await confirmParkedSpot(tx, sessionId, spot.id);
-  return { outcome: 'confirmed', spot: spot.label };
+interface PlacedSpots {
+  readonly spot: AnsweredSpot;
+  readonly session: AnsweringSession;
+}
+
+async function writeSpots(tx: Transaction, { occupiesAnswered, flagsAssigned }: Extract<Placement, { outcome: 'placed' }>, { spot, session }: PlacedSpots): Promise<void> {
+  if (occupiesAnswered) {
+    await occupyAnsweredSpot(tx, spot.id);
+  }
+  if (flagsAssigned) {
+    await flagAssignedSpotToCheck(tx, session.assignedSpotId);
+  }
 }
