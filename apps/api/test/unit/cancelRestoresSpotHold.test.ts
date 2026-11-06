@@ -22,7 +22,7 @@ function spotStateAfter(scripted: ScriptedSql): unknown {
 
 describe('cancelling an entry that used a hold', () => {
   it('puts the hold back and keeps its spot held, under the lot lock', async () => {
-    const scripted = cancelledSession(cancelledWithHold).answer('restore-spot-hold', [{ id: 'hold-julie' }]);
+    const scripted = cancelledSession(cancelledWithHold).answer('restore-spot-hold', [{ id: 'hold-julie' }]).answer('free-held-spot', [{ id: 'spot-A-1' }]);
 
     await cancelOnRollback(scripted);
 
@@ -32,7 +32,7 @@ describe('cancelling an entry that used a hold', () => {
   });
 
   it('compares the end time with the API clock and never moves it', async () => {
-    const scripted = cancelledSession(cancelledWithHold).answer('restore-spot-hold', [{ id: 'hold-julie' }]);
+    const scripted = cancelledSession(cancelledWithHold).answer('restore-spot-hold', [{ id: 'hold-julie' }]).answer('free-held-spot', [{ id: 'spot-A-1' }]);
 
     await cancelOnRollback(scripted);
 
@@ -61,6 +61,22 @@ describe('cancelling an entry that used a hold', () => {
     expect(spotStateAfter(scripted)).toBe('AVAILABLE');
   });
 
+  it('writes the held spot with the API clock, not the database one', async () => {
+    const scripted = cancelledSession(cancelledWithHold).answer('restore-spot-hold', [{ id: 'hold-julie' }]).answer('free-held-spot', [{ id: 'spot-A-1' }]);
+
+    await cancelOnRollback(scripted);
+
+    expect(scripted.statement('free-held-spot')?.params).toContain(NOW.toISOString());
+  });
+
+  it('puts the hold back to used when the spot was no longer assigned', async () => {
+    const scripted = cancelledSession(cancelledWithHold).answer('restore-spot-hold', [{ id: 'hold-julie' }]);
+
+    await cancelOnRollback(scripted);
+
+    expect(scripted.statements.at(-1)?.text).toMatch(/update spot_hold set status = 'USED'/);
+  });
+
   it('restores nothing for an entry made without a hold', async () => {
     const scripted = cancelledSession(cancelledWithoutHold);
 
@@ -82,7 +98,7 @@ describe('cancelling an entry that used a hold', () => {
 
 describe('the cancellation job', () => {
   it('restores the hold with the same rule, on the clock it was given', async () => {
-    const scripted = new ScriptedSql().answer('cancel-session', [cancelledWithHold]).answer('restore-spot-hold', [{ id: 'hold-julie' }]);
+    const scripted = new ScriptedSql().answer('cancel-session', [cancelledWithHold]).answer('restore-spot-hold', [{ id: 'hold-julie' }]).answer('free-held-spot', [{ id: 'spot-A-1' }]);
 
     const cancelled = await new PostgresUnconfirmedEntryRepository(scripted.database(), () => NOW).cancel({ sessionId: 'session-1', lotId: 'lot-demo' });
 
