@@ -24,7 +24,6 @@ export function useSpotCorrection(): SpotCorrection {
   };
 }
 
-// The late answer of docs/02: Palier presumed the assigned spot, and the driver says the car is elsewhere.
 export function CorrectSpotButton({ correction }: { readonly correction: SpotCorrection }) {
   const focusRef = useAccessibilityFocusOnMount();
   return <TextButton label={i18n.t('session.whereParked.notMySpot')} align="start" focusRef={correction.takesFocus ? focusRef : undefined} onPress={correction.start} />;

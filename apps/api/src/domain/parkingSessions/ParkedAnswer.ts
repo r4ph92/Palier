@@ -1,7 +1,7 @@
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import type { SpotState } from '../spots/spotStates.ts';
 
-// The driver says where the car is: asked after walking away in another aisle, or correcting a presumed spot; spotNumber is trimmed, otherwise as typed.
+// Trimmed, otherwise as typed, so an exact painted number wins over its canonical match (decision 020).
 export interface SpotAnswer {
   readonly sessionId: string;
   readonly driverId: string;

@@ -31,7 +31,6 @@ const PROBLEM_MESSAGES: Readonly<Record<ParkedAnswerProblem, string>> = {
   UNREACHABLE: 'session.whereParked.unreachable',
 };
 
-// How the session screen frames the form: the question after a walk in another aisle, or the correction of a presumed spot.
 export interface WhereParkedFraming {
   readonly title: string;
   // The offline notice, or null; it sits under the title so the driver knows the free spots may be old.
