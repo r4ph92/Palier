@@ -57,7 +57,6 @@ export async function recordReportedSpot(tx: Executor, { sessionId, spotId, lotI
     on conflict do nothing`);
 }
 
-// The session is locked and read ENTRY_CONFIRMED just before: a zero-row update is a broken invariant, and rolls the report back.
 export async function reassignSession(tx: Executor, sessionId: string, spotId: string): Promise<void> {
   const rows = await tx.execute(sql`
     update parking_session set assigned_spot_id = ${spotId}
