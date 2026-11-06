@@ -6,6 +6,7 @@ import { ENTRY_STATUS_POLL_MILLISECONDS } from '../src/entries/useConfirmationPo
 import type { SupportedLanguage } from '../src/i18n/i18n';
 import { SESSION_REFRESH_MILLISECONDS } from '../src/parkingSessions/useCurrentParkingSession';
 import { PositioningCore } from '../src/positioning/PositioningCore';
+import { FakeBackgroundLocationClient } from './fakeBackgroundLocationClient';
 import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
@@ -123,5 +124,21 @@ describe('walking away right after the scan, without « Terminé » (story #18)'
 
     expect(await screen.findByText('Aucune session en cours')).toBeOnTheScreen();
     expect(screen.queryByText(/A-1/, visibleText)).toBeNull();
+  });
+});
+
+describe('the automatic detection notice once parked (story #18)', () => {
+  it.each([
+    ['shows', 'ENTRY_CONFIRMED', 1],
+    ['hides', 'PARKED_PRESUMED', 0],
+  ] as const)('%s « Détection automatique désactivée » for a %s session without « Toujours »', async (_verb, state, count) => {
+    const backgroundLocation = new FakeBackgroundLocationClient();
+    backgroundLocation.hasAlwaysPermission = false;
+    const parkingSession = new FakeParkingSessionClient(julieAtParkingDemo({ state }));
+    await renderPalierApp({ ...signedInJulie(), testSignInEnabled: false, clients: () => ({ parkingSession, backgroundLocation }) });
+    await screen.findByRole('tab', { name: 'Session', selected: true });
+    await act(async () => undefined);
+
+    expect(screen.queryAllByText(/Détection automatique désactivée/)).toHaveLength(count);
   });
 });

@@ -77,6 +77,7 @@ function sessionScreenFor(currentSession: CurrentParkingSessionController, choic
   }
 }
 
+// Once parked, « présumée occupée après 30 min » would contradict a spot already presumed taken.
 function currentSessionScreen(
   reading: CurrentParkingSessionReading,
   { refresh, isReading, missedReads }: CurrentParkingSessionController,
@@ -87,7 +88,7 @@ function currentSessionScreen(
       reading={reading}
       progress={{ isReading, missedReads }}
       onRetry={refresh}
-      notice={aside.detectionNotice}
+      notice={isParked(reading.session.state) ? null : aside.detectionNotice}
       guidance={aside.guidance}
       focusSpotOnArrival={reading.session.sessionId === arrivedParkedSessionId}
     />
