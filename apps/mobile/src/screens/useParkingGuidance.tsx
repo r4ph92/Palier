@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { CurrentParkingSessionState } from '../parkingSessions/useCurrentParkingSession';
+import type { AisleFollower } from '../positioning/AisleFollower';
 import type { PositioningCore } from '../positioning/PositioningCore';
 import { isParked } from '../parkingSessions/isParked';
 import { useAisleMonitoring } from '../positioning/useAisleMonitoring';
@@ -8,10 +9,10 @@ import { ParkingGuidance } from './ParkingGuidance';
 
 // Runs above the tabs: beacons are monitored and the last aisle kept while the driver looks at another tab.
 // Once the spot is presumed taken the guidance is gone: « Rendez-vous allée A » would contradict « Garé en A-1 ».
-export function useParkingGuidance(positioning: PositioningCore, state: CurrentParkingSessionState): ReactNode {
+export function useParkingGuidance(positioning: PositioningCore, aisles: AisleFollower, state: CurrentParkingSessionState): ReactNode {
   const session = state.status === 'current' ? state.session : null;
   useAisleMonitoring(positioning, session);
-  const currentAisle = useCurrentAisle(positioning, session);
+  const currentAisle = useCurrentAisle(aisles);
   if (session === null || isParked(session.state)) {
     return null;
   }

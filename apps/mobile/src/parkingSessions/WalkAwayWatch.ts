@@ -4,7 +4,7 @@ import { PalierUnreachableError } from '../api/LotsClient';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
 import { isParked } from './isParked';
-import { aisleWithMinor } from '../positioning/aisleWithMinor';
+import type { AisleFollower } from '../positioning/AisleFollower';
 import type { PositioningCore } from '../positioning/PositioningCore';
 import type { ParkedConfidence, PositioningListener } from '../positioning/PositioningModule';
 
@@ -18,6 +18,7 @@ export interface WalkAwayContext {
   readonly positioning: PositioningCore;
   readonly client: ParkingSessionClient;
   readonly latest: () => LatestSession;
+  readonly aisles: AisleFollower;
 }
 
 interface Walk {
@@ -31,8 +32,6 @@ const EXPECTED_FAILURES = [PalierRejectedError, PalierUnreachableError, PalierUn
 export class WalkAwayWatch {
   readonly listener: PositioningListener;
   readonly #context: WalkAwayContext;
-  // Followed here, not read from a render, so an aisle seen just before the walk always counts.
-  #aisleCode: string | null = null;
   #isSending = false;
   #isReported = false;
   #isActive = true;
@@ -40,7 +39,7 @@ export class WalkAwayWatch {
   constructor(context: WalkAwayContext) {
     this.#context = context;
     this.listener = {
-      onAisleChanged: (minor) => this.#followAisle(minor),
+      onAisleChanged: () => undefined,
       onParkedDetected: (confidence, detectedAt) => void this.#onWalk({ confidence, detectedAt }),
       onLotExit: () => undefined,
       onQueueFlushed: () => undefined,
@@ -49,11 +48,6 @@ export class WalkAwayWatch {
 
   stop(): void {
     this.#isActive = false;
-  }
-
-  #followAisle(minor: number): void {
-    const aisles = this.#context.latest().session?.levelPlan?.aisles ?? [];
-    this.#aisleCode = aisleWithMinor(aisles, minor)?.code ?? this.#aisleCode;
   }
 
   async #onWalk(walk: Walk): Promise<void> {
@@ -76,7 +70,8 @@ export class WalkAwayWatch {
     if (walk.confidence === 'low' || this.#isSending || this.#isReported) {
       return false;
     }
-    return this.#aisleCode === null || this.#aisleCode === session.spot.aisleCode;
+    const aisle = this.#context.aisles.current();
+    return aisle === null || aisle.code === session.spot.aisleCode;
   }
 
   // A refused or lost signal changes nothing: the offline queue (#26) will send it again.

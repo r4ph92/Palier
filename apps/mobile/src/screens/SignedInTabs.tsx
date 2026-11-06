@@ -1,12 +1,13 @@
-import { useCallback, useMemo, type ComponentProps, type ReactElement } from 'react';
+import { useCallback, useMemo, type ComponentProps, type ReactElement, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { SignedInClients } from '../api/SignedInClients';
 import { rememberingAnswer } from '../deviceLocation/LocationExplanationStore';
 import { TabBar, type Tab } from '../components/TabBar';
 import { usePendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { useTabs, type TabsController } from '../navigation/useTabs';
-import { useCurrentParkingSession } from '../parkingSessions/useCurrentParkingSession';
+import { useCurrentParkingSession, type CurrentParkingSessionController } from '../parkingSessions/useCurrentParkingSession';
 import { useParkedPresumption } from '../parkingSessions/useParkedPresumption';
+import { useAisleFollower } from '../positioning/useCurrentAisle';
 import { useSpotHold } from '../spotHolds/useSpotHold';
 import { AccountTab } from './AccountTab';
 import { AutomaticDetectionNotice } from './AutomaticDetectionNotice';
@@ -54,8 +55,7 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
   const spotHold = useSpotHold(clients.spotHold);
   const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: currentSession.refresh, onSubmissionEnded: spotHold.refreshHold });
   const gateScanner = useScannerGate(clients);
-  useParkedPresumption({ positioning: device.positioning, client: clients.parkingSession }, currentSession);
-  const guidance = useParkingGuidance(device.positioning, currentSession.state);
+  const guidance = useSessionPositioning({ device, clients }, currentSession);
   const screens: TabScreens = {
     home: { firstName, lotsClient: clients.lots, locationClient: clients.location, spotHold },
     scan: {
@@ -68,6 +68,13 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
     account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut },
   };
   return { currentSession, screens };
+}
+
+// The aisle and the walk away are followed above the tabs too, so a driver on another tab never misses them.
+function useSessionPositioning({ device, clients }: Pick<SignedInTabsProps, 'device' | 'clients'>, currentSession: CurrentParkingSessionController): ReactNode {
+  const aisles = useAisleFollower(device.positioning, currentSession.state);
+  useParkedPresumption({ positioning: device.positioning, client: clients.parkingSession, aisles }, currentSession);
+  return useParkingGuidance(device.positioning, aisles, currentSession.state);
 }
 
 function scanTabActions(clients: SignedInClients, tabs: TabsController): ScanTabActions {

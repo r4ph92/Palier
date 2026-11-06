@@ -46,6 +46,16 @@ describe('walking signals that presume nothing (story #18)', () => {
     expect(parkingSession.parkedReports).toHaveLength(0);
   });
 
+  it('sends nothing after aisle B then minor 9, which keeps aisle B', async () => {
+    const { walkAway, enterAisle, parkingSession } = await julieWith(julieAtParkingDemo());
+    await enterAisle(2);
+    await enterAisle(9);
+
+    await walkAway();
+
+    expect(parkingSession.parkedReports).toHaveLength(0);
+  });
+
   it('keeps aisle A for a minor that belongs to no aisle, and presumes A-1', async () => {
     const { walkAway, enterAisle, parkingSession } = await julieWith(julieAtParkingDemo());
     await enterAisle(1);
