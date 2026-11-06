@@ -1,4 +1,5 @@
 import { sql, type SQL } from 'drizzle-orm';
+import type { UsableSpotHoldQuery } from '../../domain/spotHolds/SpotHoldRepository.ts';
 
 // One text for the partial indexes and every hold query, so they agree on what "active" means; the time rule is spotHoldEndedAt and spotHoldRunningAt.
 export const ACTIVE_SPOT_HOLD = sql.raw(`status = 'ACTIVE'`);
@@ -10,12 +11,6 @@ export function spotHoldEndedAt(now: Date): SQL {
 
 export function spotHoldRunningAt(now: Date): SQL {
   return sql`expires_at > ${now.toISOString()}::timestamptz`;
-}
-
-export interface UsableSpotHoldQuery {
-  readonly driverId: string;
-  readonly lotId: string;
-  readonly now: Date;
 }
 
 export function usableSpotHold({ driverId, lotId, now }: UsableSpotHoldQuery): SQL {

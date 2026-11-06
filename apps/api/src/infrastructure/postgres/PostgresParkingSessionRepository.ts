@@ -18,7 +18,7 @@ import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
 import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
 import { parkingSession } from './schema.ts';
 import { ASSIGNED_TO_ENTRY, claimFirstFittingSpot, type AssignedSpotRow } from './spotClaim.ts';
-import { consumeSpotHold } from './spotHoldUse.ts';
+import { consumeHeldSpot, heldSpotFits, readHeldSpot, releaseUnfitHold } from './spotHoldUse.ts';
 import { spotOf, type SpotLabelRow } from './spotLabel.ts';
 
 interface SessionStatusRow extends SpotLabelRow {
@@ -94,10 +94,19 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 
 // The driver's own held spot comes first, so a lot that filled while she drove still has her spot (decision 016).
 async function openSession(tx: Transaction, draft: SessionDraft): Promise<OpenedSession | null> {
-  const assigned =
-    (await consumeSpotHold(tx, { driverId: draft.driverId, lotId: draft.lotId, now: draft.now }, draft.needs)) ??
-    (await claimFirstFittingSpot(tx, { lotId: draft.lotId, needs: draft.needs, target: ASSIGNED_TO_ENTRY }));
-  return assigned === undefined ? null : insertSession(tx, draft, assigned);
+  const query = { driverId: draft.driverId, lotId: draft.lotId, now: draft.now };
+  const held = await readHeldSpot(tx, query);
+  if (heldSpotFits(draft.needs, held)) {
+    return insertSession(tx, draft, await consumeHeldSpot(tx, query, held));
+  }
+  const assigned = await claimFirstFittingSpot(tx, { lotId: draft.lotId, needs: draft.needs, target: ASSIGNED_TO_ENTRY });
+  if (assigned === undefined) {
+    return null;
+  }
+  if (held !== undefined) {
+    await releaseUnfitHold(tx, query, held);
+  }
+  return insertSession(tx, draft, assigned);
 }
 
 async function insertSession(tx: Transaction, draft: SessionDraft, assigned: AssignedSpotRow): Promise<OpenedSession> {

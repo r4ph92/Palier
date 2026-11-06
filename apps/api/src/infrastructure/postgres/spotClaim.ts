@@ -72,10 +72,18 @@ export async function readFreeSpots(executor: Pick<Database, 'execute'>, lotId: 
     aisleCode: row.aisle_code,
     distanceToExit: row.distance_to_exit,
     needsCheck: row.needs_check,
-    isEv: row.is_ev,
-    isAccessible: row.is_accessible,
-    isOversize: row.is_oversize,
+    ...spotFlagsOf(row),
   }));
+}
+
+export interface SpotFlagsRow {
+  readonly is_ev: boolean;
+  readonly is_accessible: boolean;
+  readonly is_oversize: boolean;
+}
+
+export function spotFlagsOf(row: SpotFlagsRow): Pick<FreeSpot, 'isEv' | 'isAccessible' | 'isOversize'> {
+  return { isEv: row.is_ev, isAccessible: row.is_accessible, isOversize: row.is_oversize };
 }
 
 export interface SpotTransition {
@@ -85,6 +93,7 @@ export interface SpotTransition {
 }
 
 // Undefined when the spot is no longer in the state it was read in, or another writer holds its row.
+// `from` is inlined from a closed union, so the statement text names the state it moves from.
 export async function transitionSpot(tx: Pick<Transaction, 'execute'>, { spotId, from, target }: SpotTransition): Promise<AssignedSpotRow | undefined> {
   const rows = await tx.execute<AssignedSpotRow>(sql`
     with chosen as (

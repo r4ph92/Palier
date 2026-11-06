@@ -139,13 +139,56 @@ describe('opening an entry for a driver who holds a spot', () => {
     expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-free-spots']);
   });
 
-  it('leaves the hold alone and claims a free spot when the held spot no longer fits her vehicle', async () => {
-    const scripted = new ScriptedSql().answer('read-held-spot', [{ ...heldSpotRow, is_accessible: true }]).answer('read-free-spots', [freeSpot]).answer('claim-spot', [assignedRow]).answer('insert-session', [{ id: 'session-1' }]);
+  function scriptedUnfitEntry(unfitFlag: string): ScriptedSql {
+    return new ScriptedSql()
+      .answer('read-held-spot', [{ ...heldSpotRow, [unfitFlag]: true }])
+      .answer('read-free-spots', [freeSpot])
+      .answer('claim-spot', [{ id: 'spot-A-1', number: 'A-1', aisle_code: 'A', level_code: 'P1' }])
+      .answer('release-spot-hold', [{ spot_id: 'spot-B-2' }])
+      .answer('free-held-spot', [{ id: 'spot-B-2' }])
+      .answer('insert-session', [{ id: 'session-1' }]);
+  }
+
+  it.each(['is_accessible', 'is_ev'])('claims a free spot and releases the hold when the held spot (%s) no longer fits her vehicle', async (unfitFlag) => {
+    const scripted = scriptedUnfitEntry(unfitFlag);
 
     await openEntry(scripted);
 
+    expect(scripted.labels()).toEqual([
+      'limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-free-spots', 'claim-spot', 'release-spot-hold', 'free-held-spot', 'insert-session',
+    ]);
     expect(scripted.count('use-spot-hold')).toBe(0);
-    expect(scripted.count('claim-spot')).toBe(1);
+  });
+
+  it('releases the hold of this driver by id and frees its spot at the API clock instant', async () => {
+    const scripted = scriptedUnfitEntry('is_accessible');
+
+    await openEntry(scripted);
+
+    expect(scripted.statements.find(({ label }) => label === 'release-spot-hold')?.params).toEqual(['hold-1', draft.driverId]);
+    expect(scripted.statements.find(({ label }) => label === 'free-held-spot')?.params).toContain(NOW.toISOString());
+  });
+
+  it('leaves the hold active when no fitting spot is free', async () => {
+    const scripted = new ScriptedSql().answer('read-held-spot', [{ ...heldSpotRow, is_accessible: true }]);
+
+    expect(await openEntry(scripted)).toBeNull();
+    expect(scripted.count('release-spot-hold')).toBe(0);
+    expect(scripted.count('use-spot-hold')).toBe(0);
+  });
+
+  it('pins the assigned spot to the database clock', async () => {
+    const scripted = scriptedHeldEntry();
+
+    await openEntry(scripted);
+
+    expect(scripted.statements.find(({ label }) => label === 'assign-held-spot')?.text).toContain('state_changed_at = now()');
+  });
+
+  it('rolls the entry back when the hold it read is no longer active', async () => {
+    const scripted = new ScriptedSql().answer('read-held-spot', [heldSpotRow]);
+
+    await expect(openEntry(scripted)).rejects.toThrow('was not active');
   });
 
   it('rolls the entry back when the hold was used but its spot was no longer held', async () => {
