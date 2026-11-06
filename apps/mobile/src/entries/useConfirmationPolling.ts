@@ -105,9 +105,11 @@ function outcomeOfFailure(error: unknown): Outcome {
   throw error;
 }
 
+// A walking signal can land before the next poll: a session presumed parked passed the loop first.
 function outcomeOf(state: EntrySessionState): Outcome {
   switch (state) {
     case 'ENTRY_CONFIRMED':
+    case 'PARKED_PRESUMED':
       return 'confirmed';
     case 'CANCELLED':
       return 'cancelled';

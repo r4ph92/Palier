@@ -23,6 +23,12 @@ describe('HttpParkingSessionClient', () => {
     );
   });
 
+  it('reads a session presumed parked (story #18)', async () => {
+    const parked = julieAtParkingDemo({ state: 'PARKED_PRESUMED' });
+
+    await expect(clientAnswering({ session: parked }).client.current()).resolves.toEqual(parked);
+  });
+
   it('answers null when the driver has no session', async () => {
     await expect(clientAnswering({ session: null }).client.current()).resolves.toBeNull();
   });

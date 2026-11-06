@@ -205,3 +205,19 @@ describe('ScanScreen, confirming the entry', () => {
     expect(screen.queryByText('Entrée confirmée')).not.toBeOnTheScreen();
   });
 });
+
+describe('ScanScreen, an entry already presumed parked (story #18)', () => {
+  beforeEach(() => jest.useFakeTimers({ advanceTimers: true }));
+  afterEach(() => jest.useRealTimers());
+
+  it('counts a session the walking signal reached first as confirmed, and stops asking', async () => {
+    const { client } = await scan();
+    await screen.findByText('Barrière ouverte');
+    client.sessionState = 'PARKED_PRESUMED';
+
+    await advance(ENTRY_STATUS_POLL_MILLISECONDS * 3);
+
+    expect(screen.getByText('Entrée confirmée')).toBeOnTheScreen();
+    expect(client.statusRequests).toHaveLength(1);
+  });
+});
