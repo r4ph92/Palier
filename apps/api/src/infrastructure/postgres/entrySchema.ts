@@ -16,6 +16,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
+import { PRESUMPTION_EVIDENCES } from '../../domain/parkingSessions/PresumptionEvidence.ts';
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import { appUser, vehicle } from './driverSchema.ts';
 import { gate } from './gateSchema.ts';
@@ -36,11 +37,13 @@ export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION
 // How the vehicle was identified at the exit: the tap in the app, the gate's plate or transponder reader, or the exit beacon seen by
 // the app together with a vehicle at the gate (docs/03, sequence C).
 export const exitIdentification = pgEnum('exit_identification', ['APP', 'PLATE', 'TRANSPONDER', 'BEACON']);
+export const parkingSessionPresumption = pgEnum('parking_session_presumption', PRESUMPTION_EVIDENCES);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
 
 interface StateColumns {
   readonly state: AnyPgColumn;
   readonly parkedAisleId: AnyPgColumn;
+  readonly presumedBy: AnyPgColumn;
   readonly confirmedSpotId: AnyPgColumn;
   readonly parkedAnsweredAt: AnyPgColumn;
   readonly exitAt: AnyPgColumn;
@@ -53,6 +56,7 @@ interface StateColumns {
 function stateChecks(table: StateColumns) {
   return [
     check('parking_session_unconfirmed_has_aisle', sql`${table.state}::text <> 'PARKED_UNCONFIRMED' or ${table.parkedAisleId} is not null`),
+    check('parking_session_presumed_has_evidence', sql`${table.state}::text <> 'PARKED_PRESUMED' or ${table.presumedBy} is not null`),
     check(
       'parking_session_confirmed_has_spot',
       sql`${table.state}::text <> 'PARKED_CONFIRMED' or (${table.confirmedSpotId} is not null and ${table.parkedAnsweredAt} is not null)`,
@@ -98,6 +102,8 @@ export const parkingSession = pgTable(
     entryScanAt: timestamp('entry_scan_at', { withTimezone: true }).notNull().defaultNow(),
     entryConfirmedAt: timestamp('entry_confirmed_at', { withTimezone: true }),
     parkedAt: timestamp('parked_at', { withTimezone: true }),
+    // Why the session is presumed parked; kept as history when the driver later corrects the spot.
+    presumedBy: parkingSessionPresumption('presumed_by'),
     // The aisle the device last saw at the walk, when it was not the assigned spot's: the driver is asked where they parked.
     parkedAisleId: uuid('parked_aisle_id'),
     // The spot the driver said they parked in; the assigned spot stays as the history of the entry.
