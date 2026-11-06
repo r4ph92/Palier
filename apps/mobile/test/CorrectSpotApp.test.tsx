@@ -4,9 +4,7 @@ import { PalierRejectedError } from '../src/api/VehicleClient';
 import { julieAtParkingDemo } from './fakeParkingSessionClient';
 import { visibleText } from './visibleText';
 import { julieWith, PARKED_IN_A1 } from './walkAwayRig';
-import { CONFIRM_TYPED, julieCorrecting, juliePresumedInA1, NOT_MY_SPOT, REFUSAL_MESSAGES, watchSpotFocus } from './whereParkedRig';
-
-const SPOT_NUMBER = 'Numéro de la place où vous êtes garé';
+import { CONFIRM_TYPED, CORRECTED_SPOT_NUMBER, julieCorrecting, juliePresumedInA1, NOT_MY_SPOT, REFUSAL_MESSAGES, watchSpotFocus } from './whereParkedRig';
 
 describe('correcting the spot Palier presumed (story #22)', () => {
   beforeEach(() => jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 10, 4, 18, 5) }));
@@ -25,7 +23,7 @@ describe('correcting the spot Palier presumed (story #22)', () => {
 
     const title = screen.getByRole('header', { name: NOT_MY_SPOT });
     expect(focus).toHaveBeenCalledWith(expect.objectContaining({ props: expect.objectContaining({ children: title.props.children }) }), 'focus');
-    expect(screen.getByLabelText(SPOT_NUMBER)).toBeOnTheScreen();
+    expect(screen.getByLabelText(CORRECTED_SPOT_NUMBER)).toBeOnTheScreen();
     expect(screen.queryAllByRole('radio')).toEqual([]);
     expect(screen.queryByText(/Montant à ce jour/, visibleText)).toBeNull();
     expect(screen.queryByText(PARKED_IN_A1, visibleText)).toBeNull();
@@ -35,7 +33,7 @@ describe('correcting the spot Palier presumed (story #22)', () => {
     const { user, parkingSession } = await julieCorrecting();
     const expectFocusedSpot = watchSpotFocus();
 
-    await user.type(screen.getByLabelText(SPOT_NUMBER), 'A-3');
+    await user.type(screen.getByLabelText(CORRECTED_SPOT_NUMBER), 'A-3');
     await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(parkingSession.spotAnswers).toEqual(['A-3']);
@@ -51,7 +49,7 @@ describe('correcting the spot Palier presumed (story #22)', () => {
     const { user, parkingSession } = await julieCorrecting();
     parkingSession.answerFailure = new PalierRejectedError(code);
 
-    await user.type(screen.getByLabelText(SPOT_NUMBER), typed);
+    await user.type(screen.getByLabelText(CORRECTED_SPOT_NUMBER), typed);
     await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message, visibleText);
@@ -77,7 +75,7 @@ describe('correcting the spot Palier presumed (story #22)', () => {
     parkingSession.answerFailure = new PalierRejectedError('SESSION_CLOSED');
     parkingSession.session = null;
 
-    await user.type(screen.getByLabelText(SPOT_NUMBER), 'A-3');
+    await user.type(screen.getByLabelText(CORRECTED_SPOT_NUMBER), 'A-3');
     await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(await screen.findByRole('tab', { name: 'Scanner' })).toBeOnTheScreen();

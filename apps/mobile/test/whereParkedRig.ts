@@ -40,6 +40,7 @@ export async function julieAskedInAisleB(language: SupportedLanguage = 'fr') {
 }
 
 export const NOT_MY_SPOT = 'Ce n’est pas ma place';
+export const CORRECTED_SPOT_NUMBER = 'Numéro de la place où vous êtes garé';
 
 // Julie walked away in aisle A: Palier presumed her assigned A-1.
 export async function juliePresumedInA1(language: SupportedLanguage = 'fr') {

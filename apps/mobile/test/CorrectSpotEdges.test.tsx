@@ -4,11 +4,9 @@ import { PalierUnreachableError } from '../src/api/LotsClient';
 import { julieAtParkingDemo } from './fakeParkingSessionClient';
 import { visibleText } from './visibleText';
 import { advance } from './walkAwayRig';
-import { CONFIRM_TYPED, julieCorrecting, NOT_MY_SPOT } from './whereParkedRig';
+import { CONFIRM_TYPED, CORRECTED_SPOT_NUMBER, julieCorrecting, NOT_MY_SPOT } from './whereParkedRig';
 
 const A2 = { number: 'A-2', levelCode: 'P1', aisleCode: 'A' };
-
-const SPOT_NUMBER = 'Numéro de la place où vous êtes garé';
 
 describe('the correction form at its edges (story #22)', () => {
   beforeEach(() => jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 10, 4, 18, 5) }));
@@ -18,7 +16,7 @@ describe('the correction form at its edges (story #22)', () => {
     const { user, parkingSession } = await julieCorrecting();
     parkingSession.holdsSpotAnswer = true;
 
-    await user.type(screen.getByLabelText(SPOT_NUMBER), 'A-3');
+    await user.type(screen.getByLabelText(CORRECTED_SPOT_NUMBER), 'A-3');
     await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
 
     expect(await screen.findByText('Envoi…', visibleText)).toBeOnTheScreen();
@@ -40,7 +38,7 @@ describe('the correction form at its edges (story #22)', () => {
 
   it('offers the action, not the form, on the next presumed session of Julie after she corrected the last one', async () => {
     const { user, parkingSession } = await julieCorrecting();
-    await user.type(screen.getByLabelText(SPOT_NUMBER), 'A-3');
+    await user.type(screen.getByLabelText(CORRECTED_SPOT_NUMBER), 'A-3');
     await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
     await screen.findByText('Garé en A-3', visibleText);
 
