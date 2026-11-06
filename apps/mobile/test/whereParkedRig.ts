@@ -18,3 +18,18 @@ export async function julieAskedInAisleB(language: SupportedLanguage = 'fr') {
   await screen.findByText(language === 'fr' ? WHERE_PARKED : 'Where are you parked?', visibleText);
   return { ...rig, user: userEvent.setup({ advanceTimers: jest.advanceTimersByTimeAsync }) };
 }
+
+export const NOT_MY_SPOT = 'Ce n’est pas ma place';
+
+// Julie walked away in aisle A: Palier presumed her assigned A-1.
+export async function juliePresumedInA1(language: SupportedLanguage = 'fr') {
+  const rig = await julieWith(julieAtParkingDemo({ state: 'PARKED_PRESUMED' }), language);
+  await screen.findByText(language === 'fr' ? 'Garé en A-1' : 'Parked in A-1', visibleText);
+  return { ...rig, user: userEvent.setup({ advanceTimers: jest.advanceTimersByTimeAsync }) };
+}
+
+export async function julieCorrecting() {
+  const rig = await juliePresumedInA1();
+  await rig.user.press(screen.getByRole('button', { name: NOT_MY_SPOT }));
+  return rig;
+}

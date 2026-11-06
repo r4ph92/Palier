@@ -1,27 +1,12 @@
-import { screen, userEvent } from '@testing-library/react-native';
+import { screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
-import type { SupportedLanguage } from '../src/i18n/i18n';
 import { PalierRejectedError } from '../src/api/VehicleClient';
 import { julieAtParkingDemo } from './fakeParkingSessionClient';
 import { asSeen, visibleText } from './visibleText';
 import { julieWith, PARKED_IN_A1 } from './walkAwayRig';
-import { CONFIRM_TYPED } from './whereParkedRig';
+import { CONFIRM_TYPED, julieCorrecting, juliePresumedInA1, NOT_MY_SPOT } from './whereParkedRig';
 
-const NOT_MY_SPOT = 'Ce n’est pas ma place';
 const SPOT_NUMBER = 'Numéro de place';
-
-// Julie walked away in aisle A: Palier presumed her assigned A-1.
-async function juliePresumedInA1(language: SupportedLanguage = 'fr') {
-  const rig = await julieWith(julieAtParkingDemo({ state: 'PARKED_PRESUMED' }), language);
-  await screen.findByText(language === 'fr' ? PARKED_IN_A1 : 'Parked in A-1', visibleText);
-  return { ...rig, user: userEvent.setup({ advanceTimers: jest.advanceTimersByTimeAsync }) };
-}
-
-async function julieCorrecting() {
-  const rig = await juliePresumedInA1();
-  await rig.user.press(screen.getByRole('button', { name: NOT_MY_SPOT }));
-  return rig;
-}
 
 describe('correcting the spot Palier presumed (story #22)', () => {
   beforeEach(() => jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 10, 4, 18, 5) }));

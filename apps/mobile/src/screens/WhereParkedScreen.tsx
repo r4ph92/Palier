@@ -62,24 +62,36 @@ interface WhereParkedQuestionProps {
 }
 
 function WhereParkedQuestion({ question, framing, answering }: WhereParkedQuestionProps) {
-  const colors = useColors();
-  const titleRef = useAccessibilityFocusOnMount();
   const [spotNumber, setSpotNumber] = useState('');
+  // An answer in flight decides the screen: cancelling it would only be undone, silently, when it lands.
+  const onCancel = answering.isSending ? undefined : framing.onCancel;
   const changeNumber = (value: string) => {
     setSpotNumber(value);
     answering.clearProblem();
   };
   return (
-    <View style={styles.section} onAccessibilityEscape={framing.onCancel}>
-      <Text ref={titleRef} accessibilityRole="header" maxFontSizeMultiplier={BODY_TEXT_MAX_FONT_SCALE} style={[typography.spotLine, { color: colors.ink }]}>
-        {framing.title}
-      </Text>
+    <View style={styles.section} onAccessibilityEscape={onCancel}>
+      <FormTitle title={framing.title} />
       {framing.offline}
       {question === null ? null : <FreeSpots question={question} typed={spotNumber} onChoose={changeNumber} />}
       <SpotNumberField spotNumber={spotNumber} onChange={changeNumber} answering={answering} />
-      {framing.onCancel === undefined ? null : <TextButton label={i18n.t('session.whereParked.cancel')} align="start" onPress={framing.onCancel} />}
+      <CancelButton onCancel={onCancel} />
     </View>
   );
+}
+
+function FormTitle({ title }: { readonly title: string }) {
+  const colors = useColors();
+  const titleRef = useAccessibilityFocusOnMount();
+  return (
+    <Text ref={titleRef} accessibilityRole="header" maxFontSizeMultiplier={BODY_TEXT_MAX_FONT_SCALE} style={[typography.spotLine, { color: colors.ink }]}>
+      {title}
+    </Text>
+  );
+}
+
+function CancelButton({ onCancel }: { readonly onCancel: (() => void) | undefined }) {
+  return onCancel === undefined ? null : <TextButton label={i18n.t('session.whereParked.cancel')} align="start" onPress={onCancel} />;
 }
 
 interface SpotNumberFieldProps {
