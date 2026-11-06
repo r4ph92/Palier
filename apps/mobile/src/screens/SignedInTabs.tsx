@@ -22,6 +22,13 @@ interface SignedInTabsProps {
   readonly onSignOut: () => void;
 }
 
+type ScanTabActions = Pick<ComponentProps<typeof ScanTab>, 'entryClient' | 'onAddPlate' | 'onAddCard'>;
+
+interface TabScreensWithSession {
+  readonly currentSession: ReturnType<typeof useCurrentParkingSession>;
+  readonly screens: TabScreens;
+}
+
 interface TabScreens {
   readonly home: ComponentProps<typeof HomeScreen>;
   readonly scan: ComponentProps<typeof ScanTab>;
@@ -41,7 +48,7 @@ export function SignedInTabs(props: SignedInTabsProps) {
   );
 }
 
-function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsProps, tabs: TabsController) {
+function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsProps, tabs: TabsController): TabScreensWithSession {
   const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
   const spotHold = useSpotHold(clients.spotHold);
   const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: currentSession.refresh, onSubmissionEnded: spotHold.refreshHold });
@@ -49,13 +56,19 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
   const guidance = useParkingGuidance(device.positioning, currentSession.state);
   const screens: TabScreens = {
     home: { firstName, lotsClient: clients.lots, locationClient: clients.location, spotHold },
-    scan: { ...scanTabActions(clients, tabs), gateScanner, currentSession, pendingEntry, aside: { detectionNotice: <AutomaticDetectionNotice location={clients.backgroundLocation} />, guidance } },
+    scan: {
+      ...scanTabActions(clients, tabs),
+      gateScanner,
+      currentSession,
+      pendingEntry,
+      aside: { detectionNotice: <AutomaticDetectionNotice location={clients.backgroundLocation} />, guidance },
+    },
     account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut },
   };
   return { currentSession, screens };
 }
 
-function scanTabActions(clients: SignedInClients, tabs: TabsController) {
+function scanTabActions(clients: SignedInClients, tabs: TabsController): ScanTabActions {
   return {
     entryClient: clients.entry,
     onAddPlate: () => tabs.openAccountPage('vehicles'),
