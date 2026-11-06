@@ -51,13 +51,13 @@ export function ScanTab({ entryClient, gateScanner, aside, currentSession, pendi
   return gateScanner(<ScanScreen entry={entry} notice={notice} onDone={onDone} onAddPlate={onAddPlate} onAddCard={onAddCard} />);
 }
 
-// What replaces the scan form: nothing yet known, or a current session.
 interface SessionScreenChoice {
   readonly aside: SessionAside;
   // The session the scan result gave way to, whose spot then takes VoiceOver's focus.
   readonly arrivedParkedSessionId: string | null;
 }
 
+// What replaces the scan form: nothing yet known, or a current session.
 function sessionScreenFor(currentSession: CurrentParkingSessionController, choice: SessionScreenChoice): ReactElement | null {
   const { state } = currentSession;
   switch (state.status) {
@@ -117,18 +117,28 @@ function progressKey(state: EntryState): string | null {
 // A walk away from the car can come before « Terminé »: the scan result then gives way to the session presumed parked,
 // and the entry is over, so a later closed session shows the form rather than this entry's spot.
 function useEndEntryOnceParked(entry: EntryController, state: CurrentParkingSessionState): string | null {
-  const [arrivedParkedSessionId, setArrivedParkedSessionId] = useState<string | null>(null);
-  const enteredSessionId = entry.state.status === 'entered' ? entry.state.sessionId : null;
-  const parkedSessionId = state.status === 'current' && isParked(state.session.state) ? state.session.sessionId : null;
-  const hasArrivedParked = enteredSessionId !== null && enteredSessionId === parkedSessionId;
-  if (hasArrivedParked && arrivedParkedSessionId !== enteredSessionId) {
-    setArrivedParkedSessionId(enteredSessionId);
-  }
+  const parkedEntrySessionId = parkedEntrySessionIdOf(entry.state, state);
+  const arrivedParkedSessionId = useArrivedParkedSessionId(parkedEntrySessionId);
   const { startOver } = entry;
   useEffect(() => {
-    if (hasArrivedParked) {
+    if (parkedEntrySessionId !== null) {
       startOver();
     }
-  }, [hasArrivedParked, startOver]);
+  }, [parkedEntrySessionId, startOver]);
+  return arrivedParkedSessionId;
+}
+
+function parkedEntrySessionIdOf(entryState: EntryState, state: CurrentParkingSessionState): string | null {
+  const enteredSessionId = entryState.status === 'entered' ? entryState.sessionId : null;
+  const parkedSessionId = state.status === 'current' && isParked(state.session.state) ? state.session.sessionId : null;
+  return enteredSessionId !== null && enteredSessionId === parkedSessionId ? enteredSessionId : null;
+}
+
+// Kept once the entry ends, which forgets the entered session id.
+function useArrivedParkedSessionId(parkedEntrySessionId: string | null): string | null {
+  const [arrivedParkedSessionId, setArrivedParkedSessionId] = useState<string | null>(null);
+  if (parkedEntrySessionId !== null && parkedEntrySessionId !== arrivedParkedSessionId) {
+    setArrivedParkedSessionId(parkedEntrySessionId);
+  }
   return arrivedParkedSessionId;
 }
