@@ -4,32 +4,27 @@ import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { ParkedPresumption, ParkedPresumptionRepository, WalkingSignal } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import { isStorableDate } from '../../domain/time/storableDate.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
-import { LOT_BUSY_BODY, SESSION_CLOSED_BODY } from '../parkedRefusals.ts';
+import { ENTRY_NOT_CONFIRMED_BODY, LOT_BUSY_BODY, refusalSender, SESSION_CLOSED_BODY } from '../parkedRefusals.ts';
 import { SESSION_NOT_FOUND_BODY } from '../sessionNotFound.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { entrySessionParametersSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
 import { parkedPresumptionRequestSchema, parkedPresumptionResponseSchema } from '../schemas/parkingSessionSchemas.ts';
 
 const BAD_REQUEST = 400;
-const CONFLICT = 409;
-
 interface ParkedRoute {
   readonly Params: EntrySessionParameters;
   readonly Body: ParkedPresumptionRequest;
 }
 
-interface Refusal {
-  readonly statusCode: number;
-  readonly error: ParkedPresumptionRefusalCode;
-  readonly message: string;
-}
-
-const REFUSALS: Record<Exclude<ParkedPresumption['outcome'], 'recorded' | 'already'>, Refusal> = {
-  'not-found': SESSION_NOT_FOUND_BODY,
-  'entry-not-confirmed': { statusCode: CONFLICT, error: 'ENTRY_NOT_CONFIRMED', message: 'The entry loop has not confirmed this session yet.' },
-  closed: SESSION_CLOSED_BODY,
-  'lot-busy': LOT_BUSY_BODY,
-};
+const sendRefusal = refusalSender<Exclude<ParkedPresumption['outcome'], 'recorded' | 'already'>, ParkedPresumptionRefusalCode>(
+  {
+    'not-found': SESSION_NOT_FOUND_BODY,
+    'entry-not-confirmed': ENTRY_NOT_CONFIRMED_BODY,
+    closed: SESSION_CLOSED_BODY,
+    'lot-busy': LOT_BUSY_BODY,
+  },
+  'walking signal',
+);
 
 export function registerParkedPresumptionRoute(server: FastifyInstance, driverAccess: DriverAccess, presumptions: ParkedPresumptionRepository): void {
   const onRequest = consentedDriverGuards(driverAccess);
@@ -51,11 +46,7 @@ async function presume(
   if (presumption.outcome === 'recorded' || presumption.outcome === 'already') {
     return { state: presumption.state, parkedAt: presumption.parkedAt.toISOString() };
   }
-  if (presumption.outcome === 'lot-busy') {
-    request.log.warn({ sessionId: request.params.sessionId }, 'walking signal refused: the lot stayed locked past the lock timeout');
-  }
-  const refusal = REFUSALS[presumption.outcome];
-  return reply.status(refusal.statusCode).send(refusal);
+  return sendRefusal(presumption.outcome, request, reply);
 }
 
 function walkingSignalOf(request: FastifyRequest<ParkedRoute>, detectedAt: Date): WalkingSignal {
