@@ -6,6 +6,7 @@ import { composeClock } from './composeClock.ts';
 import { composeEntries } from './composeEntries.ts';
 import { composeEntryCancellation } from './composeEntryCancellation.ts';
 import { composeHoldExpiry } from './composeHoldExpiry.ts';
+import { composeSilentSessionPresumption } from './composeSilentSessionPresumption.ts';
 import { composeOperatorStripe } from './composeOperatorStripe.ts';
 import { composeSpotHolds } from './composeSpotHolds.ts';
 import { buildServer } from './http/buildServer.ts';
@@ -26,6 +27,7 @@ import { PostgresUserDirectory } from './infrastructure/postgres/PostgresUserDir
 import { StripeCardGateway } from './infrastructure/stripe/StripeCardGateway.ts';
 import { PostgresVehicleRepository } from './infrastructure/postgres/PostgresVehicleRepository.ts';
 import { openingWindowOf } from './domain/gates/OpeningWindow.ts';
+import { presumeSilentSessions } from './domain/parkingSessions/presumeSilentSessions.ts';
 import { expireSpotHolds } from './domain/spotHolds/expireSpotHolds.ts';
 import { systemClock } from './domain/time/Clock.ts';
 import { cancelUnconfirmedEntries, releasePendingHolds } from './domain/entries/unconfirmedEntryCancellation.ts';
@@ -59,6 +61,10 @@ const entryCancellation = composeEntryCancellation(
   entries.payments,
 );
 const holdExpiry = composeHoldExpiry({ clock, periodSeconds: environment.holdExpiryPeriodSeconds }, connection.database);
+const silentSessionPresumption = composeSilentSessionPresumption(
+  { clock, periodSeconds: environment.silentSessionCheckPeriodSeconds },
+  connection.database,
+);
 const server = buildServer({
   repositories: {
     lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
@@ -125,8 +131,14 @@ const stopHoldExpiry = new SingleRun().startPeriodicTask(() => expireSpotHolds(h
   failureMessage: 'Expiring spot holds failed',
   periodMilliseconds: holdExpiry.periodMilliseconds,
 });
+// Every API instance runs it too: the lot lock and the state guards make a second run find nothing to presume.
+const stopSilentSessionPresumption = new SingleRun().startPeriodicTask(() => presumeSilentSessions(silentSessionPresumption.job, server.log), {
+  logger: server.log,
+  failureMessage: 'Presuming silent sessions failed',
+  periodMilliseconds: silentSessionPresumption.periodMilliseconds,
+});
 server.addHook('onClose', async () => {
-  await stopAll([stopHoldExpiry, stopEntryCancellation, stopSessionTokenPurge]);
+  await stopAll([stopSilentSessionPresumption, stopHoldExpiry, stopEntryCancellation, stopSessionTokenPurge]);
   await connection.close();
 });
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
