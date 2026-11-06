@@ -11,6 +11,7 @@ import { ErrorState } from './components/ErrorState';
 import { nullPositioningCore } from './positioning/nullPositioningCore';
 import type { PositioningCore } from './positioning/PositioningCore';
 import type { DeveloperEntry } from './screens/DeveloperEntry';
+import type { DeviceTools } from './screens/DeviceTools';
 import { AppUpdateRequiredScreen } from './screens/AppUpdateRequiredScreen';
 import { PrivacyNoticeScreen } from './screens/PrivacyNoticeScreen';
 import { SignedInTabs } from './screens/SignedInTabs';
@@ -54,12 +55,6 @@ interface SignedInAppProps {
   readonly device: DeviceTools;
 }
 
-// What the device brings besides the API: the developer panel in development builds, and beacon positioning.
-interface DeviceTools {
-  readonly developerEntry: DeveloperEntry | undefined;
-  readonly positioning: PositioningCore;
-}
-
 function deviceOf({ developerEntry, positioning }: PalierAppProps): DeviceTools {
   return { developerEntry, positioning: positioning ?? nullPositioningCore };
 }
@@ -70,7 +65,7 @@ function SignedInApp({ signedIn, session, createClients, device }: SignedInAppPr
   if (driver.acceptedNoticeVersion !== PRIVACY_NOTICE_VERSION) {
     return <PrivacyNoticeScreen onAccept={session.acceptNotice} onSignOut={session.signOut} />;
   }
-  return <SignedInTabs firstName={driver.firstName} clients={clients} {...device} onSignOut={session.signOut} />;
+  return <SignedInTabs firstName={driver.firstName} clients={clients} device={device} onSignOut={session.signOut} />;
 }
 
 function useSignedInClients(token: string, session: SessionController, createClients: CreateSignedInClients): SignedInClients {
