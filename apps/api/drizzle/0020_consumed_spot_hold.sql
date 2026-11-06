@@ -1,0 +1,2 @@
+ALTER TABLE "parking_session" ADD COLUMN "consumed_spot_hold_id" uuid;--> statement-breakpoint
+ALTER TABLE "parking_session" ADD CONSTRAINT "parking_session_consumed_spot_hold_id_spot_hold_id_fk" FOREIGN KEY ("consumed_spot_hold_id") REFERENCES "public"."spot_hold"("id") ON DELETE no action ON UPDATE no action;
