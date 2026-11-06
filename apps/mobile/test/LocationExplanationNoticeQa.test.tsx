@@ -31,25 +31,25 @@ describe('the detection notice on the session screen', () => {
   it('reads the permission again when Julie comes back from Settings, in both directions', async () => {
     const emit = captureAppStateListeners();
     const location = new FakeBackgroundLocationClient();
-    location.status = 'always';
+    location.hasAlwaysPermission = true;
     await signInAndOpenScanner({ location, store: new MemoryLocationExplanationStore(true), parkingSession: new FakeParkingSessionClient(julieAtParkingDemo()) });
     expect(await screen.findByText('Session en cours')).toBeOnTheScreen();
     expect(screen.queryByText(DETECTION_OFF_FR)).not.toBeOnTheScreen();
 
-    location.status = 'denied';
+    location.hasAlwaysPermission = false;
     await emit('background');
     expect(screen.queryByText(DETECTION_OFF_FR)).not.toBeOnTheScreen();
     await emit('active');
     expect(await screen.findByText(DETECTION_OFF_FR)).toBeOnTheScreen();
 
-    location.status = 'always';
+    location.hasAlwaysPermission = true;
     await emit('active');
     expect(screen.queryByText(DETECTION_OFF_FR)).not.toBeOnTheScreen();
   });
 
   it('skips the explanation for a session already underway while still flagging detection off', async () => {
     const location = new FakeBackgroundLocationClient();
-    location.status = 'limited';
+    location.hasAlwaysPermission = false;
     const store = new MemoryLocationExplanationStore(false);
     await signInAndOpenScanner({ location, store, parkingSession: new FakeParkingSessionClient(julieAtParkingDemo()) });
 

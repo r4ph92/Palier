@@ -4,7 +4,7 @@ import { useColors } from '../theme/useColors';
 import { MINIMUM_TOUCH_TARGET } from '../theme/tokens';
 import { typography } from '../theme/typography';
 
-interface TextButtonProps {
+export interface TextButtonProps {
   readonly label: string;
   readonly busyLabel?: string;
   readonly onPress: () => void;

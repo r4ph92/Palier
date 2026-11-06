@@ -6,7 +6,7 @@ import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessi
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import type { SupportedLanguage } from '../src/i18n/i18n';
 
-const DETECTION_OFF_FR = 'Détection automatique désactivée — votre place sera présumée occupée après 30 min';
+const DETECTION_OFF_FR = 'Détection automatique désactivée — votre place sera présumée occupée après 30 min';
 
 async function openScanner(options: {
   readonly location?: FakeBackgroundLocationClient;
@@ -111,15 +111,15 @@ describe('the « Always » explanation before the first scan', () => {
 });
 
 describe('the session screen when « Always » is not granted', () => {
-  async function sessionScreen(background: 'always' | 'limited' | 'denied', language: SupportedLanguage = 'fr') {
+  async function sessionScreen(hasAlways: boolean, language: SupportedLanguage = 'fr') {
     const location = new FakeBackgroundLocationClient();
-    location.status = background;
+    location.hasAlwaysPermission = hasAlways;
     await openScanner({ location, store: new MemoryLocationExplanationStore(true), parkingSession: new FakeParkingSessionClient(julieAtParkingDemo()), language });
   }
 
-  it.each(['limited', 'denied'] as const)('says detection is off for %s and links to iOS Settings', async (background) => {
+  it('says detection is off and links to iOS Settings', async () => {
     const openSettings = jest.spyOn(Linking, 'openSettings').mockResolvedValue();
-    await sessionScreen(background);
+    await sessionScreen(false);
     const user = userEvent.setup();
 
     expect(await screen.findByText(DETECTION_OFF_FR)).toBeOnTheScreen();
@@ -130,16 +130,16 @@ describe('the session screen when « Always » is not granted', () => {
   });
 
   it('shows no notice when « Always » is granted', async () => {
-    await sessionScreen('always');
+    await sessionScreen(true);
 
     expect(await screen.findByText('Session en cours')).toBeOnTheScreen();
     expect(screen.queryByText(DETECTION_OFF_FR)).not.toBeOnTheScreen();
   });
 
   it('says it in English on an English device', async () => {
-    await sessionScreen('denied', 'en');
+    await sessionScreen(false, 'en');
 
-    expect(await screen.findByText('Automatic detection is off — your spot will be assumed occupied after 30 min')).toBeOnTheScreen();
+    expect(await screen.findByText('Automatic detection is off — your spot will be assumed occupied after 30 min')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Open Settings' })).toBeOnTheScreen();
   });
 });

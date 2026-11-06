@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { useSingleFlight } from '../useSingleFlight';
 import type { BackgroundLocationClient } from './BackgroundLocationClient';
 import type { LocationExplanationStore } from './LocationExplanationStore';
 
@@ -14,35 +15,49 @@ export interface LocationExplanationController {
   readonly continueWithout: () => void;
 }
 
-function useStoredAnswer(store: LocationExplanationStore) {
-  const answer = useState<LocationExplanationState>({ status: 'reading' });
-  const setState = answer[1];
-  useEffect(() => {
-    store
-      .wasAnswered()
-      .catch((error: unknown) => {
-        console.warn('Reading the location explanation flag failed; it is shown again', error);
-        return false;
-      })
-      .then((answered) => setState({ status: answered ? 'answered' : 'unanswered' }));
-  }, [store, setState]);
-  return answer;
+interface StoredAnswer {
+  readonly state: LocationExplanationState;
+  readonly setState: Dispatch<SetStateAction<LocationExplanationState>>;
 }
 
-// Whether the driver has seen the « Always » explanation on this device; a driver who refuses or ignores iOS still counts as answered.
+function wasAnsweredOrFalse(store: LocationExplanationStore): Promise<boolean> {
+  return store.wasAnswered().catch((error: unknown) => {
+    console.warn('Reading the location explanation flag failed; it is shown again', error);
+    return false;
+  });
+}
+
+function useStoredAnswer(store: LocationExplanationStore): StoredAnswer {
+  const [state, setState] = useState<LocationExplanationState>({ status: 'reading' });
+  useEffect(() => {
+    let isCurrent = true;
+    wasAnsweredOrFalse(store).then((answered) => {
+      if (isCurrent) {
+        setState({ status: answered ? 'answered' : 'unanswered' });
+      }
+    });
+    return () => {
+      isCurrent = false;
+    };
+  }, [store]);
+  return { state, setState };
+}
+
+// A driver who refuses or ignores iOS still counts as answered.
 export function useLocationExplanation(store: LocationExplanationStore, location: BackgroundLocationClient): LocationExplanationController {
-  const [state, setState] = useStoredAnswer(store);
+  const { state, setState } = useStoredAnswer(store);
+  const { run } = useSingleFlight<'prompt'>();
   const markAnswered = useCallback(async () => {
     await store.markAnswered().catch((error: unknown) => console.warn('Saving the location explanation flag failed', error));
     setState({ status: 'answered' });
   }, [store, setState]);
   const continueToPrompt = useCallback(() => {
-    setState({ status: 'prompting' });
-    location
-      .requestAlways()
-      .catch((error: unknown) => console.warn('The « Always » location request failed; automatic detection stays off', error))
-      .then(markAnswered);
-  }, [location, markAnswered, setState]);
+    run('prompt', async () => {
+      setState({ status: 'prompting' });
+      await location.requestAlways().catch((error: unknown) => console.warn('The « Always » location request failed; automatic detection stays off', error));
+      await markAnswered();
+    });
+  }, [location, markAnswered, run, setState]);
   const continueWithout = useCallback(() => void markAnswered(), [markAnswered]);
   return { state, continueToPrompt, continueWithout };
 }

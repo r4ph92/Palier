@@ -1,33 +1,68 @@
-import * as SecureStore from 'expo-secure-store';
 import appConfig from '../app.config';
-import { secureTokenStore } from '../src/auth/TokenStore';
-import { secureLocationExplanationStore } from '../src/deviceLocation/LocationExplanationStore';
+import { fileLocationExplanationStore, rememberingAnswer } from '../src/deviceLocation/LocationExplanationStore';
+import { MemoryLocationExplanationStore } from './fakeLocationExplanationStore';
 
-jest.mock('expo-secure-store', () => {
-  const items = new Map<string, string>();
-  return {
-    getItemAsync: jest.fn((key: string) => Promise.resolve(items.get(key) ?? null)),
-    setItemAsync: jest.fn((key: string, value: string) => Promise.resolve(void items.set(key, value))),
-    deleteItemAsync: jest.fn((key: string) => Promise.resolve(void items.delete(key))),
-  };
+const mockFiles = new Set<string>();
+const mockCreate = jest.fn();
+
+jest.mock('expo-file-system', () => ({
+  Paths: { document: 'file:///documents/' },
+  File: class {
+    readonly uri: string;
+    constructor(...parts: string[]) {
+      this.uri = parts.join('');
+    }
+    get exists() {
+      return mockFiles.has(this.uri);
+    }
+    create(options: unknown) {
+      mockCreate(options);
+      mockFiles.add(this.uri);
+    }
+  },
+}));
+
+beforeEach(() => {
+  mockFiles.clear();
+  mockCreate.mockClear();
 });
 
-describe('the device flag in the iOS keychain', () => {
-  it('starts unanswered, then stays answered after the driver signs out', async () => {
-    await expect(secureLocationExplanationStore.wasAnswered()).resolves.toBe(false);
+describe('the device flag in a file of the app sandbox', () => {
+  it('starts unanswered, then stays answered once the file exists', async () => {
+    const store = fileLocationExplanationStore();
 
-    await secureLocationExplanationStore.markAnswered();
-    await secureTokenStore.save('julie-token');
-    await secureTokenStore.clear();
+    await expect(store.wasAnswered()).resolves.toBe(false);
+    await store.markAnswered();
 
-    await expect(secureLocationExplanationStore.wasAnswered()).resolves.toBe(true);
-    expect(SecureStore.deleteItemAsync).not.toHaveBeenCalledWith('palier.locationExplanationAnswered');
+    await expect(store.wasAnswered()).resolves.toBe(true);
+    await expect(fileLocationExplanationStore().wasAnswered()).resolves.toBe(true);
   });
 
-  it('counts any stored value other than its own as unanswered', async () => {
-    await SecureStore.setItemAsync('palier.locationExplanationAnswered', 'yes');
+  it('marks the answer twice without failing', async () => {
+    const store = fileLocationExplanationStore();
 
-    await expect(secureLocationExplanationStore.wasAnswered()).resolves.toBe(false);
+    await store.markAnswered();
+    await store.markAnswered();
+
+    expect(mockCreate).toHaveBeenCalledWith({ overwrite: true });
+  });
+});
+
+describe('the answer kept in memory', () => {
+  it('counts as answered after a write that failed', async () => {
+    const failing = new MemoryLocationExplanationStore(false);
+    failing.writeMode = 'failing';
+    const store = rememberingAnswer(failing);
+
+    await expect(store.markAnswered()).rejects.toThrow('fake write failure');
+
+    await expect(store.wasAnswered()).resolves.toBe(true);
+    expect(failing.answered).toBe(false);
+  });
+
+  it('reads the wrapped store when nothing was answered here', async () => {
+    await expect(rememberingAnswer(new MemoryLocationExplanationStore(true)).wasAnswered()).resolves.toBe(true);
+    await expect(rememberingAnswer(new MemoryLocationExplanationStore(false)).wasAnswered()).resolves.toBe(false);
   });
 });
 
@@ -55,5 +90,11 @@ describe('the iOS « Always » configuration', () => {
 
     expect(strings.NSLocationWhenInUseUsageDescription).toEqual(expect.any(String));
     expect(strings.NSLocationAlwaysAndWhenInUseUsageDescription).toMatch(reason);
+  });
+
+  it('uses the feminine « active » of the screen text in the French reason', () => {
+    const french = appConfig.locales?.fr as Record<string, string>;
+
+    expect(french.NSLocationAlwaysAndWhenInUseUsageDescription).toContain('Palier reste active');
   });
 });

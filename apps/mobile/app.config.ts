@@ -4,7 +4,7 @@ const LOCATION_REASON_FR = 'Palier lit votre position sur l’appareil pour trie
 const LOCATION_REASON_EN = 'Palier reads your position on the device to sort parking lots by distance. It is never sent.';
 
 const LOCATION_ALWAYS_REASON_FR =
-  'Palier reste actif 2 à 3 minutes après votre scan pour détecter la place où vous vous garez. Votre position n’est jamais envoyée.';
+  'Palier reste active 2 à 3 minutes après votre scan pour détecter la place où vous vous garez. Votre position n’est jamais envoyée.';
 const LOCATION_ALWAYS_REASON_EN =
   'Palier stays active for 2 to 3 minutes after your scan to detect the spot where you park. Your position is never sent.';
 

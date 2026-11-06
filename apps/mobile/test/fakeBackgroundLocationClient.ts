@@ -1,8 +1,8 @@
-import type { BackgroundLocationClient, BackgroundLocationStatus } from '../src/deviceLocation/BackgroundLocationClient';
+import type { BackgroundLocationClient } from '../src/deviceLocation/BackgroundLocationClient';
 
 export class FakeBackgroundLocationClient implements BackgroundLocationClient {
   alwaysRequests = 0;
-  status: BackgroundLocationStatus = 'always';
+  hasAlwaysPermission = true;
   failAlwaysRequest = false;
 
   requestAlways(): Promise<void> {
@@ -10,7 +10,7 @@ export class FakeBackgroundLocationClient implements BackgroundLocationClient {
     return this.failAlwaysRequest ? Promise.reject(new Error('fake always failure')) : Promise.resolve();
   }
 
-  backgroundStatus(): Promise<BackgroundLocationStatus> {
-    return Promise.resolve(this.status);
+  hasAlways(): Promise<boolean> {
+    return Promise.resolve(this.hasAlwaysPermission);
   }
 }

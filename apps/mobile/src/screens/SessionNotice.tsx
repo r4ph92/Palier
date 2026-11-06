@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { assertNever } from '../assertNever';
-import { TextButton } from '../components/TextButton';
+import { NoticeWithAction } from '../components/NoticeWithAction';
 import { useAnnouncement } from '../components/useAnnouncement';
 import { i18n } from '../i18n/i18n';
 import type { CurrentParkingSessionState, ReadProgress } from '../parkingSessions/useCurrentParkingSession';
@@ -33,10 +33,10 @@ function CheckFailedNotice({ progress, onRetry }: { readonly progress: ReadProgr
   const message = i18n.t('session.checkFailed');
   useAnnouncement(message, progress.missedReads);
   return (
-    <View style={styles.withAction}>
-      <MutedLine text={message} />
-      <TextButton label={i18n.t('scan.retry')} busyLabel={i18n.t('session.checking')} onPress={onRetry} isBusy={progress.isReading} />
-    </View>
+    <NoticeWithAction
+      message={<MutedLine text={message} />}
+      action={{ label: i18n.t('scan.retry'), busyLabel: i18n.t('session.checking'), onPress: onRetry, isBusy: progress.isReading }}
+    />
   );
 }
 
@@ -44,7 +44,3 @@ function MutedLine({ text }: { readonly text: string }) {
   const colors = useColors();
   return <Text style={[typography.body, { color: colors.muted }]}>{text}</Text>;
 }
-
-const styles = StyleSheet.create({
-  withAction: { alignItems: 'flex-start' },
-});

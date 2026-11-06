@@ -1,13 +1,17 @@
+import { useCallback, useMemo, type ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { SignedInClients } from '../api/SignedInClients';
+import { rememberingAnswer } from '../deviceLocation/LocationExplanationStore';
 import { TabBar } from '../components/TabBar';
 import { usePendingEntryWatch, type PendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { useTabs, type TabsController } from '../navigation/useTabs';
 import { useCurrentParkingSession, type CurrentParkingSessionController } from '../parkingSessions/useCurrentParkingSession';
 import { useSpotHold, type SpotHoldController } from '../spotHolds/useSpotHold';
 import { AccountTab } from './AccountTab';
+import { AutomaticDetectionNotice } from './AutomaticDetectionNotice';
 import type { DeveloperEntry } from './DeveloperEntry';
 import { HomeScreen } from './HomeScreen';
+import { ScannerGate } from './ScannerGate';
 import { ScanTab, scanTabLabels } from './ScanTab';
 
 interface SignedInTabsProps {
@@ -24,7 +28,8 @@ export function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: 
   const currentSession = useCurrentParkingSession(clients.parkingSession, tabs.openScanUnlessChosen);
   const spotHold = useSpotHold(clients.spotHold);
   const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: currentSession.refresh, onSubmissionEnded: spotHold.refreshHold });
-  const content = { firstName, clients, developerEntry, onSignOut, tabs, currentSession, pendingEntry, spotHold };
+  const gateScanner = useScannerGate(clients);
+  const content = { firstName, clients, developerEntry, onSignOut, tabs, currentSession, pendingEntry, spotHold, gateScanner };
   return (
     <View style={styles.app}>
       <TabContent {...content} />
@@ -33,14 +38,28 @@ export function SignedInTabs({ firstName, clients, developerEntry, onSignOut }: 
   );
 }
 
+// The answer is remembered here, above the tabs, so a flag that could not be saved is not asked again on a tab switch.
+function useScannerGate({ locationExplanation, backgroundLocation }: SignedInClients): (scanner: ReactElement) => ReactElement {
+  const store = useMemo(() => rememberingAnswer(locationExplanation), [locationExplanation]);
+  return useCallback(
+    (scanner) => (
+      <ScannerGate store={store} location={backgroundLocation}>
+        {scanner}
+      </ScannerGate>
+    ),
+    [store, backgroundLocation],
+  );
+}
+
 interface TabContentProps extends SignedInTabsProps {
   readonly tabs: TabsController;
   readonly currentSession: CurrentParkingSessionController;
   readonly pendingEntry: PendingEntryWatch;
   readonly spotHold: SpotHoldController;
+  readonly gateScanner: (scanner: ReactElement) => ReactElement;
 }
 
-function TabContent({ firstName, clients, tabs, currentSession, pendingEntry, spotHold, developerEntry, onSignOut }: TabContentProps) {
+function TabContent({ firstName, clients, tabs, currentSession, pendingEntry, spotHold, gateScanner, developerEntry, onSignOut }: TabContentProps) {
   switch (tabs.tab) {
     case 'lots':
       return <HomeScreen firstName={firstName} lotsClient={clients.lots} locationClient={clients.location} spotHold={spotHold} />;
@@ -48,8 +67,8 @@ function TabContent({ firstName, clients, tabs, currentSession, pendingEntry, sp
       return (
         <ScanTab
           entryClient={clients.entry}
-          location={clients.backgroundLocation}
-          locationExplanation={clients.locationExplanation}
+          gateScanner={gateScanner}
+          detectionNotice={<AutomaticDetectionNotice location={clients.backgroundLocation} />}
           currentSession={currentSession}
           pendingEntry={pendingEntry}
           onAddPlate={() => tabs.openAccountPage('vehicles')}

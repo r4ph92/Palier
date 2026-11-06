@@ -150,7 +150,7 @@ export const fr = {
     pending: 'Entrée en attente de confirmation',
     updatedAtLead: 'Mis à jour à ',
     offline: 'Hors ligne, montant au dernier relevé',
-    detectionOff: 'Détection automatique désactivée — votre place sera présumée occupée après 30\u00A0min',
+    detectionOff: 'Détection automatique désactivée\u00A0— votre place sera présumée occupée après 30\u00A0min',
     openSettings: 'Ouvrir les réglages',
   },
   locationExplanation: {
@@ -160,8 +160,7 @@ export const fr = {
     indicator: 'Pendant ce temps, l’indicateur bleu de localisation s’affiche sur votre téléphone.',
     refusal: 'Si vous refusez, l’entrée, la sortie et la facturation fonctionnent quand même, mais la détection automatique de votre place est perdue.',
     continue: 'Continuer',
-    continueWithout: 'Continuer sans',
-    continueWithoutLabel: 'Continuer sans «\u00A0Toujours\u00A0»',
+    continueWithout: 'Continuer sans «\u00A0Toujours\u00A0»',
   },
   tabs: {
     lots: 'Stationnements',

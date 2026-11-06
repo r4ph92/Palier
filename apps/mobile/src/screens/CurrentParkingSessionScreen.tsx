@@ -19,7 +19,6 @@ interface CurrentParkingSessionScreenProps {
   readonly reading: CurrentParkingSessionReading;
   readonly progress: ReadProgress;
   readonly onRetry: () => void;
-  // Shown after the spot: what the driver should know about how this session is followed.
   readonly notice?: ReactNode;
 }
 

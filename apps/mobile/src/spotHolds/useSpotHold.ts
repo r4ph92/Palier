@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SpotHoldClient } from '../api/SpotHoldClient';
+import { useSingleFlight } from '../useSingleFlight';
 import type { HeldSpot } from './heldSpot';
 import type { SpotHoldFailure } from './spotHoldFailure';
 import { readCurrentHold, releaseHold, requestHold, type ReleaseCallbacks, type SpotHoldReadState, type SpotHoldUpdates } from './spotHoldRequests';
@@ -66,24 +67,6 @@ function useReleaseRequest(client: SpotHoldClient, updates: SpotHoldUpdates, hel
     [client, updates, run, spotHoldId],
   );
   return { isReleasing: runningKey !== null, release };
-}
-
-// The ref refuses a second task while one runs, so a double tap sends one request.
-function useSingleFlight<Key>() {
-  const [runningKey, setRunningKey] = useState<Key | null>(null);
-  const isRunning = useRef(false);
-  const run = useCallback((key: Key, task: () => Promise<void>) => {
-    if (isRunning.current) {
-      return;
-    }
-    isRunning.current = true;
-    setRunningKey(key);
-    void task().finally(() => {
-      isRunning.current = false;
-      setRunningKey(null);
-    });
-  }, []);
-  return { runningKey, run };
 }
 
 function useAcknowledgements(

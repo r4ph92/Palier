@@ -1,6 +1,5 @@
 import { act, screen, userEvent } from '@testing-library/react-native';
 import { AppState, type AppStateStatus } from 'react-native';
-import type { BackgroundLocationStatus } from '../src/deviceLocation/BackgroundLocationClient';
 import type { SupportedLanguage } from '../src/i18n/i18n';
 import { FakeBackgroundLocationClient } from './fakeBackgroundLocationClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
@@ -11,7 +10,7 @@ import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { visibleText } from './visibleText';
 
 export const TITLE_FR = 'Pourquoi « Toujours » ?';
-export const DETECTION_OFF_FR = 'Détection automatique désactivée — votre place sera présumée occupée après 30 min';
+export const DETECTION_OFF_FR = 'Détection automatique désactivée — votre place sera présumée occupée après 30 min';
 
 // iOS keeps its prompt open until the driver answers it.
 export class PendingPromptLocationClient extends FakeBackgroundLocationClient {
@@ -24,14 +23,14 @@ export class PendingPromptLocationClient extends FakeBackgroundLocationClient {
     });
   }
 
-  answerPrompt(status: BackgroundLocationStatus): void {
-    this.status = status;
+  answerPrompt(isAlwaysGranted: boolean): void {
+    this.hasAlwaysPermission = isAlwaysGranted;
     this.#answer();
   }
 }
 
 export class FailingStatusLocationClient extends FakeBackgroundLocationClient {
-  override backgroundStatus(): Promise<BackgroundLocationStatus> {
+  override hasAlways(): Promise<boolean> {
     return Promise.reject(new Error('fake status failure'));
   }
 }

@@ -17,14 +17,13 @@ afterEach(() => jest.restoreAllMocks());
 
 describe('the « Always » choice, end to end through an entry', () => {
   it.each([
-    ['limited', 'Continuer', 1],
-    ['denied', 'Continuer', 1],
-    ['denied', 'Continuer sans « Toujours »', 0],
-  ] as const)('lets Julie enter after « %s » from « %s », then flags detection off with a link to iOS Settings', async (status, answer, requests) => {
+    ['Continuer', 1],
+    ['Continuer sans « Toujours »', 0],
+  ] as const)('lets Julie enter without « Always » after « %s », then flags detection off with a link to iOS Settings', async (answer, requests) => {
     const openSettings = jest.spyOn(Linking, 'openSettings').mockResolvedValue();
     openSettings.mockClear();
     const location = new FakeBackgroundLocationClient();
-    location.status = status;
+    location.hasAlwaysPermission = false;
     const { user, parkingSession, entry } = await signInAndOpenScanner({ location });
 
     await user.press(await screen.findByRole('button', { name: answer }));
@@ -39,11 +38,11 @@ describe('the « Always » choice, end to end through an entry', () => {
 
   it('shows the session with no detection notice once « Always » is granted at the prompt', async () => {
     const location = new PendingPromptLocationClient();
-    location.status = 'limited';
+    location.hasAlwaysPermission = false;
     const { user, parkingSession } = await signInAndOpenScanner({ location });
 
     await user.press(await screen.findByRole('button', { name: 'Continuer' }));
-    await act(async () => location.answerPrompt('always'));
+    await act(async () => location.answerPrompt(true));
     await scanEntreeDemoAndOpenSession(user, parkingSession);
 
     expect(screen.queryByText(DETECTION_OFF_FR)).not.toBeOnTheScreen();
@@ -128,7 +127,7 @@ describe('the explanation while the iOS prompt is open', () => {
     expect(screen.getByText(TITLE_FR)).toBeOnTheScreen();
     expect(store.answered).toBe(false);
 
-    await act(async () => location.answerPrompt('limited'));
+    await act(async () => location.answerPrompt(false));
 
     expect(await screen.findByLabelText('Contenu du QR')).toBeOnTheScreen();
     expect(store.answered).toBe(true);

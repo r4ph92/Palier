@@ -7,6 +7,9 @@ import { typography } from '../theme/typography';
 
 export const TITLE_MAX_FONT_SCALE = 1.4;
 
+// Past twice the size, long words like « renseignements » break in the middle on a phone, so body text stops there.
+export const BODY_TEXT_MAX_FONT_SCALE = 2;
+
 interface ScreenHeaderProps {
   readonly eyebrow?: string;
   readonly title: string;

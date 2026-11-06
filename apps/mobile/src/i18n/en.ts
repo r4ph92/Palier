@@ -150,7 +150,7 @@ export const en: Translations = {
     pending: 'Entry awaiting confirmation',
     updatedAtLead: 'Updated ',
     offline: 'Offline, amount as of last check',
-    detectionOff: 'Automatic detection is off — your spot will be assumed occupied after 30\u00A0min',
+    detectionOff: 'Automatic detection is off\u00A0— your spot will be assumed occupied after 30\u00A0min',
     openSettings: 'Open Settings',
   },
   locationExplanation: {
@@ -160,8 +160,7 @@ export const en: Translations = {
     indicator: 'During that time, the blue location indicator shows on your phone.',
     refusal: 'If you refuse, entry, exit and billing still work, but automatic detection of your spot is lost.',
     continue: 'Continue',
-    continueWithout: 'Continue without',
-    continueWithoutLabel: 'Continue without “Always”',
+    continueWithout: 'Continue without “Always”',
   },
   tabs: {
     lots: 'Parking lots',
