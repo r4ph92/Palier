@@ -7,6 +7,7 @@ import { HttpEntryClient } from './api/HttpEntryClient';
 import { HttpLotsClient } from './api/HttpLotsClient';
 import { HttpParkingSessionClient } from './api/HttpParkingSessionClient';
 import { HttpPaymentMethodClient } from './api/HttpPaymentMethodClient';
+import { HttpReceiptClient } from './api/HttpReceiptClient';
 import { HttpSpotHoldClient } from './api/HttpSpotHoldClient';
 import { HttpVehicleClient } from './api/HttpVehicleClient';
 import type { SignedInClients, SignedInSession } from './api/SignedInClients';
@@ -41,6 +42,7 @@ function createSignedInClients({ token, onUnauthorized, onConsentRequired }: Sig
     entry: new HttpEntryClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
     parkingSession: new HttpParkingSessionClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
     spotHold: new HttpSpotHoldClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
+    receipts: new HttpReceiptClient({ baseUrl: apiUrl, token, onUnauthorized, onConsentRequired }),
     location: deviceLocationClient,
     backgroundLocation: deviceLocationClient,
     locationExplanation: fileLocationExplanationStore(),
