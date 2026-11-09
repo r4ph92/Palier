@@ -1,0 +1,1 @@
+ALTER TABLE "parking_session" ADD COLUMN "exit_passage_at" timestamp with time zone;
