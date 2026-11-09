@@ -148,6 +148,13 @@
       "when": 1794008077215,
       "tag": "0020_consumed_spot_hold",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794252754196,
+      "tag": "0021_exit_and_pay",
+      "breakpoints": true
     }
   ]
 }

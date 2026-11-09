@@ -33,6 +33,8 @@ function sameLotForeignKey(name: string, columns: [AnyPgColumn, AnyPgColumn], ta
 }
 
 export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION_STATES);
+// How the vehicle was identified at the exit; the tap in the app is the only way built so far (docs/03, sequence C).
+export const exitIdentification = pgEnum('exit_identification', ['APP']);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
 
 export const parkingSession = pgTable(
@@ -67,6 +69,10 @@ export const parkingSession = pgTable(
     confirmedSpotId: uuid('confirmed_spot_id'),
     parkedAnsweredAt: timestamp('parked_answered_at', { withTimezone: true }),
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+    // Set together when the exit captures the amount and closes the session as CLOSED_PAID (decision 023).
+    exitAt: timestamp('exit_at', { withTimezone: true }),
+    exitIdentification: exitIdentification('exit_identification'),
+    capturedCents: integer('captured_cents'),
     // Set with the cancellation when a card hold exists; cleared once Stripe confirms the release, so a failed release is retried.
     holdReleasePending: boolean('hold_release_pending').notNull().default(false),
     holdReleaseAttemptedAt: timestamp('hold_release_attempted_at', { withTimezone: true }),
@@ -86,6 +92,10 @@ export const parkingSession = pgTable(
     check(
       'parking_session_pricing_positive',
       sql`${table.pricingIncrementCents} > 0 and ${table.pricingIncrementMinutes} > 0 and ${table.pricingDailyCapCents} > 0`,
+    ),
+    check(
+      'parking_session_paid_has_exit',
+      sql`${table.state}::text <> 'CLOSED_PAID' or (${table.exitAt} is not null and ${table.exitIdentification} is not null and ${table.capturedCents} is not null)`,
     ),
     uniqueIndex('parking_session_one_active_per_user_index').on(table.userId).where(ACTIVE_SESSION),
     uniqueIndex('parking_session_one_active_per_spot_index').on(table.assignedSpotId).where(ACTIVE_SESSION),
