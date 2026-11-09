@@ -132,3 +132,28 @@ export type ExitRefusalCode =
   | 'GATE_UNAVAILABLE'
   | 'PAYMENTS_UNAVAILABLE'
   | 'LOT_BUSY';
+
+// One line of the receipt history: a closed, paid session, newest exit first.
+export interface ReceiptSummary {
+  readonly sessionId: string;
+  readonly lotName: string;
+  readonly exitedAt: string;
+  readonly durationMinutes: number;
+  readonly totalCents: number;
+}
+
+export interface ReceiptListResponse {
+  readonly receipts: ReceiptSummary[];
+}
+
+// The exit receipt with where and when the driver came in and which card paid; cardLast4 is null for a session opened before the card was recorded.
+export interface ReceiptDetail extends ExitReceipt {
+  readonly sessionId: string;
+  readonly lotName: string;
+  readonly enteredAt: string;
+  readonly cardLast4: string | null;
+}
+
+export interface ReceiptDetailResponse {
+  readonly receipt: ReceiptDetail;
+}

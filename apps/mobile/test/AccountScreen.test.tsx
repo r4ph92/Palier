@@ -8,7 +8,7 @@ const SAFE_AREA_METRICS = {
   insets: { top: 59, left: 0, right: 0, bottom: 34 },
 };
 
-async function renderAccountScreen(onSignOut: () => void, developerLink?: { label: string; onOpen: () => void }) {
+async function renderAccountScreen(onSignOut: () => void, developerLink?: { label: string; onOpen: () => void }, onOpenReceipts: () => void = () => undefined) {
   applyLanguage('fr');
   return render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
@@ -16,6 +16,7 @@ async function renderAccountScreen(onSignOut: () => void, developerLink?: { labe
         cardState={{ status: 'loaded', card: null }}
         onOpenVehicles={() => undefined}
         onOpenPaymentMethod={() => undefined}
+        onOpenReceipts={onOpenReceipts}
         onSignOut={onSignOut}
         {...(developerLink === undefined ? {} : { developerLink })}
       />
@@ -60,5 +61,16 @@ describe('AccountScreen developer link', () => {
     await userEvent.setup().press(screen.getByRole('button', { name: 'Développeur' }));
 
     expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('AccountScreen receipts', () => {
+  it('opens the receipts from the Reçus button', async () => {
+    const onOpenReceipts = jest.fn();
+    await renderAccountScreen(() => undefined, undefined, onOpenReceipts);
+
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Reçus' }));
+
+    expect(onOpenReceipts).toHaveBeenCalledTimes(1);
   });
 });

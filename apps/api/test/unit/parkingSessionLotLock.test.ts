@@ -14,7 +14,8 @@ const draft: SessionDraft = {
   lotId: 'lot-demo',
   entryGateId: 'gate-entree-demo',
   authorizedCents: 2500,
-  pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 },
+    pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 },
+  cardLast4: '4242',
 };
 
 const freeSpot = {

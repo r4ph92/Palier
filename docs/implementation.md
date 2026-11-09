@@ -54,6 +54,7 @@ ligne par choix ; la raison suit le tiret.
 - Tables `gate`, `gate_device_key` et `gate_passage` (migration `0007`) ; clés hachées et passage en une seule instruction SQL : voir `docs/decisions/006`.
 - `gate.qr_secret` est nullable tant que les QR signés (#36) n'existent pas ; `integration_kind` gagne `SIMULATED` (D5). Entrée Roy est en `DRY_CONTACT`, non vérifiée.
 - Une barrière sans boucles (`has_loops = false`) refuse les passages (409) ; les trois barrières semées en ont.
+- Reçus (#53) : `GET /v1/me/receipts` et `/:sessionId` lisent les sessions `CLOSED_PAID` du conducteur ; `card_last4` (migration `0023`) est posé à l'entrée : voir `docs/decisions/025`.
 - Sortie (#48) : le passage sur la barrière de sortie fixe `exit_passage_at` (migration `0022`) sur la plus ancienne session `CLOSED_PAID` sans passage dont la commande `OPEN` date de moins de 60 s, dans la transaction qui décrémente le compteur : voir `docs/decisions/024`. Hors fenêtre ou sans ouverture, la session ne change pas.
 - Erreurs des routes de barrière : `{ statusCode, error, message }` avec `error` = code machine (`DEVICE_KEY_REFUSED`, `GATE_FORBIDDEN`, `GATE_WITHOUT_LOOPS`, `CLOSED_AT_INVALID`, `CLOSED_AT_IN_FUTURE`).
 - `DEMO_MODE` (`true`/`false`, faux par défaut) n'est pas refusé sous `NODE_ENV=production` (D13 tel qu'écrit : une démo hébergée peut tourner ainsi) ; le serveur journalise un avertissement au démarrage.

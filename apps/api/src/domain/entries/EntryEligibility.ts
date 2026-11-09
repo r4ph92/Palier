@@ -31,6 +31,8 @@ export interface EligibleEntry {
     readonly amountCents: number;
     readonly destinationAccountId: string | null;
   };
+  // Written on the session so its receipt names the card that paid, even if the driver changes cards later.
+  readonly cardLast4: string | null;
   readonly pricing: PricingPolicy;
 }
 
@@ -59,6 +61,7 @@ export class EntryEligibility {
         destinationAccountId: gate.lot.operatorStripeAccountId,
       },
       pricing,
+      cardLast4: prerequisites.cardLast4,
     };
   }
 

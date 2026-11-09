@@ -8,6 +8,7 @@ import { FakeCurrentParkingSessions } from './fakeCurrentParkingSessions.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
 import { FakeParkedAnswers } from './fakeParkedAnswers.ts';
 import { FakeParkedPresumptions } from './fakeParkedPresumptions.ts';
+import { FakeReceipts } from './fakeReceipts.ts';
 import { FakeSpotTakenReports } from './fakeSpotTakenReports.ts';
 import { FakeGateCommandFeed, FakeGateDeviceKeyRepository, FakePassageLedger } from './gateFixtures.ts';
 
@@ -52,6 +53,7 @@ export function fakeRepositories({
     parkedPresumptions,
     parkedAnswers,
     spotTakenReports,
+    receipts: new FakeReceipts(),
   };
 }
 

@@ -22,6 +22,7 @@ const julieAtEntreeDemo: EligibleEntry = {
   vehicle: { id: 'vehicle-julie', plate: 'ABC 123', needs: { isElectric: false, hasAccessiblePermit: false, isOversize: false } },
   payment: { customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },
   pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 },
+  cardLast4: '4242',
 };
 
 function admissionWith(freeSpots?: readonly string[]) {
@@ -52,7 +53,7 @@ describe('entry admission', () => {
     await admission.admit(julieAtEntreeDemo, log);
 
     expect(sessions.drafts).toEqual([
-      { driverId: julie.id, now: julieAtEntreeDemo.now, vehicleId: 'vehicle-julie', plate: 'ABC 123', needs: julieAtEntreeDemo.vehicle.needs, lotId: entreeDemo.lotId, entryGateId: entreeDemo.id, authorizedCents: 2500, pricing: julieAtEntreeDemo.pricing },
+      { driverId: julie.id, now: julieAtEntreeDemo.now, vehicleId: 'vehicle-julie', plate: 'ABC 123', needs: julieAtEntreeDemo.vehicle.needs, lotId: entreeDemo.lotId, entryGateId: entreeDemo.id, authorizedCents: 2500, pricing: julieAtEntreeDemo.pricing, cardLast4: '4242' },
     ]);
     expect(payments.authorized).toEqual([
       { sessionId: fakeSessionId(1), customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },

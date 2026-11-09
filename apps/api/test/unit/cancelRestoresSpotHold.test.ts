@@ -119,6 +119,7 @@ describe('an entry that uses a hold', () => {
     entryGateId: 'gate-entree-demo',
     authorizedCents: 2500,
     pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 },
+    cardLast4: '4242',
   };
   const heldSpot = { hold_id: 'hold-julie', spot_id: 'spot-A-1', is_ev: false, is_accessible: false, is_oversize: false };
   const freeSpot = { id: 'spot-B-1', number: 'B-1', level_order: 1, aisle_code: 'B', distance_to_exit: 1, needs_check: false, is_ev: false, is_accessible: false, is_oversize: false };
@@ -133,6 +134,17 @@ describe('an entry that uses a hold', () => {
     await new PostgresParkingSessionRepository(scripted.database(), WINDOW, () => NOW).openOrReplay(draft);
 
     expect(scripted.insertedSessions).toEqual([expect.objectContaining({ consumedSpotHoldId: 'hold-julie' })]);
+  });
+
+  it('records the card last four on the session for its receipt', async () => {
+    const scripted = new ScriptedSql()
+      .answer('read-free-spots', [freeSpot])
+      .answer('claim-spot', [{ id: 'spot-B-1', number: 'B-1', aisle_code: 'B', level_code: 'P1' }])
+      .answer('insert-session', [{ id: 'session-1' }]);
+
+    await new PostgresParkingSessionRepository(scripted.database(), WINDOW, () => NOW).openOrReplay(draft);
+
+    expect(scripted.insertedSessions).toEqual([expect.objectContaining({ cardLast4: '4242' })]);
   });
 
   it('records no hold when there was none', async () => {

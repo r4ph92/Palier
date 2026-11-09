@@ -82,6 +82,8 @@ export const parkingSession = pgTable(
     consumedSpotHoldId: uuid('consumed_spot_hold_id').references(() => spotHold.id),
     paymentIntentId: text('payment_intent_id'),
     authorizedCents: integer('authorized_cents').notNull(),
+    // The last four digits of the card held at entry, for the receipt; null for a session opened before decision 025.
+    cardLast4: text('card_last4'),
     // The lot's pricing at entry (D1): a later change to the lot never reprices a session already inside.
     pricingIncrementCents: integer('pricing_increment_cents').notNull(),
     pricingIncrementMinutes: integer('pricing_increment_minutes').notNull(),

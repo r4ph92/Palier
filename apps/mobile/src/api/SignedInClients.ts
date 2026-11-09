@@ -5,6 +5,7 @@ import type { EntryClient } from './EntryClient';
 import type { LotsClient } from './LotsClient';
 import type { ParkingSessionClient } from './ParkingSessionClient';
 import type { PaymentMethodClient } from './PaymentMethodClient';
+import type { ReceiptClient } from './ReceiptClient';
 import type { SpotHoldClient } from './SpotHoldClient';
 import type { VehicleClient } from './VehicleClient';
 
@@ -23,6 +24,7 @@ export interface SignedInClients {
   readonly entry: EntryClient;
   readonly parkingSession: ParkingSessionClient;
   readonly spotHold: SpotHoldClient;
+  readonly receipts: ReceiptClient;
   readonly location: DeviceLocationClient;
   readonly backgroundLocation: BackgroundLocationClient;
   readonly locationExplanation: LocationExplanationStore;
