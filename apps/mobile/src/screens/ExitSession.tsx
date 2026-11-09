@@ -27,12 +27,13 @@ interface ExitButtonProps {
 // « Ouvrir la barrière de sortie »: Palier takes the exact amount and opens the barrier; nothing is asked before, the tap is the exit.
 export function ExitButton({ client, sessionId, onLeft, onSessionMoved }: ExitButtonProps) {
   const exiting = useExit(client, sessionId, { onLeft, onSessionMoved });
+  // Under the button, which then stays where the driver pressed it.
   const message = exiting.isUnreachable ? i18n.t('session.exit.unreachable') : null;
   useAnnouncement(message, exiting.attempts);
   return (
     <View style={styles.group}>
-      {message === null ? null : <FieldError message={message} />}
       <PrimaryButton label={i18n.t('session.exit.action')} busyLabel={i18n.t('session.exit.opening')} busy={exiting.isSending} onPress={exiting.leave} />
+      {message === null ? null : <FieldError message={message} />}
     </View>
   );
 }
@@ -70,7 +71,7 @@ function ReceiptLine({ receipt }: { readonly receipt: ExitReceipt }) {
       {i18n.t('session.exit.receipt.durationLead')}
       <Text style={typography.figure}>{formatReceiptDuration(receipt.durationMinutes)}</Text>
       {' · '}
-      <Text style={typography.figure}>{calculation}</Text>
+      <Text style={receipt.capped ? typography.body : typography.figure}>{calculation}</Text>
       {' · '}
       {i18n.t('session.exit.receipt.totalLead')}
       <Text style={typography.figureStrong}>{formatMoney(receipt.totalCents, language)}</Text>
