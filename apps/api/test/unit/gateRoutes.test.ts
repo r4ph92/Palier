@@ -49,6 +49,7 @@ describe('gate routes', () => {
         closedAt: NOW.toISOString(),
         vehicleCount: 1,
         confirmedSessionId: null,
+        exitedSessionId: null,
       });
     });
 
@@ -75,6 +76,15 @@ describe('gate routes', () => {
       const response = await postPassage(sortieDemo.id, bearer(SORTIE_DEMO_KEY));
 
       expect(response.json()).toMatchObject({ kind: 'EXIT', vehicleCount: 0 });
+    });
+
+    it('answers the session whose exit the closure attached, and counts the vehicle out', async () => {
+      startServer(1);
+      ledger.pendingExits.push('session-julie');
+
+      const response = await postPassage(sortieDemo.id, bearer(SORTIE_DEMO_KEY));
+
+      expect(response.json()).toMatchObject({ kind: 'EXIT', vehicleCount: 0, exitedSessionId: 'session-julie' });
     });
 
     it.each([

@@ -55,6 +55,7 @@ describe('recordPassage', () => {
         closedAt: now,
         vehicleCountChange: 1,
         confirmableOpenings: { withinMilliseconds: 60_000 },
+        attachableOpenings: null,
       },
     ]);
     expect(passage).toEqual({
@@ -64,6 +65,7 @@ describe('recordPassage', () => {
       closedAt: '2026-10-27T22:02:00.000Z',
       vehicleCount: 1,
       confirmedSessionId: null,
+      exitedSessionId: null,
     });
   });
 
@@ -118,6 +120,34 @@ describe('recordPassage', () => {
 
     expect(ledger.entries[0]?.confirmableOpenings).toBeNull();
     expect(passage.confirmedSessionId).toBeNull();
+  });
+
+  it('attaches the passage to the session whose exit opened, within the configured window', async () => {
+    const ledger = new FakePassageLedger(1);
+    ledger.pendingExits.push('session-julie', 'session-marc');
+
+    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now }, { ledger, clock, openingWindow });
+
+    expect(ledger.entries[0]?.attachableOpenings).toBe(openingWindow);
+    expect(passage).toMatchObject({ kind: 'EXIT', vehicleCount: 0, exitedSessionId: 'session-julie', confirmedSessionId: null });
+  });
+
+  it('counts the vehicle out and changes no session when no exit opening waits', async () => {
+    const ledger = new FakePassageLedger(2);
+
+    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now }, { ledger, clock, openingWindow });
+
+    expect(passage).toMatchObject({ vehicleCount: 1, exitedSessionId: null });
+  });
+
+  it('attaches no exit at an entry gate', async () => {
+    const ledger = new FakePassageLedger(0);
+    ledger.pendingExits.push('session-julie');
+
+    const passage = await recordPassage(entryAt(now), { ledger, clock, openingWindow });
+
+    expect(ledger.entries[0]?.attachableOpenings).toBeNull();
+    expect(passage.exitedSessionId).toBeNull();
   });
 
   it('answers the session the ledger confirmed at an entry gate', async () => {
