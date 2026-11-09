@@ -1,6 +1,7 @@
 import type {
   BackdateParkingSessionRequest,
   CurrentParkingSessionResponse,
+  ExitResponse,
   ParkedPresumptionRequest,
   ParkedPresumptionResponse,
   ParkedSpotAnswerRequest,
@@ -151,6 +152,27 @@ export const spotTakenResponseSchema = {
   ],
 } as const;
 
+export const exitResponseSchema = {
+  type: 'object',
+  required: ['receipt'],
+  additionalProperties: false,
+  properties: {
+    receipt: {
+      type: 'object',
+      required: ['exitedAt', 'durationMinutes', 'increments', 'incrementCents', 'totalCents', 'capped'],
+      additionalProperties: false,
+      properties: {
+        exitedAt: { type: 'string' },
+        durationMinutes: { type: 'integer' },
+        increments: { type: 'integer' },
+        incrementCents: { type: 'integer' },
+        totalCents: { type: 'integer' },
+        capped: { type: 'boolean' },
+      },
+    },
+  },
+} as const;
+
 export type ResponseSchemaMatchesCurrentParkingSession = AssertTrue<
   MutuallyAssignable<FromSchema<typeof currentParkingSessionResponseSchema>, WithMutableArrays<CurrentParkingSessionResponse>>
 >;
@@ -172,3 +194,4 @@ export type ResponseSchemaMatchesParkedSpotAnswer = AssertTrue<
 >;
 export type RequestSchemaMatchesSpotTaken = AssertTrue<MutuallyAssignable<FromSchema<typeof spotTakenRequestSchema>, SpotTakenRequest>>;
 export type ResponseSchemaMatchesSpotTaken = AssertTrue<MutuallyAssignable<FromSchema<typeof spotTakenResponseSchema>, SpotTakenResponse>>;
+export type ResponseSchemaMatchesExit = AssertTrue<MutuallyAssignable<FromSchema<typeof exitResponseSchema>, ExitResponse>>;

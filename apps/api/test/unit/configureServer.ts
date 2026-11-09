@@ -9,6 +9,7 @@ import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 import { FakeOperatorRepository } from './fakes/fakeOperatorRepository.ts';
 import { fakeOperatorStripe } from './fakes/fakeOperatorStripe.ts';
 import { FakeCurrentParkingSessions } from './fakes/fakeCurrentParkingSessions.ts';
+import { FakeExits } from './fakes/fakeExits.ts';
 import { FakeParkedAnswers } from './fakes/fakeParkedAnswers.ts';
 import { FakeParkedPresumptions } from './fakes/fakeParkedPresumptions.ts';
 import { FakeSpotTakenReports } from './fakes/fakeSpotTakenReports.ts';
@@ -35,6 +36,7 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
   const parkedPresumptions = new FakeParkedPresumptions();
   const parkedAnswers = new FakeParkedAnswers();
   const spotTakenReports = new FakeSpotTakenReports();
+  const exits = new FakeExits();
   const testClock = createTestClock();
   const operatorRepository = new FakeOperatorRepository();
   const spotHolds = new FakeSpotHoldRepository();
@@ -44,11 +46,12 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
     operatorStripe: fakeOperatorStripe(operatorRepository).dependencies,
     cardGateway: new FakeCardGateway(),
     entries: entries.dependencies,
+    exits: { exits, payments: entries.payments },
     spotHolds: spotHoldServicesOf(spotHolds, { vehicles: vehicleRepository, drivers: driverRepository }, STRICT_POLICY),
     testClock,
     settings: { testSignInEnabled, demoMode, minimumAppVersion },
   });
-  return { server, driverRepository, vehicleRepository, entries, spotHolds, parkingSessions, parkedPresumptions, parkedAnswers, spotTakenReports, testClock };
+  return { server, driverRepository, vehicleRepository, entries, spotHolds, parkingSessions, parkedPresumptions, parkedAnswers, spotTakenReports, exits, testClock };
 }
 
 // Every route the server registers, as "METHOD /path" with the :params kept, read from Fastify's route tree.

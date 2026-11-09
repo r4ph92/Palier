@@ -1,7 +1,8 @@
+import { JULIE_SESSION_ID } from './fakeCurrentParkingSessions.ts';
 import type { ClosedExit, ExitableSession, ExitClosing, ExitRepository, PaidExit } from '../../../src/domain/exits/ExitRepository.ts';
 
 export const JULIE_ID = 'driver-julie';
-export const EXIT_SESSION_ID = 'session-julie';
+export const EXIT_SESSION_ID = JULIE_SESSION_ID;
 export const EXIT_GATE_ID = 'gate-sortie-demo';
 
 // Julie entered at 18 h 02 at 0,75 $ per 15 minutes, capped at 25 $, with the cap held on her card.

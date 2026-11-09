@@ -37,6 +37,32 @@ export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION
 export const exitIdentification = pgEnum('exit_identification', ['APP']);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
 
+interface StateColumns {
+  readonly state: AnyPgColumn;
+  readonly parkedAisleId: AnyPgColumn;
+  readonly confirmedSpotId: AnyPgColumn;
+  readonly parkedAnsweredAt: AnyPgColumn;
+  readonly exitAt: AnyPgColumn;
+  readonly exitIdentification: AnyPgColumn;
+  readonly capturedCents: AnyPgColumn;
+}
+
+// Compared as text: a check on the enum itself would block the next migration that recreates the enum.
+function stateChecks(table: StateColumns) {
+  return [
+    check('parking_session_unconfirmed_has_aisle', sql`${table.state}::text <> 'PARKED_UNCONFIRMED' or ${table.parkedAisleId} is not null`),
+    check(
+      'parking_session_confirmed_has_spot',
+      sql`${table.state}::text <> 'PARKED_CONFIRMED' or (${table.confirmedSpotId} is not null and ${table.parkedAnsweredAt} is not null)`,
+    ),
+    // A paid session always says when, how and how much.
+    check(
+      'parking_session_paid_has_exit',
+      sql`${table.state}::text <> 'CLOSED_PAID' or (${table.exitAt} is not null and ${table.exitIdentification} is not null and ${table.capturedCents} is not null)`,
+    ),
+  ];
+}
+
 export const parkingSession = pgTable(
   'parking_session',
   {
@@ -83,19 +109,10 @@ export const parkingSession = pgTable(
     sameLotForeignKey('parking_session_spot_in_same_lot_fk', [table.assignedSpotId, table.lotId], spot),
     sameLotForeignKey('parking_session_confirmed_spot_in_same_lot_fk', [table.confirmedSpotId, table.lotId], spot),
     sameLotForeignKey('parking_session_parked_aisle_in_same_lot_fk', [table.parkedAisleId, table.lotId], aisle),
-    // Compared as text: a check on the enum itself would block the next migration that recreates the enum.
-    check('parking_session_unconfirmed_has_aisle', sql`${table.state}::text <> 'PARKED_UNCONFIRMED' or ${table.parkedAisleId} is not null`),
-    check(
-      'parking_session_confirmed_has_spot',
-      sql`${table.state}::text <> 'PARKED_CONFIRMED' or (${table.confirmedSpotId} is not null and ${table.parkedAnsweredAt} is not null)`,
-    ),
+    ...stateChecks(table),
     check(
       'parking_session_pricing_positive',
       sql`${table.pricingIncrementCents} > 0 and ${table.pricingIncrementMinutes} > 0 and ${table.pricingDailyCapCents} > 0`,
-    ),
-    check(
-      'parking_session_paid_has_exit',
-      sql`${table.state}::text <> 'CLOSED_PAID' or (${table.exitAt} is not null and ${table.exitIdentification} is not null and ${table.capturedCents} is not null)`,
     ),
     uniqueIndex('parking_session_one_active_per_user_index').on(table.userId).where(ACTIVE_SESSION),
     uniqueIndex('parking_session_one_active_per_spot_index').on(table.assignedSpotId).where(ACTIVE_SESSION),
