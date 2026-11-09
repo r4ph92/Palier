@@ -41,11 +41,12 @@ async function payAndClose({ exits, payments }: ExitDependencies, session: Exita
   if (payments === null || session.paymentIntentId === null) {
     return { outcome: 'payments-unavailable' };
   }
-  const exit = { exitedAt: now, capturedCents: amountToCapture(session, now) };
-  const captured: CaptureOutcome = await payments.capture({ sessionId: session.id, paymentIntentId: session.paymentIntentId, amountCents: exit.capturedCents });
-  if (captured === 'failed') {
+  const captured: CaptureOutcome = await payments.capture({ sessionId: session.id, paymentIntentId: session.paymentIntentId, amountCents: amountToCapture(session, now) });
+  if (captured.outcome === 'failed') {
     return { outcome: 'payments-unavailable' };
   }
+  // What Stripe really took: after a capture whose close failed, a later tap asks another amount but the first one stands.
+  const exit = { exitedAt: now, capturedCents: captured.amountCents };
   const closed = await exits.close({ sessionId: session.id, lotId: session.lotId, exitGateId: session.exitGateId, exit });
   if (closed.outcome === 'lot-busy') {
     return closed;

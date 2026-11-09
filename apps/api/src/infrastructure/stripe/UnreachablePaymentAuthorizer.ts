@@ -12,6 +12,6 @@ export class UnreachablePaymentAuthorizer implements PaymentAuthorizer {
   }
 
   capture(): Promise<CaptureOutcome> {
-    return Promise.resolve('failed');
+    return Promise.resolve({ outcome: 'failed' });
   }
 }

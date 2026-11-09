@@ -94,6 +94,19 @@ describe('exitParking', () => {
     expect(exits.closings).toEqual([]);
   });
 
+  it('keeps the amount Stripe took when a first tap captured but could not close, and Julie taps again a few minutes later', async () => {
+    const { exits, payments, exit } = setup();
+    exits.busy = true;
+    expect(await exit()).toEqual({ outcome: 'lot-busy' });
+    exits.busy = false;
+    payments.alreadyCapturedCents = 975;
+
+    const retap = await exit(JULIE_ID, new Date(2026, 10, 4, 21, 20));
+
+    expect(retap).toMatchObject({ outcome: 'left', receipt: { totalCents: 975, durationMinutes: 198 } });
+    expect(exits.closings).toMatchObject([{ exit: { capturedCents: 975 } }]);
+  });
+
   it('answers payments unavailable when the server has no Stripe key', async () => {
     const { exits } = setup();
 

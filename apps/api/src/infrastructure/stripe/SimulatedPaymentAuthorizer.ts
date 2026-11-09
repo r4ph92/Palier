@@ -1,4 +1,4 @@
-import type { AuthorizationRequest, CaptureOutcome, HoldRelease, PaymentAuthorizer } from '../../domain/entries/PaymentAuthorizer.ts';
+import type { AuthorizationRequest, CaptureOutcome, CaptureRequest, HoldRelease, PaymentAuthorizer } from '../../domain/entries/PaymentAuthorizer.ts';
 
 const SIMULATED_INTENT_PREFIX = 'pi_sim_';
 
@@ -13,7 +13,7 @@ export class SimulatedPaymentAuthorizer implements PaymentAuthorizer {
     return Promise.resolve(paymentIntentId.startsWith(SIMULATED_INTENT_PREFIX) ? 'released' : 'gone');
   }
 
-  capture(): Promise<CaptureOutcome> {
-    return Promise.resolve('captured');
+  capture({ amountCents }: CaptureRequest): Promise<CaptureOutcome> {
+    return Promise.resolve({ outcome: 'captured', amountCents });
   }
 }

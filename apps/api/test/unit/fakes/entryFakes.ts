@@ -25,7 +25,9 @@ export class FakePaymentAuthorizer implements PaymentAuthorizer {
   refusal: EntryRefusalCode | null = null;
   release: HoldRelease = 'released';
   readonly captured: CaptureRequest[] = [];
-  captureOutcome: CaptureOutcome = 'captured';
+  captureOutcome: 'captured' | 'failed' = 'captured';
+  // What Stripe says it took when an earlier capture already did; null takes what is asked.
+  alreadyCapturedCents: number | null = null;
   readonly #journal: Journal;
 
   constructor(journal: Journal = []) {
@@ -51,10 +53,11 @@ export class FakePaymentAuthorizer implements PaymentAuthorizer {
 
   capture(request: CaptureRequest): Promise<CaptureOutcome> {
     this.#journal.push('capture');
-    if (this.captureOutcome === 'captured') {
-      this.captured.push(request);
+    if (this.captureOutcome === 'failed') {
+      return Promise.resolve({ outcome: 'failed' });
     }
-    return Promise.resolve(this.captureOutcome);
+    this.captured.push(request);
+    return Promise.resolve({ outcome: 'captured', amountCents: this.alreadyCapturedCents ?? request.amountCents });
   }
 }
 

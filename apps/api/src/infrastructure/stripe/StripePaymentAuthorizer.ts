@@ -20,7 +20,7 @@ export interface PaymentIntentsApi {
   readonly paymentIntents: {
     create(params: Stripe.PaymentIntentCreateParams, options: Stripe.RequestOptions): Promise<CreatedIntent>;
     cancel(paymentIntentId: string): Promise<unknown>;
-    capture(paymentIntentId: string, params: Stripe.PaymentIntentCaptureParams, options: Stripe.RequestOptions): Promise<unknown>;
+    capture(paymentIntentId: string, params: Stripe.PaymentIntentCaptureParams, options: Stripe.RequestOptions): Promise<{ readonly amount_received: number }>;
   };
 }
 
@@ -49,13 +49,14 @@ export class StripePaymentAuthorizer implements PaymentAuthorizer {
     }
   }
 
-  // The idempotency key is the session, so a repeated tap or a Stripe retry never captures twice; an intent already captured counts as captured.
+  // The key names the session and the amount, so a retry of the same capture replays it and a later one asking another amount is not an
+  // idempotency conflict. An intent already captured answers what it really took: the receipt never differs from the charge.
   async capture({ sessionId, paymentIntentId, amountCents }: CaptureRequest): Promise<CaptureOutcome> {
     try {
-      await this.#stripe.paymentIntents.capture(paymentIntentId, { amount_to_capture: amountCents }, { idempotencyKey: `exit-${sessionId}` });
-      return 'captured';
+      const intent = await this.#stripe.paymentIntents.capture(paymentIntentId, { amount_to_capture: amountCents }, { idempotencyKey: `exit-${sessionId}-${amountCents}` });
+      return { outcome: 'captured', amountCents: intent.amount_received };
     } catch (error) {
-      return propertyOf(error, 'code') === UNEXPECTED_STATE && propertyOf(propertyOf(error, 'payment_intent'), 'status') === SUCCEEDED ? 'captured' : 'failed';
+      return capturedBefore(error);
     }
   }
 
@@ -84,6 +85,15 @@ function intentParameters(request: AuthorizationRequest): Stripe.PaymentIntentCr
     return parameters;
   }
   return { ...parameters, transfer_data: { destination: request.destinationAccountId } };
+}
+
+function capturedBefore(error: unknown): CaptureOutcome {
+  const intent = propertyOf(error, 'payment_intent');
+  const received = propertyOf(intent, 'amount_received');
+  if (propertyOf(error, 'code') === UNEXPECTED_STATE && propertyOf(intent, 'status') === SUCCEEDED && typeof received === 'number') {
+    return { outcome: 'captured', amountCents: received };
+  }
+  return { outcome: 'failed' };
 }
 
 // An intent already canceled is the release we wanted; one missing or in another final state never will be.

@@ -16,8 +16,8 @@ function fakeStripe(created: Promise<{ id: string; status: string }>) {
     () => created,
   );
   const cancel = vi.fn<(paymentIntentId: string) => Promise<unknown>>(() => Promise.resolve({}));
-  const capture = vi.fn<(paymentIntentId: string, params: Stripe.PaymentIntentCaptureParams, options: Stripe.RequestOptions) => Promise<unknown>>(() =>
-    Promise.resolve({}),
+  const capture = vi.fn<(paymentIntentId: string, params: Stripe.PaymentIntentCaptureParams, options: Stripe.RequestOptions) => Promise<{ amount_received: number }>>(() =>
+    Promise.resolve({ amount_received: 975 }),
   );
   const stripe: PaymentIntentsApi = { paymentIntents: { create, cancel, capture } };
   return { stripe, create, cancel, capture };
@@ -129,15 +129,15 @@ describe('StripePaymentAuthorizer', () => {
     it('takes the exact amount once per session, the rest of the hold being released by Stripe', async () => {
       const { stripe, capture: stripeCapture } = fakeStripe(Promise.resolve({ id: 'pi_1', status: 'requires_capture' }));
 
-      expect(await new StripePaymentAuthorizer(stripe).capture(capture)).toBe('captured');
-      expect(stripeCapture).toHaveBeenCalledWith('pi_1', { amount_to_capture: 975 }, { idempotencyKey: 'exit-session-1' });
+      expect(await new StripePaymentAuthorizer(stripe).capture(capture)).toEqual({ outcome: 'captured', amountCents: 975 });
+      expect(stripeCapture).toHaveBeenCalledWith('pi_1', { amount_to_capture: 975 }, { idempotencyKey: 'exit-session-1-975' });
     });
 
-    it('counts an intent Stripe says is already captured as captured', async () => {
+    it('answers what an intent already captured really took, not the amount asked now', async () => {
       const { stripe, capture: stripeCapture } = fakeStripe(Promise.resolve({ id: 'pi_1', status: 'requires_capture' }));
-      stripeCapture.mockRejectedValue({ code: 'payment_intent_unexpected_state', payment_intent: { status: 'succeeded' } });
+      stripeCapture.mockRejectedValue({ code: 'payment_intent_unexpected_state', payment_intent: { status: 'succeeded', amount_received: 975 } });
 
-      expect(await new StripePaymentAuthorizer(stripe).capture(capture)).toBe('captured');
+      expect(await new StripePaymentAuthorizer(stripe).capture({ ...capture, amountCents: 1050 })).toEqual({ outcome: 'captured', amountCents: 975 });
     });
 
     it.each([
@@ -147,7 +147,7 @@ describe('StripePaymentAuthorizer', () => {
       const { stripe, capture: stripeCapture } = fakeStripe(Promise.resolve({ id: 'pi_1', status: 'requires_capture' }));
       stripeCapture.mockRejectedValue(error);
 
-      expect(await new StripePaymentAuthorizer(stripe).capture(capture)).toBe('failed');
+      expect(await new StripePaymentAuthorizer(stripe).capture(capture)).toEqual({ outcome: 'failed' });
     });
   });
 });

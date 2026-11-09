@@ -16,8 +16,9 @@ export interface CaptureRequest {
   readonly amountCents: number;
 }
 
-// captured: the amount is taken (a repeat answers captured too) and the rest released; failed: Stripe unreachable or erring, nothing taken.
-export type CaptureOutcome = 'captured' | 'failed';
+// captured: the amount Stripe really took (a repeat answers the first capture's amount, whatever is asked now) and the rest released;
+// failed: Stripe unreachable or erring, nothing known to be taken.
+export type CaptureOutcome = { readonly outcome: 'captured'; readonly amountCents: number } | { readonly outcome: 'failed' };
 
 export interface PaymentAuthorizer {
   // Holds the amount on the card without capturing it and answers the payment intent id.

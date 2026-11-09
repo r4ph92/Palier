@@ -126,7 +126,7 @@ async function freeSpots(tx: Transaction, { sessionId, session, now }: SpotsToFr
     return;
   }
   await tx.execute(sql`
-    update spot set state = 'AVAILABLE', state_changed_at = ${now.toISOString()}::timestamptz
+    update spot set needs_check = needs_check or state = 'OCCUPIED_UNKNOWN', state = 'AVAILABLE', state_changed_at = ${now.toISOString()}::timestamptz
     where id in (${sql.join(freed.map((id) => sql`${id}`), sql`, `)})`);
 }
 
@@ -141,6 +141,7 @@ async function lockSpotsOfSession(tx: Transaction, sessionId: string, session: C
     from spot
     where spot.id = ${ownSpotId} or spot.id = ${session.assigned_spot_id}
       or spot.id in (select spot_id from parking_session_reported_spot where session_id = ${sessionId})
+    order by spot.id
     for update of spot`);
   return rows.map((row) => ({ id: row.id, state: row.state, heldByAnotherSession: row.held_by_another_session }));
 }
