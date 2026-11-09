@@ -71,6 +71,7 @@ export class EntryAdmission {
       entryGateId: entry.gate.id,
       authorizedCents: entry.payment.amountCents,
       pricing: entry.pricing,
+      cardLast4: entry.cardLast4,
     });
     if (opening === null) {
       throw new EntryRefusedError('LOT_FULL');

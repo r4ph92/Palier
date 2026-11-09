@@ -13,6 +13,7 @@ export interface SessionDraft {
   readonly entryGateId: string;
   readonly authorizedCents: number;
   readonly pricing: PricingPolicy;
+  readonly cardLast4: string | null;
 }
 
 export interface OpenedSession {

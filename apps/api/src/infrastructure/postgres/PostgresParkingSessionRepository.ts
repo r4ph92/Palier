@@ -142,6 +142,7 @@ function sessionValues(draft: SessionDraft, assignedSpotId: string): typeof park
     assignedSpotId,
     entryGateId: draft.entryGateId,
     authorizedCents: draft.authorizedCents,
+    cardLast4: draft.cardLast4,
     pricingIncrementCents: draft.pricing.incrementCents,
     pricingIncrementMinutes: draft.pricing.incrementMinutes,
     pricingDailyCapCents: draft.pricing.dailyCapCents,

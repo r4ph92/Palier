@@ -1,0 +1,1 @@
+ALTER TABLE "parking_session" ADD COLUMN "card_last4" text;

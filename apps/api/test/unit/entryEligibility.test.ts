@@ -66,6 +66,7 @@ describe('entry eligibility', () => {
       vehicle: { id: expect.any(String), plate: 'ABC 123', needs: standardNeeds },
       payment: { customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },
       pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 },
+      cardLast4: '4242',
     });
   });
 
