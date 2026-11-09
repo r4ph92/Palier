@@ -32,6 +32,7 @@ const SESSION_REFUSALS: Readonly<Record<EntrySessionState, SessionRefusal | null
   PARKED_UNCONFIRMED: 'already-parked',
   PARKED_CONFIRMED: 'already-parked',
   CANCELLED: 'closed',
+  CLOSED_PAID: 'closed',
 };
 
 export interface ReportFacts {

@@ -10,10 +10,21 @@ export interface AuthorizationRequest {
 // released: nothing held any more; gone: missing or captured, never retried; failed: Stripe unreachable or erring, retried.
 export type HoldRelease = 'released' | 'gone' | 'failed';
 
+export interface CaptureRequest {
+  readonly sessionId: string;
+  readonly paymentIntentId: string;
+  readonly amountCents: number;
+}
+
+// captured: the amount is taken (a repeat answers captured too) and the rest released; failed: Stripe unreachable or erring, nothing taken.
+export type CaptureOutcome = 'captured' | 'failed';
+
 export interface PaymentAuthorizer {
   // Holds the amount on the card without capturing it and answers the payment intent id.
   // Throws EntryRefusedError CARD_DECLINED or PAYMENTS_UNAVAILABLE.
   authorize(request: AuthorizationRequest): Promise<string>;
   // Never throws for a Stripe error: the outcome says whether to retry. Cancelling twice answers released.
   cancel(paymentIntentId: string): Promise<HoldRelease>;
+  // Takes the amount from the hold and releases the rest. Never throws for a Stripe error; the same session captures once.
+  capture(request: CaptureRequest): Promise<CaptureOutcome>;
 }

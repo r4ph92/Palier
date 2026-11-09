@@ -16,8 +16,11 @@ function fakeStripe(created: Promise<{ id: string; status: string }>) {
     () => created,
   );
   const cancel = vi.fn<(paymentIntentId: string) => Promise<unknown>>(() => Promise.resolve({}));
-  const stripe: PaymentIntentsApi = { paymentIntents: { create, cancel } };
-  return { stripe, create, cancel };
+  const capture = vi.fn<(paymentIntentId: string, params: Stripe.PaymentIntentCaptureParams, options: Stripe.RequestOptions) => Promise<unknown>>(() =>
+    Promise.resolve({}),
+  );
+  const stripe: PaymentIntentsApi = { paymentIntents: { create, cancel, capture } };
+  return { stripe, create, cancel, capture };
 }
 
 describe('StripePaymentAuthorizer', () => {
@@ -118,5 +121,33 @@ describe('StripePaymentAuthorizer', () => {
     ['something that is not an object', 'boom'],
   ])('answers failed, to retry, for %s', async (_case, error) => {
     expect(await refusedCancel(error)).toBe('failed');
+  });
+
+  describe('capture', () => {
+    const capture = { sessionId: 'session-1', paymentIntentId: 'pi_1', amountCents: 975 };
+
+    it('takes the exact amount once per session, the rest of the hold being released by Stripe', async () => {
+      const { stripe, capture: stripeCapture } = fakeStripe(Promise.resolve({ id: 'pi_1', status: 'requires_capture' }));
+
+      expect(await new StripePaymentAuthorizer(stripe).capture(capture)).toBe('captured');
+      expect(stripeCapture).toHaveBeenCalledWith('pi_1', { amount_to_capture: 975 }, { idempotencyKey: 'exit-session-1' });
+    });
+
+    it('counts an intent Stripe says is already captured as captured', async () => {
+      const { stripe, capture: stripeCapture } = fakeStripe(Promise.resolve({ id: 'pi_1', status: 'requires_capture' }));
+      stripeCapture.mockRejectedValue({ code: 'payment_intent_unexpected_state', payment_intent: { status: 'succeeded' } });
+
+      expect(await new StripePaymentAuthorizer(stripe).capture(capture)).toBe('captured');
+    });
+
+    it.each([
+      { cause: 'Stripe is unreachable', error: new Error('network down') },
+      { cause: 'the intent was canceled', error: { code: 'payment_intent_unexpected_state', payment_intent: { status: 'canceled' } } },
+    ])('answers failed when $cause, without throwing', async ({ error }) => {
+      const { stripe, capture: stripeCapture } = fakeStripe(Promise.resolve({ id: 'pi_1', status: 'requires_capture' }));
+      stripeCapture.mockRejectedValue(error);
+
+      expect(await new StripePaymentAuthorizer(stripe).capture(capture)).toBe('failed');
+    });
   });
 });

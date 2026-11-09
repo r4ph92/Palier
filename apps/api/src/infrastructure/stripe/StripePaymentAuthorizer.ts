@@ -1,10 +1,11 @@
 import type Stripe from 'stripe';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
-import type { AuthorizationRequest, HoldRelease, PaymentAuthorizer } from '../../domain/entries/PaymentAuthorizer.ts';
+import type { AuthorizationRequest, CaptureOutcome, CaptureRequest, HoldRelease, PaymentAuthorizer } from '../../domain/entries/PaymentAuthorizer.ts';
 
 const CURRENCY = 'cad';
 const AUTHORIZED = 'requires_capture';
 const CANCELED = 'canceled';
+const SUCCEEDED = 'succeeded';
 const CARD_ERROR = 'StripeCardError';
 const UNEXPECTED_STATE = 'payment_intent_unexpected_state';
 const MISSING = 'resource_missing';
@@ -19,6 +20,7 @@ export interface PaymentIntentsApi {
   readonly paymentIntents: {
     create(params: Stripe.PaymentIntentCreateParams, options: Stripe.RequestOptions): Promise<CreatedIntent>;
     cancel(paymentIntentId: string): Promise<unknown>;
+    capture(paymentIntentId: string, params: Stripe.PaymentIntentCaptureParams, options: Stripe.RequestOptions): Promise<unknown>;
   };
 }
 
@@ -44,6 +46,16 @@ export class StripePaymentAuthorizer implements PaymentAuthorizer {
       return 'released';
     } catch (error) {
       return releaseAfterRefusal(error);
+    }
+  }
+
+  // The idempotency key is the session, so a repeated tap or a Stripe retry never captures twice; an intent already captured counts as captured.
+  async capture({ sessionId, paymentIntentId, amountCents }: CaptureRequest): Promise<CaptureOutcome> {
+    try {
+      await this.#stripe.paymentIntents.capture(paymentIntentId, { amount_to_capture: amountCents }, { idempotencyKey: `exit-${sessionId}` });
+      return 'captured';
+    } catch (error) {
+      return propertyOf(error, 'code') === UNEXPECTED_STATE && propertyOf(propertyOf(error, 'payment_intent'), 'status') === SUCCEEDED ? 'captured' : 'failed';
     }
   }
 

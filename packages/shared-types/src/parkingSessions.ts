@@ -108,3 +108,27 @@ export type SpotTakenRefusalCode =
   | 'SESSION_CLOSED'
   | 'SPOT_NOT_ASSIGNED'
   | 'LOT_BUSY';
+
+// What the driver paid on leaving, from the lot's pricing at entry: the figures behind "13 × 0,75 $".
+export interface ExitReceipt {
+  readonly exitedAt: string;
+  readonly durationMinutes: number;
+  readonly increments: number;
+  readonly incrementCents: number;
+  readonly totalCents: number;
+  // The daily cap (or the card hold) held the total under increments × incrementCents.
+  readonly capped: boolean;
+}
+
+// The same receipt when the exit was already done: the first tap's figures.
+export interface ExitResponse {
+  readonly receipt: ExitReceipt;
+}
+
+export type ExitRefusalCode =
+  | 'SESSION_NOT_FOUND'
+  | 'ENTRY_NOT_CONFIRMED'
+  | 'SESSION_CLOSED'
+  | 'GATE_UNAVAILABLE'
+  | 'PAYMENTS_UNAVAILABLE'
+  | 'LOT_BUSY';
