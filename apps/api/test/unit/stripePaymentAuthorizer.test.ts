@@ -140,6 +140,21 @@ describe('StripePaymentAuthorizer', () => {
       expect(await new StripePaymentAuthorizer(stripe).capture({ ...capture, amountCents: 1050 })).toEqual({ outcome: 'captured', amountCents: 975 });
     });
 
+    it('waits and replays the first capture when a tap racing it finds the idempotency key in use', async () => {
+      const { stripe, capture: stripeCapture } = fakeStripe(Promise.resolve({ id: 'pi_1', status: 'requires_capture' }));
+      stripeCapture.mockRejectedValueOnce({ code: 'idempotency_key_in_use' }).mockResolvedValueOnce({ amount_received: 975 });
+
+      expect(await new StripePaymentAuthorizer(stripe, 0).capture(capture)).toEqual({ outcome: 'captured', amountCents: 975 });
+      expect(stripeCapture).toHaveBeenCalledTimes(2);
+    });
+
+    it('answers failed when the key stays in use after the wait', async () => {
+      const { stripe, capture: stripeCapture } = fakeStripe(Promise.resolve({ id: 'pi_1', status: 'requires_capture' }));
+      stripeCapture.mockRejectedValue({ code: 'idempotency_key_in_use' });
+
+      expect(await new StripePaymentAuthorizer(stripe, 0).capture(capture)).toEqual({ outcome: 'failed' });
+    });
+
     it.each([
       { cause: 'Stripe is unreachable', error: new Error('network down') },
       { cause: 'the intent was canceled', error: { code: 'payment_intent_unexpected_state', payment_intent: { status: 'canceled' } } },
