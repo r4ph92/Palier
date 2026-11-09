@@ -24,7 +24,7 @@ export class PostgresPassageLedger implements PassageLedger {
   recordPassage(entry: PassageEntry): Promise<RecordedPassage> {
     return this.#database.transaction(async (tx) => {
       const vehicleCount = await countVehicle(tx, entry);
-      return { vehicleCount, confirmedSessionId: await confirmOpening(tx, entry) };
+      return { vehicleCount, confirmedSessionId: await confirmOpening(tx, entry), exitedSessionId: await attachExitPassage(tx, entry) };
     }, LOT_LOCK_TRANSACTION);
   }
 }
@@ -77,6 +77,28 @@ async function confirmOldestOpening(tx: Transaction, entry: PassageEntry, window
     ) and state = 'CREATED'
     returning id, assigned_spot_id`);
   return rows[0];
+}
+
+// The oldest exit opening whose session is still unattached wins; like confirmOpening it runs after countVehicle took the lot lock.
+async function attachExitPassage(tx: Transaction, entry: PassageEntry): Promise<string | null> {
+  if (entry.attachableOpenings === null) {
+    return null;
+  }
+  const rows = await tx.execute<{ readonly id: string }>(sql`
+    update parking_session
+    set exit_passage_at = ${entry.closedAt.toISOString()}
+    where id = (
+      select s.id
+      from gate_command c
+      join parking_session s on s.id = c.session_id
+      where c.gate_id = ${entry.gate.id} and c.kind = 'OPEN' and s.state = 'CLOSED_PAID' and s.exit_passage_at is null
+        and ${isWithinOpeningWindow(sql`c.issued_at`, entry.attachableOpenings)}
+      order by c.issued_at, c.id
+      limit 1
+      for update of s
+    ) and exit_passage_at is null
+    returning id`);
+  return rows[0]?.id ?? null;
 }
 
 async function occupySpot(tx: Transaction, spotId: string): Promise<void> {

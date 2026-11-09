@@ -30,13 +30,15 @@ export async function recordPassage(
   const { gate, closedAt } = command;
   const vehicleCountChange = VEHICLE_COUNT_CHANGE[gate.kind];
   const confirmableOpenings = gate.kind === 'ENTRY' ? collaborators.openingWindow : null;
-  const { vehicleCount, confirmedSessionId } = await collaborators.ledger.recordPassage({
+  const attachableOpenings = gate.kind === 'EXIT' ? collaborators.openingWindow : null;
+  const recorded = await collaborators.ledger.recordPassage({
     gate,
     closedAt,
     vehicleCountChange,
     confirmableOpenings,
+    attachableOpenings,
   });
-  return { gateId: gate.id, lotId: gate.lotId, kind: gate.kind, closedAt: closedAt.toISOString(), vehicleCount, confirmedSessionId };
+  return { gateId: gate.id, lotId: gate.lotId, kind: gate.kind, closedAt: closedAt.toISOString(), ...recorded };
 }
 
 function ensurePassageAllowed(command: PassageCommand, now: Date): void {
