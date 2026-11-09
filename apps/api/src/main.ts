@@ -11,6 +11,7 @@ import { composeSpotHolds } from './composeSpotHolds.ts';
 import { buildServer } from './http/buildServer.ts';
 import { connectToDatabase } from './infrastructure/postgres/database.ts';
 import { PostgresCurrentParkingSessionQuery } from './infrastructure/postgres/PostgresCurrentParkingSessionQuery.ts';
+import { PostgresExitRepository } from './infrastructure/postgres/PostgresExitRepository.ts';
 import { PostgresDriverRepository } from './infrastructure/postgres/PostgresDriverRepository.ts';
 import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateCommandFeed.ts';
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
@@ -83,6 +84,7 @@ const server = buildServer({
   testClock,
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   entries: entries.routes,
+  exits: { exits: new PostgresExitRepository(connection.database), payments: entries.payments },
   spotHolds: composeSpotHolds(connection.database, environment.demoMode, { vehicles: vehicleRepository, drivers: driverRepository }),
   operatorStripe: composeOperatorStripe({
     database: connection.database,

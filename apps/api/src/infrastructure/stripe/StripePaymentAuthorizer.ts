@@ -1,13 +1,16 @@
 import type Stripe from 'stripe';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
-import type { AuthorizationRequest, HoldRelease, PaymentAuthorizer } from '../../domain/entries/PaymentAuthorizer.ts';
+import type { AuthorizationRequest, CaptureOutcome, CaptureRequest, HoldRelease, PaymentAuthorizer } from '../../domain/entries/PaymentAuthorizer.ts';
 
 const CURRENCY = 'cad';
 const AUTHORIZED = 'requires_capture';
 const CANCELED = 'canceled';
+const SUCCEEDED = 'succeeded';
 const CARD_ERROR = 'StripeCardError';
 const UNEXPECTED_STATE = 'payment_intent_unexpected_state';
 const MISSING = 'resource_missing';
+const KEY_IN_USE = 'idempotency_key_in_use';
+const KEY_IN_USE_RETRY_MILLISECONDS = 400;
 
 interface CreatedIntent {
   readonly id: string;
@@ -19,14 +22,18 @@ export interface PaymentIntentsApi {
   readonly paymentIntents: {
     create(params: Stripe.PaymentIntentCreateParams, options: Stripe.RequestOptions): Promise<CreatedIntent>;
     cancel(paymentIntentId: string): Promise<unknown>;
+    capture(paymentIntentId: string, params: Stripe.PaymentIntentCaptureParams, options: Stripe.RequestOptions): Promise<{ readonly amount_received: number }>;
   };
 }
 
 export class StripePaymentAuthorizer implements PaymentAuthorizer {
   readonly #stripe: PaymentIntentsApi;
 
-  constructor(stripe: PaymentIntentsApi) {
+  readonly #keyInUseRetryMilliseconds: number;
+
+  constructor(stripe: PaymentIntentsApi, keyInUseRetryMilliseconds = KEY_IN_USE_RETRY_MILLISECONDS) {
     this.#stripe = stripe;
+    this.#keyInUseRetryMilliseconds = keyInUseRetryMilliseconds;
   }
 
   async authorize(request: AuthorizationRequest): Promise<string> {
@@ -44,6 +51,28 @@ export class StripePaymentAuthorizer implements PaymentAuthorizer {
       return 'released';
     } catch (error) {
       return releaseAfterRefusal(error);
+    }
+  }
+
+  // The key names the session and the amount, so a retry of the same capture replays it and a later one asking another amount is not an
+  // idempotency conflict. An intent already captured answers what it really took: the receipt never differs from the charge.
+  // A second tap racing the first finds the key in use: it waits a moment, then replays the first capture's answer.
+  async capture(request: CaptureRequest): Promise<CaptureOutcome> {
+    const first = await this.#captureOnce(request);
+    if (first !== KEY_IN_USE) {
+      return first;
+    }
+    await new Promise((resolve) => setTimeout(resolve, this.#keyInUseRetryMilliseconds));
+    const second = await this.#captureOnce(request);
+    return second === KEY_IN_USE ? { outcome: 'failed' } : second;
+  }
+
+  async #captureOnce({ sessionId, paymentIntentId, amountCents }: CaptureRequest): Promise<CaptureOutcome | typeof KEY_IN_USE> {
+    try {
+      const intent = await this.#stripe.paymentIntents.capture(paymentIntentId, { amount_to_capture: amountCents }, { idempotencyKey: `exit-${sessionId}-${amountCents}` });
+      return { outcome: 'captured', amountCents: intent.amount_received };
+    } catch (error) {
+      return propertyOf(error, 'code') === KEY_IN_USE ? KEY_IN_USE : capturedBefore(error);
     }
   }
 
@@ -72,6 +101,15 @@ function intentParameters(request: AuthorizationRequest): Stripe.PaymentIntentCr
     return parameters;
   }
   return { ...parameters, transfer_data: { destination: request.destinationAccountId } };
+}
+
+function capturedBefore(error: unknown): CaptureOutcome {
+  const intent = propertyOf(error, 'payment_intent');
+  const received = propertyOf(intent, 'amount_received');
+  if (propertyOf(error, 'code') === UNEXPECTED_STATE && propertyOf(intent, 'status') === SUCCEEDED && typeof received === 'number') {
+    return { outcome: 'captured', amountCents: received };
+  }
+  return { outcome: 'failed' };
 }
 
 // An intent already canceled is the release we wanted; one missing or in another final state never will be.

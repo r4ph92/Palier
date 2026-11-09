@@ -28,6 +28,8 @@ interface CurrentParkingSessionScreenProps {
   readonly whereParked?: (framing: WhereParkedFraming) => ReactNode;
   // « Place prise » while the driver has not parked; onNoneFree shows why the question follows when no other spot is free.
   readonly reportSpotTaken?: (onNoneFree: () => void) => ReactNode;
+  // « Ouvrir la barrière de sortie », under the figures it settles; absent while the entry is not confirmed.
+  readonly exit?: ReactNode;
   // The scan result holding VoiceOver's focus gave way to this screen: the focus moves to the spot.
   readonly shouldFocusSpotOnArrival?: boolean;
 }
@@ -95,7 +97,7 @@ function offlineMessageOf(session: CurrentParkingSession): string {
 }
 
 function SessionDetails(props: SessionDetailsProps) {
-  const { reading, offline, arrival, notice, guidance, shouldFocusSpotOnArrival = false } = props;
+  const { reading, offline, arrival, notice, guidance, exit, shouldFocusSpotOnArrival = false } = props;
   const { session, readAt } = reading;
   return (
     <>
@@ -107,6 +109,7 @@ function SessionDetails(props: SessionDetailsProps) {
       <SessionAmount session={session} />
       <SessionTimes session={session} />
       <UpdatedAt readAt={readAt} />
+      {session.state === 'CREATED' ? null : exit}
     </>
   );
 }

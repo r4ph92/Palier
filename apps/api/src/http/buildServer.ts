@@ -27,6 +27,8 @@ import { registerGateRoutes, type GateRouteDependencies } from './routes/gateRou
 import { registerLotsRoutes } from './routes/lotsRoutes.ts';
 import { registerParkedAnswerRoute } from './routes/parkedAnswerRoute.ts';
 import { registerParkedPresumptionRoute } from './routes/parkedPresumptionRoute.ts';
+import type { ExitDependencies } from '../domain/exits/exitParking.ts';
+import { registerExitRoute } from './routes/exitRoute.ts';
 import { registerSpotTakenRoute } from './routes/spotTakenRoute.ts';
 import { registerStripeWebhookRoute } from './routes/stripeWebhookRoute.ts';
 import { registerPaymentMethodRoutes } from './routes/paymentMethodRoutes.ts';
@@ -60,6 +62,8 @@ export interface ServerDependencies {
   readonly cardGateway?: CardGateway | undefined;
   // main.ts always passes it; tests of other routes leave it out, and entries then answer 503 PAYMENTS_UNAVAILABLE.
   readonly entries?: EntryRouteDependencies | undefined;
+  // main.ts always passes it; tests of other routes leave it out, and exits then answer 503 PAYMENTS_UNAVAILABLE.
+  readonly exits?: ExitDependencies | undefined;
   // main.ts always passes it; tests of other routes leave it out, and holds then answer 503 HOLD_UNAVAILABLE.
   readonly spotHolds?: SpotHoldServices | undefined;
   // main.ts always passes it; without it the dashboard cannot connect Stripe.
@@ -77,12 +81,12 @@ export interface ServerSettings {
   readonly secureCookies?: boolean;
 }
 
-export function buildServer({ repositories, gates, cardGateway, entries, spotHolds, operatorStripe, testClock, settings = {} }: ServerDependencies): FastifyInstance {
+export function buildServer({ repositories, gates, cardGateway, entries, exits, spotHolds, operatorStripe, testClock, settings = {} }: ServerDependencies): FastifyInstance {
   // Refuse a value of the wrong JSON type rather than converting it, so ["2026-10-28"] is not read as "2026-10-28".
   const server = Fastify({ logger: settings.logsRequests ?? false, ajv: { customOptions: { coerceTypes: false } } });
   server.setErrorHandler(handleServerError);
   server.decorateRequest('driver', null);
-  void server.register(async (appScope) => registerAppRoutes(appScope, { repositories, cardGateway, entries, spotHolds, testClock, settings }));
+  void server.register(async (appScope) => registerAppRoutes(appScope, { repositories, cardGateway, entries, exits, spotHolds, testClock, settings }));
   void server.register(async (dashboardScope) => registerDashboardRoutes(dashboardScope, dashboardDependencies(repositories, settings, operatorStripe)));
   if (operatorStripe?.webhookReader != null) {
     registerStripeWebhookRoute(server, { reader: operatorStripe.webhookReader, accounts: operatorStripe.accounts });
@@ -110,7 +114,7 @@ function dashboardDependencies(
 }
 
 // The app's routes share a scope so the minimum app version applies to the app, not to gate controllers or the console.
-function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway, entries, spotHolds, testClock, settings }: AppRouteDependencies): void {
+function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway, entries, exits, spotHolds, testClock, settings }: AppRouteDependencies): void {
   if (settings.minimumAppVersion !== undefined) {
     server.addHook('onRequest', requireMinimumAppVersion(settings.minimumAppVersion));
   }
@@ -123,6 +127,7 @@ function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway,
   registerPaymentMethodRoutes(server, driverAccess, cardGateway);
   registerEntryRoutes(server, driverAccess, entries);
   registerParkingSessionRoutes(server, driverAccess, { repositories, clock });
+  registerExitRoute(server, driverAccess, exits === undefined ? undefined : { exit: exits, clock });
   registerSpotHoldRoutes(server, driverAccess, { services: spotHolds, clock });
   if (testTools !== null) {
     registerTestSignInRoutes(server, { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository });

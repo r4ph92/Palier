@@ -112,6 +112,7 @@ function outcomeOf(state: EntrySessionState): Outcome {
     case 'PARKED_PRESUMED':
     case 'PARKED_UNCONFIRMED':
     case 'PARKED_CONFIRMED':
+    case 'CLOSED_PAID':
       return 'confirmed';
     case 'CANCELLED':
       return 'cancelled';

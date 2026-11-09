@@ -1,5 +1,6 @@
 import type {
   CurrentParkingSession,
+  ExitResponse,
   ParkedPresumptionRequest,
   ParkedPresumptionResponse,
   ParkedSpotAnswerRequest,
@@ -9,6 +10,7 @@ import type {
 } from '@palier/shared-types';
 import { AuthorizedRequester, readJson, type AuthorizedClientOptions } from './authorizedRequest';
 import type { DetectedWalk, ParkingSessionClient } from './ParkingSessionClient';
+import { parseExit } from './parseExit';
 import { parseCurrentParkingSession } from './parseCurrentParkingSession';
 import { parseParkedAnswer } from './parseParkedAnswer';
 import { parseParkedPresumption } from './parseParkedPresumption';
@@ -64,5 +66,10 @@ export class HttpParkingSessionClient implements ParkingSessionClient {
       body: JSON.stringify(body),
     });
     return parseSpotTaken(await readJson(response));
+  }
+
+  async exit(sessionId: string): Promise<ExitResponse> {
+    const response = await this.#answerRequester.send(`/v1/entries/${encodeURIComponent(sessionId)}/exit`, { method: 'POST' });
+    return parseExit(await readJson(response));
   }
 }

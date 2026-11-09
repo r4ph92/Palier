@@ -1,3 +1,4 @@
+import type { ExitReceipt } from '@palier/shared-types';
 import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import { assertNever } from '../assertNever';
 import type { EntryClient } from '../api/EntryClient';
@@ -12,6 +13,7 @@ import { isWalkedAwayState } from '@palier/shared-types/entries';
 import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
 import { ScanFrame, ScanScreen } from './ScanScreen';
 import { SessionNotice } from './SessionNotice';
+import { ExitButton, ExitReceiptScreen } from './ExitSession';
 import { ReportSpotTaken } from './ReportSpotTaken';
 import { WhereParkedScreen } from './WhereParkedScreen';
 
@@ -38,12 +40,25 @@ export function scanTabLabels(state: CurrentParkingSessionState): TabLabels {
 
 // An entry in progress keeps the scan screen, so its spot and announcement are never cut off by a refresh.
 // Otherwise the tab waits for Palier's first answer, then shows the current session or the form.
-export function ScanTab({ entryClient, parkingSessionClient, gateScanner, aside, currentSession, pendingEntry, onAddPlate, onAddCard }: ScanTabProps) {
+export function ScanTab(props: ScanTabProps) {
+  const [receipt, setReceipt] = useState<ExitReceipt | null>(null);
+  if (receipt !== null) {
+    return <ExitReceiptScreen receipt={receipt} onDone={() => setReceipt(null)} />;
+  }
+  return <SessionOrScan {...props} onLeft={setReceipt} />;
+}
+
+interface SessionOrScanProps extends ScanTabProps {
+  // The exit took the amount: the receipt replaces the whole tab, the session being closed.
+  readonly onLeft: (receipt: ExitReceipt) => void;
+}
+
+function SessionOrScan({ entryClient, parkingSessionClient, gateScanner, aside, currentSession, pendingEntry, onAddPlate, onAddCard, onLeft }: SessionOrScanProps) {
   const entry = useEntry(entryClient, pendingEntry);
   const { state, refresh, ...progress } = currentSession;
   useRefreshAsEntryProgresses(entry.state, refresh);
   const arrivedParkedSessionId = useEndEntryOnceParked(entry, state);
-  const choice = { aside, arrivedParkedSessionId, parkingSessionClient };
+  const choice = { aside, arrivedParkedSessionId, parkingSessionClient, onLeft };
   const sessionScreen = isEntryInProgress(entry.state) ? null : sessionScreenFor(currentSession, choice);
   if (sessionScreen !== null) {
     return sessionScreen;
@@ -61,6 +76,8 @@ interface SessionScreenChoice {
   // The session the scan result gave way to, whose spot then takes VoiceOver's focus.
   readonly arrivedParkedSessionId: string | null;
   readonly parkingSessionClient: ParkingSessionClient;
+  // The exit took the amount: the receipt replaces the session, which Palier has closed.
+  readonly onLeft: (receipt: ExitReceipt) => void;
 }
 
 // What replaces the scan form: nothing yet known, or a current session.
@@ -87,22 +104,38 @@ function sessionScreenFor(currentSession: CurrentParkingSessionController, choic
 function currentSessionScreen(
   reading: CurrentParkingSessionReading,
   { refresh, isReading, missedReads }: CurrentParkingSessionController,
-  { aside, arrivedParkedSessionId, parkingSessionClient }: SessionScreenChoice,
+  { aside, arrivedParkedSessionId, parkingSessionClient, onLeft }: SessionScreenChoice,
 ): ReactElement {
   return (
     <CurrentParkingSessionScreen
       reading={reading}
-      progress={{ isReading, missedReads }}
-      onRetry={refresh}
+      progress={{ isReading, missedReads }} onRetry={refresh}
       notice={isWalkedAwayState(reading.session.state) ? null : aside.detectionNotice}
       guidance={aside.guidance}
       whereParked={(framing) => <WhereParkedScreen client={parkingSessionClient} session={reading.session} framing={framing} onAnswered={refresh} />}
       reportSpotTaken={(onNoneFree) => (
         <ReportSpotTaken key={reading.session.sessionId} client={parkingSessionClient} session={reading.session} onNoneFree={onNoneFree} onSettled={refresh} />
       )}
+      exit={exitButtonFor({ client: parkingSessionClient, sessionId: reading.session.sessionId, onLeft, refresh })}
       shouldFocusSpotOnArrival={reading.session.sessionId === arrivedParkedSessionId}
     />
   );
+}
+
+interface ExitButtonChoice {
+  readonly client: ParkingSessionClient;
+  readonly sessionId: string;
+  readonly onLeft: (receipt: ExitReceipt) => void;
+  readonly refresh: () => void;
+}
+
+// The receipt shows at once and the session is read again, which now answers none.
+function exitButtonFor({ client, sessionId, onLeft, refresh }: ExitButtonChoice): ReactElement {
+  const onLeftAndRefresh = (receipt: ExitReceipt) => {
+    onLeft(receipt);
+    refresh();
+  };
+  return <ExitButton key={sessionId} client={client} sessionId={sessionId} onLeft={onLeftAndRefresh} onSessionMoved={refresh} />;
 }
 
 // A cancelled entry keeps the scan screen too: its message stays on the form, whatever the session read answers.

@@ -1,7 +1,6 @@
 import type { SpotCategory } from '@palier/shared-types';
+import { sessionPartsFr } from './sessionPartsFr';
 import { spotHoldFr } from './spotHoldFr';
-import { spotTakenFr } from './spotTakenFr';
-import { whereParkedFr } from './whereParkedFr';
 import { LOT_NOT_IN_SERVICE, NOT_RESPONDING, TOO_MANY_ATTEMPTS } from './sharedFr';
 
 export const fr = {
@@ -166,8 +165,7 @@ export const fr = {
       imageAssigned: '\u00A0: allée %{aisle} en surbrillance, place %{spot}',
       imageHere: ', vous êtes ici\u00A0: allée %{aisle}',
     },
-    whereParked: whereParkedFr,
-    spotTaken: spotTakenFr,
+    ...sessionPartsFr,
   },
   locationExplanation: {
     eyebrow: 'Localisation',
