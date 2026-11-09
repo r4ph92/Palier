@@ -11,6 +11,8 @@ export const GATED = [
   'POST /v1/me/vehicles/:id/default',
   'DELETE /v1/me/vehicles/:id',
   'GET /v1/me/payment-method',
+  'GET /v1/me/receipts',
+  'GET /v1/me/receipts/:sessionId',
   'PUT /v1/me/payment-method',
   'POST /v1/me/setup-intent',
   'POST /v1/entries',

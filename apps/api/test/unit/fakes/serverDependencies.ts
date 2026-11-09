@@ -28,7 +28,6 @@ interface FakeRepositoryChoices {
   readonly parkedPresumptions?: FakeParkedPresumptions;
   readonly parkedAnswers?: FakeParkedAnswers;
   readonly spotTakenReports?: FakeSpotTakenReports;
-  readonly receipts?: FakeReceipts;
 }
 
 // Session tokens come from the driver fake, so a token a test saves for Julie is the one the server reads.
@@ -41,7 +40,6 @@ export function fakeRepositories({
   parkedPresumptions = new FakeParkedPresumptions(),
   parkedAnswers = new FakeParkedAnswers(),
   spotTakenReports = new FakeSpotTakenReports(),
-  receipts = new FakeReceipts(),
 }: FakeRepositoryChoices = {}): ServerDependencies['repositories'] {
   return {
     lotAvailabilityRepository,
@@ -55,7 +53,7 @@ export function fakeRepositories({
     parkedPresumptions,
     parkedAnswers,
     spotTakenReports,
-    receipts,
+    receipts: new FakeReceipts(),
   };
 }
 

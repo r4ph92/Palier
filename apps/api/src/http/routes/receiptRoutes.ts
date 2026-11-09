@@ -7,7 +7,7 @@ import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { SESSION_NOT_FOUND_BODY } from '../sessionNotFound.ts';
 import { entrySessionParametersSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
-import { receiptDetailResponseSchema, receiptListResponseSchema } from '../schemas/parkingSessionSchemas.ts';
+import { receiptDetailResponseSchema, receiptListResponseSchema } from '../schemas/receiptSchemas.ts';
 
 // The driver's past receipts: only their own, and the id of someone else's answers like an unknown one.
 export function registerReceiptRoutes(server: FastifyInstance, driverAccess: DriverAccess, receipts: ReceiptRepository): void {

@@ -44,7 +44,7 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
   const spotHolds = new FakeSpotHoldRepository();
   const server: FastifyInstance = buildServer({
     gates: fakeGateDependencies(),
-    repositories: fakeRepositories({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository, operatorRepository, parkingSessions, parkedPresumptions, parkedAnswers, spotTakenReports, receipts }),
+    repositories: { ...fakeRepositories({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository, operatorRepository, parkingSessions, parkedPresumptions, parkedAnswers, spotTakenReports }), receipts },
     operatorStripe: fakeOperatorStripe(operatorRepository).dependencies,
     cardGateway: new FakeCardGateway(),
     entries: entries.dependencies,

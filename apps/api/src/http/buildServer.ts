@@ -131,7 +131,6 @@ function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway,
   registerEntryRoutes(server, driverAccess, entries);
   registerParkingSessionRoutes(server, driverAccess, { repositories, clock });
   registerExitRoute(server, driverAccess, exits === undefined ? undefined : { exit: exits, clock });
-  registerReceiptRoutes(server, driverAccess, repositories.receipts);
   registerSpotHoldRoutes(server, driverAccess, { services: spotHolds, clock });
   if (testTools !== null) {
     registerTestSignInRoutes(server, { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository });
@@ -150,6 +149,7 @@ function registerParkingSessionRoutes(server: FastifyInstance, driverAccess: Dri
   registerParkedPresumptionRoute(server, driverAccess, repositories.parkedPresumptions);
   registerParkedAnswerRoute(server, driverAccess, repositories.parkedAnswers);
   registerSpotTakenRoute(server, driverAccess, repositories.spotTakenReports);
+  registerReceiptRoutes(server, driverAccess, repositories.receipts);
 }
 
 type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock' | 'operatorStripe'> & Pick<ServerDependencies, 'testClock'>;

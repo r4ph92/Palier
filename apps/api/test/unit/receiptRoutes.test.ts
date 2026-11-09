@@ -8,13 +8,21 @@ import { acceptNoticeAs, authorizationFor, julie, marc } from './fakeDriverRepos
 const PRICING = { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 };
 const UNKNOWN_ID = '00000000-0000-4000-8000-0000000000ff';
 
-function paidSession(id: string, enteredAt: Date, exitedAt: Date, capturedCents: number, overrides: Partial<PaidSession> = {}): PaidSession {
-  return { id, lotName: 'Parking Démo', enteredAt, pricing: PRICING, exit: { exitedAt, capturedCents }, cardLast4: '4242', ...overrides };
+interface PaidSessionFacts {
+  readonly id: string;
+  readonly enteredAt: string;
+  readonly exitedAt: string;
+  readonly capturedCents: number;
+  readonly cardLast4?: string | null;
 }
 
-const monday = paidSession('00000000-0000-4000-8000-000000000a01', new Date('2026-11-02T14:00:00Z'), new Date('2026-11-02T15:00:00Z'), 300);
-const tuesday = paidSession('00000000-0000-4000-8000-000000000a02', new Date('2026-11-03T14:00:00Z'), new Date('2026-11-03T17:15:00Z'), 975);
-const wednesday = paidSession('00000000-0000-4000-8000-000000000a03', new Date('2026-11-04T14:00:00Z'), new Date('2026-11-04T23:00:00Z'), 2500);
+function paidSession({ id, enteredAt, exitedAt, capturedCents, cardLast4 = '4242' }: PaidSessionFacts): PaidSession {
+  return { id, lotName: 'Parking Démo', enteredAt: new Date(enteredAt), pricing: PRICING, exit: { exitedAt: new Date(exitedAt), capturedCents }, cardLast4 };
+}
+
+const monday = paidSession({ id: '00000000-0000-4000-8000-000000000a01', enteredAt: '2026-11-02T14:00:00Z', exitedAt: '2026-11-02T15:00:00Z', capturedCents: 300 });
+const tuesday = paidSession({ id: '00000000-0000-4000-8000-000000000a02', enteredAt: '2026-11-03T14:00:00Z', exitedAt: '2026-11-03T17:15:00Z', capturedCents: 975 });
+const wednesday = paidSession({ id: '00000000-0000-4000-8000-000000000a03', enteredAt: '2026-11-04T14:00:00Z', exitedAt: '2026-11-04T23:00:00Z', capturedCents: 2500 });
 
 describe('driver receipts', () => {
   let server: FastifyInstance;
@@ -98,7 +106,7 @@ describe('driver receipts', () => {
 
     it('answers a null card for a session opened before the card was recorded', async () => {
       const { get, receipts } = await julieWithThreeReceipts();
-      const old = paidSession('00000000-0000-4000-8000-000000000a04', new Date('2026-10-01T14:00:00Z'), new Date('2026-10-01T15:00:00Z'), 300, { cardLast4: null });
+      const old = paidSession({ id: '00000000-0000-4000-8000-000000000a04', enteredAt: '2026-10-01T14:00:00Z', exitedAt: '2026-10-01T15:00:00Z', capturedCents: 300, cardLast4: null });
       receipts.add(julie.id, old);
 
       const response = await get(`/v1/me/receipts/${old.id}`);
