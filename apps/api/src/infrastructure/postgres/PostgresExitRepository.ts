@@ -68,7 +68,7 @@ export class PostgresExitRepository implements ExitRepository {
         if (session === null) {
           return { outcome: 'already', exit: await readPaidExit(tx, sessionId) } as const;
         }
-        await freeSpots(tx, sessionId, session, exit.exitedAt);
+        await freeSpots(tx, { sessionId, session, now: exit.exitedAt });
         await tx.execute(sql`insert into gate_command (gate_id, lot_id, kind, session_id) values (${exitGateId}, ${lotId}, 'OPEN', ${sessionId})`);
         return { outcome: 'closed', exit } as const;
       }),
@@ -112,8 +112,25 @@ async function readPaidExit(tx: Transaction, sessionId: string): Promise<PaidExi
   return { exitedAt: new Date(row.exit_at), capturedCents: row.captured_cents };
 }
 
+interface SpotsToFree {
+  readonly sessionId: string;
+  readonly session: ClosedSessionRow;
+  readonly now: Date;
+}
+
 // The car's spot is the confirmed one once the driver answered, the assigned one before; the others are the history of the session.
-async function freeSpots(tx: Transaction, sessionId: string, session: ClosedSessionRow, now: Date): Promise<void> {
+async function freeSpots(tx: Transaction, { sessionId, session, now }: SpotsToFree): Promise<void> {
+  const ownSpotId = session.confirmed_spot_id ?? session.assigned_spot_id;
+  const freed = spotsFreedOnExit(ownSpotId, await lockSpotsOfSession(tx, sessionId, session));
+  if (freed.length === 0) {
+    return;
+  }
+  await tx.execute(sql`
+    update spot set state = 'AVAILABLE', state_changed_at = ${now.toISOString()}::timestamptz
+    where id in (${sql.join(freed.map((id) => sql`${id}`), sql`, `)})`);
+}
+
+async function lockSpotsOfSession(tx: Transaction, sessionId: string, session: ClosedSessionRow): Promise<SpotOfExit[]> {
   const ownSpotId = session.confirmed_spot_id ?? session.assigned_spot_id;
   const rows = await tx.execute<SpotRow>(sql`
     select spot.id, spot.state,
@@ -125,12 +142,5 @@ async function freeSpots(tx: Transaction, sessionId: string, session: ClosedSess
     where spot.id = ${ownSpotId} or spot.id = ${session.assigned_spot_id}
       or spot.id in (select spot_id from parking_session_reported_spot where session_id = ${sessionId})
     for update of spot`);
-  const spots: SpotOfExit[] = rows.map((row) => ({ id: row.id, state: row.state, heldByAnotherSession: row.held_by_another_session }));
-  const freed = spotsFreedOnExit(ownSpotId, spots);
-  if (freed.length === 0) {
-    return;
-  }
-  await tx.execute(sql`
-    update spot set state = 'AVAILABLE', state_changed_at = ${now.toISOString()}::timestamptz
-    where id in (${sql.join(freed.map((id) => sql`${id}`), sql`, `)})`);
+  return rows.map((row) => ({ id: row.id, state: row.state, heldByAnotherSession: row.held_by_another_session }));
 }

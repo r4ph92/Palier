@@ -22,8 +22,8 @@ export interface ExitDependencies {
 
 // Capture, then close and open (docs/03, sequence C). A card that cannot be charged stops the exit with the session still open
 // and nothing taken: retrying the capture while the barrier opens anyway is a later story.
-export async function exitParking({ exits, payments }: ExitDependencies, request: ExitRequest): Promise<ExitOutcome> {
-  const session = await exits.findForExit(request.sessionId, request.driverId);
+export async function exitParking(dependencies: ExitDependencies, request: ExitRequest): Promise<ExitOutcome> {
+  const session = await dependencies.exits.findForExit(request.sessionId, request.driverId);
   const refusal = refusalFor(session);
   if (session === null || refusal !== null) {
     return { outcome: refusal ?? 'not-found' };
@@ -31,13 +31,17 @@ export async function exitParking({ exits, payments }: ExitDependencies, request
   if (session.paidExit !== null) {
     return { outcome: 'already', receipt: receiptOf(session, session.paidExit) };
   }
+  return payAndClose(dependencies, session, request.now);
+}
+
+async function payAndClose({ exits, payments }: ExitDependencies, session: ExitableSession, now: Date): Promise<ExitOutcome> {
   if (session.exitGateId === null) {
     return { outcome: 'gate-unavailable' };
   }
   if (payments === null || session.paymentIntentId === null) {
     return { outcome: 'payments-unavailable' };
   }
-  const exit = { exitedAt: request.now, capturedCents: amountToCapture(session, request.now) };
+  const exit = { exitedAt: now, capturedCents: amountToCapture(session, now) };
   const captured: CaptureOutcome = await payments.capture({ sessionId: session.id, paymentIntentId: session.paymentIntentId, amountCents: exit.capturedCents });
   if (captured === 'failed') {
     return { outcome: 'payments-unavailable' };
