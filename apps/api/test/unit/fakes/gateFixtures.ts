@@ -47,6 +47,8 @@ export class FakePassageLedger implements PassageLedger {
   readonly entries: PassageEntry[] = [];
   // Sessions whose opening waits at the entry gate, oldest first: one closure confirms the first.
   readonly pendingOpenings: string[] = [];
+  // Paid sessions whose exit opening waits at the exit gate, oldest first: one closure attaches the first.
+  readonly pendingExits: string[] = [];
   vehicleCount: number;
 
   constructor(vehicleCount = 0) {
@@ -57,7 +59,8 @@ export class FakePassageLedger implements PassageLedger {
     this.entries.push(entry);
     this.vehicleCount = Math.max(this.vehicleCount + entry.vehicleCountChange, 0);
     const confirmedSessionId = entry.confirmableOpenings === null ? null : (this.pendingOpenings.shift() ?? null);
-    return Promise.resolve({ vehicleCount: this.vehicleCount, confirmedSessionId });
+    const exitedSessionId = entry.attachableOpenings === null ? null : (this.pendingExits.shift() ?? null);
+    return Promise.resolve({ vehicleCount: this.vehicleCount, confirmedSessionId, exitedSessionId });
   }
 }
 

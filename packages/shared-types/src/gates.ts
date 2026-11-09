@@ -19,4 +19,6 @@ export interface GatePassageResponse {
   readonly vehicleCount: number;
   // The entry session this passage confirmed; null when no opening was waiting.
   readonly confirmedSessionId: string | null;
+  // The paid session whose exit opening this passage closed; null when no opening was waiting.
+  readonly exitedSessionId: string | null;
 }

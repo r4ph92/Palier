@@ -99,6 +99,8 @@ export const parkingSession = pgTable(
     exitAt: timestamp('exit_at', { withTimezone: true }),
     exitIdentification: exitIdentification('exit_identification'),
     capturedCents: integer('captured_cents'),
+    // The instant the exit loop closed after the exit opened (decision 024); null while it has not, and for good when it closes too late.
+    exitPassageAt: timestamp('exit_passage_at', { withTimezone: true }),
     // Set with the cancellation when a card hold exists; cleared once Stripe confirms the release, so a failed release is retried.
     holdReleasePending: boolean('hold_release_pending').notNull().default(false),
     holdReleaseAttemptedAt: timestamp('hold_release_attempted_at', { withTimezone: true }),

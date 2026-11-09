@@ -28,7 +28,7 @@ export const passageRequestSchema = {
 
 export const passageResponseSchema = {
   type: 'object',
-  required: ['gateId', 'lotId', 'kind', 'closedAt', 'vehicleCount', 'confirmedSessionId'],
+  required: ['gateId', 'lotId', 'kind', 'closedAt', 'vehicleCount', 'confirmedSessionId', 'exitedSessionId'],
   additionalProperties: false,
   properties: {
     gateId: { type: 'string' },
@@ -37,6 +37,7 @@ export const passageResponseSchema = {
     closedAt: { type: 'string' },
     vehicleCount: { type: 'integer' },
     confirmedSessionId: { type: ['string', 'null'] },
+    exitedSessionId: { type: ['string', 'null'] },
   },
 } as const;
 
