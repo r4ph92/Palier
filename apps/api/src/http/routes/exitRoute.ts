@@ -52,5 +52,9 @@ async function leave(exit: ExitRouteDependencies | undefined, request: FastifyRe
   if (left.outcome === 'left' || left.outcome === 'already') {
     return { receipt: left.receipt };
   }
+  if (left.outcome === 'payments-unavailable') {
+    // The session stays open and nothing is taken; without this line a Stripe outage at the exit would leave no trace.
+    request.log.warn({ sessionId: request.params.sessionId }, 'exit refused: the capture did not go through');
+  }
   return sendRefusal(left.outcome, request, reply);
 }
