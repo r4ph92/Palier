@@ -1,4 +1,5 @@
 import type { Translations } from './fr';
+import { accountEn, receiptsEn } from './accountEn';
 import { sessionPartsEn } from './sessionPartsEn';
 import { spotHoldEn } from './spotHoldEn';
 import { LOT_NOT_IN_SERVICE, NOT_RESPONDING, TOO_MANY_ATTEMPTS } from './sharedEn';
@@ -52,16 +53,8 @@ export const en: Translations = {
     loadingDrivers: 'Loading drivers',
     driverGone: 'This driver no longer exists.',
   },
-  account: {
-    title: 'Account',
-    signOut: 'Sign out',
-    signingOut: 'Signing out…',
-    paymentMethod: 'Payment method',
-    cardLoading: 'Loading card',
-    cardNone: 'No card saved.',
-    cardUnavailable: 'Card unavailable right now.',
-    vehicles: 'My vehicles',
-  },
+  account: accountEn,
+  receipts: receiptsEn,
   payment: {
     title: 'Payment method',
     intro: 'Your card is saved with Stripe. Palier keeps only the brand and the last four digits.',

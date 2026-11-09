@@ -1,4 +1,5 @@
 import type { SpotCategory } from '@palier/shared-types';
+import { accountFr, receiptsFr } from './accountFr';
 import { sessionPartsFr } from './sessionPartsFr';
 import { spotHoldFr } from './spotHoldFr';
 import { LOT_NOT_IN_SERVICE, NOT_RESPONDING, TOO_MANY_ATTEMPTS } from './sharedFr';
@@ -52,16 +53,8 @@ export const fr = {
     loadingDrivers: 'Chargement des conducteurs',
     driverGone: 'Ce conducteur n’existe plus.',
   },
-  account: {
-    title: 'Compte',
-    signOut: 'Se déconnecter',
-    signingOut: 'Déconnexion…',
-    paymentMethod: 'Moyen de paiement',
-    cardLoading: 'Chargement de la carte',
-    cardNone: 'Aucune carte enregistrée.',
-    cardUnavailable: 'Carte indisponible pour le moment.',
-    vehicles: 'Mes véhicules',
-  },
+  account: accountFr,
+  receipts: receiptsFr,
   payment: {
     title: 'Moyen de paiement',
     intro: 'Votre carte est enregistrée chez Stripe. Palier ne conserve que la marque et les quatre derniers chiffres.',
