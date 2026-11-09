@@ -1,4 +1,4 @@
-import type { AssignedSpot, CurrentParkingSession, LevelPlan, ParkedPresumptionResponse, ParkedSpotAnswerResponse, SpotTakenResponse } from '@palier/shared-types';
+import type { AssignedSpot, CurrentParkingSession, ExitReceipt, ExitResponse, LevelPlan, ParkedPresumptionResponse, ParkedSpotAnswerResponse, SpotTakenResponse } from '@palier/shared-types';
 import type { DetectedWalk, ParkingSessionClient } from '../src/api/ParkingSessionClient';
 import { spotA1 } from './fakeEntryClient';
 
@@ -58,6 +58,10 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
   readonly spotTakenReports: string[] = [];
   spotTakenFailure: Error | null = null;
   holdsSpotTakenReport = false;
+  readonly exits: string[] = [];
+  exitFailure: Error | null = null;
+  holdsExit = false;
+  readonly #pendingExits: (() => void)[] = [];
   // The spot Palier gives after a spot-taken report; null when no other spot fits the vehicle.
   replacementSpot: AssignedSpot | null = spotA2;
   readonly #pendingSpotTakenReports: (() => void)[] = [];
@@ -105,6 +109,19 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
     return this.#reassignNow(sessionId);
   }
 
+  // Like the API: the tap closes the session and answers its receipt, 13 increments of 0,75 $ for Julie's 3 h 15.
+  exit(sessionId: string): Promise<ExitResponse> {
+    this.exits.push(sessionId);
+    if (this.holdsExit) {
+      return new Promise((resolve, reject) => this.#pendingExits.push(() => void this.#leaveNow(sessionId).then(resolve, reject)));
+    }
+    return this.#leaveNow(sessionId);
+  }
+
+  answerExits(): void {
+    this.#pendingExits.splice(0).forEach((resolve) => resolve());
+  }
+
   answerSpotTakenReports(): void {
     this.#pendingSpotTakenReports.splice(0).forEach((resolve) => resolve());
   }
@@ -133,6 +150,17 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
       this.session = { ...this.session, state, question };
     }
     return Promise.resolve({ state, parkedAt: new Date(detectedAt).toISOString() });
+  }
+
+  #leaveNow(sessionId: string): Promise<ExitResponse> {
+    if (this.exitFailure !== null) {
+      return Promise.reject(this.exitFailure);
+    }
+    const receipt: ExitReceipt = { exitedAt: new Date(2026, 10, 4, 21, 17).toISOString(), durationMinutes: 195, increments: 13, incrementCents: 75, totalCents: 975, capped: false };
+    if (this.session?.sessionId === sessionId) {
+      this.session = null;
+    }
+    return Promise.resolve({ receipt });
   }
 
   #confirmNow(sessionId: string, spotNumber: string): Promise<ParkedSpotAnswerResponse> {

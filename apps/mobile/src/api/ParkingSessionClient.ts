@@ -1,4 +1,4 @@
-import type { CurrentParkingSession, ParkedPresumptionResponse, ParkedSpotAnswerResponse, SpotTakenResponse } from '@palier/shared-types';
+import type { CurrentParkingSession, ExitResponse, ParkedPresumptionResponse, ParkedSpotAnswerResponse, SpotTakenResponse } from '@palier/shared-types';
 
 // detectedAt in ms; aisleMinor: the aisle the device last saw, null when it saw none.
 export interface DetectedWalk {
@@ -15,4 +15,6 @@ export interface ParkingSessionClient {
   answerParkedSpot(sessionId: string, spotNumber: string): Promise<ParkedSpotAnswerResponse>;
   // The assigned spot, named as shown, has a car in it before the driver parked. A 404 or 409 rejects with the API's code.
   reportSpotTaken(sessionId: string, spotNumber: string): Promise<SpotTakenResponse>;
+  // The tap at the exit: Palier takes the amount and opens the barrier. A 404 or 409 rejects with the API's code; a repeat answers the first receipt.
+  exit(sessionId: string): Promise<ExitResponse>;
 }
