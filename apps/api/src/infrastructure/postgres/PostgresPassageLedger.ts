@@ -24,7 +24,10 @@ export class PostgresPassageLedger implements PassageLedger {
   recordPassage(entry: PassageEntry): Promise<RecordedPassage> {
     return this.#database.transaction(async (tx) => {
       const vehicleCount = await countVehicle(tx, entry);
-      return { vehicleCount, confirmedSessionId: await confirmOpening(tx, entry), exitedSessionId: await attachExitPassage(tx, entry) };
+      // Each step is a no-op unless the gate is of its kind: confirmOpening at an entry, attachExitPassage at an exit.
+      const confirmedSessionId = await confirmOpening(tx, entry);
+      const exitedSessionId = await attachExitPassage(tx, entry);
+      return { vehicleCount, confirmedSessionId, exitedSessionId };
     }, LOT_LOCK_TRANSACTION);
   }
 }
