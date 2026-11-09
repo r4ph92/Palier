@@ -10,6 +10,7 @@ import type { ParkedAnswerRepository } from '../domain/parkingSessions/ParkedAns
 import type { ParkedPresumptionRepository } from '../domain/parkingSessions/ParkedPresumption.ts';
 import type { SpotTakenReportRepository } from '../domain/parkingSessions/SpotTakenReport.ts';
 import type { ParkingSessionBackdater } from '../domain/parkingSessions/ParkingSessionBackdater.ts';
+import type { ReceiptRepository } from '../domain/receipts/ReceiptRepository.ts';
 import type { SessionTokenRepository } from '../domain/sessions/SessionTokenRepository.ts';
 import { systemClock, type Clock } from '../domain/time/Clock.ts';
 import type { TestClock } from '../domain/time/TestClock.ts';
@@ -29,6 +30,7 @@ import { registerParkedAnswerRoute } from './routes/parkedAnswerRoute.ts';
 import { registerParkedPresumptionRoute } from './routes/parkedPresumptionRoute.ts';
 import type { ExitDependencies } from '../domain/exits/exitParking.ts';
 import { registerExitRoute } from './routes/exitRoute.ts';
+import { registerReceiptRoutes } from './routes/receiptRoutes.ts';
 import { registerSpotTakenRoute } from './routes/spotTakenRoute.ts';
 import { registerStripeWebhookRoute } from './routes/stripeWebhookRoute.ts';
 import { registerPaymentMethodRoutes } from './routes/paymentMethodRoutes.ts';
@@ -57,6 +59,7 @@ export interface ServerDependencies {
     readonly parkedPresumptions: ParkedPresumptionRepository;
     readonly parkedAnswers: ParkedAnswerRepository;
     readonly spotTakenReports: SpotTakenReportRepository;
+    readonly receipts: ReceiptRepository;
   };
   readonly gates: GateRouteDependencies;
   readonly cardGateway?: CardGateway | undefined;
@@ -128,6 +131,7 @@ function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway,
   registerEntryRoutes(server, driverAccess, entries);
   registerParkingSessionRoutes(server, driverAccess, { repositories, clock });
   registerExitRoute(server, driverAccess, exits === undefined ? undefined : { exit: exits, clock });
+  registerReceiptRoutes(server, driverAccess, repositories.receipts);
   registerSpotHoldRoutes(server, driverAccess, { services: spotHolds, clock });
   if (testTools !== null) {
     registerTestSignInRoutes(server, { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository });

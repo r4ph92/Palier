@@ -12,6 +12,7 @@ import { FakeCurrentParkingSessions } from './fakes/fakeCurrentParkingSessions.t
 import { FakeExits } from './fakes/fakeExits.ts';
 import { FakeParkedAnswers } from './fakes/fakeParkedAnswers.ts';
 import { FakeParkedPresumptions } from './fakes/fakeParkedPresumptions.ts';
+import { FakeReceipts } from './fakes/fakeReceipts.ts';
 import { FakeSpotTakenReports } from './fakes/fakeSpotTakenReports.ts';
 import { fakeEntries } from './fakes/entryFakes.ts';
 import { STRICT_POLICY } from './fakes/entryGateFakes.ts';
@@ -37,12 +38,13 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
   const parkedAnswers = new FakeParkedAnswers();
   const spotTakenReports = new FakeSpotTakenReports();
   const exits = new FakeExits();
+  const receipts = new FakeReceipts();
   const testClock = createTestClock();
   const operatorRepository = new FakeOperatorRepository();
   const spotHolds = new FakeSpotHoldRepository();
   const server: FastifyInstance = buildServer({
     gates: fakeGateDependencies(),
-    repositories: fakeRepositories({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository, operatorRepository, parkingSessions, parkedPresumptions, parkedAnswers, spotTakenReports }),
+    repositories: fakeRepositories({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository, operatorRepository, parkingSessions, parkedPresumptions, parkedAnswers, spotTakenReports, receipts }),
     operatorStripe: fakeOperatorStripe(operatorRepository).dependencies,
     cardGateway: new FakeCardGateway(),
     entries: entries.dependencies,
@@ -51,7 +53,7 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
     testClock,
     settings: { testSignInEnabled, demoMode, minimumAppVersion },
   });
-  return { server, driverRepository, vehicleRepository, entries, spotHolds, parkingSessions, parkedPresumptions, parkedAnswers, spotTakenReports, exits, testClock };
+  return { server, driverRepository, vehicleRepository, entries, spotHolds, parkingSessions, parkedPresumptions, parkedAnswers, spotTakenReports, exits, receipts, testClock };
 }
 
 // Every route the server registers, as "METHOD /path" with the :params kept, read from Fastify's route tree.

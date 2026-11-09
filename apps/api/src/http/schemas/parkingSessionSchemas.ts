@@ -6,6 +6,8 @@ import type {
   ParkedPresumptionResponse,
   ParkedSpotAnswerRequest,
   ParkedSpotAnswerResponse,
+  ReceiptDetailResponse,
+  ReceiptListResponse,
   SpotTakenRequest,
   SpotTakenResponse,
   TestClockReading,
@@ -173,6 +175,58 @@ export const exitResponseSchema = {
   },
 } as const;
 
+const exitReceiptProperties = {
+  exitedAt: { type: 'string' },
+  durationMinutes: { type: 'integer' },
+  increments: { type: 'integer' },
+  incrementCents: { type: 'integer' },
+  totalCents: { type: 'integer' },
+  capped: { type: 'boolean' },
+} as const;
+
+export const receiptListResponseSchema = {
+  type: 'object',
+  required: ['receipts'],
+  additionalProperties: false,
+  properties: {
+    receipts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['sessionId', 'lotName', 'exitedAt', 'durationMinutes', 'totalCents'],
+        additionalProperties: false,
+        properties: {
+          sessionId: { type: 'string' },
+          lotName: { type: 'string' },
+          exitedAt: exitReceiptProperties.exitedAt,
+          durationMinutes: exitReceiptProperties.durationMinutes,
+          totalCents: exitReceiptProperties.totalCents,
+        },
+      },
+    },
+  },
+} as const;
+
+export const receiptDetailResponseSchema = {
+  type: 'object',
+  required: ['receipt'],
+  additionalProperties: false,
+  properties: {
+    receipt: {
+      type: 'object',
+      required: ['sessionId', 'lotName', 'enteredAt', 'cardLast4', 'exitedAt', 'durationMinutes', 'increments', 'incrementCents', 'totalCents', 'capped'],
+      additionalProperties: false,
+      properties: {
+        sessionId: { type: 'string' },
+        lotName: { type: 'string' },
+        enteredAt: { type: 'string' },
+        cardLast4: { anyOf: [{ type: 'string' }, { type: 'null' }] },
+        ...exitReceiptProperties,
+      },
+    },
+  },
+} as const;
+
 export type ResponseSchemaMatchesCurrentParkingSession = AssertTrue<
   MutuallyAssignable<FromSchema<typeof currentParkingSessionResponseSchema>, WithMutableArrays<CurrentParkingSessionResponse>>
 >;
@@ -195,3 +249,7 @@ export type ResponseSchemaMatchesParkedSpotAnswer = AssertTrue<
 export type RequestSchemaMatchesSpotTaken = AssertTrue<MutuallyAssignable<FromSchema<typeof spotTakenRequestSchema>, SpotTakenRequest>>;
 export type ResponseSchemaMatchesSpotTaken = AssertTrue<MutuallyAssignable<FromSchema<typeof spotTakenResponseSchema>, SpotTakenResponse>>;
 export type ResponseSchemaMatchesExit = AssertTrue<MutuallyAssignable<FromSchema<typeof exitResponseSchema>, ExitResponse>>;
+export type ResponseSchemaMatchesReceiptList = AssertTrue<
+  MutuallyAssignable<FromSchema<typeof receiptListResponseSchema>, WithMutableArrays<ReceiptListResponse>>
+>;
+export type ResponseSchemaMatchesReceiptDetail = AssertTrue<MutuallyAssignable<FromSchema<typeof receiptDetailResponseSchema>, ReceiptDetailResponse>>;

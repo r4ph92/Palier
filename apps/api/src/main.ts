@@ -19,6 +19,7 @@ import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/Pos
 import { PostgresOperatorRepository } from './infrastructure/postgres/PostgresOperatorRepository.ts';
 import { PostgresParkedAnswerRepository } from './infrastructure/postgres/PostgresParkedAnswerRepository.ts';
 import { PostgresParkedPresumptionRepository } from './infrastructure/postgres/PostgresParkedPresumptionRepository.ts';
+import { PostgresReceiptRepository } from './infrastructure/postgres/PostgresReceiptRepository.ts';
 import { PostgresSpotTakenReportRepository } from './infrastructure/postgres/PostgresSpotTakenReportRepository.ts';
 import { PostgresParkingSessionBackdater } from './infrastructure/postgres/PostgresParkingSessionBackdater.ts';
 import { PostgresPassageLedger } from './infrastructure/postgres/PostgresPassageLedger.ts';
@@ -73,6 +74,7 @@ const server = buildServer({
     parkedPresumptions: new PostgresParkedPresumptionRepository(connection.database),
     parkedAnswers: new PostgresParkedAnswerRepository(connection.database),
     spotTakenReports: new PostgresSpotTakenReportRepository(connection.database),
+    receipts: new PostgresReceiptRepository(connection.database),
   },
   gates: {
     deviceKeys: new PostgresGateDeviceKeyRepository(connection.database),
