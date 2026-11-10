@@ -3,15 +3,17 @@ import { AccessibilityInfo } from 'react-native';
 import { PalierUnreachableError } from '../src/api/LotsClient';
 import { PalierRejectedError } from '../src/api/VehicleClient';
 import { julieAtB3, julieAtParkingDemo } from './fakeParkingSessionClient';
+import { FakeReceiptClient, julieReceipt } from './fakeReceiptClient';
 import { asSeen, visibleText } from './visibleText';
-import { julieWith } from './walkAwayRig';
+import { PENDING_RECEIPT_POLL_MILLISECONDS } from '../src/receipts/usePendingReceipt';
+import { advance, julieWith } from './walkAwayRig';
 
 const EXIT = 'Ouvrir la barrière de sortie';
 const FRENCH_RECEIPT = 'Durée 3 h 15 · 13 × 0,75 $ · Total 9,75 $';
 const ENGLISH_RECEIPT = 'Duration 3 h 15 · 13 × $0.75 · Total $9.75';
 
-async function julieAtTheExit(language: 'fr' | 'en' = 'fr', session = julieAtParkingDemo()) {
-  const rig = await julieWith(session, language);
+async function julieAtTheExit(language: 'fr' | 'en' = 'fr', session = julieAtParkingDemo(), receipts?: FakeReceiptClient) {
+  const rig = await julieWith(session, language, receipts);
   return { ...rig, user: userEvent.setup({ advanceTimers: jest.advanceTimersByTimeAsync }) };
 }
 
@@ -94,5 +96,51 @@ describe('leaving with the « Ouvrir » tap (story #47)', () => {
 
     expect(await screen.findByLabelText('Contenu du QR')).toBeOnTheScreen();
     expect(screen.queryByText(FRENCH_RECEIPT, visibleText)).toBeNull();
+  });
+
+  describe('when Stripe is unreachable (story #50)', () => {
+    const PENDING_FR = 'Barrière ouverte — votre reçu suivra';
+    const PENDING_EN = 'Barrier open — your receipt will follow';
+
+    async function leaveWithCapturePending(language: 'fr' | 'en' = 'fr') {
+      const receipts = new FakeReceiptClient();
+      const rig = await julieAtTheExit(language, julieAtParkingDemo(), receipts);
+      rig.parkingSession.exitsWithCapturePending = true;
+      await rig.user.press(screen.getByRole('button', { name: language === 'fr' ? EXIT : 'Open the exit barrier' }));
+      return { ...rig, receipts };
+    }
+
+    it('says the barrier is open and the receipt will follow', async () => {
+      await leaveWithCapturePending();
+
+      expect(await screen.findByRole('header', { name: PENDING_FR })).toBeOnTheScreen();
+      expect(screen.queryByText(FRENCH_RECEIPT, visibleText)).toBeNull();
+    });
+
+    it('says it in English on an English device', async () => {
+      await leaveWithCapturePending('en');
+
+      expect(await screen.findByRole('header', { name: PENDING_EN })).toBeOnTheScreen();
+    });
+
+    it('shows the receipt once the capture is taken, asking again until then', async () => {
+      const { receipts } = await leaveWithCapturePending();
+      await screen.findByRole('header', { name: PENDING_FR });
+      await advance(PENDING_RECEIPT_POLL_MILLISECONDS);
+      expect(screen.getByRole('header', { name: PENDING_FR })).toBeOnTheScreen();
+
+      receipts.add(julieReceipt({ sessionId: 'session-1' }));
+      await advance(PENDING_RECEIPT_POLL_MILLISECONDS);
+
+      expect(await screen.findByText(FRENCH_RECEIPT, visibleText)).toBeOnTheScreen();
+    });
+
+    it('gives the scanner back with « Terminé » while the capture is still pending', async () => {
+      const { user } = await leaveWithCapturePending();
+
+      await user.press(await screen.findByRole('button', { name: 'Terminé' }));
+
+      expect(screen.getByLabelText('Contenu du QR')).toBeOnTheScreen();
+    });
   });
 });

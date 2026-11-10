@@ -2,6 +2,7 @@ import type { ExitReceipt } from '@palier/shared-types';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
+import type { ReceiptClient } from '../api/ReceiptClient';
 import { FieldError } from '../components/FieldError';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -12,6 +13,7 @@ import { formatReceiptDuration } from '../i18n/formatReceiptDuration';
 import { currentLanguage, i18n } from '../i18n/i18n';
 import { NO_BREAK_SPACE } from '../i18n/spaces';
 import { useExit } from '../parkingSessions/useExit';
+import { usePendingReceipt } from '../receipts/usePendingReceipt';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
@@ -19,7 +21,7 @@ import { typography } from '../theme/typography';
 interface ExitButtonProps {
   readonly client: ParkingSessionClient;
   readonly sessionId: string;
-  readonly onLeft: (receipt: ExitReceipt) => void;
+  readonly onLeft: (receipt: ExitReceipt | null) => void;
   // Reads the session again: it was closed or is unknown to Palier.
   readonly onSessionMoved: () => void;
 }
@@ -35,6 +37,32 @@ export function ExitButton({ client, sessionId, onLeft, onSessionMoved }: ExitBu
       <PrimaryButton label={i18n.t('session.exit.action')} busyLabel={i18n.t('session.exit.opening')} busy={exiting.isSending} onPress={exiting.leave} />
       {message === null ? null : <FieldError message={message} />}
     </View>
+  );
+}
+
+interface PendingReceiptScreenProps {
+  readonly client: ReceiptClient;
+  readonly sessionId: string;
+  readonly onDone: () => void;
+}
+
+// The barrier is open but Stripe could not be reached: this says so, and the receipt replaces it as soon as Palier has taken the amount.
+export function PendingReceiptScreen({ client, sessionId, onDone }: PendingReceiptScreenProps) {
+  const receipt = usePendingReceipt(client, sessionId);
+  const colors = useColors();
+  const focusRef = useAccessibilityFocusOnMount();
+  if (receipt !== null) {
+    return <ExitReceiptScreen receipt={receipt} onDone={onDone} />;
+  }
+  return (
+    <SafeAreaView edges={['top', 'left', 'right']} style={[styles.screen, { backgroundColor: colors.canvas }]}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View ref={focusRef} accessible>
+          <ScreenHeader eyebrow={i18n.t('session.exit.receipt.eyebrow')} title={i18n.t('session.exit.pending.title')} />
+        </View>
+        <PrimaryButton label={i18n.t('session.exit.receipt.done')} onPress={onDone} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

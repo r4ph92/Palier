@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import { assertNever } from '../assertNever';
 import type { EntryClient } from '../api/EntryClient';
 import type { ParkingSessionClient } from '../api/ParkingSessionClient';
+import type { ReceiptClient } from '../api/ReceiptClient';
 import { LoadingState } from '../components/LoadingState';
 import type { TabLabels } from '../components/TabBar';
 import { useEntry, type EntryController, type EntryState } from '../entries/useEntry';
@@ -13,7 +14,7 @@ import { isWalkedAwayState } from '@palier/shared-types/entries';
 import { CurrentParkingSessionScreen } from './CurrentParkingSessionScreen';
 import { ScanFrame, ScanScreen } from './ScanScreen';
 import { SessionNotice } from './SessionNotice';
-import { ExitButton, ExitReceiptScreen } from './ExitSession';
+import { ExitButton, ExitReceiptScreen, PendingReceiptScreen } from './ExitSession';
 import { ReportSpotTaken } from './ReportSpotTaken';
 import { WhereParkedScreen } from './WhereParkedScreen';
 
@@ -25,6 +26,7 @@ export interface SessionAside {
 interface ScanTabProps {
   readonly entryClient: EntryClient;
   readonly parkingSessionClient: ParkingSessionClient;
+  readonly receiptClient: ReceiptClient;
   readonly gateScanner: (scanner: ReactElement) => ReactElement;
   readonly aside: SessionAside;
   readonly currentSession: CurrentParkingSessionController;
@@ -41,16 +43,28 @@ export function scanTabLabels(state: CurrentParkingSessionState): TabLabels {
 // An entry in progress keeps the scan screen, so its spot and announcement are never cut off by a refresh.
 // Otherwise the tab waits for Palier's first answer, then shows the current session or the form.
 export function ScanTab(props: ScanTabProps) {
-  const [receipt, setReceipt] = useState<ExitReceipt | null>(null);
-  if (receipt !== null) {
-    return <ExitReceiptScreen receipt={receipt} onDone={() => setReceipt(null)} />;
+  const [left, setLeft] = useState<LeftSession | null>(null);
+  if (left === null) {
+    return <SessionOrScan {...props} onLeft={setLeft} />;
   }
-  return <SessionOrScan {...props} onLeft={setReceipt} />;
+  const onDone = () => setLeft(null);
+  // The capture is pending: the screen says the barrier is open and waits for the receipt.
+  return left.receipt === null ? (
+    <PendingReceiptScreen client={props.receiptClient} sessionId={left.sessionId} onDone={onDone} />
+  ) : (
+    <ExitReceiptScreen receipt={left.receipt} onDone={onDone} />
+  );
+}
+
+interface LeftSession {
+  readonly sessionId: string;
+  // Null while the capture is pending.
+  readonly receipt: ExitReceipt | null;
 }
 
 interface SessionOrScanProps extends ScanTabProps {
   // The exit took the amount: the receipt replaces the whole tab, the session being closed.
-  readonly onLeft: (receipt: ExitReceipt) => void;
+  readonly onLeft: (left: LeftSession) => void;
 }
 
 function SessionOrScan({ entryClient, parkingSessionClient, gateScanner, aside, currentSession, pendingEntry, onAddPlate, onAddCard, onLeft }: SessionOrScanProps) {
@@ -77,7 +91,7 @@ interface SessionScreenChoice {
   readonly arrivedParkedSessionId: string | null;
   readonly parkingSessionClient: ParkingSessionClient;
   // The exit took the amount: the receipt replaces the session, which Palier has closed.
-  readonly onLeft: (receipt: ExitReceipt) => void;
+  readonly onLeft: (left: LeftSession) => void;
 }
 
 // What replaces the scan form: nothing yet known, or a current session.
@@ -125,14 +139,14 @@ function currentSessionScreen(
 interface ExitButtonChoice {
   readonly client: ParkingSessionClient;
   readonly sessionId: string;
-  readonly onLeft: (receipt: ExitReceipt) => void;
+  readonly onLeft: (left: LeftSession) => void;
   readonly refresh: () => void;
 }
 
 // The receipt shows at once and the session is read again, which now answers none.
 function exitButtonFor({ client, sessionId, onLeft, refresh }: ExitButtonChoice): ReactElement {
-  const onLeftAndRefresh = (receipt: ExitReceipt) => {
-    onLeft(receipt);
+  const onLeftAndRefresh = (receipt: ExitReceipt | null) => {
+    onLeft({ sessionId, receipt });
     refresh();
   };
   return <ExitButton key={sessionId} client={client} sessionId={sessionId} onLeft={onLeftAndRefresh} onSessionMoved={refresh} />;

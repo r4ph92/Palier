@@ -61,6 +61,8 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
   readonly exits: string[] = [];
   exitFailure: Error | null = null;
   holdsExit = false;
+  // Stripe could not be reached at the exit: the barrier opens and the receipt is null.
+  exitsWithCapturePending = false;
   readonly #pendingExits: (() => void)[] = [];
   // The spot Palier gives after a spot-taken report; null when no other spot fits the vehicle.
   replacementSpot: AssignedSpot | null = spotA2;
@@ -156,10 +158,13 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
     if (this.exitFailure !== null) {
       return Promise.reject(this.exitFailure);
     }
-    const receipt: ExitReceipt = { exitedAt: new Date(2026, 10, 4, 21, 17).toISOString(), durationMinutes: 195, increments: 13, incrementCents: 75, totalCents: 975, capped: false };
     if (this.session?.sessionId === sessionId) {
       this.session = null;
     }
+    if (this.exitsWithCapturePending) {
+      return Promise.resolve({ receipt: null });
+    }
+    const receipt: ExitReceipt = { exitedAt: new Date(2026, 10, 4, 21, 17).toISOString(), durationMinutes: 195, increments: 13, incrementCents: 75, totalCents: 975, capped: false };
     return Promise.resolve({ receipt });
   }
 

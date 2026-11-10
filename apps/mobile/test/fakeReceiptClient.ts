@@ -22,12 +22,17 @@ export function julieReceipt(overrides: Partial<ReceiptDetail> = {}): ReceiptDet
 
 // The API answers receipts newest first; the fake keeps the order it is given.
 export class FakeReceiptClient implements ReceiptClient {
-  readonly #receipts: readonly ReceiptDetail[];
+  readonly #receipts: ReceiptDetail[];
   isReachable = true;
   listRequests = 0;
 
   constructor(receipts: readonly ReceiptDetail[] = []) {
-    this.#receipts = receipts;
+    this.#receipts = [...receipts];
+  }
+
+  // A capture the retry took: the receipt now exists.
+  add(receipt: ReceiptDetail): void {
+    this.#receipts.unshift(receipt);
   }
 
   listReceipts(): Promise<ReceiptListResponse> {
