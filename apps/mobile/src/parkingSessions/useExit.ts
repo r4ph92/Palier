@@ -18,7 +18,8 @@ export interface ExitController {
 }
 
 interface ExitHandlers {
-  readonly onLeft: (receipt: ExitReceipt) => void;
+  // Null when the barrier opened but the capture is pending: the receipt follows.
+  readonly onLeft: (receipt: ExitReceipt | null) => void;
   // The session moved on without this tap (closed, unknown): the screen reads it again.
   readonly onSessionMoved: () => void;
 }
