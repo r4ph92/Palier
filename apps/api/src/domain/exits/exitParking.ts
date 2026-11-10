@@ -54,8 +54,16 @@ async function payAndClose({ exits, payments }: ExitDependencies, session: Exita
     return leaveWithCapturePending(exits, session, { exitGateId: session.exitGateId, exitedAt: now, pendingCaptureCents: amountCents });
   }
   // What Stripe really took: after a capture whose close failed, a later tap asks another amount but the first one stands.
-  const exit = { exitedAt: now, capturedCents: captured.amountCents };
-  const closed = await exits.close({ sessionId: session.id, lotId: session.lotId, exitGateId: session.exitGateId, exit });
+  return closePaid(exits, session, { exitGateId: session.exitGateId, exit: { exitedAt: now, capturedCents: captured.amountCents } });
+}
+
+interface PaidLeave {
+  readonly exitGateId: string;
+  readonly exit: PaidExit;
+}
+
+async function closePaid(exits: ExitRepository, session: ExitableSession, { exitGateId, exit }: PaidLeave): Promise<ExitOutcome> {
+  const closed = await exits.close({ sessionId: session.id, lotId: session.lotId, exitGateId, exit });
   if (closed.outcome === 'lot-busy') {
     return closed;
   }

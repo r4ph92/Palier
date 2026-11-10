@@ -33,6 +33,9 @@ import { systemClock } from './domain/time/Clock.ts';
 import { cancelUnconfirmedEntries, releasePendingHolds } from './domain/entries/unconfirmedEntryCancellation.ts';
 import { purgeEndedSessionTokens } from './domain/sessions/sessionTokens.ts';
 import { SingleRun, stopAll } from './scheduler/SingleRun.ts';
+import { PostgresPendingCaptureRepository } from './infrastructure/postgres/PostgresPendingCaptureRepository.ts';
+import { retryCaptures } from './domain/exits/retryCaptures.ts';
+import { startRetryCaptures } from './scheduler/startRetryCaptures.ts';
 import { startSessionTokenPurge } from './scheduler/startSessionTokenPurge.ts';
 import { startUnconfirmedEntryCancellation } from './scheduler/startUnconfirmedEntryCancellation.ts';
 
@@ -113,6 +116,10 @@ if (paymentsSimulation === 'success') {
   server.log.warn('PAYMENTS_SIMULATION=success: every entry hold succeeds without calling Stripe (pi_sim_ intents).');
 }
 
+if (paymentsSimulation === 'capture-unreachable') {
+  server.log.warn('PAYMENTS_SIMULATION=capture-unreachable: entry holds succeed, every capture at the exit fails and stays pending.');
+}
+
 const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(sessionTokenRepository, systemClock()), server.log);
 // Every API instance may run it: the CREATED guard under the lot lock and Stripe's idempotent cancel make a second run harmless.
 const stopEntryCancellation = startUnconfirmedEntryCancellation(
@@ -129,8 +136,17 @@ const stopHoldExpiry = new SingleRun().startPeriodicTask(() => expireSpotHolds(h
   failureMessage: 'Expiring spot holds failed',
   periodMilliseconds: holdExpiry.periodMilliseconds,
 });
+// Every API instance runs it: the state guard on the paid update and Stripe's idempotency key make a second run take nothing twice.
+const captureRetryPayments = entries.payments;
+const stopCaptureRetry =
+  captureRetryPayments === null
+    ? async () => {}
+    : startRetryCaptures(
+        () => retryCaptures({ pending: new PostgresPendingCaptureRepository(connection.database), payments: captureRetryPayments }, server.log),
+        server.log,
+      );
 server.addHook('onClose', async () => {
-  await stopAll([stopHoldExpiry, stopEntryCancellation, stopSessionTokenPurge]);
+  await stopAll([stopHoldExpiry, stopEntryCancellation, stopSessionTokenPurge, stopCaptureRetry]);
   await connection.close();
 });
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
