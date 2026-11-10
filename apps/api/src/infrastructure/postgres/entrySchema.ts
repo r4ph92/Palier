@@ -45,6 +45,7 @@ interface StateColumns {
   readonly exitAt: AnyPgColumn;
   readonly exitIdentification: AnyPgColumn;
   readonly capturedCents: AnyPgColumn;
+  readonly pendingCaptureCents: AnyPgColumn;
 }
 
 // Compared as text: a check on the enum itself would block the next migration that recreates the enum.
@@ -59,6 +60,11 @@ function stateChecks(table: StateColumns) {
     check(
       'parking_session_paid_has_exit',
       sql`${table.state}::text <> 'CLOSED_PAID' or (${table.exitAt} is not null and ${table.exitIdentification} is not null and ${table.capturedCents} is not null)`,
+    ),
+    // A session left with its capture pending says when, how, and the amount the retry takes (decision 026).
+    check(
+      'parking_session_pending_has_exit',
+      sql`${table.state}::text <> 'CLOSED_CAPTURE_PENDING' or (${table.exitAt} is not null and ${table.exitIdentification} is not null and ${table.pendingCaptureCents} is not null)`,
     ),
   ];
 }
@@ -101,6 +107,8 @@ export const parkingSession = pgTable(
     exitAt: timestamp('exit_at', { withTimezone: true }),
     exitIdentification: exitIdentification('exit_identification'),
     capturedCents: integer('captured_cents'),
+    // The amount fixed at the tap when Stripe could not be reached; the retry captures exactly this, under the same idempotency key (decision 026).
+    pendingCaptureCents: integer('pending_capture_cents'),
     // The instant the exit loop closed after the exit opened (decision 024); null while it has not, and for good when it closes too late.
     exitPassageAt: timestamp('exit_passage_at', { withTimezone: true }),
     // Set with the cancellation when a card hold exists; cleared once Stripe confirms the release, so a failed release is retried.

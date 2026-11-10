@@ -1,0 +1,3 @@
+ALTER TYPE "public"."parking_session_state" ADD VALUE 'CLOSED_CAPTURE_PENDING';--> statement-breakpoint
+ALTER TABLE "parking_session" ADD COLUMN "pending_capture_cents" integer;--> statement-breakpoint
+ALTER TABLE "parking_session" ADD CONSTRAINT "parking_session_pending_has_exit" CHECK ("parking_session"."state"::text <> 'CLOSED_CAPTURE_PENDING' or ("parking_session"."exit_at" is not null and "parking_session"."exit_identification" is not null and "parking_session"."pending_capture_cents" is not null));
