@@ -5,7 +5,12 @@ import { isNonNegativeInteger } from './isNonNegativeInteger';
 import { PalierUnreachableError } from './LotsClient';
 
 export function parseExit(body: unknown): ExitResponse {
-  const { exitedAt, durationMinutes, increments, incrementCents, totalCents, capped } = asRecord(asRecord(body)['receipt']);
+  const receipt = asRecord(body)['receipt'];
+  // The barrier is open but Stripe could not be reached: the receipt follows.
+  if (receipt === null) {
+    return { receipt: null };
+  }
+  const { exitedAt, durationMinutes, increments, incrementCents, totalCents, capped } = asRecord(receipt);
   if (
     !isInstant(exitedAt) ||
     !isNonNegativeInteger(durationMinutes) ||

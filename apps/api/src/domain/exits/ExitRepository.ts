@@ -29,8 +29,21 @@ export interface ExitClosing {
   readonly exit: PaidExit;
 }
 
-// closed: this request closed the session; already: another request did first, and its exit stands.
-export type ClosedExit = { readonly outcome: 'closed' | 'already'; readonly exit: PaidExit } | { readonly outcome: 'lot-busy' };
+// The exit of a session whose capture Stripe could not take: the amount is fixed now, and the retry captures exactly it.
+export interface PendingExitClosing {
+  readonly sessionId: string;
+  readonly lotId: string;
+  readonly exitGateId: string;
+  readonly exitedAt: Date;
+  readonly pendingCaptureCents: number;
+}
+
+// closed: this request closed the session; already: another request did first, and its exit stands (null when that one left the
+// capture pending).
+export type ClosedExit = { readonly outcome: 'closed'; readonly exit: PaidExit } | { readonly outcome: 'already'; readonly exit: PaidExit | null } | { readonly outcome: 'lot-busy' };
+
+// closed: this request closed the session with its capture pending; already: another request closed it first, paid or pending.
+export type ClosedPendingExit = { readonly outcome: 'closed' | 'already' | 'lot-busy' };
 
 export interface ExitRepository {
   // The driver's own session only: another driver's session is not found, like an unknown id.
@@ -38,4 +51,6 @@ export interface ExitRepository {
   // One transaction under the lot lock: closes the session as CLOSED_PAID with the app as identification, frees the spots it held
   // and records the gate's open command. A session another request closed first answers that request's exit instead.
   close(closing: ExitClosing): Promise<ClosedExit>;
+  // The same transaction, for a capture to retry: the session becomes CLOSED_CAPTURE_PENDING, with no captured amount yet.
+  closeWithPendingCapture(closing: PendingExitClosing): Promise<ClosedPendingExit>;
 }

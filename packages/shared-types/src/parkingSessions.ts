@@ -120,9 +120,10 @@ export interface ExitReceipt {
   readonly capped: boolean;
 }
 
-// The same receipt when the exit was already done: the first tap's figures.
+// The same receipt when the exit was already done: the first tap's figures. Null when the barrier is open but Stripe could not be
+// reached: the capture is retried and the receipt follows (decision 026).
 export interface ExitResponse {
-  readonly receipt: ExitReceipt;
+  readonly receipt: ExitReceipt | null;
 }
 
 export type ExitRefusalCode =

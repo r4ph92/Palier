@@ -127,7 +127,7 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
 
   #activeSessionOf(driverId: string): ActiveSessionFacts | null {
     for (const [id, session] of this.#sessions) {
-      if (session.driverId === driverId && session.state !== 'CANCELLED' && session.state !== 'CLOSED_PAID') {
+      if (session.driverId === driverId && session.state !== 'CANCELLED' && session.state !== 'CLOSED_PAID' && session.state !== 'CLOSED_CAPTURE_PENDING') {
         const { lotId, entryGateId, state, isWithinOpeningWindow } = session;
         return { id, lotId, entryGateId, state, isWithinOpeningWindow, spot: assignedSpot(session.spot) };
       }

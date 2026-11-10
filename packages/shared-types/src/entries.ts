@@ -15,7 +15,7 @@ export interface EntryResponse {
   readonly barrierOpened: true;
 }
 
-export const ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED', 'CANCELLED', 'CLOSED_PAID'] as const;
+export const ENTRY_SESSION_STATES = ['CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED', 'CANCELLED', 'CLOSED_PAID', 'CLOSED_CAPTURE_PENDING'] as const;
 
 export type EntrySessionState = (typeof ENTRY_SESSION_STATES)[number];
 

@@ -41,6 +41,12 @@ describe('exit (story #47)', () => {
     );
   });
 
+  it('reads a null receipt when the barrier opened and the capture is pending', async () => {
+    const { client } = clientAnswering({ receipt: null });
+
+    await expect(client.exit('session-1')).resolves.toEqual({ receipt: null });
+  });
+
   it.each([
     [404, 'SESSION_NOT_FOUND'],
     [409, 'SESSION_CLOSED'],

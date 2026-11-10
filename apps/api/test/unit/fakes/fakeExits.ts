@@ -1,5 +1,5 @@
 import { JULIE_SESSION_ID } from './fakeCurrentParkingSessions.ts';
-import type { ClosedExit, ExitableSession, ExitClosing, ExitRepository, PaidExit } from '../../../src/domain/exits/ExitRepository.ts';
+import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitRepository, PaidExit, PendingExitClosing } from '../../../src/domain/exits/ExitRepository.ts';
 
 export const JULIE_ID = 'driver-julie';
 export const EXIT_SESSION_ID = JULIE_SESSION_ID;
@@ -22,6 +22,7 @@ export function julieInside(enteredAt: Date): ExitableSession {
 
 export class FakeExits implements ExitRepository {
   readonly closings: ExitClosing[] = [];
+  readonly pendingClosings: PendingExitClosing[] = [];
   busy = false;
   readonly #sessions = new Map<string, { readonly driverId: string; session: ExitableSession }>();
 
@@ -42,12 +43,28 @@ export class FakeExits implements ExitRepository {
     if (found === undefined) {
       throw new Error('Unknown session.');
     }
-    if (found.session.paidExit !== null) {
+    if (found.session.paidExit !== null || found.session.state === 'CLOSED_CAPTURE_PENDING') {
       return Promise.resolve({ outcome: 'already', exit: found.session.paidExit });
     }
     const exit: PaidExit = closing.exit;
     this.closings.push(closing);
     found.session = { ...found.session, state: 'CLOSED_PAID', paidExit: exit };
     return Promise.resolve({ outcome: 'closed', exit });
+  }
+
+  closeWithPendingCapture(closing: PendingExitClosing): Promise<ClosedPendingExit> {
+    if (this.busy) {
+      return Promise.resolve({ outcome: 'lot-busy' });
+    }
+    const found = this.#sessions.get(closing.sessionId);
+    if (found === undefined) {
+      throw new Error('Unknown session.');
+    }
+    if (found.session.paidExit !== null || found.session.state === 'CLOSED_CAPTURE_PENDING') {
+      return Promise.resolve({ outcome: 'already' });
+    }
+    this.pendingClosings.push(closing);
+    found.session = { ...found.session, state: 'CLOSED_CAPTURE_PENDING' };
+    return Promise.resolve({ outcome: 'closed' });
   }
 }
