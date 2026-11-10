@@ -10,21 +10,15 @@ export function usePendingReceipt(client: ReceiptClient, sessionId: string): Exi
   const [receipt, setReceipt] = useState<ExitReceipt | null>(null);
   useEffect(() => {
     let isOpen = true;
-    const poll = () => {
-      client.findReceipt(sessionId).then(
-        ({ receipt: found }) => {
-          if (isOpen) {
-            setReceipt(found);
-          }
-        },
-        () => undefined,
-      );
-    };
-    const timer = setInterval(poll, PENDING_RECEIPT_POLL_MILLISECONDS);
+    const timer = setInterval(() => askOnce(client, sessionId, (found) => isOpen && setReceipt(found)), PENDING_RECEIPT_POLL_MILLISECONDS);
     return () => {
       isOpen = false;
       clearInterval(timer);
     };
   }, [client, sessionId]);
   return receipt;
+}
+
+function askOnce(client: ReceiptClient, sessionId: string, onFound: (receipt: ExitReceipt) => void): void {
+  client.findReceipt(sessionId).then(({ receipt }) => onFound(receipt), () => undefined);
 }
