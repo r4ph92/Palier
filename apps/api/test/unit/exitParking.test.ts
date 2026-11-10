@@ -86,12 +86,34 @@ describe('exitParking', () => {
     expect(payments.captured).toEqual([]);
   });
 
-  it('leaves the session open when Stripe cannot capture', async () => {
+  it('opens the barrier with the capture pending when Stripe cannot capture, and fixes the amount of the retry', async () => {
     const { exits, payments, exit } = setup();
     payments.captureOutcome = 'failed';
 
-    expect(await exit()).toEqual({ outcome: 'payments-unavailable' });
+    expect(await exit()).toEqual({ outcome: 'capture-pending' });
     expect(exits.closings).toEqual([]);
+    expect(exits.pendingClosings).toEqual([
+      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, exitedAt: at2117, pendingCaptureCents: 975 },
+    ]);
+  });
+
+  it('answers pending to a second tap without capturing or closing again', async () => {
+    const { exits, payments, exit } = setup();
+    payments.captureOutcome = 'failed';
+    await exit();
+    payments.captureOutcome = 'captured';
+
+    expect(await exit(JULIE_ID, new Date(2026, 10, 4, 21, 30))).toEqual({ outcome: 'capture-pending' });
+    expect(payments.captured).toEqual([]);
+    expect(exits.pendingClosings).toHaveLength(1);
+  });
+
+  it('answers lot busy, not pending, when the lot stays locked while Stripe is down', async () => {
+    const { exits, payments, exit } = setup();
+    payments.captureOutcome = 'failed';
+    exits.busy = true;
+
+    expect(await exit()).toEqual({ outcome: 'lot-busy' });
   });
 
   it('keeps the amount Stripe took when a first tap captured but could not close, and Julie taps again a few minutes later', async () => {

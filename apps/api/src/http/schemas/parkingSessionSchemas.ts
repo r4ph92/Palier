@@ -158,7 +158,7 @@ export const exitResponseSchema = {
   additionalProperties: false,
   properties: {
     receipt: {
-      type: 'object',
+      type: ['object', 'null'],
       required: ['exitedAt', 'durationMinutes', 'increments', 'incrementCents', 'totalCents', 'capped'],
       additionalProperties: false,
       properties: {

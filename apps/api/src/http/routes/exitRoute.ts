@@ -52,9 +52,13 @@ async function leave(exit: ExitRouteDependencies | undefined, request: FastifyRe
   if (left.outcome === 'left' || left.outcome === 'already') {
     return { receipt: left.receipt };
   }
+  if (left.outcome === 'capture-pending') {
+    // The barrier opened without the money; without this line a Stripe outage at the exit would leave no trace.
+    request.log.warn({ sessionId: request.params.sessionId }, 'exit left with the capture pending');
+    return { receipt: null };
+  }
   if (left.outcome === 'payments-unavailable') {
-    // The session stays open and nothing is taken; without this line a Stripe outage at the exit would leave no trace.
-    request.log.warn({ sessionId: request.params.sessionId }, 'exit refused: the capture did not go through');
+    request.log.warn({ sessionId: request.params.sessionId }, 'exit refused: the server cannot take payments');
   }
   return sendRefusal(left.outcome, request, reply);
 }

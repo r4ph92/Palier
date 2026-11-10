@@ -94,7 +94,7 @@ async function attachExitPassage(tx: Transaction, entry: PassageEntry): Promise<
       select s.id
       from gate_command c
       join parking_session s on s.id = c.session_id
-      where c.gate_id = ${entry.gate.id} and c.kind = 'OPEN' and s.state = 'CLOSED_PAID' and s.exit_passage_at is null
+      where c.gate_id = ${entry.gate.id} and c.kind = 'OPEN' and s.state in ('CLOSED_PAID', 'CLOSED_CAPTURE_PENDING') and s.exit_passage_at is null
         and ${isWithinOpeningWindow(sql`c.issued_at`, entry.attachableOpenings)}
       order by c.issued_at, c.id
       limit 1

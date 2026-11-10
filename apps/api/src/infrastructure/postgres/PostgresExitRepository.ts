@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
-import type { ClosedExit, ExitableSession, ExitClosing, ExitRepository, PaidExit } from '../../domain/exits/ExitRepository.ts';
+import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitRepository, PaidExit, PendingExitClosing } from '../../domain/exits/ExitRepository.ts';
 import { spotsFreedOnExit, type SpotOfExit } from '../../domain/exits/spotsFreedOnExit.ts';
 import type { SpotState } from '../../domain/spots/spotStates.ts';
 import { activeSessionOf } from './activeSessionStates.ts';
@@ -23,8 +23,9 @@ interface ExitableRow extends Record<string, unknown> {
 }
 
 interface PaidExitRow extends Record<string, unknown> {
+  readonly state: EntrySessionState;
   readonly exit_at: Date | string;
-  readonly captured_cents: number;
+  readonly captured_cents: number | null;
 }
 
 interface ClosedSessionRow extends Record<string, unknown> {
@@ -68,12 +69,38 @@ export class PostgresExitRepository implements ExitRepository {
         if (session === null) {
           return { outcome: 'already', exit: await readPaidExit(tx, sessionId) } as const;
         }
-        await freeSpots(tx, { sessionId, session, now: exit.exitedAt });
-        await tx.execute(sql`insert into gate_command (gate_id, lot_id, kind, session_id) values (${exitGateId}, ${lotId}, 'OPEN', ${sessionId})`);
+        await openGate(tx, { sessionId, lotId, exitGateId, session, now: exit.exitedAt });
         return { outcome: 'closed', exit } as const;
       }),
     );
   }
+
+  // Same lot lock, same order and same gate command as a paid exit: the driver leaves whether or not Stripe answered.
+  async closeWithPendingCapture({ sessionId, lotId, exitGateId, exitedAt, pendingCaptureCents }: PendingExitClosing): Promise<ClosedPendingExit> {
+    return orLotBusy(
+      inLotLock(this.#database, lotId, async (tx): Promise<ClosedPendingExit> => {
+        const session = await closePendingSession(tx, sessionId, { exitedAt, pendingCaptureCents });
+        if (session === null) {
+          return { outcome: 'already' };
+        }
+        await openGate(tx, { sessionId, lotId, exitGateId, session, now: exitedAt });
+        return { outcome: 'closed' };
+      }),
+    );
+  }
+}
+
+interface GateOpening {
+  readonly sessionId: string;
+  readonly lotId: string;
+  readonly exitGateId: string;
+  readonly session: ClosedSessionRow;
+  readonly now: Date;
+}
+
+async function openGate(tx: Transaction, { sessionId, lotId, exitGateId, session, now }: GateOpening): Promise<void> {
+  await freeSpots(tx, { sessionId, session, now });
+  await tx.execute(sql`insert into gate_command (gate_id, lot_id, kind, session_id) values (${exitGateId}, ${lotId}, 'OPEN', ${sessionId})`);
 }
 
 function exitableSessionOf(row: ExitableRow): ExitableSession {
@@ -104,12 +131,25 @@ async function closeSession(tx: Transaction, sessionId: string, { exitedAt, capt
   return rows[0] ?? null;
 }
 
-async function readPaidExit(tx: Transaction, sessionId: string): Promise<PaidExit> {
-  const [row] = await tx.execute<PaidExitRow>(sql`select exit_at, captured_cents from parking_session where id = ${sessionId} and state = 'CLOSED_PAID'`);
+// Null for a session another request left with its capture pending: the retry will pay it.
+async function readPaidExit(tx: Transaction, sessionId: string): Promise<PaidExit | null> {
+  const [row] = await tx.execute<PaidExitRow>(sql`
+    select state, exit_at, captured_cents from parking_session where id = ${sessionId} and state in ('CLOSED_PAID', 'CLOSED_CAPTURE_PENDING')`);
   if (row === undefined) {
-    throw new Error(`Session ${sessionId} is neither leavable nor paid: it cannot be exited.`);
+    throw new Error(`Session ${sessionId} is neither leavable nor closed: it cannot be exited.`);
   }
-  return { exitedAt: new Date(row.exit_at), capturedCents: row.captured_cents };
+  return row.state === 'CLOSED_PAID' && row.captured_cents !== null ? { exitedAt: new Date(row.exit_at), capturedCents: row.captured_cents } : null;
+}
+
+// Null when the session is not leavable any more: another request closed it first.
+async function closePendingSession(tx: Transaction, sessionId: string, { exitedAt, pendingCaptureCents }: Pick<PendingExitClosing, 'exitedAt' | 'pendingCaptureCents'>): Promise<ClosedSessionRow | null> {
+  const rows = await tx.execute<ClosedSessionRow>(sql`
+    update parking_session
+    set state = 'CLOSED_CAPTURE_PENDING', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = 'APP',
+      pending_capture_cents = ${pendingCaptureCents}
+    where id = ${sessionId} and state in ${LEAVABLE_STATES}
+    returning assigned_spot_id, confirmed_spot_id`);
+  return rows[0] ?? null;
 }
 
 interface SpotsToFree {

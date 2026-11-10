@@ -63,15 +63,26 @@ describe('POST /v1/entries/:sessionId/exit', () => {
     expect(exits.closings).toEqual([]);
   });
 
-  it('answers 503 PAYMENTS_UNAVAILABLE and leaves the session open when Stripe cannot capture', async () => {
+  it('answers 200 with no receipt yet and opens the barrier when Stripe cannot capture', async () => {
     const { tap, entries, exits } = await julieAtTheExit();
     entries.payments.captureOutcome = 'failed';
 
     const response = await tap();
 
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ receipt: null });
+    expect(exits.closings).toEqual([]);
+    expect(exits.pendingClosings).toMatchObject([{ sessionId: EXIT_SESSION_ID, exitGateId: EXIT_GATE_ID, pendingCaptureCents: 975 }]);
+  });
+
+  it('answers 503 PAYMENTS_UNAVAILABLE when the session has no payment intent to capture', async () => {
+    const { tap, exits } = await julieAtTheExit();
+    exits.add(julie.id, { ...julieInside(enteredAt), paymentIntentId: null });
+
+    const response = await tap();
+
     expect(response.statusCode).toBe(503);
     expect(response.json()).toMatchObject({ error: 'PAYMENTS_UNAVAILABLE' });
-    expect(exits.closings).toEqual([]);
   });
 
   it('refuses a session id that is not a UUID', async () => {
