@@ -15,6 +15,13 @@ describe('paymentAuthorizer', () => {
     expect(paymentAuthorizer(null, 'success')).toBeInstanceOf(SimulatedPaymentAuthorizer);
   });
 
+  it('simulates a capture outage when asked: the hold works, the capture fails', async () => {
+    const payments = paymentAuthorizer(null, 'capture-unreachable');
+
+    expect(await payments?.authorize({ sessionId: 's1', customerId: 'c', paymentMethodId: 'p', amountCents: 2500, destinationAccountId: null })).toBe('pi_sim_s1');
+    expect(await payments?.capture({ sessionId: 's1', paymentIntentId: 'pi_sim_s1', amountCents: 975 })).toEqual({ outcome: 'failed' });
+  });
+
   it('calls Stripe when nothing is simulated and a key is set', () => {
     expect(paymentAuthorizer(testKey, 'none')).toBeInstanceOf(StripePaymentAuthorizer);
   });

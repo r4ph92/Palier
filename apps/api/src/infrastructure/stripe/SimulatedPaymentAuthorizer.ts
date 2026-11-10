@@ -4,6 +4,13 @@ const SIMULATED_INTENT_PREFIX = 'pi_sim_';
 
 // The intent id derives from the session, so a retry gets the same intent, as Stripe's idempotency key entry-<sessionId> would.
 export class SimulatedPaymentAuthorizer implements PaymentAuthorizer {
+  readonly #capturesFail: boolean;
+
+  // capturesFail: holds work but Stripe is "unreachable" for captures, the outage of a driver leaving (#50).
+  constructor({ capturesFail = false }: { readonly capturesFail?: boolean } = {}) {
+    this.#capturesFail = capturesFail;
+  }
+
   authorize({ sessionId }: AuthorizationRequest): Promise<string> {
     return Promise.resolve(`${SIMULATED_INTENT_PREFIX}${sessionId}`);
   }
@@ -14,6 +21,6 @@ export class SimulatedPaymentAuthorizer implements PaymentAuthorizer {
   }
 
   capture({ amountCents }: CaptureRequest): Promise<CaptureOutcome> {
-    return Promise.resolve({ outcome: 'captured', amountCents });
+    return Promise.resolve(this.#capturesFail ? { outcome: 'failed' } : { outcome: 'captured', amountCents });
   }
 }

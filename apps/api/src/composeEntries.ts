@@ -67,6 +67,9 @@ export function paymentAuthorizer(stripeKey: string | null, simulation: Payments
   if (simulation === 'success') {
     return new SimulatedPaymentAuthorizer();
   }
+  if (simulation === 'capture-unreachable') {
+    return new SimulatedPaymentAuthorizer({ capturesFail: true });
+  }
   if (stripeKey === null) {
     return null;
   }

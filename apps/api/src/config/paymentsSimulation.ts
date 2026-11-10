@@ -1,8 +1,9 @@
 import { readTestSignInEnabled } from './environment.ts';
 import { stripeTestKey } from './stripeTestKey.ts';
 
-// unreachable: every hold fails as if Stripe were down (#41); success: every hold succeeds without calling Stripe (#42).
-export const PAYMENTS_SIMULATIONS = ['none', 'unreachable', 'success'] as const;
+// unreachable: every hold fails as if Stripe were down (#41); success: every hold succeeds without calling Stripe (#42);
+// capture-unreachable: holds succeed but every capture fails, so a driver can enter and leave with the capture pending (#50).
+export const PAYMENTS_SIMULATIONS = ['none', 'unreachable', 'success', 'capture-unreachable'] as const;
 
 export type PaymentsSimulation = (typeof PAYMENTS_SIMULATIONS)[number];
 
@@ -18,8 +19,8 @@ export function readPaymentsSimulation(variables: NodeJS.ProcessEnv): PaymentsSi
   if (!readTestSignInEnabled(variables)) {
     throw new Error('PAYMENTS_SIMULATION is only allowed when NODE_ENV is development or test.');
   }
-  if (simulation === 'success' && stripeTestKey(variables) !== null) {
-    throw new Error('PAYMENTS_SIMULATION=success is refused while STRIPE_SECRET_KEY is set: empty the key or the switch.');
+  if ((simulation === 'success' || simulation === 'capture-unreachable') && stripeTestKey(variables) !== null) {
+    throw new Error(`PAYMENTS_SIMULATION=${simulation} is refused while STRIPE_SECRET_KEY is set: empty the key or the switch.`);
   }
   return simulation;
 }
