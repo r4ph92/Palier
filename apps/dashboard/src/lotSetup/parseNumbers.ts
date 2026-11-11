@@ -1,6 +1,7 @@
+import { CENTS_PER_DOLLAR } from '@palier/shared-types/money';
+
 export type ParsedNumber = { readonly ok: true; readonly value: number } | { readonly ok: false; readonly reason: 'empty' | 'invalid' };
 
-const CENTS_PER_DOLLAR = 100;
 // Dollars, spaces only between groups of three, then at most one decimal mark and two digits: "1 000,00", "18.5", "18".
 const AMOUNT = /^(\d{1,3}(?:\s\d{3})+|\d+)(?:[.,](\d{1,2}))?$/;
 const DECIMAL = /^-?\d+(?:[.,]\d+)?$/;

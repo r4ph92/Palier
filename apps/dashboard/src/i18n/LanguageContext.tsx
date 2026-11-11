@@ -1,8 +1,9 @@
+import type { Language } from '@palier/shared-types/money';
 import { createContext, useContext, useLayoutEffect, useMemo, useState, type ReactNode } from 'react';
 import { en } from './en.ts';
 import { fr, type Dictionary } from './fr.ts';
 
-export type Language = 'fr' | 'en';
+export type { Language };
 
 const STORAGE_KEY = 'palier.language';
 const DICTIONARIES: Readonly<Record<Language, Dictionary>> = { fr, en };
