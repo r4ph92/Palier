@@ -1,11 +1,12 @@
 export type ParsedNumber = { readonly ok: true; readonly value: number } | { readonly ok: false; readonly reason: 'empty' | 'invalid' };
 
 const CENTS_PER_DOLLAR = 100;
-// Dollars, then at most one decimal mark and two digits: "18,00", "18.5", "18". No thousands mark, so "1.000,00" is refused.
-const AMOUNT = /^(\d+)(?:[.,](\d{1,2}))?$/;
+// Dollars, spaces only between groups of three, then at most one decimal mark and two digits: "1 000,00", "18.5", "18".
+const AMOUNT = /^(\d{1,3}(?:\s\d{3})+|\d+)(?:[.,](\d{1,2}))?$/;
 const DECIMAL = /^-?\d+(?:[.,]\d+)?$/;
 const WHOLE_NUMBER = /^\d+$/;
-const DOLLAR_SIGN = /^\$|\$$/g;
+// No g flag: one dollar sign comes off, leading or trailing, so "$18$" keeps one and is refused.
+const ONE_DOLLAR_SIGN = /^\$\s*|\s*\$$/;
 const SPACES = /\s/g;
 
 const EMPTY: ParsedNumber = { ok: false, reason: 'empty' };
@@ -13,16 +14,16 @@ const INVALID: ParsedNumber = { ok: false, reason: 'invalid' };
 
 // "18,00 $", "$18.00" and "1 000,00" (no-break spaces too) all read as cents, without floating point.
 export function parseAmount(text: string): ParsedNumber {
-  const compact = text.replace(SPACES, '').replace(DOLLAR_SIGN, '');
-  if (compact === '') {
+  const unsigned = text.trim().replace(ONE_DOLLAR_SIGN, '');
+  if (unsigned === '') {
     return EMPTY;
   }
-  const match = AMOUNT.exec(compact);
+  const match = AMOUNT.exec(unsigned);
   if (match === null) {
     return INVALID;
   }
   const [, dollars = '', decimals = ''] = match;
-  return safeNumber(Number(dollars) * CENTS_PER_DOLLAR + Number(decimals.padEnd(2, '0')));
+  return safeNumber(Number(dollars.replace(SPACES, '')) * CENTS_PER_DOLLAR + Number(decimals.padEnd(2, '0')));
 }
 
 // Degrees with a comma or a point as the decimal mark: "45,52", "-73.58".
