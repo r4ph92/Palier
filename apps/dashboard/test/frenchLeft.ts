@@ -16,8 +16,14 @@ function textNodesOf(root: Node): string[] {
   return texts;
 }
 
-// A short fragment such as "par" counts only as whole words, so the English "parking" does not hide inside it.
+const WORD_CHARACTER = /[\p{L}\p{N}]/u;
+const NOT_AFTER_WORD = '(?<![\\p{L}\\p{N}])';
+const NOT_BEFORE_WORD = '(?![\\p{L}\\p{N}])';
+
+// A fragment that starts or ends with a letter must match as whole words there ("par" is not inside "parking"); punctuation needs no boundary.
 function containsAsWords(text: string, fragment: string): boolean {
   const escaped = fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, 'u').test(text);
+  const before = WORD_CHARACTER.test(fragment.at(0) ?? '') ? NOT_AFTER_WORD : '';
+  const after = WORD_CHARACTER.test(fragment.at(-1) ?? '') ? NOT_BEFORE_WORD : '';
+  return new RegExp(`${before}${escaped}${after}`, 'u').test(text);
 }
