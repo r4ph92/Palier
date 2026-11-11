@@ -93,7 +93,7 @@ describe('exitParking', () => {
     expect(await exit()).toEqual({ outcome: 'capture-pending' });
     expect(exits.closings).toEqual([]);
     expect(exits.pendingClosings).toEqual([
-      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, identification: 'APP', exitedAt: at2117, pendingCaptureCents: 975, surplusPaidCents: 0, unpaidCents: 0 },
+      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, identification: 'APP', exitedAt: at2117, pendingCaptureCents: 975, pendingSurplusCents: 0 },
     ]);
   });
 
@@ -213,7 +213,7 @@ describe('exitParking', () => {
 
     it('opens the barrier and records the 18 $ as unpaid when the card refuses the surplus', async () => {
       const { exits, payments, exit } = setup();
-      payments.surplusOutcome = 'failed';
+      payments.surplusOutcome = 'declined';
 
       const result = await exit(JULIE_ID, after30Hours);
 
@@ -229,13 +229,34 @@ describe('exitParking', () => {
       expect(payments.surcharged).toEqual([]);
     });
 
-    it('settles the surplus at the tap even when the capture stays pending', async () => {
+    it('leaves the surplus to the retry, without asking Stripe again, when the capture fails', async () => {
       const { exits, payments, exit } = setup();
       payments.captureOutcome = 'failed';
 
       expect(await exit(JULIE_ID, after30Hours)).toEqual({ outcome: 'capture-pending' });
 
-      expect(exits.pendingClosings).toMatchObject([{ pendingCaptureCents: 2500, surplusPaidCents: 1800, unpaidCents: 0 }]);
+      expect(payments.surcharged).toEqual([]);
+      expect(exits.pendingClosings).toMatchObject([{ pendingCaptureCents: 2500, pendingSurplusCents: 1800 }]);
+    });
+
+    it('opens the barrier with the payment pending when Stripe cannot say whether it charged the surplus', async () => {
+      const { exits, payments, exit } = setup();
+      payments.surplusOutcome = 'failed';
+
+      expect(await exit(JULIE_ID, after30Hours)).toEqual({ outcome: 'capture-pending' });
+
+      expect(exits.closings).toEqual([]);
+      expect(exits.pendingClosings).toMatchObject([{ pendingCaptureCents: 2500, pendingSurplusCents: 1800 }]);
+    });
+
+    it('records what an earlier tap already charged, not an unpaid balance, when a later tap asks another amount', async () => {
+      const { exits, payments, exit } = setup();
+      payments.alreadySurchargedCents = 1800;
+
+      const result = await exit(JULIE_ID, new Date(after30Hours.getTime() + 15 * 60_000));
+
+      expect(exits.closings).toMatchObject([{ exit: { capturedCents: 2500, surplusPaidCents: 1800, unpaidCents: 0 } }]);
+      expect(result).toMatchObject({ outcome: 'left', receipt: { totalCents: 4300, unpaidCents: 0 } });
     });
 
     it('charges the surplus once when Julie taps twice', async () => {

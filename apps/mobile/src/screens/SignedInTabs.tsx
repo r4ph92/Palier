@@ -6,6 +6,7 @@ import { TabBar, type Tab } from '../components/TabBar';
 import { usePendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { useTabs, type TabsController } from '../navigation/useTabs';
 import { useCurrentParkingSession, type CurrentParkingSessionController } from '../parkingSessions/useCurrentParkingSession';
+import { useExitByBeacon, type ExitByBeacon } from '../parkingSessions/useExitByBeacon';
 import { useParkedPresumption } from '../parkingSessions/useParkedPresumption';
 import { useParkedSignalBanner } from '../parkingSessions/useParkedSignalBanner';
 import { useAisleFollower } from '../positioning/useAisleFollower';
@@ -62,7 +63,7 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
   const spotHold = useSpotHold(clients.spotHold);
   const pendingEntry = usePendingEntryAndHold(clients, currentSession, spotHold);
   const gateScanner = useScannerGate(clients);
-  const guidance = useSessionGuidance({ device, clients }, currentSession);
+  const { guidance, beaconExit } = useSessionGuidance({ device, clients }, currentSession);
   const screens: TabScreens = {
     home: { firstName, lotsClient: clients.lots, locationClient: clients.location, spotHold },
     scan: {
@@ -70,6 +71,7 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
       gateScanner,
       currentSession,
       pendingEntry,
+      beaconExit,
       aside: { detectionNotice: <AutomaticDetectionNotice location={clients.backgroundLocation} />, guidance },
     },
     account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut: () => signOutForgettingWalks(device, onSignOut) },
@@ -86,20 +88,29 @@ function usePendingEntryAndHold(clients: SignedInClients, currentSession: Curren
   return usePendingEntryWatch(clients.entry, { onSettled, onSubmissionEnded: spotHold.refreshHold });
 }
 
+interface SessionGuidance {
+  readonly guidance: ReactNode;
+  readonly beaconExit: ExitByBeacon;
+}
+
 // The aisle and the walk away are followed above the tabs too, so a driver on another tab never misses them.
-function useSessionGuidance({ device, clients }: Pick<SignedInTabsProps, 'device' | 'clients'>, currentSession: CurrentParkingSessionController): ReactNode {
+function useSessionGuidance({ device, clients }: Pick<SignedInTabsProps, 'device' | 'clients'>, currentSession: CurrentParkingSessionController): SessionGuidance {
   const { state, refresh } = currentSession;
   const session = state.status === 'current' ? state.session : null;
   const aisles = useAisleFollower(device.positioning, session);
   useParkedPresumption({ positioning: device.positioning, client: clients.parkingSession, aisles, queue: device.parkedSignals }, session, refresh);
   const banner = useParkedSignalBanner(device.parkedSignals, device.positioning.connectivity);
   const guidance = useParkingGuidance(device.positioning, aisles, session);
-  return (
-    <>
-      <ParkedSignalNotice banner={banner} />
-      {guidance}
-    </>
-  );
+  const beaconExit = useExitByBeacon({ positioning: device.positioning, sessions: clients.parkingSession, receipts: clients.receipts }, currentSession);
+  return {
+    guidance: (
+      <>
+        <ParkedSignalNotice banner={banner} />
+        {guidance}
+      </>
+    ),
+    beaconExit,
+  };
 }
 
 function scanTabActions(clients: SignedInClients, tabs: TabsController): ScanTabActions {

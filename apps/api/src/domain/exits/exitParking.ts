@@ -1,7 +1,8 @@
 import type { ExitReceipt } from '@palier/shared-types';
-import type { CaptureOutcome, PaymentAuthorizer, SurplusRequest } from '../entries/PaymentAuthorizer.ts';
+import type { CaptureOutcome, PaymentAuthorizer } from '../entries/PaymentAuthorizer.ts';
 import { elapsedMinutesBetween, stayAmount, stayLines } from '../pricing/priceParkingSessionAt.ts';
 import type { ExitableSession, ExitIdentification, ExitRepository, PaidExit } from './ExitRepository.ts';
+import { settleSurplus } from './settleSurplus.ts';
 
 export interface ExitRequest {
   readonly sessionId: string;
@@ -12,7 +13,7 @@ export interface ExitRequest {
 export type ExitRefusal = 'not-found' | 'entry-not-confirmed' | 'closed' | 'gate-unavailable' | 'payments-unavailable' | 'lot-busy';
 
 // left: this request took the money and opened the barrier; already: an earlier one did, and its receipt stands; capture-pending: the
-// barrier is open but Stripe could not be reached, so the capture is retried and the receipt follows.
+// barrier is open but Stripe could not be reached, so the capture and the surplus are retried and the receipt follows.
 export type ExitOutcome =
   | { readonly outcome: 'left' | 'already'; readonly receipt: ExitReceipt }
   | { readonly outcome: 'capture-pending' }
@@ -24,8 +25,8 @@ export interface ExitDependencies {
   readonly payments: PaymentAuthorizer | null;
 }
 
-// Capture, then close and open (docs/03, sequence C). When Stripe cannot take the capture the barrier opens anyway: the session closes
-// with the capture pending and the retry takes the same amount later (decision 026).
+// Capture, then close and open (docs/03, sequence C). When Stripe cannot take the capture, or cannot say whether it took the surplus, the
+// barrier opens anyway: the session closes with the payment pending and the retry takes the same amounts later (decisions 026 and 027).
 export async function exitParking(dependencies: ExitDependencies, request: ExitRequest): Promise<ExitOutcome> {
   const session = await dependencies.exits.findForExit(request.sessionId, request.driverId);
   const refusal = refusalFor(session);
@@ -59,21 +60,18 @@ export async function payAndClose({ exits, payments }: ExitDependencies, session
   const amountCents = Math.min(session.authorizedCents, billedCents);
   const captured: CaptureOutcome = await payments.capture({ sessionId: session.id, paymentIntentId: session.paymentIntentId, amountCents });
   // Only what the hold cannot cover is a surplus, however much a capture of an earlier tap already took.
-  const surplus = await chargeSurplus(payments, { sessionId: session.id, paymentIntentId: session.paymentIntentId, amountCents: billedCents - amountCents });
+  const pending = { exitGateId, identification, exitedAt: now, pendingCaptureCents: amountCents, pendingSurplusCents: billedCents - amountCents };
+  // A Stripe that cannot take the capture is not asked for the surplus either: the retry charges both.
   if (captured.outcome === 'failed') {
-    return leaveWithCapturePending(exits, session, { exitGateId, identification, exitedAt: now, pendingCaptureCents: amountCents, ...surplus });
+    return leaveWithCapturePending(exits, session, pending);
+  }
+  const surplus = await settleSurplus(payments, { sessionId: session.id, paymentIntentId: session.paymentIntentId, amountCents: pending.pendingSurplusCents });
+  // Whether the card paid the surplus is unknown: the retry replays the capture just taken and asks Stripe again.
+  if (surplus === null) {
+    return leaveWithCapturePending(exits, session, pending);
   }
   // What Stripe really took: after a capture whose close failed, a later tap asks another amount but the first one stands.
   return closePaid(exits, session, { exitGateId, identification, exit: { exitedAt: now, capturedCents: captured.amountCents, ...surplus } });
-}
-
-// A stay over 24 hours costs more than the hold: the rest is charged to the card, and the barrier opens whatever the card answers.
-async function chargeSurplus(payments: PaymentAuthorizer, surplus: SurplusRequest): Promise<Pick<PaidExit, 'surplusPaidCents' | 'unpaidCents'>> {
-  if (surplus.amountCents === 0) {
-    return { surplusPaidCents: 0, unpaidCents: 0 };
-  }
-  const charged = await payments.chargeSurplus(surplus);
-  return charged.outcome === 'charged' ? { surplusPaidCents: surplus.amountCents, unpaidCents: 0 } : { surplusPaidCents: 0, unpaidCents: surplus.amountCents };
 }
 
 interface PaidLeave {
@@ -99,8 +97,7 @@ interface PendingLeave {
   readonly identification: ExitIdentification;
   readonly exitedAt: Date;
   readonly pendingCaptureCents: number;
-  readonly surplusPaidCents: number;
-  readonly unpaidCents: number;
+  readonly pendingSurplusCents: number;
 }
 
 // Funds are already held at entry (Q38): the driver is not kept inside for Stripe's outage.

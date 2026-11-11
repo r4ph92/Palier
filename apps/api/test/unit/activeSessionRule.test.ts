@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeSessionRefusal, decideActiveSessionRule } from '../../src/seed/activeSessionRule.ts';
+import { activeSessionRefusal, activeSessionWarning, decideActiveSessionRule } from '../../src/seed/activeSessionRule.ts';
 import type { SpotStateChange } from '../../src/seed/spotStateArguments.ts';
 
 function change(state: SpotStateChange['state'], forceActiveSession = false): SpotStateChange {
@@ -27,5 +27,11 @@ describe('decideActiveSessionRule', () => {
 describe('activeSessionRefusal', () => {
   it('names the spot and says an active session holds it', () => {
     expect(activeSessionRefusal(change('AVAILABLE'))).toMatch(/B-3.*held by an active session/);
+  });
+});
+
+describe('activeSessionWarning', () => {
+  it('names the spot an active session still points at', () => {
+    expect(activeSessionWarning(change('AVAILABLE', true))).toMatch(/active session still points at B-3/);
   });
 });

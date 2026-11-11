@@ -33,8 +33,9 @@ function sameLotForeignKey(name: string, columns: [AnyPgColumn, AnyPgColumn], ta
 }
 
 export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION_STATES);
-// How the vehicle was identified at the exit: the tap in the app, or the gate's plate or transponder reader (docs/03, sequence C).
-export const exitIdentification = pgEnum('exit_identification', ['APP', 'PLATE', 'TRANSPONDER']);
+// How the vehicle was identified at the exit: the tap in the app, the gate's plate or transponder reader, or the exit beacon seen by
+// the app together with a vehicle at the gate (docs/03, sequence C).
+export const exitIdentification = pgEnum('exit_identification', ['APP', 'PLATE', 'TRANSPONDER', 'BEACON']);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
 
 interface StateColumns {
@@ -109,6 +110,8 @@ export const parkingSession = pgTable(
     capturedCents: integer('captured_cents'),
     // The amount fixed at the tap when Stripe could not be reached; the retry captures exactly this, under the same idempotency key (decision 026).
     pendingCaptureCents: integer('pending_capture_cents'),
+    // The surplus Stripe could not settle at the tap; the retry charges it after the capture (decision 027).
+    pendingSurplusCents: integer('pending_surplus_cents').notNull().default(0),
     // What the exit charged beyond the card hold for a stay over 24 hours, and what the card refused of it (decision 027).
     surplusPaidCents: integer('surplus_paid_cents').notNull().default(0),
     unpaidCents: integer('unpaid_cents').notNull().default(0),
@@ -126,6 +129,7 @@ export const parkingSession = pgTable(
     sameLotForeignKey('parking_session_parked_aisle_in_same_lot_fk', [table.parkedAisleId, table.lotId], aisle),
     ...stateChecks(table),
     check('parking_session_surplus_not_negative', sql`${table.surplusPaidCents} >= 0 and ${table.unpaidCents} >= 0`),
+    check('parking_session_pending_surplus_not_negative', sql`${table.pendingSurplusCents} >= 0`),
     check(
       'parking_session_pricing_positive',
       sql`${table.pricingIncrementCents} > 0 and ${table.pricingIncrementMinutes} > 0 and ${table.pricingDailyCapCents} > 0`,

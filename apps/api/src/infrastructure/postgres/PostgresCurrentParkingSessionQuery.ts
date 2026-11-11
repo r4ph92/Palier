@@ -1,9 +1,12 @@
 import { sql } from 'drizzle-orm';
 import type { ActiveEntrySessionState, ParkedQuestion } from '@palier/shared-types';
+import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import type { StoredLevelAisle } from '../../domain/lots/levelPlanOf.ts';
 import type { ActiveParkingSession, CurrentParkingSessionQuery } from '../../domain/parkingSessions/ActiveParkingSession.ts';
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import type { Database } from './database.ts';
+import { LEAVABLE_STATES } from './exitableSessionSql.ts';
+import { isWithinOpeningWindow } from './openingWindowSql.ts';
 import { readParkedQuestion } from './parkedQuestion.ts';
 import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './vehicleNeedsSql.ts';
 
@@ -21,6 +24,7 @@ interface CurrentSessionRow extends Record<string, unknown>, VehicleNeedsRow {
   readonly level_id: string;
   readonly beacon_major: number | null;
   readonly parked_aisle_id: string | null;
+  readonly exit_beacon_fallback: boolean | null;
 }
 
 interface LevelAisleRow extends Record<string, unknown> {
@@ -31,9 +35,12 @@ interface LevelAisleRow extends Record<string, unknown> {
 
 export class PostgresCurrentParkingSessionQuery implements CurrentParkingSessionQuery {
   readonly #database: Database;
+  // How fresh an exit beacon report is for the fallback to show.
+  readonly #beaconWindow: OpeningWindow;
 
-  constructor(database: Database) {
+  constructor(database: Database, beaconWindow: OpeningWindow) {
     this.#database = database;
+    this.#beaconWindow = beaconWindow;
   }
 
   // The inner select keeps the index predicate's exact text, so the per-driver partial unique index serves it.
@@ -42,7 +49,8 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
     const rows = await this.#database.execute<CurrentSessionRow>(sql`
       select ps.id, ps.state, ps.entry_scan_at, ps.pricing_increment_cents, ps.pricing_increment_minutes, ps.pricing_daily_cap_cents,
         ps.parked_aisle_id, lot.name as lot_name, lot.beacon_major, spot.number, aisle.code as aisle_code, level.code as level_code, aisle.level_id,
-        ${vehicleNeedsColumns}
+        ${vehicleNeedsColumns},
+        ${this.#exitBeaconFallbackColumn()}
       from (select * from parking_session where user_id = ${userId} and ${ACTIVE_SESSION}) ps
       join parking_lot lot on lot.id = ps.lot_id
       left join vehicle on vehicle.id = ps.vehicle_id
@@ -55,6 +63,16 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
     }
     const [levelAisles, question] = await Promise.all([this.#levelAisles(row.level_id), this.#questionOf(row)]);
     return activeSessionOf(row, { levelAisles, question });
+  }
+
+  // True when this session reported the beacon and another session of its lot did too, both within the window.
+  #exitBeaconFallbackColumn() {
+    const fresh = isWithinOpeningWindow(sql`report.reported_at`, this.#beaconWindow);
+    return sql`(
+      exists (select 1 from exit_beacon_report report where report.session_id = ps.id and ${fresh})
+      and (select count(*) from exit_beacon_report report join parking_session other on other.id = report.session_id
+        where other.lot_id = ps.lot_id and other.state in ${LEAVABLE_STATES} and ${fresh}) >= 2
+    ) as exit_beacon_fallback`;
   }
 
   #questionOf(row: CurrentSessionRow): Promise<ParkedQuestion | null> {
@@ -88,6 +106,7 @@ function activeSessionOf(row: CurrentSessionRow, { levelAisles, question }: Sess
       dailyCapCents: row.pricing_daily_cap_cents,
     },
     beaconMajor: row.beacon_major,
+    exitBeaconFallback: row.exit_beacon_fallback === true,
     levelAisles,
     question,
   };

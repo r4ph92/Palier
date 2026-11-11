@@ -1,4 +1,5 @@
 import type {
+  ExitBeaconRequest,
   BackdateParkingSessionRequest,
   CurrentParkingSessionResponse,
   ExitResponse,
@@ -51,7 +52,7 @@ const parkedQuestionSchema = {
 
 const currentParkingSessionSchema = {
   type: 'object',
-  required: ['sessionId', 'state', 'lotName', 'spot', 'enteredAt', 'elapsedMinutes', 'amountCents', 'dailyCapCents', 'beaconMajor', 'levelPlan', 'question'],
+  required: ['sessionId', 'state', 'lotName', 'spot', 'enteredAt', 'elapsedMinutes', 'amountCents', 'dailyCapCents', 'beaconMajor', 'exitBeaconFallback', 'levelPlan', 'question'],
   additionalProperties: false,
   properties: {
     sessionId: { type: 'string' },
@@ -63,6 +64,7 @@ const currentParkingSessionSchema = {
     amountCents: { type: 'integer' },
     dailyCapCents: { type: 'integer' },
     beaconMajor: { anyOf: [{ type: 'integer' }, { type: 'null' }] },
+    exitBeaconFallback: { type: 'boolean' },
     levelPlan: { anyOf: [levelPlanSchema, { type: 'null' }] },
     question: { anyOf: [parkedQuestionSchema, { type: 'null' }] },
   },
@@ -153,6 +155,13 @@ export const spotTakenResponseSchema = {
   ],
 } as const;
 
+export const exitBeaconRequestSchema = {
+  type: 'object',
+  required: ['major'],
+  additionalProperties: false,
+  properties: { major: { type: 'integer', minimum: 0, maximum: 65535 } },
+} as const;
+
 export const exitResponseSchema = {
   type: 'object',
   required: ['receipt'],
@@ -189,3 +198,4 @@ export type ResponseSchemaMatchesParkedSpotAnswer = AssertTrue<
 export type RequestSchemaMatchesSpotTaken = AssertTrue<MutuallyAssignable<FromSchema<typeof spotTakenRequestSchema>, SpotTakenRequest>>;
 export type ResponseSchemaMatchesSpotTaken = AssertTrue<MutuallyAssignable<FromSchema<typeof spotTakenResponseSchema>, SpotTakenResponse>>;
 export type ResponseSchemaMatchesExit = AssertTrue<MutuallyAssignable<FromSchema<typeof exitResponseSchema>, WithMutableArrays<ExitResponse>>>;
+export type RequestSchemaMatchesExitBeacon = AssertTrue<MutuallyAssignable<FromSchema<typeof exitBeaconRequestSchema>, ExitBeaconRequest>>;

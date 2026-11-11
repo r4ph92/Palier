@@ -9,6 +9,7 @@ const STATUS_BY_REASON: Record<PassageRefusalReason, number> = {
   CLOSED_AT_IN_FUTURE: 400,
   GATE_WITHOUT_READER: 409,
   IDENTIFIER_INVALID: 400,
+  GATE_NOT_EXIT: 409,
 };
 
 export function handleGateError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {

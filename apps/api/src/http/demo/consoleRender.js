@@ -1,6 +1,7 @@
 import { formatPassageTime, translate, vehiclesInside } from './consoleText.js';
 import { isLoopEnabled } from './loopPress.js';
 import { isReaderEnabled } from './readerRead.js';
+import { isPresenceEnabled } from './vehiclePresence.js';
 
 /** @typedef {import('./consoleText.js').TextKey} TextKey */
 /** @typedef {import('@palier/shared-types').GateKind} GateKind */
@@ -35,6 +36,7 @@ export const deviceKeyInput = /** @type {HTMLInputElement} */ (elementById('devi
 export const loopButtons = /** @type {HTMLButtonElement[]} */ ([...document.querySelectorAll('[data-loop]')]);
 export const plateInput = /** @type {HTMLInputElement} */ (elementById('plate-read'));
 export const readerButton = /** @type {HTMLButtonElement} */ (elementById('reader-send'));
+export const presenceButton = /** @type {HTMLButtonElement} */ (elementById('presence-send'));
 export const languageButtons = /** @type {HTMLButtonElement[]} */ ([...document.querySelectorAll('[data-language]')]);
 
 /** @param {ConsoleState} state */
@@ -45,6 +47,7 @@ export function render(state) {
   renderIdentity(state);
   renderLoops(state);
   readerButton.disabled = !isReaderEnabled(state);
+  presenceButton.disabled = !isPresenceEnabled(state);
   renderMessage(state);
   renderCommands(state);
   renderPassages(state);

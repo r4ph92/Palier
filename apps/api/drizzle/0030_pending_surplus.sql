@@ -1,0 +1,2 @@
+ALTER TABLE "parking_session" ADD COLUMN "pending_surplus_cents" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "parking_session" ADD CONSTRAINT "parking_session_pending_surplus_not_negative" CHECK ("parking_session"."pending_surplus_cents" >= 0);

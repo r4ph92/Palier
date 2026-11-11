@@ -33,3 +33,9 @@ export interface GateIdentifyResponse {
   readonly outcome: 'opened' | 'fallback';
   readonly identification: 'plate' | 'transponder' | null;
 }
+
+// waiting: the vehicle is noted and no single app has reported the exit beacon yet; opened: the barrier was ordered open;
+// fallback: two apps reported, so nothing opened and both drivers use the tap.
+export interface GatePresenceResponse {
+  readonly outcome: 'waiting' | 'opened' | 'fallback';
+}

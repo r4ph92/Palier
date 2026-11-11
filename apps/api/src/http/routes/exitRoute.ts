@@ -8,6 +8,7 @@ import { SESSION_NOT_FOUND_BODY } from '../sessionNotFound.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { entrySessionParametersSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
+import { registerExitBeaconRoute } from './exitBeaconRoute.ts';
 import { exitResponseSchema } from '../schemas/parkingSessionSchemas.ts';
 
 const SERVICE_UNAVAILABLE = 503;
@@ -42,6 +43,7 @@ export function registerExitRoute(server: FastifyInstance, driverAccess: DriverA
   const onRequest = consentedDriverGuards(driverAccess);
   const schema = { params: entrySessionParametersSchema, response: { 200: exitResponseSchema } };
   server.post<ExitRoute>('/v1/entries/:sessionId/exit', { onRequest, schema }, (request, reply) => leave(exit, request, reply));
+  registerExitBeaconRoute(server, driverAccess, exit);
 }
 
 async function leave(exit: ExitRouteDependencies | undefined, request: FastifyRequest<ExitRoute>, reply: FastifyReply): Promise<ExitResponse | FastifyReply> {
