@@ -22,3 +22,14 @@ export interface GatePassageResponse {
   // The paid session whose exit opening this passage closed; null when no opening was waiting.
   readonly exitedSessionId: string | null;
 }
+
+// What the exit reader read: a plate or a transponder identifier, in any case, with or without spaces.
+export interface GateIdentifyRequest {
+  readonly identifier: string;
+}
+
+// opened: the barrier was ordered open for the identified vehicle; fallback: nothing was taken or opened, the driver uses the app.
+export interface GateIdentifyResponse {
+  readonly outcome: 'opened' | 'fallback';
+  readonly identification: 'plate' | 'transponder' | null;
+}

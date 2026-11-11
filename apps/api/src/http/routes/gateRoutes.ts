@@ -1,10 +1,12 @@
-import type { GateIdentity, GatePassageRequest, GatePassageResponse } from '@palier/shared-types';
+import type { GateIdentifyRequest, GateIdentifyResponse, GateIdentity, GatePassageRequest, GatePassageResponse } from '@palier/shared-types';
 import { isStorableDate } from '../../domain/time/storableDate.ts';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { GateCommandCursor, GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
 import type { GateDeviceKeyRepository } from '../../domain/gates/GateDeviceKeyRepository.ts';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import type { PassageLedger } from '../../domain/gates/PassageLedger.ts';
+import type { ExitDependencies } from '../../domain/exits/exitParking.ts';
+import { identifyAtExit, type IdentifyOutcome } from '../../domain/exits/identifyAtExit.ts';
 import { recordPassage } from '../../domain/gates/recordPassage.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 import { authenticatedGateOf, createGateDeviceAuthentication } from '../gates/gateDeviceAuthentication.ts';
@@ -13,6 +15,8 @@ import { gateCommandListSchema, gateCommandsQuerySchema, type GateCommandsQuery 
 import {
   gateIdentitySchema,
   gateIdParametersSchema,
+  identifyRequestSchema,
+  identifyResponseSchema,
   passageRequestSchema,
   passageResponseSchema,
   type GateIdParameters,
@@ -27,6 +31,7 @@ export interface GateRouteDependencies {
 }
 
 const BAD_REQUEST = 400;
+const SERVICE_UNAVAILABLE = 503;
 
 interface CommandsRoute {
   Querystring: GateCommandsQuery;
@@ -37,7 +42,19 @@ interface PassageRoute {
   Body: GatePassageRequest;
 }
 
-export function registerGateRoutes(server: FastifyInstance, dependencies: GateRouteDependencies): void {
+interface IdentifyRoute {
+  Params: GateIdParameters;
+  Body: GateIdentifyRequest;
+}
+
+export interface ReaderExitDependencies {
+  readonly exit: ExitDependencies;
+  // The clock of the tap, so a reader prices the stay and stamps the exit as the tap does (the test clock when it is active).
+  readonly clock: Clock;
+}
+
+// The reader exit is missing in a server composed without payments: a reader then gets 503, like the tap.
+export function registerGateRoutes(server: FastifyInstance, dependencies: GateRouteDependencies, readerExit?: ReaderExitDependencies): void {
   void server.register(
     async (scope) => {
       scope.decorateRequest('authenticatedGate', null);
@@ -45,6 +62,7 @@ export function registerGateRoutes(server: FastifyInstance, dependencies: GateRo
       scope.setErrorHandler(handleGateError);
       registerIdentityRoute(scope);
       registerPassageRoute(scope, dependencies);
+      registerIdentifyRoute(scope, readerExit);
       registerCommandsRoute(scope, dependencies.commands);
     },
     { prefix: '/v1/gates' },
@@ -68,6 +86,32 @@ function registerPassageRoute(scope: FastifyInstance, dependencies: GateRouteDep
     };
     return recordPassage(command, { ledger: dependencies.ledger, clock: dependencies.clock, openingWindow: dependencies.openingWindow });
   });
+}
+
+// The exit reader read a plate or a transponder: the same exit as the tap, for the one open session that has it.
+function registerIdentifyRoute(scope: FastifyInstance, readerExit: ReaderExitDependencies | undefined): void {
+  const schema = { params: gateIdParametersSchema, body: identifyRequestSchema, response: { 200: identifyResponseSchema } };
+  scope.post<IdentifyRoute>('/:id/identify', { schema }, async (request, reply): Promise<GateIdentifyResponse | FastifyReply> => {
+    if (readerExit === undefined) {
+      return reply.status(SERVICE_UNAVAILABLE).send({ statusCode: SERVICE_UNAVAILABLE, error: 'PAYMENTS_UNAVAILABLE', message: 'The payment could not be taken; try again.' });
+    }
+    const { id: requestedGateId } = request.params;
+    const gate = authenticatedGateOf(request);
+    const identified = await identifyAtExit(readerExit.exit, { gate, requestedGateId, identifier: request.body.identifier, now: readerExit.clock() });
+    return identifyReply(identified, request, reply);
+  });
+}
+
+function identifyReply(identified: IdentifyOutcome, request: FastifyRequest<IdentifyRoute>, reply: FastifyReply): GateIdentifyResponse | FastifyReply {
+  if (identified.outcome === 'opened') {
+    return { outcome: 'opened', identification: identified.identification };
+  }
+  if (identified.outcome === 'fallback') {
+    return { outcome: 'fallback', identification: null };
+  }
+  request.log.warn({ gateId: request.params.id, reason: identified.outcome }, 'exit reader request refused');
+  const error = identified.outcome.toUpperCase().replace('-', '_');
+  return reply.status(SERVICE_UNAVAILABLE).send({ statusCode: SERVICE_UNAVAILABLE, error, message: 'The exit could not be completed; use the app.' });
 }
 
 // The demo console polls this with the issuedAt and id of the last command it shows, so each poll brings only new ones.
