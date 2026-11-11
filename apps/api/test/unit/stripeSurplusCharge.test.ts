@@ -105,4 +105,18 @@ describe('StripePaymentAuthorizer.chargeSurplus', () => {
     expect(await new StripePaymentAuthorizer(stripe).chargeSurplus(surplus)).toEqual({ outcome: 'failed' });
     expect(create).not.toHaveBeenCalled();
   });
+
+  it('answers declined, not pending forever, when Stripe refuses the request itself', async () => {
+    const { stripe } = fakeStripe(Promise.reject(Object.assign(new Error('No such PaymentMethod'), { type: 'StripeInvalidRequestError', code: 'resource_missing' })));
+
+    expect(await new StripePaymentAuthorizer(stripe).chargeSurplus(surplus)).toEqual({ outcome: 'declined' });
+  });
+
+  it('answers failed when the key stays in use and no charge of the session shows yet', async () => {
+    const { stripe } = fakeStripe(
+      Promise.reject(Object.assign(new Error('in use'), { type: 'StripeInvalidRequestError', code: 'idempotency_key_in_use' })),
+    );
+
+    expect(await new StripePaymentAuthorizer(stripe, 0).chargeSurplus(surplus)).toEqual({ outcome: 'failed' });
+  });
 });

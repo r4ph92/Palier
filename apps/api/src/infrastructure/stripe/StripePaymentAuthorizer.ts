@@ -19,6 +19,7 @@ const SURPLUS = 'surplus';
 // Every intent of the customer since the entry: far more than one driver makes, so the session's surplus is always among them.
 const SURPLUS_LOOKUP_LIMIT = 100;
 const CARD_ERROR = 'StripeCardError';
+const INVALID_REQUEST = 'StripeInvalidRequestError';
 const UNEXPECTED_STATE = 'payment_intent_unexpected_state';
 const MISSING = 'resource_missing';
 const KEY_IN_USE = 'idempotency_key_in_use';
@@ -122,11 +123,13 @@ export class StripePaymentAuthorizer implements PaymentAuthorizer {
       const intent = await this.#stripe.paymentIntents.create(surplusParameters(sessionId, amountCents, entry), { idempotencyKey: `exit-extra-${sessionId}` });
       return surplusOutcomeOf(intent.status, amountCents);
     } catch (error) {
-      if (isCardError(error)) {
+      const keyInUse = propertyOf(error, 'code') === KEY_IN_USE;
+      // A refused card, or a request Stripe will never accept (the entry card detached since), is unpaid rather than retried forever.
+      if (isCardError(error) || (propertyOf(error, 'type') === INVALID_REQUEST && !keyInUse)) {
         return { outcome: 'declined' };
       }
       // A second tap racing the first finds the key in use: it waits a moment for the first charge to settle.
-      if (propertyOf(error, 'code') === KEY_IN_USE) {
+      if (keyInUse) {
         await new Promise((resolve) => setTimeout(resolve, this.#keyInUseRetryMilliseconds));
       }
       return (await this.#surplusOf(sessionId, entry)) ?? { outcome: 'failed' };
