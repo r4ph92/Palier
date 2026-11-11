@@ -29,6 +29,8 @@ describe('exit (story #47)', () => {
     incrementCents: 75,
     totalCents: 975,
     capped: false,
+    lines: [],
+    unpaidCents: 0,
   };
 
   it('posts the tap for the session and reads the receipt', async () => {
@@ -68,8 +70,26 @@ describe('exit (story #47)', () => {
     },
   );
 
+  it('reads the lines and the unpaid balance of a stay over 24 hours', async () => {
+    const long = {
+      ...receipt,
+      durationMinutes: 1800,
+      totalCents: 2500,
+      lines: [
+        { kind: 'DAY', dayNumber: 1, cents: 2500 },
+        { kind: 'EXTRA', minutes: 360, cents: 1800 },
+      ],
+      unpaidCents: 1800,
+    };
+
+    await expect(clientAnswering({ receipt: long }).client.exit('session-1')).resolves.toEqual({ receipt: long });
+  });
+
   it.each([
     ['no receipt', {}],
+    ['no lines', { receipt: { ...receipt, lines: undefined } }],
+    ['a line of an unknown kind', { receipt: { ...receipt, lines: [{ kind: 'WEEK', cents: 100 }] } }],
+    ['an unpaid balance that is not a number', { receipt: { ...receipt, unpaidCents: '18,00' } }],
     [
       'a total that is not a number',
       { receipt: { ...receipt, totalCents: '9,75' } },

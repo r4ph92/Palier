@@ -14,6 +14,8 @@ const detail = {
   incrementCents: 75,
   totalCents: 975,
   capped: false,
+  lines: [],
+  unpaidCents: 0,
   cardLast4: '4242',
 };
 
@@ -49,6 +51,16 @@ describe('findReceipt', () => {
 
   it('reads a receipt without a card', async () => {
     await expect(clientAnswering({ receipt: { ...detail, cardLast4: null } }).client.findReceipt('session-1')).resolves.toMatchObject({ receipt: { cardLast4: null } });
+  });
+
+  it('reads the lines and the unpaid balance of a stay over 24 hours', async () => {
+    const long = { ...detail, lines: [{ kind: 'DAY', dayNumber: 1, cents: 2500 }, { kind: 'EXTRA', minutes: 360, cents: 1800 }], unpaidCents: 1800 };
+
+    await expect(clientAnswering({ receipt: long }).client.findReceipt('session-1')).resolves.toEqual({ receipt: long });
+  });
+
+  it('refuses a receipt without its lines', async () => {
+    await expect(clientAnswering({ receipt: { ...detail, lines: undefined } }).client.findReceipt('session-1')).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 
   it('fails with the status of a 404, as for an unknown or another driver’s receipt', async () => {

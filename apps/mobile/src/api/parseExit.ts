@@ -3,6 +3,7 @@ import { asRecord } from './asRecord';
 import { isInstant } from './isInstant';
 import { isNonNegativeInteger } from './isNonNegativeInteger';
 import { PalierUnreachableError } from './LotsClient';
+import { parseReceiptBill } from './parseReceiptBill';
 
 export function parseExit(body: unknown): ExitResponse {
   const receipt = asRecord(body)['receipt'];
@@ -11,7 +12,9 @@ export function parseExit(body: unknown): ExitResponse {
     return { receipt: null };
   }
   const { exitedAt, durationMinutes, increments, incrementCents, totalCents, capped } = asRecord(receipt);
+  const bill = parseReceiptBill(asRecord(receipt));
   if (
+    bill === null ||
     !isInstant(exitedAt) ||
     !isNonNegativeInteger(durationMinutes) ||
     !isNonNegativeInteger(increments) ||
@@ -21,5 +24,5 @@ export function parseExit(body: unknown): ExitResponse {
   ) {
     throw new PalierUnreachableError('unexpected response body');
   }
-  return { receipt: { exitedAt, durationMinutes, increments, incrementCents, totalCents, capped } };
+  return { receipt: { exitedAt, durationMinutes, increments, incrementCents, totalCents, capped, ...bill } };
 }
