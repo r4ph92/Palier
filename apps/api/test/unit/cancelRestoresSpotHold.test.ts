@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PostgresParkingSessionRepository } from '../../src/infrastructure/postgres/PostgresParkingSessionRepository.ts';
 import { PostgresUnconfirmedEntryRepository } from '../../src/infrastructure/postgres/PostgresUnconfirmedEntryRepository.ts';
-import { ScriptedSql } from './fakes/scriptedSql.ts';
+import { PARKING_DEMO_OCCUPANCY_ROW, ScriptedSql } from './fakes/scriptedSql.ts';
 
 const NOW = new Date('2026-11-05T14:05:00Z');
 const WINDOW = { withinMilliseconds: 60_000 };
@@ -138,6 +138,7 @@ describe('an entry that uses a hold', () => {
 
   it('records the card last four on the session for its receipt', async () => {
     const scripted = new ScriptedSql()
+      .answer('read-lot-occupancy', [PARKING_DEMO_OCCUPANCY_ROW])
       .answer('read-free-spots', [freeSpot])
       .answer('claim-spot', [{ id: 'spot-B-1', number: 'B-1', aisle_code: 'B', level_code: 'P1' }])
       .answer('insert-session', [{ id: 'session-1' }]);
@@ -149,6 +150,7 @@ describe('an entry that uses a hold', () => {
 
   it('records no hold when there was none', async () => {
     const scripted = new ScriptedSql()
+      .answer('read-lot-occupancy', [PARKING_DEMO_OCCUPANCY_ROW])
       .answer('read-free-spots', [freeSpot])
       .answer('claim-spot', [{ id: 'spot-B-1', number: 'B-1', aisle_code: 'B', level_code: 'P1' }])
       .answer('insert-session', [{ id: 'session-1' }]);

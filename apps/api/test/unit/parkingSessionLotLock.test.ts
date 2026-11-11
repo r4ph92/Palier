@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SessionDraft } from '../../src/domain/entries/ParkingSessionRepository.ts';
 import { PostgresParkingSessionRepository } from '../../src/infrastructure/postgres/PostgresParkingSessionRepository.ts';
 import { PostgresUnconfirmedEntryRepository } from '../../src/infrastructure/postgres/PostgresUnconfirmedEntryRepository.ts';
-import { ScriptedSql, type Rows } from './fakes/scriptedSql.ts';
+import { PARKING_DEMO_OCCUPANCY_ROW, ScriptedSql, type Rows } from './fakes/scriptedSql.ts';
 
 const NOW = new Date('2026-11-05T12:00:00Z');
 const draft: SessionDraft = {
@@ -30,8 +30,9 @@ const freeSpot = {
   is_oversize: false,
 };
 
-function scriptedEntry(): ScriptedSql {
+function scriptedEntry(occupancy: Rows[number] = PARKING_DEMO_OCCUPANCY_ROW): ScriptedSql {
   return new ScriptedSql()
+    .answer('read-lot-occupancy', [occupancy])
     .answer('read-free-spots', [freeSpot])
     .answer('claim-spot', [{ id: 'spot-A-1', number: 'A-1', aisle_code: 'A', level_code: 'P1' }])
     .answer('insert-session', [{ id: 'session-1' }]);
@@ -43,12 +44,12 @@ async function openEntry(scripted: ScriptedSql) {
 }
 
 describe('opening an entry under the lot lock', () => {
-  it('bounds the lock wait, locks the lot, then reads the driver, claims a spot and inserts the session', async () => {
+  it('bounds the lock wait, locks the lot, then reads the driver and the room, claims a spot and inserts the session', async () => {
     const scripted = scriptedEntry();
 
     await openEntry(scripted);
 
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-free-spots', 'claim-spot', 'insert-session']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-lot-occupancy', 'read-free-spots', 'claim-spot', 'insert-session']);
   });
 
   it('runs every statement on the transaction, never on the shared connection', async () => {
@@ -134,10 +135,10 @@ describe('opening an entry for a driver who holds a spot', () => {
   });
 
   it('asks for a free spot when she has no usable hold, and refuses a full lot', async () => {
-    const scripted = new ScriptedSql();
+    const scripted = new ScriptedSql().answer('read-lot-occupancy', [PARKING_DEMO_OCCUPANCY_ROW]);
 
     expect(await openEntry(scripted)).toBeNull();
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-free-spots']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-lot-occupancy', 'read-free-spots']);
   });
 
   interface UnfitAnswers {
@@ -244,5 +245,52 @@ describe('cancelling an unconfirmed entry under the lot lock', () => {
 
     expect(scripted.isolationLevels).toEqual(['read committed']);
     expect(scripted.labels()[0]).toBe('lock-lot');
+  });
+});
+
+// #110: the room is read again under the lot lock, where simultaneous scans of the lot wait their turn.
+describe('opening an entry when counted vehicles and admitted entries leave no room', () => {
+  const lastPlace = { ...PARKING_DEMO_OCCUPANCY_ROW, vehicle_count: 9 };
+
+  it('admits Julie at count 9 of 10 with every spot free', async () => {
+    const scripted = scriptedEntry(lastPlace);
+
+    expect(await openEntry(scripted)).toMatchObject({ kind: 'opened' });
+  });
+
+  it.each([
+    ['Julie was admitted and her loop has not closed', { ...lastPlace, assigned_spot_count: 1 }],
+    ['the count is above the capacity', { ...PARKING_DEMO_OCCUPANCY_ROW, vehicle_count: 12 }],
+    ['a hold takes the last place', { ...lastPlace, held_spot_count: 1 }],
+  ])('refuses Marc without claiming a spot when %s', async (_case, occupancy) => {
+    const scripted = new ScriptedSql().answer('read-lot-occupancy', [occupancy]).answer('read-free-spots', [freeSpot]);
+
+    expect(await openEntry(scripted)).toBeNull();
+    expect(scripted.count('claim-spot')).toBe(0);
+    expect(scripted.insertedSessions).toEqual([]);
+  });
+
+  it('admits Marc again once Julie\'s cancelled entry gave her spot back', async () => {
+    const scripted = scriptedEntry({ ...lastPlace, assigned_spot_count: 0 });
+
+    expect(await openEntry(scripted)).toMatchObject({ kind: 'opened' });
+  });
+
+  it('reads the room after the lot lock, on the transaction, for the scanned lot', async () => {
+    const scripted = scriptedEntry();
+
+    await openEntry(scripted);
+
+    const read = scripted.statement('read-lot-occupancy');
+    expect(scripted.labels().indexOf('read-lot-occupancy')).toBeGreaterThan(scripted.labels().indexOf('lock-lot'));
+    expect(read?.onTransaction).toBe(true);
+    expect(read?.params).toEqual([draft.lotId, draft.lotId, draft.lotId]);
+  });
+
+  it('refuses when the lot row is gone', async () => {
+    const scripted = new ScriptedSql().answer('read-free-spots', [freeSpot]);
+
+    expect(await openEntry(scripted)).toBeNull();
+    expect(scripted.count('claim-spot')).toBe(0);
   });
 });
