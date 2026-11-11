@@ -7,11 +7,11 @@ import type { SpotStateChange } from './spotStateArguments.ts';
 
 // A held spot belongs to its hold until the hold ends (released or expired): changing it by hand would orphan the hold.
 export async function changeSpotState(database: Database, change: SpotStateChange): Promise<{ readonly activeSessionStillPoints: boolean }> {
-  const lotsWithName = database.select({ id: parkingLot.id }).from(parkingLot).where(eq(parkingLot.name, change.lotName));
   const decision = decideActiveSessionRule(change, await countActiveSessionsOnSpot(database, change));
   if (decision === 'refuse') {
     throw new Error(activeSessionRefusal(change));
   }
+  const lotsWithName = database.select({ id: parkingLot.id }).from(parkingLot).where(eq(parkingLot.name, change.lotName));
   const updated = await database
     .update(spot)
     .set({ state: change.state, stateChangedAt: new Date() })
