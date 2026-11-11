@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { installFakeApi, pierre } from './fakeDashboardApi.ts';
@@ -106,6 +106,21 @@ describe('creating a lot', () => {
     await userEvent.click(createButton());
 
     expect((await screen.findByRole('alert')).textContent).toBe('Trop de stationnements créés en peu de temps. Réessayez dans une heure.');
+  });
+
+  it('sends one request for three presses in the same instant', async () => {
+    const api = installFakeApi({ signedInAs: pierre, answers: { 'POST /lots': 'pending' } });
+    renderDashboard({ path: '/lots/new' });
+    await fillGarageRoyNord();
+    const button = createButton();
+
+    act(() => {
+      button.click();
+      button.click();
+      button.click();
+    });
+
+    expect(api.requests.filter((request) => request === 'POST /lots')).toHaveLength(1);
   });
 
   it('sends one request however often the button is pressed while it is on its way', async () => {

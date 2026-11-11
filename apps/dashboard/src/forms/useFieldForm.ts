@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { asDashboardApiError, endsSession, type DashboardApiError, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
 
@@ -54,16 +54,20 @@ function useFieldValues<Field extends string>(initialValues: FieldValues<Field>)
   return { values, setValue, outcome, setOutcome };
 }
 
+// A ref, not state, guards the request: clicks in the same instant all see the state of the render before the first one.
 function useSubmit<Field extends string>(values: FieldValues<Field>, sendValues: (values: FieldValues<Field>) => Promise<boolean>) {
   const [attempt, setAttempt] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const inFlight = useRef(false);
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (submitting) {
+    if (inFlight.current) {
       return;
     }
+    inFlight.current = true;
     setSubmitting(true);
     const accepted = await sendValues(values);
+    inFlight.current = false;
     setSubmitting(false);
     if (!accepted) {
       setAttempt((previous) => previous + 1);
