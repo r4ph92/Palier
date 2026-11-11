@@ -7,7 +7,7 @@ import { NOW, serverDependencies, SIXTY_SECOND_WINDOW } from './fakes/serverDepe
 const PASSAGE_ID = 'abcdef12-3456-4789-8abc-def123456789';
 const MINUTE = 60 * 1000;
 
-describe('POST /v1/gates/:id/passages/replay, edge cases found in QA', () => {
+describe('POST /v1/gates/:id/passages/replay, batch rules', () => {
   let server: FastifyInstance;
   let ledger: FakePassageLedger;
 

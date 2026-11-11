@@ -1,11 +1,9 @@
-import type { GateKind, GatePassageResponse } from '@palier/shared-types';
+import type { GatePassageResponse } from '@palier/shared-types';
 import type { Clock } from '../time/Clock.ts';
 import type { AuthenticatedGate } from './AuthenticatedGate.ts';
 import type { OpeningWindow } from './OpeningWindow.ts';
-import type { PassageLedger, VehicleCountChange } from './PassageLedger.ts';
-import { ensureClosedAtIsPlausible, ensureGateMayReport } from './passageRules.ts';
-
-const VEHICLE_COUNT_CHANGE: Record<GateKind, VehicleCountChange> = { ENTRY: 1, EXIT: -1 };
+import type { PassageLedger } from './PassageLedger.ts';
+import { ensureClosedAtIsPlausible, ensureGateMayReport, vehicleCountChangeFor } from './passageRules.ts';
 
 export interface PassageCommand {
   readonly gate: AuthenticatedGate;
@@ -27,7 +25,7 @@ export async function recordPassage(
   ensureGateMayReport(command.gate, command.requestedGateId);
   ensureClosedAtIsPlausible(command.closedAt, collaborators.clock());
   const { gate, closedAt } = command;
-  const vehicleCountChange = VEHICLE_COUNT_CHANGE[gate.kind];
+  const vehicleCountChange = vehicleCountChangeFor(gate.kind);
   const confirmableOpenings = gate.kind === 'ENTRY' ? collaborators.openingWindow : null;
   const attachableOpenings = gate.kind === 'EXIT' ? collaborators.openingWindow : null;
   const recorded = await collaborators.ledger.recordPassage({

@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import type { PassageEntry, PassageLedger, RecordedPassage, RecordedReplay, ReplayEntry } from '../../domain/gates/PassageLedger.ts';
 import type { Database, Transaction } from './database.ts';
-import { LOT_LOCK_TRANSACTION } from './lockParkingLot.ts';
+import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
 
 interface VehicleCountRow extends Record<string, unknown> {
@@ -60,9 +60,11 @@ async function countVehicle(tx: Transaction, entry: PassageEntry): Promise<numbe
   return row.vehicle_count;
 }
 
+// The lot lock comes first, as in countVehicle: two batches inserting the same ids in opposite order would otherwise deadlock on the unique index.
 // The unique (gate_id, replay_id) index drops a passage already recorded; the counter moves once per row actually inserted.
 async function countReplayedVehicles(tx: Transaction, entry: ReplayEntry): Promise<RecordedReplay> {
   const { gate } = entry;
+  await lockParkingLot(tx, gate.lotId);
   const values = entry.passages.map((passage) => sql`(${gate.id}, ${gate.lotId}, ${passage.closedAt.toISOString()}, ${passage.id}::uuid)`);
   const rows = await tx.execute<ReplayRow>(sql`
     with inserted as (

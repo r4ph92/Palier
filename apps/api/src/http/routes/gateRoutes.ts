@@ -100,7 +100,7 @@ function registerPassageRoute(scope: FastifyInstance, dependencies: GateRouteDep
   });
 }
 
-// A controller that lost contact counted passages itself: it sends them with their original times, once reconnected.
+// The passages were counted by the controller during an outage: they keep their original times, and a repeated id counts once.
 function registerReplayRoute(scope: FastifyInstance, dependencies: GateRouteDependencies): void {
   const schema = { params: gateIdParametersSchema, body: replayRequestSchema, response: { 200: replayResponseSchema } };
   scope.post<ReplayRoute>('/:id/passages/replay', { schema }, async (request): Promise<PassageReplayResponse> => {
