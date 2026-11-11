@@ -5,7 +5,7 @@ import { SpotHoldRefusedError } from '../../domain/spotHolds/SpotHoldRefusedErro
 import type { SpotHoldDraft, SpotHoldExpiry, SpotHoldLot, SpotHoldRelease, SpotHoldRepository, UsableSpotHoldQuery } from '../../domain/spotHolds/SpotHoldRepository.ts';
 import { ACTIVE_SPOT_HOLD, usableSpotHold } from './activeSpotHold.ts';
 import type { Database, Transaction } from './database.ts';
-import { LOT_LOCK_TRANSACTION, lockParkingLot, orLotBusyError, type LockedParkingLot } from './lockParkingLot.ts';
+import { inLotLock, LOT_LOCK_TRANSACTION, lockParkingLot, orLotBusyError, type LockedParkingLot } from './lockParkingLot.ts';
 import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
 import { claimFirstFittingSpot, heldSince } from './spotClaim.ts';
 import { findLotsWithExpiredHolds, freeHeldSpots, markSpotHoldsExpired } from './spotExpiry.ts';
@@ -96,13 +96,7 @@ export class PostgresSpotHoldRepository implements SpotHoldRepository {
   }
 
   expireLotSpotHolds(lotId: string, now: Date): Promise<SpotHoldExpiry> {
-    return orLotBusyError(
-      lotId,
-      this.#database.transaction(async (tx) => {
-        await tx.execute(LIMIT_LOCK_WAIT);
-        return await expireUnderLotLock(tx, lotId, now);
-      }, LOT_LOCK_TRANSACTION),
-    );
+    return orLotBusyError(lotId, inLotLock(this.#database, lotId, (tx) => expireUnderLotLock(tx, lotId, now)));
   }
 }
 
@@ -119,7 +113,6 @@ async function releaseUnderLotLock(tx: Transaction, release: SpotHoldRelease): P
 }
 
 async function expireUnderLotLock(tx: Transaction, lotId: string, now: Date): Promise<SpotHoldExpiry> {
-  await lockParkingLot(tx, lotId);
   const spotIds = await markSpotHoldsExpired(tx, lotId, now);
   return { expired: spotIds.length, freed: await freeHeldSpots(tx, spotIds, now) };
 }
