@@ -5,5 +5,11 @@ export function heldSpotCountOf(lotId: SQLWrapper | string): SQL<number> {
   return sql<number>`(select count(*)::int from spot where spot.lot_id = ${lotId} and spot.state = 'HELD')`;
 }
 
+// An ASSIGNED spot is an admitted entry whose loop has not closed: the closure moves it to OCCUPIED as it counts the vehicle.
+export function assignedSpotCountOf(lotId: SQLWrapper | string): SQL<number> {
+  return sql<number>`(select count(*)::int from spot where spot.lot_id = ${lotId} and spot.state = 'ASSIGNED')`;
+}
+
 // Qualified by hand: Drizzle leaves a single-table select's columns bare, and a bare "id" here would be spot.id.
 export const HELD_SPOT_COUNT = heldSpotCountOf(sql.raw('parking_lot.id'));
+export const ASSIGNED_SPOT_COUNT = assignedSpotCountOf(sql.raw('parking_lot.id'));

@@ -11,6 +11,7 @@ export interface EntryGateLot {
   readonly capacity: number;
   readonly vehicleCount: number;
   readonly heldSpotCount: number;
+  readonly assignedSpotCount: number;
   readonly operatorStripeAccountId: string | null;
 }
 

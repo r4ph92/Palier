@@ -12,6 +12,7 @@ export interface OnlineLotRow {
   readonly capacity: number;
   readonly vehicleCount: number;
   readonly heldSpotCount: number;
+  readonly assignedSpotCount: number;
 }
 
 export function onlineLotFromRow(row: OnlineLotRow, availableSpots: readonly AvailableSpotGroup[]): OnlineLot {
@@ -23,6 +24,7 @@ export function onlineLotFromRow(row: OnlineLotRow, availableSpots: readonly Ava
       capacity: row.capacity,
       vehicleCount: row.vehicleCount,
       heldSpotCount: row.heldSpotCount,
+      assignedSpotCount: row.assignedSpotCount,
       availableSpotCount: availableSpotCount(availableSpots),
       availableByCategory: availableByCategory(availableSpots),
     },

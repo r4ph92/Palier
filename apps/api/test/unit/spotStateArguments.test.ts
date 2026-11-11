@@ -14,14 +14,18 @@ describe('parseSpotStateArguments', () => {
     expect(change.forceActiveSession).toBe(true);
   });
 
-  it('refuses an unknown state', () => {
+  it('refuses an unknown state and lists only the states a person may set', () => {
     expect(() => parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'A-1', '--state', 'BROKEN'])).toThrow(
-      /Unknown state "BROKEN"/,
+      'Unknown state "BROKEN". Expected one of: AVAILABLE, OCCUPIED, OCCUPIED_UNKNOWN, OUT_OF_SERVICE.',
     );
   });
 
   it('refuses HELD, which only a spot hold sets', () => {
     expect(() => parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'A-1', '--state', 'HELD'])).toThrow(/Unknown state "HELD"/);
+  });
+
+  it('refuses ASSIGNED, which only an entry sets', () => {
+    expect(() => parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'A-1', '--state', 'ASSIGNED'])).toThrow(/Unknown state "ASSIGNED"/);
   });
 
   it('shows the usage when an argument is missing', () => {

@@ -53,6 +53,7 @@ export function composeEntries({ database, stripeKey, demoMode, paymentsSimulati
       drivers,
       policy: entryPolicyFor(demoMode),
       spotHolds: new PostgresSpotHoldRepository(database),
+      sessions,
     }),
     admission: new EntryAdmission({ sessions, payments, gateCommander: new SimulatedGateCommander(database) }),
   };

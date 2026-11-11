@@ -12,6 +12,7 @@ const parkingDemoRow: OnlineLotRow = {
   capacity: 10,
   vehicleCount: 0,
   heldSpotCount: 0,
+  assignedSpotCount: 0,
 };
 
 const fourThreeTwoOne: readonly AvailableSpotGroup[] = [
@@ -31,6 +32,7 @@ describe('onlineLotFromRow', () => {
       capacity: 10,
       vehicleCount: 0,
       heldSpotCount: 0,
+      assignedSpotCount: 0,
       availableSpotCount: 10,
       availableByCategory: { standard: 4, electric: 3, accessible: 2, oversize: 1 },
     });

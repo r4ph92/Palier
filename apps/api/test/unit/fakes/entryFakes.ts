@@ -122,6 +122,7 @@ export function fakeEntries({ drivers, vehicles, policy, gates, spotHolds = new 
     drivers,
     policy: policy ?? STRICT_POLICY,
     spotHolds,
+    sessions,
   });
   const admission = new EntryAdmission({ sessions, payments: hasPaymentAuthorizer ? payments : null, gateCommander });
   return { journal, sessions, payments, gateCommander, dependencies: { eligibility, admission, sessions, clock } };

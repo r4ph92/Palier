@@ -10,12 +10,14 @@ import type {
   SessionStatus,
 } from '../../domain/entries/ParkingSessionRepository.ts';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
+import { hasRoomForAnotherVehicle } from '../../domain/occupancy/hasRoomForAnotherVehicle.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 import { findActiveSessionFacts } from './activeSessionFacts.ts';
 import { admissionRefusalOf } from './admissionRefusal.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
 import { inLotLock, LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
+import { readLotOccupancy } from './lotOccupancy.ts';
 import { parkingSession } from './schema.ts';
 import { ASSIGNED_TO_ENTRY, claimFirstFittingSpot, type AssignedSpotRow } from './spotClaim.ts';
 import { consumeHeldSpot, heldSpotFits, readHeldSpot, releaseUnfitHold } from './spotHoldUse.ts';
@@ -86,6 +88,12 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
     return row === undefined ? null : statusOf(row);
   }
 
+  async hasOpeningEntry(driverId: string, lotId: string): Promise<boolean> {
+    const rows = await this.#database.execute(sql`
+      select 1 from parking_session where user_id = ${driverId} and lot_id = ${lotId} and state = 'CREATED' limit 1`);
+    return rows.length > 0;
+  }
+
   async cancel(sessionId: string): Promise<void> {
     await this.#database.transaction(async (tx) => {
       const lotId = await lotOfSession(tx, sessionId);
@@ -104,6 +112,10 @@ async function openSession(tx: Transaction, draft: SessionDraft): Promise<Opened
   if (heldSpotFits(draft.needs, held)) {
     return insertSession(tx, draft, { assigned: await consumeHeldSpot(tx, query, held), consumedSpotHoldId: held.hold_id });
   }
+  // Any usable hold is already her room; without one, the room is read again here, where concurrent scans wait their turn (#110).
+  if (held === undefined && !(await hasRoomUnderLotLock(tx, draft.lotId))) {
+    return null;
+  }
   const assigned = await claimFirstFittingSpot(tx, { lotId: draft.lotId, needs: draft.needs, target: ASSIGNED_TO_ENTRY });
   if (assigned === undefined) {
     return null;
@@ -112,6 +124,11 @@ async function openSession(tx: Transaction, draft: SessionDraft): Promise<Opened
     await releaseUnfitHold(tx, query, held);
   }
   return insertSession(tx, draft, { assigned, consumedSpotHoldId: null });
+}
+
+async function hasRoomUnderLotLock(tx: Transaction, lotId: string): Promise<boolean> {
+  const occupancy = await readLotOccupancy(tx, lotId);
+  return occupancy !== undefined && hasRoomForAnotherVehicle(occupancy);
 }
 
 // Read before the lot lock, which needs the lot; the lot of a session never changes.

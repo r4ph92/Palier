@@ -83,6 +83,10 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
     return Promise.resolve(state === 'CANCELLED' ? 'cancelled' : 'attached');
   }
 
+  hasOpeningEntry(driverId: string, lotId: string): Promise<boolean> {
+    return Promise.resolve([...this.#sessions.values()].some((session) => session.driverId === driverId && session.lotId === lotId && session.state === 'CREATED'));
+  }
+
   cancel(sessionId: string): Promise<void> {
     this.#journal.push('cancel-session');
     if (this.cancelFails) {

@@ -211,6 +211,7 @@ describe('QA #5 onlineLotFromRow with hostile rows', () => {
     capacity: 10,
     vehicleCount: 0,
     heldSpotCount: 0,
+    assignedSpotCount: 0,
   };
 
   it.each([

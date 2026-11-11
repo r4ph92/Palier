@@ -166,7 +166,10 @@ npm run load:entries --workspace @palier/api        # 20 conducteurs, 10 places
 Attendu : `summary entries=20 expected=10 admitted=10 lot_full=10 other=0
 distinct_spots=10 sessions=10 session_spots=10 intents=10 double_booked=0`, puis `OK`.
 La ligne `summary` ne contient que des comptes : après un nouveau seed, une seconde
-exécution donne la même. Le script refuse de tourner tant qu'un conducteur de charge
+exécution donne la même. `expected` = min(conducteurs, places libres affichées avant
+la course) : avec `update parking_lot set vehicle_count = 9 where name = 'Parking Démo'`,
+la ligne attendue est `expected=1 admitted=1 lot_full=19` (#110).
+Le script refuse de tourner tant qu'un conducteur de charge
 a une entrée active (« reseed first ») ; l'API n'admet que 5 entrées par conducteur en
 10 minutes, la redémarrer entre deux séries (`TOO_MANY_ENTRIES`).
 

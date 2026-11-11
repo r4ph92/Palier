@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SessionDraft } from '../../src/domain/entries/ParkingSessionRepository.ts';
 import { PostgresParkingSessionRepository } from '../../src/infrastructure/postgres/PostgresParkingSessionRepository.ts';
 import { PostgresUnconfirmedEntryRepository } from '../../src/infrastructure/postgres/PostgresUnconfirmedEntryRepository.ts';
-import { ScriptedSql, type Rows } from './fakes/scriptedSql.ts';
+import { PARKING_DEMO_OCCUPANCY_ROW, ScriptedSql, type Rows } from './fakes/scriptedSql.ts';
 
 const NOW = new Date('2026-11-05T12:00:00Z');
 const draft: SessionDraft = {
@@ -32,6 +32,7 @@ const freeSpot = {
 
 function scriptedEntry(): ScriptedSql {
   return new ScriptedSql()
+    .answer('read-lot-occupancy', [PARKING_DEMO_OCCUPANCY_ROW])
     .answer('read-free-spots', [freeSpot])
     .answer('claim-spot', [{ id: 'spot-A-1', number: 'A-1', aisle_code: 'A', level_code: 'P1' }])
     .answer('insert-session', [{ id: 'session-1' }]);
@@ -43,12 +44,12 @@ async function openEntry(scripted: ScriptedSql) {
 }
 
 describe('opening an entry under the lot lock', () => {
-  it('bounds the lock wait, locks the lot, then reads the driver, claims a spot and inserts the session', async () => {
+  it('bounds the lock wait, locks the lot, then reads the driver and the room, claims a spot and inserts the session', async () => {
     const scripted = scriptedEntry();
 
     await openEntry(scripted);
 
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-free-spots', 'claim-spot', 'insert-session']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-lot-occupancy', 'read-free-spots', 'claim-spot', 'insert-session']);
   });
 
   it('runs every statement on the transaction, never on the shared connection', async () => {
@@ -134,10 +135,10 @@ describe('opening an entry for a driver who holds a spot', () => {
   });
 
   it('asks for a free spot when she has no usable hold, and refuses a full lot', async () => {
-    const scripted = new ScriptedSql();
+    const scripted = new ScriptedSql().answer('read-lot-occupancy', [PARKING_DEMO_OCCUPANCY_ROW]);
 
     expect(await openEntry(scripted)).toBeNull();
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-free-spots']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-lot-occupancy', 'read-free-spots']);
   });
 
   interface UnfitAnswers {
