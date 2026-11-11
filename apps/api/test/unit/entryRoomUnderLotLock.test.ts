@@ -90,7 +90,7 @@ describe('PostgresParkingSessionRepository.hasOpeningEntry', () => {
 
     expect(await repository.hasOpeningEntry('driver-julie', 'lot-demo')).toBe(false);
     const read = scripted.statements[0];
-    expect(read?.text).toContain(`state = 'CREATED'`);
+    expect(read?.text).toMatch(/user_id = \$1 and lot_id = \$2 and state = 'CREATED'/);
     expect(read?.params).toEqual(['driver-julie', 'lot-demo']);
   });
 });
