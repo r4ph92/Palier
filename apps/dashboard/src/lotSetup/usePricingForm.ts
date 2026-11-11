@@ -1,5 +1,4 @@
-import type { LotPricing } from '@palier/shared-types';
-import { DEFAULT_HOLD_QUOTA, pricingErrors, type LotPricingRequest, type PricingErrorCode, type PricingField } from '@palier/shared-types/lotPricing';
+import { DEFAULT_HOLD_QUOTA, pricingErrors, type LotPricing, type LotPricingRequest, type PricingErrorCode, type PricingField } from '@palier/shared-types/lotPricing';
 import { useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import { readFormOf, useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
