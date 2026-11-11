@@ -14,8 +14,14 @@ describe('SimulatedPaymentAuthorizer', () => {
   it('charges a surplus unless the simulation declines it', async () => {
     const surplus = { sessionId: 'session-1', paymentIntentId: 'pi_sim_session-1', amountCents: 1800 };
 
-    expect(await new SimulatedPaymentAuthorizer().chargeSurplus(surplus)).toEqual({ outcome: 'charged' });
-    expect(await new SimulatedPaymentAuthorizer({ surplusFails: true }).chargeSurplus(surplus)).toEqual({ outcome: 'failed' });
+    expect(await new SimulatedPaymentAuthorizer().chargeSurplus(surplus)).toEqual({ outcome: 'charged', amountCents: 1800 });
+    expect(await new SimulatedPaymentAuthorizer({ surplusFails: true }).chargeSurplus(surplus)).toEqual({ outcome: 'declined' });
+  });
+
+  it('fails the surplus like the capture when the simulation makes Stripe unreachable for captures', async () => {
+    const surplus = { sessionId: 'session-1', paymentIntentId: 'pi_sim_session-1', amountCents: 1800 };
+
+    expect(await new SimulatedPaymentAuthorizer({ capturesFail: true }).chargeSurplus(surplus)).toEqual({ outcome: 'failed' });
   });
 
   it('releases a simulated hold', async () => {

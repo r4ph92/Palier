@@ -26,7 +26,7 @@ describe('paymentAuthorizer', () => {
     const payments = paymentAuthorizer(null, 'surplus-declined');
 
     expect(await payments?.capture({ sessionId: 's1', paymentIntentId: 'pi_sim_s1', amountCents: 2500 })).toEqual({ outcome: 'captured', amountCents: 2500 });
-    expect(await payments?.chargeSurplus({ sessionId: 's1', paymentIntentId: 'pi_sim_s1', amountCents: 1800 })).toEqual({ outcome: 'failed' });
+    expect(await payments?.chargeSurplus({ sessionId: 's1', paymentIntentId: 'pi_sim_s1', amountCents: 1800 })).toEqual({ outcome: 'declined' });
   });
 
   it('calls Stripe when nothing is simulated and a key is set', () => {
