@@ -6,6 +6,10 @@ describe('dashboard addresses', () => {
     expect(routeOf(lotPath('00000000-0000-4000-8000-000000000201'))).toEqual({ page: 'lot', lotId: '00000000-0000-4000-8000-000000000201' });
   });
 
+  it.each(['/lots/new', '/lots/new/'])('opens the new lot page at %s, not a lot whose id is "new"', (pathname) => {
+    expect(routeOf(pathname)).toEqual({ page: 'newLot' });
+  });
+
   // A static host that serves index.html for every path hands these to the app; decodeURIComponent throws on them.
   it.each(['/lots/%E0%A4%A', '/lots/%'])('treats the malformed address %s as not found instead of crashing', (pathname) => {
     expect(() => routeOf(pathname)).not.toThrow();

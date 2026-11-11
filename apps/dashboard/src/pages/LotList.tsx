@@ -8,7 +8,7 @@ import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { SkeletonRows } from '../components/SkeletonRows.tsx';
 import { LotStateMark } from '../components/LotStateMark.tsx';
 import { useText } from '../i18n/LanguageContext.tsx';
-import { lotPath } from '../navigation/routes.ts';
+import { lotPath, NEW_LOT_PATH } from '../navigation/routes.ts';
 
 const LOADING_ROWS = 2;
 
@@ -21,6 +21,9 @@ export function LotList() {
       <h2 id="lots-title" ref={titleRef} tabIndex={-1} className="section-title">
         {text.home.lotsTitle}
       </h2>
+      <AppLink href={NEW_LOT_PATH} className="text-link">
+        {text.home.createLot}
+      </AppLink>
       <LotListContent lots={lots} onRetry={reload} isRetrying={isReloading} />
     </section>
   );

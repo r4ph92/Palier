@@ -5,7 +5,8 @@ function isDashboardErrorCode(code: string | undefined): code is DashboardErrorC
   return DASHBOARD_ERROR_CODES.some((known) => known === code);
 }
 
-export type DisplayedErrorCode = DashboardErrorCode | 'UNKNOWN';
+// FIELDS_INVALID never comes from the API: it heads a form whose fields show their own errors.
+export type DisplayedErrorCode = DashboardErrorCode | 'FIELDS_INVALID' | 'UNKNOWN';
 
 // The page shows a dictionary sentence for the code, never the API's English message.
 export class DashboardApiError extends Error {

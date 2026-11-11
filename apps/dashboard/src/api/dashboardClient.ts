@@ -1,8 +1,10 @@
 import type {
-  DashboardLot,
+  DashboardLotDetails,
   DashboardLotListResponse,
   DashboardMeResponse,
   DashboardOperator,
+  LotDraft,
+  LotPricingRequest,
   StripeOnboardingLink,
 } from '@palier/shared-types';
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
@@ -13,7 +15,7 @@ const NO_CONTENT = 204;
 const JSON_TYPE = 'application/json';
 
 interface DashboardRequest {
-  readonly method: 'GET' | 'POST';
+  readonly method: 'GET' | 'POST' | 'PUT';
   readonly body?: object;
 }
 
@@ -52,5 +54,8 @@ export const dashboardClient = {
   startStripeOnboarding: (operatorId: string) =>
     dashboardRequest<StripeOnboardingLink>(`/operators/${encodeURIComponent(operatorId)}/stripe-onboarding`, { method: 'POST' }),
   lots: () => dashboardRequest<DashboardLotListResponse>('/lots'),
-  lot: (lotId: string) => dashboardRequest<DashboardLot>(`/lots/${encodeURIComponent(lotId)}`),
+  lot: (lotId: string) => dashboardRequest<DashboardLotDetails>(`/lots/${encodeURIComponent(lotId)}`),
+  createLot: (draft: LotDraft) => dashboardRequest<DashboardLotDetails>('/lots', { method: 'POST', body: draft }),
+  setLotPricing: (lotId: string, pricing: LotPricingRequest) =>
+    dashboardRequest<DashboardLotDetails>(`/lots/${encodeURIComponent(lotId)}/pricing`, { method: 'PUT', body: pricing }),
 };

@@ -8,6 +8,7 @@ export const INCREMENT_MINUTES_LIMITS = { minimum: 5, maximum: 60 } as const;
 // The cap is the amount authorized at entry (Q19), and Stripe refuses a CAD charge under 0,50 $.
 export const DAILY_CAP_CENTS_LIMITS = { minimum: 50, maximum: PRICING_MAX_CENTS } as const;
 export const HOLD_QUOTA_LIMITS = { minimum: 0, maximum: 50 } as const;
+export const DEFAULT_HOLD_QUOTA = 3;
 
 // D1: each started increment costs incrementCents, a day never costs more than dailyCapCents; holdQuota is the lot's guarantees at once.
 export interface LotPricing {
