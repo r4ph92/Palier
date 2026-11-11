@@ -18,7 +18,8 @@ export const operator = pgTable('operator', {
 });
 
 // A BLE major is 16 bits. The seeds hold 1 to 3, so the platform hands out majors from 4.
-export const beaconMajorSequence = pgSequence('parking_lot_beacon_major_seq', { startWith: 4, minValue: 1, maxValue: 65535 });
+export const BEACON_MAJOR_SEQUENCE_START = 4;
+export const beaconMajorSequence = pgSequence('parking_lot_beacon_major_seq', { startWith: BEACON_MAJOR_SEQUENCE_START, minValue: 1, maxValue: 65535 });
 
 export const parkingLot = pgTable(
   'parking_lot',
