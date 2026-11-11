@@ -1,7 +1,7 @@
 import type { ExitReceipt } from '@palier/shared-types';
 import type { CaptureOutcome, PaymentAuthorizer, SurplusRequest } from '../entries/PaymentAuthorizer.ts';
 import { elapsedMinutesBetween, stayAmount, stayLines } from '../pricing/priceParkingSessionAt.ts';
-import type { ExitableSession, ExitRepository, PaidExit } from './ExitRepository.ts';
+import type { ExitableSession, ExitIdentification, ExitRepository, PaidExit } from './ExitRepository.ts';
 
 export interface ExitRequest {
   readonly sessionId: string;
@@ -38,11 +38,18 @@ export async function exitParking(dependencies: ExitDependencies, request: ExitR
   if (session.state === 'CLOSED_CAPTURE_PENDING') {
     return { outcome: 'capture-pending' };
   }
-  return payAndClose(dependencies, session, request.now);
+  return payAndClose(dependencies, session, { now: request.now, identification: 'APP', exitGateId: session.exitGateId });
 }
 
-async function payAndClose({ exits, payments }: ExitDependencies, session: ExitableSession, now: Date): Promise<ExitOutcome> {
-  if (session.exitGateId === null) {
+// Where and how the exit happens: the tap uses the lot's exit gate, a reader the gate that read the vehicle.
+export interface ExitSettings {
+  readonly now: Date;
+  readonly identification: ExitIdentification;
+  readonly exitGateId: string | null;
+}
+
+export async function payAndClose({ exits, payments }: ExitDependencies, session: ExitableSession, { now, identification, exitGateId }: ExitSettings): Promise<ExitOutcome> {
+  if (exitGateId === null) {
     return { outcome: 'gate-unavailable' };
   }
   if (payments === null || session.paymentIntentId === null) {
@@ -54,10 +61,10 @@ async function payAndClose({ exits, payments }: ExitDependencies, session: Exita
   // Only what the hold cannot cover is a surplus, however much a capture of an earlier tap already took.
   const surplus = await chargeSurplus(payments, { sessionId: session.id, paymentIntentId: session.paymentIntentId, amountCents: billedCents - amountCents });
   if (captured.outcome === 'failed') {
-    return leaveWithCapturePending(exits, session, { exitGateId: session.exitGateId, exitedAt: now, pendingCaptureCents: amountCents, ...surplus });
+    return leaveWithCapturePending(exits, session, { exitGateId, identification, exitedAt: now, pendingCaptureCents: amountCents, ...surplus });
   }
   // What Stripe really took: after a capture whose close failed, a later tap asks another amount but the first one stands.
-  return closePaid(exits, session, { exitGateId: session.exitGateId, exit: { exitedAt: now, capturedCents: captured.amountCents, ...surplus } });
+  return closePaid(exits, session, { exitGateId, identification, exit: { exitedAt: now, capturedCents: captured.amountCents, ...surplus } });
 }
 
 // A stay over 24 hours costs more than the hold: the rest is charged to the card, and the barrier opens whatever the card answers.
@@ -71,11 +78,12 @@ async function chargeSurplus(payments: PaymentAuthorizer, surplus: SurplusReques
 
 interface PaidLeave {
   readonly exitGateId: string;
+  readonly identification: ExitIdentification;
   readonly exit: PaidExit;
 }
 
-async function closePaid(exits: ExitRepository, session: ExitableSession, { exitGateId, exit }: PaidLeave): Promise<ExitOutcome> {
-  const closed = await exits.close({ sessionId: session.id, lotId: session.lotId, exitGateId, exit });
+async function closePaid(exits: ExitRepository, session: ExitableSession, { exitGateId, identification, exit }: PaidLeave): Promise<ExitOutcome> {
+  const closed = await exits.close({ sessionId: session.id, lotId: session.lotId, exitGateId, identification, exit });
   if (closed.outcome === 'lot-busy') {
     return closed;
   }
@@ -88,6 +96,7 @@ async function closePaid(exits: ExitRepository, session: ExitableSession, { exit
 
 interface PendingLeave {
   readonly exitGateId: string;
+  readonly identification: ExitIdentification;
   readonly exitedAt: Date;
   readonly pendingCaptureCents: number;
   readonly surplusPaidCents: number;

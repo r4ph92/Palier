@@ -34,7 +34,7 @@ describe('exitParking', () => {
     await exit();
 
     expect(exits.closings).toEqual([
-      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, exit: { exitedAt: at2117, capturedCents: 975, surplusPaidCents: 0, unpaidCents: 0 } },
+      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, identification: 'APP', exit: { exitedAt: at2117, capturedCents: 975, surplusPaidCents: 0, unpaidCents: 0 } },
     ]);
   });
 
@@ -93,7 +93,7 @@ describe('exitParking', () => {
     expect(await exit()).toEqual({ outcome: 'capture-pending' });
     expect(exits.closings).toEqual([]);
     expect(exits.pendingClosings).toEqual([
-      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, exitedAt: at2117, pendingCaptureCents: 975, surplusPaidCents: 0, unpaidCents: 0 },
+      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, identification: 'APP', exitedAt: at2117, pendingCaptureCents: 975, surplusPaidCents: 0, unpaidCents: 0 },
     ]);
   });
 

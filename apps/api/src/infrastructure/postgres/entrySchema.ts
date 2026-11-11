@@ -33,8 +33,8 @@ function sameLotForeignKey(name: string, columns: [AnyPgColumn, AnyPgColumn], ta
 }
 
 export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION_STATES);
-// How the vehicle was identified at the exit; the tap in the app is the only way built so far (docs/03, sequence C).
-export const exitIdentification = pgEnum('exit_identification', ['APP']);
+// How the vehicle was identified at the exit: the tap in the app, or the gate's plate or transponder reader (docs/03, sequence C).
+export const exitIdentification = pgEnum('exit_identification', ['APP', 'PLATE', 'TRANSPONDER']);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
 
 interface StateColumns {

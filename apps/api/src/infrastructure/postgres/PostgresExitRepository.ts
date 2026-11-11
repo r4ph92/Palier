@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
-import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitRepository, PaidExit, PendingExitClosing } from '../../domain/exits/ExitRepository.ts';
+import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitIdentification, ExitRepository, PaidExit, PendingExitClosing } from '../../domain/exits/ExitRepository.ts';
 import { spotsFreedOnExit, type SpotOfExit } from '../../domain/exits/spotsFreedOnExit.ts';
 import type { SpotState } from '../../domain/spots/spotStates.ts';
 import { activeSessionOf } from './activeSessionStates.ts';
@@ -67,10 +67,10 @@ export class PostgresExitRepository implements ExitRepository {
 
   // Lot, then session, then spots: the order every other writer takes. The gate command is part of the transaction, so a paid
   // session always has its open command and a command never exists for a session left open.
-  async close({ sessionId, lotId, exitGateId, exit }: ExitClosing): Promise<ClosedExit> {
+  async close({ sessionId, lotId, exitGateId, identification, exit }: ExitClosing): Promise<ClosedExit> {
     return orLotBusy(
       inLotLock(this.#database, lotId, async (tx) => {
-        const session = await closeSession(tx, sessionId, exit);
+        const session = await closeSession(tx, sessionId, identification, exit);
         if (session === null) {
           return { outcome: 'already', exit: await readPaidExit(tx, sessionId) } as const;
         }
@@ -81,10 +81,10 @@ export class PostgresExitRepository implements ExitRepository {
   }
 
   // Same lot lock, same order and same gate command as a paid exit: the driver leaves whether or not Stripe answered.
-  async closeWithPendingCapture({ sessionId, lotId, exitGateId, ...pending }: PendingExitClosing): Promise<ClosedPendingExit> {
+  async closeWithPendingCapture({ sessionId, lotId, exitGateId, identification, ...pending }: PendingExitClosing): Promise<ClosedPendingExit> {
     return orLotBusy(
       inLotLock(this.#database, lotId, async (tx): Promise<ClosedPendingExit> => {
-        const session = await closePendingSession(tx, sessionId, pending);
+        const session = await closePendingSession(tx, sessionId, identification, pending);
         if (session === null) {
           return { outcome: 'already' };
         }
@@ -131,10 +131,10 @@ function paidExitOf(row: { readonly surplus_paid_cents: number; readonly unpaid_
 }
 
 // Null when the session is not leavable any more: another request closed it first.
-async function closeSession(tx: Transaction, sessionId: string, { exitedAt, capturedCents, surplusPaidCents, unpaidCents }: PaidExit): Promise<ClosedSessionRow | null> {
+async function closeSession(tx: Transaction, sessionId: string, identification: ExitIdentification, { exitedAt, capturedCents, surplusPaidCents, unpaidCents }: PaidExit): Promise<ClosedSessionRow | null> {
   const rows = await tx.execute<ClosedSessionRow>(sql`
     update parking_session
-    set state = 'CLOSED_PAID', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = 'APP', captured_cents = ${capturedCents},
+    set state = 'CLOSED_PAID', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = ${identification}, captured_cents = ${capturedCents},
       surplus_paid_cents = ${surplusPaidCents}, unpaid_cents = ${unpaidCents}
     where id = ${sessionId} and state in ${LEAVABLE_STATES}
     returning assigned_spot_id, confirmed_spot_id`);
@@ -152,10 +152,10 @@ async function readPaidExit(tx: Transaction, sessionId: string): Promise<PaidExi
 }
 
 // Null when the session is not leavable any more: another request closed it first.
-async function closePendingSession(tx: Transaction, sessionId: string, { exitedAt, pendingCaptureCents, surplusPaidCents, unpaidCents }: Omit<PendingExitClosing, 'sessionId' | 'lotId' | 'exitGateId'>): Promise<ClosedSessionRow | null> {
+async function closePendingSession(tx: Transaction, sessionId: string, identification: ExitIdentification, { exitedAt, pendingCaptureCents, surplusPaidCents, unpaidCents }: Omit<PendingExitClosing, 'sessionId' | 'lotId' | 'exitGateId' | 'identification'>): Promise<ClosedSessionRow | null> {
   const rows = await tx.execute<ClosedSessionRow>(sql`
     update parking_session
-    set state = 'CLOSED_CAPTURE_PENDING', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = 'APP',
+    set state = 'CLOSED_CAPTURE_PENDING', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = ${identification},
       pending_capture_cents = ${pendingCaptureCents}, surplus_paid_cents = ${surplusPaidCents}, unpaid_cents = ${unpaidCents}
     where id = ${sessionId} and state in ${LEAVABLE_STATES}
     returning assigned_spot_id, confirmed_spot_id`);

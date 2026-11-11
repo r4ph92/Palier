@@ -25,10 +25,14 @@ export interface PaidExit {
   readonly unpaidCents: number;
 }
 
+// How the vehicle was identified at the exit.
+export type ExitIdentification = 'APP' | 'PLATE' | 'TRANSPONDER';
+
 export interface ExitClosing {
   readonly sessionId: string;
   readonly lotId: string;
   readonly exitGateId: string;
+  readonly identification: ExitIdentification;
   readonly exit: PaidExit;
 }
 
@@ -37,6 +41,7 @@ export interface PendingExitClosing {
   readonly sessionId: string;
   readonly lotId: string;
   readonly exitGateId: string;
+  readonly identification: ExitIdentification;
   readonly exitedAt: Date;
   readonly pendingCaptureCents: number;
   // Settled at the tap whatever the capture did; the retry only captures.
