@@ -16,7 +16,6 @@ export interface SilenceCheck {
 }
 
 export interface SilentSessionRepository {
-  // Lots with an entry confirmed, or a question asked, at or before the cutoff and still waiting for a signal or an answer.
   findLotsWithSilentSessions(cutoff: Date): Promise<string[]>;
   presumeLotSilentSessions(lotId: string, silence: SilenceCheck): Promise<SilentPresumptions>;
 }
@@ -24,6 +23,10 @@ export interface SilentSessionRepository {
 export interface SilentSessionJob {
   readonly silentSessions: SilentSessionRepository;
   readonly clock: Clock;
+}
+
+interface LotSilenceCheck extends SilenceCheck {
+  readonly lotId: string;
 }
 
 // One clock reading per run and one transaction per lot: a lot that cannot be locked waits for the next run, the others still count.
@@ -35,11 +38,11 @@ export async function presumeSilentSessions({ silentSessions, clock }: SilentSes
   }
 }
 
-async function presumeLot(silentSessions: SilentSessionRepository, { lotId, ...silence }: SilenceCheck & { readonly lotId: string }, log: JobLog): Promise<void> {
+async function presumeLot(silentSessions: SilentSessionRepository, { lotId, ...silence }: LotSilenceCheck, log: JobLog): Promise<void> {
   try {
     const { confirmedEntries, unansweredQuestions } = await silentSessions.presumeLotSilentSessions(lotId, silence);
     if (confirmedEntries + unansweredQuestions > 0) {
-      log.info({ lotId, confirmedEntries, unansweredQuestions }, 'presumed parked the sessions silent for 30 minutes');
+      log.info({ lotId, confirmedEntries, unansweredQuestions }, 'presumed parked the sessions silent past the presumption limit');
     }
   } catch (error) {
     log.error({ err: error, lotId }, 'could not presume the silent sessions of a lot, retried at the next check');
