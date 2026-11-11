@@ -5,6 +5,7 @@ import { hasRoomForAnotherVehicle } from '../occupancy/hasRoomForAnotherVehicle.
 import type { PricingPolicy } from '../pricing/PricingPolicy.ts';
 import type { SpotHoldRepository, UsableSpotHoldQuery } from '../spotHolds/SpotHoldRepository.ts';
 import type { EntryGate, EntryGateRepository } from './EntryGateRepository.ts';
+import type { ParkingSessionRepository } from './ParkingSessionRepository.ts';
 import { EntryRefusedError } from './EntryRefusedError.ts';
 import { isSignedWith, readGateToken } from './gateToken.ts';
 
@@ -12,6 +13,7 @@ export interface EntryEligibilityDependencies extends DriverPrerequisiteSources 
   readonly gates: EntryGateRepository;
   readonly policy: EntryPolicy;
   readonly spotHolds: Pick<SpotHoldRepository, 'hasUsableSpotHold'>;
+  readonly sessions: Pick<ParkingSessionRepository, 'hasOpeningEntry'>;
 }
 
 export interface EntryAttempt {
@@ -89,12 +91,17 @@ export class EntryEligibility {
     return terms.pricing;
   }
 
-  // A live hold already counts in the lot's held spots: it is the driver's room, whatever else filled the lot.
+  // A live hold already counts in the lot's held spots, and her own admitted entry in its assigned spots: either is the driver's room,
+  // whatever else filled the lot. The admission then hands that entry back or refuses ALREADY_INSIDE (decideRepeatedScan, #110).
   async #requireRoom(holder: UsableSpotHoldQuery, gate: EntryGate): Promise<void> {
     if (hasRoomForAnotherVehicle(gate.lot)) {
       return;
     }
-    if (!(await this.#dependencies.spotHolds.hasUsableSpotHold(holder))) {
+    const { spotHolds, sessions } = this.#dependencies;
+    if (await spotHolds.hasUsableSpotHold(holder)) {
+      return;
+    }
+    if (!(await sessions.hasOpeningEntry(holder.driverId, holder.lotId))) {
       throw new EntryRefusedError('LOT_FULL');
     }
   }

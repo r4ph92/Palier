@@ -88,6 +88,12 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
     return row === undefined ? null : statusOf(row);
   }
 
+  async hasOpeningEntry(driverId: string, lotId: string): Promise<boolean> {
+    const rows = await this.#database.execute(sql`
+      select 1 from parking_session where user_id = ${driverId} and lot_id = ${lotId} and state = 'CREATED' limit 1`);
+    return rows.length > 0;
+  }
+
   async cancel(sessionId: string): Promise<void> {
     await this.#database.transaction(async (tx) => {
       const lotId = await lotOfSession(tx, sessionId);

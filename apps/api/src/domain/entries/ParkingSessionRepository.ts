@@ -44,6 +44,8 @@ export interface ParkingSessionRepository {
   attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment>;
   // The driver's own session only; null for an unknown id or another driver's session.
   findForUser(sessionId: string, userId: string): Promise<SessionStatus | null>;
+  // True when the driver has an entry admitted in this lot whose loop has not closed yet (CREATED): its ASSIGNED spot is her room.
+  hasOpeningEntry(driverId: string, lotId: string): Promise<boolean>;
   // Cancels a CREATED session and frees its spot in one transaction, marking its hold, if any, for release by the cancellation job.
   cancel(sessionId: string): Promise<void>;
 }

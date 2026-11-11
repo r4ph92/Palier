@@ -31,9 +31,11 @@ interface Setup {
   readonly plate?: boolean;
   readonly card?: boolean;
   readonly needs?: VehicleNeeds;
+  // Lots where Julie has an entry admitted whose loop has not closed.
+  readonly openingEntryLots?: readonly string[];
 }
 
-async function eligibilityFor({ gates: gateList, holds = [], policy = STRICT_POLICY, plate = true, card = true, needs = standardNeeds }: Setup = {}) {
+async function eligibilityFor({ gates: gateList, holds = [], policy = STRICT_POLICY, plate = true, card = true, needs = standardNeeds, openingEntryLots = [] }: Setup = {}) {
   const drivers = new FakeDriverRepository();
   const vehicles = new FakeVehicleRepository();
   const spotHolds = new FakeSpotHoldRepository();
@@ -45,7 +47,8 @@ async function eligibilityFor({ gates: gateList, holds = [], policy = STRICT_POL
     await drivers.saveStripeCustomerIdIfMissing(julie.id, 'cus_julie');
     await drivers.saveSavedCard(julie.id, 'pm_julie', { brand: 'visa', last4: '4242' });
   }
-  return new EntryEligibility({ gates: new FakeEntryGateRepository(gateList), vehicles, drivers, policy, spotHolds });
+  const sessions = { hasOpeningEntry: (driverId: string, lotId: string) => Promise.resolve(driverId === julie.id && openingEntryLots.includes(lotId)) };
+  return new EntryEligibility({ gates: new FakeEntryGateRepository(gateList), vehicles, drivers, policy, spotHolds, sessions });
 }
 
 async function refusalOf(eligibility: EntryEligibility, qrContent: string): Promise<EntryRefusalCode | undefined> {
@@ -152,6 +155,21 @@ describe('entry eligibility', () => {
     const overCounted = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 12 } };
 
     expect(await refusalOf(await eligibilityFor({ gates: [overCounted] }), entreeDemoQr)).toBe('LOT_FULL');
+  });
+
+  // #110 pentest: the driver who took the last room re-scans after an app timeout; her own entry fills the lot.
+  describe('a driver whose own admitted entry fills the lot', () => {
+    const filledByHer = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 9, assignedSpotCount: 1 } };
+
+    it('passes, so the admission can hand her entry back', async () => {
+      expect(await refusalOf(await eligibilityFor({ gates: [filledByHer], openingEntryLots: [entreeDemoGate.lot.id] }), entreeDemoQr)).toBeUndefined();
+    });
+
+    it('is refused LOT_FULL when her admitted entry is in another lot', async () => {
+      const openingEntryLots = ['00000000-0000-4000-8000-000000000299'];
+
+      expect(await refusalOf(await eligibilityFor({ gates: [filledByHer], openingEntryLots }), entreeDemoQr)).toBe('LOT_FULL');
+    });
   });
 
   describe('a driver holding a spot in a full lot', () => {

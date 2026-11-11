@@ -82,3 +82,15 @@ describe('opening an entry when counted vehicles and admitted entries leave no r
     expect(scripted.count('claim-spot')).toBe(0);
   });
 });
+
+describe('PostgresParkingSessionRepository.hasOpeningEntry', () => {
+  it('looks only for this driver\'s admitted entry in this lot whose loop has not closed', async () => {
+    const scripted = new ScriptedSql();
+    const repository = new PostgresParkingSessionRepository(scripted.database(), { withinMilliseconds: 60_000 }, () => new Date());
+
+    expect(await repository.hasOpeningEntry('driver-julie', 'lot-demo')).toBe(false);
+    const read = scripted.statements[0];
+    expect(read?.text).toContain(`state = 'CREATED'`);
+    expect(read?.params).toEqual(['driver-julie', 'lot-demo']);
+  });
+});
