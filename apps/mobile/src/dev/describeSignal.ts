@@ -1,5 +1,5 @@
 import type { ParkedConfidence } from '../positioning/PositioningModule';
-import type { Connectivity } from './Connectivity';
+import type { Connectivity } from '../api/ConnectivitySource';
 import { formatLogTime } from './formatLogTime';
 
 const UUID_PREFIX_LENGTH = 8;

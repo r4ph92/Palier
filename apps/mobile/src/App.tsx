@@ -58,6 +58,7 @@ const palierApp = (
       createSignedInClients={createSignedInClients}
       developerEntry={developerEntry}
       positioning={positioningCore}
+      connectivity={developerTools?.connectivity}
     />
   </StripeProvider>
 );

@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import type { AuthClient } from './api/AuthClient';
+import { alwaysOnline, type ConnectivitySource } from './api/ConnectivitySource';
 import { onUpdateRequired, STORE_URL } from './api/appUpdate';
 import type { CreateSignedInClients, SignedInClients } from './api/SignedInClients';
 import type { TokenStore } from './auth/TokenStore';
@@ -26,6 +27,7 @@ export interface PalierAppProps {
   readonly createSignedInClients: CreateSignedInClients;
   readonly developerEntry?: DeveloperEntry | undefined;
   readonly positioning?: PositioningCore | undefined;
+  readonly connectivity?: ConnectivitySource | undefined;
 }
 
 export function PalierApp(props: PalierAppProps) {
@@ -55,8 +57,8 @@ interface SignedInAppProps {
   readonly device: DeviceTools;
 }
 
-function deviceOf({ developerEntry, positioning }: PalierAppProps): DeviceTools {
-  return { developerEntry, positioning: positioning ?? nullPositioningCore };
+function deviceOf({ developerEntry, positioning, connectivity }: PalierAppProps): DeviceTools {
+  return { developerEntry, positioning: positioning ?? nullPositioningCore, connectivity: connectivity ?? alwaysOnline };
 }
 
 function SignedInApp({ signedIn, session, createClients, device }: SignedInAppProps) {

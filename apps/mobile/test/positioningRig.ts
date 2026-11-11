@@ -3,6 +3,7 @@ import { SimulatedPositioningModule } from '../src/dev/SimulatedPositioningModul
 import { PositioningCore } from '../src/positioning/PositioningCore';
 
 // A core over the simulated module, with the commands it received readable oldest first.
+// Its network is its own: the app it is given to stays online whatever the rig's « Réseau coupé ».
 export function positioningRig() {
   const journal = new SignalJournal(() => new Date(2026, 10, 4, 18, 2));
   const simulator = new SimulatedPositioningModule(journal, () => 0);

@@ -1,16 +1,20 @@
 import type { ParkedConfidence, PositioningListener, PositioningModule } from '../positioning/PositioningModule';
+import type { Connectivity } from '../api/ConnectivitySource';
 import { describeCommand, describeConnectivity } from './describeSignal';
-import type { Connectivity } from './Connectivity';
+import { SimulatedConnectivity } from './SimulatedConnectivity';
 import type { SignalJournal } from './SignalJournal';
 
 export class SimulatedPositioningModule implements PositioningModule {
   private readonly journal: SignalJournal;
   private readonly now: () => number;
+  private readonly connectivity: SimulatedConnectivity;
   private listener: PositioningListener | null = null;
 
-  constructor(journal: SignalJournal, now: () => number) {
+  // A module built without a connectivity keeps its network to itself: the app it feeds stays online.
+  constructor(journal: SignalJournal, now: () => number, connectivity = new SimulatedConnectivity()) {
     this.journal = journal;
     this.now = now;
+    this.connectivity = connectivity;
   }
 
   startMonitoring(uuid: string, major: number): void {
@@ -48,5 +52,6 @@ export class SimulatedPositioningModule implements PositioningModule {
 
   setConnectivity(connectivity: Connectivity): void {
     this.journal.append(describeConnectivity(connectivity));
+    this.connectivity.set(connectivity);
   }
 }
