@@ -13,6 +13,7 @@ export interface LockedParkingLot {
   readonly isOnline: boolean;
   readonly capacity: number;
   readonly vehicleCount: number;
+  readonly holdQuota: number;
 }
 
 interface LockedParkingLotRow extends Record<string, unknown> {
@@ -21,15 +22,20 @@ interface LockedParkingLotRow extends Record<string, unknown> {
   readonly is_online: boolean;
   readonly capacity: number;
   readonly vehicle_count: number;
+  readonly hold_quota: number;
 }
 
 // Lot, then session, then spot: the order a loop closure, the cancellation job, an entry and a spot hold all take.
 // The row is read under the lock, so a spot hold re-checks the lot as the previous holder left it; undefined for an unknown lot.
 export async function lockParkingLot(tx: Pick<Transaction, 'execute'>, lotId: string): Promise<LockedParkingLot | undefined> {
   const rows = await tx.execute<LockedParkingLotRow>(sql`
-    select id, name, is_online, capacity, vehicle_count from parking_lot where id = ${lotId} for no key update`);
+    select id, name, is_online, capacity, vehicle_count, hold_quota from parking_lot where id = ${lotId} for no key update`);
   const row = rows[0];
-  return row === undefined ? undefined : { id: row.id, name: row.name, isOnline: row.is_online, capacity: row.capacity, vehicleCount: row.vehicle_count };
+  return row === undefined ? undefined : lockedParkingLotOf(row);
+}
+
+function lockedParkingLotOf(row: LockedParkingLotRow): LockedParkingLot {
+  return { id: row.id, name: row.name, isOnline: row.is_online, capacity: row.capacity, vehicleCount: row.vehicle_count, holdQuota: row.hold_quota };
 }
 
 // Runs the work under the lot lock, waiting for it at most LIMIT_LOCK_WAIT.

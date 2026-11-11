@@ -17,7 +17,7 @@ const draft: SpotHoldDraft = {
   expiresAt: EXPIRES_AT,
 };
 
-const noHoldYet = { own_active_hold: false, active_holds_in_lot: 0, hold_quota: 3, held_spot_count: 0 };
+const noHoldYet = { own_active_hold: false, active_holds_in_lot: 0, held_spot_count: 0 };
 const freeSpot = (number: string, isEv = false) => ({
   id: `spot-${number}`,
   number,
@@ -82,7 +82,7 @@ describe('placing a spot hold under the lot lock', () => {
     await placeWith(scripted);
 
     expect(paramsOf(scripted, 'lock-lot')).toEqual([PARKING_DEMO_LOCK_ID]);
-    expect(paramsOf(scripted, 'read-spot-hold-facts')).toEqual(['driver-julie', PARKING_DEMO_LOCK_ID, PARKING_DEMO_LOCK_ID, PARKING_DEMO_LOCK_ID]);
+    expect(paramsOf(scripted, 'read-spot-hold-facts')).toEqual(['driver-julie', PARKING_DEMO_LOCK_ID, PARKING_DEMO_LOCK_ID]);
   });
 
   it('moves the claimed spot to HELD and records the request\'s instants, not the database clock', async () => {
@@ -106,7 +106,7 @@ describe('placing a spot hold under the lot lock', () => {
     ['the lot went offline', { lot: { ...parkingDemoLockRow, is_online: false } }, 'LOT_NOT_IN_SERVICE'],
     ['the driver already holds a spot', { facts: { ...noHoldYet, own_active_hold: true } }, 'HOLD_ALREADY_EXISTS'],
     ['Marc and two other drivers use the quota of 3', { facts: { ...noHoldYet, active_holds_in_lot: 3 } }, 'HOLD_QUOTA_REACHED'],
-    ['the lot sets a quota of 1 and one hold is active', { facts: { ...noHoldYet, active_holds_in_lot: 1, hold_quota: 1 } }, 'HOLD_QUOTA_REACHED'],
+    ['the lot sets a quota of 1 and one hold is active', { lot: { ...parkingDemoLockRow, hold_quota: 1 }, facts: { ...noHoldYet, active_holds_in_lot: 1 } }, 'HOLD_QUOTA_REACHED'],
     ['vehicles and held spots fill the lot', { lot: { ...parkingDemoLockRow, vehicle_count: 8 }, facts: { ...noHoldYet, active_holds_in_lot: 2, held_spot_count: 2 } }, 'NO_SUITABLE_SPOT'],
   ])('refuses before claiming a spot when %s', async (_case, script: HoldScript, reason) => {
     const scripted = scriptedHold(script);
