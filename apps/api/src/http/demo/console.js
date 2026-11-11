@@ -1,4 +1,5 @@
 import { COMMAND_POLL_MILLISECONDS, pollCommands } from './commandFeed.js';
+import { isMessageKey } from './consoleText.js';
 import { createGateApi } from './gateApi.js';
 import {
   clearQueueButton,
@@ -14,9 +15,10 @@ import {
   renderMessage,
 } from './consoleRender.js';
 import { pressLoop } from './loopPress.js';
-import { clearQueue, pressLoopWhileOffline, toggleOffline } from './offlineControls.js';
-import { sendReading } from './readerRead.js';
-import { sendPresence } from './vehiclePresence.js';
+import { clearQueue, hasPendingPassages, pressLoopWhileOffline, statusMessageOf, toggleOffline } from './offlineControls.js';
+import { restoredConnection, saveConnection } from './queueStorage.js';
+import { readingMessage, sendReading } from './readerRead.js';
+import { presenceMessage, sendPresence } from './vehiclePresence.js';
 
 /** @typedef {import('./consoleText.js').Language} Language */
 /** @typedef {import('./consoleText.js').TextKey} TextKey */
@@ -28,6 +30,8 @@ import { sendPresence } from './vehiclePresence.js';
 
 const api = createGateApi(window.fetch.bind(window));
 
+const initialConnection = restoredConnection(window.sessionStorage);
+
 const state = {
   /** @type {Language} */ language: 'fr',
   deviceKey: '',
@@ -35,17 +39,15 @@ const state = {
   /** @type {GatePassageResponse[]} */ passages: [],
   /** @type {readonly GateCommand[]} */ commands: [],
   isPolling: false,
-  /** @type {import('./consoleText.js').ConsoleMessage | null} */ message: null,
-  offline: false,
-  /** @type {import('./offlineMode.js').OfflineQueue | null} */ pending: null,
-  isQueueBlocked: false,
+  /** @type {import('./consoleText.js').ConsoleMessage | null} */ message: statusMessageOf(initialConnection),
+  /** @type {import('./offlineControls.js').Connection} */ connection: initialConnection,
   isSending: false,
   renderedCommandLines: '',
 };
 
 // An answer for a key the field no longer holds is dropped, so one gate's commands never show under another.
 async function refreshCommands() {
-  if (state.isPolling || state.offline) {
+  if (state.isPolling || state.connection.kind !== 'online') {
     return;
   }
   state.isPolling = true;
@@ -62,7 +64,7 @@ async function refreshCommands() {
 
 /** @param {import('./commandFeed.js').PollResult} poll */
 function applyPoll(poll) {
-  if (poll.isKeyRefused && state.message?.key !== 'keyRefused') {
+  if (poll.isKeyRefused && !isMessageKey(state.message, 'keyRefused')) {
     state.message = { key: 'keyRefused', isError: true };
     renderMessage(state);
   }
@@ -83,95 +85,92 @@ function applyOutcome(outcome) {
   state.message = { key: outcome.kind === 'wrongLoop' ? 'wrongLoop' : outcome.messageKey, isError: true };
 }
 
-/** @param {GateKind} loop */
-async function onLoopPressed(loop) {
-  if (state.isSending) {
-    return;
-  }
-  if (state.offline) {
-    pressLoopWhileOffline(state, loop);
-    render(state);
-    return;
-  }
-  state.isSending = true;
-  try {
-    const press = { loop, deviceKey: state.deviceKey, identity: state.identity, pressedAt: new Date() };
-    applyOutcome(await pressLoop(press, api));
-  } finally {
-    state.isSending = false;
-    render(state);
-  }
-}
-
-async function onOfflineToggled() {
-  if (state.isSending) {
-    return;
-  }
-  state.isSending = true;
-  try {
-    await toggleOffline(state, api);
-  } finally {
-    state.isSending = false;
-    render(state);
-  }
-}
-
-async function onReadingSent() {
-  if (state.isSending) {
-    return;
-  }
-  state.isSending = true;
-  try {
-    const outcome = await sendReading({ deviceKey: state.deviceKey, identity: state.identity, identifier: plateInput.value }, api);
-    state.identity = outcome.identity;
-    state.message = readingMessage(outcome);
-  } finally {
-    state.isSending = false;
-    render(state);
-  }
+/** @param {import('./offlineControls.js').ConsolePatch} patch */
+function applyPatch(patch) {
+  Object.assign(state, patch);
+  saveConnection(state.connection, window.sessionStorage);
 }
 
 /**
- * @param {import('./readerRead.js').ReadOutcome} outcome
- * @returns {{ key: TextKey, isError: boolean }}
+ * One request at a time: the controls are disabled and the message region is busy until it ends.
+ * @param {() => Promise<void>} work
+ * @param {import('./consoleText.js').ConsoleMessage | null} [busyMessage]
  */
-function readingMessage(outcome) {
-  if (outcome.kind === 'refused') {
-    return { key: outcome.messageKey, isError: true };
-  }
-  return outcome.kind === 'opened' ? { key: 'readerOpened', isError: false } : { key: 'readerFallback', isError: true };
-}
-
-async function onPresenceSent() {
+async function whileSending(work, busyMessage = null) {
   if (state.isSending) {
     return;
   }
   state.isSending = true;
+  state.message = busyMessage ?? state.message;
+  render(state);
   try {
-    const outcome = await sendPresence({ deviceKey: state.deviceKey, identity: state.identity }, api);
-    state.identity = outcome.identity;
-    state.message = outcome.kind === 'refused' ? { key: outcome.messageKey, isError: true } : { key: PRESENCE_MESSAGES[outcome.kind], isError: outcome.kind === 'fallback' };
+    await work();
   } finally {
     state.isSending = false;
     render(state);
   }
 }
 
-/** @type {Record<'waiting' | 'opened' | 'fallback', TextKey>} */
-const PRESENCE_MESSAGES = { waiting: 'presenceWaiting', opened: 'presenceOpened', fallback: 'presenceFallback' };
+/** @param {GateKind} loop */
+function onLoopPressed(loop) {
+  return whileSending(async () => {
+    if (state.connection.kind !== 'online') {
+      applyPatch(pressLoopWhileOffline(state.connection, loop, new Date()));
+      return;
+    }
+    const press = { loop, deviceKey: state.deviceKey, identity: state.identity, pressedAt: new Date() };
+    applyOutcome(await pressLoop(press, api));
+  });
+}
+
+function onOfflineToggled() {
+  const busyMessage = state.connection.kind === 'online' ? null : { key: /** @type {TextKey} */ ('replaying'), isError: false };
+  const toggled = whileSending(async () => {
+    const request = { connection: state.connection, deviceKey: state.deviceKey, identity: state.identity };
+    applyPatch(await toggleOffline(request, api));
+  }, busyMessage);
+  return toggled.then(() => offlineToggle.focus());
+}
+
+function onQueueCleared() {
+  if (state.isSending) {
+    return;
+  }
+  applyPatch(clearQueue());
+  render(state);
+  offlineToggle.focus();
+}
+
+function onReadingSent() {
+  return whileSending(async () => {
+    const outcome = await sendReading({ deviceKey: state.deviceKey, identity: state.identity, identifier: plateInput.value }, api);
+    state.identity = outcome.identity;
+    state.message = readingMessage(outcome);
+  });
+}
+
+function onPresenceSent() {
+  return whileSending(async () => {
+    const outcome = await sendPresence({ deviceKey: state.deviceKey, identity: state.identity }, api);
+    state.identity = outcome.identity;
+    state.message = presenceMessage(outcome);
+  });
+}
 
 readerButton.addEventListener('click', () => void onReadingSent());
 presenceButton.addEventListener('click', () => void onPresenceSent());
 offlineToggle.addEventListener('click', () => void onOfflineToggled());
-clearQueueButton.addEventListener('click', () => {
-  clearQueue(state);
-  render(state);
+clearQueueButton.addEventListener('click', onQueueCleared);
+window.addEventListener('beforeunload', (event) => {
+  if (hasPendingPassages(state.connection)) {
+    event.preventDefault();
+  }
 });
 
 deviceKeyInput.addEventListener('input', () => {
   state.deviceKey = deviceKeyInput.value.trim();
   state.identity = null;
-  state.message = null;
+  state.message = statusMessageOf(state.connection);
   state.commands = [];
   render(state);
 });

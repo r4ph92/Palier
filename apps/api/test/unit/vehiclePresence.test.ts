@@ -66,13 +66,13 @@ describe('presenceMessageForStatus', () => {
 
 describe('isPresenceEnabled', () => {
   it('is disabled until a key is typed, and for an entry gate', () => {
-    expect(isPresenceEnabled({ deviceKey: '', identity: null })).toBe(false);
-    expect(isPresenceEnabled({ deviceKey: DEVICE_KEY, identity: entreeDemo })).toBe(false);
+    expect(isPresenceEnabled({ deviceKey: '', identity: null, isOffline: false })).toBe(false);
+    expect(isPresenceEnabled({ deviceKey: DEVICE_KEY, identity: entreeDemo, isOffline: false })).toBe(false);
   });
 
   it('is enabled for an exit gate, or while the gate is not identified', () => {
-    expect(isPresenceEnabled({ deviceKey: DEVICE_KEY, identity: null })).toBe(true);
-    expect(isPresenceEnabled({ deviceKey: DEVICE_KEY, identity: sortieDemo })).toBe(true);
+    expect(isPresenceEnabled({ deviceKey: DEVICE_KEY, identity: null, isOffline: false })).toBe(true);
+    expect(isPresenceEnabled({ deviceKey: DEVICE_KEY, identity: sortieDemo, isOffline: false })).toBe(true);
   });
 });
 

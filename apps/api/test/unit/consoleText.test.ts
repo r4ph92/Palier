@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatPassageTime, messageText, pendingPassages, translate, vehiclesInside } from '../../src/http/demo/consoleText.js';
+import { formatPassageTime, messageText, passagesReplayed, pendingPassages, translate, vehiclesInside } from '../../src/http/demo/consoleText.js';
 import { translations } from '../../src/http/demo/consoleTranslations.js';
 
 describe('console translations', () => {
@@ -72,11 +72,16 @@ describe('offline texts', () => {
   });
 
   it.each([
-    ['fr', { key: 'passagesReplayedOther', isError: false, count: 2, vehicleCount: 3 }, '2 passages rejoués · 3 véhicules dans le parking'],
-    ['fr', { key: 'passagesReplayedOne', isError: false, count: 1, vehicleCount: 1 }, '1 passage rejoué · 1 véhicule dans le parking'],
-    ['en', { key: 'passagesReplayedOther', isError: false, count: 2, vehicleCount: 3 }, '2 passages replayed · 3 vehicles in the lot'],
-  ] as const)('%s replay message reads "%s"', (language, message, expected) => {
-    expect(messageText(language, message)).toBe(expected);
+    ['fr', { count: 2, vehicleCount: 3 }, '2 passages rejoués · 3 véhicules dans le parking'],
+    ['fr', { count: 1, vehicleCount: 1 }, '1 passage rejoué · 1 véhicule dans le parking'],
+    ['en', { count: 2, vehicleCount: 3 }, '2 passages replayed · 3 vehicles in the lot'],
+    ['en', { count: 1, vehicleCount: 1 }, '1 passage replayed · 1 vehicle in the lot'],
+  ] as const)('%s replay of %o reads "%s"', (language, { count, vehicleCount }, expected) => {
+    expect(passagesReplayed(count, vehicleCount, language)).toBe(expected);
+  });
+
+  it('writes a replay message through the same text', () => {
+    expect(messageText('fr', { replayed: { count: 2, vehicleCount: 3 }, isError: false })).toBe(passagesReplayed(2, 3, 'fr'));
   });
 
   it('writes a plain message without counts as its key', () => {

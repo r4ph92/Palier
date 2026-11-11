@@ -69,13 +69,13 @@ describe('readerMessageForStatus', () => {
 
 describe('isReaderEnabled', () => {
   it('is disabled until a key is typed, and for an entry gate', () => {
-    expect(isReaderEnabled({ deviceKey: '', identity: null })).toBe(false);
-    expect(isReaderEnabled({ deviceKey: DEVICE_KEY, identity: entreeDemo })).toBe(false);
+    expect(isReaderEnabled({ deviceKey: '', identity: null, isOffline: false })).toBe(false);
+    expect(isReaderEnabled({ deviceKey: DEVICE_KEY, identity: entreeDemo, isOffline: false })).toBe(false);
   });
 
   it('is enabled for an exit gate, or while the gate is not identified', () => {
-    expect(isReaderEnabled({ deviceKey: DEVICE_KEY, identity: null })).toBe(true);
-    expect(isReaderEnabled({ deviceKey: DEVICE_KEY, identity: sortieDemo })).toBe(true);
+    expect(isReaderEnabled({ deviceKey: DEVICE_KEY, identity: null, isOffline: false })).toBe(true);
+    expect(isReaderEnabled({ deviceKey: DEVICE_KEY, identity: sortieDemo, isOffline: false })).toBe(true);
   });
 });
 

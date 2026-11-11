@@ -1,5 +1,5 @@
-import { UNREACHABLE } from './gateApi.js';
-import { DEVICE_KEY_SHAPE, identify } from './loopPress.js';
+import { OK, UNREACHABLE } from './gateApi.js';
+import { knownGateIdentity } from './gateIdentity.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('@palier/shared-types').GatePresenceResponse} GatePresenceResponse */
@@ -9,8 +9,6 @@ import { DEVICE_KEY_SHAPE, identify } from './loopPress.js';
  * @typedef {{ kind: GatePresenceResponse['outcome'], identity: GateIdentity }
  *   | { kind: 'refused', identity: GateIdentity | null, messageKey: TextKey }} PresenceOutcome
  */
-
-const OK = 200;
 
 /** @type {Record<number, TextKey>} */
 const MESSAGE_BY_STATUS = { [UNREACHABLE]: 'unreachable', 401: 'keyRefused', 403: 'gateForbidden', 409: 'gateNotExit' };
@@ -23,6 +21,9 @@ export function presenceMessageForStatus(status) {
   return MESSAGE_BY_STATUS[status] ?? 'presenceFailed';
 }
 
+/** @type {Record<GatePresenceResponse['outcome'], TextKey>} */
+const PRESENCE_MESSAGES = { waiting: 'presenceWaiting', opened: 'presenceOpened', fallback: 'presenceFallback' };
+
 /**
  * A vehicle is on the exit gate's arming loop: Palier opens when exactly one app reported the exit beacon in the last minute.
  * @param {{ deviceKey: string, identity: GateIdentity | null }} presence
@@ -30,10 +31,7 @@ export function presenceMessageForStatus(status) {
  * @returns {Promise<PresenceOutcome>}
  */
 export async function sendPresence(presence, api) {
-  if (!DEVICE_KEY_SHAPE.test(presence.deviceKey)) {
-    return { kind: 'refused', identity: null, messageKey: 'keyRefused' };
-  }
-  const identityOrRefusal = presence.identity ?? (await identify(presence.deviceKey, api));
+  const identityOrRefusal = await knownGateIdentity(presence, api);
   if ('messageKey' in identityOrRefusal) {
     return identityOrRefusal;
   }
@@ -45,9 +43,20 @@ export async function sendPresence(presence, api) {
 }
 
 /**
- * @param {{ deviceKey: string, identity: GateIdentity | null }} state
+ * @param {{ deviceKey: string, identity: GateIdentity | null, isOffline: boolean }} state
  * @returns {boolean}
  */
 export function isPresenceEnabled(state) {
-  return state.deviceKey !== '' && (state.identity === null || state.identity.kind === 'EXIT');
+  return !state.isOffline && state.deviceKey !== '' && (state.identity === null || state.identity.kind === 'EXIT');
+}
+
+/**
+ * @param {PresenceOutcome} outcome
+ * @returns {import('./consoleText.js').ConsoleMessage}
+ */
+export function presenceMessage(outcome) {
+  if (outcome.kind === 'refused') {
+    return { key: outcome.messageKey, isError: true };
+  }
+  return { key: PRESENCE_MESSAGES[outcome.kind], isError: outcome.kind === 'fallback' };
 }

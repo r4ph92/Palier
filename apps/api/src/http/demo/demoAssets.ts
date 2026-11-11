@@ -30,8 +30,10 @@ export const DEMO_ASSETS: Readonly<Record<string, DemoAsset>> = {
   'gateApi.js': { contentType: JAVASCRIPT, location: besideThisFile('gateApi.js') },
   'loopPress.js': { contentType: JAVASCRIPT, location: besideThisFile('loopPress.js') },
   'vehiclePresence.js': { contentType: JAVASCRIPT, location: besideThisFile('vehiclePresence.js') },
+  'gateIdentity.js': { contentType: JAVASCRIPT, location: besideThisFile('gateIdentity.js') },
   'offlineControls.js': { contentType: JAVASCRIPT, location: besideThisFile('offlineControls.js') },
   'offlineMode.js': { contentType: JAVASCRIPT, location: besideThisFile('offlineMode.js') },
+  'queueStorage.js': { contentType: JAVASCRIPT, location: besideThisFile('queueStorage.js') },
   'readerRead.js': { contentType: JAVASCRIPT, location: besideThisFile('readerRead.js') },
   'Archivo_400Regular.ttf': {
     contentType: FONT,

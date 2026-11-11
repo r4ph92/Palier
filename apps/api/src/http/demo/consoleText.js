@@ -49,7 +49,21 @@ export function pendingPassages(count, language) {
   return translate(language, isSingular(count, language) ? 'pendingPassagesOne' : 'pendingPassagesOther', { count });
 }
 
-/** @typedef {{ key: TextKey, isError: boolean, count?: number, vehicleCount?: number }} ConsoleMessage */
+/**
+ * @param {number} count
+ * @param {number} vehicleCount
+ * @param {Language} language
+ * @returns {string}
+ */
+export function passagesReplayed(count, vehicleCount, language) {
+  const key = isSingular(count, language) ? 'passagesReplayedOne' : 'passagesReplayedOther';
+  return translate(language, key, { count, vehicles: vehiclesInside(vehicleCount, language) });
+}
+
+/**
+ * @typedef {{ key: TextKey, isError: boolean, tone?: 'degraded' | 'muted' }
+ *   | { replayed: { count: number, vehicleCount: number }, isError: false }} ConsoleMessage
+ */
 
 /**
  * @param {Language} language
@@ -57,11 +71,19 @@ export function pendingPassages(count, language) {
  * @returns {string}
  */
 export function messageText(language, message) {
-  const { count, vehicleCount } = message;
-  if (count === undefined || vehicleCount === undefined) {
-    return translate(language, message.key);
+  if ('replayed' in message) {
+    return passagesReplayed(message.replayed.count, message.replayed.vehicleCount, language);
   }
-  return translate(language, message.key, { count, vehicles: vehiclesInside(vehicleCount, language) });
+  return translate(language, message.key);
+}
+
+/**
+ * @param {ConsoleMessage | null} message
+ * @param {TextKey} key
+ * @returns {boolean}
+ */
+export function isMessageKey(message, key) {
+  return message !== null && 'key' in message && message.key === key;
 }
 
 /**

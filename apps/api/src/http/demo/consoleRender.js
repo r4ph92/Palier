@@ -1,5 +1,5 @@
 import { formatPassageTime, messageText, pendingPassages, translate, vehiclesInside } from './consoleText.js';
-import { isLoopEnabled } from './loopPress.js';
+import { isLoopAvailable, queueOf } from './offlineControls.js';
 import { isReaderEnabled } from './readerRead.js';
 import { isPresenceEnabled } from './vehiclePresence.js';
 
@@ -17,9 +17,8 @@ import { isPresenceEnabled } from './vehiclePresence.js';
  * @property {GatePassageResponse[]} passages
  * @property {readonly GateCommand[]} commands
  * @property {import('./consoleText.js').ConsoleMessage | null} message
- * @property {boolean} offline
- * @property {import('./offlineMode.js').OfflineQueue | null} pending
- * @property {boolean} isQueueBlocked
+ * @property {import('./offlineControls.js').Connection} connection
+ * @property {boolean} isSending
  * @property {string} renderedCommandLines
  */
 
@@ -52,8 +51,9 @@ export function render(state) {
   renderIdentity(state);
   renderOffline(state);
   renderLoops(state);
-  readerButton.disabled = !isReaderEnabled(state);
-  presenceButton.disabled = !isPresenceEnabled(state);
+  const controls = { ...state, isOffline: state.connection.kind !== 'online' };
+  readerButton.disabled = !isReaderEnabled(controls);
+  presenceButton.disabled = !isPresenceEnabled(controls);
   renderMessage(state);
   renderCommands(state);
   renderPassages(state);
@@ -84,18 +84,28 @@ function renderIdentity(state) {
 
 /** @param {ConsoleState} state */
 function renderOffline(state) {
-  const pendingCount = state.pending?.items.length ?? 0;
-  offlineToggle.setAttribute('aria-pressed', String(state.offline));
-  offlineToggle.disabled = state.deviceKey === '' && !state.offline;
-  deviceKeyInput.disabled = state.offline || pendingCount > 0;
-  elementById('pending').textContent = pendingPassages(pendingCount, state.language);
-  clearQueueButton.hidden = !state.isQueueBlocked;
+  const { connection } = state;
+  offlineToggle.setAttribute('aria-pressed', String(connection.kind !== 'online'));
+  offlineToggle.disabled = state.isSending || (state.deviceKey === '' && connection.kind === 'online');
+  deviceKeyInput.disabled = connection.kind !== 'online' && state.identity !== null;
+  renderPending(state);
+  clearQueueButton.hidden = connection.kind !== 'blocked';
+  clearQueueButton.disabled = state.isSending;
+}
+
+// The line stays in the page, only emptied, so a screen reader announces the count when it appears.
+/** @param {ConsoleState} state */
+function renderPending(state) {
+  const { connection } = state;
+  const isShown = connection.kind !== 'online' || connection.hasReplayed;
+  const count = queueOf(connection)?.items.length ?? 0;
+  elementById('pending').textContent = isShown ? pendingPassages(count, state.language) : '';
 }
 
 /** @param {ConsoleState} state */
 function renderLoops(state) {
   for (const button of loopButtons) {
-    button.disabled = !isLoopEnabled(/** @type {GateKind} */ (button.dataset['loop']), state);
+    button.disabled = !isLoopAvailable(/** @type {GateKind} */ (button.dataset['loop']), state);
   }
 }
 
@@ -104,6 +114,10 @@ export function renderMessage(state) {
   const message = elementById('message');
   message.textContent = state.message === null ? '' : messageText(state.language, state.message);
   message.classList.toggle('message-error', state.message?.isError === true);
+  const tone = state.message !== null && 'tone' in state.message ? state.message.tone : undefined;
+  message.classList.toggle('message-degraded', tone !== undefined);
+  message.classList.toggle('message-muted', tone === 'muted');
+  message.setAttribute('aria-busy', String(state.isSending));
 }
 
 /** @param {ConsoleState} state */

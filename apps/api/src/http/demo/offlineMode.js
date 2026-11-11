@@ -1,31 +1,34 @@
-import { UNREACHABLE } from './gateApi.js';
-import { DEVICE_KEY_SHAPE, identify } from './loopPress.js';
+import { OK, UNREACHABLE } from './gateApi.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('@palier/shared-types').GateKind} GateKind */
 /** @typedef {import('@palier/shared-types').PassageReplayItem} PassageReplayItem */
 /** @typedef {import('./consoleText.js').TextKey} TextKey */
-/** @typedef {Pick<import('./gateApi.js').GateApi, 'fetchIdentity'>} OfflineApi */
 /** @typedef {Pick<import('./gateApi.js').GateApi, 'replayPassages'>} ReplayApi */
 /**
  * The passages a controller counted while it had no contact with Palier, bound to the gate that counted them.
  * @typedef {object} OfflineQueue
- * @property {string} deviceKey
  * @property {string} gateId
  * @property {GateKind} kind
  * @property {readonly PassageReplayItem[]} items
  */
 /** @typedef {{ messageKey: TextKey, isRetryable: boolean }} ReplayFailure */
 /** @typedef {{ queue: OfflineQueue, replayed: number, vehicleCount: number | null, failure: ReplayFailure | null }} ReplayOutcome */
-/** @typedef {{ kind: 'offline', identity: GateIdentity, queue: OfflineQueue } | { kind: 'refused', identity: GateIdentity | null, messageKey: TextKey }} GoOfflineOutcome */
 
-const OK = 200;
 const SERVER_ERROR = 500;
-// Matches the server's maximum batch size.
+// Equal to the server's maximum batch size; a test ties the two.
 export const REPLAY_BATCH_SIZE = 500;
 
 /** @type {Record<number, TextKey>} */
-const REPLAY_MESSAGE_BY_STATUS = { [UNREACHABLE]: 'unreachable', 401: 'keyRefused', 403: 'gateForbidden' };
+const REPLAY_MESSAGE_BY_STATUS = { [UNREACHABLE]: 'replayUnreachable', 401: 'replayKeyRefused', 403: 'replayGateForbidden' };
+
+/**
+ * @param {GateIdentity} identity
+ * @returns {OfflineQueue}
+ */
+export function startQueue(identity) {
+  return { gateId: identity.id, kind: identity.kind, items: [] };
+}
 
 /**
  * An offline controller refuses Palier subscribers at an entry and opens an exit unconditionally.
@@ -34,24 +37,6 @@ const REPLAY_MESSAGE_BY_STATUS = { [UNREACHABLE]: 'unreachable', 401: 'keyRefuse
  */
 export function offlineStatusKey(kind) {
   return kind === 'ENTRY' ? 'offlineEntryRefused' : 'offlineExitOpened';
-}
-
-/**
- * The gate must be known before the controller loses contact, since nothing can be asked while offline.
- * @param {{ deviceKey: string, identity: GateIdentity | null }} request
- * @param {OfflineApi} api
- * @returns {Promise<GoOfflineOutcome>}
- */
-export async function goOffline(request, api) {
-  if (!DEVICE_KEY_SHAPE.test(request.deviceKey)) {
-    return { kind: 'refused', identity: null, messageKey: 'keyRefused' };
-  }
-  const identityOrRefusal = request.identity ?? (await identify(request.deviceKey, api));
-  if ('messageKey' in identityOrRefusal) {
-    return identityOrRefusal;
-  }
-  const queue = { deviceKey: request.deviceKey, gateId: identityOrRefusal.id, kind: identityOrRefusal.kind, items: [] };
-  return { kind: 'offline', identity: identityOrRefusal, queue };
 }
 
 /**
@@ -70,38 +55,31 @@ export function pressLoopOffline(queue, loop, pressedAt) {
 }
 
 /**
- * @param {number} replayed
- * @param {number} vehicleCount
- * @returns {import('./consoleText.js').ConsoleMessage}
- */
-export function replayedMessage(replayed, vehicleCount) {
-  return { key: replayed === 1 ? 'passagesReplayedOne' : 'passagesReplayedOther', isError: false, count: replayed, vehicleCount };
-}
-
-/**
  * Only the passages Palier acknowledged leave the queue; the first failure stops the replay and keeps the rest.
  * @param {OfflineQueue} queue
+ * @param {string} deviceKey
  * @param {ReplayApi} api
  * @returns {Promise<ReplayOutcome>}
  */
-export async function replayQueue(queue, api) {
+export async function replayQueue(queue, deviceKey, api) {
   /** @type {ReplayOutcome} */
   let outcome = { queue, replayed: 0, vehicleCount: null, failure: null };
   while (outcome.failure === null && outcome.queue.items.length > 0) {
-    outcome = await replayNextBatch(outcome, api);
+    outcome = await replayNextBatch(outcome, deviceKey, api);
   }
   return outcome;
 }
 
 /**
  * @param {ReplayOutcome} previous
+ * @param {string} deviceKey
  * @param {ReplayApi} api
  * @returns {Promise<ReplayOutcome>}
  */
-async function replayNextBatch(previous, api) {
+async function replayNextBatch(previous, deviceKey, api) {
   const { queue } = previous;
   const batch = queue.items.slice(0, REPLAY_BATCH_SIZE);
-  const response = await api.replayPassages(queue.deviceKey, queue.gateId, batch);
+  const response = await api.replayPassages(deviceKey, queue.gateId, batch);
   if (response.status !== OK || response.body === null) {
     return { ...previous, failure: replayFailure(response.status) };
   }
@@ -111,11 +89,13 @@ async function replayNextBatch(previous, api) {
 }
 
 /**
- * A refused batch would be refused again, so only an unreachable Palier or a server error is worth retrying.
+ * A refused batch would be refused again, so only an unreachable Palier, a server error or an unreadable answer is worth retrying.
+ * Retrying after an unreadable 200 is safe: the batch's ids count once.
  * @param {number} status
  * @returns {ReplayFailure}
  */
 function replayFailure(status) {
   const isRetryable = status === UNREACHABLE || status >= SERVER_ERROR || status === OK;
-  return { messageKey: REPLAY_MESSAGE_BY_STATUS[status] ?? 'replayFailed', isRetryable };
+  const messageKey = REPLAY_MESSAGE_BY_STATUS[status] ?? (isRetryable ? 'replayFailed' : 'replayRefused');
+  return { messageKey, isRetryable };
 }

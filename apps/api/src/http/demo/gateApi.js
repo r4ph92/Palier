@@ -12,6 +12,7 @@
  */
 
 export const UNREACHABLE = 0;
+export const OK = 200;
 
 /**
  * @param {typeof fetch} fetchFunction

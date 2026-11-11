@@ -37,8 +37,8 @@
           <button type="button" class="loop-button" data-loop="EXIT" data-text="loopEXIT" disabled>Boucle de sortie fermée</button>
         </div>
         <p id="message" class="message" role="status"></p>
-        <p id="pending" class="hint"></p>
-        <button type="button" id="clear-queue" class="loop-button" data-text="clearQueue" hidden>Vider la file</button>
+        <p id="pending" class="pending" role="status"></p>
+        <button type="button" id="clear-queue" class="clear-queue" data-text="clearQueue" hidden>Vider la file</button>
       </section>
 
       <section class="block" aria-labelledby="reader-heading">
@@ -61,7 +61,7 @@
 
       <section class="block" aria-labelledby="passages-heading">
         <h2 id="passages-heading" class="eyebrow" data-text="passagesHeading">Passages</h2>
-        <p id="no-passage" class="hint" data-text="noPassage">Aucun passage pour l’instant.</p>
+        <p id="no-passage" class="hint" data-text="noPassage">Aucun passage en ligne pour l’instant.</p>
         <ul id="passages" class="passages"></ul>
       </section>
     </main>
