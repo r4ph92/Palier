@@ -1,5 +1,6 @@
 import type {
   CurrentParkingSession,
+  ExitBeaconRequest,
   ExitResponse,
   ParkedPresumptionRequest,
   ParkedPresumptionResponse,
@@ -71,5 +72,14 @@ export class HttpParkingSessionClient implements ParkingSessionClient {
   async exit(sessionId: string): Promise<ExitResponse> {
     const response = await this.#answerRequester.send(`/v1/entries/${encodeURIComponent(sessionId)}/exit`, { method: 'POST' });
     return parseExit(await readJson(response));
+  }
+
+  async reportExitBeacon(sessionId: string, major: number): Promise<void> {
+    const body: ExitBeaconRequest = { major };
+    await this.#answerRequester.send(`/v1/entries/${encodeURIComponent(sessionId)}/exit-beacon`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
   }
 }

@@ -17,4 +17,6 @@ export interface ParkingSessionClient {
   reportSpotTaken(sessionId: string, spotNumber: string): Promise<SpotTakenResponse>;
   // The tap at the exit: Palier takes the amount and opens the barrier. A 404 or 409 rejects with the API's code; a repeat answers the first receipt.
   exit(sessionId: string): Promise<ExitResponse>;
+  // The app saw the exit beacon of the session's own lot: Palier opens the exit by itself once a vehicle is at the barrier. A 404 or 409 rejects with the API's code.
+  reportExitBeacon(sessionId: string, major: number): Promise<void>;
 }

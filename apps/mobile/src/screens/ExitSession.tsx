@@ -22,19 +22,25 @@ import { typography } from '../theme/typography';
 interface ExitButtonProps {
   readonly client: ParkingSessionClient;
   readonly sessionId: string;
+  // Two apps reported the exit beacon: nothing opens by itself, so the driver is told to tap.
+  readonly beaconFallback: boolean;
   readonly onLeft: (receipt: ExitReceipt | null) => void;
   // Reads the session again: it was closed or is unknown to Palier.
   readonly onSessionMoved: () => void;
 }
 
 // « Ouvrir la barrière de sortie »: Palier takes the exact amount and opens the barrier; nothing is asked before, the tap is the exit.
-export function ExitButton({ client, sessionId, onLeft, onSessionMoved }: ExitButtonProps) {
+export function ExitButton({ client, sessionId, beaconFallback, onLeft, onSessionMoved }: ExitButtonProps) {
+  const colors = useColors();
   const exiting = useExit(client, sessionId, { onLeft, onSessionMoved });
   // Under the button, which then stays where the driver pressed it.
   const message = exiting.isUnreachable ? i18n.t('session.exit.unreachable') : null;
   useAnnouncement(message, exiting.attempts);
+  const fallback = beaconFallback ? i18n.t('session.exit.beaconFallback') : null;
+  useAnnouncement(fallback);
   return (
     <View style={styles.group}>
+      {fallback === null ? null : <Text style={[typography.body, { color: colors.ink }]}>{fallback}</Text>}
       <PrimaryButton label={i18n.t('session.exit.action')} busyLabel={i18n.t('session.exit.opening')} busy={exiting.isSending} onPress={exiting.leave} />
       {message === null ? null : <FieldError message={message} />}
     </View>

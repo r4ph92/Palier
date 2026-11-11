@@ -102,3 +102,25 @@ describe('exit (story #47)', () => {
     ).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 });
+
+describe('reportExitBeacon (story #49)', () => {
+  it('posts the lot major for the session and expects no body', async () => {
+    const fetchFunction = jest.fn(() => Promise.resolve(new Response(null, { status: 204 })));
+    const client = new HttpParkingSessionClient({ baseUrl: BASE_URL, token: 'julie-token', onUnauthorized: () => undefined, onConsentRequired: () => undefined, fetchFunction });
+
+    await expect(client.reportExitBeacon('session-1', 1)).resolves.toBeUndefined();
+    expect(fetchFunction).toHaveBeenCalledWith(`${BASE_URL}/v1/entries/session-1/exit-beacon`, expect.objectContaining({ method: 'POST', body: JSON.stringify({ major: 1 }) }));
+  });
+
+  it.each([404, 409])('rejects with the API code on a %i', async (status) => {
+    const { client } = clientAnswering({ error: 'BEACON_NOT_THIS_LOT' }, status);
+
+    await expect(client.reportExitBeacon('session-1', 2)).rejects.toBeInstanceOf(PalierRejectedError);
+  });
+
+  it('reports a 500 as a status error', async () => {
+    const { client } = clientAnswering({}, 500);
+
+    await expect(client.reportExitBeacon('session-1', 1)).rejects.toBeInstanceOf(PalierStatusError);
+  });
+});

@@ -28,6 +28,8 @@ export interface ReadProgress {
 export interface CurrentParkingSessionController extends ReadProgress {
   readonly state: CurrentParkingSessionState;
   refresh(): void;
+  // The same read, as the minute poll does it: a miss is not announced to the driver.
+  poll(): void;
 }
 
 interface ReadTracker {
@@ -62,12 +64,18 @@ export function useCurrentParkingSession(client: ParkingSessionClient, onFirstSe
     [client],
   );
   const refresh = useCallback(() => readWith(true), [readWith]);
+  const poll = useCallback(() => readWith(false), [readWith]);
+  useMinutePoll(poll);
+  return { state, refresh, poll, ...progress };
+}
+
+// Read at once, then every minute.
+function useMinutePoll(poll: () => void): void {
   useEffect(() => {
-    readWith(false);
-    const timer = setInterval(() => readWith(false), SESSION_REFRESH_MILLISECONDS);
+    poll();
+    const timer = setInterval(poll, SESSION_REFRESH_MILLISECONDS);
     return () => clearInterval(timer);
-  }, [readWith]);
-  return { state, refresh, ...progress };
+  }, [poll]);
 }
 
 // Only the latest read lands, so a slow answer never replaces a newer one.
