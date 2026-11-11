@@ -1,12 +1,10 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
-import { PalierUnauthorizedError } from '../api/AuthClient';
-import { PalierUnreachableError } from '../api/LotsClient';
-import type { ParkingSessionClient } from '../api/ParkingSessionClient';
-import { PalierConsentRequiredError, PalierRejectedError } from '../api/VehicleClient';
 import { isWalkedAwayState } from '@palier/shared-types/entries';
 import type { AisleFollower } from '../positioning/AisleFollower';
 import type { PositioningCore } from '../positioning/PositioningCore';
 import type { ParkedConfidence, PositioningListener } from '../positioning/PositioningModule';
+import type { OfflineWalkListener, OfflineWalkSender, SubmitResult } from './OfflineWalkSender';
+import type { QueuedWalk } from './OfflineWalkStore';
 
 export interface LatestSession {
   readonly session: CurrentParkingSession | null;
@@ -16,7 +14,7 @@ export interface LatestSession {
 export interface WalkAwayContext {
   readonly sessionId: string;
   readonly positioning: PositioningCore;
-  readonly client: ParkingSessionClient;
+  readonly sender: OfflineWalkSender;
   readonly latest: () => LatestSession;
   readonly aisles: AisleFollower;
 }
@@ -26,11 +24,10 @@ interface Walk {
   readonly detectedAt: number;
 }
 
-const EXPECTED_FAILURES = [PalierRejectedError, PalierUnreachableError, PalierUnauthorizedError, PalierConsentRequiredError];
-
-// One watch per session: once Palier accepted its walk, the session never sends another.
+// One watch per session: once Palier accepted its walk, sent now or kept and sent later, the session never sends another.
 export class WalkAwayWatch {
   readonly listener: PositioningListener;
+  readonly replays: OfflineWalkListener;
   readonly #context: WalkAwayContext;
   #isSending = false;
   #isReported = false;
@@ -44,6 +41,7 @@ export class WalkAwayWatch {
       onLotExit: () => undefined,
       onQueueFlushed: () => undefined,
     };
+    this.replays = { onReplayed: (walk) => this.#onReplayed(walk) };
   }
 
   stop(): void {
@@ -51,14 +49,22 @@ export class WalkAwayWatch {
   }
 
   async #onWalk(walk: Walk): Promise<void> {
-    if (!this.#isReportable(walk) || !(await this.#report(walk))) {
+    if (!this.#isReportable(walk)) {
       return;
     }
-    try {
-      this.#settleAccepted(walk);
-    } catch (error) {
-      console.error('Settling the accepted walk failed', error);
+    const queued = this.#queuedWalk(walk);
+    if ((await this.#submit(queued)) === 'sent') {
+      this.#isReported = true;
+      this.#settleAccepted(queued.detectedAt);
     }
+  }
+
+  #onReplayed(walk: QueuedWalk): void {
+    if (walk.sessionId !== this.#context.sessionId) {
+      return;
+    }
+    this.#isReported = true;
+    this.#settleAccepted(walk.detectedAt);
   }
 
   #isReportable(walk: Walk): boolean {
@@ -70,35 +76,30 @@ export class WalkAwayWatch {
   }
 
   // Q36: Palier presumes the assigned spot for a walk in its aisle or before any aisle was seen, and asks where
-  // the car is for a walk in another aisle. A refused or lost signal changes nothing: the offline queue (#26) will send it again.
-  async #report(walk: Walk): Promise<boolean> {
-    this.#isSending = true;
+  // the car is for a walk in another aisle. The aisle is the one seen at the walk, even when it is sent later.
+  #queuedWalk({ detectedAt }: Walk): QueuedWalk {
     const aisle = this.#context.aisles.currentFor(this.#context.sessionId);
+    return { sessionId: this.#context.sessionId, detectedAt, aisleMinor: aisle?.beaconMinor ?? null };
+  }
+
+  async #submit(walk: QueuedWalk): Promise<SubmitResult> {
+    this.#isSending = true;
     try {
-      await this.#context.client.reportParked(this.#context.sessionId, { detectedAt: walk.detectedAt, aisleMinor: aisle?.beaconMinor ?? null });
-      this.#isReported = true;
-      return true;
-    } catch (error) {
-      logUnexpectedFailure(error);
-      return false;
+      return await this.#context.sender.submit(walk);
     } finally {
       this.#isSending = false;
     }
   }
 
-  #settleAccepted(walk: Walk): void {
+  #settleAccepted(detectedAt: number): void {
     if (!this.#isActive) {
       return;
     }
-    this.#context.positioning.stopKeepAliveAt(walk.detectedAt);
-    this.#context.latest().refresh();
+    try {
+      this.#context.positioning.stopKeepAliveAt(detectedAt);
+      this.#context.latest().refresh();
+    } catch (error) {
+      console.error('Settling the accepted walk failed', error);
+    }
   }
-}
-
-// A refused token or a missing notice already moved the app off the tabs through the requester.
-function logUnexpectedFailure(error: unknown): void {
-  if (EXPECTED_FAILURES.some((failure) => error instanceof failure)) {
-    return;
-  }
-  console.error('Reporting the walk away from the car failed', error);
 }

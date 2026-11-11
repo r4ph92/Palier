@@ -44,9 +44,11 @@ export class OfflineWalkQueue {
     await this.#change((walks) => mergeWalk(walks, walk));
   }
 
-  // Only the walk that was sent leaves: an earlier one merged in meanwhile still waits.
-  async remove(sent: QueuedWalk): Promise<void> {
+  // Only the walk that was sent leaves: an earlier one merged in meanwhile still waits. False when nothing left.
+  async remove(sent: QueuedWalk): Promise<boolean> {
+    const sizeBefore = (await this.walks()).length;
     await this.#change((walks) => walks.filter((walk) => walk.sessionId !== sent.sessionId || walk.detectedAt !== sent.detectedAt));
+    return this.#walks.length < sizeBefore;
   }
 
   async clear(): Promise<void> {

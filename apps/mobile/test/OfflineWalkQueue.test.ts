@@ -40,8 +40,9 @@ describe('the queue of walks Palier has not accepted yet', () => {
     await queue.add(sent);
     await queue.add(firstWalk);
 
-    await queue.remove(sent);
+    const isRemoved = await queue.remove(sent);
 
+    expect(isRemoved).toBe(false);
     await expect(queue.walks()).resolves.toEqual([firstWalk]);
   });
 

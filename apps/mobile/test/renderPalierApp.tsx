@@ -11,6 +11,7 @@ import { FakeBackgroundLocationClient } from './fakeBackgroundLocationClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeEntryClient } from './fakeEntryClient';
 import { MemoryLocationExplanationStore } from './fakeLocationExplanationStore';
+import { MemoryOfflineWalkStore } from './fakeOfflineWalkStore';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeParkingSessionClient } from './fakeParkingSessionClient';
 import { FakePaymentMethodClient } from './fakePaymentMethodClient';
@@ -51,6 +52,7 @@ export function fakeSignedInClients(): SignedInClients {
     location: new FakeDeviceLocationClient(),
     backgroundLocation: new FakeBackgroundLocationClient(),
     locationExplanation: new MemoryLocationExplanationStore(),
+    offlineWalks: new MemoryOfflineWalkStore(),
   };
 }
 

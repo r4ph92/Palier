@@ -1,6 +1,7 @@
 import type { BackgroundLocationClient } from '../deviceLocation/BackgroundLocationClient';
 import type { DeviceLocationClient } from '../deviceLocation/DeviceLocationClient';
 import type { LocationExplanationStore } from '../deviceLocation/LocationExplanationStore';
+import type { OfflineWalkStore } from '../parkingSessions/OfflineWalkStore';
 import type { EntryClient } from './EntryClient';
 import type { LotsClient } from './LotsClient';
 import type { ParkingSessionClient } from './ParkingSessionClient';
@@ -26,6 +27,7 @@ export interface SignedInClients {
   readonly location: DeviceLocationClient;
   readonly backgroundLocation: BackgroundLocationClient;
   readonly locationExplanation: LocationExplanationStore;
+  readonly offlineWalks: OfflineWalkStore;
 }
 
 export type CreateSignedInClients = (session: SignedInSession) => SignedInClients;

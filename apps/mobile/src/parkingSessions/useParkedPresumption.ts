@@ -1,18 +1,19 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
 import { useEffect, useRef } from 'react';
-import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import type { AisleFollower } from '../positioning/AisleFollower';
 import type { PositioningCore } from '../positioning/PositioningCore';
+import type { OfflineWalkSender } from './OfflineWalkSender';
 import { WalkAwayWatch, type LatestSession } from './WalkAwayWatch';
 
 export interface ParkedPresumptionTools {
   readonly positioning: PositioningCore;
-  readonly client: ParkingSessionClient;
+  readonly sender: OfflineWalkSender;
   readonly aisles: AisleFollower;
 }
 
 // The walk alone presumes the spot taken (Q36); only a walk in another aisle has Palier ask where the car is.
-export function useParkedPresumption({ positioning, client, aisles }: ParkedPresumptionTools, session: CurrentParkingSession | null, refresh: () => void): void {
+// A session that starts, or comes back after a relaunch, sends the walks kept offline.
+export function useParkedPresumption({ positioning, sender, aisles }: ParkedPresumptionTools, session: CurrentParkingSession | null, refresh: () => void): void {
   const latest = useRef<LatestSession>({ session, refresh });
   useEffect(() => {
     latest.current = { session, refresh };
@@ -22,11 +23,17 @@ export function useParkedPresumption({ positioning, client, aisles }: ParkedPres
     if (sessionId === null) {
       return;
     }
-    const watch = new WalkAwayWatch({ sessionId, positioning, client, latest: () => latest.current, aisles });
-    const unsubscribe = positioning.subscribe(watch.listener);
-    return () => {
-      watch.stop();
-      unsubscribe();
-    };
-  }, [positioning, client, aisles, sessionId]);
+    return watchWalks(new WalkAwayWatch({ sessionId, positioning, sender, latest: () => latest.current, aisles }), { positioning, sender, aisles });
+  }, [positioning, sender, aisles, sessionId]);
+}
+
+function watchWalks(watch: WalkAwayWatch, { positioning, sender }: ParkedPresumptionTools): () => void {
+  const unsubscribeWalks = positioning.subscribe(watch.listener);
+  const unsubscribeReplays = sender.subscribe(watch.replays);
+  void sender.flush();
+  return () => {
+    watch.stop();
+    unsubscribeWalks();
+    unsubscribeReplays();
+  };
 }

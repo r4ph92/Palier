@@ -6,6 +6,8 @@ import { TabBar, type Tab } from '../components/TabBar';
 import { usePendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { useTabs, type TabsController } from '../navigation/useTabs';
 import { useCurrentParkingSession, type CurrentParkingSessionController } from '../parkingSessions/useCurrentParkingSession';
+import type { OfflineWalkSender } from '../parkingSessions/OfflineWalkSender';
+import { useOfflineWalkSender } from '../parkingSessions/useOfflineWalkSender';
 import { useParkedPresumption } from '../parkingSessions/useParkedPresumption';
 import { useAisleFollower } from '../positioning/useAisleFollower';
 import { useSpotHold } from '../spotHolds/useSpotHold';
@@ -55,7 +57,8 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
   const spotHold = useSpotHold(clients.spotHold);
   const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: currentSession.refresh, onSubmissionEnded: spotHold.refreshHold });
   const gateScanner = useScannerGate(clients);
-  const guidance = useSessionGuidance({ device, clients }, currentSession);
+  const sender = useOfflineWalkSender({ client: clients.parkingSession, store: clients.offlineWalks, connectivity: device.connectivity, positioning: device.positioning });
+  const guidance = useSessionGuidance(device, sender, currentSession);
   const screens: TabScreens = {
     home: { firstName, lotsClient: clients.lots, locationClient: clients.location, spotHold },
     scan: {
@@ -65,18 +68,26 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
       pendingEntry,
       aside: { detectionNotice: <AutomaticDetectionNotice location={clients.backgroundLocation} />, guidance },
     },
-    account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut },
+    account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut: clearingWalks(sender, onSignOut) },
   };
   return { currentSession, screens };
 }
 
 // The aisle and the walk away are followed above the tabs too, so a driver on another tab never misses them.
-function useSessionGuidance({ device, clients }: Pick<SignedInTabsProps, 'device' | 'clients'>, currentSession: CurrentParkingSessionController): ReactNode {
+function useSessionGuidance({ positioning }: DeviceTools, sender: OfflineWalkSender, currentSession: CurrentParkingSessionController): ReactNode {
   const { state, refresh } = currentSession;
   const session = state.status === 'current' ? state.session : null;
-  const aisles = useAisleFollower(device.positioning, session);
-  useParkedPresumption({ positioning: device.positioning, client: clients.parkingSession, aisles }, session, refresh);
-  return useParkingGuidance(device.positioning, aisles, session);
+  const aisles = useAisleFollower(positioning, session);
+  useParkedPresumption({ positioning, sender, aisles }, session, refresh);
+  return useParkingGuidance(positioning, aisles, session);
+}
+
+// Signing out leaves nothing of the driver's walks on the device; a token that expired keeps them for the next sign-in (decision 024).
+function clearingWalks(sender: OfflineWalkSender, onSignOut: () => void): () => void {
+  return () => {
+    void sender.clear();
+    onSignOut();
+  };
 }
 
 function scanTabActions(clients: SignedInClients, tabs: TabsController): ScanTabActions {

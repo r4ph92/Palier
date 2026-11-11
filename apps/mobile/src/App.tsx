@@ -17,6 +17,7 @@ import { ExpoDeviceLocationClient } from './deviceLocation/ExpoDeviceLocationCli
 import { applyLanguage, deviceLanguage } from './i18n/i18n';
 import { developerTools } from './dev/loadDeveloperTools';
 import { PalierApp } from './PalierApp';
+import { fileOfflineWalkStore } from './parkingSessions/FileOfflineWalkStore';
 import { NullPositioningModule } from './positioning/NullPositioningModule';
 import { PositioningCore } from './positioning/PositioningCore';
 import { fontAssets } from './theme/fonts';
@@ -43,6 +44,7 @@ function createSignedInClients({ token, onUnauthorized, onConsentRequired }: Sig
     location: deviceLocationClient,
     backgroundLocation: deviceLocationClient,
     locationExplanation: fileLocationExplanationStore(),
+    offlineWalks: fileOfflineWalkStore(),
   };
 }
 
