@@ -311,6 +311,7 @@
         <tr><td>payment_intent_id</td><td class="t">text</td><td>PaymentIntent Stripe en capture manuelle, créé à l'entrée</td></tr>
         <tr><td>authorized_cents</td><td class="t">int</td><td>Plafond journalier pré-autorisé</td></tr>
         <tr><td>captured_cents</td><td class="t">int null</td><td>Montant réellement capturé à la sortie</td></tr>
+        <tr><td>pending_capture_cents</td><td class="t">int null</td><td>Montant figé au tap quand Stripe est injoignable, capturé par <code>retry_captures</code> ; <code>captured_cents</code> reste nul tant que la session est <code>CLOSED_CAPTURE_PENDING</code> (026)</td></tr>
       </tbody>
     </table>
   </div>
@@ -438,7 +439,7 @@
           <text x="652" y="124" text-anchor="middle">réponse tardive</text>
           <text x="703" y="52" text-anchor="middle">sortie</text>
           <text x="713" y="168" text-anchor="middle">sortie</text>
-          <text x="640" y="236" text-anchor="middle">anonymisation après 90 jours</text>
+          <text x="520" y="236" text-anchor="middle">anonymisation après 90 jours</text>
           <text x="648" y="342" text-anchor="end">sortie, Stripe injoignable</text>
           <text x="832" y="276" text-anchor="end">reprise</text>
         </g>
