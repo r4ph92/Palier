@@ -26,6 +26,20 @@ describe('the current session after a relaunch', () => {
     expect(screen.getAllByRole('tab')).toHaveLength(3);
   });
 
+  it('warns that the surplus will be billed at the exit once the stay passes 24 hours', async () => {
+    await relaunchAsJulie(new FakeParkingSessionClient(julieAtParkingDemo({ elapsedMinutes: 1800, amountCents: 4300 })));
+
+    expect(await screen.findByText('Plafond de 24 h dépassé — le surplus sera facturé à la sortie', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('Montant à ce jour : 43,00 $', visibleText)).toBeOnTheScreen();
+  });
+
+  it('says nothing about a cap exceeded at exactly 24 hours', async () => {
+    await relaunchAsJulie(new FakeParkingSessionClient(julieAtParkingDemo({ elapsedMinutes: 1440, amountCents: 2500 })));
+
+    await screen.findByText('Montant à ce jour : 25,00 $', visibleText);
+    expect(screen.queryByText(/Plafond de 24 h dépassé/, visibleText)).toBeNull();
+  });
+
   it('stays on the lots and offers the scanner when Julie has no session', async () => {
     await relaunchAsJulie(new FakeParkingSessionClient(null));
     await screen.findByText('Parking Démo');
