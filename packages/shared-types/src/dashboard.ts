@@ -1,30 +1,15 @@
+import { isValidDisplayText } from './displayText.ts';
+import type { LotPricing } from './lotPricing.ts';
+
 // Every mutating /v1/dashboard request carries this header; a cross-site form cannot set it.
 export const DASHBOARD_CSRF_HEADER = 'x-requested-with';
 export const DASHBOARD_CSRF_VALUE = 'palier-dashboard';
 
 export const LEGAL_NAME_LENGTH = { minimum: 2, maximum: 120 } as const;
 
-// Control, format and line-separator characters (NUL, zero-width spaces, bidi overrides, U+2028) are invisible, and Postgres refuses NUL in text.
-const INVISIBLE_CHARACTER = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
-
-// Letters in Unicode that draw nothing: the Hangul fillers and the Braille blank.
-const BLANK_LETTER = /[\u3164\u115F\u1160\uFFA0\u2800]/u;
-
-const LETTER_OR_DIGIT = /[\p{L}\p{N}]/u;
-
-// Counted in code points after trimming, so an emoji is one character, the way a person counts it.
-// A lone surrogate is refused because Postgres would store it as U+FFFD, a name nobody typed.
+// Counted in code points after trimming, with no invisible character: see isValidDisplayText.
 export function isValidLegalName(legalName: string): boolean {
-  const trimmedName = legalName.trim();
-  const length = [...trimmedName].length;
-  return (
-    length >= LEGAL_NAME_LENGTH.minimum &&
-    length <= LEGAL_NAME_LENGTH.maximum &&
-    trimmedName.isWellFormed() &&
-    !INVISIBLE_CHARACTER.test(trimmedName) &&
-    !BLANK_LETTER.test(trimmedName) &&
-    LETTER_OR_DIGIT.test(trimmedName)
-  );
+  return isValidDisplayText(legalName, LEGAL_NAME_LENGTH);
 }
 
 export type KycStatus = 'NOT_STARTED' | 'PENDING' | 'ACTION_REQUIRED' | 'VERIFIED';
@@ -60,6 +45,16 @@ export interface DashboardLot {
   readonly isOnline: boolean;
 }
 
+// Coordinates are null only for a lot made before #64; beaconMajor once the 16-bit majors run out.
+export interface DashboardLotDetails extends DashboardLot {
+  readonly address: string;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+  readonly capacity: number;
+  readonly beaconMajor: number | null;
+  readonly pricing: LotPricing | null;
+}
+
 export type DashboardLotListResponse = readonly DashboardLot[];
 
 export type DashboardTestUserListResponse = readonly DashboardUser[];
@@ -82,6 +77,16 @@ export const DASHBOARD_ERROR_CODES = [
   'LOT_NOT_FOUND',
   'OPERATOR_NOT_FOUND',
   'STRIPE_UNAVAILABLE',
+  'LOT_NAME_INVALID',
+  'LOT_ADDRESS_INVALID',
+  'LOT_COORDINATES_INVALID',
+  'LOT_CAPACITY_INVALID',
+  'PRICING_INCREMENT_CENTS_INVALID',
+  'PRICING_INCREMENT_MINUTES_INVALID',
+  'PRICING_DAILY_CAP_REQUIRED',
+  'PRICING_DAILY_CAP_INVALID',
+  'PRICING_DAILY_CAP_BELOW_INCREMENT',
+  'PRICING_HOLD_QUOTA_INVALID',
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];

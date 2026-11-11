@@ -6,6 +6,7 @@
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
+    "allowImportingTsExtensions": true,
     "types": ["jest", "node"]
   },
   "include": ["**/*.ts", "**/*.tsx"]
