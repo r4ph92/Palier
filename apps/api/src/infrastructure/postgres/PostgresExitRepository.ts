@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
-import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitIdentification, ExitRepository, PaidExit, PendingExitClosing } from '../../domain/exits/ExitRepository.ts';
+import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitIdentification, ExitRepository, PaidExit, PendingExitClosing, ReadIdentifierKind } from '../../domain/exits/ExitRepository.ts';
 import { spotsFreedOnExit, type SpotOfExit } from '../../domain/exits/spotsFreedOnExit.ts';
 import type { SpotState } from '../../domain/spots/spotStates.ts';
 import { activeSessionOf } from './activeSessionStates.ts';
@@ -63,6 +63,22 @@ export class PostgresExitRepository implements ExitRepository {
       where ps.id = ${sessionId} and ps.user_id = ${driverId}`);
     const row = rows[0];
     return row === undefined ? null : exitableSessionOf(row);
+  }
+
+  async findLeavableByIdentifier(lotId: string, kind: ReadIdentifierKind, key: string): Promise<readonly ExitableSession[]> {
+    const matches =
+      kind === 'PLATE'
+        ? sql`upper(regexp_replace(ps.plate, '[ -]', '', 'g')) = ${key}`
+        : sql`exists (select 1 from vehicle where vehicle.id = ps.vehicle_id and vehicle.transponder_key = ${key})`;
+    const rows = await this.#database.execute<ExitableRow>(sql`
+      select ps.id, ps.state, ps.lot_id, ps.payment_intent_id, ps.authorized_cents, ps.entry_scan_at, ps.exit_at, ps.captured_cents,
+        ps.surplus_paid_cents, ps.unpaid_cents,
+        ps.pricing_increment_cents, ps.pricing_increment_minutes, ps.pricing_daily_cap_cents,
+        (select gate.id from gate where gate.lot_id = ps.lot_id and gate.kind = 'EXIT' order by gate.name limit 1) as exit_gate_id
+      from parking_session ps
+      where ps.lot_id = ${lotId} and ps.state in ${LEAVABLE_STATES} and ${matches}
+      limit 2`);
+    return rows.map(exitableSessionOf);
   }
 
   // Lot, then session, then spots: the order every other writer takes. The gate command is part of the transaction, so a paid

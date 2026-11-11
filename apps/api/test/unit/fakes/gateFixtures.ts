@@ -17,6 +17,7 @@ export const entreeDemo: AuthenticatedGate = {
   name: 'Entrée Démo',
   kind: 'ENTRY',
   hasLoops: true,
+  exitIdKind: 'NONE',
 };
 
 export const sortieDemo: AuthenticatedGate = {
@@ -24,6 +25,7 @@ export const sortieDemo: AuthenticatedGate = {
   id: '00000000-0000-4000-8000-000000000702',
   name: 'Sortie Démo',
   kind: 'EXIT',
+  exitIdKind: 'ANPR',
 };
 
 export class FakeGateDeviceKeyRepository implements GateDeviceKeyRepository {
