@@ -118,7 +118,7 @@ describe('presumeSilentSessions', () => {
 
   it('presumes an entry confirmed exactly 30:00.000 before the check, not one confirmed a millisecond later', async () => {
     const atLimit = repositoryWith(julieEntered());
-    const justUnder = repositoryWith({ ...julieEntered(), entryConfirmedAt: new Date(ENTERED_AT.getTime() + 1) });
+    const justUnder = repositoryWith({ state: 'ENTRY_CONFIRMED', entryConfirmedAt: new Date(ENTERED_AT.getTime() + 1), presumedBy: null });
 
     await presumeSilentSessions(jobAt(atLimit, AFTER_30_MINUTES), logSpy());
     await presumeSilentSessions(jobAt(justUnder, AFTER_30_MINUTES), logSpy());

@@ -4,7 +4,6 @@ import type { Database, Transaction } from './database.ts';
 
 type Executor = Pick<Transaction, 'execute'> | Pick<Database, 'execute'>;
 
-
 export function silentConfirmedEntry(cutoff: Date): SQL {
   return sql`state = 'ENTRY_CONFIRMED' and entry_confirmed_at <= ${cutoff.toISOString()}::timestamptz`;
 }
