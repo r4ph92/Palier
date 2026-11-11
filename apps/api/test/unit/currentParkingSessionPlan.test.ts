@@ -31,6 +31,7 @@ describe('GET /v1/me/session level plan (story #17)', () => {
       session: {
         spot: { number: 'B-3', levelCode: 'P1', aisleCode: 'B' },
         beaconMajor: 1,
+        exitBeaconFallback: false,
         levelPlan: {
           levelCode: 'P1',
           aisles: [

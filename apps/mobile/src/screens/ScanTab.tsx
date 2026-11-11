@@ -6,6 +6,7 @@ import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import type { ReceiptClient } from '../api/ReceiptClient';
 import { LoadingState } from '../components/LoadingState';
 import type { TabLabels } from '../components/TabBar';
+import type { ExitByBeacon } from '../parkingSessions/useExitByBeacon';
 import { useEntry, type EntryController, type EntryState } from '../entries/useEntry';
 import type { PendingEntryWatch } from '../entries/usePendingEntryWatch';
 import { i18n } from '../i18n/i18n';
@@ -31,6 +32,8 @@ interface ScanTabProps {
   readonly aside: SessionAside;
   readonly currentSession: CurrentParkingSessionController;
   readonly pendingEntry: PendingEntryWatch;
+  // The exit the barrier made by itself, from the exit beacon and a vehicle at the gate.
+  readonly beaconExit: ExitByBeacon;
   readonly onAddPlate: () => void;
   readonly onAddCard: () => void;
 }
@@ -43,11 +46,16 @@ export function scanTabLabels(state: CurrentParkingSessionState): TabLabels {
 // An entry in progress keeps the scan screen, so its spot and announcement are never cut off by a refresh.
 // Otherwise the tab waits for Palier's first answer, then shows the current session or the form.
 export function ScanTab(props: ScanTabProps) {
-  const [left, setLeft] = useState<LeftSession | null>(null);
+  const [tappedLeft, setLeft] = useState<LeftSession | null>(null);
+  const { beaconExit } = props;
+  const left = tappedLeft ?? beaconExit.left;
   if (left === null) {
     return <SessionOrScan {...props} onLeft={setLeft} />;
   }
-  const onDone = () => setLeft(null);
+  const onDone = () => {
+    setLeft(null);
+    beaconExit.clear();
+  };
   // The capture is pending: the screen says the barrier is open and waits for the receipt.
   return left.receipt === null ? (
     <PendingReceiptScreen client={props.receiptClient} sessionId={left.sessionId} onDone={onDone} />
@@ -130,7 +138,7 @@ function currentSessionScreen(
       reportSpotTaken={(onNoneFree) => (
         <ReportSpotTaken key={reading.session.sessionId} client={parkingSessionClient} session={reading.session} onNoneFree={onNoneFree} onSettled={refresh} />
       )}
-      exit={exitButtonFor({ client: parkingSessionClient, sessionId: reading.session.sessionId, onLeft, refresh })}
+      exit={exitButtonFor({ client: parkingSessionClient, sessionId: reading.session.sessionId, beaconFallback: reading.session.exitBeaconFallback, onLeft, refresh })}
       shouldFocusSpotOnArrival={reading.session.sessionId === arrivedParkedSessionId}
     />
   );
@@ -139,17 +147,18 @@ function currentSessionScreen(
 interface ExitButtonChoice {
   readonly client: ParkingSessionClient;
   readonly sessionId: string;
+  readonly beaconFallback: boolean;
   readonly onLeft: (left: LeftSession) => void;
   readonly refresh: () => void;
 }
 
 // The receipt shows at once and the session is read again, which now answers none.
-function exitButtonFor({ client, sessionId, onLeft, refresh }: ExitButtonChoice): ReactElement {
+function exitButtonFor({ client, sessionId, beaconFallback, onLeft, refresh }: ExitButtonChoice): ReactElement {
   const onLeftAndRefresh = (receipt: ExitReceipt | null) => {
     onLeft({ sessionId, receipt });
     refresh();
   };
-  return <ExitButton key={sessionId} client={client} sessionId={sessionId} onLeft={onLeftAndRefresh} onSessionMoved={refresh} />;
+  return <ExitButton key={sessionId} client={client} sessionId={sessionId} beaconFallback={beaconFallback} onLeft={onLeftAndRefresh} onSessionMoved={refresh} />;
 }
 
 // A cancelled entry keeps the scan screen too: its message stays on the form, whatever the session read answers.

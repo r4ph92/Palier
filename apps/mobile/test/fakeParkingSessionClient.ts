@@ -26,6 +26,7 @@ export function julieAtParkingDemo(overrides: Partial<CurrentParkingSession> = {
     amountCents: 975,
     dailyCapCents: 2500,
     beaconMajor: 1,
+    exitBeaconFallback: false,
     levelPlan: parkingDemoP1Plan,
     question: null,
     ...overrides,
@@ -59,6 +60,8 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
   spotTakenFailure: Error | null = null;
   holdsSpotTakenReport = false;
   readonly exits: string[] = [];
+  readonly exitBeaconReports: { readonly sessionId: string; readonly major: number }[] = [];
+  exitBeaconFailure: Error | null = null;
   exitFailure: Error | null = null;
   holdsExit = false;
   // Stripe could not be reached at the exit: the barrier opens and the receipt is null.
@@ -120,6 +123,11 @@ export class FakeParkingSessionClient implements ParkingSessionClient {
       return new Promise((resolve, reject) => this.#pendingExits.push(() => void this.#leaveNow(sessionId).then(resolve, reject)));
     }
     return this.#leaveNow(sessionId);
+  }
+
+  reportExitBeacon(sessionId: string, major: number): Promise<void> {
+    this.exitBeaconReports.push({ sessionId, major });
+    return this.exitBeaconFailure === null ? Promise.resolve() : Promise.reject(this.exitBeaconFailure);
   }
 
   answerExits(): void {

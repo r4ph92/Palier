@@ -5,6 +5,7 @@
  * @property {(deviceKey: string) => Promise<ApiResponse>} fetchIdentity
  * @property {(deviceKey: string, gateId: string, closedAt: string) => Promise<ApiResponse>} postPassage
  * @property {(deviceKey: string, gateId: string, identifier: string) => Promise<ApiResponse>} postIdentify
+ * @property {(deviceKey: string, gateId: string) => Promise<ApiResponse>} postPresence
  * @property {(deviceKey: string, after: CommandCursor | null) => Promise<ApiResponse>} fetchCommands
  */
 
@@ -29,9 +30,20 @@ export function createGateApi(fetchFunction) {
         headers: { ...authorization(deviceKey), 'content-type': 'application/json' },
         body: JSON.stringify({ identifier }),
       }),
+    postPresence: (deviceKey, gateId) => postPresence(fetchFunction, deviceKey, gateId),
     fetchCommands: (deviceKey, after) =>
       request(fetchFunction, commandsUrl(after), { headers: authorization(deviceKey) }),
   };
+}
+
+/**
+ * @param {typeof fetch} fetchFunction
+ * @param {string} deviceKey
+ * @param {string} gateId
+ * @returns {Promise<ApiResponse>}
+ */
+function postPresence(fetchFunction, deviceKey, gateId) {
+  return request(fetchFunction, `/v1/gates/${encodeURIComponent(gateId)}/presence`, { method: 'POST', headers: authorization(deviceKey) });
 }
 
 /**

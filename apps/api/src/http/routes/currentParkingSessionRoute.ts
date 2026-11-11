@@ -40,6 +40,7 @@ function currentParkingSessionAt(session: ActiveParkingSession, now: Date, log: 
     amountCents,
     dailyCapCents: session.pricing.dailyCapCents,
     beaconMajor: session.beaconMajor,
+    exitBeaconFallback: session.exitBeaconFallback,
     levelPlan: levelPlanWarningOnRejectedShapes(session, log),
     question: session.question,
   };

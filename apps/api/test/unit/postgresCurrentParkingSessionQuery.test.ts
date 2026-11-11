@@ -1,4 +1,5 @@
 import type { ActiveEntrySessionState } from '@palier/shared-types';
+import { exitBeaconWindow } from '../../src/domain/exits/identifyByBeacon.ts';
 import { describe, expect, it } from 'vitest';
 import { PostgresCurrentParkingSessionQuery } from '../../src/infrastructure/postgres/PostgresCurrentParkingSessionQuery.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
@@ -32,7 +33,7 @@ function freeSpotRow(number: string, flags: Partial<Record<'is_ev' | 'is_accessi
 }
 
 function readWith(sql: ScriptedSql) {
-  return new PostgresCurrentParkingSessionQuery(sql.database()).findCurrentParkingSessionForUser(JULIE_ID);
+  return new PostgresCurrentParkingSessionQuery(sql.database(), exitBeaconWindow).findCurrentParkingSessionForUser(JULIE_ID);
 }
 
 describe('PostgresCurrentParkingSessionQuery, the spot and the question (story #21)', () => {
@@ -105,5 +106,28 @@ describe('PostgresCurrentParkingSessionQuery, free spots for the vehicle (story 
     expect(text).toMatch(/left join vehicle on vehicle\.id = ps\.vehicle_id/);
     expect(text).toMatch(/coalesce\(vehicle\.is_electric, false\) as is_electric/);
     expect(sql.statement('read-parked-question')?.text).toMatch(/spot\.is_ev, spot\.is_accessible, spot\.is_oversize/);
+  });
+});
+
+describe('PostgresCurrentParkingSessionQuery, the exit beacon fallback (story #49)', () => {
+  it.each([
+    { read: true, fallback: true },
+    { read: false, fallback: false },
+    { read: null, fallback: false },
+  ])('reads $read as a fallback of $fallback', async ({ read, fallback }) => {
+    const sql = new ScriptedSql().answer('read-current-session', [{ ...sessionRow('PARKED_CONFIRMED'), exit_beacon_fallback: read }]);
+
+    expect(await readWith(sql)).toMatchObject({ exitBeaconFallback: fallback });
+  });
+
+  it('counts only fresh reports of leavable sessions of the lot, the session\'s own included', async () => {
+    const sql = new ScriptedSql().answer('read-current-session', [sessionRow('PARKED_CONFIRMED')]);
+
+    await readWith(sql);
+
+    const text = sql.statements[0]?.text ?? '';
+    expect(text).toMatch(/exit_beacon_report report where report\.session_id = ps\.id and report\.reported_at >= now\(\)/);
+    expect(text).toMatch(/other\.lot_id = ps\.lot_id and other\.state in/);
+    expect(text).toMatch(/\) >= 2/);
   });
 });
