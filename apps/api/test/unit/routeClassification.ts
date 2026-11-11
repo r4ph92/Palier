@@ -19,6 +19,7 @@ export const GATED = [
   'GET /v1/entries/:sessionId',
   'GET /v1/me/session',
   'POST /v1/entries/:sessionId/exit',
+  'POST /v1/entries/:sessionId/exit-beacon',
   'POST /v1/entries/:sessionId/parked',
   'POST /v1/entries/:sessionId/spot',
   'POST /v1/entries/:sessionId/spot-taken',
@@ -40,7 +41,7 @@ export const TEST_ROUTES = [
 const DRIVER_EXEMPT = ['GET /v1/me', 'POST /v1/consent', 'POST /v1/sign-out', ...TEST_ROUTES];
 
 // Gate controllers sign with a device key, never a driver token: there is no driver whose consent could be checked.
-const GATE_DEVICE_ROUTES = ['GET /v1/gates/me', 'GET /v1/gates/me/commands', 'POST /v1/gates/:id/passage', 'POST /v1/gates/:id/identify'];
+const GATE_DEVICE_ROUTES = ['GET /v1/gates/me', 'GET /v1/gates/me/commands', 'POST /v1/gates/:id/passage', 'POST /v1/gates/:id/identify', 'POST /v1/gates/:id/presence'];
 
 // The demo console is static files served only in demo mode; it reaches data through the gate routes with a device key.
 const DEMO_CONSOLE_ROUTES = Object.keys(DEMO_ASSETS).map((fileName) => `GET ${demoAssetUrl(fileName)}`);

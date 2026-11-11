@@ -1,4 +1,4 @@
-import type { GateIdentifyRequest, GateIdentifyResponse, GateIdentity, GatePassageRequest, GatePassageResponse } from '@palier/shared-types';
+import type { GateIdentifyRequest, GateIdentifyResponse, GateIdentity, GatePassageRequest, GatePassageResponse, GatePresenceResponse } from '@palier/shared-types';
 import { isStorableDate } from '../../domain/time/storableDate.ts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { GateCommandCursor, GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
@@ -7,6 +7,7 @@ import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import type { PassageLedger } from '../../domain/gates/PassageLedger.ts';
 import type { ExitDependencies } from '../../domain/exits/exitParking.ts';
 import { identifyAtExit, type IdentifyOutcome } from '../../domain/exits/identifyAtExit.ts';
+import { recordVehicleAtExit } from '../../domain/exits/identifyByBeacon.ts';
 import { recordPassage } from '../../domain/gates/recordPassage.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 import { authenticatedGateOf, createGateDeviceAuthentication } from '../gates/gateDeviceAuthentication.ts';
@@ -19,6 +20,7 @@ import {
   identifyResponseSchema,
   passageRequestSchema,
   passageResponseSchema,
+  presenceResponseSchema,
   type GateIdParameters,
 } from '../schemas/gateSchemas.ts';
 
@@ -63,6 +65,7 @@ export function registerGateRoutes(server: FastifyInstance, dependencies: GateRo
       registerIdentityRoute(scope);
       registerPassageRoute(scope, dependencies);
       registerIdentifyRoute(scope, readerExit);
+      registerPresenceRoute(scope, readerExit);
       registerCommandsRoute(scope, dependencies.commands);
     },
     { prefix: '/v1/gates' },
@@ -99,6 +102,23 @@ function registerIdentifyRoute(scope: FastifyInstance, readerExit: ReaderExitDep
     const gate = authenticatedGateOf(request);
     const identified = await identifyAtExit(readerExit.exit, { gate, requestedGateId, identifier: request.body.identifier, now: readerExit.clock() });
     return identifyReply(identified, request, reply);
+  });
+}
+
+// The console saw a vehicle on the exit gate's arming loop: with exactly one app that reported the exit beacon, the same exit as the tap.
+function registerPresenceRoute(scope: FastifyInstance, readerExit: ReaderExitDependencies | undefined): void {
+  const schema = { params: gateIdParametersSchema, response: { 200: presenceResponseSchema } };
+  scope.post<{ Params: GateIdParameters }>('/:id/presence', { schema }, async (request, reply): Promise<GatePresenceResponse | FastifyReply> => {
+    if (readerExit === undefined) {
+      return reply.status(SERVICE_UNAVAILABLE).send({ statusCode: SERVICE_UNAVAILABLE, error: 'PAYMENTS_UNAVAILABLE', message: 'The payment could not be taken; try again.' });
+    }
+    const gate = authenticatedGateOf(request);
+    const settled = await recordVehicleAtExit(readerExit.exit, { gate, requestedGateId: request.params.id, now: readerExit.clock() });
+    if (settled.outcome === 'waiting' || settled.outcome === 'opened' || settled.outcome === 'fallback') {
+      return { outcome: settled.outcome };
+    }
+    request.log.warn({ gateId: request.params.id, reason: settled.outcome }, 'exit by beacon could not complete; the driver uses the tap');
+    return { outcome: 'waiting' };
   });
 }
 

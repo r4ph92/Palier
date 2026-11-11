@@ -144,6 +144,13 @@ export type ExitRefusalCode =
   | 'PAYMENTS_UNAVAILABLE'
   | 'LOT_BUSY';
 
+// The app saw the exit beacon: the major it heard, which must be the major of the session's own parking (decision 029).
+export interface ExitBeaconRequest {
+  readonly major: number;
+}
+
+export type ExitBeaconRefusalCode = ExitRefusalCode | 'BEACON_NOT_THIS_LOT';
+
 // One line of the receipt history: a closed, paid session, newest exit first.
 export interface ReceiptSummary {
   readonly sessionId: string;
