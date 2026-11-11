@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parsePricingPolicy, PricingPolicyInvalidError, type PricingPolicy } from '../../src/domain/pricing/PricingPolicy.ts';
-import { amountSoFar, priceParkingSessionAt } from '../../src/domain/pricing/priceParkingSessionAt.ts';
+import { amountSoFar, priceParkingSessionAt, stayAmount, stayLines } from '../../src/domain/pricing/priceParkingSessionAt.ts';
 
 const parkingDemoPricing: PricingPolicy = { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 };
 const enteredAt = new Date(2026, 10, 4, 18, 2);
@@ -34,6 +34,44 @@ describe('amountSoFar', () => {
 
   it('stops at the daily cap from the 34th increment', () => {
     expect(amountSoFar(parkingDemoPricing, 33 * 15 + 1)).toBe(2500);
+  });
+});
+
+describe('stays over 24 hours', () => {
+  it('stays at the daily cap for exactly 24 hours, with no lines', () => {
+    expect(stayAmount(parkingDemoPricing, 24 * 60)).toBe(2500);
+    expect(stayLines(parkingDemoPricing, 24 * 60)).toEqual([]);
+  });
+
+  it('bills 30 hours as the first day at the cap and 6 hours at 3 $ an hour', () => {
+    expect(stayLines(parkingDemoPricing, 30 * 60)).toEqual([
+      { kind: 'DAY', dayNumber: 1, cents: 2500 },
+      { kind: 'EXTRA', minutes: 360, cents: 1800 },
+    ]);
+    expect(stayAmount(parkingDemoPricing, 30 * 60)).toBe(4300);
+  });
+
+  it('bills 50 hours as two days and 2 hours, 56 $', () => {
+    expect(stayLines(parkingDemoPricing, 50 * 60)).toEqual([
+      { kind: 'DAY', dayNumber: 1, cents: 2500 },
+      { kind: 'DAY', dayNumber: 2, cents: 2500 },
+      { kind: 'EXTRA', minutes: 120, cents: 600 },
+    ]);
+    expect(stayAmount(parkingDemoPricing, 50 * 60)).toBe(5600);
+  });
+
+  it('bills exactly 48 hours as two days with no extra line', () => {
+    expect(stayLines(parkingDemoPricing, 48 * 60)).toHaveLength(2);
+    expect(stayAmount(parkingDemoPricing, 48 * 60)).toBe(5000);
+  });
+
+  it('starts the extra increment one minute past the day and caps the extra at a day', () => {
+    expect(stayAmount(parkingDemoPricing, 24 * 60 + 1)).toBe(2575);
+    expect(stayAmount(parkingDemoPricing, 47 * 60 + 59)).toBe(5000);
+  });
+
+  it('prices the live session beyond 24 hours with the running total', () => {
+    expect(priceParkingSessionAt({ enteredAt, pricing: parkingDemoPricing }, minutesAfterEntry(30 * 60))).toEqual({ elapsedMinutes: 1800, amountCents: 4300 });
   });
 });
 
