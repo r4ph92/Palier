@@ -1,4 +1,4 @@
-import { boolean, foreignKey, index, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { boolean, foreignKey, index, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { parkingLot } from './lotSchema.ts';
 
 export const gateKind = pgEnum('gate_kind', ['ENTRY', 'EXIT']);
@@ -49,6 +49,7 @@ export const gatePassage = pgTable(
     lotId: uuid('lot_id').notNull(),
     closedAt: timestamp('closed_at', { withTimezone: true }).notNull(),
     recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
+    replayId: uuid('replay_id'),
   },
   (table) => [
     foreignKey({
@@ -57,5 +58,6 @@ export const gatePassage = pgTable(
       foreignColumns: [gate.id, gate.lotId],
     }),
     index('gate_passage_gate_id_recorded_at_index').on(table.gateId, table.recordedAt),
+    uniqueIndex('gate_passage_gate_id_replay_id_unique').on(table.gateId, table.replayId),
   ],
 );

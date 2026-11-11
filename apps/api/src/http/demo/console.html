@@ -27,6 +27,7 @@
         <input id="device-key" class="field" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="device-key-hint">
         <p id="device-key-hint" class="hint" data-text="deviceKeyHint">Les clés de démonstration sont dans docs/demo-console.md.</p>
         <p id="gate-identity" class="identity">Barrière identifiée au premier appui.</p>
+        <button type="button" id="offline-toggle" class="loop-button offline-toggle" aria-pressed="false" aria-disabled="true" data-text="offlineToggle">Hors ligne</button>
       </section>
 
       <section class="block" aria-labelledby="loops-heading">
@@ -36,6 +37,8 @@
           <button type="button" class="loop-button" data-loop="EXIT" data-text="loopEXIT" disabled>Boucle de sortie fermée</button>
         </div>
         <p id="message" class="message" role="status"></p>
+        <p id="pending" class="pending" role="status"></p>
+        <button type="button" id="clear-queue" class="clear-queue" data-text="clearQueue" hidden>Vider la file</button>
       </section>
 
       <section class="block" aria-labelledby="reader-heading">
@@ -58,7 +61,7 @@
 
       <section class="block" aria-labelledby="passages-heading">
         <h2 id="passages-heading" class="eyebrow" data-text="passagesHeading">Passages</h2>
-        <p id="no-passage" class="hint" data-text="noPassage">Aucun passage pour l’instant.</p>
+        <p id="no-passage" class="hint" data-text="noPassage">Aucun passage en ligne pour l’instant.</p>
         <ul id="passages" class="passages"></ul>
       </section>
     </main>

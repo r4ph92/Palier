@@ -1,4 +1,5 @@
-import { UNREACHABLE } from './gateApi.js';
+import { OK } from './gateApi.js';
+import { knownGateIdentity, messageForStatus } from './gateIdentity.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('@palier/shared-types').GateKind} GateKind */
@@ -19,20 +20,6 @@ import { UNREACHABLE } from './gateApi.js';
  *   | { kind: 'wrongLoop', identity: GateIdentity }} PressOutcome
  */
 
-const OK = 200;
-export const DEVICE_KEY_SHAPE = /^[A-Za-z0-9_-]{43}$/;
-
-/** @type {Record<number, TextKey>} */
-const MESSAGE_BY_STATUS = { [UNREACHABLE]: 'unreachable', 401: 'keyRefused', 403: 'gateForbidden', 409: 'gateWithoutLoops' };
-
-/**
- * @param {number} status
- * @returns {TextKey}
- */
-export function messageForStatus(status) {
-  return MESSAGE_BY_STATUS[status] ?? 'passageFailed';
-}
-
 /**
  * @param {GateKind} loop
  * @param {{ deviceKey: string, identity: GateIdentity | null }} state
@@ -51,10 +38,7 @@ export function isLoopEnabled(loop, state) {
  * @returns {Promise<PressOutcome>}
  */
 export async function pressLoop(press, api) {
-  if (!DEVICE_KEY_SHAPE.test(press.deviceKey)) {
-    return { kind: 'refused', identity: null, messageKey: 'keyRefused' };
-  }
-  const identityOrRefusal = press.identity ?? (await identify(press.deviceKey, api));
+  const identityOrRefusal = await knownGateIdentity(press, api);
   if ('messageKey' in identityOrRefusal) {
     return identityOrRefusal;
   }
@@ -75,17 +59,4 @@ export async function pressLoop(press, api) {
  */
 function passageRefusal(status) {
   return status === OK ? 'passageUnconfirmed' : messageForStatus(status);
-}
-
-/**
- * @param {string} deviceKey
- * @param {Pick<import('./gateApi.js').GateApi, 'fetchIdentity'>} api
- * @returns {Promise<GateIdentity | RefusedOutcome>}
- */
-export async function identify(deviceKey, api) {
-  const response = await api.fetchIdentity(deviceKey);
-  if (response.status !== OK || response.body === null) {
-    return { kind: 'refused', identity: null, messageKey: messageForStatus(response.status) };
-  }
-  return /** @type {GateIdentity} */ (response.body);
 }

@@ -106,6 +106,36 @@ Messages : « Clé d'appareil refusée » (clé inconnue, mal formée ou révoqu
 boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouton
 « English » passe toute la page en anglais.
 
+## Hors ligne (#12)
+
+Le bouton « Hors ligne » joue un contrôleur qui a perdu le contact avec Palier.
+
+1. Avec une clé saisie, appuyer sur « Hors ligne ». La console identifie d'abord la
+   barrière (encore en ligne), puis n'envoie plus rien : la clé se verrouille, le
+   lecteur, la boucle d'armement et l'interrogation des commandes sont suspendus.
+2. À une entrée, la console affiche « Hors service — entrée refusée aux usagers
+   Palier » ; à une sortie, « Sortie ouverte sans condition ». Chaque appui sur la
+   boucle de la barrière s'ajoute à « N passages en attente », avec son heure.
+   Le compteur de l'app ne bouge pas.
+3. Appuyer de nouveau sur « Hors ligne » : la console rejoue la file (lots de 500,
+   `POST /v1/gates/:id/passages/replay`) avec les heures d'origine. Elle affiche
+   « 2 passages rejoués · 3 véhicules dans le parking » et « 0 passage en attente ».
+   Rejouer deux fois le même lot ne change le compteur qu'une fois.
+4. Si Palier est injoignable ou répond 5xx, la file reste en attente : appuyer de
+   nouveau pour réessayer. Si Palier refuse le lot (400, 401, 403, 409) ou si la
+   clé est celle d'une autre barrière, « Vider la file » abandonne les passages et
+   remet la console en ligne.
+5. La file est gardée dans `sessionStorage` (jamais la clé) : après un rechargement
+   la console redémarre hors ligne avec sa file (les boucles de la barrière
+   continuent de compter) ; saisir la clé de la même barrière puis appuyer sur
+   « Hors ligne » rejoue la file. Tant que la clé manque ou est refusée, la console
+   le dit et ne rejoue rien. Si la file est bloquée, les boucles sont désactivées et
+   la raison reste affichée jusqu'à « Vider la file ». Fermer l'onglet l'efface ; le navigateur prévient avant
+   de quitter la page tant que des passages attendent.
+
+Un passage de plus de 7 jours est refusé (400 `CLOSED_AT_TOO_OLD`) et bloque tout le
+lot : voir la décision 031.
+
 ## Scénarios
 
 - **Entrée par QR** : clé d'Entrée Démo dans la console ; Julie colle le QR
@@ -170,6 +200,7 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
 - `POST /v1/gates/:id/presence` (clé d'une barrière de sortie, sans corps) : `{ outcome: 'waiting' | 'opened' | 'fallback' }` ; 409 `GATE_NOT_EXIT` pour une barrière d'entrée. Voir `docs/decisions/029`.
 
 - `GET /v1/gates/me` : `{ id, name, kind, lotName }` de la barrière de la clé.
+- `POST /v1/gates/:id/passages/replay`, corps `{ "passages": [{ "id": "<uuid>", "kind": "ENTRY" | "EXIT", "closedAt": "<ISO 8601>" }] }` (1 à 500) : `{ counted, duplicates, vehicleCount }`. Compte seulement : aucune session confirmée ni sortie rattachée. 403 `GATE_FORBIDDEN`, 409 `REPLAY_KIND_MISMATCH`, 400 `REPLAY_IDS_REPEATED`, `CLOSED_AT_TOO_OLD`.
 - `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>" }` :
   `{ gateId, lotId, kind, closedAt, vehicleCount, confirmedSessionId, exitedSessionId }`.
   `confirmedSessionId` est la session d'entrée que ce passage a confirmée (la plus

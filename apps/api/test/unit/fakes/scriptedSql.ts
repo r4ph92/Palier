@@ -44,6 +44,7 @@ export type StatementLabel =
   | 'read-parked-question'
   | 'read-session-status'
   | 'read-lot-occupancy'
+  | 'replay-passages'
   | 'unknown';
 
 export interface ExecutedStatement {
@@ -66,6 +67,7 @@ const dialect = new PgDialect();
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
+  ['replay-passages', /insert into gate_passage[\s\S]*on conflict/],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],
   ['presume-silent-questions', /where lot_id = \$\d and state = 'PARKED_UNCONFIRMED' and parked_at/],

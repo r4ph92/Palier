@@ -10,6 +10,9 @@ const STATUS_BY_REASON: Record<PassageRefusalReason, number> = {
   GATE_WITHOUT_READER: 409,
   IDENTIFIER_INVALID: 400,
   GATE_NOT_EXIT: 409,
+  REPLAY_KIND_MISMATCH: 409,
+  REPLAY_IDS_REPEATED: 400,
+  CLOSED_AT_TOO_OLD: 400,
 };
 
 export function handleGateError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {

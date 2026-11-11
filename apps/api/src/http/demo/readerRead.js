@@ -1,5 +1,5 @@
-import { UNREACHABLE } from './gateApi.js';
-import { DEVICE_KEY_SHAPE, identify } from './loopPress.js';
+import { OK, UNREACHABLE } from './gateApi.js';
+import { knownGateIdentity } from './gateIdentity.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('@palier/shared-types').GateIdentifyResponse} GateIdentifyResponse */
@@ -9,8 +9,6 @@ import { DEVICE_KEY_SHAPE, identify } from './loopPress.js';
  * @typedef {{ kind: 'opened' | 'fallback', identity: GateIdentity }
  *   | { kind: 'refused', identity: GateIdentity | null, messageKey: TextKey }} ReadOutcome
  */
-
-const OK = 200;
 
 /** @type {Record<number, TextKey>} */
 const MESSAGE_BY_STATUS = {
@@ -36,10 +34,7 @@ export function readerMessageForStatus(status) {
  * @returns {Promise<ReadOutcome>}
  */
 export async function sendReading(reading, api) {
-  if (!DEVICE_KEY_SHAPE.test(reading.deviceKey)) {
-    return { kind: 'refused', identity: null, messageKey: 'keyRefused' };
-  }
-  const identityOrRefusal = reading.identity ?? (await identify(reading.deviceKey, api));
+  const identityOrRefusal = await knownGateIdentity(reading, api);
   if ('messageKey' in identityOrRefusal) {
     return identityOrRefusal;
   }
@@ -52,9 +47,20 @@ export async function sendReading(reading, api) {
 }
 
 /**
- * @param {{ deviceKey: string, identity: GateIdentity | null }} state
+ * @param {{ deviceKey: string, identity: GateIdentity | null, isOffline: boolean }} state
  * @returns {boolean}
  */
 export function isReaderEnabled(state) {
-  return state.deviceKey !== '' && (state.identity === null || state.identity.kind === 'EXIT');
+  return !state.isOffline && state.deviceKey !== '' && (state.identity === null || state.identity.kind === 'EXIT');
+}
+
+/**
+ * @param {ReadOutcome} outcome
+ * @returns {import('./consoleText.js').ConsoleMessage}
+ */
+export function readingMessage(outcome) {
+  if (outcome.kind === 'refused') {
+    return { key: outcome.messageKey, isError: true };
+  }
+  return outcome.kind === 'opened' ? { key: 'readerOpened', isError: false } : { key: 'readerFallback', isError: true };
 }

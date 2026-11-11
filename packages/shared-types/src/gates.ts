@@ -23,6 +23,23 @@ export interface GatePassageResponse {
   readonly exitedSessionId: string | null;
 }
 
+export interface PassageReplayItem {
+  // Chosen by the controller when it counts the passage: sending the same id again counts nothing more.
+  readonly id: string;
+  readonly kind: GateKind;
+  readonly closedAt: string;
+}
+
+export interface PassageReplayRequest {
+  readonly passages: readonly PassageReplayItem[];
+}
+
+export interface PassageReplayResponse {
+  readonly counted: number;
+  readonly duplicates: number;
+  readonly vehicleCount: number;
+}
+
 // What the exit reader read: a plate or a transponder identifier, in any case, with or without spaces.
 export interface GateIdentifyRequest {
   readonly identifier: string;
