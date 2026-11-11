@@ -1,8 +1,9 @@
 import { COMMAND_POLL_MILLISECONDS, pollCommands } from './commandFeed.js';
 import { createGateApi } from './gateApi.js';
-import { deviceKeyInput, languageButtons, loopButtons, plateInput, readerButton, render, renderCommands, renderMessage } from './consoleRender.js';
+import { deviceKeyInput, languageButtons, loopButtons, plateInput, presenceButton, readerButton, render, renderCommands, renderMessage } from './consoleRender.js';
 import { pressLoop } from './loopPress.js';
 import { sendReading } from './readerRead.js';
+import { sendPresence } from './vehiclePresence.js';
 
 /** @typedef {import('./consoleText.js').Language} Language */
 /** @typedef {import('./consoleText.js').TextKey} TextKey */
@@ -107,7 +108,26 @@ function readingMessage(outcome) {
   return outcome.kind === 'opened' ? { key: 'readerOpened', isError: false } : { key: 'readerFallback', isError: true };
 }
 
+async function onPresenceSent() {
+  if (state.isSending) {
+    return;
+  }
+  state.isSending = true;
+  try {
+    const outcome = await sendPresence({ deviceKey: state.deviceKey, identity: state.identity }, api);
+    state.identity = outcome.identity;
+    state.message = outcome.kind === 'refused' ? { key: outcome.messageKey, isError: true } : { key: PRESENCE_MESSAGES[outcome.kind], isError: outcome.kind === 'fallback' };
+  } finally {
+    state.isSending = false;
+    render(state);
+  }
+}
+
+/** @type {Record<'waiting' | 'opened' | 'fallback', TextKey>} */
+const PRESENCE_MESSAGES = { waiting: 'presenceWaiting', opened: 'presenceOpened', fallback: 'presenceFallback' };
+
 readerButton.addEventListener('click', () => void onReadingSent());
+presenceButton.addEventListener('click', () => void onPresenceSent());
 
 deviceKeyInput.addEventListener('input', () => {
   state.deviceKey = deviceKeyInput.value.trim();

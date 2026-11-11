@@ -67,6 +67,26 @@ fait, la barrière s'ouvre (« Ouverture commandée ») et le reçu apparaît da
 Compte > Reçus. Sans session ouverte pour cette plaque, ou avec deux, la console
 affiche « Aucune session — repli sur l'app » et rien n'est capturé.
 
+## Sortie par la balise de sortie (#49)
+
+Sans lecteur, la sortie se fait quand l'app d'un conducteur voit la balise de la
+voie de sortie **et** que la console signale un véhicule à la sortie, dans les 60
+secondes l'un de l'autre, dans l'ordre qu'on veut.
+
+1. Julie est dans le parking. Coller la clé de Sortie Démo dans la console.
+2. Dans l'app, Compte > Développeur > « Signaux simulés » : « Voie de sortie
+   (minor 0) » (l'app signale la balise).
+3. Dans la console, « Véhicule à la sortie » : « Ouverture commandée par la balise
+   de sortie. » ; l'app affiche le reçu sans toucher, et l'historique l'identifie
+   par balise (`exit_identification = 'BEACON'`).
+4. Dans l'autre ordre (console d'abord, puis le signal de l'app), le résultat est
+   le même.
+5. Deux conducteurs (deux appareils) qui signalent la balise : la console répond
+   « Deux apps ont signalé la balise : repli sur « Ouvrir » dans l'app. », rien
+   n'est capturé, et les deux apps affichent « Touchez « Ouvrir » pour sortir ».
+6. Un signal de balise sans véhicule (un piéton), ou plus de 60 s entre les deux :
+   rien ne se passe.
+
 ## Utiliser la console
 
 1. Coller une clé dans « Clé d'appareil ». La clé ne quitte jamais la page :
@@ -146,6 +166,8 @@ boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouto
   Réponse 403 `GATE_FORBIDDEN`, compteur inchangé.
 
 ## API utilisée
+
+- `POST /v1/gates/:id/presence` (clé d'une barrière de sortie, sans corps) : `{ outcome: 'waiting' | 'opened' | 'fallback' }` ; 409 `GATE_NOT_EXIT` pour une barrière d'entrée. Voir `docs/decisions/029`.
 
 - `GET /v1/gates/me` : `{ id, name, kind, lotName }` de la barrière de la clé.
 - `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>" }` :

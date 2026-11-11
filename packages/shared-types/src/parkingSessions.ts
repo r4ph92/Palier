@@ -14,6 +14,8 @@ export interface CurrentParkingSession {
   readonly dailyCapCents: number;
   // The lot's beacon major, which the app monitors while the session lasts; null for a lot without beacons.
   readonly beaconMajor: number | null;
+  // Two apps reported the exit beacon in the last minute, so nothing opens by itself: the app says "Touchez « Ouvrir » pour sortir".
+  readonly exitBeaconFallback: boolean;
   readonly levelPlan: LevelPlan | null;
   // PARKED_UNCONFIRMED only: the driver walked away in another aisle, and is asked where they parked.
   readonly question: ParkedQuestion | null;
@@ -143,6 +145,13 @@ export type ExitRefusalCode =
   | 'GATE_UNAVAILABLE'
   | 'PAYMENTS_UNAVAILABLE'
   | 'LOT_BUSY';
+
+// The app saw the exit beacon: the major it heard, which must be the major of the session's own parking (decision 029).
+export interface ExitBeaconRequest {
+  readonly major: number;
+}
+
+export type ExitBeaconRefusalCode = ExitRefusalCode | 'BEACON_NOT_THIS_LOT';
 
 // One line of the receipt history: a closed, paid session, newest exit first.
 export interface ReceiptSummary {

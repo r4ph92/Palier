@@ -1,4 +1,4 @@
-import type { GateIdentity, GateIdentifyRequest, GateIdentifyResponse, GatePassageRequest, GatePassageResponse } from '@palier/shared-types';
+import type { GateIdentity, GateIdentifyRequest, GateIdentifyResponse, GatePassageRequest, GatePassageResponse, GatePresenceResponse } from '@palier/shared-types';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
 import { idPathParametersSchema } from './uuidSchema.ts';
@@ -58,6 +58,13 @@ export const identifyResponseSchema = {
   },
 } as const;
 
+export const presenceResponseSchema = {
+  type: 'object',
+  required: ['outcome'],
+  additionalProperties: false,
+  properties: { outcome: { type: 'string', enum: ['waiting', 'opened', 'fallback'] } },
+} as const;
+
 export type GateIdParameters = FromSchema<typeof gateIdParametersSchema>;
 
 export type IdentitySchemaMatchesGateIdentity = AssertTrue<MutuallyAssignable<FromSchema<typeof gateIdentitySchema>, GateIdentity>>;
@@ -69,3 +76,4 @@ export type ResponseSchemaMatchesPassageResponse = AssertTrue<
 >;
 export type RequestSchemaMatchesIdentifyRequest = AssertTrue<MutuallyAssignable<FromSchema<typeof identifyRequestSchema>, GateIdentifyRequest>>;
 export type ResponseSchemaMatchesIdentifyResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof identifyResponseSchema>, GateIdentifyResponse>>;
+export type ResponseSchemaMatchesPresenceResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof presenceResponseSchema>, GatePresenceResponse>>;

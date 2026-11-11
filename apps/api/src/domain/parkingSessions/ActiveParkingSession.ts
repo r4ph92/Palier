@@ -11,6 +11,8 @@ export interface ActiveParkingSession {
   readonly enteredAt: Date;
   readonly pricing: PricingPolicy;
   readonly beaconMajor: number | null;
+  // This session and another one of its lot both reported the exit beacon within the window (decision 029).
+  readonly exitBeaconFallback: boolean;
   // Every aisle of the spot's level the driver can drive in, ordered by code; the level plan is drawn from them.
   readonly levelAisles: readonly StoredLevelAisle[];
   readonly question: ParkedQuestion | null;

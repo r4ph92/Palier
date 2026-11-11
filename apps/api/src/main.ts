@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { readDashboardUrl, readServerEnvironment, readStripeWebhookSecret } from './config/environment.ts';
 import { readPaymentsSimulation } from './config/paymentsSimulation.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
+import { exitBeaconWindow } from './domain/exits/identifyByBeacon.ts';
 import { composeClock } from './composeClock.ts';
 import { composeEntries } from './composeEntries.ts';
 import { composeEntryCancellation } from './composeEntryCancellation.ts';
@@ -72,7 +73,7 @@ const server = buildServer({
     userDirectory: new PostgresUserDirectory(connection.database),
     vehicleRepository,
     operatorRepository: new PostgresOperatorRepository(connection.database),
-    currentParkingSessions: new PostgresCurrentParkingSessionQuery(connection.database),
+    currentParkingSessions: new PostgresCurrentParkingSessionQuery(connection.database, exitBeaconWindow),
     parkingSessionBackdater: new PostgresParkingSessionBackdater(connection.database),
     parkedPresumptions: new PostgresParkedPresumptionRepository(connection.database),
     parkedAnswers: new PostgresParkedAnswerRepository(connection.database),

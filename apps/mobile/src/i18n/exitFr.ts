@@ -3,6 +3,7 @@ import { UNREACHABLE } from './sharedFr';
 export const exitFr = {
   action: 'Ouvrir la barrière de sortie',
   opening: 'Ouverture…',
+  beaconFallback: 'Touchez « Ouvrir » pour sortir',
   unreachable: UNREACHABLE,
   pending: { title: 'Barrière ouverte — votre reçu suivra' },
   receipt: {

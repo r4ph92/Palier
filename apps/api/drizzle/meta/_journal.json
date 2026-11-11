@@ -208,8 +208,15 @@
     {
       "idx": 29,
       "version": "7",
-      "when": 1794363477757,
-      "tag": "0029_pending_surplus",
+      "when": 1794362404979,
+      "tag": "0029_exit_beacon",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1794407772283,
+      "tag": "0030_pending_surplus",
       "breakpoints": true
     }
   ]

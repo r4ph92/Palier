@@ -1,28 +1,14 @@
 import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
 import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitIdentification, ExitRepository, PaidExit, PendingExitClosing, ReadIdentifierKind } from '../../domain/exits/ExitRepository.ts';
+import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import { spotsFreedOnExit, type SpotOfExit } from '../../domain/exits/spotsFreedOnExit.ts';
 import type { SpotState } from '../../domain/spots/spotStates.ts';
+import { EXITABLE_COLUMNS, exitableSessionOf, LEAVABLE_STATES, paidExitOf, type ExitableRow } from './exitableSessionSql.ts';
 import { activeSessionOf } from './activeSessionStates.ts';
 import type { Database, Transaction } from './database.ts';
 import { inLotLock, orLotBusy } from './lockParkingLot.ts';
-
-interface ExitableRow extends Record<string, unknown> {
-  readonly id: string;
-  readonly state: EntrySessionState;
-  readonly lot_id: string;
-  readonly payment_intent_id: string | null;
-  readonly authorized_cents: number;
-  readonly entry_scan_at: Date | string;
-  readonly pricing_increment_cents: number;
-  readonly pricing_increment_minutes: number;
-  readonly pricing_daily_cap_cents: number;
-  readonly exit_gate_id: string | null;
-  readonly exit_at: Date | string | null;
-  readonly captured_cents: number | null;
-  readonly surplus_paid_cents: number;
-  readonly unpaid_cents: number;
-}
+import { isWithinOpeningWindow } from './openingWindowSql.ts';
 
 interface PaidExitRow extends Record<string, unknown> {
   readonly state: EntrySessionState;
@@ -43,9 +29,6 @@ interface SpotRow extends Record<string, unknown> {
   readonly held_by_another_session: boolean;
 }
 
-// Sessions that went through the gate and have not left: the only ones an exit closes.
-const LEAVABLE_STATES = sql`('ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED')`;
-
 export class PostgresExitRepository implements ExitRepository {
   readonly #database: Database;
 
@@ -55,10 +38,7 @@ export class PostgresExitRepository implements ExitRepository {
 
   async findForExit(sessionId: string, driverId: string): Promise<ExitableSession | null> {
     const rows = await this.#database.execute<ExitableRow>(sql`
-      select ps.id, ps.state, ps.lot_id, ps.payment_intent_id, ps.authorized_cents, ps.entry_scan_at, ps.exit_at, ps.captured_cents,
-        ps.surplus_paid_cents, ps.unpaid_cents,
-        ps.pricing_increment_cents, ps.pricing_increment_minutes, ps.pricing_daily_cap_cents,
-        (select gate.id from gate where gate.lot_id = ps.lot_id and gate.kind = 'EXIT' order by gate.name limit 1) as exit_gate_id
+      select ${EXITABLE_COLUMNS}
       from parking_session ps
       where ps.id = ${sessionId} and ps.user_id = ${driverId}`);
     const row = rows[0];
@@ -71,10 +51,7 @@ export class PostgresExitRepository implements ExitRepository {
         ? sql`upper(regexp_replace(ps.plate, '[ -]', '', 'g')) = ${key}`
         : sql`exists (select 1 from vehicle where vehicle.id = ps.vehicle_id and vehicle.transponder_key = ${key})`;
     const rows = await this.#database.execute<ExitableRow>(sql`
-      select ps.id, ps.state, ps.lot_id, ps.payment_intent_id, ps.authorized_cents, ps.entry_scan_at, ps.exit_at, ps.captured_cents,
-        ps.surplus_paid_cents, ps.unpaid_cents,
-        ps.pricing_increment_cents, ps.pricing_increment_minutes, ps.pricing_daily_cap_cents,
-        (select gate.id from gate where gate.lot_id = ps.lot_id and gate.kind = 'EXIT' order by gate.name limit 1) as exit_gate_id
+      select ${EXITABLE_COLUMNS}
       from parking_session ps
       where ps.lot_id = ${lotId} and ps.state in ${LEAVABLE_STATES} and ${matches}
       limit 2`);
@@ -109,6 +86,39 @@ export class PostgresExitRepository implements ExitRepository {
       }),
     );
   }
+
+  // On the database clock, like the window that reads it. Only a session that can still leave, in its own lot (the major is the lot's).
+  async recordBeaconReport(sessionId: string, major: number): Promise<boolean> {
+    const rows = await this.#database.execute(sql`
+      insert into exit_beacon_report (session_id, reported_at)
+      select ps.id, now() from parking_session ps join parking_lot lot on lot.id = ps.lot_id
+      where ps.id = ${sessionId} and lot.beacon_major = ${major} and ps.state in ${LEAVABLE_STATES}
+      on conflict (session_id) do update set reported_at = excluded.reported_at
+      returning session_id`);
+    return rows.length > 0;
+  }
+
+  async recordVehiclePresence(gateId: string): Promise<void> {
+    await this.#database.execute(sql`
+      insert into exit_vehicle_presence (gate_id, seen_at) values (${gateId}, now())
+      on conflict (gate_id) do update set seen_at = excluded.seen_at`);
+  }
+
+  async findBeaconCandidates(lotId: string, window: OpeningWindow): Promise<readonly ExitableSession[]> {
+    const rows = await this.#database.execute<ExitableRow>(sql`
+      select ${EXITABLE_COLUMNS}
+      from parking_session ps join exit_beacon_report report on report.session_id = ps.id
+      where ps.lot_id = ${lotId} and ps.state in ${LEAVABLE_STATES} and ${isWithinOpeningWindow(sql`report.reported_at`, window)}
+      limit 2`);
+    return rows.map(exitableSessionOf);
+  }
+
+  // One delete decides who spends the presence: two requests at once cannot both open for one vehicle.
+  async takeVehiclePresence(gateId: string, window: OpeningWindow): Promise<boolean> {
+    const rows = await this.#database.execute(sql`
+      delete from exit_vehicle_presence where gate_id = ${gateId} and ${isWithinOpeningWindow(sql`seen_at`, window)} returning gate_id`);
+    return rows.length > 0;
+  }
 }
 
 interface IdentifiedExit {
@@ -126,28 +136,6 @@ interface GateOpening {
 async function openGate(tx: Transaction, { sessionId, lotId, exitGateId, session, now }: GateOpening): Promise<void> {
   await freeSpots(tx, { sessionId, session, now });
   await tx.execute(sql`insert into gate_command (gate_id, lot_id, kind, session_id) values (${exitGateId}, ${lotId}, 'OPEN', ${sessionId})`);
-}
-
-function exitableSessionOf(row: ExitableRow): ExitableSession {
-  return {
-    id: row.id,
-    state: row.state,
-    lotId: row.lot_id,
-    paymentIntentId: row.payment_intent_id,
-    authorizedCents: row.authorized_cents,
-    enteredAt: new Date(row.entry_scan_at),
-    pricing: {
-      incrementCents: row.pricing_increment_cents,
-      incrementMinutes: row.pricing_increment_minutes,
-      dailyCapCents: row.pricing_daily_cap_cents,
-    },
-    exitGateId: row.exit_gate_id,
-    paidExit: row.exit_at === null || row.captured_cents === null ? null : paidExitOf(row, row.exit_at, row.captured_cents),
-  };
-}
-
-function paidExitOf(row: { readonly surplus_paid_cents: number; readonly unpaid_cents: number }, exitAt: Date | string, capturedCents: number): PaidExit {
-  return { exitedAt: new Date(exitAt), capturedCents, surplusPaidCents: row.surplus_paid_cents, unpaidCents: row.unpaid_cents };
 }
 
 // Null when the session is not leavable any more: another request closed it first.

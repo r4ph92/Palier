@@ -1,5 +1,5 @@
 {
-  "id": "5811fab6-ec2d-42be-9705-86730897106f",
+  "id": "a1182961-3f92-42e7-bb32-26af56df0247",
   "prevId": "bcbcc6b7-7a4d-4fad-9632-b8cf2542f7cf",
   "version": "7",
   "dialect": "postgresql",
@@ -1524,13 +1524,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "pending_surplus_cents": {
-          "name": "pending_surplus_cents",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
         "surplus_paid_cents": {
           "name": "surplus_paid_cents",
           "type": "integer",
@@ -1783,10 +1776,6 @@
         "parking_session_surplus_not_negative": {
           "name": "parking_session_surplus_not_negative",
           "value": "\"parking_session\".\"surplus_paid_cents\" >= 0 and \"parking_session\".\"unpaid_cents\" >= 0"
-        },
-        "parking_session_pending_surplus_not_negative": {
-          "name": "parking_session_pending_surplus_not_negative",
-          "value": "\"parking_session\".\"pending_surplus_cents\" >= 0"
         },
         "parking_session_pricing_positive": {
           "name": "parking_session_pricing_positive",
@@ -2100,6 +2089,84 @@
         }
       },
       "isRLSEnabled": false
+    },
+    "public.exit_beacon_report": {
+      "name": "exit_beacon_report",
+      "schema": "",
+      "columns": {
+        "session_id": {
+          "name": "session_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "reported_at": {
+          "name": "reported_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "exit_beacon_report_session_id_parking_session_id_fk": {
+          "name": "exit_beacon_report_session_id_parking_session_id_fk",
+          "tableFrom": "exit_beacon_report",
+          "tableTo": "parking_session",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.exit_vehicle_presence": {
+      "name": "exit_vehicle_presence",
+      "schema": "",
+      "columns": {
+        "gate_id": {
+          "name": "gate_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "seen_at": {
+          "name": "seen_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "exit_vehicle_presence_gate_id_gate_id_fk": {
+          "name": "exit_vehicle_presence_gate_id_gate_id_fk",
+          "tableFrom": "exit_vehicle_presence",
+          "tableTo": "gate",
+          "columnsFrom": [
+            "gate_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -2188,7 +2255,8 @@
       "values": [
         "APP",
         "PLATE",
-        "TRANSPONDER"
+        "TRANSPONDER",
+        "BEACON"
       ]
     },
     "public.gate_command_kind": {
