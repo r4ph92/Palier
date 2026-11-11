@@ -45,6 +45,12 @@
   font: inherit;
 }
 
+.field-input[inputmode='decimal'],
+.field-input[inputmode='numeric'] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
 .field-input[aria-invalid='true'] {
   border-color: var(--danger);
 }

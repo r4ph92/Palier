@@ -55,10 +55,10 @@ function LotFacts({ lot }: { readonly lot: DashboardLotDetails }) {
         <LotStateMark isOnline={lot.isOnline} />
       </Fact>
       <Fact label={text.createLot.addressLabel}>{lot.address}</Fact>
-      <Fact label={text.createLot.latitudeLabel}>{degrees(lot.latitude)}</Fact>
-      <Fact label={text.createLot.longitudeLabel}>{degrees(lot.longitude)}</Fact>
-      <Fact label={text.createLot.capacityLabel}>{formatCount(lot.capacity, language)}</Fact>
-      <Fact label={text.lot.beaconMajorLabel}>{lot.beaconMajor === null ? MISSING : String(lot.beaconMajor)}</Fact>
+      <Fact label={text.createLot.latitudeLabel} numeric>{degrees(lot.latitude)}</Fact>
+      <Fact label={text.createLot.longitudeLabel} numeric>{degrees(lot.longitude)}</Fact>
+      <Fact label={text.createLot.capacityLabel} numeric>{formatCount(lot.capacity, language)}</Fact>
+      <Fact label={text.lot.beaconMajorLabel} numeric>{lot.beaconMajor === null ? MISSING : String(lot.beaconMajor)}</Fact>
     </dl>
   );
 }

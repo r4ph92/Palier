@@ -30,9 +30,9 @@ function PricingFacts({ pricing }: { readonly pricing: LotPricing }) {
   const rate = interpolate(text.pricing.rate, { amount: formatMoney(pricing.incrementCents, language), duration: durationOf(pricing.incrementMinutes) });
   return (
     <dl className="facts">
-      <Fact label={text.pricing.rateLabel}>{rate}</Fact>
-      <Fact label={text.pricing.dailyCapLabel}>{formatMoney(pricing.dailyCapCents, language)}</Fact>
-      <Fact label={text.pricing.holdQuotaLabel}>{pluralOf(text.pricing.holdQuota, pricing.holdQuota, language)}</Fact>
+      <Fact label={text.pricing.rateLabel} numeric>{rate}</Fact>
+      <Fact label={text.pricing.dailyCapLabel} numeric>{formatMoney(pricing.dailyCapCents, language)}</Fact>
+      <Fact label={text.pricing.holdQuotaLabel} numeric>{pluralOf(text.pricing.holdQuota, pricing.holdQuota, language)}</Fact>
     </dl>
   );
 }

@@ -143,4 +143,16 @@ describe('the facts of a lot', () => {
     expect(screen.getByText('En ligne')).toBeDefined();
     expect(screen.getByText('1')).toBeDefined();
   });
+
+  it('sets the figures of Parking Démo in tabular mono, and its address and state in text', async () => {
+    installFakeApi({ signedInAs: sophie });
+    renderDashboard({ path: `/lots/${parkingDemo.id}` });
+
+    const address = await screen.findByText('500, rue Peel, Montréal (Québec)');
+
+    expect(address.className).toBe('fact-value');
+    expect(screen.getByText('45,50165').className).toBe('fact-value fact-value-number');
+    expect(screen.getByText('10').className).toBe('fact-value fact-value-number');
+    expect(screen.getByText('0,75 $ par 15 min').className).toBe('fact-value fact-value-number');
+  });
 });
