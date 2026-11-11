@@ -30,6 +30,14 @@ describe('PostgresParkedPresumptionRepository, a walk without an aisle', () => {
     expect(update?.params).toEqual(expect.arrayContaining([SESSION_ID, JULIE_ID]));
   });
 
+  it('records the walk as the evidence of the presumption', async () => {
+    const sql = new ScriptedSql().answer('presume-parked', [{ parked_at: WALKED_AT.toISOString() }]);
+
+    await presumeWith(sql);
+
+    expect(sql.statements[0]?.text).toContain(`presumed_by = 'WALK'`);
+  });
+
   it('keeps the walking instant at or before the database clock, and never before the loop confirmation', async () => {
     const sql = new ScriptedSql().answer('presume-parked', [{ parked_at: WALKED_AT.toISOString() }]);
 

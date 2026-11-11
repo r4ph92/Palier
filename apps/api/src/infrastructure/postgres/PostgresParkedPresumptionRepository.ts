@@ -80,7 +80,7 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
     const sameSpot = assignedSpotId === null ? sql.empty() : sql` and assigned_spot_id = ${assignedSpotId}`;
     const [row] = await this.#database.execute<ParkedAtRow>(sql`
       update parking_session
-      set state = 'PARKED_PRESUMED', parked_at = ${clampedParkedAt(detectedAt)}
+      set state = 'PARKED_PRESUMED', presumed_by = 'WALK', parked_at = ${clampedParkedAt(detectedAt)}
       where id = ${sessionId} and user_id = ${driverId} and state = 'ENTRY_CONFIRMED'${sameSpot}
       returning parked_at`);
     return row === undefined ? null : new Date(row.parked_at);

@@ -1,4 +1,5 @@
 import type { JobLog } from '../JobLog.ts';
+import { logLotFailure } from '../logLotFailure.ts';
 import type { Clock } from '../time/Clock.ts';
 import type { SpotHoldRepository } from './SpotHoldRepository.ts';
 
@@ -30,6 +31,6 @@ async function expireLot(spotHolds: HoldExpiryJob['spotHolds'], { lotId, now }: 
       log.warn({ lotId, expired, freed }, 'an expired spot hold had a spot that was no longer held');
     }
   } catch (error) {
-    log.error({ err: error, lotId }, 'could not expire the spot holds of a lot, retried at the next check');
+    logLotFailure(log, { lotId, error }, 'could not expire the spot holds of a lot, retried at the next check');
   }
 }

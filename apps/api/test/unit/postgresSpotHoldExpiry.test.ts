@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { LotBusyError } from '../../src/domain/lots/LotBusyError.ts';
 import { PostgresSpotHoldRepository } from '../../src/infrastructure/postgres/PostgresSpotHoldRepository.ts';
 import { PARKING_DEMO_LOCK_ID, parkingDemoLockRow } from './fakes/lotRows.ts';
-import { ScriptedSql } from './fakes/scriptedSql.ts';
+import { LOCK_NOT_AVAILABLE, ScriptedSql } from './fakes/scriptedSql.ts';
 
 describe('expiring the spot holds of a lot', () => {
   const NOW = new Date('2026-11-04T19:17:00Z');
@@ -16,6 +17,12 @@ describe('expiring the spot holds of a lot', () => {
       .answer('expire-spot-holds', [{ spot_id: 'spot-A-1' }, { spot_id: 'spot-A-2' }])
       .answer('free-held-spot', [{ id: 'spot-A-1' }, { id: 'spot-A-2' }]);
   }
+
+  it('turns a lock timeout into a busy lot for the job to warn about', async () => {
+    const scripted = new ScriptedSql().fail('lock-lot', LOCK_NOT_AVAILABLE);
+
+    await expect(expireWith(scripted)).rejects.toBeInstanceOf(LotBusyError);
+  });
 
   it('bounds the lock wait, locks the lot, ends the holds, then frees the spots in one statement', async () => {
     const scripted = endingTwoHolds();

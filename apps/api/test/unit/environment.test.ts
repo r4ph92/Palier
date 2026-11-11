@@ -22,6 +22,7 @@ describe('readServerEnvironment', () => {
       secureCookies: true,
       entryCancellation: { confirmationWindowSeconds: 60, cancellationPeriodSeconds: 30 },
       holdExpiryPeriodSeconds: 30,
+      silentSessionCheckPeriodSeconds: 300,
     });
   });
 
@@ -102,6 +103,25 @@ describe('hold expiry period', () => {
 
   it.each(['abc', '0', '-5', '1.5'])('refuses a period of "%s"', (rawSeconds) => {
     expect(() => periodOf({ HOLD_EXPIRY_PERIOD_SECONDS: rawSeconds })).toThrow(/HOLD_EXPIRY_PERIOD_SECONDS must be a positive whole number/);
+  });
+});
+
+describe('silent session check period', () => {
+  function periodOf(variables: NodeJS.ProcessEnv): number {
+    return readServerEnvironment({ DATABASE_URL: databaseUrl, ...variables }).silentSessionCheckPeriodSeconds;
+  }
+
+  it('checks every 5 minutes unless told otherwise', () => {
+    expect(periodOf({})).toBe(300);
+    expect(periodOf({ SILENT_SESSION_CHECK_PERIOD_SECONDS: '' })).toBe(300);
+  });
+
+  it('reads the period in seconds', () => {
+    expect(periodOf({ SILENT_SESSION_CHECK_PERIOD_SECONDS: '10' })).toBe(10);
+  });
+
+  it.each(['abc', '0', '-5', '1.5'])('refuses a period of "%s"', (rawSeconds) => {
+    expect(() => periodOf({ SILENT_SESSION_CHECK_PERIOD_SECONDS: rawSeconds })).toThrow(/SILENT_SESSION_CHECK_PERIOD_SECONDS must be a positive whole number/);
   });
 });
 

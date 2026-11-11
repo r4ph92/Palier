@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { PgTransactionConfig } from 'drizzle-orm/pg-core';
+import { LotBusyError } from '../../domain/lots/LotBusyError.ts';
 import type { Database, Transaction } from './database.ts';
 import { isLockTimeout, LIMIT_LOCK_WAIT } from './lockTimeout.ts';
 
@@ -55,5 +56,14 @@ export async function orLotBusy<T>(work: Promise<T>): Promise<T | typeof LOT_BUS
       return LOT_BUSY;
     }
     throw error;
+  }
+}
+
+// For the periodic jobs, whose domain loop logs a busy lot apart from a real failure.
+export async function orLotBusyError<T>(lotId: string, work: Promise<T>): Promise<T> {
+  try {
+    return await work;
+  } catch (error) {
+    throw isLockTimeout(error) ? new LotBusyError(lotId, { cause: error }) : error;
   }
 }
