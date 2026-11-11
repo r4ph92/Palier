@@ -88,7 +88,7 @@ export function pressLoopWhileOffline(connection, loop, pressedAt) {
  */
 export async function toggleOffline(request, api) {
   if (request.connection.kind !== 'online' && !DEVICE_KEY_SHAPE.test(request.deviceKey)) {
-    return { message: { key: 'replayKeyHint', isError: false } };
+    return { message: { key: 'replayKeyHint', isError: false, tone: 'muted' } };
   }
   const identityOrRefusal = await knownGateIdentity(request, api);
   if ('messageKey' in identityOrRefusal) {

@@ -196,7 +196,7 @@ describe('going back online after a reload', () => {
 
     const patch = await toggleOffline({ connection: reloaded, deviceKey, identity: null }, api);
 
-    expect(patch).toEqual({ message: { key: 'replayKeyHint', isError: false } });
+    expect(patch).toEqual({ message: { key: 'replayKeyHint', isError: false, tone: 'muted' } });
     expect(api.fetchIdentity).not.toHaveBeenCalled();
     expect(api.replayPassages).not.toHaveBeenCalled();
   });
