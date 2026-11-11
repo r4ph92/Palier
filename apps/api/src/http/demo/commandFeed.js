@@ -1,4 +1,4 @@
-import { DEVICE_KEY_SHAPE } from './loopPress.js';
+import { DEVICE_KEY_SHAPE } from './gateIdentity.js';
 
 /** @typedef {import('@palier/shared-types').GateCommand} GateCommand */
 /** @typedef {Pick<import('./gateApi.js').GateApi, 'fetchCommands'>} CommandApi */

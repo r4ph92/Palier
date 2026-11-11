@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatPassageTime, translate, vehiclesInside } from '../../src/http/demo/consoleText.js';
+import { formatPassageTime, messageText, passagesReplayed, pendingPassages, translate, vehiclesInside } from '../../src/http/demo/consoleText.js';
 import { translations } from '../../src/http/demo/consoleTranslations.js';
 
 describe('console translations', () => {
@@ -43,5 +43,58 @@ describe('formatPassageTime', () => {
     ['en', new Date(2026, 9, 27, 12, 0), '12:00 PM'],
   ] as const)('%s writes %s as %s', (language, moment, expected) => {
     expect(formatPassageTime(moment, language)).toBe(expected);
+  });
+});
+
+describe('offline texts', () => {
+  it.each([
+    ['fr', 'offlineEntryRefused', 'Hors service — entrée refusée aux usagers Palier'],
+    ['fr', 'offlineExitOpened', 'Sortie ouverte sans condition'],
+    ['fr', 'offlineToggle', 'Hors ligne'],
+    ['fr', 'clearQueue', 'Vider la file'],
+    ['en', 'offlineEntryRefused', 'Out of service — entry refused to Palier users'],
+    ['fr', 'replayKeyHint', 'Entrez la clé de la barrière pour rejouer les passages en attente.'],
+    ['en', 'replayKeyHint', 'Enter the gate’s key to replay the waiting passages.'],
+    ['en', 'offlineExitOpened', 'Exit opened unconditionally'],
+    ['en', 'offlineToggle', 'Offline'],
+    ['en', 'clearQueue', 'Clear queue'],
+  ] as const)('%s %s reads "%s"', (language, key, expected) => {
+    expect(translate(language, key)).toBe(expected);
+  });
+
+  it.each([
+    ['fr', 0, '0 passage en attente'],
+    ['fr', 1, '1 passage en attente'],
+    ['fr', 2, '2 passages en attente'],
+    ['en', 0, '0 passages waiting'],
+    ['en', 1, '1 passage waiting'],
+    ['en', 2, '2 passages waiting'],
+  ] as const)('%s with %i waiting reads "%s"', (language, count, expected) => {
+    expect(pendingPassages(count, language)).toBe(expected);
+  });
+
+  it.each([
+    ['fr', { count: 2, vehicleCount: 3 }, '2 passages rejoués · 3 véhicules dans le parking'],
+    ['fr', { count: 1, vehicleCount: 1 }, '1 passage rejoué · 1 véhicule dans le parking'],
+    ['en', { count: 2, vehicleCount: 3 }, '2 passages replayed · 3 vehicles in the lot'],
+    ['en', { count: 1, vehicleCount: 1 }, '1 passage replayed · 1 vehicle in the lot'],
+  ] as const)('%s replay of %o reads "%s"', (language, { count, vehicleCount }, expected) => {
+    expect(passagesReplayed(count, vehicleCount, language)).toBe(expected);
+  });
+
+  it('writes a replay message through the same text', () => {
+    expect(messageText('fr', { replayed: { count: 2, vehicleCount: 3 }, isError: false })).toBe(passagesReplayed(2, 3, 'fr'));
+  });
+
+  it('writes a plain message without counts as its key', () => {
+    expect(messageText('en', { key: 'keyRefused', isError: true })).toBe('Device key refused');
+  });
+});
+
+describe('French typography', () => {
+  it('keeps a no-break space before every colon and semicolon and inside every guillemet pair', () => {
+    for (const text of Object.values(translations.fr)) {
+      expect(text).not.toMatch(/ [:;»]|«(?!\u00a0)|[^\u00a0\s]»/);
+    }
   });
 });

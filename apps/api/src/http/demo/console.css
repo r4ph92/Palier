@@ -163,7 +163,54 @@ button {
   color: var(--on-ink);
 }
 
-.loop-button:disabled {
+.loop-button:disabled,
+.loop-button[aria-disabled='true'] {
+  border-color: var(--line);
+  background: var(--sunken);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.offline-toggle {
+  display: block;
+  margin-top: 16px;
+  background: transparent;
+  color: var(--ink);
+}
+
+.offline-toggle[aria-pressed='true']::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  background: var(--danger);
+}
+
+.pending {
+  margin: 8px 0 0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.clear-queue {
+  margin-top: 8px;
+  background: transparent;
+  color: var(--ink);
+}
+
+.clear-queue:disabled {
+  border-color: var(--line);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.offline-toggle[aria-disabled='true']::before {
+  background: var(--muted);
+}
+
+.offline-toggle[aria-disabled='true'] {
   border-color: var(--line);
   background: var(--sunken);
   color: var(--muted);
@@ -220,8 +267,13 @@ button:focus-visible,
   background: var(--free);
 }
 
-.message.message-error:not(:empty)::before {
+.message.message-error:not(:empty)::before,
+.message.message-degraded:not(:empty)::before {
   background: var(--danger);
+}
+
+.message.message-degraded.message-muted:not(:empty)::before {
+  background: var(--muted);
 }
 
 .passages {

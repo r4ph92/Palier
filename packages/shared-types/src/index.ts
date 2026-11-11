@@ -28,7 +28,18 @@ export type {
   GateCommandListResponse,
   WalkedAwayState,
 } from './entries.ts';
-export type { GateIdentifyRequest, GateIdentifyResponse, GateIdentity, GateKind, GatePassageRequest, GatePassageResponse, GatePresenceResponse } from './gates.ts';
+export type {
+  GateIdentifyRequest,
+  GateIdentifyResponse,
+  GateIdentity,
+  GateKind,
+  GatePassageRequest,
+  GatePassageResponse,
+  GatePresenceResponse,
+  PassageReplayItem,
+  PassageReplayRequest,
+  PassageReplayResponse,
+} from './gates.ts';
 export type { GeoPosition, LotListResponse, LotSummary, SpotCategory, SpotCountByCategory } from './lots.ts';
 export type {
   AisleRectangle,

@@ -3,7 +3,7 @@ import type { AuthenticatedGate } from '../../../src/domain/gates/AuthenticatedG
 import { GATE_COMMAND_PAGE_SIZE, type GateCommandCursor, type GateCommandFeed } from '../../../src/domain/gates/GateCommandFeed.ts';
 import type { DeviceKeyRecord, GateDeviceKeyRepository } from '../../../src/domain/gates/GateDeviceKeyRepository.ts';
 import { hashDeviceKey } from '../../../src/domain/gates/hashDeviceKey.ts';
-import type { PassageEntry, PassageLedger, RecordedPassage } from '../../../src/domain/gates/PassageLedger.ts';
+import type { PassageEntry, PassageLedger, RecordedPassage, RecordedReplay, ReplayedPassage, ReplayEntry } from '../../../src/domain/gates/PassageLedger.ts';
 
 export const ENTREE_DEMO_KEY = 'entreeDemoKey000000000000000000000000000000';
 export const SORTIE_DEMO_KEY = 'sortieDemoKey000000000000000000000000000000';
@@ -51,6 +51,8 @@ export class FakePassageLedger implements PassageLedger {
   readonly pendingOpenings: string[] = [];
   // Paid sessions whose exit opening waits at the exit gate, oldest first: one closure attaches the first.
   readonly pendingExits: string[] = [];
+  // What a replay recorded, for the tests to read back; ids already seen per gate are the unique index.
+  readonly replayed: { gateId: string; passage: ReplayedPassage }[] = [];
   vehicleCount: number;
 
   constructor(vehicleCount = 0) {
@@ -63,6 +65,13 @@ export class FakePassageLedger implements PassageLedger {
     const confirmedSessionId = entry.confirmableOpenings === null ? null : (this.pendingOpenings.shift() ?? null);
     const exitedSessionId = entry.attachableOpenings === null ? null : (this.pendingExits.shift() ?? null);
     return Promise.resolve({ vehicleCount: this.vehicleCount, confirmedSessionId, exitedSessionId });
+  }
+
+  recordReplay(entry: ReplayEntry): Promise<RecordedReplay> {
+    const fresh = entry.passages.filter((passage) => !this.replayed.some((seen) => seen.gateId === entry.gate.id && seen.passage.id === passage.id));
+    this.replayed.push(...fresh.map((passage) => ({ gateId: entry.gate.id, passage })));
+    this.vehicleCount = Math.max(this.vehicleCount + entry.vehicleCountChange * fresh.length, 0);
+    return Promise.resolve({ counted: fresh.length, duplicates: entry.passages.length - fresh.length, vehicleCount: this.vehicleCount });
   }
 }
 
