@@ -1,5 +1,6 @@
 import type { SpotCategory } from '@palier/shared-types';
 import { spotHoldFr } from './spotHoldFr';
+import { planFr } from './planFr';
 import { spotTakenFr } from './spotTakenFr';
 import { whereParkedFr } from './whereParkedFr';
 import { LOT_NOT_IN_SERVICE, NOT_RESPONDING, TOO_MANY_ATTEMPTS } from './sharedFr';
@@ -155,17 +156,7 @@ export const fr = {
     offline: 'Hors ligne, montant au dernier relevé',
     detectionOff: 'Détection automatique désactivée\u00A0— votre place sera présumée occupée après 30\u00A0min',
     openSettings: 'Ouvrir les réglages',
-    plan: {
-      goToLead: 'Rendez-vous allée %{aisle}, place ',
-      wrongAisle: 'Vous êtes dans l’allée %{current}\u00A0— votre place est dans l’allée %{assigned}',
-      rightAisle: 'Vous êtes dans la bonne allée',
-      aisle: 'Allée %{aisle}',
-      spotLead: 'Place ',
-      youAreHere: 'Vous êtes ici',
-      imageLabel: 'Plan du niveau %{level}',
-      imageAssigned: '\u00A0: allée %{aisle} en surbrillance, place %{spot}',
-      imageHere: ', vous êtes ici\u00A0: allée %{aisle}',
-    },
+    plan: planFr,
     whereParked: whereParkedFr,
     spotTaken: spotTakenFr,
   },
