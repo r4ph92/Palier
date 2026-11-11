@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { DeleteVehicleResult, NewVehicle, Vehicle, VehicleEdit, VehicleNeeds, VehicleRepository } from '../../src/domain/vehicles/VehicleRepository.ts';
+import { TRANSPONDER_TAKEN, type DeleteVehicleResult, type NewVehicle, type Vehicle, type VehicleEdit, type VehicleNeeds, type VehicleRepository } from '../../src/domain/vehicles/VehicleRepository.ts';
 
 export const standardNeeds: VehicleNeeds = { isElectric: false, hasAccessiblePermit: false, isOversize: false };
 
@@ -57,10 +57,14 @@ export class FakeVehicleRepository implements VehicleRepository {
     return Promise.resolve(toVehicle(stored));
   }
 
-  updateVehicleNeeds(driverId: string, vehicleId: string, { transponder, ...needs }: VehicleEdit): Promise<Vehicle | null> {
+  updateVehicleNeeds(driverId: string, vehicleId: string, { transponder, ...needs }: VehicleEdit): Promise<Vehicle | null | typeof TRANSPONDER_TAKEN> {
     const target = this.#find(driverId, vehicleId);
     if (target === undefined) {
       return Promise.resolve(null);
+    }
+    const taken = transponder != null && this.#stored.some((other) => other.id !== vehicleId && other.transponder !== null && other.transponder.replace(/[ -]/g, '') === transponder.transponderKey);
+    if (taken) {
+      return Promise.resolve(TRANSPONDER_TAKEN);
     }
     const updated: StoredVehicle = { ...target, ...needs, transponder: transponder === undefined ? target.transponder : (transponder?.transponder ?? null) };
     this.#stored.splice(this.#stored.indexOf(target), 1, updated);

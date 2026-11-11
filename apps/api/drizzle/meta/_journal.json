@@ -197,6 +197,13 @@
       "when": 1794359911253,
       "tag": "0027_exit_identification_readers",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794361351050,
+      "tag": "0028_transponder_unique",
+      "breakpoints": true
     }
   ]
 }

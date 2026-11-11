@@ -78,6 +78,7 @@ export const en: Translations = {
     plate: 'Plate',
     transponder: 'Transponder (optional)',
     invalidTransponder: 'Invalid transponder',
+    transponderTaken: 'This transponder is already registered.',
     province: 'Province or state',
     needs: 'Vehicle needs',
     isElectric: 'Electric vehicle',

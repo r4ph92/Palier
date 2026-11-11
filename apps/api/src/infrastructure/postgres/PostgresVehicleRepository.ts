@@ -1,5 +1,6 @@
 import { and, asc, eq, ne } from 'drizzle-orm';
-import type { DeleteVehicleResult, NewVehicle, Vehicle, VehicleEdit, VehicleNeeds, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
+import { isUniqueViolationOf } from './uniqueViolation.ts';
+import { TRANSPONDER_TAKEN, type DeleteVehicleResult, type NewVehicle, type Vehicle, type VehicleEdit, type VehicleNeeds, type VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Database, Transaction } from './database.ts';
 import { appUser, vehicle } from './schema.ts';
 
@@ -31,6 +32,8 @@ function newVehicleRow(driverId: string, newVehicle: NewVehicle, isDefault: bool
   const { plate, plateKey, province } = newVehicle;
   return { userId: driverId, plate, plateKey, province, ...needColumns(newVehicle), isDefault };
 }
+
+const TRANSPONDER_INDEX: ReadonlySet<string> = new Set(['vehicle_transponder_key_unique']);
 
 export class PostgresVehicleRepository implements VehicleRepository {
   readonly #database: Database;
@@ -75,13 +78,20 @@ export class PostgresVehicleRepository implements VehicleRepository {
     });
   }
 
-  async updateVehicleNeeds(driverId: string, vehicleId: string, { transponder, ...needs }: VehicleEdit): Promise<Vehicle | null> {
-    const [updated] = await this.#database
-      .update(vehicle)
-      .set({ ...needColumns(needs), ...transponderColumns(transponder) })
-      .where(and(eq(vehicle.id, vehicleId), eq(vehicle.userId, driverId)))
-      .returning(vehicleColumns);
-    return updated ?? null;
+  async updateVehicleNeeds(driverId: string, vehicleId: string, { transponder, ...needs }: VehicleEdit): Promise<Vehicle | null | typeof TRANSPONDER_TAKEN> {
+    try {
+      const [updated] = await this.#database
+        .update(vehicle)
+        .set({ ...needColumns(needs), ...transponderColumns(transponder) })
+        .where(and(eq(vehicle.id, vehicleId), eq(vehicle.userId, driverId)))
+        .returning(vehicleColumns);
+      return updated ?? null;
+    } catch (error) {
+      if (isUniqueViolationOf(error, TRANSPONDER_INDEX)) {
+        return TRANSPONDER_TAKEN;
+      }
+      throw error;
+    }
   }
 
   // The old default is cleared first, so the one-default-per-driver index is never broken between the two writes.

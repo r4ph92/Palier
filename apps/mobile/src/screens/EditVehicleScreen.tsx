@@ -59,7 +59,7 @@ function TransponderField({ form }: { readonly form: EditVehicleController }) {
         onChangeText={form.setTransponder}
         style={[typography.body, styles.input, { color: colors.ink, borderColor: colors.ink }]}
       />
-      {form.isTransponderInvalid ? <FieldError message={i18n.t('vehicles.invalidTransponder')} /> : null}
+      {form.transponderError === null ? null : <FieldError message={i18n.t(`vehicles.${form.transponderError === 'taken' ? 'transponderTaken' : 'invalidTransponder'}`)} />}
     </View>
   );
 }

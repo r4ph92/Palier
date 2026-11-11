@@ -171,6 +171,31 @@ describe('vehicle needs routes', () => {
       expect(response.json()).toMatchObject({ transponder: null });
     });
 
+    it('refuses a transponder another driver already has, with 409, and keeps the vehicle as it was', async () => {
+      const { headers, id } = await createdVehicle();
+      await server.inject({ method: 'PATCH', url: `/v1/me/vehicles/${id}`, headers, payload: { ...standard, transponder: 'T-0042' } });
+      await acceptNoticeAs(driverRepository, marc, PRIVACY_NOTICE_VERSION);
+      const marcHeaders = await authorizationFor(driverRepository, marc);
+      const marcs = await server.inject({ method: 'POST', url: '/v1/me/vehicles', headers: marcHeaders, payload: { plate: 'XYZ 789', province: 'QC' } });
+      const marcId = marcs.json<{ id: string }>().id;
+
+      const response = await server.inject({ method: 'PATCH', url: `/v1/me/vehicles/${marcId}`, headers: marcHeaders, payload: { ...standard, transponder: 't0042' } });
+
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toMatchObject({ error: 'TRANSPONDER_ALREADY_REGISTERED' });
+      const listed = await server.inject({ method: 'GET', url: '/v1/me/vehicles', headers: marcHeaders });
+      expect(listed.json()).toEqual([expect.objectContaining({ transponder: null })]);
+    });
+
+    it('lets a driver save the same transponder again on the same vehicle', async () => {
+      const { headers, id } = await createdVehicle();
+      await server.inject({ method: 'PATCH', url: `/v1/me/vehicles/${id}`, headers, payload: { ...standard, transponder: 'T-0042' } });
+
+      const response = await server.inject({ method: 'PATCH', url: `/v1/me/vehicles/${id}`, headers, payload: { ...standard, isElectric: true, transponder: 't 0042' } });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('refuses a transponder with forbidden characters or too long, and changes nothing', async () => {
       const { headers, id } = await createdVehicle();
 

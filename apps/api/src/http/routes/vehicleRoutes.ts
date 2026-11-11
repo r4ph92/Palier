@@ -3,7 +3,7 @@ import type { FastifyInstance, preHandlerAsyncHookHandler } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import { readPlate, readTransponder } from '../../domain/vehicles/plate.ts';
 import { isProvinceCode } from '../../domain/vehicles/provinces.ts';
-import type { VehicleEdit, VehicleNeeds, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
+import { TRANSPONDER_TAKEN, type VehicleEdit, type VehicleNeeds, type VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { addVehicleBodySchema, vehicleListSchema, vehicleNeedsBodySchema, vehicleParamsSchema, vehicleSchema } from '../schemas/vehicleSchemas.ts';
@@ -13,6 +13,8 @@ const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const CONFLICT = 409;
 const NO_CONTENT = 204;
+
+const TRANSPONDER_TAKEN_BODY = { statusCode: CONFLICT, error: 'TRANSPONDER_ALREADY_REGISTERED', message: 'This transponder is already registered.' } as const;
 
 interface AddVehicleRequest {
   // A need left out is not declared.
@@ -91,7 +93,8 @@ function declaredVehicle(body: AddVehicleRequest['Body']): VehicleNeeds & { read
 }
 
 // Null when the transponder is typed but invalid.
-function editOf(needs: VehicleNeeds, typed: string | undefined): VehicleEdit | null {
+function editOf({ isElectric, hasAccessiblePermit, isOversize, transponder: typed }: UpdateNeedsRequest['Body']): VehicleEdit | null {
+  const needs = { isElectric, hasAccessiblePermit, isOversize };
   if (typed === undefined) {
     return needs;
   }
@@ -107,12 +110,14 @@ function registerUpdateNeedsRoute(server: FastifyInstance, repository: VehicleRe
     '/v1/me/vehicles/:id',
     { onRequest: guards, schema: { params: vehicleParamsSchema, body: vehicleNeedsBodySchema, response: { 200: vehicleSchema } } },
     async (request, reply) => {
-      const { isElectric, hasAccessiblePermit, isOversize, transponder } = request.body;
-      const edit = editOf({ isElectric, hasAccessiblePermit, isOversize }, transponder);
+      const edit = editOf(request.body);
       if (edit === null) {
         return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'INVALID_TRANSPONDER', message: 'Invalid transponder.' });
       }
       const vehicle = await repository.updateVehicleNeeds(signedInDriver(request).id, request.params.id, edit);
+      if (vehicle === TRANSPONDER_TAKEN) {
+        return reply.status(CONFLICT).send(TRANSPONDER_TAKEN_BODY);
+      }
       if (vehicle === null) {
         return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'NOT_FOUND', message: 'No such vehicle.' });
       }

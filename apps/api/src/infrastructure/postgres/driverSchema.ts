@@ -61,7 +61,7 @@ export const vehicle = pgTable(
     isOversize: boolean('is_oversize').notNull().default(false),
   },
   (table) => [
-    index('vehicle_transponder_key_index').on(table.transponderKey),
+    uniqueIndex('vehicle_transponder_key_unique').on(table.transponderKey),
     unique('vehicle_user_id_plate_key_province_unique').on(table.userId, table.plateKey, table.province),
     uniqueIndex('vehicle_one_default_per_user_index')
       .on(table.userId)

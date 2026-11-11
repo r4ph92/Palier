@@ -88,6 +88,18 @@ describe('EditVehicleScreen', () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 
+  it('says the transponder is already registered when another vehicle has it, and stays on the page', async () => {
+    const client = new FakeVehicleClient([eva001]);
+    const onSaved = await renderEditVehicleScreen(client);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText('Transpondeur (facultatif)'), 't-taken');
+    await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(await screen.findByText('Ce transpondeur est déjà enregistré.')).toBeOnTheScreen();
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
   it('says the needs could not be saved when Palier cannot be reached, and stays on the page', async () => {
     const client = new FakeVehicleClient([eva001]);
     client.isReachable = false;

@@ -78,6 +78,7 @@ export const fr = {
     plate: 'Plaque',
     transponder: 'Transpondeur (facultatif)',
     invalidTransponder: 'Transpondeur invalide',
+    transponderTaken: 'Ce transpondeur est déjà enregistré.',
     province: 'Province ou État',
     needs: 'Besoins du véhicule',
     isElectric: 'Véhicule électrique',

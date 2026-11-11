@@ -53,6 +53,9 @@ export class FakeVehicleClient implements VehicleClient {
     if (found === undefined) {
       return Promise.reject(new PalierStatusError(404));
     }
+    if (transponder.trim().toUpperCase() === 'T-TAKEN') {
+      return Promise.reject(new PalierRejectedError('TRANSPONDER_ALREADY_REGISTERED'));
+    }
     if (transponder.trim().toUpperCase().includes('_')) {
       return Promise.reject(new PalierRejectedError('INVALID_TRANSPONDER'));
     }
