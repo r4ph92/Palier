@@ -135,6 +135,19 @@ describe('leaving with the « Ouvrir » tap (story #47)', () => {
       expect(await screen.findByText(FRENCH_RECEIPT, visibleText)).toBeOnTheScreen();
     });
 
+    it('stops asking for the receipt once it is shown', async () => {
+      const { receipts } = await leaveWithCapturePending();
+      await screen.findByRole('header', { name: PENDING_FR });
+      receipts.add(julieReceipt({ sessionId: 'session-1' }));
+      const asked = jest.spyOn(receipts, 'findReceipt');
+      await advance(PENDING_RECEIPT_POLL_MILLISECONDS);
+      await screen.findByText(FRENCH_RECEIPT, visibleText);
+
+      await advance(3 * PENDING_RECEIPT_POLL_MILLISECONDS);
+
+      expect(asked).toHaveBeenCalledTimes(1);
+    });
+
     it('gives the scanner back with « Terminé » while the capture is still pending', async () => {
       const { user } = await leaveWithCapturePending();
 
