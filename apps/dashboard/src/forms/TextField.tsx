@@ -9,13 +9,12 @@ export interface TextFieldProps {
   readonly value: string;
   readonly onChange: (value: string) => void;
   readonly error: DisplayedErrorCode | undefined;
-  // Fills the limits named in the hint and the error.
-  readonly values: Readonly<Record<string, string>>;
+  readonly messageValues: Readonly<Record<string, string>>;
   readonly inputMode?: 'decimal' | 'numeric' | 'text';
   readonly autoComplete?: string;
 }
 
-export function TextField({ id, label, hint, value, onChange, error, values, inputMode = 'text', autoComplete = 'off' }: TextFieldProps) {
+export function TextField({ id, label, hint, value, onChange, error, messageValues, inputMode = 'text', autoComplete = 'off' }: TextFieldProps) {
   const describedBy = [hint === undefined ? null : `${id}-hint`, error === undefined ? null : `${id}-error`].filter((part) => part !== null);
   return (
     <div className="field">
@@ -30,8 +29,8 @@ export function TextField({ id, label, hint, value, onChange, error, values, inp
         aria-describedby={describedBy.length === 0 ? undefined : describedBy.join(' ')}
         aria-invalid={error !== undefined}
       />
-      {hint === undefined ? null : <p id={`${id}-hint`} className="field-hint">{interpolate(hint, values)}</p>}
-      {error === undefined ? null : <FieldError id={`${id}-error`} code={error} values={values} />}
+      {hint === undefined ? null : <p id={`${id}-hint`} className="field-hint">{interpolate(hint, messageValues)}</p>}
+      {error === undefined ? null : <FieldError id={`${id}-error`} code={error} messageValues={messageValues} />}
     </div>
   );
 }
@@ -39,15 +38,15 @@ export function TextField({ id, label, hint, value, onChange, error, values, inp
 interface FieldErrorProps {
   readonly id: string;
   readonly code: DisplayedErrorCode;
-  readonly values: Readonly<Record<string, string>>;
+  readonly messageValues: Readonly<Record<string, string>>;
 }
 
 // Plain text tied to its input, not an alert: the form's summary is the one alert, so a screen reader hears it once.
-function FieldError({ id, code, values }: FieldErrorProps) {
+function FieldError({ id, code, messageValues }: FieldErrorProps) {
   const text = useText();
   return (
     <p id={id} className="error-notice">
-      {interpolate(text.errors[code], values)}
+      {interpolate(text.errors[code], messageValues)}
     </p>
   );
 }
