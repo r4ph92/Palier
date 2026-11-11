@@ -25,6 +25,7 @@ export const parkingDemoLot: typeof parkingLot.$inferInsert = {
   id: PARKING_DEMO_ID,
   operatorId: LAVOIE_OPERATOR_ID,
   name: 'Parking Démo',
+  address: '500, rue Peel, Montréal (Québec)',
   latitude: '45.501650',
   longitude: '-73.567300',
   beaconMajor: 1,

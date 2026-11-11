@@ -15,8 +15,8 @@ export class PricingPolicyInvalidError extends Error {
   }
 }
 
-// The lot stores increment and length in an untyped jsonb column and the cap in its own column.
-export function parsePricingPolicy(storedPolicy: unknown, dailyCapCents: number): PricingPolicy {
+// The lot stores increment and length in an untyped jsonb column and the cap in its own column, null on a lot without pricing.
+export function parsePricingPolicy(storedPolicy: unknown, dailyCapCents: number | null): PricingPolicy {
   if (typeof storedPolicy !== 'object' || storedPolicy === null) {
     throw new PricingPolicyInvalidError();
   }
@@ -31,7 +31,7 @@ export interface PricedLot {
   readonly id: string;
   // The lot's jsonb policy as stored.
   readonly pricingPolicy: unknown;
-  readonly dailyCapCents: number;
+  readonly dailyCapCents: number | null;
 }
 
 // The problem is returned, not thrown, so each caller turns it into its own refusal and keeps it as the cause to log.

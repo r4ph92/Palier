@@ -69,7 +69,7 @@ describe('seeded entry fixtures', () => {
   });
 
   it.each([parkingDemoLot, garageRoyLot, parkingTestPaliersLot])('prices $name at 0,75 $ per started 15 minutes, capped at 25,00 $', (lot) => {
-    expect(parsePricingPolicy(lot.pricingPolicy, lot.dailyCapCents)).toEqual({ incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 });
+    expect(parsePricingPolicy(lot.pricingPolicy, lot.dailyCapCents ?? null)).toEqual({ incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 });
   });
 
   it('draws aisles A and B of Parking Démo as two rectangles and leaves the exit lane undrawn', () => {

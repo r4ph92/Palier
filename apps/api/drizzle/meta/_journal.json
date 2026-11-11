@@ -232,6 +232,13 @@
       "when": 1794408390096,
       "tag": "0032_awaiting_signal_index",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794410331743,
+      "tag": "0033_lot_setup",
+      "breakpoints": true
     }
   ]
 }

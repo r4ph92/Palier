@@ -8,6 +8,7 @@ import type { LockedParkingLot } from './lockParkingLot.ts';
 interface SpotHoldFactsRow extends Record<string, unknown> {
   readonly own_active_hold: boolean;
   readonly active_holds_in_lot: number;
+  readonly hold_quota: number;
   readonly held_spot_count: number;
 }
 
@@ -17,6 +18,7 @@ export async function readSpotHoldFacts(tx: Pick<Transaction, 'execute'>, lot: L
     select
       exists (select 1 from spot_hold where user_id = ${driverId} and ${ACTIVE_SPOT_HOLD}) as own_active_hold,
       (select count(*)::int from spot_hold where lot_id = ${lot.id} and ${ACTIVE_SPOT_HOLD}) as active_holds_in_lot,
+      (select hold_quota from parking_lot where id = ${lot.id}) as hold_quota,
       ${heldSpotCountOf(lot.id)} as held_spot_count`);
   const row = rows[0];
   if (row === undefined) {
@@ -26,6 +28,7 @@ export async function readSpotHoldFacts(tx: Pick<Transaction, 'execute'>, lot: L
     isLotOnline: lot.isOnline,
     hasOwnActiveHold: row.own_active_hold,
     activeHoldsInLot: row.active_holds_in_lot,
+    holdQuota: row.hold_quota,
     occupancy: { capacity: lot.capacity, vehicleCount: lot.vehicleCount, heldSpotCount: row.held_spot_count },
   };
 }

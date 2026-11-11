@@ -1,5 +1,7 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { HOLD_QUOTA_LIMITS } from '@palier/shared-types/lotPricing';
+import { DEFAULT_SPOT_HOLD_QUOTA } from '../../domain/spotHolds/spotHoldRules.ts';
 import { SPOT_STATES } from '../../domain/spots/spotStates.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
 
@@ -16,6 +18,9 @@ export const operator = pgTable('operator', {
   kycStatus: kycStatus('kyc_status').notNull().default('NOT_STARTED'),
 });
 
+// A BLE major is 16 bits. The seeds hold 1 to 3, so the platform hands out majors from 4.
+export const beaconMajorSequence = pgSequence('parking_lot_beacon_major_seq', { startWith: 4, minValue: 1, maxValue: 65535 });
+
 export const parkingLot = pgTable(
   'parking_lot',
   {
@@ -24,11 +29,16 @@ export const parkingLot = pgTable(
       .notNull()
       .references(() => operator.id),
     name: text('name').notNull(),
+    address: text('address').notNull(),
     latitude: numeric('latitude', { precision: 9, scale: 6 }),
     longitude: numeric('longitude', { precision: 9, scale: 6 }),
-    beaconMajor: integer('beacon_major').unique(),
+    beaconMajor: integer('beacon_major')
+      .unique()
+      .default(sql`nextval('parking_lot_beacon_major_seq')`),
     pricingPolicy: jsonb('pricing_policy'),
-    dailyCapCents: integer('daily_cap_cents').notNull(),
+    // Null with the policy: a lot without pricing stays offline (decision 031).
+    dailyCapCents: integer('daily_cap_cents'),
+    holdQuota: integer('hold_quota').notNull().default(DEFAULT_SPOT_HOLD_QUOTA),
     assignmentStrategy: assignmentStrategy('assignment_strategy').notNull().default('AISLE_BY_AISLE'),
     occupancySource: occupancySource('occupancy_source').notNull().default('DECLARATIVE'),
     capacity: integer('capacity').notNull(),
@@ -41,6 +51,10 @@ export const parkingLot = pgTable(
     index('parking_lot_operator_id_index').on(table.operatorId),
     check('parking_lot_capacity_not_negative', sql`${table.capacity} >= 0`),
     check('parking_lot_vehicle_count_not_negative', sql`${table.vehicleCount} >= 0`),
+    check('parking_lot_pricing_complete', sql`(${table.pricingPolicy} is null) = (${table.dailyCapCents} is null)`),
+    check('parking_lot_daily_cap_positive', sql`${table.dailyCapCents} > 0`),
+    check('parking_lot_online_has_pricing', sql`(not ${table.isOnline}) or ${table.pricingPolicy} is not null`),
+    check('parking_lot_hold_quota_range', sql`${table.holdQuota} between ${sql.raw(String(HOLD_QUOTA_LIMITS.minimum))} and ${sql.raw(String(HOLD_QUOTA_LIMITS.maximum))}`),
   ],
 );
 

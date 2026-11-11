@@ -3,7 +3,7 @@ import { decideSpotHoldRequest, type SpotHoldFacts } from '../../src/domain/spot
 
 const roomForOne = { capacity: 10, vehicleCount: 7, heldSpotCount: 2 };
 const full = { capacity: 10, vehicleCount: 8, heldSpotCount: 2 };
-const openLot: SpotHoldFacts = { isLotOnline: true, hasOwnActiveHold: false, activeHoldsInLot: 0, occupancy: roomForOne };
+const openLot: SpotHoldFacts = { isLotOnline: true, hasOwnActiveHold: false, activeHoldsInLot: 0, holdQuota: 3, occupancy: roomForOne };
 
 describe('decideSpotHoldRequest', () => {
   it('lets Julie hold the last room of an online lot, with no hold of her own and the quota unused', () => {
@@ -12,6 +12,15 @@ describe('decideSpotHoldRequest', () => {
 
   it('lets the third hold of a lot through', () => {
     expect(decideSpotHoldRequest({ ...openLot, activeHoldsInLot: 2 })).toEqual({ kind: 'proceed' });
+  });
+
+  it('lets the fourth hold through when the lot sets a quota of 4, and refuses the fifth', () => {
+    expect(decideSpotHoldRequest({ ...openLot, holdQuota: 4, activeHoldsInLot: 3 })).toEqual({ kind: 'proceed' });
+    expect(decideSpotHoldRequest({ ...openLot, holdQuota: 4, activeHoldsInLot: 4 })).toEqual({ kind: 'refuse', reason: 'HOLD_QUOTA_REACHED' });
+  });
+
+  it('refuses every hold of a lot whose quota is 0', () => {
+    expect(decideSpotHoldRequest({ ...openLot, holdQuota: 0 })).toEqual({ kind: 'refuse', reason: 'HOLD_QUOTA_REACHED' });
   });
 
   it.each([
