@@ -1,0 +1,1 @@
+CREATE INDEX "parking_session_awaiting_signal_by_lot_index" ON "parking_session" USING btree ("lot_id") WHERE "parking_session"."state" in ('ENTRY_CONFIRMED', 'PARKED_UNCONFIRMED');
