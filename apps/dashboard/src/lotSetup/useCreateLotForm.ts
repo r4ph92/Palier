@@ -1,6 +1,5 @@
-import { lotDraftErrors, type LotDraft, type LotDraftField } from '@palier/shared-types/lotDraft';
+import { lotDraftErrors, type LotDraft, type LotDraftErrorCode, type LotDraftField } from '@palier/shared-types/lotDraft';
 import { dashboardClient } from '../api/dashboardClient.ts';
-import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { readFormOf, useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
 import { useNavigation } from '../navigation/NavigationContext.tsx';
 import { lotPath } from '../navigation/routes.ts';
@@ -8,7 +7,7 @@ import { numberOrNaN, parseDecimal, parseWholeNumber } from './parseNumbers.ts';
 
 const EMPTY_DRAFT: FieldValues<LotDraftField> = { name: '', address: '', latitude: '', longitude: '', capacity: '' };
 
-const FIELD_OF_CODE: Partial<Readonly<Record<DisplayedErrorCode, LotDraftField>>> = {
+const FIELD_OF_CODE: Readonly<Record<LotDraftErrorCode, LotDraftField>> = {
   LOT_NAME_INVALID: 'name',
   LOT_ADDRESS_INVALID: 'address',
   LOT_COORDINATES_INVALID: 'latitude',

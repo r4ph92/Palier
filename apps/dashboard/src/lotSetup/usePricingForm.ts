@@ -1,14 +1,13 @@
 import type { LotPricing } from '@palier/shared-types';
-import { DEFAULT_HOLD_QUOTA, pricingErrors, type LotPricingRequest, type PricingField } from '@palier/shared-types/lotPricing';
+import { DEFAULT_HOLD_QUOTA, pricingErrors, type LotPricingRequest, type PricingErrorCode, type PricingField } from '@palier/shared-types/lotPricing';
 import { useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
-import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { readFormOf, useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
 import { useLanguage, type Language } from '../i18n/LanguageContext.tsx';
 import { amountInputOf } from './amountInput.ts';
 import { numberOrNaN, parseAmount, parseWholeNumber, type ParsedNumber } from './parseNumbers.ts';
 
-const FIELD_OF_CODE: Partial<Readonly<Record<DisplayedErrorCode, PricingField>>> = {
+const FIELD_OF_CODE: Readonly<Record<PricingErrorCode, PricingField>> = {
   PRICING_INCREMENT_CENTS_INVALID: 'incrementCents',
   PRICING_INCREMENT_MINUTES_INVALID: 'incrementMinutes',
   PRICING_DAILY_CAP_REQUIRED: 'dailyCapCents',

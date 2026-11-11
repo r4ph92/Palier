@@ -1,13 +1,13 @@
 import { isValidLegalName } from '@palier/shared-types/dashboard';
 import { dashboardClient } from '../api/dashboardClient.ts';
-import { asDashboardApiError, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import { asDashboardApiError } from '../api/DashboardApiError.ts';
 import { useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
 
 type OperatorField = 'legalName';
 
 const EMPTY_OPERATOR: FieldValues<OperatorField> = { legalName: '' };
 
-const FIELD_OF_CODE: Partial<Readonly<Record<DisplayedErrorCode, OperatorField>>> = {
+const FIELD_OF_CODE: Readonly<Record<'LEGAL_NAME_INVALID', OperatorField>> = {
   LEGAL_NAME_INVALID: 'legalName',
 };
 
