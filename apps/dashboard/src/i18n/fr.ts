@@ -114,6 +114,7 @@ export const fr = {
     PRICING_DAILY_CAP_INVALID: 'Entrez un plafond de %{capMinimum} à %{amountMaximum}.',
     PRICING_DAILY_CAP_BELOW_INCREMENT: 'Le plafond journalier doit valoir au moins le prix d’un incrément.',
     PRICING_HOLD_QUOTA_INVALID: 'Entrez un nombre entier de places garanties, de 0 à %{quotaMaximum}.',
+    TOO_MANY_LOTS: 'Trop de stationnements créés en peu de temps. Réessayez dans une heure.',
     FIELDS_INVALID: 'Corrigez les champs indiqués.',
     UNKNOWN: 'Une erreur est survenue. Réessayez dans un instant.',
   },

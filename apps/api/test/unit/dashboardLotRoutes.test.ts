@@ -8,6 +8,8 @@ import { garageRoyDetails, type FakeLotStore } from './fakes/fakeLotSetupReposit
 
 const garageRoyNord = { name: 'Garage Roy Nord', address: '8000, boulevard Saint-Laurent, Montréal', latitude: 45.54, longitude: -73.62, capacity: 40 };
 const royPricing = { incrementCents: 100, incrementMinutes: 20, dailyCapCents: 1800, holdQuota: 4 };
+const LOT_CREATIONS_PER_HOUR = 10;
+const ONE_HOUR_IN_SECONDS = 3600;
 const LOT_NOT_FOUND = { statusCode: 404, error: 'LOT_NOT_FOUND', message: 'No such lot.' };
 
 describe('dashboard lot setup routes', () => {
@@ -41,6 +43,21 @@ describe('dashboard lot setup routes', () => {
       { id: garageRoyDetails.id, name: 'Garage Roy', isOnline: false },
       { id: created.json<{ id: string }>().id, name: 'Garage Roy Nord', isOnline: false },
     ]);
+  });
+
+  it('lets Pierre create ten lots in an hour, refuses the eleventh with Retry-After, and still lets Sophie create hers', async () => {
+    const cookies = await signIn(pierre);
+    for (let created = 0; created < LOT_CREATIONS_PER_HOUR; created += 1) {
+      await createLot(cookies);
+    }
+
+    const eleventh = await createLot(cookies);
+    const sophies = await createLot(await dashboardCookieFor(server, sophie));
+
+    expect(eleventh.statusCode).toBe(429);
+    expect(eleventh.headers['retry-after']).toBe(String(ONE_HOUR_IN_SECONDS));
+    expect(eleventh.json()).toMatchObject({ error: 'TOO_MANY_LOTS' });
+    expect(sophies.statusCode).toBe(201);
   });
 
   it('stores the name and address without their surrounding spaces', async () => {

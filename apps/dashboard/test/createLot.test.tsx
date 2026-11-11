@@ -97,6 +97,17 @@ describe('creating a lot', () => {
     expect((screen.getByLabelText('Nom') as HTMLInputElement).value).toBe('Garage Roy Nord');
   });
 
+  it('tells Pierre to wait an hour once he has created too many lots', async () => {
+    const refusal = { status: 429, body: { statusCode: 429, error: 'TOO_MANY_LOTS', message: '' } };
+    installFakeApi({ signedInAs: pierre, answers: { 'POST /lots': refusal } });
+    renderDashboard({ path: '/lots/new' });
+    await fillGarageRoyNord();
+
+    await userEvent.click(createButton());
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Trop de stationnements créés en peu de temps. Réessayez dans une heure.');
+  });
+
   it('sends one request however often the button is pressed while it is on its way', async () => {
     const api = installFakeApi({ signedInAs: pierre, answers: { 'POST /lots': 'pending' } });
     renderDashboard({ path: '/lots/new' });

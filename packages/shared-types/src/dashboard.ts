@@ -87,6 +87,7 @@ export const DASHBOARD_ERROR_CODES = [
   'PRICING_DAILY_CAP_INVALID',
   'PRICING_DAILY_CAP_BELOW_INCREMENT',
   'PRICING_HOLD_QUOTA_INVALID',
+  'TOO_MANY_LOTS',
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];

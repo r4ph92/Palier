@@ -116,6 +116,7 @@ export const en: Dictionary = {
     PRICING_DAILY_CAP_INVALID: 'Enter a cap from %{capMinimum} to %{amountMaximum}.',
     PRICING_DAILY_CAP_BELOW_INCREMENT: 'The daily cap must be at least the price of one increment.',
     PRICING_HOLD_QUOTA_INVALID: 'Enter a whole number of guaranteed spots, from 0 to %{quotaMaximum}.',
+    TOO_MANY_LOTS: 'Too many lots created in a short time. Try again in an hour.',
     FIELDS_INVALID: 'Fix the fields shown.',
     UNKNOWN: 'Something went wrong. Try again in a moment.',
   },

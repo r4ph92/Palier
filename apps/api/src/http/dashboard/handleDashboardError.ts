@@ -23,6 +23,7 @@ const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
   PRICING_DAILY_CAP_INVALID: 400,
   PRICING_DAILY_CAP_BELOW_INCREMENT: 400,
   PRICING_HOLD_QUOTA_INVALID: 400,
+  TOO_MANY_LOTS: 429,
 };
 
 export function handleDashboardError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {
