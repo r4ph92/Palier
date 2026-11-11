@@ -83,7 +83,7 @@ export const fr = {
     holdQuotaHint: 'Conducteurs qui peuvent se garder une place 15 minutes en même temps, de 0 à %{quotaMaximum}.',
     submit: 'Enregistrer la tarification',
     submitting: 'Enregistrement…',
-    saved: 'Tarification enregistrée. Elle vaut pour les prochaines entrées ; une session en cours garde le tarif de son entrée.',
+    saved: 'Tarification enregistrée. Elle vaut pour les prochaines entrées; une session en cours garde le tarif de son entrée.',
   },
   notFound: {
     eyebrow: 'Erreur 404',
@@ -107,7 +107,7 @@ export const fr = {
     STRIPE_UNAVAILABLE: 'Stripe est injoignable pour l’instant. Réessayez dans un instant.',
     LOT_NAME_INVALID: 'Le nom doit compter de 1 à %{nameMaximum} caractères, sans caractère invisible.',
     LOT_ADDRESS_INVALID: 'L’adresse doit compter de 1 à %{addressMaximum} caractères, sans caractère invisible.',
-    LOT_COORDINATES_INVALID: 'Entrez des degrés décimaux : latitude de -90 à 90, longitude de -180 à 180.',
+    LOT_COORDINATES_INVALID: 'Entrez des degrés décimaux : latitude de -90 à 90, longitude de -180 à 180.',
     LOT_CAPACITY_INVALID: 'Entrez un nombre entier de places, de 0 à %{capacityMaximum}.',
     PRICING_INCREMENT_CENTS_INVALID: 'Entrez un montant plus grand que zéro, d’au plus %{amountMaximum}.',
     PRICING_INCREMENT_MINUTES_INVALID: 'Entrez un nombre entier de minutes, de %{minutesMinimum} à %{minutesMaximum}.',

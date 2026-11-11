@@ -1,6 +1,7 @@
 import type { LotPricing } from '@palier/shared-types';
 import { formatMoney, NO_BREAK_SPACE } from '@palier/shared-types/money';
 import { Fact } from '../components/Fact.tsx';
+import { StateMark } from '../components/StateMark.tsx';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { pluralOf } from '../i18n/plural.ts';
@@ -19,9 +20,18 @@ export function PricingSection(target: PricingFormTarget) {
       <h2 id="pricing-title" className="section-title">
         {text.pricing.title}
       </h2>
-      {target.pricing === null ? <p className="muted">{text.pricing.none}</p> : <PricingFacts pricing={target.pricing} />}
+      {target.pricing === null ? <NoPricing /> : <PricingFacts pricing={target.pricing} />}
       <PricingForm {...target} />
     </section>
+  );
+}
+
+function NoPricing() {
+  const text = useText();
+  return (
+    <p>
+      <StateMark tone="danger" label={text.pricing.none} wraps />
+    </p>
   );
 }
 

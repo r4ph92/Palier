@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
+import { StateMark } from '../components/StateMark.tsx';
 import { fieldBinder } from '../forms/fieldBinder.ts';
 import { SubmitButton } from '../forms/SubmitButton.tsx';
 import { TextField } from '../forms/TextField.tsx';
@@ -21,9 +22,7 @@ export function PricingForm({ lotId, pricing, onSaved }: PricingFormTarget) {
       <TextField {...field('dailyCapCents')} label={text.pricing.dailyCapLabel} hint={text.pricing.dailyCapHint} inputMode="decimal" />
       <TextField {...field('holdQuota')} label={text.pricing.holdQuotaLabel} hint={text.pricing.holdQuotaHint} inputMode="numeric" />
       <SubmitButton label={text.pricing.submit} busyLabel={text.pricing.submitting} busy={form.submitting} />
-      <p role="status" className="muted">
-        {saved.hasSaved && form.summary === null ? text.pricing.saved : ''}
-      </p>
+      <p role="status">{saved.hasSaved && form.summary === null ? <StateMark tone="free" label={text.pricing.saved} wraps /> : null}</p>
     </form>
   );
 }

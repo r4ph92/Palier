@@ -56,6 +56,11 @@
   white-space: nowrap;
 }
 
+.state-mark-sentence {
+  align-items: baseline;
+  white-space: normal;
+}
+
 .state-mark-square {
   width: 8px;
   height: 8px;

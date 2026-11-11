@@ -33,7 +33,7 @@ function CreateLotForm() {
       <TextField {...field('name')} label={text.createLot.nameLabel} hint={text.createLot.nameHint} autoComplete="organization" />
       <TextField {...field('address')} label={text.createLot.addressLabel} autoComplete="street-address" />
       <fieldset className="fieldset">
-        <legend className="field-label">{text.createLot.locationLegend}</legend>
+        <legend className="eyebrow">{text.createLot.locationLegend}</legend>
         <TextField {...field('latitude')} label={text.createLot.latitudeLabel} hint={text.createLot.latitudeHint} inputMode="decimal" />
         <TextField {...field('longitude')} label={text.createLot.longitudeLabel} hint={text.createLot.longitudeHint} inputMode="decimal" />
       </fieldset>
