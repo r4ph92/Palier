@@ -3,10 +3,10 @@ import { useCallback } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import { useResource } from '../api/useResource.ts';
 import { AppLink } from '../components/AppLink.tsx';
-import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { Fact } from '../components/Fact.tsx';
 import { LotStateMark } from '../components/LotStateMark.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
+import { RetryableFailure, type RetryableFailureProps } from '../components/RetryableFailure.tsx';
 import { formatCount, formatDegrees } from '../i18n/formatNumbers.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { HOME_PATH } from '../navigation/routes.ts';
@@ -17,14 +17,27 @@ const MISSING = '—';
 
 export function LotPage({ lotId }: { readonly lotId: string }) {
   const text = useText();
-  const { resource: lot, reload } = useResource(useCallback(() => dashboardClient.lot(lotId), [lotId]));
+  const { resource: lot, reload, isReloading } = useResource(useCallback(() => dashboardClient.lot(lotId), [lotId]));
   if (lot.status === 'loading') {
     return <p role="status" className="muted">{text.app.loading}</p>;
   }
   if (lot.status === 'failed') {
-    return lot.error.code === 'LOT_NOT_FOUND' ? <NotFoundPage /> : <ErrorNotice code={lot.error.code} />;
+    return lot.error.code === 'LOT_NOT_FOUND' ? <NotFoundPage /> : <LotUnavailable code={lot.error.code} onRetry={reload} isRetrying={isReloading} />;
   }
   return <LotDetails lot={lot.value} onPricingSaved={reload} />;
+}
+
+function LotUnavailable(failure: RetryableFailureProps) {
+  const text = useText();
+  return (
+    <>
+      <PageHeader eyebrow={text.lot.eyebrow} title={text.lot.unavailableTitle} />
+      <RetryableFailure {...failure} />
+      <AppLink href={HOME_PATH} className="text-link">
+        {text.lot.back}
+      </AppLink>
+    </>
+  );
 }
 
 interface LotDetailsProps {

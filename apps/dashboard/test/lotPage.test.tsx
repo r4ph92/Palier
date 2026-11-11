@@ -27,6 +27,21 @@ describe('lot page', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Stationnements Lavoie inc.' })).toBeDefined();
   });
 
+  it('shows Parking Démo as unavailable with a way back, and opens it once the retry succeeds', async () => {
+    const api = installFakeApi({ signedInAs: sophie, answers: { [`GET /lots/${parkingDemo.id}`]: { status: 500 } } });
+    renderDashboard({ path: `/lots/${parkingDemo.id}` });
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Stationnement indisponible' })).toBeDefined();
+    expect(screen.getByText('Stationnement')).toBeDefined();
+    expect(screen.getByRole('alert').textContent).toBe('Une erreur est survenue. Réessayez dans un instant.');
+    expect(screen.getByRole('link', { name: 'Retour aux stationnements' })).toBeDefined();
+    api.answers.delete(`GET /lots/${parkingDemo.id}`);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Parking Démo' })).toBeDefined();
+  });
+
   it('answers not found for an address the dashboard does not know', async () => {
     installFakeApi({ signedInAs: sophie });
     renderDashboard({ path: '/operators/settings' });

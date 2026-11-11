@@ -64,6 +64,7 @@ export const fr = {
     offline: 'Hors ligne',
     back: 'Retour aux stationnements',
     stateLabel: 'État',
+    unavailableTitle: 'Stationnement indisponible',
     beaconMajorLabel: 'Major de balise',
   },
   pricing: {

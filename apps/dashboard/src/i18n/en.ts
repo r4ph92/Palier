@@ -66,6 +66,7 @@ export const en: Dictionary = {
     offline: 'Offline',
     back: 'Back to parking lots',
     stateLabel: 'State',
+    unavailableTitle: 'Parking lot unavailable',
     beaconMajorLabel: 'Beacon major',
   },
   pricing: {
