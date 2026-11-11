@@ -12,6 +12,7 @@ import { formatReceiptDate } from '../i18n/formatReceiptDate';
 import { formatReceiptDuration } from '../i18n/formatReceiptDuration';
 import { currentLanguage, i18n } from '../i18n/i18n';
 import { LIST_SEPARATOR } from '../i18n/spaces';
+import { stayLineAmount, stayLineLabel } from '../i18n/stayBillText';
 import { useReceipt } from '../receipts/useReceipts';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
@@ -54,11 +55,26 @@ function ReceiptFigures({ receipt }: { readonly receipt: ReceiptDetail }) {
       <Figure label={i18n.t('receipts.entry')} value={moment(receipt.enteredAt)} />
       <Figure label={i18n.t('receipts.exit')} value={moment(receipt.exitedAt)} />
       <Figure label={i18n.t('receipts.duration')} value={formatReceiptDuration(receipt.durationMinutes)} />
-      <Figure label={i18n.t('receipts.pricePerIncrement')} value={formatMoney(receipt.incrementCents, language)} />
-      <Figure label={i18n.t('receipts.increments')} value={receipt.capped ? `${receipt.increments}${LIST_SEPARATOR}${i18n.t('receipts.capped')}` : String(receipt.increments)} />
+      <PricingFigures receipt={receipt} />
       <Figure label={i18n.t('receipts.total')} value={formatMoney(receipt.totalCents, language)} strong />
+      {receipt.unpaidCents === 0 ? null : <Figure label={i18n.t('session.exit.receipt.unpaid')} value={formatMoney(receipt.unpaidCents, language)} strong />}
       {receipt.cardLast4 === null ? null : <Figure label={i18n.t('receipts.card')} value={i18n.t('receipts.cardEnding', { last4: receipt.cardLast4 })} />}
     </View>
+  );
+}
+
+// Up to 24 hours: the price and the increments behind the total; beyond, the days and the extra that make the bill.
+function PricingFigures({ receipt }: { readonly receipt: ReceiptDetail }) {
+  const language = currentLanguage();
+  if (receipt.lines.length > 0) {
+    return receipt.lines.map((line) => <Figure key={line.kind === 'DAY' ? `day-${line.dayNumber}` : 'extra'} label={stayLineLabel(line)} value={stayLineAmount(line)} />);
+  }
+  const increments = receipt.capped ? `${receipt.increments}${LIST_SEPARATOR}${i18n.t('receipts.capped')}` : String(receipt.increments);
+  return (
+    <>
+      <Figure label={i18n.t('receipts.pricePerIncrement')} value={formatMoney(receipt.incrementCents, language)} />
+      <Figure label={i18n.t('receipts.increments')} value={increments} />
+    </>
   );
 }
 

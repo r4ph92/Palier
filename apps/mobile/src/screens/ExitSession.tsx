@@ -12,6 +12,7 @@ import { formatMoney } from '../i18n/formatMoney';
 import { formatReceiptDuration } from '../i18n/formatReceiptDuration';
 import { currentLanguage, i18n } from '../i18n/i18n';
 import { NO_BREAK_SPACE } from '../i18n/spaces';
+import { billSentence, stayLineAmount, stayLineLabel } from '../i18n/stayBillText';
 import { useExit } from '../parkingSessions/useExit';
 import { usePendingReceipt } from '../receipts/usePendingReceipt';
 import { useColors } from '../theme/useColors';
@@ -80,7 +81,7 @@ export function ExitReceiptScreen({ receipt, onDone }: ExitReceiptScreenProps) {
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader eyebrow={i18n.t('session.exit.receipt.eyebrow')} title={i18n.t('session.exit.receipt.title')} />
         <View ref={focusRef} accessible>
-          <ReceiptLine receipt={receipt} />
+          {receipt.lines.length === 0 ? <ReceiptLine receipt={receipt} /> : <StayBill receipt={receipt} />}
         </View>
         <PrimaryButton label={i18n.t('session.exit.receipt.done')} onPress={onDone} />
       </ScrollView>
@@ -107,7 +108,33 @@ function ReceiptLine({ receipt }: { readonly receipt: ExitReceipt }) {
   );
 }
 
+// A stay over 24 hours: each full day at the cap and the extra, then what was paid and what the card refused.
+function StayBill({ receipt }: { readonly receipt: ExitReceipt }) {
+  const colors = useColors();
+  return (
+    <View style={styles.bill}>
+      <Text style={[typography.body, { color: colors.ink }]}>
+        {i18n.t('session.exit.receipt.durationLead')}
+        <Text style={typography.figure}>{formatReceiptDuration(receipt.durationMinutes)}</Text>
+      </Text>
+      {receipt.lines.map((line) => (
+        <Text key={line.kind === 'DAY' ? `day-${line.dayNumber}` : 'extra'} style={[typography.body, { color: colors.ink }]}>
+          {billSentence(stayLineLabel(line), stayLineAmount(line))}
+        </Text>
+      ))}
+      <BillTotal label={i18n.t('session.exit.receipt.total')} cents={receipt.totalCents} />
+      {receipt.unpaidCents === 0 ? null : <BillTotal label={i18n.t('session.exit.receipt.unpaid')} cents={receipt.unpaidCents} />}
+    </View>
+  );
+}
+
+function BillTotal({ label, cents }: { readonly label: string; readonly cents: number }) {
+  const colors = useColors();
+  return <Text style={[typography.bodyStrong, { color: colors.ink }]}>{billSentence(label, formatMoney(cents, currentLanguage()))}</Text>;
+}
+
 const styles = StyleSheet.create({
+  bill: { gap: spacing.small },
   screen: { flex: 1 },
   content: { flexGrow: 1, gap: spacing.large, paddingHorizontal: spacing.medium, paddingBottom: spacing.large },
   group: { gap: spacing.medium },

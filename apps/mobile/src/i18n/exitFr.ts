@@ -11,6 +11,13 @@ export const exitFr = {
     durationLead: 'Durée ',
     totalLead: 'Total ',
     capped: 'Plafond journalier',
+    total: 'Total',
+    firstDay: '24 premières heures',
+    nextDay: '24 heures suivantes',
+    extra: '%{duration} supplémentaires',
+    capNote: '(plafond)',
+    unpaid: 'Solde impayé',
+    lineAmount: '%{label}\u00A0: %{amount}',
     done: 'Terminé',
   },
 };

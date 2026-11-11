@@ -28,6 +28,21 @@ const wednesday = julieReceipt({
   cardLast4: null,
 });
 
+const thursday = julieReceipt({
+  sessionId: 'session-thu',
+  enteredAt: new Date(2026, 10, 5, 8, 0).toISOString(),
+  exitedAt: new Date(2026, 10, 6, 14, 0).toISOString(),
+  durationMinutes: 1800,
+  increments: 72,
+  totalCents: 2500,
+  capped: false,
+  lines: [
+    { kind: 'DAY', dayNumber: 1, cents: 2500 },
+    { kind: 'EXTRA', minutes: 360, cents: 1800 },
+  ],
+  unpaidCents: 1800,
+});
+
 // The app keeps figures and units together with no-break spaces; a plain space in the expected text matches either.
 function exactly(text: string): RegExp {
   const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -74,6 +89,18 @@ describe('the receipts page of the account tab', () => {
 
     expect(await screen.findByLabelText(exactly('Tranches, 36 · Plafond journalier'))).toBeOnTheScreen();
     expect(screen.queryByLabelText(/^Carte/)).not.toBeOnTheScreen();
+  });
+
+  it('opens a stay over 24 hours with its day, its extra, what was paid and the unpaid balance', async () => {
+    const user = await openReceipts(new FakeReceiptClient([thursday]));
+
+    await user.press(await screen.findByTestId('receipt-row-session-thu'));
+
+    expect(await screen.findByLabelText(exactly('24 premières heures, 25,00 $ (plafond)'))).toBeOnTheScreen();
+    expect(screen.getByLabelText(exactly('6 h supplémentaires, 18,00 $'))).toBeOnTheScreen();
+    expect(screen.getByLabelText(exactly('Total, 25,00 $'))).toBeOnTheScreen();
+    expect(screen.getByLabelText(exactly('Solde impayé, 18,00 $'))).toBeOnTheScreen();
+    expect(screen.queryByLabelText(/^Tarif par tranche/)).not.toBeOnTheScreen();
   });
 
   it('goes back from a receipt to the list, and from the list to Compte', async () => {

@@ -15,6 +15,8 @@ export function julieReceipt(overrides: Partial<ReceiptDetail> = {}): ReceiptDet
     incrementCents: 75,
     totalCents: 975,
     capped: false,
+    lines: [],
+    unpaidCents: 0,
     cardLast4: '4242',
     ...overrides,
   };
