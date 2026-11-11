@@ -1,12 +1,9 @@
 import { sql, type SQL } from 'drizzle-orm';
-import type { PresumptionEvidence } from '../../domain/parkingSessions/PresumptionEvidence.ts';
 import type { SilenceCheck } from '../../domain/parkingSessions/presumeSilentSessions.ts';
 import type { Database, Transaction } from './database.ts';
 
 type Executor = Pick<Transaction, 'execute'> | Pick<Database, 'execute'>;
 
-const SILENCE_EVIDENCE: PresumptionEvidence = 'TIMEOUT';
-const SILENCE_EVIDENCE_LITERAL = sql.raw(`'${SILENCE_EVIDENCE}'`);
 
 export function silentConfirmedEntry(cutoff: Date): SQL {
   return sql`state = 'ENTRY_CONFIRMED' and entry_confirmed_at <= ${cutoff.toISOString()}::timestamptz`;
@@ -28,7 +25,7 @@ export async function findLotsWithSilentSessions(database: Executor, cutoff: Dat
 export async function presumeSilentConfirmedEntries(executor: Executor, lotId: string, { cutoff, now }: SilenceCheck): Promise<number> {
   const rows = await executor.execute(sql`
     update parking_session
-    set state = 'PARKED_PRESUMED', presumed_by = ${SILENCE_EVIDENCE_LITERAL}, parked_at = ${now.toISOString()}::timestamptz
+    set state = 'PARKED_PRESUMED', presumed_by = 'TIMEOUT', parked_at = ${now.toISOString()}::timestamptz
     where lot_id = ${lotId} and ${silentConfirmedEntry(cutoff)}
     returning id`);
   return rows.length;
@@ -38,7 +35,7 @@ export async function presumeSilentConfirmedEntries(executor: Executor, lotId: s
 export async function presumeUnansweredQuestions(executor: Executor, lotId: string, { cutoff }: SilenceCheck): Promise<number> {
   const rows = await executor.execute(sql`
     update parking_session
-    set state = 'PARKED_PRESUMED', presumed_by = ${SILENCE_EVIDENCE_LITERAL}
+    set state = 'PARKED_PRESUMED', presumed_by = 'TIMEOUT'
     where lot_id = ${lotId} and ${unansweredQuestion(cutoff)}
     returning id`);
   return rows.length;
