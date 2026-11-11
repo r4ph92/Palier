@@ -19,11 +19,12 @@ function isVehicle(candidate: unknown): candidate is Vehicle {
   if (typeof candidate !== 'object' || candidate === null) {
     return false;
   }
-  const { id, plate, province, isDefault, isElectric, hasAccessiblePermit, isOversize } = candidate as Record<string, unknown>;
+  const { id, plate, province, transponder, isDefault, isElectric, hasAccessiblePermit, isOversize } = candidate as Record<string, unknown>;
   return (
     typeof id === 'string' &&
     typeof plate === 'string' &&
     typeof province === 'string' &&
+    (transponder === null || typeof transponder === 'string') &&
     [isDefault, isElectric, hasAccessiblePermit, isOversize].every((flag) => typeof flag === 'boolean')
   );
 }

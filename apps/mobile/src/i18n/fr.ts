@@ -76,6 +76,8 @@ export const fr = {
     add: 'Ajouter',
     addTitle: 'Ajouter un véhicule',
     plate: 'Plaque',
+    transponder: 'Transpondeur (facultatif)',
+    invalidTransponder: 'Transpondeur invalide',
     province: 'Province ou État',
     needs: 'Besoins du véhicule',
     isElectric: 'Véhicule électrique',

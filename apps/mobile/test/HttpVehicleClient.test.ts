@@ -6,7 +6,7 @@ import { PalierConsentRequiredError, PalierRejectedError } from '../src/api/Vehi
 const BASE_URL = 'http://localhost:3000';
 const TOKEN = 'julie-token';
 const noNeeds = { isElectric: false, hasAccessiblePermit: false, isOversize: false };
-const abc123 = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC', isDefault: true, isElectric: false, hasAccessiblePermit: false, isOversize: false };
+const abc123 = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC', isDefault: true, transponder: null, isElectric: false, hasAccessiblePermit: false, isOversize: false };
 
 function jsonResponse(body: unknown, status = 200): Promise<Response> {
   return Promise.resolve(new Response(JSON.stringify(body), { status }));
@@ -64,7 +64,7 @@ describe('HttpVehicleClient', () => {
     );
   });
 
-  it('patches only the needs of a vehicle and returns the saved vehicle', async () => {
+  it('patches the needs and the transponder of a vehicle and returns the saved vehicle', async () => {
     const needs = { isElectric: true, hasAccessiblePermit: true, isOversize: false };
     const fetchFunction = jest.fn(() => jsonResponse({ ...abc123, ...needs }));
     const client = new HttpVehicleClient({
@@ -75,10 +75,10 @@ describe('HttpVehicleClient', () => {
       fetchFunction,
     });
 
-    await expect(client.updateVehicleNeeds(abc123.id, { ...abc123, ...needs })).resolves.toEqual({ ...abc123, ...needs });
+    await expect(client.updateVehicleNeeds(abc123.id, { ...needs, transponder: 't-0042' })).resolves.toEqual({ ...abc123, ...needs });
     expect(fetchFunction).toHaveBeenCalledWith(
       `${BASE_URL}/v1/me/vehicles/${abc123.id}`,
-      expect.objectContaining({ method: 'PATCH', body: JSON.stringify(needs) }),
+      expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ ...needs, transponder: 't-0042' }) }),
     );
   });
 

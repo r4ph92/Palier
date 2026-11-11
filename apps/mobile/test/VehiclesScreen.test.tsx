@@ -4,7 +4,7 @@ import { applyLanguage } from '../src/i18n/i18n';
 import { VehiclesScreen } from '../src/screens/VehiclesScreen';
 import { abc123, FakeVehicleClient, standardNeeds } from './fakeVehicleClient';
 
-const def456 = { id: 'vehicle-2', plate: 'DEF 456', province: 'QC', isDefault: false, ...standardNeeds };
+const def456 = { id: 'vehicle-2', plate: 'DEF 456', province: 'QC', isDefault: false, transponder: null, ...standardNeeds };
 
 const SAFE_AREA_METRICS = {
   frame: { x: 0, y: 0, width: 393, height: 852 },
