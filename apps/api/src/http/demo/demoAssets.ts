@@ -24,6 +24,7 @@ export const DEMO_ASSETS: Readonly<Record<string, DemoAsset>> = {
   'console.css': { contentType: 'text/css; charset=utf-8', location: besideThisFile('console.css') },
   'console.js': { contentType: JAVASCRIPT, location: besideThisFile('console.js') },
   'commandFeed.js': { contentType: JAVASCRIPT, location: besideThisFile('commandFeed.js') },
+  'commandPolling.js': { contentType: JAVASCRIPT, location: besideThisFile('commandPolling.js') },
   'consoleRender.js': { contentType: JAVASCRIPT, location: besideThisFile('consoleRender.js') },
   'consoleText.js': { contentType: JAVASCRIPT, location: besideThisFile('consoleText.js') },
   'consoleTranslations.js': { contentType: JAVASCRIPT, location: besideThisFile('consoleTranslations.js') },

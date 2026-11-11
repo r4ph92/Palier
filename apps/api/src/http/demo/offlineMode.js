@@ -9,6 +9,7 @@ import { OK, UNREACHABLE } from './gateApi.js';
  * The passages a controller counted while it had no contact with Palier, bound to the gate that counted them.
  * @typedef {object} OfflineQueue
  * @property {string} gateId
+ * @property {string} gateName
  * @property {GateKind} kind
  * @property {readonly PassageReplayItem[]} items
  */
@@ -27,7 +28,7 @@ const REPLAY_MESSAGE_BY_STATUS = { [UNREACHABLE]: 'replayUnreachable', 401: 'rep
  * @returns {OfflineQueue}
  */
 export function startQueue(identity) {
-  return { gateId: identity.id, kind: identity.kind, items: [] };
+  return { gateId: identity.id, gateName: identity.name, kind: identity.kind, items: [] };
 }
 
 /**

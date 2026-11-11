@@ -1,5 +1,5 @@
-import { COMMAND_POLL_MILLISECONDS, pollCommands } from './commandFeed.js';
-import { isMessageKey } from './consoleText.js';
+import { COMMAND_POLL_MILLISECONDS } from './commandFeed.js';
+import { createCommandRefresh } from './commandPolling.js';
 import { createGateApi } from './gateApi.js';
 import {
   clearQueueButton,
@@ -11,11 +11,10 @@ import {
   presenceButton,
   readerButton,
   render,
-  renderCommands,
-  renderMessage,
+  focusAfterQueueAction,
 } from './consoleRender.js';
 import { pressLoop } from './loopPress.js';
-import { clearQueue, hasPendingPassages, pressLoopWhileOffline, statusMessageOf, toggleOffline } from './offlineControls.js';
+import { clearQueue, hasPendingPassages, isToggleAvailable, pressLoopWhileOffline, statusMessageOf, toggleOffline } from './offlineControls.js';
 import { restoredConnection, saveConnection } from './queueStorage.js';
 import { readingMessage, sendReading } from './readerRead.js';
 import { presenceMessage, sendPresence } from './vehiclePresence.js';
@@ -44,35 +43,6 @@ const state = {
   isSending: false,
   renderedCommandLines: '',
 };
-
-// An answer for a key the field no longer holds is dropped, so one gate's commands never show under another.
-async function refreshCommands() {
-  if (state.isPolling || state.connection.kind !== 'online') {
-    return;
-  }
-  state.isPolling = true;
-  const deviceKey = state.deviceKey;
-  try {
-    const poll = await pollCommands(api, deviceKey, state.commands);
-    if (deviceKey === state.deviceKey) {
-      applyPoll(poll);
-    }
-  } finally {
-    state.isPolling = false;
-  }
-}
-
-/** @param {import('./commandFeed.js').PollResult} poll */
-function applyPoll(poll) {
-  if (poll.isKeyRefused && !isMessageKey(state.message, 'keyRefused')) {
-    state.message = { key: 'keyRefused', isError: true };
-    renderMessage(state);
-  }
-  if (poll.commands !== state.commands) {
-    state.commands = poll.commands;
-    renderCommands(state);
-  }
-}
 
 /** @param {PressOutcome} outcome */
 function applyOutcome(outcome) {
@@ -124,12 +94,15 @@ function onLoopPressed(loop) {
 }
 
 function onOfflineToggled() {
-  const busyMessage = state.connection.kind === 'online' ? null : { key: /** @type {TextKey} */ ('replaying'), isError: false };
+  if (!isToggleAvailable(state)) {
+    return Promise.resolve();
+  }
+  const busyMessage = state.connection.kind === 'online' ? null : { key: /** @type {TextKey} */ ('replaying'), isError: false, tone: /** @type {const} */ ('muted') };
   const toggled = whileSending(async () => {
     const request = { connection: state.connection, deviceKey: state.deviceKey, identity: state.identity };
     applyPatch(await toggleOffline(request, api));
   }, busyMessage);
-  return toggled.then(() => offlineToggle.focus());
+  return toggled.then(() => focusAfterQueueAction(state));
 }
 
 function onQueueCleared() {
@@ -138,7 +111,7 @@ function onQueueCleared() {
   }
   applyPatch(clearQueue());
   render(state);
-  offlineToggle.focus();
+  focusAfterQueueAction(state);
 }
 
 function onReadingSent() {
@@ -187,4 +160,5 @@ for (const button of languageButtons) {
 }
 
 render(state);
+const refreshCommands = createCommandRefresh(state, api);
 setInterval(() => void refreshCommands(), COMMAND_POLL_MILLISECONDS);

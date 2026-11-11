@@ -163,7 +163,8 @@ button {
   color: var(--on-ink);
 }
 
-.loop-button:disabled {
+.loop-button:disabled,
+.loop-button[aria-disabled='true'] {
   border-color: var(--line);
   background: var(--sunken);
   color: var(--muted);
@@ -177,18 +178,13 @@ button {
   color: var(--ink);
 }
 
-.offline-toggle[aria-pressed='true'] {
-  background: var(--ink);
-  color: var(--on-ink);
-}
-
 .offline-toggle[aria-pressed='true']::before {
   content: '';
   display: inline-block;
   width: 8px;
   height: 8px;
   margin-right: 8px;
-  background: var(--on-ink);
+  background: var(--danger);
 }
 
 .pending {
@@ -210,11 +206,11 @@ button {
   cursor: not-allowed;
 }
 
-.offline-toggle:disabled::before {
+.offline-toggle[aria-disabled='true']::before {
   background: var(--muted);
 }
 
-.offline-toggle:disabled {
+.offline-toggle[aria-disabled='true'] {
   border-color: var(--line);
   background: var(--sunken);
   color: var(--muted);

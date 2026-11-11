@@ -3,8 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 import type { ApiResponse, GateApi } from '../../src/http/demo/gateApi.js';
 import {
   clearQueue,
+  focusTargetAfterQueueAction,
   hasPendingPassages,
   isLoopAvailable,
+  isToggleAvailable,
   ONLINE,
   pressLoopWhileOffline,
   statusMessageOf,
@@ -28,7 +30,7 @@ function fakeApi(identity: ApiResponse = { status: 200, body: sortieDemo }, repl
 }
 
 function offlineWith(identity: GateIdentity, passages: number): Connection {
-  let connection: Connection = { kind: 'offline', queue: { gateId: identity.id, kind: identity.kind, items: [] } };
+  let connection: Connection = { kind: 'offline', queue: { gateId: identity.id, gateName: identity.name, kind: identity.kind, items: [] } };
   for (let press = 0; press < passages; press += 1) {
     connection = { ...connection, ...pressLoopWhileOffline(connection, identity.kind, PRESSED_AT).connection };
   }
@@ -43,7 +45,7 @@ describe('going offline', () => {
   it('identifies the gate while still online, then refuses Palier users at an entry (C1)', async () => {
     const patch = await toggleOffline(request(ONLINE), fakeApi({ status: 200, body: entreeDemo }));
 
-    expect(patch.connection).toEqual({ kind: 'offline', queue: { gateId: 'gate-701', kind: 'ENTRY', items: [] } });
+    expect(patch.connection).toEqual({ kind: 'offline', queue: { gateId: 'gate-701', gateName: 'Entrée Démo', kind: 'ENTRY', items: [] } });
     expect(patch.message).toEqual({ key: 'offlineEntryRefused', isError: false, tone: 'degraded' });
     expect(patch.identity).toEqual(entreeDemo);
   });
@@ -72,7 +74,7 @@ describe('counting while offline', () => {
   });
 
   it('changes nothing while online or blocked', () => {
-    const blocked: Connection = { kind: 'blocked', queue: { gateId: 'gate-702', kind: 'EXIT', items: [] } };
+    const blocked: Connection = { kind: 'blocked', queue: { gateId: 'gate-702', gateName: 'Sortie Démo', kind: 'EXIT', items: [] }, refusal: 'replayRefused' };
 
     expect(pressLoopWhileOffline(ONLINE, 'EXIT', PRESSED_AT)).toEqual({});
     expect(pressLoopWhileOffline(blocked, 'EXIT', PRESSED_AT)).toEqual({});
@@ -148,7 +150,7 @@ describe('which controls work', () => {
   });
 
   it('disables every loop while the queue is blocked', () => {
-    const state = { connection: { kind: 'blocked', queue: { gateId: 'g', kind: 'EXIT', items: [] } } as Connection, deviceKey: DEVICE_KEY, identity: sortieDemo };
+    const state = { connection: { kind: 'blocked', queue: { gateId: 'g', gateName: 'g', kind: 'EXIT', items: [] }, refusal: 'replayRefused' } as Connection, deviceKey: DEVICE_KEY, identity: sortieDemo };
 
     expect(isLoopAvailable('EXIT', state)).toBe(false);
   });
@@ -165,8 +167,65 @@ describe('which controls work', () => {
     expect(isPresenceEnabled(state)).toBe(false);
   });
 
-  it('shows a status only while offline', () => {
+  it('shows a status only while offline, and the refusal while blocked', () => {
+    const blocked: Connection = { kind: 'blocked', queue: { gateId: 'g', gateName: 'g', kind: 'EXIT', items: [] }, refusal: 'replayRefused' };
+
     expect(statusMessageOf(ONLINE)).toBeNull();
+    expect(statusMessageOf(blocked)).toEqual({ key: 'replayRefused', isError: true });
     expect(statusMessageOf(offline)).toMatchObject({ key: 'offlineExitOpened' });
+  });
+});
+
+describe('going back online after a reload', () => {
+  const reloaded = offlineWith(sortieDemo, 1);
+
+  it.each([
+    [401, 'replayKeyRefused'],
+    [403, 'replayGateForbidden'],
+    [0, 'replayUnreachable'],
+    [409, 'replayFailed'],
+    [500, 'replayFailed'],
+  ])('words an identify failure %i as the replay key %s', async (status, expected) => {
+    const patch = await toggleOffline(request(reloaded), fakeApi({ status, body: null }));
+
+    expect(patch).toEqual({ identity: null, message: { key: expected, isError: true } });
+  });
+
+  it.each(['', 'short', `${DEVICE_KEY}!`])('asks for the gate key without any request when the key is "%s"', async (deviceKey) => {
+    const api = fakeApi();
+
+    const patch = await toggleOffline({ connection: reloaded, deviceKey, identity: null }, api);
+
+    expect(patch).toEqual({ message: { key: 'replayKeyHint', isError: false } });
+    expect(api.fetchIdentity).not.toHaveBeenCalled();
+    expect(api.replayPassages).not.toHaveBeenCalled();
+  });
+
+  it('keeps the refusal key on the blocked connection, so editing the key field keeps the explanation', async () => {
+    const forbidden = await toggleOffline(request(reloaded), fakeApi({ status: 200, body: entreeDemo }));
+    const refused = await toggleOffline(request(reloaded, sortieDemo), fakeApi(undefined, { status: 409, body: null }));
+
+    expect(statusMessageOf(forbidden.connection as Connection)).toEqual({ key: 'replayGateForbidden', isError: true });
+    expect(statusMessageOf(refused.connection as Connection)).toEqual({ key: 'replayRefused', isError: true });
+  });
+});
+
+describe('the offline toggle and the focus', () => {
+  const idle = { connection: ONLINE, deviceKey: DEVICE_KEY, isSending: false };
+
+  it('acts when a key is entered or a queue is waiting, and never while sending', () => {
+    expect(isToggleAvailable(idle)).toBe(true);
+    expect(isToggleAvailable({ ...idle, deviceKey: '' })).toBe(false);
+    expect(isToggleAvailable({ ...idle, deviceKey: '', connection: offlineWith(sortieDemo, 1) })).toBe(true);
+    expect(isToggleAvailable({ ...idle, isSending: true })).toBe(false);
+  });
+
+  it('puts the focus on the key field after clearing a queue when no key is left, else on the toggle', () => {
+    expect(focusTargetAfterQueueAction({ ...idle, deviceKey: '' })).toBe('deviceKey');
+    expect(focusTargetAfterQueueAction(idle)).toBe('offlineToggle');
+  });
+
+  it('names the gate on the stored queue', () => {
+    expect(offlineWith(sortieDemo, 0)).toMatchObject({ queue: { gateName: 'Sortie Démo' } });
   });
 });

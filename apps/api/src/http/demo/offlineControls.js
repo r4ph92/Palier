@@ -1,19 +1,24 @@
 import { isLoopEnabled } from './loopPress.js';
-import { knownGateIdentity } from './gateIdentity.js';
+import { DEVICE_KEY_SHAPE, knownGateIdentity } from './gateIdentity.js';
 import { offlineStatusKey, pressLoopOffline, replayQueue, startQueue } from './offlineMode.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('@palier/shared-types').GateKind} GateKind */
 /** @typedef {import('./consoleText.js').ConsoleMessage} ConsoleMessage */
 /** @typedef {import('./offlineMode.js').OfflineQueue} OfflineQueue */
+/** @typedef {import('./consoleText.js').TextKey} TextKey */
 /** @typedef {Pick<import('./gateApi.js').GateApi, 'fetchIdentity' | 'replayPassages'>} OfflineControlApi */
 /**
  * Offline counts passages in a queue; blocked is an offline queue Palier refused, which only a retry with the right key or a clearing resolves.
+ * A blocked connection keeps the key of the refusal, so its explanation survives an edit of the key field.
  * hasReplayed keeps the "0 passages waiting" line after a replay.
- * @typedef {{ kind: 'online', hasReplayed: boolean } | { kind: 'offline', queue: OfflineQueue } | { kind: 'blocked', queue: OfflineQueue }} Connection
+ * @typedef {{ kind: 'online', hasReplayed: boolean } | { kind: 'offline', queue: OfflineQueue } | { kind: 'blocked', queue: OfflineQueue, refusal: TextKey }} Connection
  */
 /** @typedef {{ connection?: Connection, identity?: GateIdentity | null, message?: ConsoleMessage | null }} ConsolePatch */
 /** @typedef {{ connection: Connection, deviceKey: string, identity: GateIdentity | null }} ToggleRequest */
+
+/** @type {Partial<Record<TextKey, TextKey>>} */
+const REPLAY_KEY_BY_IDENTIFY_KEY = { keyRefused: 'replayKeyRefused', gateForbidden: 'replayGateForbidden', unreachable: 'replayUnreachable' };
 
 /** @type {Connection} */
 export const ONLINE = { kind: 'online', hasReplayed: false };
@@ -52,6 +57,9 @@ export function isLoopAvailable(loop, state) {
  * @returns {ConsoleMessage | null}
  */
 export function statusMessageOf(connection) {
+  if (connection.kind === 'blocked') {
+    return { key: connection.refusal, isError: true };
+  }
   if (connection.kind !== 'offline') {
     return null;
   }
@@ -79,15 +87,31 @@ export function pressLoopWhileOffline(connection, loop, pressedAt) {
  * @returns {Promise<ConsolePatch>}
  */
 export async function toggleOffline(request, api) {
+  if (request.connection.kind !== 'online' && !DEVICE_KEY_SHAPE.test(request.deviceKey)) {
+    return { message: { key: 'replayKeyHint', isError: false } };
+  }
   const identityOrRefusal = await knownGateIdentity(request, api);
   if ('messageKey' in identityOrRefusal) {
-    return { identity: null, message: { key: identityOrRefusal.messageKey, isError: true } };
+    return { identity: null, message: { key: refusalKey(request.connection, identityOrRefusal.messageKey), isError: true } };
   }
   const identity = identityOrRefusal;
   if (request.connection.kind === 'online') {
     return goOffline(identity);
   }
   return goOnline(request, identity, api);
+}
+
+/**
+ * Going back online, a failure to identify the gate concerns the replay, so it is worded as one.
+ * @param {Connection} connection
+ * @param {TextKey} identifyKey
+ * @returns {TextKey}
+ */
+function refusalKey(connection, identifyKey) {
+  if (connection.kind === 'online') {
+    return identifyKey;
+  }
+  return REPLAY_KEY_BY_IDENTIFY_KEY[identifyKey] ?? 'replayFailed';
 }
 
 /**
@@ -110,7 +134,7 @@ function goOffline(identity) {
 async function goOnline(request, identity, api) {
   const queue = /** @type {OfflineQueue} */ (queueOf(request.connection));
   if (identity.id !== queue.gateId) {
-    return { identity: null, connection: { kind: 'blocked', queue }, message: { key: 'replayGateForbidden', isError: true } };
+    return { identity: null, connection: { kind: 'blocked', queue, refusal: 'replayGateForbidden' }, message: { key: 'replayGateForbidden', isError: true } };
   }
   const outcome = await replayQueue(queue, request.deviceKey, api);
   if (outcome.failure !== null) {
@@ -131,7 +155,24 @@ function failedReplay(queue, failure, identity) {
   if (failure.isRetryable) {
     return { identity, connection: { kind: 'offline', queue }, message };
   }
-  return { identity: null, connection: { kind: 'blocked', queue }, message };
+  return { identity: null, connection: { kind: 'blocked', queue, refusal: failure.messageKey }, message };
+}
+
+/**
+ * The toggle stays focusable while it cannot act, so a screen reader user keeps their place; it only refuses the press.
+ * @param {{ connection: Connection, deviceKey: string, isSending: boolean }} state
+ * @returns {boolean}
+ */
+export function isToggleAvailable(state) {
+  return !state.isSending && !(state.deviceKey === '' && state.connection.kind === 'online');
+}
+
+/**
+ * @param {{ connection: Connection, deviceKey: string, isSending: boolean }} state
+ * @returns {'offlineToggle' | 'deviceKey'}
+ */
+export function focusTargetAfterQueueAction(state) {
+  return isToggleAvailable(state) ? 'offlineToggle' : 'deviceKey';
 }
 
 /** @returns {ConsolePatch} */

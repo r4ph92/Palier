@@ -1,5 +1,5 @@
 import { formatPassageTime, messageText, pendingPassages, translate, vehiclesInside } from './consoleText.js';
-import { isLoopAvailable, queueOf } from './offlineControls.js';
+import { focusTargetAfterQueueAction, isLoopAvailable, isToggleAvailable, queueOf } from './offlineControls.js';
 import { isReaderEnabled } from './readerRead.js';
 import { isPresenceEnabled } from './vehiclePresence.js';
 
@@ -86,8 +86,8 @@ function renderIdentity(state) {
 function renderOffline(state) {
   const { connection } = state;
   offlineToggle.setAttribute('aria-pressed', String(connection.kind !== 'online'));
-  offlineToggle.disabled = state.isSending || (state.deviceKey === '' && connection.kind === 'online');
-  deviceKeyInput.disabled = connection.kind !== 'online' && state.identity !== null;
+  offlineToggle.setAttribute('aria-disabled', String(!isToggleAvailable(state)));
+  deviceKeyInput.disabled = state.isSending || (connection.kind !== 'online' && state.identity !== null);
   renderPending(state);
   clearQueueButton.hidden = connection.kind !== 'blocked';
   clearQueueButton.disabled = state.isSending;
@@ -98,14 +98,23 @@ function renderOffline(state) {
 function renderPending(state) {
   const { connection } = state;
   const isShown = connection.kind !== 'online' || connection.hasReplayed;
-  const count = queueOf(connection)?.items.length ?? 0;
-  elementById('pending').textContent = isShown ? pendingPassages(count, state.language) : '';
+  const queue = queueOf(connection);
+  const pending = pendingPassages(queue?.items.length ?? 0, state.language);
+  const gate = queue?.gateName ?? '';
+  const line = gate === '' ? pending : translate(state.language, 'pendingForGate', { pending, gate });
+  elementById('pending').textContent = isShown ? line : '';
+}
+
+/** @param {ConsoleState} state */
+export function focusAfterQueueAction(state) {
+  (focusTargetAfterQueueAction(state) === 'offlineToggle' ? offlineToggle : deviceKeyInput).focus();
 }
 
 /** @param {ConsoleState} state */
 function renderLoops(state) {
   for (const button of loopButtons) {
     button.disabled = !isLoopAvailable(/** @type {GateKind} */ (button.dataset['loop']), state);
+    button.setAttribute('aria-disabled', String(state.isSending));
   }
 }
 

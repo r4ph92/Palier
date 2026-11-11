@@ -52,7 +52,9 @@ describe('offline texts', () => {
     ['fr', 'offlineExitOpened', 'Sortie ouverte sans condition'],
     ['fr', 'offlineToggle', 'Hors ligne'],
     ['fr', 'clearQueue', 'Vider la file'],
-    ['en', 'offlineEntryRefused', 'Out of service — entry refused'],
+    ['en', 'offlineEntryRefused', 'Out of service — entry refused to Palier users'],
+    ['fr', 'replayKeyHint', 'Entrez la clé de la barrière pour rejouer les passages en attente.'],
+    ['en', 'replayKeyHint', 'Enter the gate’s key to replay the waiting passages.'],
     ['en', 'offlineExitOpened', 'Exit opened unconditionally'],
     ['en', 'offlineToggle', 'Offline'],
     ['en', 'clearQueue', 'Clear queue'],
@@ -86,5 +88,13 @@ describe('offline texts', () => {
 
   it('writes a plain message without counts as its key', () => {
     expect(messageText('en', { key: 'keyRefused', isError: true })).toBe('Device key refused');
+  });
+});
+
+describe('French typography', () => {
+  it('keeps a no-break space before every colon and semicolon and inside every guillemet pair', () => {
+    for (const text of Object.values(translations.fr)) {
+      expect(text).not.toMatch(/ [:;»]|«(?!\u00a0)|[^\u00a0\s]»/);
+    }
   });
 });

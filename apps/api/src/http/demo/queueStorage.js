@@ -45,8 +45,8 @@ function isQueue(value) {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
-  const { gateId, kind, items } = /** @type {Record<string, unknown>} */ (value);
-  return typeof gateId === 'string' && (kind === 'ENTRY' || kind === 'EXIT') && Array.isArray(items) && items.every(isItem);
+  const { gateId, gateName, kind, items } = /** @type {Record<string, unknown>} */ (value);
+  return typeof gateId === 'string' && typeof gateName === 'string' && (kind === 'ENTRY' || kind === 'EXIT') && Array.isArray(items) && items.every(isItem);
 }
 
 /**

@@ -25,7 +25,7 @@ const brokenStorage = {
 };
 
 const item = { id: 'abcdef12-3456-4789-8abc-def123456789', kind: 'EXIT' as const, closedAt: '2026-11-01T14:00:00.000Z' };
-const queue = { gateId: 'gate-702', kind: 'EXIT' as const, items: [item] };
+const queue = { gateId: 'gate-702', gateName: 'Sortie Démo', kind: 'EXIT' as const, items: [item] };
 const offline: Connection = { kind: 'offline', queue };
 
 describe('queueStorage', () => {
@@ -38,7 +38,7 @@ describe('queueStorage', () => {
 
   it('restores a blocked queue as offline, so a retry decides again', () => {
     const storage = memoryStorage();
-    saveConnection({ kind: 'blocked', queue }, storage);
+    saveConnection({ kind: 'blocked', queue, refusal: 'replayRefused' }, storage);
 
     expect(restoredConnection(storage)).toEqual(offline);
   });

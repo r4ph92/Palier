@@ -35,7 +35,7 @@ describe('offlineStatusKey', () => {
 
 describe('startQueue', () => {
   it('starts an empty queue bound to the gate and its kind', () => {
-    expect(startQueue(entreeDemo)).toEqual({ gateId: 'gate-701', kind: 'ENTRY', items: [] });
+    expect(startQueue(entreeDemo)).toEqual({ gateId: 'gate-701', gateName: 'Entrée Démo', kind: 'ENTRY', items: [] });
   });
 });
 
