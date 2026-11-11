@@ -80,8 +80,9 @@ describe('the pricing of a lot', () => {
   });
 
   it.each([
-    { case: 'a zero amount', change: { incrementCents: '0' }, field: 'incrementCents', message: 'Entrez un montant plus grand que zéro, d’au plus 100 000,00 $.' },
-    { case: 'a negative amount', change: { incrementCents: '-1,00' }, field: 'incrementCents', message: 'Entrez un montant plus grand que zéro, d’au plus 100 000,00 $.' },
+    { case: 'an amount of 0,49 $', change: { incrementCents: '0,49' }, field: 'incrementCents', message: 'Entrez un montant de 0,50 $ à 100 000,00 $.' },
+    { case: 'a zero amount', change: { incrementCents: '0' }, field: 'incrementCents', message: 'Entrez un montant de 0,50 $ à 100 000,00 $.' },
+    { case: 'a negative amount', change: { incrementCents: '-1,00' }, field: 'incrementCents', message: 'Entrez un montant de 0,50 $ à 100 000,00 $.' },
     { case: 'a 4-minute increment', change: { incrementMinutes: '4' }, field: 'incrementMinutes', message: 'Entrez un nombre entier de minutes, de 5 à 60.' },
     { case: 'a 61-minute increment', change: { incrementMinutes: '61' }, field: 'incrementMinutes', message: 'Entrez un nombre entier de minutes, de 5 à 60.' },
     { case: 'a cap under one increment', change: { dailyCapCents: '0,50' }, field: 'dailyCapCents', message: 'Le plafond journalier doit valoir au moins le prix d’un incrément.' },

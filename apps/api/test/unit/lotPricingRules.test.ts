@@ -14,13 +14,14 @@ describe('the pricing rule', () => {
   });
 
   it.each([
+    ['an increment of 0,49 $', { incrementCents: 49 }, { incrementCents: 'PRICING_INCREMENT_CENTS_INVALID' }],
     ['a zero increment price', { incrementCents: 0 }, { incrementCents: 'PRICING_INCREMENT_CENTS_INVALID' }],
     ['a negative increment price', { incrementCents: -100 }, { incrementCents: 'PRICING_INCREMENT_CENTS_INVALID' }],
     ['a fractional increment price', { incrementCents: 100.5 }, { incrementCents: 'PRICING_INCREMENT_CENTS_INVALID' }],
     ['a 4-minute increment', { incrementMinutes: 4 }, { incrementMinutes: 'PRICING_INCREMENT_MINUTES_INVALID' }],
     ['a 61-minute increment', { incrementMinutes: 61 }, { incrementMinutes: 'PRICING_INCREMENT_MINUTES_INVALID' }],
     ['a cap under one increment', { dailyCapCents: 50, incrementCents: 100 }, { dailyCapCents: 'PRICING_DAILY_CAP_BELOW_INCREMENT' }],
-    ['a cap of 0,49 $', { dailyCapCents: 49, incrementCents: 1 }, { dailyCapCents: 'PRICING_DAILY_CAP_INVALID' }],
+    ['a cap of 0,49 $', { dailyCapCents: 49, incrementCents: 50 }, { dailyCapCents: 'PRICING_DAILY_CAP_INVALID' }],
     ['a negative cap', { dailyCapCents: -1800 }, { dailyCapCents: 'PRICING_DAILY_CAP_INVALID' }],
     ['a hold quota of 51', { holdQuota: 51 }, { holdQuota: 'PRICING_HOLD_QUOTA_INVALID' }],
     ['a negative hold quota', { holdQuota: -1 }, { holdQuota: 'PRICING_HOLD_QUOTA_INVALID' }],
@@ -29,7 +30,7 @@ describe('the pricing rule', () => {
   });
 
   it.each([
-    ['the smallest cap Stripe charges, 0,50 $', { incrementCents: 1, dailyCapCents: 50 }],
+    ['the smallest cap Stripe charges, 0,50 $', { incrementCents: 50, dailyCapCents: 50 }],
     ['the largest amounts, 100 000,00 $', { incrementCents: 10_000_000, dailyCapCents: 10_000_000 }],
     ['a cap equal to one increment', { incrementCents: 1800, dailyCapCents: 1800 }],
     ['5- and 60-minute increments', { incrementMinutes: 5 }],

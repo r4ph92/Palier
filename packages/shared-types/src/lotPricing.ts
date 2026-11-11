@@ -3,10 +3,12 @@ import { fieldErrorsOf, isWholeNumberWithin, type FieldErrors } from './fieldErr
 
 // 100 000,00 $: far above any parking day, and far below what int4 columns and Stripe amounts hold.
 export const PRICING_MAX_CENTS = 10_000_000;
-export const INCREMENT_CENTS_LIMITS = { minimum: 1, maximum: PRICING_MAX_CENTS } as const;
+// Stripe refuses any CAD charge or capture under 0,50 $, so no price may bill less than that.
+export const STRIPE_MINIMUM_CENTS = 50;
+export const INCREMENT_CENTS_LIMITS = { minimum: STRIPE_MINIMUM_CENTS, maximum: PRICING_MAX_CENTS } as const;
 export const INCREMENT_MINUTES_LIMITS = { minimum: 5, maximum: 60 } as const;
-// The cap is the amount authorized at entry (Q19), and Stripe refuses a CAD charge under 0,50 $.
-export const DAILY_CAP_CENTS_LIMITS = { minimum: 50, maximum: PRICING_MAX_CENTS } as const;
+// The cap is the amount authorized at entry (Q19).
+export const DAILY_CAP_CENTS_LIMITS = { minimum: STRIPE_MINIMUM_CENTS, maximum: PRICING_MAX_CENTS } as const;
 export const HOLD_QUOTA_LIMITS = { minimum: 0, maximum: 50 } as const;
 export const DEFAULT_HOLD_QUOTA = 3;
 
