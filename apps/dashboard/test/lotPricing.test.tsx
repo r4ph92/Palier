@@ -48,6 +48,17 @@ describe('the pricing of a lot', () => {
     expect(api.lots.get('00000000-0000-4000-8000-000000000102')?.[0]?.pricing).toEqual({ incrementCents: 100, incrementMinutes: 20, dailyCapCents: 1800, holdQuota: 4 });
   });
 
+  it('empties the saved status while the next save is on its way, so the confirmation is announced again', async () => {
+    const api = await openGarageRoy();
+    await enterPricing(royPricing);
+    await screen.findByText(/^Tarification enregistrée\./);
+    api.answers.set(`PUT /lots/${garageRoy.id}/pricing`, 'pending');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer la tarification' }));
+
+    expect(screen.getByRole('status').textContent).toBe('');
+  });
+
   it('says Le plafond journalier est obligatoire when the cap is empty, and saves nothing', async () => {
     const api = await openGarageRoy();
 

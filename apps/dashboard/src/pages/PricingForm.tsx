@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { fieldBinder } from '../forms/fieldBinder.ts';
 import { SubmitButton } from '../forms/SubmitButton.tsx';
 import { TextField } from '../forms/TextField.tsx';
+import type { FieldForm } from '../forms/useFieldForm.ts';
 import { useText } from '../i18n/LanguageContext.tsx';
 import { useLimitValues } from '../lotSetup/useLimitValues.ts';
 import { usePricingForm, type PricingFormTarget } from '../lotSetup/usePricingForm.ts';
@@ -10,7 +11,7 @@ import { usePricingForm, type PricingFormTarget } from '../lotSetup/usePricingFo
 export function PricingForm({ lotId, pricing, onSaved }: PricingFormTarget) {
   const text = useText();
   const saved = useSavedNotice(onSaved);
-  const form = usePricingForm({ lotId, pricing, onSaved: saved.markSaved });
+  const form = clearingOnEachChange(usePricingForm({ lotId, pricing, onSaved: saved.markSaved }), saved.clear);
   const field = fieldBinder(form, 'pricing', useLimitValues());
   return (
     <form className="form" noValidate aria-busy={form.submitting} onSubmit={(event) => void form.submit(event)}>
@@ -27,12 +28,24 @@ export function PricingForm({ lotId, pricing, onSaved }: PricingFormTarget) {
   );
 }
 
-// The status stays empty until the first save, so a screen reader announces the confirmation when it appears.
+// The status empties on each edit and each submit, so a screen reader announces the confirmation every time it comes back.
 function useSavedNotice(onSaved: () => void) {
   const [hasSaved, setHasSaved] = useState(false);
   const markSaved = () => {
     setHasSaved(true);
     onSaved();
   };
-  return { hasSaved, markSaved };
+  return { hasSaved, markSaved, clear: () => setHasSaved(false) };
+}
+
+function clearingOnEachChange<Field extends string>(form: FieldForm<Field>, clear: () => void): FieldForm<Field> {
+  const setValue = (field: Field, value: string) => {
+    clear();
+    form.setValue(field, value);
+  };
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    clear();
+    return form.submit(event);
+  };
+  return { ...form, setValue, submit };
 }
