@@ -21,6 +21,11 @@
   border: 0;
 }
 
+.fieldset > legend {
+  padding: 0;
+  margin-bottom: var(--space-small);
+}
+
 .field .error-notice {
   margin: 0;
 }
@@ -106,4 +111,8 @@
 
 .text-button[aria-disabled='true'] {
   cursor: wait;
+}
+
+.section .form {
+  margin-top: var(--space-large);
 }
