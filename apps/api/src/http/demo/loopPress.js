@@ -79,10 +79,10 @@ function passageRefusal(status) {
 
 /**
  * @param {string} deviceKey
- * @param {PassageApi} api
+ * @param {Pick<import('./gateApi.js').GateApi, 'fetchIdentity'>} api
  * @returns {Promise<GateIdentity | RefusedOutcome>}
  */
-async function identify(deviceKey, api) {
+export async function identify(deviceKey, api) {
   const response = await api.fetchIdentity(deviceKey);
   if (response.status !== OK || response.body === null) {
     return { kind: 'refused', identity: null, messageKey: messageForStatus(response.status) };

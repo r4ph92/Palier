@@ -38,6 +38,13 @@
         <p id="message" class="message" role="status"></p>
       </section>
 
+      <section class="block" aria-labelledby="reader-heading">
+        <h2 id="reader-heading" class="eyebrow" data-text="readerHeading">Lecteur de plaque ou de transpondeur</h2>
+        <label class="field-label" for="plate-read" data-text="plateLabel">Plaque lue</label>
+        <input id="plate-read" class="field" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="64">
+        <button type="button" id="reader-send" class="loop-button" data-text="readerSend" disabled>Envoyer la lecture</button>
+      </section>
+
       <section class="block" aria-labelledby="commands-heading">
         <h2 id="commands-heading" class="eyebrow" data-text="commandsHeading">Commandes</h2>
         <p id="no-command" class="hint" data-text="noCommand">Aucune commande pour l’instant.</p>

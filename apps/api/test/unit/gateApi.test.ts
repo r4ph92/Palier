@@ -21,6 +21,21 @@ describe('createGateApi', () => {
     });
   });
 
+  it('sends the reading as the identifier of the gate named in the path', async () => {
+    const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ outcome: 'fallback', identification: null }));
+
+    const response = await createGateApi(fetchFunction).postIdentify(DEVICE_KEY, 'gate-502', 'abc 123');
+
+    expect(response).toEqual({ status: 200, body: { outcome: 'fallback', identification: null } });
+    expect(fetchFunction).toHaveBeenCalledWith('/v1/gates/gate-502/identify', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${DEVICE_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ identifier: 'abc 123' }),
+      cache: 'no-store',
+      credentials: 'omit',
+    });
+  });
+
   it('reports the status of a refusal', async () => {
     const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
 
