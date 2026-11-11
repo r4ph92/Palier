@@ -14,6 +14,10 @@ const CURRENCY = 'cad';
 const AUTHORIZED = 'requires_capture';
 const CANCELED = 'canceled';
 const SUCCEEDED = 'succeeded';
+const PROCESSING = 'processing';
+const SURPLUS = 'surplus';
+// Every intent of the customer since the entry: far more than one driver makes, so the session's surplus is always among them.
+const SURPLUS_LOOKUP_LIMIT = 100;
 const CARD_ERROR = 'StripeCardError';
 const UNEXPECTED_STATE = 'payment_intent_unexpected_state';
 const MISSING = 'resource_missing';
@@ -27,6 +31,7 @@ interface CreatedIntent {
 
 // What the entry authorization says of the card and the operator account the surplus goes to.
 export interface EntryIntent {
+  readonly created: number;
   readonly customer: string | { readonly id: string } | null;
   readonly payment_method: string | { readonly id: string } | null;
   readonly transfer_data?: { readonly destination: string | { readonly id: string } } | null;
@@ -39,7 +44,15 @@ export interface PaymentIntentsApi {
     retrieve(paymentIntentId: string): Promise<EntryIntent>;
     cancel(paymentIntentId: string): Promise<unknown>;
     capture(paymentIntentId: string, params: Stripe.PaymentIntentCaptureParams, options: Stripe.RequestOptions): Promise<{ readonly amount_received: number }>;
+    list(params: Stripe.PaymentIntentListParams): Promise<{ readonly data: readonly ListedIntent[] }>;
   };
+}
+
+// What a listed intent says of a surplus charge.
+export interface ListedIntent {
+  readonly status: string;
+  readonly amount_received: number;
+  readonly metadata: Stripe.Metadata | null;
 }
 
 export class StripePaymentAuthorizer implements PaymentAuthorizer {
@@ -92,15 +105,39 @@ export class StripePaymentAuthorizer implements PaymentAuthorizer {
     }
   }
 
-  // The key names the session only: a second tap asking another amount is refused by Stripe rather than charged twice.
+  // The key names the session only, so a second tap asking another amount is refused by Stripe rather than charged twice. Before charging,
+  // and after any error but a card refusal, the session's surplus is looked up among the customer's intents: an earlier tap's charge, or
+  // one Stripe took before a timeout, is answered as it is instead of read as unpaid.
   async chargeSurplus({ sessionId, paymentIntentId, amountCents }: SurplusRequest): Promise<SurplusOutcome> {
     try {
       const entry = await this.#stripe.paymentIntents.retrieve(paymentIntentId);
-      const intent = await this.#stripe.paymentIntents.create(surplusParameters(sessionId, amountCents, entry), { idempotencyKey: `exit-extra-${sessionId}` });
-      return { outcome: intent.status === SUCCEEDED ? 'charged' : 'failed' };
+      return (await this.#surplusOf(sessionId, entry)) ?? (await this.#createSurplus(sessionId, amountCents, entry));
     } catch {
       return { outcome: 'failed' };
     }
+  }
+
+  async #createSurplus(sessionId: string, amountCents: number, entry: EntryIntent): Promise<SurplusOutcome> {
+    try {
+      const intent = await this.#stripe.paymentIntents.create(surplusParameters(sessionId, amountCents, entry), { idempotencyKey: `exit-extra-${sessionId}` });
+      return surplusOutcomeOf(intent.status, amountCents);
+    } catch (error) {
+      if (isCardError(error)) {
+        return { outcome: 'declined' };
+      }
+      // A second tap racing the first finds the key in use: it waits a moment for the first charge to settle.
+      if (propertyOf(error, 'code') === KEY_IN_USE) {
+        await new Promise((resolve) => setTimeout(resolve, this.#keyInUseRetryMilliseconds));
+      }
+      return (await this.#surplusOf(sessionId, entry)) ?? { outcome: 'failed' };
+    }
+  }
+
+  // Null when the session has no surplus charge yet.
+  async #surplusOf(sessionId: string, entry: EntryIntent): Promise<SurplusOutcome | null> {
+    const intents = await this.#stripe.paymentIntents.list({ customer: idOf(entry.customer), created: { gte: entry.created }, limit: SURPLUS_LOOKUP_LIMIT });
+    const surplus = intents.data.find((intent) => intent.metadata?.sessionId === sessionId && intent.metadata.kind === SURPLUS);
+    return surplus === undefined ? null : surplusOutcomeOf(surplus.status, surplus.amount_received);
   }
 
   // The idempotency key is the session, so Stripe's own retries never create a second hold for one entry.
@@ -140,7 +177,7 @@ function surplusParameters(sessionId: string, amountCents: number, entry: EntryI
     off_session: true,
     // A card that needs the driver (3-D Secure) is refused outright rather than left open on Stripe's side.
     error_on_requires_action: true,
-    metadata: { sessionId, kind: 'surplus' },
+    metadata: { sessionId, kind: SURPLUS },
   };
   return entry.transfer_data?.destination === undefined ? parameters : { ...parameters, transfer_data: { destination: idOf(entry.transfer_data.destination) } };
 }
@@ -150,6 +187,14 @@ function idOf(reference: string | { readonly id: string } | null): string {
     throw new Error('The entry authorization has no card to charge.');
   }
   return typeof reference === 'string' ? reference : reference.id;
+}
+
+// A card charge settles at once: anything but succeeded is a refusal, save one still processing, which is read again later.
+function surplusOutcomeOf(status: string, chargedCents: number): SurplusOutcome {
+  if (status === SUCCEEDED) {
+    return { outcome: 'charged', amountCents: chargedCents };
+  }
+  return status === PROCESSING ? { outcome: 'failed' } : { outcome: 'declined' };
 }
 
 function capturedBefore(error: unknown): CaptureOutcome {

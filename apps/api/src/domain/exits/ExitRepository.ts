@@ -36,7 +36,7 @@ export interface ExitClosing {
   readonly exit: PaidExit;
 }
 
-// The exit of a session whose capture Stripe could not take: the amount is fixed now, and the retry captures exactly it.
+// The exit of a session whose payment Stripe could not settle: the amounts are fixed now, and the retry takes exactly them.
 export interface PendingExitClosing {
   readonly sessionId: string;
   readonly lotId: string;
@@ -44,9 +44,8 @@ export interface PendingExitClosing {
   readonly identification: ExitIdentification;
   readonly exitedAt: Date;
   readonly pendingCaptureCents: number;
-  // Settled at the tap whatever the capture did; the retry only captures.
-  readonly surplusPaidCents: number;
-  readonly unpaidCents: number;
+  // The surplus of a stay over 24 hours the retry charges after the capture; 0 when the hold covers the stay (decision 027).
+  readonly pendingSurplusCents: number;
 }
 
 // closed: this request closed the session; already: another request did first, and its exit stands (null when that one left the
