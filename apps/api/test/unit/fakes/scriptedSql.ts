@@ -63,8 +63,8 @@ const dialect = new PgDialect();
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
-  ['presume-silent-entries', /presumed_by = 'TIMEOUT', parked_at/],
-  ['presume-silent-questions', /presumed_by = 'TIMEOUT'\s+where/],
+  ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],
+  ['presume-silent-questions', /where lot_id = \$\d and state = 'PARKED_UNCONFIRMED' and parked_at/],
   ['presume-parked', /set state = 'PARKED_PRESUMED'/],
   ['read-walk-facts', /left join aisle detected/],
   ['ask-where-parked', /set state = 'PARKED_UNCONFIRMED'/],
