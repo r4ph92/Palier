@@ -75,7 +75,7 @@ describe('presumeSilentSessions', () => {
   });
 
   it('logs the failure of one lot with its id and still presumes the next lot', async () => {
-    const failure = new Error('lock timeout');
+    const failure = new Error('connection reset');
     const silentSessions: SilentSessionJob['silentSessions'] = {
       findLotsWithSilentSessions: () => Promise.resolve(['lot-busy', 'lot-calm']),
       presumeLotSilentSessions: (lotId) =>

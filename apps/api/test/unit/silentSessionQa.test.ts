@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { LotBusyError } from '../../src/domain/lots/LotBusyError.ts';
 import { presumeSilentSessions, type SilentSessionJob } from '../../src/domain/parkingSessions/presumeSilentSessions.ts';
 import { PostgresSilentSessionRepository } from '../../src/infrastructure/postgres/PostgresSilentSessionRepository.ts';
 import { FakeSilentSessionRepository } from './fakes/fakeSilentSessions.ts';
@@ -46,7 +47,7 @@ describe('presuming silent sessions, QA attacks (story #24)', () => {
   it('presumes at the next check a lot that was busy at the previous one', async () => {
     const presumeLot = vi
       .fn<SilentSessionJob['silentSessions']['presumeLotSilentSessions']>()
-      .mockRejectedValueOnce(new Error('canceling statement due to lock timeout'))
+      .mockRejectedValueOnce(new LotBusyError('lot-demo'))
       .mockResolvedValueOnce({ confirmedEntries: 1, unansweredQuestions: 0 });
     const silentSessions: SilentSessionJob['silentSessions'] = { findLotsWithSilentSessions: () => Promise.resolve(['lot-demo']), presumeLotSilentSessions: presumeLot };
     const log = logSpy();
@@ -55,7 +56,8 @@ describe('presuming silent sessions, QA attacks (story #24)', () => {
     await presumeSilentSessions({ silentSessions, clock: () => new Date(NOW.getTime() + 300_000) }, log);
 
     expect(presumeLot).toHaveBeenCalledTimes(2);
-    expect(log.error).toHaveBeenCalledTimes(1);
+    expect(log.warn).toHaveBeenCalledTimes(1);
+    expect(log.error).not.toHaveBeenCalled();
     expect(log.info).toHaveBeenCalledExactlyOnceWith({ lotId: 'lot-demo', confirmedEntries: 1, unansweredQuestions: 0 }, expect.any(String));
   });
 
