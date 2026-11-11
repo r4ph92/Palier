@@ -20,3 +20,5 @@
 - Si Stripe ou la barrière ne peuvent pas suivre, la présence est déjà dépensée : le conducteur garde le tap (la capture en attente de 026 s'applique, elle, comme au tap).
 - Une session dont le reçu n'est pas encore lisible quand elle disparaît peut aussi disparaître pour une autre raison : l'écran d'attente reste alors jusqu'à « Terminé » (un cas qui ne vaut qu'une minute après un rapport).
 - Un seul portail de sortie par parking (OQ12) : la barrière qui s'ouvre est la première par nom.
+- La lecture des candidates et la dépense de la présence sont deux requêtes sans verrou du parking : un rapport d'un second conducteur validé entre les deux laisse le premier sortir seul. C'est la même ambiguïté que celle acceptée plus haut (le véhicule ne dit pas quel conducteur il est).
+- Un client modifié qui connaît le `major` du parking peut rapporter la balise de n'importe où et forcer le repli sur le tap pour tous, aussi longtemps qu'il rafraîchit son rapport : un déni de la fonction, jamais une perte d'argent. Aucune limite par session pour l'instant.

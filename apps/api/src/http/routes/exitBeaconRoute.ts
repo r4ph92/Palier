@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import { reportExitBeacon, type BeaconReportOutcome, type BeaconReportRefusal } from '../../domain/exits/identifyByBeacon.ts';
 import type { ExitRouteDependencies } from './exitRoute.ts';
-import { ENTRY_NOT_CONFIRMED_BODY, LOT_BUSY_BODY, refusalSender, SESSION_CLOSED_BODY } from '../parkedRefusals.ts';
+import { ENTRY_NOT_CONFIRMED_BODY, refusalSender, SESSION_CLOSED_BODY } from '../parkedRefusals.ts';
 import { SESSION_NOT_FOUND_BODY } from '../sessionNotFound.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
@@ -19,13 +19,12 @@ interface ExitBeaconRoute {
   readonly Body: ExitBeaconRequest;
 }
 
-const sendRefusal = refusalSender<BeaconReportRefusal | 'lot-busy', ExitBeaconRefusalCode>(
+const sendRefusal = refusalSender<BeaconReportRefusal, ExitBeaconRefusalCode>(
   {
     'not-found': SESSION_NOT_FOUND_BODY,
     'entry-not-confirmed': ENTRY_NOT_CONFIRMED_BODY,
     closed: SESSION_CLOSED_BODY,
     'wrong-lot': { statusCode: CONFLICT, error: 'BEACON_NOT_THIS_LOT', message: 'This beacon is not the one of this session\'s parking lot.' },
-    'lot-busy': LOT_BUSY_BODY,
   },
   'exit beacon report',
 );
