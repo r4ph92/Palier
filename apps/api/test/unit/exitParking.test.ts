@@ -137,6 +137,30 @@ describe('exitParking', () => {
     });
   });
 
+  it('answers pending to a tap that captured but lost the close to a tap that left the capture pending', async () => {
+    const { exits, payments, exit } = setup();
+    const read = exits.findForExit.bind(exits);
+    exits.findForExit = async (sessionId, driverId) => {
+      const session = await read(sessionId, driverId);
+      // The other tap, whose capture failed, closes the session as pending while this one captures.
+      await exits.closeWithPendingCapture({
+        sessionId: EXIT_SESSION_ID,
+        lotId: 'lot-demo',
+        exitGateId: EXIT_GATE_ID,
+        identification: 'APP',
+        exitedAt: at2117,
+        pendingCaptureCents: 975,
+        surplusPaidCents: 0,
+        unpaidCents: 0,
+      });
+      return session;
+    };
+
+    expect(await exit()).toEqual({ outcome: 'capture-pending' });
+    expect(payments.captured).toHaveLength(1);
+    expect(exits.closings).toEqual([]);
+  });
+
   it('answers lot busy when the lot stays locked', async () => {
     const { exits, exit } = setup();
     exits.busy = true;
