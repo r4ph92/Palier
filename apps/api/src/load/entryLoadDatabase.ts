@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import type { VehicleNeeds } from '../domain/vehicles/VehicleRepository.ts';
 import { ACTIVE_SESSION } from '../infrastructure/postgres/activeSessionStates.ts';
 import type { Database } from '../infrastructure/postgres/database.ts';
-import { HELD_SPOT_COUNT } from '../infrastructure/postgres/heldSpotCount.ts';
+import { ASSIGNED_SPOT_COUNT, HELD_SPOT_COUNT } from '../infrastructure/postgres/heldSpotCount.ts';
 import { readFreeSpots } from '../infrastructure/postgres/spotClaim.ts';
 import { admissibleSpotCount } from './admissibleSpotCount.ts';
 
@@ -28,6 +28,7 @@ interface LotOccupancyRow extends Record<string, unknown> {
   readonly capacity: number;
   readonly vehicle_count: number;
   readonly held_spot_count: number;
+  readonly assigned_spot_count: number;
 }
 
 interface SessionCheckRow extends Record<string, unknown> {
@@ -44,12 +45,12 @@ export async function countActiveSessionsOf(database: Database, driverIds: reado
 
 export async function countAdmissibleSpots(database: Database, lotId: string, needs: VehicleNeeds): Promise<number> {
   const rows = await database.execute<LotOccupancyRow>(sql`
-    select capacity, vehicle_count, ${HELD_SPOT_COUNT} as held_spot_count from parking_lot where id = ${lotId}`);
+    select capacity, vehicle_count, ${HELD_SPOT_COUNT} as held_spot_count, ${ASSIGNED_SPOT_COUNT} as assigned_spot_count from parking_lot where id = ${lotId}`);
   const lot = rows[0];
   if (lot === undefined) {
     return 0;
   }
-  const occupancy = { capacity: lot.capacity, vehicleCount: lot.vehicle_count, heldSpotCount: lot.held_spot_count };
+  const occupancy = { capacity: lot.capacity, vehicleCount: lot.vehicle_count, heldSpotCount: lot.held_spot_count, assignedSpotCount: lot.assigned_spot_count };
   return admissibleSpotCount({ occupancy, freeSpots: await readFreeSpots(database, lotId), needs });
 }
 

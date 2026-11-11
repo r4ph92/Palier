@@ -10,10 +10,10 @@ const freeSpots = [spot('A-1'), spot('A-2'), spot('A-3', true)];
 
 describe('admissibleSpotCount', () => {
   it('counts the free spots a standard vehicle may take when the lot has room', () => {
-    expect(admissibleSpotCount({ occupancy: { capacity: 10, vehicleCount: 0, heldSpotCount: 0 }, freeSpots, needs: standardNeeds })).toBe(2);
+    expect(admissibleSpotCount({ occupancy: { capacity: 10, vehicleCount: 0, heldSpotCount: 0, assignedSpotCount: 0 }, freeSpots, needs: standardNeeds })).toBe(2);
   });
 
   it('admits nobody once vehicles and held spots fill the lot, though spots look free', () => {
-    expect(admissibleSpotCount({ occupancy: { capacity: 10, vehicleCount: 7, heldSpotCount: 3 }, freeSpots, needs: standardNeeds })).toBe(0);
+    expect(admissibleSpotCount({ occupancy: { capacity: 10, vehicleCount: 7, heldSpotCount: 3, assignedSpotCount: 0 }, freeSpots, needs: standardNeeds })).toBe(0);
   });
 });

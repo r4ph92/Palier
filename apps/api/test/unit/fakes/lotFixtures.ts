@@ -10,7 +10,7 @@ export const PARKING_DEMO_CATEGORIES_WITH_8_INSIDE: SpotCountByCategory = { stan
 
 // Parking Démo as seeded: capacity 10, nobody inside, nothing held, every spot free.
 export function parkingDemoAvailability(overrides: Partial<LotAvailability> = {}): LotAvailability {
-  return { capacity: 10, vehicleCount: 0, heldSpotCount: 0, availableSpotCount: 10, availableByCategory: PARKING_DEMO_CATEGORIES, ...overrides };
+  return { capacity: 10, vehicleCount: 0, heldSpotCount: 0, assignedSpotCount: 0, availableSpotCount: 10, availableByCategory: PARKING_DEMO_CATEGORIES, ...overrides };
 }
 
 export function parkingDemoOnline(availability = parkingDemoAvailability()): OnlineLot {

@@ -139,6 +139,21 @@ describe('entry eligibility', () => {
     expect(await refusalOf(await eligibilityFor({ gates: [heldFull] }), entreeDemoQr)).toBe('LOT_FULL');
   });
 
+  // #110: capacity 10, 9 counted vehicles, all 10 spots free.
+  it('admits Julie at count 9 of 10, then refuses Marc as LOT_FULL while her loop has not closed', async () => {
+    const lastPlace = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 9 } };
+    const julieAdmitted = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 9, assignedSpotCount: 1 } };
+
+    expect(await refusalOf(await eligibilityFor({ gates: [lastPlace] }), entreeDemoQr)).toBeUndefined();
+    expect(await refusalOf(await eligibilityFor({ gates: [julieAdmitted] }), entreeDemoQr)).toBe('LOT_FULL');
+  });
+
+  it('refuses a lot with more counted vehicles than its capacity as LOT_FULL', async () => {
+    const overCounted = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 12 } };
+
+    expect(await refusalOf(await eligibilityFor({ gates: [overCounted] }), entreeDemoQr)).toBe('LOT_FULL');
+  });
+
   describe('a driver holding a spot in a full lot', () => {
     const heldFull = { ...entreeDemoGate, lot: { ...entreeDemoGate.lot, vehicleCount: 9, heldSpotCount: 1 } };
     const hold = (lotId: string, expiresAt: Date) => ({ lotId, expiresAt });
