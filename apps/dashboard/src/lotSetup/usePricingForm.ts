@@ -1,5 +1,6 @@
 import type { LotPricing } from '@palier/shared-types';
 import { DEFAULT_HOLD_QUOTA, pricingErrors, type LotPricingRequest, type PricingField } from '@palier/shared-types/lotPricing';
+import { useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { readFormOf, useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
@@ -15,6 +16,8 @@ const FIELD_OF_CODE: Partial<Readonly<Record<DisplayedErrorCode, PricingField>>>
   PRICING_DAILY_CAP_BELOW_INCREMENT: 'dailyCapCents',
   PRICING_HOLD_QUOTA_INVALID: 'holdQuota',
 };
+
+const AMOUNT_FIELDS = ['incrementCents', 'dailyCapCents'] as const satisfies readonly PricingField[];
 
 const NO_PRICING_YET: FieldValues<PricingField> = { incrementCents: '', incrementMinutes: '', dailyCapCents: '', holdQuota: String(DEFAULT_HOLD_QUOTA) };
 
@@ -57,5 +60,23 @@ export function usePricingForm({ lotId, pricing, onSaved }: PricingFormTarget): 
     await dashboardClient.setLotPricing(lotId, request);
     onSaved();
   };
-  return useFieldForm({ initialValues: valuesOf(pricing, language), read: readPricing, send, fieldOfCode: FIELD_OF_CODE });
+  const form = useFieldForm({ initialValues: valuesOf(pricing, language), read: readPricing, send, fieldOfCode: FIELD_OF_CODE });
+  useAmountsInLanguage(form, language);
+  return form;
+}
+
+// Rewrites each readable amount with the decimal mark of the new language, during the render that sees the switch.
+// A field that shows an error keeps its text, so the error still describes what is in the box.
+function useAmountsInLanguage(form: FieldForm<PricingField>, language: Language): void {
+  const [shownIn, setShownIn] = useState(language);
+  if (shownIn === language) {
+    return;
+  }
+  setShownIn(language);
+  for (const field of AMOUNT_FIELDS) {
+    const amount = parseAmount(form.values[field]);
+    if (amount.ok && form.errors[field] === undefined) {
+      form.setValue(field, amountInputOf(amount.value, language));
+    }
+  }
 }
