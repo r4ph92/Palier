@@ -17,7 +17,7 @@ interface PaidSessionFacts {
 }
 
 function paidSession({ id, enteredAt, exitedAt, capturedCents, cardLast4 = '4242' }: PaidSessionFacts): PaidSession {
-  return { id, lotName: 'Parking Démo', enteredAt: new Date(enteredAt), pricing: PRICING, exit: { exitedAt: new Date(exitedAt), capturedCents }, cardLast4 };
+  return { id, lotName: 'Parking Démo', enteredAt: new Date(enteredAt), pricing: PRICING, exit: { exitedAt: new Date(exitedAt), capturedCents, surplusPaidCents: 0, unpaidCents: 0 }, cardLast4 };
 }
 
 const monday = paidSession({ id: '00000000-0000-4000-8000-000000000a01', enteredAt: '2026-11-02T14:00:00Z', exitedAt: '2026-11-02T15:00:00Z', capturedCents: 300 });
@@ -73,6 +73,30 @@ describe('driver receipts', () => {
     });
   });
 
+  describe('a stay over 24 hours', () => {
+    it('lists what was paid and shows the day lines, the extra and the unpaid balance in the detail', async () => {
+      const { get, receipts } = await julieWithThreeReceipts();
+      const long = paidSession({ id: '00000000-0000-4000-8000-000000000a09', enteredAt: '2026-11-05T14:00:00Z', exitedAt: '2026-11-06T20:00:00Z', capturedCents: 2500 });
+      receipts.add(julie.id, { ...long, exit: { ...long.exit, unpaidCents: 1800 } });
+
+      const detail = await get(`/v1/me/receipts/${long.id}`);
+      const list = await get('/v1/me/receipts');
+
+      expect(detail.json()).toMatchObject({
+        receipt: {
+          durationMinutes: 1800,
+          totalCents: 2500,
+          unpaidCents: 1800,
+          lines: [
+            { kind: 'DAY', dayNumber: 1, cents: 2500 },
+            { kind: 'EXTRA', minutes: 360, cents: 1800 },
+          ],
+        },
+      });
+      expect(list.json().receipts[0]).toMatchObject({ sessionId: long.id, totalCents: 2500 });
+    });
+  });
+
   describe('GET /v1/me/receipts/:sessionId', () => {
     it('shows entry and exit times, the price per increment, the increments, the total and the card’s last four', async () => {
       const { get } = await julieWithThreeReceipts();
@@ -91,6 +115,8 @@ describe('driver receipts', () => {
           incrementCents: 75,
           totalCents: 975,
           capped: false,
+          lines: [],
+          unpaidCents: 0,
           cardLast4: '4242',
         },
       });

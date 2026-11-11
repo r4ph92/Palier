@@ -49,10 +49,10 @@ describe('GET /v1/me/session edge cases', () => {
     expect(response.json()).toMatchObject({ session: { elapsedMinutes: 0, amountCents: 75 } });
   });
 
-  it('stays at the daily cap 25 hours after entry', async () => {
+  it('bills the first day at the cap and one increment for the 25th hour', async () => {
     const response = await readJulieSession(julieAtParkingDemo(enteredAt), new Date(2026, 10, 5, 19, 2));
 
-    expect(response.json()).toMatchObject({ session: { elapsedMinutes: 1500, amountCents: 2500 } });
+    expect(response.json()).toMatchObject({ session: { elapsedMinutes: 1500, amountCents: 2800 } });
   });
 });
 

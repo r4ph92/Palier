@@ -141,6 +141,7 @@ export const en: Translations = {
     elapsedLead: 'Time parked ',
     amountLead: 'Amount so far: ',
     capLead: 'Daily cap: ',
+    overDay: '24-hour cap exceeded — the extra will be billed at exit',
     pending: 'Entry awaiting confirmation',
     parkedInLead: 'Parked in ',
     updatedAtLead: 'Updated ',

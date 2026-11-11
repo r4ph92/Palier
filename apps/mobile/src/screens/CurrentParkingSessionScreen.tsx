@@ -150,8 +150,17 @@ function SessionAmount({ session }: { readonly session: CurrentParkingSession })
     <View style={styles.group}>
       <Figure lead={i18n.t('session.amountLead')} value={formatMoney(session.amountCents, language)} leadStyle={typography.bodyStrong} valueStyle={typography.countNumber} />
       <Figure lead={i18n.t('session.capLead')} value={formatMoney(session.dailyCapCents, language)} />
+      {session.elapsedMinutes > MINUTES_PER_DAY ? <OverDayNotice /> : null}
     </View>
   );
+}
+
+const MINUTES_PER_DAY = 24 * 60;
+
+// Past 24 hours the amount keeps growing beyond the cap held on the card: the driver is told before the exit, not at it.
+function OverDayNotice() {
+  const colors = useColors();
+  return <Text style={[typography.body, { color: colors.ink }]}>{i18n.t('session.overDay')}</Text>;
 }
 
 interface FigureProps {

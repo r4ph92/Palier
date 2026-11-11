@@ -28,6 +28,13 @@ describe('readPaymentsSimulation', () => {
     );
   });
 
+  it('accepts the declined surplus in development and refuses it beside a real key', () => {
+    expect(readPaymentsSimulation({ NODE_ENV: 'development', PAYMENTS_SIMULATION: 'surplus-declined' })).toBe('surplus-declined');
+    expect(() => readPaymentsSimulation({ NODE_ENV: 'development', PAYMENTS_SIMULATION: 'surplus-declined', STRIPE_SECRET_KEY: testKey })).toThrow(
+      /refused while STRIPE_SECRET_KEY is set/,
+    );
+  });
+
   it('refuses simulated successes beside a real Stripe key', () => {
     expect(() => readPaymentsSimulation({ NODE_ENV: 'development', PAYMENTS_SIMULATION: 'success', STRIPE_SECRET_KEY: testKey })).toThrow(
       /refused while STRIPE_SECRET_KEY is set/,
@@ -43,7 +50,7 @@ describe('readPaymentsSimulation', () => {
   });
 
   it.each(['true', 'yes', 'SUCCESS'])('refuses PAYMENTS_SIMULATION=%s', (rawSimulation) => {
-    expect(() => readPaymentsSimulation({ NODE_ENV: 'development', PAYMENTS_SIMULATION: rawSimulation })).toThrow(/must be one of none, unreachable, success, capture-unreachable/);
+    expect(() => readPaymentsSimulation({ NODE_ENV: 'development', PAYMENTS_SIMULATION: rawSimulation })).toThrow(/must be one of none, unreachable, success, capture-unreachable, surplus-declined/);
   });
 
   it.each(['true', '1'])('refuses to start while the renamed SIMULATE_STRIPE_UNREACHABLE is %s', (rawSwitch) => {

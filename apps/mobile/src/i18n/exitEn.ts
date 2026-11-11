@@ -12,6 +12,13 @@ export const exitEn: Translations['session']['exit'] = {
     durationLead: 'Duration ',
     totalLead: 'Total ',
     capped: 'Daily cap',
+    total: 'Total',
+    firstDay: 'First 24 hours',
+    nextDay: 'Next 24 hours',
+    extra: '%{duration} extra',
+    capNote: '(cap)',
+    unpaid: 'Unpaid balance',
+    lineAmount: '%{label}: %{amount}',
     done: 'Done',
   },
 };

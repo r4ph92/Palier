@@ -7,7 +7,7 @@ import type { EntryGateRepository } from '../../../src/domain/entries/EntryGateR
 import type { EntryLog } from '../../../src/domain/entries/EntryLog.ts';
 import { EntryRefusedError } from '../../../src/domain/entries/EntryRefusedError.ts';
 import type { GateCommander, OpenCommand } from '../../../src/domain/entries/GateCommander.ts';
-import type { AuthorizationRequest, CaptureOutcome, CaptureRequest, HoldRelease, PaymentAuthorizer } from '../../../src/domain/entries/PaymentAuthorizer.ts';
+import type { AuthorizationRequest, CaptureOutcome, CaptureRequest, HoldRelease, PaymentAuthorizer, SurplusOutcome, SurplusRequest } from '../../../src/domain/entries/PaymentAuthorizer.ts';
 import type { EntryRouteDependencies } from '../../../src/http/routes/entryRoutes.ts';
 import type { FakeDriverRepository } from '../fakeDriverRepository.ts';
 import type { FakeVehicleRepository } from '../fakeVehicleRepository.ts';
@@ -25,6 +25,8 @@ export class FakePaymentAuthorizer implements PaymentAuthorizer {
   refusal: EntryRefusalCode | null = null;
   release: HoldRelease = 'released';
   readonly captured: CaptureRequest[] = [];
+  readonly surcharged: SurplusRequest[] = [];
+  surplusOutcome: 'charged' | 'failed' = 'charged';
   captureOutcome: 'captured' | 'failed' = 'captured';
   // What Stripe says it took when an earlier capture already did; null takes what is asked.
   alreadyCapturedCents: number | null = null;
@@ -58,6 +60,14 @@ export class FakePaymentAuthorizer implements PaymentAuthorizer {
     }
     this.captured.push(request);
     return Promise.resolve({ outcome: 'captured', amountCents: this.alreadyCapturedCents ?? request.amountCents });
+  }
+
+  chargeSurplus(request: SurplusRequest): Promise<SurplusOutcome> {
+    this.#journal.push('charge-surplus');
+    if (this.surplusOutcome === 'charged') {
+      this.surcharged.push(request);
+    }
+    return Promise.resolve({ outcome: this.surplusOutcome });
   }
 }
 

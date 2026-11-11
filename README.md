@@ -253,6 +253,10 @@ Les SVG intermédiaires sont écrits dans `tools/out/`, les pages finales dans `
 L'étape 4 précède délibérément les écrans : c'est le seul chantier dont l'échec
 remettrait en cause la conception elle-même.
 
+## Limites connues
+
+- **Séjour de plus de 24 heures (Q39).** La carte ne retient que le plafond journalier : au-delà, la sortie capture ce plafond et charge le surplus à part sur la carte enregistrée. Un surplus refusé laisse un solde impayé, sans relance ni blocage de l'entrée suivante. L'autorisation Stripe expire après 7 jours : au-delà, le plafond ne se capture plus. Voir `docs/decisions/027` et `026`.
+
 ## Reste ouvert
 
 Aucune décision de conception n'est en suspens. Les tours 8 à 10 (Q33 à Q49) ont

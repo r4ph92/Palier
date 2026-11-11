@@ -34,10 +34,10 @@ describe('POST /v1/entries/:sessionId/exit', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
-      receipt: { exitedAt: at2117.toISOString(), durationMinutes: 195, increments: 13, incrementCents: 75, totalCents: 975, capped: false },
+      receipt: { exitedAt: at2117.toISOString(), durationMinutes: 195, increments: 13, incrementCents: 75, totalCents: 975, capped: false, lines: [], unpaidCents: 0 },
     });
     expect(entries.payments.captured).toEqual([{ sessionId: EXIT_SESSION_ID, paymentIntentId: 'pi_julie', amountCents: 975 }]);
-    expect(exits.closings).toMatchObject([{ sessionId: EXIT_SESSION_ID, exitGateId: EXIT_GATE_ID, exit: { exitedAt: at2117, capturedCents: 975 } }]);
+    expect(exits.closings).toMatchObject([{ sessionId: EXIT_SESSION_ID, exitGateId: EXIT_GATE_ID, exit: { exitedAt: at2117, capturedCents: 975, surplusPaidCents: 0, unpaidCents: 0 } }]);
   });
 
   it('captures once and answers the same receipt when Julie taps twice', async () => {

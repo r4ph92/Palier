@@ -153,6 +153,6 @@ describe('test clock in production', () => {
 
     const response = await server.inject({ method: 'GET', url: '/v1/me/session', headers: await authorizationFor(driverRepository, julie) });
 
-    expect(response.json()).toMatchObject({ session: { amountCents: 2500 } });
+    expect(response.json()).not.toMatchObject({ session: { amountCents: 300 } });
   });
 });

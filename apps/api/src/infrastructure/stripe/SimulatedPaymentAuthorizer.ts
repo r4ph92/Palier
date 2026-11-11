@@ -1,4 +1,12 @@
-import type { AuthorizationRequest, CaptureOutcome, CaptureRequest, HoldRelease, PaymentAuthorizer } from '../../domain/entries/PaymentAuthorizer.ts';
+import type {
+  AuthorizationRequest,
+  CaptureOutcome,
+  CaptureRequest,
+  HoldRelease,
+  PaymentAuthorizer,
+  SurplusOutcome,
+  SurplusRequest,
+} from '../../domain/entries/PaymentAuthorizer.ts';
 
 const SIMULATED_INTENT_PREFIX = 'pi_sim_';
 
@@ -6,9 +14,13 @@ const SIMULATED_INTENT_PREFIX = 'pi_sim_';
 export class SimulatedPaymentAuthorizer implements PaymentAuthorizer {
   readonly #capturesFail: boolean;
 
+  readonly #surplusFails: boolean;
+
   // capturesFail: holds work but Stripe is "unreachable" for captures, the outage of a driver leaving (#50).
-  constructor({ capturesFail = false }: { readonly capturesFail?: boolean } = {}) {
+  // surplusFails: the card refuses what a stay over 24 hours costs beyond the hold (#51).
+  constructor({ capturesFail = false, surplusFails = false }: { readonly capturesFail?: boolean; readonly surplusFails?: boolean } = {}) {
     this.#capturesFail = capturesFail;
+    this.#surplusFails = surplusFails;
   }
 
   authorize({ sessionId }: AuthorizationRequest): Promise<string> {
@@ -22,5 +34,10 @@ export class SimulatedPaymentAuthorizer implements PaymentAuthorizer {
 
   capture({ amountCents }: CaptureRequest): Promise<CaptureOutcome> {
     return Promise.resolve(this.#capturesFail ? { outcome: 'failed' } : { outcome: 'captured', amountCents });
+  }
+
+  // The simulation moves no money; like Stripe, it refuses an amount that is not positive.
+  chargeSurplus({ amountCents }: SurplusRequest): Promise<SurplusOutcome> {
+    return Promise.resolve({ outcome: this.#surplusFails || amountCents <= 0 ? 'failed' : 'charged' });
   }
 }

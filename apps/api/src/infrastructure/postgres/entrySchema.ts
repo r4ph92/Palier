@@ -109,6 +109,9 @@ export const parkingSession = pgTable(
     capturedCents: integer('captured_cents'),
     // The amount fixed at the tap when Stripe could not be reached; the retry captures exactly this, under the same idempotency key (decision 026).
     pendingCaptureCents: integer('pending_capture_cents'),
+    // What the exit charged beyond the card hold for a stay over 24 hours, and what the card refused of it (decision 027).
+    surplusPaidCents: integer('surplus_paid_cents').notNull().default(0),
+    unpaidCents: integer('unpaid_cents').notNull().default(0),
     // The instant the exit loop closed after the exit opened (decision 024); null while it has not, and for good when it closes too late.
     exitPassageAt: timestamp('exit_passage_at', { withTimezone: true }),
     // Set with the cancellation when a card hold exists; cleared once Stripe confirms the release, so a failed release is retried.
@@ -122,6 +125,7 @@ export const parkingSession = pgTable(
     sameLotForeignKey('parking_session_confirmed_spot_in_same_lot_fk', [table.confirmedSpotId, table.lotId], spot),
     sameLotForeignKey('parking_session_parked_aisle_in_same_lot_fk', [table.parkedAisleId, table.lotId], aisle),
     ...stateChecks(table),
+    check('parking_session_surplus_not_negative', sql`${table.surplusPaidCents} >= 0 and ${table.unpaidCents} >= 0`),
     check(
       'parking_session_pricing_positive',
       sql`${table.pricingIncrementCents} > 0 and ${table.pricingIncrementMinutes} > 0 and ${table.pricingDailyCapCents} > 0`,

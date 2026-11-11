@@ -144,3 +144,71 @@ describe('leaving with the « Ouvrir » tap (story #47)', () => {
     });
   });
 });
+
+describe('leaving after more than 24 hours (story #51)', () => {
+  beforeEach(() => jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 10, 4, 21, 17) }));
+  afterEach(() => jest.useRealTimers());
+
+  const exitedAt = new Date(2026, 10, 5, 0, 2).toISOString();
+  const thirtyHours = {
+    exitedAt,
+    durationMinutes: 1800,
+    increments: 72,
+    incrementCents: 75,
+    totalCents: 4300,
+    capped: false,
+    lines: [
+      { kind: 'DAY', dayNumber: 1, cents: 2500 },
+      { kind: 'EXTRA', minutes: 360, cents: 1800 },
+    ],
+    unpaidCents: 0,
+  } as const;
+
+  async function leaveAfter(receipt: typeof thirtyHours | Record<string, unknown>, language: 'fr' | 'en' = 'fr') {
+    const { user, parkingSession } = await julieAtTheExit(language);
+    parkingSession.exitReceipt = receipt as typeof thirtyHours;
+    await user.press(screen.getByRole('button', { name: language === 'fr' ? EXIT : 'Open the exit barrier' }));
+  }
+
+  it('shows the day at the cap, the extra hours and the 43,00 $ total', async () => {
+    await leaveAfter(thirtyHours);
+
+    expect(await screen.findByText('24 premières heures : 25,00 $ (plafond)', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('6 h supplémentaires : 18,00 $', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('Total : 43,00 $', visibleText)).toBeOnTheScreen();
+    expect(screen.queryByText(/Solde impayé/, visibleText)).toBeNull();
+  });
+
+  it('shows two days and the last 2 hours for 50 hours', async () => {
+    await leaveAfter({
+      ...thirtyHours,
+      durationMinutes: 3000,
+      totalCents: 5600,
+      lines: [
+        { kind: 'DAY', dayNumber: 1, cents: 2500 },
+        { kind: 'DAY', dayNumber: 2, cents: 2500 },
+        { kind: 'EXTRA', minutes: 120, cents: 600 },
+      ],
+    });
+
+    expect(await screen.findByText('24 premières heures : 25,00 $ (plafond)', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('24 heures suivantes : 25,00 $ (plafond)', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('2 h supplémentaires : 6,00 $', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('Total : 56,00 $', visibleText)).toBeOnTheScreen();
+  });
+
+  it('shows the unpaid balance when the card refused the extra', async () => {
+    await leaveAfter({ ...thirtyHours, totalCents: 2500, unpaidCents: 1800 });
+
+    expect(await screen.findByText('Total : 25,00 $', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('Solde impayé : 18,00 $', visibleText)).toBeOnTheScreen();
+  });
+
+  it('reads the receipt in English on an English device', async () => {
+    await leaveAfter({ ...thirtyHours, unpaidCents: 1800 }, 'en');
+
+    expect(await screen.findByText('First 24 hours: $25.00 (cap)', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('6 h extra: $18.00', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('Unpaid balance: $18.00', visibleText)).toBeOnTheScreen();
+  });
+});

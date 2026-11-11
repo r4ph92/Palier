@@ -24,7 +24,7 @@ describe('exitParking', () => {
     expect(payments.captured).toEqual([{ sessionId: EXIT_SESSION_ID, paymentIntentId: 'pi_julie', amountCents: 975 }]);
     expect(result).toEqual({
       outcome: 'left',
-      receipt: { exitedAt: at2117.toISOString(), durationMinutes: 195, increments: 13, incrementCents: 75, totalCents: 975, capped: false },
+      receipt: { exitedAt: at2117.toISOString(), durationMinutes: 195, increments: 13, incrementCents: 75, totalCents: 975, capped: false, lines: [], unpaidCents: 0 },
     });
   });
 
@@ -34,7 +34,7 @@ describe('exitParking', () => {
     await exit();
 
     expect(exits.closings).toEqual([
-      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, exit: { exitedAt: at2117, capturedCents: 975 } },
+      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, exit: { exitedAt: at2117, capturedCents: 975, surplusPaidCents: 0, unpaidCents: 0 } },
     ]);
   });
 
@@ -93,7 +93,7 @@ describe('exitParking', () => {
     expect(await exit()).toEqual({ outcome: 'capture-pending' });
     expect(exits.closings).toEqual([]);
     expect(exits.pendingClosings).toEqual([
-      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, exitedAt: at2117, pendingCaptureCents: 975 },
+      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, exitedAt: at2117, pendingCaptureCents: 975, surplusPaidCents: 0, unpaidCents: 0 },
     ]);
   });
 
@@ -142,5 +142,85 @@ describe('exitParking', () => {
     exits.busy = true;
 
     expect(await exit()).toEqual({ outcome: 'lot-busy' });
+  });
+
+  describe('a stay over 24 hours', () => {
+    const after30Hours = new Date(enteredAt.getTime() + 30 * 60 * 60 * 1000);
+    const after50Hours = new Date(enteredAt.getTime() + 50 * 60 * 60 * 1000);
+
+    it('captures the 25 $ hold, charges 18 $ for the 6 hours beyond, and gives the receipt lines and the 43 $ total', async () => {
+      const { exits, payments, exit } = setup();
+
+      const result = await exit(JULIE_ID, after30Hours);
+
+      expect(payments.captured).toMatchObject([{ amountCents: 2500 }]);
+      expect(payments.surcharged).toEqual([{ sessionId: EXIT_SESSION_ID, paymentIntentId: 'pi_julie', amountCents: 1800 }]);
+      expect(exits.closings).toMatchObject([{ exit: { capturedCents: 2500, surplusPaidCents: 1800, unpaidCents: 0 } }]);
+      expect(result).toMatchObject({
+        outcome: 'left',
+        receipt: {
+          totalCents: 4300,
+          unpaidCents: 0,
+          lines: [
+            { kind: 'DAY', dayNumber: 1, cents: 2500 },
+            { kind: 'EXTRA', minutes: 360, cents: 1800 },
+          ],
+        },
+      });
+    });
+
+    it('bills 50 hours as 25 $, 25 $ and 6 $ for 2 hours, 56 $ in all', async () => {
+      const { payments, exit } = setup();
+
+      const result = await exit(JULIE_ID, after50Hours);
+
+      expect(payments.surcharged).toMatchObject([{ amountCents: 3100 }]);
+      expect(result).toMatchObject({
+        receipt: {
+          totalCents: 5600,
+          lines: [
+            { kind: 'DAY', dayNumber: 1, cents: 2500 },
+            { kind: 'DAY', dayNumber: 2, cents: 2500 },
+            { kind: 'EXTRA', minutes: 120, cents: 600 },
+          ],
+        },
+      });
+    });
+
+    it('opens the barrier and records the 18 $ as unpaid when the card refuses the surplus', async () => {
+      const { exits, payments, exit } = setup();
+      payments.surplusOutcome = 'failed';
+
+      const result = await exit(JULIE_ID, after30Hours);
+
+      expect(exits.closings).toMatchObject([{ exit: { capturedCents: 2500, surplusPaidCents: 0, unpaidCents: 1800 } }]);
+      expect(result).toMatchObject({ outcome: 'left', receipt: { totalCents: 2500, unpaidCents: 1800 } });
+    });
+
+    it('charges nothing beyond the hold for a stay of exactly 24 hours', async () => {
+      const { payments, exit } = setup();
+
+      await exit(JULIE_ID, new Date(enteredAt.getTime() + 24 * 60 * 60 * 1000));
+
+      expect(payments.surcharged).toEqual([]);
+    });
+
+    it('settles the surplus at the tap even when the capture stays pending', async () => {
+      const { exits, payments, exit } = setup();
+      payments.captureOutcome = 'failed';
+
+      expect(await exit(JULIE_ID, after30Hours)).toEqual({ outcome: 'capture-pending' });
+
+      expect(exits.pendingClosings).toMatchObject([{ pendingCaptureCents: 2500, surplusPaidCents: 1800, unpaidCents: 0 }]);
+    });
+
+    it('charges the surplus once when Julie taps twice', async () => {
+      const { payments, exit } = setup();
+
+      await exit(JULIE_ID, after30Hours);
+      await exit(JULIE_ID, new Date(after30Hours.getTime() + 60_000));
+
+      expect(payments.surcharged).toHaveLength(1);
+    });
   });
 });

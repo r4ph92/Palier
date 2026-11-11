@@ -141,6 +141,7 @@ export const fr = {
     elapsedLead: 'Durée ',
     amountLead: 'Montant à ce jour\u00A0: ',
     capLead: 'Plafond\u00A0: ',
+    overDay: 'Plafond de 24\u00A0h dépassé — le surplus sera facturé à la sortie',
     pending: 'Entrée en attente de confirmation',
     parkedInLead: 'Garé en ',
     updatedAtLead: 'Mis à jour à ',
