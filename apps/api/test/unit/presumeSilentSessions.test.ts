@@ -115,4 +115,16 @@ describe('presumeSilentSessions', () => {
 
     expect(log.info).not.toHaveBeenCalled();
   });
+
+  it('presumes an entry confirmed exactly 30:00.000 before the check, not one confirmed a millisecond later', async () => {
+    const atLimit = repositoryWith(julieEntered());
+    const justUnder = repositoryWith({ ...julieEntered(), entryConfirmedAt: new Date(ENTERED_AT.getTime() + 1) });
+
+    await presumeSilentSessions(jobAt(atLimit, AFTER_30_MINUTES), logSpy());
+    await presumeSilentSessions(jobAt(justUnder, AFTER_30_MINUTES), logSpy());
+
+    expect(atLimit.sessions[0]?.presumedBy).toBe('TIMEOUT');
+    expect(justUnder.sessions[0]?.presumedBy).toBeNull();
+    expect(justUnder.presumptions).toEqual([]);
+  });
 });
