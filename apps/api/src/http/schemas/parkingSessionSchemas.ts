@@ -52,7 +52,7 @@ const parkedQuestionSchema = {
 
 const currentParkingSessionSchema = {
   type: 'object',
-  required: ['sessionId', 'state', 'lotName', 'spot', 'enteredAt', 'elapsedMinutes', 'amountCents', 'dailyCapCents', 'beaconMajor', 'levelPlan', 'question'],
+  required: ['sessionId', 'state', 'lotName', 'spot', 'enteredAt', 'elapsedMinutes', 'amountCents', 'dailyCapCents', 'beaconMajor', 'exitBeaconFallback', 'levelPlan', 'question'],
   additionalProperties: false,
   properties: {
     sessionId: { type: 'string' },
@@ -64,6 +64,7 @@ const currentParkingSessionSchema = {
     amountCents: { type: 'integer' },
     dailyCapCents: { type: 'integer' },
     beaconMajor: { anyOf: [{ type: 'integer' }, { type: 'null' }] },
+    exitBeaconFallback: { type: 'boolean' },
     levelPlan: { anyOf: [levelPlanSchema, { type: 'null' }] },
     question: { anyOf: [parkedQuestionSchema, { type: 'null' }] },
   },

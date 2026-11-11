@@ -38,6 +38,7 @@ describe('GET /v1/me/session', () => {
         amountCents: 975,
         dailyCapCents: 2500,
         beaconMajor: 1,
+        exitBeaconFallback: false,
         levelPlan: {
           levelCode: 'P1',
           aisles: [
@@ -57,6 +58,13 @@ describe('GET /v1/me/session', () => {
     const { readSession } = await julieInsideAt(now);
 
     expect((await readSession()).json()).toMatchObject({ session: { amountCents } });
+  });
+
+  it('serves the exit beacon fallback when two apps reported it (story #49)', async () => {
+    const { readSession, parkingSessions } = await julieInsideAt(new Date(2026, 10, 4, 21, 17));
+    parkingSessions.add(julie.id, { ...julieAtParkingDemo(enteredAt), exitBeaconFallback: true });
+
+    expect((await readSession()).json()).toMatchObject({ session: { exitBeaconFallback: true } });
   });
 
   it('serves a session presumed parked (story #18)', async () => {

@@ -80,6 +80,14 @@ describe('HttpParkingSessionClient', () => {
     );
   });
 
+  it('reads the exit beacon fallback, false when the API does not say', async () => {
+    const olderSession: Record<string, unknown> = { ...julieAtParkingDemo() };
+    delete olderSession['exitBeaconFallback'];
+
+    await expect(clientAnswering({ session: julieAtParkingDemo({ exitBeaconFallback: true }) }).client.current()).resolves.toMatchObject({ exitBeaconFallback: true });
+    await expect(clientAnswering({ session: olderSession }).client.current()).resolves.toMatchObject({ exitBeaconFallback: false });
+  });
+
   it('signs the driver out on a 401', async () => {
     const onUnauthorized = jest.fn();
 

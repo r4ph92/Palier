@@ -14,6 +14,8 @@ export interface CurrentParkingSession {
   readonly dailyCapCents: number;
   // The lot's beacon major, which the app monitors while the session lasts; null for a lot without beacons.
   readonly beaconMajor: number | null;
+  // Two apps reported the exit beacon in the last minute, so nothing opens by itself: the app says "Touchez « Ouvrir » pour sortir".
+  readonly exitBeaconFallback: boolean;
   readonly levelPlan: LevelPlan | null;
   // PARKED_UNCONFIRMED only: the driver walked away in another aisle, and is asked where they parked.
   readonly question: ParkedQuestion | null;
