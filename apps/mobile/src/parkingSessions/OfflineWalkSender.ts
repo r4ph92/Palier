@@ -4,6 +4,7 @@ import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import type { PositioningCore } from '../positioning/PositioningCore';
 import type { OfflineWalkQueue } from './OfflineWalkQueue';
 import type { QueuedWalk } from './OfflineWalkStore';
+import { RetryTimer } from './RetryTimer';
 import { walkSendOutcome, type WalkSendOutcome } from './walkSendOutcome';
 
 export const RETRY_MILLISECONDS = 10_000;
@@ -28,10 +29,9 @@ export interface OfflineWalkSenderTools {
 export class OfflineWalkSender {
   readonly #tools: OfflineWalkSenderTools;
   readonly #listeners = new Set<OfflineWalkListener>();
+  readonly #retry = new RetryTimer(() => void this.flush(), RETRY_MILLISECONDS);
   #flight: Promise<void> | null = null;
-  #retry: ReturnType<typeof setInterval> | null = null;
   #stops: (() => void)[] = [];
-  #isDisposed = false;
 
   constructor(tools: OfflineWalkSenderTools) {
     this.#tools = tools;
@@ -45,9 +45,8 @@ export class OfflineWalkSender {
   }
 
   dispose(): void {
-    this.#isDisposed = true;
     this.#stops.forEach((stop) => stop());
-    this.#stopRetry();
+    this.#retry.stop();
   }
 
   pendingFor(sessionId: string): number {
@@ -164,23 +163,8 @@ export class OfflineWalkSender {
   }
 
   #changed(): void {
-    this.#updateRetry();
+    this.#retry.runWhile(this.#tools.queue.size > 0);
     this.#notify((listener) => listener.onChange?.());
-  }
-
-  #updateRetry(): void {
-    if (this.#tools.queue.size === 0 || this.#isDisposed) {
-      this.#stopRetry();
-      return;
-    }
-    this.#retry ??= setInterval(() => void this.flush(), RETRY_MILLISECONDS);
-  }
-
-  #stopRetry(): void {
-    if (this.#retry !== null) {
-      clearInterval(this.#retry);
-      this.#retry = null;
-    }
   }
 
   #notify(deliver: (listener: OfflineWalkListener) => void): void {
