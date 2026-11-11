@@ -59,14 +59,14 @@ describe('the pricing of a lot', () => {
   });
 
   it.each([
-    ['a zero amount', { incrementCents: '0' }, 'incrementCents', 'Entrez un montant plus grand que zéro, d’au plus 100 000,00 $.'],
-    ['a negative amount', { incrementCents: '-1,00' }, 'incrementCents', 'Entrez un montant plus grand que zéro, d’au plus 100 000,00 $.'],
-    ['a 4-minute increment', { incrementMinutes: '4' }, 'incrementMinutes', 'Entrez un nombre entier de minutes, de 5 à 60.'],
-    ['a 61-minute increment', { incrementMinutes: '61' }, 'incrementMinutes', 'Entrez un nombre entier de minutes, de 5 à 60.'],
-    ['a cap under one increment', { dailyCapCents: '0,50' }, 'dailyCapCents', 'Le plafond journalier doit valoir au moins le prix d’un incrément.'],
-    ['a negative cap', { dailyCapCents: '-18' }, 'dailyCapCents', 'Entrez un plafond de 0,50 $ à 100 000,00 $.'],
-    ['a hold quota of 51', { holdQuota: '51' }, 'holdQuota', 'Entrez un nombre entier de places garanties, de 0 à 50.'],
-  ] as const)('refuses %s on its field and saves nothing', async (_case, change, field, message) => {
+    { case: 'a zero amount', change: { incrementCents: '0' }, field: 'incrementCents', message: 'Entrez un montant plus grand que zéro, d’au plus 100 000,00 $.' },
+    { case: 'a negative amount', change: { incrementCents: '-1,00' }, field: 'incrementCents', message: 'Entrez un montant plus grand que zéro, d’au plus 100 000,00 $.' },
+    { case: 'a 4-minute increment', change: { incrementMinutes: '4' }, field: 'incrementMinutes', message: 'Entrez un nombre entier de minutes, de 5 à 60.' },
+    { case: 'a 61-minute increment', change: { incrementMinutes: '61' }, field: 'incrementMinutes', message: 'Entrez un nombre entier de minutes, de 5 à 60.' },
+    { case: 'a cap under one increment', change: { dailyCapCents: '0,50' }, field: 'dailyCapCents', message: 'Le plafond journalier doit valoir au moins le prix d’un incrément.' },
+    { case: 'a negative cap', change: { dailyCapCents: '-18' }, field: 'dailyCapCents', message: 'Entrez un plafond de 0,50 $ à 100 000,00 $.' },
+    { case: 'a hold quota of 51', change: { holdQuota: '51' }, field: 'holdQuota', message: 'Entrez un nombre entier de places garanties, de 0 à 50.' },
+  ] as const)('refuses $case on its field and saves nothing', async ({ change, field, message }) => {
     const api = await openGarageRoy();
 
     await enterPricing({ ...royPricing, ...change });
