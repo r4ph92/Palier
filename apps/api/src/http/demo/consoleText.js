@@ -37,6 +37,38 @@ export function formatPassageTime(moment, language) {
  * @returns {string}
  */
 export function vehiclesInside(count, language) {
-  const isSingular = language === 'fr' ? count <= 1 : count === 1;
-  return translate(language, isSingular ? 'vehiclesInsideOne' : 'vehiclesInsideOther', { count });
+  return translate(language, isSingular(count, language) ? 'vehiclesInsideOne' : 'vehiclesInsideOther', { count });
+}
+
+/**
+ * @param {number} count
+ * @param {Language} language
+ * @returns {string}
+ */
+export function pendingPassages(count, language) {
+  return translate(language, isSingular(count, language) ? 'pendingPassagesOne' : 'pendingPassagesOther', { count });
+}
+
+/** @typedef {{ key: TextKey, isError: boolean, count?: number, vehicleCount?: number }} ConsoleMessage */
+
+/**
+ * @param {Language} language
+ * @param {ConsoleMessage} message
+ * @returns {string}
+ */
+export function messageText(language, message) {
+  const { count, vehicleCount } = message;
+  if (count === undefined || vehicleCount === undefined) {
+    return translate(language, message.key);
+  }
+  return translate(language, message.key, { count, vehicles: vehiclesInside(vehicleCount, language) });
+}
+
+/**
+ * @param {number} count
+ * @param {Language} language
+ * @returns {boolean}
+ */
+function isSingular(count, language) {
+  return language === 'fr' ? count <= 1 : count === 1;
 }

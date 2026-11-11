@@ -1,9 +1,11 @@
+/** @typedef {import('@palier/shared-types').PassageReplayItem} PassageReplayItem */
 /** @typedef {{ status: number, body: unknown }} ApiResponse */
 /** @typedef {{ issuedAt: string, id: string }} CommandCursor */
 /**
  * @typedef {object} GateApi
  * @property {(deviceKey: string) => Promise<ApiResponse>} fetchIdentity
  * @property {(deviceKey: string, gateId: string, closedAt: string) => Promise<ApiResponse>} postPassage
+ * @property {(deviceKey: string, gateId: string, passages: readonly PassageReplayItem[]) => Promise<ApiResponse>} replayPassages
  * @property {(deviceKey: string, gateId: string, identifier: string) => Promise<ApiResponse>} postIdentify
  * @property {(deviceKey: string, gateId: string) => Promise<ApiResponse>} postPresence
  * @property {(deviceKey: string, after: CommandCursor | null) => Promise<ApiResponse>} fetchCommands
@@ -16,34 +18,29 @@ export const UNREACHABLE = 0;
  * @returns {GateApi}
  */
 export function createGateApi(fetchFunction) {
+  /** @type {(deviceKey: string, url: string, body: object) => Promise<ApiResponse>} */
+  const postJson = (deviceKey, url, body) => {
+    const headers = { ...authorization(deviceKey), 'content-type': 'application/json' };
+    return request(fetchFunction, url, { method: 'POST', headers, body: JSON.stringify(body) });
+  };
   return {
     fetchIdentity: (deviceKey) => request(fetchFunction, '/v1/gates/me', { headers: authorization(deviceKey) }),
-    postPassage: (deviceKey, gateId, closedAt) =>
-      request(fetchFunction, `/v1/gates/${encodeURIComponent(gateId)}/passage`, {
-        method: 'POST',
-        headers: { ...authorization(deviceKey), 'content-type': 'application/json' },
-        body: JSON.stringify({ closedAt }),
-      }),
-    postIdentify: (deviceKey, gateId, identifier) =>
-      request(fetchFunction, `/v1/gates/${encodeURIComponent(gateId)}/identify`, {
-        method: 'POST',
-        headers: { ...authorization(deviceKey), 'content-type': 'application/json' },
-        body: JSON.stringify({ identifier }),
-      }),
-    postPresence: (deviceKey, gateId) => postPresence(fetchFunction, deviceKey, gateId),
-    fetchCommands: (deviceKey, after) =>
-      request(fetchFunction, commandsUrl(after), { headers: authorization(deviceKey) }),
+    postPassage: (deviceKey, gateId, closedAt) => postJson(deviceKey, gatePath(gateId, 'passage'), { closedAt }),
+    replayPassages: (deviceKey, gateId, passages) => postJson(deviceKey, gatePath(gateId, 'passages/replay'), { passages }),
+    postIdentify: (deviceKey, gateId, identifier) => postJson(deviceKey, gatePath(gateId, 'identify'), { identifier }),
+    postPresence: (deviceKey, gateId) =>
+      request(fetchFunction, gatePath(gateId, 'presence'), { method: 'POST', headers: authorization(deviceKey) }),
+    fetchCommands: (deviceKey, after) => request(fetchFunction, commandsUrl(after), { headers: authorization(deviceKey) }),
   };
 }
 
 /**
- * @param {typeof fetch} fetchFunction
- * @param {string} deviceKey
  * @param {string} gateId
- * @returns {Promise<ApiResponse>}
+ * @param {string} action
+ * @returns {string}
  */
-function postPresence(fetchFunction, deviceKey, gateId) {
-  return request(fetchFunction, `/v1/gates/${encodeURIComponent(gateId)}/presence`, { method: 'POST', headers: authorization(deviceKey) });
+function gatePath(gateId, action) {
+  return `/v1/gates/${encodeURIComponent(gateId)}/${action}`;
 }
 
 /**

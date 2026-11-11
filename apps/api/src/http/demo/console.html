@@ -27,6 +27,7 @@
         <input id="device-key" class="field" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="device-key-hint">
         <p id="device-key-hint" class="hint" data-text="deviceKeyHint">Les clés de démonstration sont dans docs/demo-console.md.</p>
         <p id="gate-identity" class="identity">Barrière identifiée au premier appui.</p>
+        <button type="button" id="offline-toggle" class="loop-button offline-toggle" aria-pressed="false" data-text="offlineToggle" disabled>Hors ligne</button>
       </section>
 
       <section class="block" aria-labelledby="loops-heading">
@@ -36,6 +37,8 @@
           <button type="button" class="loop-button" data-loop="EXIT" data-text="loopEXIT" disabled>Boucle de sortie fermée</button>
         </div>
         <p id="message" class="message" role="status"></p>
+        <p id="pending" class="hint"></p>
+        <button type="button" id="clear-queue" class="loop-button" data-text="clearQueue" hidden>Vider la file</button>
       </section>
 
       <section class="block" aria-labelledby="reader-heading">

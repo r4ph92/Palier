@@ -1,7 +1,20 @@
 import { COMMAND_POLL_MILLISECONDS, pollCommands } from './commandFeed.js';
 import { createGateApi } from './gateApi.js';
-import { deviceKeyInput, languageButtons, loopButtons, plateInput, presenceButton, readerButton, render, renderCommands, renderMessage } from './consoleRender.js';
+import {
+  clearQueueButton,
+  deviceKeyInput,
+  languageButtons,
+  loopButtons,
+  offlineToggle,
+  plateInput,
+  presenceButton,
+  readerButton,
+  render,
+  renderCommands,
+  renderMessage,
+} from './consoleRender.js';
 import { pressLoop } from './loopPress.js';
+import { clearQueue, pressLoopWhileOffline, toggleOffline } from './offlineControls.js';
 import { sendReading } from './readerRead.js';
 import { sendPresence } from './vehiclePresence.js';
 
@@ -22,14 +35,17 @@ const state = {
   /** @type {GatePassageResponse[]} */ passages: [],
   /** @type {readonly GateCommand[]} */ commands: [],
   isPolling: false,
-  /** @type {{ key: TextKey, isError: boolean } | null} */ message: null,
+  /** @type {import('./consoleText.js').ConsoleMessage | null} */ message: null,
+  offline: false,
+  /** @type {import('./offlineMode.js').OfflineQueue | null} */ pending: null,
+  isQueueBlocked: false,
   isSending: false,
   renderedCommandLines: '',
 };
 
 // An answer for a key the field no longer holds is dropped, so one gate's commands never show under another.
 async function refreshCommands() {
-  if (state.isPolling) {
+  if (state.isPolling || state.offline) {
     return;
   }
   state.isPolling = true;
@@ -72,10 +88,28 @@ async function onLoopPressed(loop) {
   if (state.isSending) {
     return;
   }
+  if (state.offline) {
+    pressLoopWhileOffline(state, loop);
+    render(state);
+    return;
+  }
   state.isSending = true;
   try {
     const press = { loop, deviceKey: state.deviceKey, identity: state.identity, pressedAt: new Date() };
     applyOutcome(await pressLoop(press, api));
+  } finally {
+    state.isSending = false;
+    render(state);
+  }
+}
+
+async function onOfflineToggled() {
+  if (state.isSending) {
+    return;
+  }
+  state.isSending = true;
+  try {
+    await toggleOffline(state, api);
   } finally {
     state.isSending = false;
     render(state);
@@ -128,6 +162,11 @@ const PRESENCE_MESSAGES = { waiting: 'presenceWaiting', opened: 'presenceOpened'
 
 readerButton.addEventListener('click', () => void onReadingSent());
 presenceButton.addEventListener('click', () => void onPresenceSent());
+offlineToggle.addEventListener('click', () => void onOfflineToggled());
+clearQueueButton.addEventListener('click', () => {
+  clearQueue(state);
+  render(state);
+});
 
 deviceKeyInput.addEventListener('input', () => {
   state.deviceKey = deviceKeyInput.value.trim();

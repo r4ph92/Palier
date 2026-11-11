@@ -170,6 +170,31 @@ button {
   cursor: not-allowed;
 }
 
+.offline-toggle {
+  display: block;
+  margin-top: 16px;
+  background: transparent;
+  color: var(--ink);
+}
+
+.offline-toggle[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.offline-toggle[aria-pressed='true']::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  background: var(--on-ink);
+}
+
+#clear-queue {
+  margin-top: 8px;
+}
+
 .language {
   display: flex;
   gap: 4px;

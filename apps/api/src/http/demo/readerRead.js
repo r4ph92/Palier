@@ -52,9 +52,9 @@ export async function sendReading(reading, api) {
 }
 
 /**
- * @param {{ deviceKey: string, identity: GateIdentity | null }} state
+ * @param {{ deviceKey: string, identity: GateIdentity | null, offline?: boolean }} state
  * @returns {boolean}
  */
 export function isReaderEnabled(state) {
-  return state.deviceKey !== '' && (state.identity === null || state.identity.kind === 'EXIT');
+  return !state.offline && state.deviceKey !== '' && (state.identity === null || state.identity.kind === 'EXIT');
 }

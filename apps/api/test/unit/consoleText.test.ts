@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatPassageTime, translate, vehiclesInside } from '../../src/http/demo/consoleText.js';
+import { formatPassageTime, messageText, pendingPassages, translate, vehiclesInside } from '../../src/http/demo/consoleText.js';
 import { translations } from '../../src/http/demo/consoleTranslations.js';
 
 describe('console translations', () => {
@@ -43,5 +43,43 @@ describe('formatPassageTime', () => {
     ['en', new Date(2026, 9, 27, 12, 0), '12:00 PM'],
   ] as const)('%s writes %s as %s', (language, moment, expected) => {
     expect(formatPassageTime(moment, language)).toBe(expected);
+  });
+});
+
+describe('offline texts', () => {
+  it.each([
+    ['fr', 'offlineEntryRefused', 'Hors service — entrée refusée aux usagers Palier'],
+    ['fr', 'offlineExitOpened', 'Sortie ouverte sans condition'],
+    ['fr', 'offlineToggle', 'Hors ligne'],
+    ['fr', 'clearQueue', 'Vider la file'],
+    ['en', 'offlineEntryRefused', 'Out of service — entry refused'],
+    ['en', 'offlineExitOpened', 'Exit opened unconditionally'],
+    ['en', 'offlineToggle', 'Offline'],
+    ['en', 'clearQueue', 'Clear queue'],
+  ] as const)('%s %s reads "%s"', (language, key, expected) => {
+    expect(translate(language, key)).toBe(expected);
+  });
+
+  it.each([
+    ['fr', 0, '0 passage en attente'],
+    ['fr', 1, '1 passage en attente'],
+    ['fr', 2, '2 passages en attente'],
+    ['en', 0, '0 passages waiting'],
+    ['en', 1, '1 passage waiting'],
+    ['en', 2, '2 passages waiting'],
+  ] as const)('%s with %i waiting reads "%s"', (language, count, expected) => {
+    expect(pendingPassages(count, language)).toBe(expected);
+  });
+
+  it.each([
+    ['fr', { key: 'passagesReplayedOther', isError: false, count: 2, vehicleCount: 3 }, '2 passages rejoués · 3 véhicules dans le parking'],
+    ['fr', { key: 'passagesReplayedOne', isError: false, count: 1, vehicleCount: 1 }, '1 passage rejoué · 1 véhicule dans le parking'],
+    ['en', { key: 'passagesReplayedOther', isError: false, count: 2, vehicleCount: 3 }, '2 passages replayed · 3 vehicles in the lot'],
+  ] as const)('%s replay message reads "%s"', (language, message, expected) => {
+    expect(messageText(language, message)).toBe(expected);
+  });
+
+  it('writes a plain message without counts as its key', () => {
+    expect(messageText('en', { key: 'keyRefused', isError: true })).toBe('Device key refused');
   });
 });

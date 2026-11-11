@@ -1,4 +1,4 @@
-import { formatPassageTime, translate, vehiclesInside } from './consoleText.js';
+import { formatPassageTime, messageText, pendingPassages, translate, vehiclesInside } from './consoleText.js';
 import { isLoopEnabled } from './loopPress.js';
 import { isReaderEnabled } from './readerRead.js';
 import { isPresenceEnabled } from './vehiclePresence.js';
@@ -16,7 +16,10 @@ import { isPresenceEnabled } from './vehiclePresence.js';
  * @property {GateIdentity | null} identity
  * @property {GatePassageResponse[]} passages
  * @property {readonly GateCommand[]} commands
- * @property {{ key: TextKey, isError: boolean } | null} message
+ * @property {import('./consoleText.js').ConsoleMessage | null} message
+ * @property {boolean} offline
+ * @property {import('./offlineMode.js').OfflineQueue | null} pending
+ * @property {boolean} isQueueBlocked
  * @property {string} renderedCommandLines
  */
 
@@ -34,6 +37,8 @@ export function elementById(id) {
 
 export const deviceKeyInput = /** @type {HTMLInputElement} */ (elementById('device-key'));
 export const loopButtons = /** @type {HTMLButtonElement[]} */ ([...document.querySelectorAll('[data-loop]')]);
+export const offlineToggle = /** @type {HTMLButtonElement} */ (elementById('offline-toggle'));
+export const clearQueueButton = /** @type {HTMLButtonElement} */ (elementById('clear-queue'));
 export const plateInput = /** @type {HTMLInputElement} */ (elementById('plate-read'));
 export const readerButton = /** @type {HTMLButtonElement} */ (elementById('reader-send'));
 export const presenceButton = /** @type {HTMLButtonElement} */ (elementById('presence-send'));
@@ -45,6 +50,7 @@ export function render(state) {
   document.title = translate(state.language, 'pageTitle');
   renderStaticTexts(state);
   renderIdentity(state);
+  renderOffline(state);
   renderLoops(state);
   readerButton.disabled = !isReaderEnabled(state);
   presenceButton.disabled = !isPresenceEnabled(state);
@@ -77,6 +83,16 @@ function renderIdentity(state) {
 }
 
 /** @param {ConsoleState} state */
+function renderOffline(state) {
+  const pendingCount = state.pending?.items.length ?? 0;
+  offlineToggle.setAttribute('aria-pressed', String(state.offline));
+  offlineToggle.disabled = state.deviceKey === '' && !state.offline;
+  deviceKeyInput.disabled = state.offline || pendingCount > 0;
+  elementById('pending').textContent = pendingPassages(pendingCount, state.language);
+  clearQueueButton.hidden = !state.isQueueBlocked;
+}
+
+/** @param {ConsoleState} state */
 function renderLoops(state) {
   for (const button of loopButtons) {
     button.disabled = !isLoopEnabled(/** @type {GateKind} */ (button.dataset['loop']), state);
@@ -86,7 +102,7 @@ function renderLoops(state) {
 /** @param {ConsoleState} state */
 export function renderMessage(state) {
   const message = elementById('message');
-  message.textContent = state.message === null ? '' : translate(state.language, state.message.key);
+  message.textContent = state.message === null ? '' : messageText(state.language, state.message);
   message.classList.toggle('message-error', state.message?.isError === true);
 }
 
