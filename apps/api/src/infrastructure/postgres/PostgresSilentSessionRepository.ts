@@ -1,7 +1,6 @@
 import type { SilenceCheck, SilentPresumptions, SilentSessionRepository } from '../../domain/parkingSessions/presumeSilentSessions.ts';
 import type { Database } from './database.ts';
-import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
-import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
+import { inLotLock } from './lockParkingLot.ts';
 import { findLotsWithSilentSessions, presumeSilentConfirmedEntries, presumeUnansweredQuestions } from './silentSessionStatements.ts';
 
 export class PostgresSilentSessionRepository implements SilentSessionRepository {
@@ -15,15 +14,11 @@ export class PostgresSilentSessionRepository implements SilentSessionRepository 
     return findLotsWithSilentSessions(this.#database, cutoff);
   }
 
-  // Under the lot lock like every other writer of a session's state; each UPDATE re-checks the state, so a walk or an answer that won the race stands.
+  // The state guard in each UPDATE decides any race; the lot lock only keeps the lot-then-session order of the locking writers.
   presumeLotSilentSessions(lotId: string, silence: SilenceCheck): Promise<SilentPresumptions> {
-    return this.#database.transaction(async (tx) => {
-      await tx.execute(LIMIT_LOCK_WAIT);
-      await lockParkingLot(tx, lotId);
-      return {
-        confirmedEntries: await presumeSilentConfirmedEntries(tx, lotId, silence),
-        unansweredQuestions: await presumeUnansweredQuestions(tx, lotId, silence),
-      };
-    }, LOT_LOCK_TRANSACTION);
+    return inLotLock(this.#database, lotId, async (tx) => ({
+      confirmedEntries: await presumeSilentConfirmedEntries(tx, lotId, silence),
+      unansweredQuestions: await presumeUnansweredQuestions(tx, lotId, silence),
+    }));
   }
 }
