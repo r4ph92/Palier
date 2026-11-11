@@ -1,4 +1,5 @@
 import { JULIE_SESSION_ID } from './fakeCurrentParkingSessions.ts';
+import type { OpeningWindow } from '../../../src/domain/gates/OpeningWindow.ts';
 import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitRepository, PaidExit, PendingExitClosing, ReadIdentifierKind } from '../../../src/domain/exits/ExitRepository.ts';
 
 export const JULIE_ID = 'driver-julie';
@@ -29,6 +30,12 @@ export class FakeExits implements ExitRepository {
   readonly closings: ExitClosing[] = [];
   readonly pendingClosings: PendingExitClosing[] = [];
   busy = false;
+  // The lot's beacon major; a report with another one is refused.
+  beaconMajor = 1;
+  // When each session reported the beacon, and when the console last saw a vehicle, as the fake clock `now` sees them.
+  readonly #reports = new Map<string, number>();
+  readonly #presences = new Map<string, number>();
+  now = 0;
   readonly #sessions = new Map<string, { readonly driverId: string; session: ExitableSession; readonly keys: ReadKeys }>();
 
   // The keys are what the exit readers can match: the plate of the session and the transponder of its vehicle, without spaces or hyphens.
@@ -81,5 +88,38 @@ export class FakeExits implements ExitRepository {
     this.pendingClosings.push(closing);
     found.session = { ...found.session, state: 'CLOSED_CAPTURE_PENDING' };
     return Promise.resolve({ outcome: 'closed' });
+  }
+
+  recordBeaconReport(sessionId: string, major: number): Promise<boolean> {
+    const found = this.#sessions.get(sessionId);
+    const leavable = found !== undefined && this.#isLeavable(found.session);
+    if (!leavable || major !== this.beaconMajor) {
+      return Promise.resolve(false);
+    }
+    this.#reports.set(sessionId, this.now);
+    return Promise.resolve(true);
+  }
+
+  recordVehiclePresence(gateId: string): Promise<void> {
+    this.#presences.set(gateId, this.now);
+    return Promise.resolve();
+  }
+
+  findBeaconCandidates(lotId: string, window: OpeningWindow): Promise<readonly ExitableSession[]> {
+    const fresh = [...this.#sessions.values()].filter(({ session }) => {
+      const reportedAt = this.#reports.get(session.id);
+      return session.lotId === lotId && this.#isLeavable(session) && reportedAt !== undefined && this.now - reportedAt <= window.withinMilliseconds;
+    });
+    return Promise.resolve(fresh.slice(0, 2).map(({ session }) => session));
+  }
+
+  takeVehiclePresence(gateId: string, window: OpeningWindow): Promise<boolean> {
+    const seenAt = this.#presences.get(gateId);
+    this.#presences.delete(gateId);
+    return Promise.resolve(seenAt !== undefined && this.now - seenAt <= window.withinMilliseconds);
+  }
+
+  #isLeavable({ state }: ExitableSession): boolean {
+    return state !== 'CREATED' && state !== 'CANCELLED' && state !== 'CLOSED_PAID' && state !== 'CLOSED_CAPTURE_PENDING';
   }
 }

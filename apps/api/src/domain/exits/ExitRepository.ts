@@ -1,4 +1,5 @@
 import type { EntrySessionState } from '@palier/shared-types';
+import type { OpeningWindow } from '../gates/OpeningWindow.ts';
 import type { PricingPolicy } from '../pricing/PricingPolicy.ts';
 
 // What an exit reads of the driver's own session before it takes any money.
@@ -26,7 +27,7 @@ export interface PaidExit {
 }
 
 // How the vehicle was identified at the exit.
-export type ExitIdentification = 'APP' | 'PLATE' | 'TRANSPONDER';
+export type ExitIdentification = 'APP' | 'PLATE' | 'TRANSPONDER' | 'BEACON';
 
 export interface ExitClosing {
   readonly sessionId: string;
@@ -70,4 +71,13 @@ export interface ExitRepository {
   close(closing: ExitClosing): Promise<ClosedExit>;
   // The same transaction, for a capture to retry: the session becomes CLOSED_CAPTURE_PENDING, with no captured amount yet.
   closeWithPendingCapture(closing: PendingExitClosing): Promise<ClosedPendingExit>;
+  // The session's app saw the exit beacon of its own lot (the lot's beacon major, decision 029). False, and nothing recorded, when
+  // the major is another lot's or the session has already left. A repeated report only refreshes the time.
+  recordBeaconReport(sessionId: string, major: number): Promise<boolean>;
+  // The console saw a vehicle on the exit gate's arming loop.
+  recordVehiclePresence(gateId: string): Promise<void>;
+  // Sessions of this lot that have not left and reported the beacon within the window. At most two come back.
+  findBeaconCandidates(lotId: string, window: OpeningWindow): Promise<readonly ExitableSession[]>;
+  // Spends the gate's vehicle presence when it is within the window; false when there is none, or another request spent it first.
+  takeVehiclePresence(gateId: string, window: OpeningWindow): Promise<boolean>;
 }
