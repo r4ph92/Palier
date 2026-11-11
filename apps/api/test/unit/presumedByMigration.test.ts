@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const migration = readFileSync(new URL('../../drizzle/0030_presumed_by.sql', import.meta.url), 'utf8');
+const migration = readFileSync(new URL('../../drizzle/0031_presumed_by.sql', import.meta.url), 'utf8');
 
 // This only guards the hand-written backfill and its order against a regeneration.
-describe('migration 0030, the evidence of a presumption', () => {
+describe('migration 0031, the evidence of a presumption', () => {
   it('creates the evidence enum with the walk and the timeout', () => {
     expect(migration).toContain(`CREATE TYPE "public"."parking_session_presumption" AS ENUM('WALK', 'TIMEOUT')`);
   });

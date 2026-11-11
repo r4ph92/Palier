@@ -216,7 +216,7 @@ curl -X DELETE localhost:3000/v1/test/clock
 
 ## Présomption après 30 minutes de silence (#24)
 
-- Règles et choix : `docs/decisions/030`. Migration 0030 : enum `parking_session_presumption` (`WALK`, `TIMEOUT`), colonne `parking_session.presumed_by` (nulle tant que la session n'est pas présumée, historique après correction), `CHECK parking_session_presumed_has_evidence`. Le passage à pied de #18 écrit `WALK`.
+- Règles et choix : `docs/decisions/030`. Migration 0031 : enum `parking_session_presumption` (`WALK`, `TIMEOUT`), colonne `parking_session.presumed_by` (nulle tant que la session n'est pas présumée, historique après correction), `CHECK parking_session_presumed_has_evidence`. Le passage à pied de #18 écrit `WALK`.
 - Configuration (`apps/api/.env.example`) : `SILENT_SESSION_CHECK_PERIOD_SECONDS` (300 par défaut, entier positif), lu par `config/silentSessionTiming.ts`. Les 30 minutes sont `SILENCE_BEFORE_PRESUMPTION_MILLISECONDS` (`domain/parkingSessions/presumeSilentSessions.ts`).
 - Tâche : `main.ts` lance `presumeSilentSessions` par `SingleRun.startPeriodicTask`, avec l'horloge de `composeClock` (`composeSilentSessionPresumption.ts`) ; `stopAll` l'attend à l'arrêt. Dépôt : `PostgresSilentSessionRepository` et `silentSessionStatements.ts` ; un parking à la fois, verrou du parking, deux `UPDATE` gardés par l'état, aucune écriture de place.
 - Journal : `presumed parked the sessions silent for 30 minutes` (info, `lotId`, `confirmedEntries`, `unansweredQuestions`, jamais de conducteur ni de place), `could not presume the silent sessions of a lot, retried at the next check` (erreur avec la trace; un verrou de lot non obtenu est journalisé en avertissement avec le `lotId`, sans trace).

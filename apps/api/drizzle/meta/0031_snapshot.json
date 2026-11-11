@@ -1,6 +1,6 @@
 {
-  "id": "8194c7ea-3c32-4323-bc21-67d05fe9f122",
-  "prevId": "2fa9e26f-4efe-45e1-bd60-e9a16af5abed",
+  "id": "99f8eb40-44d9-4e40-8ec4-16b9ba0eaba5",
+  "prevId": "cb08b0bc-5290-4762-be1d-e3d309f2b0d9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1531,6 +1531,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "pending_surplus_cents": {
+          "name": "pending_surplus_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
         "surplus_paid_cents": {
           "name": "surplus_paid_cents",
           "type": "integer",
@@ -1632,22 +1639,6 @@
           ],
           "isUnique": false,
           "where": "\"parking_session\".\"hold_release_pending\"",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "parking_session_awaiting_signal_by_lot_index": {
-          "name": "parking_session_awaiting_signal_by_lot_index",
-          "columns": [
-            {
-              "expression": "lot_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "\"parking_session\".\"state\" in ('ENTRY_CONFIRMED', 'PARKED_UNCONFIRMED')",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1803,6 +1794,10 @@
         "parking_session_surplus_not_negative": {
           "name": "parking_session_surplus_not_negative",
           "value": "\"parking_session\".\"surplus_paid_cents\" >= 0 and \"parking_session\".\"unpaid_cents\" >= 0"
+        },
+        "parking_session_pending_surplus_not_negative": {
+          "name": "parking_session_pending_surplus_not_negative",
+          "value": "\"parking_session\".\"pending_surplus_cents\" >= 0"
         },
         "parking_session_pricing_positive": {
           "name": "parking_session_pricing_positive",
