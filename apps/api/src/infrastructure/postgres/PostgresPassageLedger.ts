@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { sql, type SQL } from 'drizzle-orm';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import type { PassageEntry, PassageLedger, RecordedPassage, RecordedReplay, ReplayEntry } from '../../domain/gates/PassageLedger.ts';
 import type { Database, Transaction } from './database.ts';
@@ -63,25 +63,31 @@ async function countVehicle(tx: Transaction, entry: PassageEntry): Promise<numbe
 // The lot lock comes first, as in countVehicle: two batches inserting the same ids in opposite order would otherwise deadlock on the unique index.
 // The unique (gate_id, replay_id) index drops a passage already recorded; the counter moves once per row actually inserted.
 async function countReplayedVehicles(tx: Transaction, entry: ReplayEntry): Promise<RecordedReplay> {
-  const { gate } = entry;
-  await lockParkingLot(tx, gate.lotId);
-  const values = entry.passages.map((passage) => sql`(${gate.id}, ${gate.lotId}, ${passage.closedAt.toISOString()}, ${passage.id}::uuid)`);
+  await lockParkingLot(tx, entry.gate.lotId);
+  const row = await insertReplayedPassages(tx, entry);
+  if (row === undefined) {
+    throw new Error('The replay did not update any parking lot.');
+  }
+  return { counted: row.counted, duplicates: entry.passages.length - row.counted, vehicleCount: row.vehicle_count };
+}
+
+async function insertReplayedPassages(tx: Transaction, entry: ReplayEntry): Promise<ReplayRow | undefined> {
   const rows = await tx.execute<ReplayRow>(sql`
     with inserted as (
       insert into gate_passage (gate_id, lot_id, closed_at, replay_id)
-      values ${sql.join(values, sql`, `)}
+      values ${sql.join(replayValues(entry), sql`, `)}
       on conflict (gate_id, replay_id) do nothing
       returning id
     )
     update parking_lot
     set vehicle_count = greatest(parking_lot.vehicle_count + ${entry.vehicleCountChange} * (select count(*) from inserted), 0)
-    where parking_lot.id = ${gate.lotId}
+    where parking_lot.id = ${entry.gate.lotId}
     returning parking_lot.vehicle_count, (select count(*) from inserted)::int as counted`);
-  const row = rows[0];
-  if (row === undefined) {
-    throw new Error('The replay did not update any parking lot.');
-  }
-  return { counted: row.counted, duplicates: entry.passages.length - row.counted, vehicleCount: row.vehicle_count };
+  return rows[0];
+}
+
+function replayValues({ gate, passages }: ReplayEntry): SQL[] {
+  return passages.map((passage) => sql`(${gate.id}, ${gate.lotId}, ${passage.closedAt.toISOString()}, ${passage.id}::uuid)`);
 }
 
 async function confirmOpening(tx: Transaction, entry: PassageEntry): Promise<string | null> {
