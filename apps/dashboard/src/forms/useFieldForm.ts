@@ -15,7 +15,6 @@ export interface FieldFormSetup<Field extends string, Value> {
   // The shared rule, run before the request: a form that breaks it sends nothing.
   readonly read: (values: FieldValues<Field>) => ReadForm<Field, Value>;
   readonly send: (value: Value) => Promise<void>;
-  // An API refusal that names a field is shown beside it; any other goes in the summary.
   readonly fieldOfCode: Partial<Readonly<Record<DisplayedErrorCode, Field>>>;
 }
 
