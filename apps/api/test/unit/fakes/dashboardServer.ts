@@ -23,7 +23,7 @@ export function startDashboardServer(settings: ServerSettings = { testSignInEnab
     testClock: composeClock(settings.testSignInEnabled === true).testClock,
     settings,
   });
-  return { server, driverRepository, ...stripe };
+  return { server, driverRepository, lots: operatorRepository.lots, ...stripe };
 }
 
 // Signs in through the test route and returns the cookie the browser would send back.

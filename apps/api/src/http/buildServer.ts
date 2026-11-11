@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { AccountWebhookReader, OperatorStripeAccounts, OperatorStripeGateway } from '../domain/dashboard/OperatorStripe.ts';
+import type { LotSetupRepository } from '../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../domain/dashboard/OperatorRepository.ts';
 import type { DriverRepository } from '../domain/drivers/DriverRepository.ts';
 import type { DriverAccess } from '../domain/drivers/driverSessions.ts';
@@ -54,6 +55,7 @@ export interface ServerDependencies {
     readonly userDirectory: UserDirectory;
     readonly vehicleRepository: VehicleRepository;
     readonly operatorRepository: OperatorRepository;
+    readonly lotSetupRepository: LotSetupRepository;
     readonly currentParkingSessions: CurrentParkingSessionQuery;
     readonly parkingSessionBackdater: ParkingSessionBackdater;
     readonly parkedPresumptions: ParkedPresumptionRepository;
@@ -110,6 +112,7 @@ function dashboardDependencies(
   return {
     access: { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository },
     operators: repositories.operatorRepository,
+    lots: repositories.lotSetupRepository,
     stripe: operatorStripe?.gateway == null ? null : { accounts: operatorStripe.accounts, gateway: operatorStripe.gateway },
     testSignInEnabled: settings.testSignInEnabled === true,
     secureCookies: settings.secureCookies ?? true,

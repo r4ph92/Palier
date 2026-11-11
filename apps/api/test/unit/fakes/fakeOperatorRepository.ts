@@ -1,31 +1,24 @@
 import { randomUUID } from 'node:crypto';
 import type { DashboardLot, DashboardOperator, KycStatus } from '@palier/shared-types';
 import type { NewOperator, OperatorRepository } from '../../../src/domain/dashboard/OperatorRepository.ts';
-import { GARAGE_ROY_ID } from '../../../src/seed/fixtures/garageRoy.ts';
 import { PIERRE_ROY_ID, SOPHIE_LAVOIE_ID } from '../../../src/config/testPersonas.ts';
 import { LAVOIE_OPERATOR_ID, ROY_OPERATOR_ID } from '../../../src/seed/fixtures/operators.ts';
-import { PARKING_DEMO_ID } from '../../../src/seed/fixtures/parkingDemo.ts';
-import { PARKING_TEST_PALIERS_ID } from '../../../src/seed/fixtures/parkingTestPaliers.ts';
-
-interface OwnedLot extends DashboardLot {
-  readonly operatorId: string;
-}
+import { FakeLotStore, parkingDemoDetails, parkingTestPaliersDetails } from './fakeLotSetupRepository.ts';
 
 export const lavoie: DashboardOperator = { id: LAVOIE_OPERATOR_ID, legalName: 'Stationnements Lavoie inc.', kycStatus: 'VERIFIED' };
 export const roy: DashboardOperator = { id: ROY_OPERATOR_ID, legalName: 'Garages Roy', kycStatus: 'NOT_STARTED' };
-export const parkingDemo: DashboardLot = { id: PARKING_DEMO_ID, name: 'Parking Démo', isOnline: true };
-export const parkingTestPaliers: DashboardLot = { id: PARKING_TEST_PALIERS_ID, name: 'Parking Test Paliers', isOnline: false };
-
-const seededLots: readonly OwnedLot[] = [
-  { ...parkingDemo, operatorId: LAVOIE_OPERATOR_ID },
-  { ...parkingTestPaliers, operatorId: LAVOIE_OPERATOR_ID },
-  { id: GARAGE_ROY_ID, name: 'Garage Roy', isOnline: false, operatorId: ROY_OPERATOR_ID },
-];
+export const parkingDemo: DashboardLot = { id: parkingDemoDetails.id, name: parkingDemoDetails.name, isOnline: parkingDemoDetails.isOnline };
+export const parkingTestPaliers: DashboardLot = { id: parkingTestPaliersDetails.id, name: parkingTestPaliersDetails.name, isOnline: parkingTestPaliersDetails.isOnline };
 
 // Seeded like the database: Sophie belongs to Lavoie, Pierre to Roy, and nobody else to anything.
 export class FakeOperatorRepository implements OperatorRepository {
+  readonly lots: FakeLotStore;
   readonly #operators = new Map<string, DashboardOperator>([[lavoie.id, lavoie], [roy.id, roy]]);
   readonly #memberships = new Map<string, string>([[SOPHIE_LAVOIE_ID, LAVOIE_OPERATOR_ID], [PIERRE_ROY_ID, ROY_OPERATOR_ID]]);
+
+  constructor(lots: FakeLotStore = new FakeLotStore()) {
+    this.lots = lots;
+  }
 
   findOperatorOfMember(userId: string): Promise<DashboardOperator | null> {
     const operatorId = this.#memberships.get(userId);
@@ -50,15 +43,6 @@ export class FakeOperatorRepository implements OperatorRepository {
   }
 
   listLotsOfOperator(operatorId: string): Promise<readonly DashboardLot[]> {
-    return Promise.resolve(seededLots.filter((lot) => lot.operatorId === operatorId).map(withoutOwner));
+    return Promise.resolve(this.lots.lotsOf(operatorId));
   }
-
-  findLotOfOperator(operatorId: string, lotId: string): Promise<DashboardLot | null> {
-    const lot = seededLots.find((candidate) => candidate.id === lotId && candidate.operatorId === operatorId);
-    return Promise.resolve(lot === undefined ? null : withoutOwner(lot));
-  }
-}
-
-function withoutOwner({ id, name, isOnline }: OwnedLot): DashboardLot {
-  return { id, name, isOnline };
 }

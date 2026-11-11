@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { julie } from './fakeDriverRepository.ts';
 import { nouvelOperateur, pierre, sophie } from './fakes/dashboardFixtures.ts';
 import { dashboardCookieFor, startDashboardServer, writeHeader } from './fakes/dashboardServer.ts';
+import { parkingTestPaliersDetails } from './fakes/fakeLotSetupRepository.ts';
 import { lavoie, parkingDemo, parkingTestPaliers } from './fakes/fakeOperatorRepository.ts';
 
 const LOT_NOT_FOUND = { statusCode: 404, error: 'LOT_NOT_FOUND', message: 'No such lot.' };
@@ -98,7 +99,7 @@ describe('operator dashboard routes', () => {
 
     const response = await server.inject({ method: 'GET', url: `/v1/dashboard/lots/${parkingTestPaliers.id}`, cookies });
 
-    expect(response.json()).toEqual(parkingTestPaliers);
+    expect(response.json()).toEqual(parkingTestPaliersDetails);
   });
 
   it('asks Julie to create an operator and shows her no operator data', async () => {

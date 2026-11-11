@@ -27,6 +27,13 @@ export function parsePricingPolicy(storedPolicy: unknown, dailyCapCents: number 
   return { incrementCents, incrementMinutes, dailyCapCents };
 }
 
+export type StoredPricingPolicy = Pick<PricingPolicy, 'incrementCents' | 'incrementMinutes'>;
+
+// What the lot's jsonb column holds, the one shape parsePricingPolicy reads back.
+export function storedPricingPolicyOf({ incrementCents, incrementMinutes }: StoredPricingPolicy): StoredPricingPolicy {
+  return { incrementCents, incrementMinutes };
+}
+
 export interface PricedLot {
   readonly id: string;
   // The lot's jsonb policy as stored.

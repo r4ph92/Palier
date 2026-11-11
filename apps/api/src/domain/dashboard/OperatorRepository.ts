@@ -11,5 +11,4 @@ export interface OperatorRepository {
   // Creates the operator and its first member together; null when the user already belongs to an operator.
   createOperatorWithMember(operator: NewOperator): Promise<DashboardOperator | null>;
   listLotsOfOperator(operatorId: string): Promise<readonly DashboardLot[]>;
-  findLotOfOperator(operatorId: string, lotId: string): Promise<DashboardLot | null>;
 }

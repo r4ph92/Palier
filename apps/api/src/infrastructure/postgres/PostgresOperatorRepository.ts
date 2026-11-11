@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import type { DashboardLot, DashboardOperator } from '@palier/shared-types';
 import type { NewOperator, OperatorRepository } from '../../domain/dashboard/OperatorRepository.ts';
 import type { Database } from './database.ts';
@@ -47,14 +47,5 @@ export class PostgresOperatorRepository implements OperatorRepository {
 
   listLotsOfOperator(operatorId: string): Promise<readonly DashboardLot[]> {
     return this.#database.select(lotColumns).from(parkingLot).where(eq(parkingLot.operatorId, operatorId)).orderBy(asc(parkingLot.name));
-  }
-
-  async findLotOfOperator(operatorId: string, lotId: string): Promise<DashboardLot | null> {
-    const [lot] = await this.#database
-      .select(lotColumns)
-      .from(parkingLot)
-      .where(and(eq(parkingLot.id, lotId), eq(parkingLot.operatorId, operatorId)))
-      .limit(1);
-    return lot ?? null;
   }
 }

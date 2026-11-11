@@ -18,6 +18,7 @@ import { PostgresDriverRepository } from './infrastructure/postgres/PostgresDriv
 import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateCommandFeed.ts';
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
+import { PostgresLotSetupRepository } from './infrastructure/postgres/PostgresLotSetupRepository.ts';
 import { PostgresOperatorRepository } from './infrastructure/postgres/PostgresOperatorRepository.ts';
 import { PostgresParkedAnswerRepository } from './infrastructure/postgres/PostgresParkedAnswerRepository.ts';
 import { PostgresParkedPresumptionRepository } from './infrastructure/postgres/PostgresParkedPresumptionRepository.ts';
@@ -79,6 +80,7 @@ const server = buildServer({
     userDirectory: new PostgresUserDirectory(connection.database),
     vehicleRepository,
     operatorRepository: new PostgresOperatorRepository(connection.database),
+    lotSetupRepository: new PostgresLotSetupRepository(connection.database),
     currentParkingSessions: new PostgresCurrentParkingSessionQuery(connection.database, exitBeaconWindow),
     parkingSessionBackdater: new PostgresParkingSessionBackdater(connection.database),
     parkedPresumptions: new PostgresParkedPresumptionRepository(connection.database),
