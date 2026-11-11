@@ -1,10 +1,10 @@
-import type { Vehicle, VehicleListResponse, VehicleNeeds } from '@palier/shared-types';
+import type { Vehicle, VehicleListResponse } from '@palier/shared-types';
 import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
-import { PalierRejectedError, type NewVehicleInput, type VehicleClient } from '../src/api/VehicleClient';
+import { PalierRejectedError, type NewVehicleInput, type VehicleClient, type VehicleEdit } from '../src/api/VehicleClient';
 
 export const standardNeeds = { isElectric: false, hasAccessiblePermit: false, isOversize: false };
 
-export const abc123: Vehicle = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC', isDefault: true, ...standardNeeds };
+export const abc123: Vehicle = { id: 'vehicle-1', plate: 'ABC 123', province: 'QC', isDefault: true, transponder: null, ...standardNeeds };
 
 export class FakeVehicleClient implements VehicleClient {
   readonly #vehicles: Vehicle[];
@@ -35,6 +35,7 @@ export class FakeVehicleClient implements VehicleClient {
       plate: plate.trim().toUpperCase(),
       province,
       isDefault: this.#vehicles.length === 0,
+      transponder: null,
       isElectric,
       hasAccessiblePermit,
       isOversize,
@@ -43,7 +44,7 @@ export class FakeVehicleClient implements VehicleClient {
     return Promise.resolve(vehicle);
   }
 
-  updateVehicleNeeds(vehicleId: string, needs: VehicleNeeds): Promise<Vehicle> {
+  updateVehicleNeeds(vehicleId: string, { transponder, ...needs }: VehicleEdit): Promise<Vehicle> {
     if (!this.isReachable) {
       return Promise.reject(new PalierUnreachableError('fake'));
     }
@@ -52,7 +53,13 @@ export class FakeVehicleClient implements VehicleClient {
     if (found === undefined) {
       return Promise.reject(new PalierStatusError(404));
     }
-    const updated = { ...found, ...needs };
+    if (transponder.trim().toUpperCase() === 'T-TAKEN') {
+      return Promise.reject(new PalierRejectedError('TRANSPONDER_ALREADY_REGISTERED'));
+    }
+    if (transponder.trim().toUpperCase().includes('_')) {
+      return Promise.reject(new PalierRejectedError('INVALID_TRANSPONDER'));
+    }
+    const updated = { ...found, ...needs, transponder: transponder.trim() === '' ? null : transponder.trim().toUpperCase() };
     this.#vehicles[index] = updated;
     return Promise.resolve(updated);
   }

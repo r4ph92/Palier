@@ -5,10 +5,15 @@ export interface NewVehicleInput extends VehicleNeeds {
   readonly province: string;
 }
 
+// The needs and the exit transponder as typed; an empty transponder clears it.
+export interface VehicleEdit extends VehicleNeeds {
+  readonly transponder: string;
+}
+
 export interface VehicleClient {
   listVehicles(): Promise<VehicleListResponse>;
   addVehicle(vehicle: NewVehicleInput): Promise<Vehicle>;
-  updateVehicleNeeds(vehicleId: string, needs: VehicleNeeds): Promise<Vehicle>;
+  updateVehicleNeeds(vehicleId: string, edit: VehicleEdit): Promise<Vehicle>;
   setDefaultVehicle(vehicleId: string): Promise<Vehicle>;
   deleteVehicle(vehicleId: string): Promise<void>;
 }

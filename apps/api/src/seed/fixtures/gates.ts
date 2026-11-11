@@ -44,7 +44,7 @@ export const gateFixtures: (typeof gate.$inferInsert)[] = [
     kind: 'EXIT',
     integrationKind: 'SIMULATED',
     hasLoops: true,
-    exitIdKind: 'NONE',
+    exitIdKind: 'ANPR',
     qrSecret: SORTIE_DEMO_QR_SECRET,
     verifiedAt: VERIFIED_AT,
   },

@@ -1,7 +1,8 @@
 import { COMMAND_POLL_MILLISECONDS, pollCommands } from './commandFeed.js';
 import { createGateApi } from './gateApi.js';
-import { deviceKeyInput, languageButtons, loopButtons, render, renderCommands, renderMessage } from './consoleRender.js';
+import { deviceKeyInput, languageButtons, loopButtons, plateInput, readerButton, render, renderCommands, renderMessage } from './consoleRender.js';
 import { pressLoop } from './loopPress.js';
+import { sendReading } from './readerRead.js';
 
 /** @typedef {import('./consoleText.js').Language} Language */
 /** @typedef {import('./consoleText.js').TextKey} TextKey */
@@ -79,6 +80,34 @@ async function onLoopPressed(loop) {
     render(state);
   }
 }
+
+async function onReadingSent() {
+  if (state.isSending) {
+    return;
+  }
+  state.isSending = true;
+  try {
+    const outcome = await sendReading({ deviceKey: state.deviceKey, identity: state.identity, identifier: plateInput.value }, api);
+    state.identity = outcome.identity;
+    state.message = readingMessage(outcome);
+  } finally {
+    state.isSending = false;
+    render(state);
+  }
+}
+
+/**
+ * @param {import('./readerRead.js').ReadOutcome} outcome
+ * @returns {{ key: TextKey, isError: boolean }}
+ */
+function readingMessage(outcome) {
+  if (outcome.kind === 'refused') {
+    return { key: outcome.messageKey, isError: true };
+  }
+  return outcome.kind === 'opened' ? { key: 'readerOpened', isError: false } : { key: 'readerFallback', isError: true };
+}
+
+readerButton.addEventListener('click', () => void onReadingSent());
 
 deviceKeyInput.addEventListener('input', () => {
   state.deviceKey = deviceKeyInput.value.trim();

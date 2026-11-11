@@ -10,6 +10,8 @@ export interface Vehicle extends VehicleNeeds {
   readonly plate: string;
   readonly province: string;
   readonly isDefault: boolean;
+  // The identifier of the driver's exit transponder; null when none.
+  readonly transponder: string | null;
 }
 
 export type VehicleListResponse = readonly Vehicle[];

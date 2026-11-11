@@ -50,6 +50,23 @@ Stationnements Lavoie ; sans lui, elle reste sur la plateforme (mode démo
 seulement). Une entrée par conducteur et par seed : la deuxième répond « Vous
 avez déjà une entrée en cours ».
 
+## Sortie par lecteur de plaque ou de transpondeur (#52)
+
+Sortie Démo est semée avec un lecteur de plaque (`exit_id_kind = 'ANPR'`). Pour
+essayer le transpondeur, ajouter un transpondeur au véhicule (Compte >
+Véhicules > Modifier > « Transpondeur (facultatif) »), puis changer le lecteur :
+
+```
+update gate set exit_id_kind = 'RFID' where name = 'Sortie Démo';
+```
+
+Coller la clé de Sortie Démo, écrire la plaque (« abc123 », casse et espaces
+sans importance) ou le transpondeur (« T-0042 ») dans « Plaque lue » et appuyer
+sur « Envoyer la lecture ». Pour un conducteur dans le parking, la capture se
+fait, la barrière s'ouvre (« Ouverture commandée ») et le reçu apparaît dans
+Compte > Reçus. Sans session ouverte pour cette plaque, ou avec deux, la console
+affiche « Aucune session — repli sur l'app » et rien n'est capturé.
+
 ## Utiliser la console
 
 1. Coller une clé dans « Clé d'appareil ». La clé ne quitte jamais la page :

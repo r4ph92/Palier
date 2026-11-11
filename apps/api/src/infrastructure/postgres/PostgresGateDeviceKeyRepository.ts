@@ -3,6 +3,16 @@ import type { DeviceKeyRecord, GateDeviceKeyRepository } from '../../domain/gate
 import type { Database } from './database.ts';
 import { gate, gateDeviceKey, parkingLot } from './schema.ts';
 
+const gateColumns = {
+  id: gate.id,
+  lotId: gate.lotId,
+  lotName: parkingLot.name,
+  name: gate.name,
+  kind: gate.kind,
+  hasLoops: gate.hasLoops,
+  exitIdKind: gate.exitIdKind,
+};
+
 export class PostgresGateDeviceKeyRepository implements GateDeviceKeyRepository {
   readonly #database: Database;
 
@@ -14,14 +24,7 @@ export class PostgresGateDeviceKeyRepository implements GateDeviceKeyRepository 
     const rows = await this.#database
       .select({
         revokedAt: gateDeviceKey.revokedAt,
-        gate: {
-          id: gate.id,
-          lotId: gate.lotId,
-          lotName: parkingLot.name,
-          name: gate.name,
-          kind: gate.kind,
-          hasLoops: gate.hasLoops,
-        },
+        gate: gateColumns,
       })
       .from(gateDeviceKey)
       .innerJoin(gate, eq(gate.id, gateDeviceKey.gateId))

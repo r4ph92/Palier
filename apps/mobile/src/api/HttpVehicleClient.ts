@@ -1,6 +1,6 @@
-import type { Vehicle, VehicleListResponse, VehicleNeeds } from '@palier/shared-types';
+import type { Vehicle, VehicleListResponse } from '@palier/shared-types';
 import { AuthorizedRequester, readJson, type AuthorizedClientOptions } from './authorizedRequest';
-import type { NewVehicleInput, VehicleClient } from './VehicleClient';
+import type { NewVehicleInput, VehicleClient, VehicleEdit } from './VehicleClient';
 import { parseVehicle, parseVehicleList } from './parseVehicles';
 
 const BAD_REQUEST = 400;
@@ -28,11 +28,11 @@ export class HttpVehicleClient implements VehicleClient {
     return parseVehicle(await readJson(response));
   }
 
-  async updateVehicleNeeds(vehicleId: string, { isElectric, hasAccessiblePermit, isOversize }: VehicleNeeds): Promise<Vehicle> {
+  async updateVehicleNeeds(vehicleId: string, { isElectric, hasAccessiblePermit, isOversize, transponder }: VehicleEdit): Promise<Vehicle> {
     const response = await this.#requester.send(`/v1/me/vehicles/${vehicleId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isElectric, hasAccessiblePermit, isOversize }),
+      body: JSON.stringify({ isElectric, hasAccessiblePermit, isOversize, transponder }),
     });
     return parseVehicle(await readJson(response));
   }

@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
@@ -6,6 +7,21 @@ import { DEMO_SECURITY_HEADERS } from '../../src/http/demo/demoConsoleRoutes.ts'
 import { serverDependencies } from './fakes/serverDependencies.ts';
 
 const CONSOLE_ASSETS = Object.entries(DEMO_ASSETS).map(([fileName, asset]) => [demoAssetUrl(fileName), asset.contentType] as const);
+
+describe('demo console assets', () => {
+  // A module the page imports but the server does not serve leaves the whole console dead.
+  it('serves every script file of the console folder', () => {
+    const folder = new URL('../../src/http/demo/', import.meta.url);
+    const scripts = readdirSync(folder).filter((name) => name.endsWith('.js'));
+
+    expect(scripts.filter((name) => !(name in DEMO_ASSETS))).toEqual([]);
+    for (const name of scripts) {
+      const imported = [...readFileSync(new URL(name, folder), 'utf8').matchAll(/from '\.\/([\w]+\.js)'/g)].map((match) => match[1] ?? '');
+      expect(imported.filter((file) => !(file in DEMO_ASSETS))).toEqual([]);
+    }
+  });
+
+});
 
 describe('demo console', () => {
   let server: FastifyInstance;

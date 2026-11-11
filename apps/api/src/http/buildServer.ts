@@ -94,7 +94,7 @@ export function buildServer({ repositories, gates, cardGateway, entries, exits, 
   if (operatorStripe?.webhookReader != null) {
     registerStripeWebhookRoute(server, { reader: operatorStripe.webhookReader, accounts: operatorStripe.accounts });
   }
-  registerGateRoutes(server, gates);
+  registerGateRoutes(server, gates, exits === undefined ? undefined : { exit: exits, clock: testToolsFor(settings, repositories, testClock)?.testClock.now ?? systemClock });
   if (settings.demoMode === true) {
     registerDemoConsoleRoutes(server);
   }

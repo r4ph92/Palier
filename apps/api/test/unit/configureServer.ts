@@ -17,6 +17,7 @@ import { FakeSpotTakenReports } from './fakes/fakeSpotTakenReports.ts';
 import { fakeEntries } from './fakes/entryFakes.ts';
 import { STRICT_POLICY } from './fakes/entryGateFakes.ts';
 import { FakeSpotHoldRepository } from './fakes/fakeSpotHolds.ts';
+import { FakeGateDeviceKeyRepository } from './fakes/gateFixtures.ts';
 import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
 
 const noLots = { findOnlineLots: () => Promise.resolve([]) };
@@ -26,10 +27,11 @@ interface ServerOptions {
   readonly demoMode?: boolean;
   readonly minimumAppVersion?: string;
   readonly entryClock?: Clock;
+  readonly deviceKeys?: FakeGateDeviceKeyRepository;
 }
 
 // The one place route tests build the real server over fake repositories.
-export function configureServer({ testSignInEnabled = false, demoMode = false, minimumAppVersion, entryClock }: ServerOptions = {}) {
+export function configureServer({ testSignInEnabled = false, demoMode = false, minimumAppVersion, entryClock, deviceKeys }: ServerOptions = {}) {
   const driverRepository = new FakeDriverRepository();
   const vehicleRepository = new FakeVehicleRepository();
   const entries = fakeEntries({ drivers: driverRepository, vehicles: vehicleRepository, ...(entryClock === undefined ? {} : { clock: entryClock }) });
@@ -43,7 +45,7 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
   const operatorRepository = new FakeOperatorRepository();
   const spotHolds = new FakeSpotHoldRepository();
   const server: FastifyInstance = buildServer({
-    gates: fakeGateDependencies(),
+    gates: { ...fakeGateDependencies(), ...(deviceKeys === undefined ? {} : { deviceKeys }) },
     repositories: { ...fakeRepositories({ lotAvailabilityRepository: noLots, driverRepository, vehicleRepository, operatorRepository, parkingSessions, parkedPresumptions, parkedAnswers, spotTakenReports }), receipts },
     operatorStripe: fakeOperatorStripe(operatorRepository).dependencies,
     cardGateway: new FakeCardGateway(),

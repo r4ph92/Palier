@@ -11,12 +11,12 @@ const SAFE_AREA_METRICS = {
 
 const eva001 = { ...abc123, plate: 'EVA 001', isElectric: true };
 
-async function renderEditVehicleScreen(client: FakeVehicleClient, language: 'fr' | 'en' = 'fr') {
+async function renderEditVehicleScreen(client: FakeVehicleClient, language: 'fr' | 'en' = 'fr', vehicle = eva001) {
   applyLanguage(language);
   const onSaved = jest.fn();
   await render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
-      <EditVehicleScreen client={client} vehicle={eva001} onCancel={jest.fn()} onSaved={onSaved} />
+      <EditVehicleScreen client={client} vehicle={vehicle} onCancel={jest.fn()} onSaved={onSaved} />
     </SafeAreaProvider>,
   );
   return onSaved;
@@ -43,6 +43,61 @@ describe('EditVehicleScreen', () => {
 
     expect(client.savedVehicles).toEqual([{ ...eva001, hasAccessiblePermit: true, isOversize: true }]);
     expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it('labels the transponder field in English and in French', async () => {
+    await renderEditVehicleScreen(new FakeVehicleClient([eva001]), 'en');
+
+    expect(screen.getByLabelText('Transponder (optional)')).toBeOnTheScreen();
+  });
+
+  it('saves the transponder Julie types, upper-case', async () => {
+    const client = new FakeVehicleClient([eva001]);
+    const onSaved = await renderEditVehicleScreen(client);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText('Transpondeur (facultatif)'), 't-0042');
+    await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(client.savedVehicles).toEqual([{ ...eva001, transponder: 'T-0042' }]);
+    expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the transponder already saved and clears it when emptied', async () => {
+    const withTransponder = { ...eva001, transponder: 'T-0042' };
+    const client = new FakeVehicleClient([withTransponder]);
+    await renderEditVehicleScreen(client, 'fr', withTransponder);
+    const user = userEvent.setup();
+
+    expect(screen.getByLabelText('Transpondeur (facultatif)')).toHaveDisplayValue('T-0042');
+    await user.clear(screen.getByLabelText('Transpondeur (facultatif)'));
+    await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(client.savedVehicles).toEqual([{ ...eva001, transponder: null }]);
+  });
+
+  it('says the transponder is invalid when Palier refuses it, and stays on the page', async () => {
+    const client = new FakeVehicleClient([eva001]);
+    const onSaved = await renderEditVehicleScreen(client);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText('Transpondeur (facultatif)'), 'T_1');
+    await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(await screen.findByText('Transpondeur invalide')).toBeOnTheScreen();
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it('says the transponder is already registered when another vehicle has it, and stays on the page', async () => {
+    const client = new FakeVehicleClient([eva001]);
+    const onSaved = await renderEditVehicleScreen(client);
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText('Transpondeur (facultatif)'), 't-taken');
+    await user.press(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    expect(await screen.findByText('Ce transpondeur est déjà enregistré.')).toBeOnTheScreen();
+    expect(onSaved).not.toHaveBeenCalled();
   });
 
   it('says the needs could not be saved when Palier cannot be reached, and stays on the page', async () => {

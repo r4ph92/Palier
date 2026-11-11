@@ -29,6 +29,7 @@ export const DEMO_ASSETS: Readonly<Record<string, DemoAsset>> = {
   'consoleTranslations.js': { contentType: JAVASCRIPT, location: besideThisFile('consoleTranslations.js') },
   'gateApi.js': { contentType: JAVASCRIPT, location: besideThisFile('gateApi.js') },
   'loopPress.js': { contentType: JAVASCRIPT, location: besideThisFile('loopPress.js') },
+  'readerRead.js': { contentType: JAVASCRIPT, location: besideThisFile('readerRead.js') },
   'Archivo_400Regular.ttf': {
     contentType: FONT,
     location: fromPackage('@expo-google-fonts/archivo/400Regular/Archivo_400Regular.ttf'),

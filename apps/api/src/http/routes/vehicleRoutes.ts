@@ -1,9 +1,9 @@
 import type { Vehicle, VehicleListResponse } from '@palier/shared-types';
 import type { FastifyInstance, preHandlerAsyncHookHandler } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
-import { readPlate } from '../../domain/vehicles/plate.ts';
+import { readPlate, readTransponder } from '../../domain/vehicles/plate.ts';
 import { isProvinceCode } from '../../domain/vehicles/provinces.ts';
-import type { VehicleNeeds, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
+import { TRANSPONDER_TAKEN, type VehicleEdit, type VehicleNeeds, type VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { addVehicleBodySchema, vehicleListSchema, vehicleNeedsBodySchema, vehicleParamsSchema, vehicleSchema } from '../schemas/vehicleSchemas.ts';
@@ -14,6 +14,8 @@ const NOT_FOUND = 404;
 const CONFLICT = 409;
 const NO_CONTENT = 204;
 
+const TRANSPONDER_TAKEN_BODY = { statusCode: CONFLICT, error: 'TRANSPONDER_ALREADY_REGISTERED', message: 'This transponder is already registered.' } as const;
+
 interface AddVehicleRequest {
   // A need left out is not declared.
   readonly Body: { readonly plate: string; readonly province: string } & Partial<VehicleNeeds>;
@@ -21,7 +23,7 @@ interface AddVehicleRequest {
 
 interface UpdateNeedsRequest {
   readonly Params: { readonly id: string };
-  readonly Body: VehicleNeeds;
+  readonly Body: VehicleNeeds & { readonly transponder?: string };
 }
 
 interface VehicleParamsRequest {
@@ -90,13 +92,32 @@ function declaredVehicle(body: AddVehicleRequest['Body']): VehicleNeeds & { read
   };
 }
 
+// Null when the transponder is typed but invalid.
+function editOf({ isElectric, hasAccessiblePermit, isOversize, transponder: typed }: UpdateNeedsRequest['Body']): VehicleEdit | null {
+  const needs = { isElectric, hasAccessiblePermit, isOversize };
+  if (typed === undefined) {
+    return needs;
+  }
+  if (typed.trim() === '') {
+    return { ...needs, transponder: null };
+  }
+  const transponder = readTransponder(typed);
+  return transponder === null ? null : { ...needs, transponder };
+}
+
 function registerUpdateNeedsRoute(server: FastifyInstance, repository: VehicleRepository, guards: preHandlerAsyncHookHandler[]): void {
   server.patch<UpdateNeedsRequest>(
     '/v1/me/vehicles/:id',
     { onRequest: guards, schema: { params: vehicleParamsSchema, body: vehicleNeedsBodySchema, response: { 200: vehicleSchema } } },
     async (request, reply) => {
-      const { isElectric, hasAccessiblePermit, isOversize } = request.body;
-      const vehicle = await repository.updateVehicleNeeds(signedInDriver(request).id, request.params.id, { isElectric, hasAccessiblePermit, isOversize });
+      const edit = editOf(request.body);
+      if (edit === null) {
+        return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'INVALID_TRANSPONDER', message: 'Invalid transponder.' });
+      }
+      const vehicle = await repository.updateVehicleNeeds(signedInDriver(request).id, request.params.id, edit);
+      if (vehicle === TRANSPONDER_TAKEN) {
+        return reply.status(CONFLICT).send(TRANSPONDER_TAKEN_BODY);
+      }
       if (vehicle === null) {
         return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'NOT_FOUND', message: 'No such vehicle.' });
       }

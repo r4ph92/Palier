@@ -25,10 +25,14 @@ export interface PaidExit {
   readonly unpaidCents: number;
 }
 
+// How the vehicle was identified at the exit.
+export type ExitIdentification = 'APP' | 'PLATE' | 'TRANSPONDER';
+
 export interface ExitClosing {
   readonly sessionId: string;
   readonly lotId: string;
   readonly exitGateId: string;
+  readonly identification: ExitIdentification;
   readonly exit: PaidExit;
 }
 
@@ -37,6 +41,7 @@ export interface PendingExitClosing {
   readonly sessionId: string;
   readonly lotId: string;
   readonly exitGateId: string;
+  readonly identification: ExitIdentification;
   readonly exitedAt: Date;
   readonly pendingCaptureCents: number;
   // Settled at the tap whatever the capture did; the retry only captures.
@@ -51,9 +56,15 @@ export type ClosedExit = { readonly outcome: 'closed'; readonly exit: PaidExit }
 // closed: this request closed the session with its capture pending; already: another request closed it first, paid or pending.
 export type ClosedPendingExit = { readonly outcome: 'closed' | 'already' | 'lot-busy' };
 
+// What a gate's reader reads: the plate of the session, or the transponder of its vehicle.
+export type ReadIdentifierKind = 'PLATE' | 'TRANSPONDER';
+
 export interface ExitRepository {
   // The driver's own session only: another driver's session is not found, like an unknown id.
   findForExit(sessionId: string, driverId: string): Promise<ExitableSession | null>;
+  // Sessions of this lot that have not left and whose plate or vehicle transponder matches the key (spaces and hyphens already
+  // removed, upper-case). At most two come back: two are already too many to open on.
+  findLeavableByIdentifier(lotId: string, kind: ReadIdentifierKind, key: string): Promise<readonly ExitableSession[]>;
   // One transaction under the lot lock: closes the session as CLOSED_PAID with the app as identification, frees the spots it held
   // and records the gate's open command. A session another request closed first answers that request's exit instead.
   close(closing: ExitClosing): Promise<ClosedExit>;

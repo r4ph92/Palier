@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { DeleteVehicleResult, NewVehicle, Vehicle, VehicleNeeds, VehicleRepository } from '../../src/domain/vehicles/VehicleRepository.ts';
+import { TRANSPONDER_TAKEN, type DeleteVehicleResult, type NewVehicle, type Vehicle, type VehicleEdit, type VehicleNeeds, type VehicleRepository } from '../../src/domain/vehicles/VehicleRepository.ts';
 
 export const standardNeeds: VehicleNeeds = { isElectric: false, hasAccessiblePermit: false, isOversize: false };
 
@@ -10,6 +10,7 @@ interface StoredVehicle extends VehicleNeeds {
   readonly plate: string;
   readonly province: string;
   isDefault: boolean;
+  transponder: string | null;
 }
 
 export class FakeVehicleRepository implements VehicleRepository {
@@ -47,6 +48,7 @@ export class FakeVehicleRepository implements VehicleRepository {
       plate: newVehicle.plate,
       province: newVehicle.province,
       isDefault: this.#ownedBy(driverId).length === 0,
+      transponder: null,
       isElectric: newVehicle.isElectric,
       hasAccessiblePermit: newVehicle.hasAccessiblePermit,
       isOversize: newVehicle.isOversize,
@@ -55,12 +57,16 @@ export class FakeVehicleRepository implements VehicleRepository {
     return Promise.resolve(toVehicle(stored));
   }
 
-  updateVehicleNeeds(driverId: string, vehicleId: string, needs: VehicleNeeds): Promise<Vehicle | null> {
+  updateVehicleNeeds(driverId: string, vehicleId: string, { transponder, ...needs }: VehicleEdit): Promise<Vehicle | null | typeof TRANSPONDER_TAKEN> {
     const target = this.#find(driverId, vehicleId);
     if (target === undefined) {
       return Promise.resolve(null);
     }
-    const updated: StoredVehicle = { ...target, ...needs };
+    const taken = transponder != null && this.#stored.some((other) => other.id !== vehicleId && other.transponder !== null && other.transponder.replace(/[ -]/g, '') === transponder.transponderKey);
+    if (taken) {
+      return Promise.resolve(TRANSPONDER_TAKEN);
+    }
+    const updated: StoredVehicle = { ...target, ...needs, transponder: transponder === undefined ? target.transponder : (transponder?.transponder ?? null) };
     this.#stored.splice(this.#stored.indexOf(target), 1, updated);
     return Promise.resolve(toVehicle(updated));
   }
@@ -102,6 +108,6 @@ export class FakeVehicleRepository implements VehicleRepository {
   }
 }
 
-function toVehicle({ id, plate, province, isDefault, isElectric, hasAccessiblePermit, isOversize }: StoredVehicle): Vehicle {
-  return { id, plate, province, isDefault, isElectric, hasAccessiblePermit, isOversize };
+function toVehicle({ id, plate, province, isDefault, transponder, isElectric, hasAccessiblePermit, isOversize }: StoredVehicle): Vehicle {
+  return { id, plate, province, isDefault, transponder, isElectric, hasAccessiblePermit, isOversize };
 }

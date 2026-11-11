@@ -1,5 +1,5 @@
 import { JULIE_SESSION_ID } from './fakeCurrentParkingSessions.ts';
-import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitRepository, PaidExit, PendingExitClosing } from '../../../src/domain/exits/ExitRepository.ts';
+import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitRepository, PaidExit, PendingExitClosing, ReadIdentifierKind } from '../../../src/domain/exits/ExitRepository.ts';
 
 export const JULIE_ID = 'driver-julie';
 export const EXIT_SESSION_ID = JULIE_SESSION_ID;
@@ -20,14 +20,29 @@ export function julieInside(enteredAt: Date): ExitableSession {
   };
 }
 
+export interface ReadKeys {
+  readonly plateKey?: string;
+  readonly transponderKey?: string;
+}
+
 export class FakeExits implements ExitRepository {
   readonly closings: ExitClosing[] = [];
   readonly pendingClosings: PendingExitClosing[] = [];
   busy = false;
-  readonly #sessions = new Map<string, { readonly driverId: string; session: ExitableSession }>();
+  readonly #sessions = new Map<string, { readonly driverId: string; session: ExitableSession; readonly keys: ReadKeys }>();
 
-  add(driverId: string, session: ExitableSession): void {
-    this.#sessions.set(session.id, { driverId, session });
+  // The keys are what the exit readers can match: the plate of the session and the transponder of its vehicle, without spaces or hyphens.
+  add(driverId: string, session: ExitableSession, keys: ReadKeys = {}): void {
+    this.#sessions.set(session.id, { driverId, session, keys });
+  }
+
+  findLeavableByIdentifier(lotId: string, kind: ReadIdentifierKind, key: string): Promise<readonly ExitableSession[]> {
+    const leavable = [...this.#sessions.values()].filter(({ session, keys }) => {
+      const state = session.state;
+      const open = session.lotId === lotId && state !== 'CREATED' && state !== 'CANCELLED' && state !== 'CLOSED_PAID' && state !== 'CLOSED_CAPTURE_PENDING';
+      return open && (kind === 'PLATE' ? keys.plateKey : keys.transponderKey) === key;
+    });
+    return Promise.resolve(leavable.slice(0, 2).map(({ session }) => session));
   }
 
   findForExit(sessionId: string, driverId: string): Promise<ExitableSession | null> {

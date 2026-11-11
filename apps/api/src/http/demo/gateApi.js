@@ -4,6 +4,7 @@
  * @typedef {object} GateApi
  * @property {(deviceKey: string) => Promise<ApiResponse>} fetchIdentity
  * @property {(deviceKey: string, gateId: string, closedAt: string) => Promise<ApiResponse>} postPassage
+ * @property {(deviceKey: string, gateId: string, identifier: string) => Promise<ApiResponse>} postIdentify
  * @property {(deviceKey: string, after: CommandCursor | null) => Promise<ApiResponse>} fetchCommands
  */
 
@@ -21,6 +22,12 @@ export function createGateApi(fetchFunction) {
         method: 'POST',
         headers: { ...authorization(deviceKey), 'content-type': 'application/json' },
         body: JSON.stringify({ closedAt }),
+      }),
+    postIdentify: (deviceKey, gateId, identifier) =>
+      request(fetchFunction, `/v1/gates/${encodeURIComponent(gateId)}/identify`, {
+        method: 'POST',
+        headers: { ...authorization(deviceKey), 'content-type': 'application/json' },
+        body: JSON.stringify({ identifier }),
       }),
     fetchCommands: (deviceKey, after) =>
       request(fetchFunction, commandsUrl(after), { headers: authorization(deviceKey) }),
