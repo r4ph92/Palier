@@ -1,5 +1,6 @@
 import type { SpotCategory } from '@palier/shared-types';
 import { spotHoldFr } from './spotHoldFr';
+import { offlineWalksFr } from './offlineWalksFr';
 import { planFr } from './planFr';
 import { spotTakenFr } from './spotTakenFr';
 import { whereParkedFr } from './whereParkedFr';
@@ -159,6 +160,7 @@ export const fr = {
     plan: planFr,
     whereParked: whereParkedFr,
     spotTaken: spotTakenFr,
+    offlineWalks: offlineWalksFr,
   },
   locationExplanation: {
     eyebrow: 'Localisation',

@@ -1,5 +1,6 @@
 import type { Translations } from './fr';
 import { spotHoldEn } from './spotHoldEn';
+import { offlineWalksEn } from './offlineWalksEn';
 import { planEn } from './planEn';
 import { spotTakenEn } from './spotTakenEn';
 import { whereParkedEn } from './whereParkedEn';
@@ -159,6 +160,7 @@ export const en: Translations = {
     plan: planEn,
     whereParked: whereParkedEn,
     spotTaken: spotTakenEn,
+    offlineWalks: offlineWalksEn,
   },
   locationExplanation: {
     eyebrow: 'Location',

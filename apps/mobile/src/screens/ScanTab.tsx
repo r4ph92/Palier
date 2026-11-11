@@ -1,3 +1,4 @@
+import type { CurrentParkingSession } from '@palier/shared-types';
 import { useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import { assertNever } from '../assertNever';
 import type { EntryClient } from '../api/EntryClient';
@@ -18,6 +19,7 @@ import { WhereParkedScreen } from './WhereParkedScreen';
 export interface SessionAside {
   readonly detectionNotice: ReactNode;
   readonly guidance: ReactNode;
+  readonly offlineWalks: ReactNode;
 }
 
 interface ScanTabProps {
@@ -84,6 +86,10 @@ function sessionScreenFor(currentSession: CurrentParkingSessionController, choic
 }
 
 // Once the driver walked away, « présumée occupée après 30 min » would contradict a spot already presumed taken or asked about.
+function asideOf({ detectionNotice, guidance, offlineWalks }: SessionAside, session: CurrentParkingSession) {
+  return { notice: isWalkedAwayState(session.state) ? null : detectionNotice, guidance, offlineWalks };
+}
+
 function currentSessionScreen(
   reading: CurrentParkingSessionReading,
   { refresh, isReading, missedReads }: CurrentParkingSessionController,
@@ -94,8 +100,7 @@ function currentSessionScreen(
       reading={reading}
       progress={{ isReading, missedReads }}
       onRetry={refresh}
-      notice={isWalkedAwayState(reading.session.state) ? null : aside.detectionNotice}
-      guidance={aside.guidance}
+      {...asideOf(aside, reading.session)}
       whereParked={(framing) => <WhereParkedScreen client={parkingSessionClient} session={reading.session} framing={framing} onAnswered={refresh} />}
       reportSpotTaken={(onNoneFree) => (
         <ReportSpotTaken key={reading.session.sessionId} client={parkingSessionClient} session={reading.session} onNoneFree={onNoneFree} onSettled={refresh} />

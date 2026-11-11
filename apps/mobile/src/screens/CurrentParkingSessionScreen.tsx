@@ -24,6 +24,8 @@ interface CurrentParkingSessionScreenProps {
   readonly onRetry: () => void;
   readonly notice?: ReactNode;
   readonly guidance?: ReactNode;
+  // The walks kept offline, shown whatever the state, beside the offline notice.
+  readonly offlineWalks?: ReactNode;
   // Asks where the car is in place of the details: while the session is PARKED_UNCONFIRMED, or while the driver corrects a presumed spot.
   readonly whereParked?: (framing: WhereParkedFraming) => ReactNode;
   // « Place prise » while the driver has not parked; onNoneFree shows why the question follows when no other spot is free.
@@ -95,7 +97,7 @@ function offlineMessageOf(session: CurrentParkingSession): string {
 }
 
 function SessionDetails(props: SessionDetailsProps) {
-  const { reading, offline, arrival, notice, guidance, shouldFocusSpotOnArrival = false } = props;
+  const { reading, offline, offlineWalks, arrival, notice, guidance, shouldFocusSpotOnArrival = false } = props;
   const { session, readAt } = reading;
   return (
     <>
@@ -103,6 +105,7 @@ function SessionDetails(props: SessionDetailsProps) {
       <SpotAction {...props} />
       {guidance}
       {offline}
+      {offlineWalks}
       {notice}
       <SessionAmount session={session} />
       <SessionTimes session={session} />

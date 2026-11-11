@@ -8,6 +8,7 @@ import { useTabs, type TabsController } from '../navigation/useTabs';
 import { useCurrentParkingSession, type CurrentParkingSessionController } from '../parkingSessions/useCurrentParkingSession';
 import type { OfflineWalkSender } from '../parkingSessions/OfflineWalkSender';
 import { useOfflineWalkSender } from '../parkingSessions/useOfflineWalkSender';
+import { useOfflineWalks } from '../parkingSessions/useOfflineWalks';
 import { useParkedPresumption } from '../parkingSessions/useParkedPresumption';
 import { useAisleFollower } from '../positioning/useAisleFollower';
 import { useSpotHold } from '../spotHolds/useSpotHold';
@@ -15,8 +16,9 @@ import { AccountTab } from './AccountTab';
 import { AutomaticDetectionNotice } from './AutomaticDetectionNotice';
 import type { DeviceTools } from './DeviceTools';
 import { HomeScreen } from './HomeScreen';
+import { OfflineWalksNotice } from './OfflineWalksNotice';
 import { ScannerGate } from './ScannerGate';
-import { ScanTab, scanTabLabels } from './ScanTab';
+import { ScanTab, scanTabLabels, type SessionAside } from './ScanTab';
 import { useParkingGuidance } from './useParkingGuidance';
 
 interface SignedInTabsProps {
@@ -58,7 +60,7 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
   const pendingEntry = usePendingEntryWatch(clients.entry, { onSettled: currentSession.refresh, onSubmissionEnded: spotHold.refreshHold });
   const gateScanner = useScannerGate(clients);
   const sender = useOfflineWalkSender({ client: clients.parkingSession, store: clients.offlineWalks, connectivity: device.connectivity, positioning: device.positioning });
-  const guidance = useSessionGuidance(device, sender, currentSession);
+  const aside = useSessionAside({ device, clients }, sender, currentSession);
   const screens: TabScreens = {
     home: { firstName, lotsClient: clients.lots, locationClient: clients.location, spotHold },
     scan: {
@@ -66,14 +68,25 @@ function useTabScreens({ firstName, clients, device, onSignOut }: SignedInTabsPr
       gateScanner,
       currentSession,
       pendingEntry,
-      aside: { detectionNotice: <AutomaticDetectionNotice location={clients.backgroundLocation} />, guidance },
+      aside,
     },
     account: { firstName, page: tabs.accountPage, clients, developerEntry: device.developerEntry, onPageChange: tabs.setAccountPage, onSignOut: clearingWalks(sender, onSignOut) },
   };
   return { currentSession, screens };
 }
 
-// The aisle and the walk away are followed above the tabs too, so a driver on another tab never misses them.
+// The aisle, the walk away and the walks kept offline are followed above the tabs too, so a driver on another tab never misses them.
+function useSessionAside({ device, clients }: Pick<SignedInTabsProps, 'device' | 'clients'>, sender: OfflineWalkSender, currentSession: CurrentParkingSessionController): SessionAside {
+  const { state } = currentSession;
+  const walks = useOfflineWalks(sender, state.status === 'current' ? state.session.sessionId : null);
+  const guidance = useSessionGuidance(device, sender, currentSession);
+  return {
+    detectionNotice: <AutomaticDetectionNotice location={clients.backgroundLocation} />,
+    guidance,
+    offlineWalks: <OfflineWalksNotice walks={walks} />,
+  };
+}
+
 function useSessionGuidance({ positioning }: DeviceTools, sender: OfflineWalkSender, currentSession: CurrentParkingSessionController): ReactNode {
   const { state, refresh } = currentSession;
   const session = state.status === 'current' ? state.session : null;
