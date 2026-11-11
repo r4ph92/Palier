@@ -109,6 +109,8 @@ export const parkingSession = pgTable(
     capturedCents: integer('captured_cents'),
     // The amount fixed at the tap when Stripe could not be reached; the retry captures exactly this, under the same idempotency key (decision 026).
     pendingCaptureCents: integer('pending_capture_cents'),
+    // The surplus Stripe could not settle at the tap; the retry charges it after the capture (decision 027).
+    pendingSurplusCents: integer('pending_surplus_cents').notNull().default(0),
     // What the exit charged beyond the card hold for a stay over 24 hours, and what the card refused of it (decision 027).
     surplusPaidCents: integer('surplus_paid_cents').notNull().default(0),
     unpaidCents: integer('unpaid_cents').notNull().default(0),
@@ -126,6 +128,7 @@ export const parkingSession = pgTable(
     sameLotForeignKey('parking_session_parked_aisle_in_same_lot_fk', [table.parkedAisleId, table.lotId], aisle),
     ...stateChecks(table),
     check('parking_session_surplus_not_negative', sql`${table.surplusPaidCents} >= 0 and ${table.unpaidCents} >= 0`),
+    check('parking_session_pending_surplus_not_negative', sql`${table.pendingSurplusCents} >= 0`),
     check(
       'parking_session_pricing_positive',
       sql`${table.pricingIncrementCents} > 0 and ${table.pricingIncrementMinutes} > 0 and ${table.pricingDailyCapCents} > 0`,
