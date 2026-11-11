@@ -185,6 +185,7 @@ describe('StripePaymentAuthorizer', () => {
           payment_method: 'pm_julie',
           confirm: true,
           off_session: true,
+          error_on_requires_action: true,
           metadata: { sessionId: 'session-1', kind: 'surplus' },
           transfer_data: { destination: 'acct_1Lavoie' },
         },

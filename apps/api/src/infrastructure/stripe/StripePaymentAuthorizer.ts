@@ -138,6 +138,8 @@ function surplusParameters(sessionId: string, amountCents: number, entry: EntryI
     payment_method: idOf(entry.payment_method),
     confirm: true,
     off_session: true,
+    // A card that needs the driver (3-D Secure) is refused outright rather than left open on Stripe's side.
+    error_on_requires_action: true,
     metadata: { sessionId, kind: 'surplus' },
   };
   return entry.transfer_data?.destination === undefined ? parameters : { ...parameters, transfer_data: { destination: idOf(entry.transfer_data.destination) } };
