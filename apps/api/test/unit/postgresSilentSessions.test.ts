@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { LotBusyError } from '../../src/domain/LotBusyError.ts';
 import { PostgresSilentSessionRepository } from '../../src/infrastructure/postgres/PostgresSilentSessionRepository.ts';
 import { PARKING_DEMO_LOCK_ID, parkingDemoLockRow } from './fakes/lotRows.ts';
-import { ScriptedSql } from './fakes/scriptedSql.ts';
+import { LOCK_NOT_AVAILABLE, ScriptedSql } from './fakes/scriptedSql.ts';
 
 const CUTOFF = new Date('2026-11-04T19:00:00Z');
 const NOW = new Date('2026-11-04T19:30:00Z');
@@ -60,11 +61,10 @@ describe('presuming the silent sessions of a lot', () => {
     expect(scripted.statement(label)?.text).not.toMatch(/CANCELLED|CREATED|PARKED_CONFIRMED/);
   });
 
-  it('lets a lock timeout through for the job to log and retry, writing nothing', async () => {
-    const timeout = new Error('lock timeout');
-    const scripted = lockedLot().fail('lock-lot', timeout);
+  it('turns a lock timeout into a busy lot for the job to warn about, writing nothing', async () => {
+    const scripted = lockedLot().fail('lock-lot', LOCK_NOT_AVAILABLE);
 
-    await expect(presumeWith(scripted)).rejects.toBe(timeout);
+    await expect(presumeWith(scripted)).rejects.toBeInstanceOf(LotBusyError);
     expect(scripted.count('presume-silent-entries')).toBe(0);
   });
 

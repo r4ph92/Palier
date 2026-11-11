@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { LotBusyError } from '../../src/domain/LotBusyError.ts';
 import { presumeSilentSessions, type SilentSessionJob } from '../../src/domain/parkingSessions/presumeSilentSessions.ts';
 import { FakeSilentSessionRepository, type FakeSilentSession } from './fakes/fakeSilentSessions.ts';
 
@@ -86,6 +87,21 @@ describe('presumeSilentSessions', () => {
 
     expect(log.error).toHaveBeenCalledExactlyOnceWith({ err: failure, lotId: 'lot-busy' }, expect.stringContaining('retried at the next check'));
     expect(log.info).toHaveBeenCalledExactlyOnceWith({ lotId: 'lot-calm', confirmedEntries: 2, unansweredQuestions: 0 }, expect.any(String));
+  });
+
+  it('warns with the lot id and no stack when a lot is busy, and still presumes the next one', async () => {
+    const silentSessions: SilentSessionJob['silentSessions'] = {
+      findLotsWithSilentSessions: () => Promise.resolve(['lot-busy', 'lot-calm']),
+      presumeLotSilentSessions: (lotId) =>
+        lotId === 'lot-busy' ? Promise.reject(new LotBusyError(lotId)) : Promise.resolve({ confirmedEntries: 1, unansweredQuestions: 0 }),
+    };
+    const log = logSpy();
+
+    await presumeSilentSessions(jobAt(silentSessions, AFTER_30_MINUTES), log);
+
+    expect(log.warn).toHaveBeenCalledExactlyOnceWith({ lotId: 'lot-busy' }, expect.stringContaining('retried at the next check'));
+    expect(log.error).not.toHaveBeenCalled();
+    expect(log.info).toHaveBeenCalledOnce();
   });
 
   it('stays silent when a concurrent run already presumed everything', async () => {

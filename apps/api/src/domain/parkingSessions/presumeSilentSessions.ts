@@ -1,4 +1,5 @@
 import type { JobLog } from '../JobLog.ts';
+import { logLotFailure } from '../logLotFailure.ts';
 import { MILLISECONDS_PER_MINUTE } from '../time/durations.ts';
 import type { Clock } from '../time/Clock.ts';
 
@@ -45,6 +46,6 @@ async function presumeLot(silentSessions: SilentSessionRepository, { lotId, ...s
       log.info({ lotId, confirmedEntries, unansweredQuestions }, 'presumed parked the sessions silent past the presumption limit');
     }
   } catch (error) {
-    log.error({ err: error, lotId }, 'could not presume the silent sessions of a lot, retried at the next check');
+    logLotFailure(log, { lotId, error }, 'could not presume the silent sessions of a lot, retried at the next check');
   }
 }

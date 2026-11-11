@@ -1,3 +1,4 @@
+import { LotBusyError } from '../../src/domain/LotBusyError.ts';
 import { describe, expect, it, vi } from 'vitest';
 import { expireSpotHolds, type HoldExpiryJob } from '../../src/domain/spotHolds/expireSpotHolds.ts';
 import type { SpotHoldRepository } from '../../src/domain/spotHolds/SpotHoldRepository.ts';
@@ -81,6 +82,19 @@ describe('expireSpotHolds', () => {
 
     expect(log.error).toHaveBeenCalledExactlyOnceWith({ err: failure, lotId: 'lot-busy' }, expect.stringContaining('retried at the next check'));
     expect(log.info).toHaveBeenCalledExactlyOnceWith({ lotId: 'lot-calm', expired: 1 }, 'expired spot holds nobody used');
+  });
+
+  it('warns with the lot id and no stack when a lot is busy', async () => {
+    const spotHolds: HoldExpiryJob['spotHolds'] = {
+      findLotsWithExpiredHolds: () => Promise.resolve(['lot-busy']),
+      expireLotSpotHolds: (lotId) => Promise.reject(new LotBusyError(lotId)),
+    };
+    const log = logSpy();
+
+    await expireSpotHolds(jobAt(spotHolds, AT_14_17), log);
+
+    expect(log.warn).toHaveBeenCalledExactlyOnceWith({ lotId: 'lot-busy' }, expect.stringContaining('retried at the next check'));
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('warns when an expired hold had a spot that was no longer held', async () => {
