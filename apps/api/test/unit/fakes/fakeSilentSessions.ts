@@ -1,8 +1,9 @@
+import type { PresumptionEvidence } from '../../../src/domain/parkingSessions/PresumptionEvidence.ts';
 import type { SilenceCheck, SilentPresumptions, SilentSessionRepository } from '../../../src/domain/parkingSessions/presumeSilentSessions.ts';
 
 export type FakeSilentSession =
-  | { readonly state: 'ENTRY_CONFIRMED'; readonly entryConfirmedAt: Date; presumedBy: 'TIMEOUT' | null }
-  | { readonly state: 'PARKED_UNCONFIRMED'; readonly parkedAt: Date; presumedBy: 'TIMEOUT' | null }
+  | { readonly state: 'ENTRY_CONFIRMED'; readonly entryConfirmedAt: Date; presumedBy: PresumptionEvidence | null }
+  | { readonly state: 'PARKED_UNCONFIRMED'; readonly parkedAt: Date; presumedBy: PresumptionEvidence | null }
   | { readonly state: 'CANCELLED' | 'CREATED'; presumedBy: null };
 
 // Applies the same cut as the SQL (at or before the cutoff); the statements themselves are proven on scripted SQL.

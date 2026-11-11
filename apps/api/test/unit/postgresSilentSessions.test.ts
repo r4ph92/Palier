@@ -47,8 +47,17 @@ describe('presuming the silent sessions of a lot', () => {
     const statement = scripted.statements.find(({ label }) => label === 'presume-silent-questions');
     expect(statement?.text).toContain(`state = 'PARKED_UNCONFIRMED'`);
     expect(statement?.text).toContain('parked_at <=');
+    expect(statement?.text).toContain(`presumed_by = 'TIMEOUT'`);
     expect(statement?.text).not.toContain('parked_at =');
     expect(statement?.params).toEqual([PARKING_DEMO_LOCK_ID, CUTOFF.toISOString()]);
+  });
+
+  it.each(['presume-silent-entries', 'presume-silent-questions'] as const)('%s only touches its own state, never a cancelled, created or confirmed session', async (label) => {
+    const scripted = lockedLot();
+
+    await presumeWith(scripted);
+
+    expect(scripted.statement(label)?.text).not.toMatch(/CANCELLED|CREATED|PARKED_CONFIRMED/);
   });
 
   it('lets a lock timeout through for the job to log and retry, writing nothing', async () => {

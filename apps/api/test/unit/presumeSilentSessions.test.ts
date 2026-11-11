@@ -24,13 +24,13 @@ const julieEntered = (): FakeSilentSession => ({ state: 'ENTRY_CONFIRMED', entry
 const julieAsked = (): FakeSilentSession => ({ state: 'PARKED_UNCONFIRMED', parkedAt: ENTERED_AT, presumedBy: null });
 
 describe('presumeSilentSessions', () => {
-  it('C1: presumes a session entered 30 minutes ago with timeout evidence, and logs only the counts', async () => {
+  it('C1: asks the repository to presume a session entered 30 minutes ago and logs only the counts', async () => {
     const silentSessions = repositoryWith(julieEntered());
     const log = logSpy();
 
     await presumeSilentSessions(jobAt(silentSessions, AFTER_30_MINUTES), log);
 
-    expect(silentSessions.sessions[0]?.presumedBy).toBe('TIMEOUT');
+    expect(silentSessions.presumptions).toHaveLength(1);
     expect(log.info).toHaveBeenCalledExactlyOnceWith({ lotId: 'lot-demo', confirmedEntries: 1, unansweredQuestions: 0 }, expect.any(String));
   });
 
@@ -61,15 +61,6 @@ describe('presumeSilentSessions', () => {
     await presumeSilentSessions(jobAt(silentSessions, AFTER_29_MINUTES), logSpy());
 
     expect(silentSessions.sessions[0]?.presumedBy).toBeNull();
-  });
-
-  it.each(['CANCELLED', 'CREATED'] as const)('C4: never touches a %s session, however old', async (state) => {
-    const silentSessions = repositoryWith({ state, presumedBy: null });
-
-    await presumeSilentSessions(jobAt(silentSessions, new Date('2026-11-05T19:00:00Z')), logSpy());
-
-    expect(silentSessions.sessions[0]?.presumedBy).toBeNull();
-    expect(silentSessions.presumptions).toEqual([]);
   });
 
   it('reads the clock once and cuts 30 minutes before that reading', async () => {
