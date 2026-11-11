@@ -9,8 +9,8 @@ import { usePricingForm, type PricingFormTarget } from '../lotSetup/usePricingFo
 
 export function PricingForm({ lotId, pricing, onSaved }: PricingFormTarget) {
   const text = useText();
-  const [hasSaved, setHasSaved] = useState(false);
-  const form = usePricingForm({ lotId, pricing, onSaved: () => (setHasSaved(true), onSaved()) });
+  const saved = useSavedNotice(onSaved);
+  const form = usePricingForm({ lotId, pricing, onSaved: saved.markSaved });
   const field = fieldBinder(form, 'pricing', useLimitValues());
   return (
     <form className="form" noValidate aria-busy={form.submitting} onSubmit={(event) => void form.submit(event)}>
@@ -21,8 +21,18 @@ export function PricingForm({ lotId, pricing, onSaved }: PricingFormTarget) {
       <TextField {...field('holdQuota')} label={text.pricing.holdQuotaLabel} hint={text.pricing.holdQuotaHint} inputMode="numeric" />
       <SubmitButton label={text.pricing.submit} busyLabel={text.pricing.submitting} busy={form.submitting} />
       <p role="status" className="muted">
-        {hasSaved && form.summary === null ? text.pricing.saved : ''}
+        {saved.hasSaved && form.summary === null ? text.pricing.saved : ''}
       </p>
     </form>
   );
+}
+
+// The status stays empty until the first save, so a screen reader announces the confirmation when it appears.
+function useSavedNotice(onSaved: () => void) {
+  const [hasSaved, setHasSaved] = useState(false);
+  const markSaved = () => {
+    setHasSaved(true);
+    onSaved();
+  };
+  return { hasSaved, markSaved };
 }

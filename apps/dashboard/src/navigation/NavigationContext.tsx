@@ -8,7 +8,7 @@ interface Navigation {
 
 const NavigationContext = createContext<Navigation | null>(null);
 
-// Four pages do not need a router library: the path is the state, and the back button replays it through popstate.
+// A handful of pages do not need a router library: the path is the state, and the back button replays it through popstate.
 export function NavigationProvider({ children }: { readonly children: ReactNode }) {
   const [pathname, setPathname] = useState(() => window.location.pathname);
   useEffect(() => {
