@@ -1,7 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
-import { HOLD_QUOTA_LIMITS } from '@palier/shared-types/lotPricing';
-import { DEFAULT_SPOT_HOLD_QUOTA } from '../../domain/spotHolds/spotHoldRules.ts';
+import { DEFAULT_HOLD_QUOTA, HOLD_QUOTA_LIMITS } from '@palier/shared-types/lotPricing';
 import { SPOT_STATES } from '../../domain/spots/spotStates.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
 
@@ -38,7 +37,7 @@ export const parkingLot = pgTable(
     pricingPolicy: jsonb('pricing_policy'),
     // Null with the policy: a lot without pricing stays offline (decision 031).
     dailyCapCents: integer('daily_cap_cents'),
-    holdQuota: integer('hold_quota').notNull().default(DEFAULT_SPOT_HOLD_QUOTA),
+    holdQuota: integer('hold_quota').notNull().default(DEFAULT_HOLD_QUOTA),
     assignmentStrategy: assignmentStrategy('assignment_strategy').notNull().default('AISLE_BY_AISLE'),
     occupancySource: occupancySource('occupancy_source').notNull().default('DECLARATIVE'),
     capacity: integer('capacity').notNull(),
