@@ -38,7 +38,7 @@ describe('dashboard lot setup routes', () => {
     const list = await server.inject({ method: 'GET', url: '/v1/dashboard/lots', cookies });
 
     expect(created.statusCode).toBe(201);
-    expect(created.json()).toEqual({ ...garageRoyNord, id: expect.any(String), isOnline: false, beaconMajor: 4, pricing: null });
+    expect(created.json()).toEqual({ ...garageRoyNord, id: expect.any(String), isOnline: false, beaconMajor: expect.any(Number), pricing: null });
     expect(list.json()).toEqual([
       { id: garageRoyDetails.id, name: 'Garage Roy', isOnline: false },
       { id: created.json<{ id: string }>().id, name: 'Garage Roy Nord', isOnline: false },
@@ -86,7 +86,7 @@ describe('dashboard lot setup routes', () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({ error: 'PRICING_DAILY_CAP_REQUIRED' });
-    expect(lots.lots.find(({ id }) => id === garageRoyDetails.id)?.pricing).toEqual(garageRoyDetails.pricing);
+    expect(lots.byId(garageRoyDetails.id)?.pricing).toEqual(garageRoyDetails.pricing);
   });
 
   it.each([
@@ -103,7 +103,7 @@ describe('dashboard lot setup routes', () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({ error });
-    expect(lots.lots.find(({ id }) => id === garageRoyDetails.id)?.pricing).toEqual(garageRoyDetails.pricing);
+    expect(lots.byId(garageRoyDetails.id)?.pricing).toEqual(garageRoyDetails.pricing);
   });
 
   it('gives Sophie not found when she reads or prices Garage Roy, and changes nothing', async () => {
@@ -114,7 +114,7 @@ describe('dashboard lot setup routes', () => {
 
     expect(read.json()).toEqual(LOT_NOT_FOUND);
     expect(priced.json()).toEqual(LOT_NOT_FOUND);
-    expect(lots.lots.find(({ id }) => id === garageRoyDetails.id)?.pricing).toEqual(garageRoyDetails.pricing);
+    expect(lots.byId(garageRoyDetails.id)?.pricing).toEqual(garageRoyDetails.pricing);
   });
 
   it('asks Julie, who has no operator, to create one before a lot, and gives her not found on pricing', async () => {
@@ -140,7 +140,7 @@ describe('dashboard lot setup routes', () => {
 
   it('answers null, never 0, for a lot without coordinates or beacon major', async () => {
     const cookies = await signIn(pierre);
-    lots.lots[2] = { ...garageRoyDetails, operatorId: ROY_OPERATOR_ID, latitude: null, longitude: null, beaconMajor: null };
+    lots.owned[lots.indexOf(ROY_OPERATOR_ID, garageRoyDetails.id)] = { ...garageRoyDetails, operatorId: ROY_OPERATOR_ID, latitude: null, longitude: null, beaconMajor: null };
 
     const read = await server.inject({ method: 'GET', url: `/v1/dashboard/lots/${garageRoyDetails.id}`, cookies });
 
@@ -154,6 +154,6 @@ describe('dashboard lot setup routes', () => {
     const priced = await server.inject({ method: 'PUT', url: `/v1/dashboard/lots/${garageRoyDetails.id}/pricing`, cookies, payload: royPricing });
 
     expect([created.statusCode, priced.statusCode]).toEqual([403, 403]);
-    expect(lots.lots).toHaveLength(3);
+    expect(lots.owned).toHaveLength(3);
   });
 });

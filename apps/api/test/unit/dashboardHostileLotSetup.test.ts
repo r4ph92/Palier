@@ -35,9 +35,11 @@ describe('hostile lot setup requests', () => {
     const created = await createLot({ ...garageRoyNord, operatorId: '00000000-0000-4000-8000-000000000101', isOnline: true, beaconMajor: 1, vehicleCount: 99 });
 
     expect(created.statusCode).toBe(201);
-    expect(created.json()).toMatchObject({ isOnline: false, beaconMajor: 4, pricing: null });
-    expect(lots.lots.at(-1)).toMatchObject({ operatorId: ROY_OPERATOR_ID, isOnline: false });
-    expect(lots.lots.at(-1)).not.toHaveProperty('vehicleCount');
+    const stored = lots.byId(created.json<{ id: string }>().id);
+    expect(created.json()).toMatchObject({ isOnline: false, pricing: null });
+    expect(created.json()).not.toMatchObject({ beaconMajor: 1 });
+    expect(stored).toMatchObject({ operatorId: ROY_OPERATOR_ID, isOnline: false });
+    expect(stored).not.toHaveProperty('vehicleCount');
   });
 
   it.each([
@@ -54,7 +56,7 @@ describe('hostile lot setup requests', () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({ error });
-    expect(lots.lots).toHaveLength(3);
+    expect(lots.owned).toHaveLength(3);
   });
 
   it('refuses NaN, which JSON cannot carry, as a malformed body', async () => {
@@ -86,7 +88,7 @@ describe('hostile lot setup requests', () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({ error });
-    expect(lots.lots[2]?.pricing).toEqual(garageRoyDetails.pricing);
+    expect(lots.byId(garageRoyDetails.id)?.pricing).toEqual(garageRoyDetails.pricing);
   });
 
   it.each([

@@ -17,7 +17,7 @@ describe('a burst of lot creations by one operator (QA #64)', () => {
     const started = startDashboardServer();
     server = started.server;
     const cookies = await dashboardCookieFor(server, pierre);
-    const lotsBefore = started.lots.lots.length;
+    const lotsBefore = started.lots.owned.length;
 
     const statuses: number[] = [];
     for (let attempt = 0; attempt < BURST; attempt += 1) {
@@ -26,6 +26,6 @@ describe('a burst of lot creations by one operator (QA #64)', () => {
     }
 
     expect(statuses).toContain(TOO_MANY_REQUESTS);
-    expect(started.lots.lots.length - lotsBefore).toBeLessThan(BURST);
+    expect(started.lots.owned.length - lotsBefore).toBeLessThan(BURST);
   });
 });

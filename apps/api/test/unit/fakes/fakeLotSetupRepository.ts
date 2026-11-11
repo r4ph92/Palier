@@ -51,21 +51,25 @@ export const garageRoyDetails: DashboardLotDetails = {
 
 // The lots of both operators, as seeded; lot setup writes here and the operator list reads here.
 export class FakeLotStore {
-  readonly lots: OwnedLot[] = [
+  readonly owned: OwnedLot[] = [
     { ...parkingDemoDetails, operatorId: LAVOIE_OPERATOR_ID },
     { ...parkingTestPaliersDetails, operatorId: LAVOIE_OPERATOR_ID },
     { ...garageRoyDetails, operatorId: ROY_OPERATOR_ID },
   ];
 
   lotsOf(operatorId: string): readonly DashboardLot[] {
-    return this.lots
+    return this.owned
       .filter((lot) => lot.operatorId === operatorId)
       .map(({ id, name, isOnline }) => ({ id, name, isOnline }))
       .sort((left, right) => left.name.localeCompare(right.name));
   }
 
   indexOf(operatorId: string, lotId: string): number {
-    return this.lots.findIndex((lot) => lot.id === lotId && lot.operatorId === operatorId);
+    return this.owned.findIndex((lot) => lot.id === lotId && lot.operatorId === operatorId);
+  }
+
+  byId(lotId: string): OwnedLot | undefined {
+    return this.owned.find(({ id }) => id === lotId);
   }
 }
 
@@ -79,22 +83,22 @@ export class FakeLotSetupRepository implements LotSetupRepository {
 
   createLot(operatorId: string, draft: LotDraft): Promise<DashboardLotDetails> {
     const created: OwnedLot = { ...draft, id: randomUUID(), isOnline: false, beaconMajor: this.#nextMajor++, pricing: null, operatorId };
-    this.#store.lots.push(created);
+    this.#store.owned.push(created);
     return Promise.resolve(withoutOwner(created));
   }
 
   updateLotPricing(operatorId: string, lotId: string, pricing: LotPricing): Promise<DashboardLotDetails | null> {
     const index = this.#store.indexOf(operatorId, lotId);
-    const found = this.#store.lots[index];
+    const found = this.#store.owned[index];
     if (found === undefined) {
       return Promise.resolve(null);
     }
-    this.#store.lots[index] = { ...found, pricing };
+    this.#store.owned[index] = { ...found, pricing };
     return Promise.resolve(withoutOwner({ ...found, pricing }));
   }
 
   findLotDetailsOfOperator(operatorId: string, lotId: string): Promise<DashboardLotDetails | null> {
-    const found = this.#store.lots[this.#store.indexOf(operatorId, lotId)];
+    const found = this.#store.owned[this.#store.indexOf(operatorId, lotId)];
     return Promise.resolve(found === undefined ? null : withoutOwner(found));
   }
 }
