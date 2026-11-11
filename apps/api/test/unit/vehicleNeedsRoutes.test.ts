@@ -126,4 +126,62 @@ describe('vehicle needs routes', () => {
     expect(response.statusCode).toBe(404);
     expect(listed.json()).toEqual([expect.objectContaining({ id, isElectric: false, hasAccessiblePermit: false, isOversize: false })]);
   });
+
+  describe('transponder', () => {
+    const standard = { isElectric: false, hasAccessiblePermit: false, isOversize: false };
+
+    async function createdVehicle() {
+      const headers = await signInConsentedJulie();
+      const created = await server.inject({ method: 'POST', url: '/v1/me/vehicles', headers, payload: abc123 });
+      return { headers, id: created.json<{ id: string }>().id };
+    }
+
+    it('starts a vehicle without a transponder', async () => {
+      const { headers } = await createdVehicle();
+
+      const listed = await server.inject({ method: 'GET', url: '/v1/me/vehicles', headers });
+
+      expect(listed.json()).toEqual([expect.objectContaining({ transponder: null })]);
+    });
+
+    it('saves the transponder upper-case, trimmed', async () => {
+      const { headers, id } = await createdVehicle();
+
+      const response = await server.inject({ method: 'PATCH', url: `/v1/me/vehicles/${id}`, headers, payload: { ...standard, transponder: ' t-0042 ' } });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({ transponder: 'T-0042' });
+    });
+
+    it('keeps the transponder when an edit leaves it out', async () => {
+      const { headers, id } = await createdVehicle();
+      await server.inject({ method: 'PATCH', url: `/v1/me/vehicles/${id}`, headers, payload: { ...standard, transponder: 'T-0042' } });
+
+      const response = await server.inject({ method: 'PATCH', url: `/v1/me/vehicles/${id}`, headers, payload: { ...standard, isElectric: true } });
+
+      expect(response.json()).toMatchObject({ transponder: 'T-0042', isElectric: true });
+    });
+
+    it('clears the transponder when an edit sends it empty', async () => {
+      const { headers, id } = await createdVehicle();
+      await server.inject({ method: 'PATCH', url: `/v1/me/vehicles/${id}`, headers, payload: { ...standard, transponder: 'T-0042' } });
+
+      const response = await server.inject({ method: 'PATCH', url: `/v1/me/vehicles/${id}`, headers, payload: { ...standard, transponder: '  ' } });
+
+      expect(response.json()).toMatchObject({ transponder: null });
+    });
+
+    it('refuses a transponder with forbidden characters or too long, and changes nothing', async () => {
+      const { headers, id } = await createdVehicle();
+
+      for (const transponder of ['T_0042', "T';--", 'T-00420042', '--']) {
+        const response = await server.inject({ method: 'PATCH', url: `/v1/me/vehicles/${id}`, headers, payload: { ...standard, transponder } });
+
+        expect(response.statusCode).toBe(400);
+        expect(response.json()).toMatchObject({ error: 'INVALID_TRANSPONDER' });
+      }
+      const listed = await server.inject({ method: 'GET', url: '/v1/me/vehicles', headers });
+      expect(listed.json()).toEqual([expect.objectContaining({ transponder: null })]);
+    });
+  });
 });

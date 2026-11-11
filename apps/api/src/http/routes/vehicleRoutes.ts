@@ -1,9 +1,9 @@
 import type { Vehicle, VehicleListResponse } from '@palier/shared-types';
 import type { FastifyInstance, preHandlerAsyncHookHandler } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
-import { readPlate } from '../../domain/vehicles/plate.ts';
+import { readPlate, readTransponder } from '../../domain/vehicles/plate.ts';
 import { isProvinceCode } from '../../domain/vehicles/provinces.ts';
-import type { VehicleNeeds, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
+import type { VehicleEdit, VehicleNeeds, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { addVehicleBodySchema, vehicleListSchema, vehicleNeedsBodySchema, vehicleParamsSchema, vehicleSchema } from '../schemas/vehicleSchemas.ts';
@@ -21,7 +21,7 @@ interface AddVehicleRequest {
 
 interface UpdateNeedsRequest {
   readonly Params: { readonly id: string };
-  readonly Body: VehicleNeeds;
+  readonly Body: VehicleNeeds & { readonly transponder?: string };
 }
 
 interface VehicleParamsRequest {
@@ -90,13 +90,29 @@ function declaredVehicle(body: AddVehicleRequest['Body']): VehicleNeeds & { read
   };
 }
 
+// Null when the transponder is typed but invalid.
+function editOf(needs: VehicleNeeds, typed: string | undefined): VehicleEdit | null {
+  if (typed === undefined) {
+    return needs;
+  }
+  if (typed.trim() === '') {
+    return { ...needs, transponder: null };
+  }
+  const transponder = readTransponder(typed);
+  return transponder === null ? null : { ...needs, transponder };
+}
+
 function registerUpdateNeedsRoute(server: FastifyInstance, repository: VehicleRepository, guards: preHandlerAsyncHookHandler[]): void {
   server.patch<UpdateNeedsRequest>(
     '/v1/me/vehicles/:id',
     { onRequest: guards, schema: { params: vehicleParamsSchema, body: vehicleNeedsBodySchema, response: { 200: vehicleSchema } } },
     async (request, reply) => {
-      const { isElectric, hasAccessiblePermit, isOversize } = request.body;
-      const vehicle = await repository.updateVehicleNeeds(signedInDriver(request).id, request.params.id, { isElectric, hasAccessiblePermit, isOversize });
+      const { isElectric, hasAccessiblePermit, isOversize, transponder } = request.body;
+      const edit = editOf({ isElectric, hasAccessiblePermit, isOversize }, transponder);
+      if (edit === null) {
+        return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'INVALID_TRANSPONDER', message: 'Invalid transponder.' });
+      }
+      const vehicle = await repository.updateVehicleNeeds(signedInDriver(request).id, request.params.id, edit);
       if (vehicle === null) {
         return reply.status(NOT_FOUND).send({ statusCode: NOT_FOUND, error: 'NOT_FOUND', message: 'No such vehicle.' });
       }

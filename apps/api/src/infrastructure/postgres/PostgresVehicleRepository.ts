@@ -1,5 +1,5 @@
 import { and, asc, eq, ne } from 'drizzle-orm';
-import type { DeleteVehicleResult, NewVehicle, Vehicle, VehicleNeeds, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
+import type { DeleteVehicleResult, NewVehicle, Vehicle, VehicleEdit, VehicleNeeds, VehicleRepository } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Database, Transaction } from './database.ts';
 import { appUser, vehicle } from './schema.ts';
 
@@ -8,6 +8,7 @@ const vehicleColumns = {
   plate: vehicle.plate,
   province: vehicle.province,
   isDefault: vehicle.isDefault,
+  transponder: vehicle.transponder,
   isElectric: vehicle.isElectric,
   hasAccessiblePermit: vehicle.hasAccessiblePermit,
   isOversize: vehicle.isOversize,
@@ -16,6 +17,14 @@ const vehicleColumns = {
 // Each column is named, so a field added to the domain type is never written by accident.
 function needColumns(needs: VehicleNeeds) {
   return { isElectric: needs.isElectric, hasAccessiblePermit: needs.hasAccessiblePermit, isOversize: needs.isOversize };
+}
+
+// Left out of the update when the edit does not mention it.
+function transponderColumns(transponder: VehicleEdit['transponder']) {
+  if (transponder === undefined) {
+    return {};
+  }
+  return { transponder: transponder?.transponder ?? null, transponderKey: transponder?.transponderKey ?? null };
 }
 
 function newVehicleRow(driverId: string, newVehicle: NewVehicle, isDefault: boolean) {
@@ -66,10 +75,10 @@ export class PostgresVehicleRepository implements VehicleRepository {
     });
   }
 
-  async updateVehicleNeeds(driverId: string, vehicleId: string, needs: VehicleNeeds): Promise<Vehicle | null> {
+  async updateVehicleNeeds(driverId: string, vehicleId: string, { transponder, ...needs }: VehicleEdit): Promise<Vehicle | null> {
     const [updated] = await this.#database
       .update(vehicle)
-      .set(needColumns(needs))
+      .set({ ...needColumns(needs), ...transponderColumns(transponder) })
       .where(and(eq(vehicle.id, vehicleId), eq(vehicle.userId, driverId)))
       .returning(vehicleColumns);
     return updated ?? null;

@@ -18,3 +18,14 @@ export function readPlate(input: string): PlateEntry | null {
   // A plate of only spaces and hyphens has no letter or digit to match on.
   return plateKey === '' ? null : { plate, plateKey };
 }
+
+export interface TransponderEntry {
+  readonly transponder: string;
+  readonly transponderKey: string;
+}
+
+// A transponder identifier follows the plate's rules, so the exit reader's "t0042" finds the driver's "T-0042".
+export function readTransponder(input: string): TransponderEntry | null {
+  const entry = readPlate(input);
+  return entry === null ? null : { transponder: entry.plate, transponderKey: entry.plateKey };
+}

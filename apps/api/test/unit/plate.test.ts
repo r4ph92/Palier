@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readPlate } from '../../src/domain/vehicles/plate.ts';
+import { readPlate, readTransponder } from '../../src/domain/vehicles/plate.ts';
 
 describe('readPlate', () => {
   it('shows the plate upper-case with its spaces and matches it without them', () => {
@@ -40,5 +40,19 @@ describe('readPlate', () => {
     expect(readPlate('AB_123')).toBeNull();
     expect(readPlate('AB.123')).toBeNull();
     expect(readPlate('ÉT-123')).toBeNull();
+  });
+});
+
+describe('readTransponder', () => {
+  it('matches "t-0042", "T0042" and "t 0042" as one identifier', () => {
+    expect(readTransponder('t-0042')).toEqual({ transponder: 'T-0042', transponderKey: 'T0042' });
+    expect(readTransponder('T0042')?.transponderKey).toBe('T0042');
+    expect(readTransponder('t 0042')?.transponderKey).toBe('T0042');
+  });
+
+  it('refuses an empty, too long or odd identifier', () => {
+    expect(readTransponder('')).toBeNull();
+    expect(readTransponder('T-00420042')).toBeNull();
+    expect(readTransponder('T_0042')).toBeNull();
   });
 });

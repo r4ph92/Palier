@@ -8,9 +8,9 @@ const needsProperties = {
 
 export const vehicleSchema = {
   type: 'object',
-  required: ['id', 'plate', 'province', 'isDefault', 'isElectric', 'hasAccessiblePermit', 'isOversize'],
+  required: ['id', 'plate', 'province', 'isDefault', 'transponder', 'isElectric', 'hasAccessiblePermit', 'isOversize'],
   additionalProperties: false,
-  properties: { id: { type: 'string' }, plate: { type: 'string' }, province: { type: 'string' }, isDefault: { type: 'boolean' }, ...needsProperties },
+  properties: { id: { type: 'string' }, plate: { type: 'string' }, province: { type: 'string' }, isDefault: { type: 'boolean' }, transponder: { type: ['string', 'null'] }, ...needsProperties },
 } as const;
 
 export const vehicleListSchema = { type: 'array', items: vehicleSchema } as const;
@@ -30,7 +30,8 @@ export const vehicleNeedsBodySchema = {
   type: 'object',
   required: ['isElectric', 'hasAccessiblePermit', 'isOversize'],
   additionalProperties: false,
-  properties: needsProperties,
+  // An empty transponder clears it; a missing one leaves it as it is.
+  properties: { ...needsProperties, transponder: { type: 'string', maxLength: 64 } },
 } as const;
 
 export const vehicleParamsSchema = idPathParametersSchema;

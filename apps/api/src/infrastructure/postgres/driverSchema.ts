@@ -54,11 +54,14 @@ export const vehicle = pgTable(
     plateKey: text('plate_key').notNull(),
     province: text('province').notNull(),
     isDefault: boolean('is_default').notNull().default(false),
+    transponder: text('transponder'),
+    transponderKey: text('transponder_key'),
     isElectric: boolean('is_electric').notNull().default(false),
     hasAccessiblePermit: boolean('has_accessible_permit').notNull().default(false),
     isOversize: boolean('is_oversize').notNull().default(false),
   },
   (table) => [
+    index('vehicle_transponder_key_index').on(table.transponderKey),
     unique('vehicle_user_id_plate_key_province_unique').on(table.userId, table.plateKey, table.province),
     uniqueIndex('vehicle_one_default_per_user_index')
       .on(table.userId)
