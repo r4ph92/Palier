@@ -19,6 +19,25 @@ export interface RecordedPassage {
   readonly exitedSessionId: string | null;
 }
 
+export interface ReplayedPassage {
+  readonly id: string;
+  readonly closedAt: Date;
+}
+
+export interface ReplayEntry {
+  readonly gate: AuthenticatedGate;
+  readonly passages: readonly ReplayedPassage[];
+  readonly vehicleCountChange: VehicleCountChange;
+}
+
+export interface RecordedReplay {
+  readonly counted: number;
+  readonly duplicates: number;
+  readonly vehicleCount: number;
+}
+
 export interface PassageLedger {
   recordPassage(entry: PassageEntry): Promise<RecordedPassage>;
+  // Only moves the counter: a replayed passage confirms no session and attaches no exit. An id already recorded for the gate counts nothing.
+  recordReplay(entry: ReplayEntry): Promise<RecordedReplay>;
 }
