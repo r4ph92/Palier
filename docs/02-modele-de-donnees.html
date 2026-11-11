@@ -299,7 +299,7 @@
         <tr><td>stripe_customer_id</td><td class="t">text null</td><td>Client Stripe créé par le portefeuille pour une session web ; moyen de paiement enregistré pour usage hors session</td></tr>
         <tr><td class="fk">assigned_spot_id</td><td class="t">uuid FK</td><td>Place attribuée à l'entrée</td></tr>
         <tr><td class="fk">confirmed_spot_id</td><td class="t">uuid FK null</td><td>Place réellement occupée ; diffère si l'utilisateur a corrigé</td></tr>
-        <tr><td>state</td><td class="t">enum</td><td><code>CREATED</code> · <code>ENTRY_CONFIRMED</code> · <code>PARKED_CONFIRMED</code> · <code>PARKED_PRESUMED</code> · <code>CLOSED_PAID</code> · <code>CANCELLED</code></td></tr>
+        <tr><td>state</td><td class="t">enum</td><td><code>CREATED</code> · <code>ENTRY_CONFIRMED</code> · <code>PARKED_CONFIRMED</code> · <code>PARKED_PRESUMED</code> · <code>CLOSED_CAPTURE_PENDING</code> · <code>CLOSED_PAID</code> · <code>CANCELLED</code></td></tr>
         <tr><td>entry_scan_at</td><td class="t">timestamptz</td><td>Scan du QR à la borne — début de la fenêtre de 60 secondes avant annulation</td></tr>
         <tr><td>entry_passage_at</td><td class="t">timestamptz null</td><td>Fermeture de la boucle d'entrée après l'ouverture : preuve d'entrée effective, quel que soit le temps</td></tr>
         <tr><td>parked_evidence</td><td class="t">enum null</td><td><code>PRESUMED</code> (à pied dans l'allée assignée) · <code>CONFIRMED</code> (réponse de l'usager) · <code>SENSOR</code> (capteur de place) · <code>TIMEOUT</code> (garde-fou 30 min)</td></tr>
@@ -413,7 +413,7 @@
 
   <figure>
     <div class="fig"><div class="fig-scroll">
-      <svg id="stSess" viewBox="0 0 1000 340" role="img" aria-label="Machine à états d'une session de stationnement.">
+      <svg id="stSess" viewBox="0 0 1000 370" role="img" aria-label="Machine à états d'une session de stationnement.">
         <g fill="none" stroke="var(--line-strong)" stroke-width="1.7" marker-end="url(#m1)">
           <path d="M154,120 H210"/>
           <path d="M376,120 C412,120 412,62 448,62"/>
@@ -422,6 +422,8 @@
           <path d="M692,178 H734"/>
           <path d="M610,154 V86"/>
           <path d="M878,86 V244 H100 V144" stroke-dasharray="5 4"/>
+          <path d="M660,202 V320 H700"/>
+          <path d="M840,298 V144"/>
         </g>
         <g fill="none" stroke="var(--line-strong)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#m1)">
           <path d="M92,144 V206 H196"/>
@@ -437,6 +439,8 @@
           <text x="703" y="52" text-anchor="middle">sortie</text>
           <text x="713" y="168" text-anchor="middle">sortie</text>
           <text x="640" y="236" text-anchor="middle">anonymisation après 90 jours</text>
+          <text x="648" y="342" text-anchor="end">sortie, Stripe injoignable</text>
+          <text x="832" y="276" text-anchor="end">reprise</text>
         </g>
 
         <g>
@@ -455,12 +459,15 @@
           <rect class="st-node" x="734" y="96" width="144" height="48" rx="4" fill="var(--ext-soft)" stroke="var(--ext)"/>
           <text class="t-st" x="806" y="125" text-anchor="middle" fill="var(--ext)">CLOSED_PAID</text>
 
+          <rect class="st-node" x="700" y="298" width="236" height="44" rx="4" fill="var(--ext-soft)" stroke="var(--ext)" stroke-dasharray="5 4"/>
+          <text class="t-st" x="818" y="325" text-anchor="middle" fill="var(--ext)">CLOSED_CAPTURE_PENDING</text>
+
           <rect class="st-node" x="196" y="182" width="140" height="46" rx="4" fill="var(--stop-soft)" stroke="var(--stop)"/>
           <text class="t-st" x="266" y="210" text-anchor="middle" fill="var(--stop)">CANCELLED</text>
         </g>
       </svg>
     </div>
-    <figcaption>CLOSED_PAID n'est pas terminal : la session est anonymisée après 90 jours, ses agrégats d'occupation survivant sous forme non identifiante.</figcaption>
+    <figcaption>CLOSED_PAID n'est pas terminal : la session est anonymisée après 90 jours, ses agrégats d'occupation survivant sous forme non identifiante. CLOSED_CAPTURE_PENDING (décision 026) : la barrière s'est ouverte mais Stripe n'a pas pu prendre le paiement ; on y arrive à la sortie depuis tout état actif (ENTRY_CONFIRMED, PARKED_*), et la tâche retry_captures la fait passer à CLOSED_PAID. Comme CLOSED_PAID, la session est fermée : elle ne tient plus de place et n'est plus active.</figcaption>
     </div>
   </figure>
 
