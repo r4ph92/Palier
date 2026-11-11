@@ -14,9 +14,9 @@ describe('parseSpotStateArguments', () => {
     expect(change.forceActiveSession).toBe(true);
   });
 
-  it('refuses an unknown state', () => {
+  it('refuses an unknown state and lists only the states a person may set', () => {
     expect(() => parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'A-1', '--state', 'BROKEN'])).toThrow(
-      /Unknown state "BROKEN"/,
+      'Unknown state "BROKEN". Expected one of: AVAILABLE, OCCUPIED, OCCUPIED_UNKNOWN, OUT_OF_SERVICE.',
     );
   });
 
@@ -26,12 +26,6 @@ describe('parseSpotStateArguments', () => {
 
   it('refuses ASSIGNED, which only an entry sets', () => {
     expect(() => parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'A-1', '--state', 'ASSIGNED'])).toThrow(/Unknown state "ASSIGNED"/);
-  });
-
-  it('does not offer HELD or ASSIGNED in the expected states', () => {
-    expect(() => parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'A-1', '--state', 'BROKEN'])).toThrow(
-      'Expected one of: AVAILABLE, OCCUPIED, OCCUPIED_UNKNOWN, OUT_OF_SERVICE.',
-    );
   });
 
   it('shows the usage when an argument is missing', () => {
