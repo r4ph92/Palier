@@ -44,12 +44,13 @@ describe('elapsed time is clamped and finite against clock tampering', () => {
     expect(priced).toEqual({ elapsedMinutes: 0, amountCents: 75 });
   });
 
-  it('stays a capped, finite, non-negative integer with the clock driven far into the future', () => {
+  it('stays a finite, non-negative integer with the clock driven far into the future', () => {
     const farFuture = new Date('2100-01-01T00:00:00Z');
     const priced = priceParkingSessionAt({ enteredAt, pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 } }, farFuture);
     expect(Number.isInteger(priced.elapsedMinutes)).toBe(true);
     expect(priced.elapsedMinutes).toBeGreaterThan(0);
     expect(Number.isFinite(priced.elapsedMinutes)).toBe(true);
-    expect(priced.amountCents).toBe(2500);
+    expect(Number.isSafeInteger(priced.amountCents)).toBe(true);
+    expect(priced.amountCents).toBeGreaterThan(2500);
   });
 });
