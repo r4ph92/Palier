@@ -16,7 +16,7 @@ export class SimulatedPaymentAuthorizer implements PaymentAuthorizer {
 
   readonly #surplusFails: boolean;
 
-  // capturesFail: holds work but Stripe is "unreachable" for captures, the outage of a driver leaving (#50).
+  // capturesFail: holds work but Stripe is "unreachable" for captures and surplus charges, the outage of a driver leaving (#50).
   // surplusFails: the card refuses what a stay over 24 hours costs beyond the hold (#51).
   constructor({ capturesFail = false, surplusFails = false }: { readonly capturesFail?: boolean; readonly surplusFails?: boolean } = {}) {
     this.#capturesFail = capturesFail;
@@ -36,8 +36,11 @@ export class SimulatedPaymentAuthorizer implements PaymentAuthorizer {
     return Promise.resolve(this.#capturesFail ? { outcome: 'failed' } : { outcome: 'captured', amountCents });
   }
 
-  // The simulation moves no money; like Stripe, it refuses an amount that is not positive.
+  // The simulation moves no money; like Stripe, it refuses an amount that is not positive. An outage of captures is one of the surplus too.
   chargeSurplus({ amountCents }: SurplusRequest): Promise<SurplusOutcome> {
-    return Promise.resolve({ outcome: this.#surplusFails || amountCents <= 0 ? 'failed' : 'charged' });
+    if (this.#capturesFail) {
+      return Promise.resolve({ outcome: 'failed' });
+    }
+    return Promise.resolve(this.#surplusFails || amountCents <= 0 ? { outcome: 'declined' } : { outcome: 'charged', amountCents });
   }
 }

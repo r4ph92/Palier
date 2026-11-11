@@ -1,5 +1,5 @@
 {
-  "id": "2fa9e26f-4efe-45e1-bd60-e9a16af5abed",
+  "id": "cb08b0bc-5290-4762-be1d-e3d309f2b0d9",
   "prevId": "a1182961-3f92-42e7-bb32-26af56df0247",
   "version": "7",
   "dialect": "postgresql",
@@ -1475,13 +1475,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "presumed_by": {
-          "name": "presumed_by",
-          "type": "parking_session_presumption",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
         "parked_aisle_id": {
           "name": "parked_aisle_id",
           "type": "uuid",
@@ -1530,6 +1523,13 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": false
+        },
+        "pending_surplus_cents": {
+          "name": "pending_surplus_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "surplus_paid_cents": {
           "name": "surplus_paid_cents",
@@ -1768,10 +1768,6 @@
           "name": "parking_session_unconfirmed_has_aisle",
           "value": "\"parking_session\".\"state\"::text <> 'PARKED_UNCONFIRMED' or \"parking_session\".\"parked_aisle_id\" is not null"
         },
-        "parking_session_presumed_has_evidence": {
-          "name": "parking_session_presumed_has_evidence",
-          "value": "\"parking_session\".\"state\"::text <> 'PARKED_PRESUMED' or \"parking_session\".\"presumed_by\" is not null"
-        },
         "parking_session_confirmed_has_spot": {
           "name": "parking_session_confirmed_has_spot",
           "value": "\"parking_session\".\"state\"::text <> 'PARKED_CONFIRMED' or (\"parking_session\".\"confirmed_spot_id\" is not null and \"parking_session\".\"parked_answered_at\" is not null)"
@@ -1787,6 +1783,10 @@
         "parking_session_surplus_not_negative": {
           "name": "parking_session_surplus_not_negative",
           "value": "\"parking_session\".\"surplus_paid_cents\" >= 0 and \"parking_session\".\"unpaid_cents\" >= 0"
+        },
+        "parking_session_pending_surplus_not_negative": {
+          "name": "parking_session_pending_surplus_not_negative",
+          "value": "\"parking_session\".\"pending_surplus_cents\" >= 0"
         },
         "parking_session_pricing_positive": {
           "name": "parking_session_pricing_positive",
@@ -2275,14 +2275,6 @@
       "schema": "public",
       "values": [
         "OPEN"
-      ]
-    },
-    "public.parking_session_presumption": {
-      "name": "parking_session_presumption",
-      "schema": "public",
-      "values": [
-        "WALK",
-        "TIMEOUT"
       ]
     },
     "public.parking_session_state": {

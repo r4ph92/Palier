@@ -27,8 +27,9 @@ export interface SurplusRequest {
   readonly amountCents: number;
 }
 
-// charged: the amount is taken from the card; failed: the card refused it or Stripe could not be reached, nothing known to be taken.
-export type SurplusOutcome = { readonly outcome: 'charged' | 'failed' };
+// charged: what Stripe really took for this session's surplus (an earlier tap's charge stands, whatever is asked now); declined: the card
+// refused it; failed: Stripe unreachable or erring, so whether it was taken is unknown and the charge is retried.
+export type SurplusOutcome = { readonly outcome: 'charged'; readonly amountCents: number } | { readonly outcome: 'declined' | 'failed' };
 
 export interface PaymentAuthorizer {
   // Holds the amount on the card without capturing it and answers the payment intent id.
@@ -39,6 +40,6 @@ export interface PaymentAuthorizer {
   // Takes the amount from the hold and releases the rest. Never throws for a Stripe error; the same session captures once.
   capture(request: CaptureRequest): Promise<CaptureOutcome>;
   // Charges the part of a stay beyond the card hold, off session, on the card of the entry authorization. Never throws for a Stripe
-  // error; one session charges its surplus once (decision 027).
+  // error; one session charges its surplus once, and a repeat answers the first charge (decision 027).
   chargeSurplus(request: SurplusRequest): Promise<SurplusOutcome>;
 }

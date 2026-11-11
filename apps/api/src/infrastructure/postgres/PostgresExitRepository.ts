@@ -160,11 +160,11 @@ async function readPaidExit(tx: Transaction, sessionId: string): Promise<PaidExi
 }
 
 // Null when the session is not leavable any more: another request closed it first.
-async function closePendingSession(tx: Transaction, sessionId: string, { identification, exitedAt, pendingCaptureCents, surplusPaidCents, unpaidCents }: Omit<PendingExitClosing, 'sessionId' | 'lotId' | 'exitGateId'>): Promise<ClosedSessionRow | null> {
+async function closePendingSession(tx: Transaction, sessionId: string, { identification, exitedAt, pendingCaptureCents, pendingSurplusCents }: Omit<PendingExitClosing, 'sessionId' | 'lotId' | 'exitGateId'>): Promise<ClosedSessionRow | null> {
   const rows = await tx.execute<ClosedSessionRow>(sql`
     update parking_session
     set state = 'CLOSED_CAPTURE_PENDING', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = ${identification},
-      pending_capture_cents = ${pendingCaptureCents}, surplus_paid_cents = ${surplusPaidCents}, unpaid_cents = ${unpaidCents}
+      pending_capture_cents = ${pendingCaptureCents}, pending_surplus_cents = ${pendingSurplusCents}
     where id = ${sessionId} and state in ${LEAVABLE_STATES}
     returning assigned_spot_id, confirmed_spot_id`);
   return rows[0] ?? null;

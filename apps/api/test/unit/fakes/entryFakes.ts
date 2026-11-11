@@ -26,7 +26,9 @@ export class FakePaymentAuthorizer implements PaymentAuthorizer {
   release: HoldRelease = 'released';
   readonly captured: CaptureRequest[] = [];
   readonly surcharged: SurplusRequest[] = [];
-  surplusOutcome: 'charged' | 'failed' = 'charged';
+  surplusOutcome: 'charged' | 'declined' | 'failed' = 'charged';
+  // What Stripe says it charged when an earlier tap already did; null charges what is asked.
+  alreadySurchargedCents: number | null = null;
   captureOutcome: 'captured' | 'failed' = 'captured';
   // What Stripe says it took when an earlier capture already did; null takes what is asked.
   alreadyCapturedCents: number | null = null;
@@ -64,10 +66,11 @@ export class FakePaymentAuthorizer implements PaymentAuthorizer {
 
   chargeSurplus(request: SurplusRequest): Promise<SurplusOutcome> {
     this.#journal.push('charge-surplus');
-    if (this.surplusOutcome === 'charged') {
-      this.surcharged.push(request);
+    if (this.surplusOutcome !== 'charged') {
+      return Promise.resolve({ outcome: this.surplusOutcome });
     }
-    return Promise.resolve({ outcome: this.surplusOutcome });
+    this.surcharged.push(request);
+    return Promise.resolve({ outcome: 'charged', amountCents: this.alreadySurchargedCents ?? request.amountCents });
   }
 }
 
