@@ -20,12 +20,16 @@ interface ExitableRow extends Record<string, unknown> {
   readonly exit_gate_id: string | null;
   readonly exit_at: Date | string | null;
   readonly captured_cents: number | null;
+  readonly surplus_paid_cents: number;
+  readonly unpaid_cents: number;
 }
 
 interface PaidExitRow extends Record<string, unknown> {
   readonly state: EntrySessionState;
   readonly exit_at: Date | string;
   readonly captured_cents: number | null;
+  readonly surplus_paid_cents: number;
+  readonly unpaid_cents: number;
 }
 
 interface ClosedSessionRow extends Record<string, unknown> {
@@ -52,6 +56,7 @@ export class PostgresExitRepository implements ExitRepository {
   async findForExit(sessionId: string, driverId: string): Promise<ExitableSession | null> {
     const rows = await this.#database.execute<ExitableRow>(sql`
       select ps.id, ps.state, ps.lot_id, ps.payment_intent_id, ps.authorized_cents, ps.entry_scan_at, ps.exit_at, ps.captured_cents,
+        ps.surplus_paid_cents, ps.unpaid_cents,
         ps.pricing_increment_cents, ps.pricing_increment_minutes, ps.pricing_daily_cap_cents,
         (select gate.id from gate where gate.lot_id = ps.lot_id and gate.kind = 'EXIT' order by gate.name limit 1) as exit_gate_id
       from parking_session ps
@@ -76,14 +81,14 @@ export class PostgresExitRepository implements ExitRepository {
   }
 
   // Same lot lock, same order and same gate command as a paid exit: the driver leaves whether or not Stripe answered.
-  async closeWithPendingCapture({ sessionId, lotId, exitGateId, exitedAt, pendingCaptureCents }: PendingExitClosing): Promise<ClosedPendingExit> {
+  async closeWithPendingCapture({ sessionId, lotId, exitGateId, ...pending }: PendingExitClosing): Promise<ClosedPendingExit> {
     return orLotBusy(
       inLotLock(this.#database, lotId, async (tx): Promise<ClosedPendingExit> => {
-        const session = await closePendingSession(tx, sessionId, { exitedAt, pendingCaptureCents });
+        const session = await closePendingSession(tx, sessionId, pending);
         if (session === null) {
           return { outcome: 'already' };
         }
-        await openGate(tx, { sessionId, lotId, exitGateId, session, now: exitedAt });
+        await openGate(tx, { sessionId, lotId, exitGateId, session, now: pending.exitedAt });
         return { outcome: 'closed' };
       }),
     );
@@ -117,15 +122,20 @@ function exitableSessionOf(row: ExitableRow): ExitableSession {
       dailyCapCents: row.pricing_daily_cap_cents,
     },
     exitGateId: row.exit_gate_id,
-    paidExit: row.exit_at === null || row.captured_cents === null ? null : { exitedAt: new Date(row.exit_at), capturedCents: row.captured_cents },
+    paidExit: row.exit_at === null || row.captured_cents === null ? null : paidExitOf(row, row.exit_at, row.captured_cents),
   };
 }
 
+function paidExitOf(row: { readonly surplus_paid_cents: number; readonly unpaid_cents: number }, exitAt: Date | string, capturedCents: number): PaidExit {
+  return { exitedAt: new Date(exitAt), capturedCents, surplusPaidCents: row.surplus_paid_cents, unpaidCents: row.unpaid_cents };
+}
+
 // Null when the session is not leavable any more: another request closed it first.
-async function closeSession(tx: Transaction, sessionId: string, { exitedAt, capturedCents }: PaidExit): Promise<ClosedSessionRow | null> {
+async function closeSession(tx: Transaction, sessionId: string, { exitedAt, capturedCents, surplusPaidCents, unpaidCents }: PaidExit): Promise<ClosedSessionRow | null> {
   const rows = await tx.execute<ClosedSessionRow>(sql`
     update parking_session
-    set state = 'CLOSED_PAID', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = 'APP', captured_cents = ${capturedCents}
+    set state = 'CLOSED_PAID', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = 'APP', captured_cents = ${capturedCents},
+      surplus_paid_cents = ${surplusPaidCents}, unpaid_cents = ${unpaidCents}
     where id = ${sessionId} and state in ${LEAVABLE_STATES}
     returning assigned_spot_id, confirmed_spot_id`);
   return rows[0] ?? null;
@@ -134,19 +144,19 @@ async function closeSession(tx: Transaction, sessionId: string, { exitedAt, capt
 // Null for a session another request left with its capture pending: the retry will pay it.
 async function readPaidExit(tx: Transaction, sessionId: string): Promise<PaidExit | null> {
   const [row] = await tx.execute<PaidExitRow>(sql`
-    select state, exit_at, captured_cents from parking_session where id = ${sessionId} and state in ('CLOSED_PAID', 'CLOSED_CAPTURE_PENDING')`);
+    select state, exit_at, captured_cents, surplus_paid_cents, unpaid_cents from parking_session where id = ${sessionId} and state in ('CLOSED_PAID', 'CLOSED_CAPTURE_PENDING')`);
   if (row === undefined) {
     throw new Error(`Session ${sessionId} is neither leavable nor closed: it cannot be exited.`);
   }
-  return row.state === 'CLOSED_PAID' && row.captured_cents !== null ? { exitedAt: new Date(row.exit_at), capturedCents: row.captured_cents } : null;
+  return row.state === 'CLOSED_PAID' && row.captured_cents !== null ? paidExitOf(row, row.exit_at, row.captured_cents) : null;
 }
 
 // Null when the session is not leavable any more: another request closed it first.
-async function closePendingSession(tx: Transaction, sessionId: string, { exitedAt, pendingCaptureCents }: Pick<PendingExitClosing, 'exitedAt' | 'pendingCaptureCents'>): Promise<ClosedSessionRow | null> {
+async function closePendingSession(tx: Transaction, sessionId: string, { exitedAt, pendingCaptureCents, surplusPaidCents, unpaidCents }: Omit<PendingExitClosing, 'sessionId' | 'lotId' | 'exitGateId'>): Promise<ClosedSessionRow | null> {
   const rows = await tx.execute<ClosedSessionRow>(sql`
     update parking_session
     set state = 'CLOSED_CAPTURE_PENDING', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = 'APP',
-      pending_capture_cents = ${pendingCaptureCents}
+      pending_capture_cents = ${pendingCaptureCents}, surplus_paid_cents = ${surplusPaidCents}, unpaid_cents = ${unpaidCents}
     where id = ${sessionId} and state in ${LEAVABLE_STATES}
     returning assigned_spot_id, confirmed_spot_id`);
   return rows[0] ?? null;

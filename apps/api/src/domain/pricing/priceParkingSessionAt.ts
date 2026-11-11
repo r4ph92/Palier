@@ -1,3 +1,4 @@
+import type { ReceiptLine } from '@palier/shared-types';
 import { MILLISECONDS_PER_MINUTE } from '../time/durations.ts';
 import type { PricingPolicy } from './PricingPolicy.ts';
 
@@ -23,19 +24,14 @@ export function elapsedMinutesBetween(enteredAt: Date, now: Date): number {
 
 const MINUTES_PER_DAY = 24 * 60;
 
-// One line of a stay over 24 h: a full day at the daily cap, or the minutes beyond the last full day.
-export type StayLine =
-  | { readonly kind: 'DAY'; readonly dayNumber: number; readonly cents: number }
-  | { readonly kind: 'EXTRA'; readonly minutes: number; readonly cents: number };
-
 // A stay of 24 h or less is one capped block and has no lines; beyond, each full 24 h costs the daily cap (Q39) and the minutes
 // after the last full day are priced by started increments, capped like a day.
-export function stayLines(pricing: PricingPolicy, elapsedMinutes: number): StayLine[] {
+export function stayLines(pricing: PricingPolicy, elapsedMinutes: number): ReceiptLine[] {
   if (elapsedMinutes <= MINUTES_PER_DAY) {
     return [];
   }
   const fullDays = Math.floor(elapsedMinutes / MINUTES_PER_DAY);
-  const lines: StayLine[] = Array.from({ length: fullDays }, (_, index): StayLine => ({ kind: 'DAY', dayNumber: index + 1, cents: pricing.dailyCapCents }));
+  const lines: ReceiptLine[] = Array.from({ length: fullDays }, (_, index): ReceiptLine => ({ kind: 'DAY', dayNumber: index + 1, cents: pricing.dailyCapCents }));
   const extraMinutes = elapsedMinutes - fullDays * MINUTES_PER_DAY;
   return extraMinutes === 0 ? lines : [...lines, { kind: 'EXTRA', minutes: extraMinutes, cents: amountSoFar(pricing, extraMinutes) }];
 }

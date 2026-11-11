@@ -1,6 +1,6 @@
 import type { ExitReceipt } from '@palier/shared-types';
-import type { CaptureOutcome, PaymentAuthorizer } from '../entries/PaymentAuthorizer.ts';
-import { amountSoFar, elapsedMinutesBetween } from '../pricing/priceParkingSessionAt.ts';
+import type { CaptureOutcome, PaymentAuthorizer, SurplusRequest } from '../entries/PaymentAuthorizer.ts';
+import { elapsedMinutesBetween, stayAmount, stayLines } from '../pricing/priceParkingSessionAt.ts';
 import type { ExitableSession, ExitRepository, PaidExit } from './ExitRepository.ts';
 
 export interface ExitRequest {
@@ -48,13 +48,25 @@ async function payAndClose({ exits, payments }: ExitDependencies, session: Exita
   if (payments === null || session.paymentIntentId === null) {
     return { outcome: 'payments-unavailable' };
   }
-  const amountCents = amountToCapture(session, now);
+  const billedCents = stayAmount(session.pricing, elapsedMinutesBetween(session.enteredAt, now));
+  const amountCents = Math.min(session.authorizedCents, billedCents);
   const captured: CaptureOutcome = await payments.capture({ sessionId: session.id, paymentIntentId: session.paymentIntentId, amountCents });
+  // Only what the hold cannot cover is a surplus, however much a capture of an earlier tap already took.
+  const surplus = await chargeSurplus(payments, { sessionId: session.id, paymentIntentId: session.paymentIntentId, amountCents: billedCents - amountCents });
   if (captured.outcome === 'failed') {
-    return leaveWithCapturePending(exits, session, { exitGateId: session.exitGateId, exitedAt: now, pendingCaptureCents: amountCents });
+    return leaveWithCapturePending(exits, session, { exitGateId: session.exitGateId, exitedAt: now, pendingCaptureCents: amountCents, ...surplus });
   }
   // What Stripe really took: after a capture whose close failed, a later tap asks another amount but the first one stands.
-  return closePaid(exits, session, { exitGateId: session.exitGateId, exit: { exitedAt: now, capturedCents: captured.amountCents } });
+  return closePaid(exits, session, { exitGateId: session.exitGateId, exit: { exitedAt: now, capturedCents: captured.amountCents, ...surplus } });
+}
+
+// A stay over 24 hours costs more than the hold: the rest is charged to the card, and the barrier opens whatever the card answers.
+async function chargeSurplus(payments: PaymentAuthorizer, surplus: SurplusRequest): Promise<Pick<PaidExit, 'surplusPaidCents' | 'unpaidCents'>> {
+  if (surplus.amountCents === 0) {
+    return { surplusPaidCents: 0, unpaidCents: 0 };
+  }
+  const charged = await payments.chargeSurplus(surplus);
+  return charged.outcome === 'charged' ? { surplusPaidCents: surplus.amountCents, unpaidCents: 0 } : { surplusPaidCents: 0, unpaidCents: surplus.amountCents };
 }
 
 interface PaidLeave {
@@ -78,6 +90,8 @@ interface PendingLeave {
   readonly exitGateId: string;
   readonly exitedAt: Date;
   readonly pendingCaptureCents: number;
+  readonly surplusPaidCents: number;
+  readonly unpaidCents: number;
 }
 
 // Funds are already held at entry (Q38): the driver is not kept inside for Stripe's outage.
@@ -96,20 +110,18 @@ function refusalFor(session: ExitableSession | null): ExitRefusal | null {
   return session.state === 'CANCELLED' ? 'closed' : null;
 }
 
-// The card hold is the ceiling: an exit never takes more than was authorized.
-function amountToCapture(session: ExitableSession, now: Date): number {
-  return Math.min(session.authorizedCents, amountSoFar(session.pricing, elapsedMinutesBetween(session.enteredAt, now)));
-}
-
-export function receiptOf(session: Pick<ExitableSession, 'enteredAt' | 'pricing'>, { exitedAt, capturedCents }: PaidExit): ExitReceipt {
+export function receiptOf(session: Pick<ExitableSession, 'enteredAt' | 'pricing'>, { exitedAt, capturedCents, surplusPaidCents, unpaidCents }: PaidExit): ExitReceipt {
   const durationMinutes = elapsedMinutesBetween(session.enteredAt, exitedAt);
   const increments = Math.max(1, Math.ceil(durationMinutes / session.pricing.incrementMinutes));
+  const lines = stayLines(session.pricing, durationMinutes);
   return {
     exitedAt: exitedAt.toISOString(),
     durationMinutes,
     increments,
     incrementCents: session.pricing.incrementCents,
-    totalCents: capturedCents,
-    capped: capturedCents !== increments * session.pricing.incrementCents,
+    totalCents: capturedCents + surplusPaidCents,
+    capped: lines.length === 0 && capturedCents !== increments * session.pricing.incrementCents,
+    lines,
+    unpaidCents,
   };
 }

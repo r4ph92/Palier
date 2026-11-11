@@ -10,6 +10,7 @@ import type {
   SpotTakenResponse,
   TestClockReading,
 } from '@palier/shared-types';
+import { exitReceiptProperties, exitReceiptRequired } from './receiptSchemas.ts';
 import { ACTIVE_ENTRY_SESSION_STATES, WALKED_AWAY_STATES } from '@palier/shared-types/entries';
 import { SPOT_NUMBER_MAX_LENGTH } from '@palier/shared-types/spotNumber';
 import type { FromSchema } from 'json-schema-to-ts';
@@ -159,16 +160,9 @@ export const exitResponseSchema = {
   properties: {
     receipt: {
       type: ['object', 'null'],
-      required: ['exitedAt', 'durationMinutes', 'increments', 'incrementCents', 'totalCents', 'capped'],
+      required: exitReceiptRequired,
       additionalProperties: false,
-      properties: {
-        exitedAt: { type: 'string' },
-        durationMinutes: { type: 'integer' },
-        increments: { type: 'integer' },
-        incrementCents: { type: 'integer' },
-        totalCents: { type: 'integer' },
-        capped: { type: 'boolean' },
-      },
+      properties: exitReceiptProperties,
     },
   },
 } as const;
@@ -194,4 +188,4 @@ export type ResponseSchemaMatchesParkedSpotAnswer = AssertTrue<
 >;
 export type RequestSchemaMatchesSpotTaken = AssertTrue<MutuallyAssignable<FromSchema<typeof spotTakenRequestSchema>, SpotTakenRequest>>;
 export type ResponseSchemaMatchesSpotTaken = AssertTrue<MutuallyAssignable<FromSchema<typeof spotTakenResponseSchema>, SpotTakenResponse>>;
-export type ResponseSchemaMatchesExit = AssertTrue<MutuallyAssignable<FromSchema<typeof exitResponseSchema>, ExitResponse>>;
+export type ResponseSchemaMatchesExit = AssertTrue<MutuallyAssignable<FromSchema<typeof exitResponseSchema>, WithMutableArrays<ExitResponse>>>;

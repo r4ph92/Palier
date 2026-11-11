@@ -20,6 +20,9 @@ export interface ExitableSession {
 export interface PaidExit {
   readonly exitedAt: Date;
   readonly capturedCents: number;
+  // A stay over 24 hours bills beyond the card hold: what the card accepted of it, and what it refused (decision 027).
+  readonly surplusPaidCents: number;
+  readonly unpaidCents: number;
 }
 
 export interface ExitClosing {
@@ -36,6 +39,9 @@ export interface PendingExitClosing {
   readonly exitGateId: string;
   readonly exitedAt: Date;
   readonly pendingCaptureCents: number;
+  // Settled at the tap whatever the capture did; the retry only captures.
+  readonly surplusPaidCents: number;
+  readonly unpaidCents: number;
 }
 
 // closed: this request closed the session; already: another request did first, and its exit stands (null when that one left the

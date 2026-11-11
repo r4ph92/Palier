@@ -8,6 +8,8 @@ interface PaidSessionRow extends Record<string, unknown> {
   readonly entry_scan_at: Date | string;
   readonly exit_at: Date | string;
   readonly captured_cents: number;
+  readonly surplus_paid_cents: number;
+  readonly unpaid_cents: number;
   readonly pricing_increment_cents: number;
   readonly pricing_increment_minutes: number;
   readonly pricing_daily_cap_cents: number;
@@ -16,7 +18,7 @@ interface PaidSessionRow extends Record<string, unknown> {
 
 // A paid session always has its exit time and captured amount (parking_session_paid_has_exit).
 const PAID_COLUMNS = sql`
-  select ps.id, lot.name as lot_name, ps.entry_scan_at, ps.exit_at, ps.captured_cents,
+  select ps.id, lot.name as lot_name, ps.entry_scan_at, ps.exit_at, ps.captured_cents, ps.surplus_paid_cents, ps.unpaid_cents,
     ps.pricing_increment_cents, ps.pricing_increment_minutes, ps.pricing_daily_cap_cents, ps.card_last4
   from parking_session ps
   join parking_lot lot on lot.id = ps.lot_id`;
@@ -55,7 +57,7 @@ function paidSessionOf(row: PaidSessionRow): PaidSession {
       incrementMinutes: row.pricing_increment_minutes,
       dailyCapCents: row.pricing_daily_cap_cents,
     },
-    exit: { exitedAt: new Date(row.exit_at), capturedCents: row.captured_cents },
+    exit: { exitedAt: new Date(row.exit_at), capturedCents: row.captured_cents, surplusPaidCents: row.surplus_paid_cents, unpaidCents: row.unpaid_cents },
     cardLast4: row.card_last4,
   };
 }

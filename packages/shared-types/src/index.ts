@@ -49,6 +49,7 @@ export type {
   PlanAisle,
   ReceiptDetail,
   ReceiptDetailResponse,
+  ReceiptLine,
   ReceiptListResponse,
   ReceiptSummary,
   SpotTakenRefusalCode,

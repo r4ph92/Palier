@@ -109,15 +109,25 @@ export type SpotTakenRefusalCode =
   | 'SPOT_NOT_ASSIGNED'
   | 'LOT_BUSY';
 
+// One line of the receipt of a stay over 24 hours: a full day at the daily cap, or the minutes beyond the last full day (Q39).
+export type ReceiptLine =
+  | { readonly kind: 'DAY'; readonly dayNumber: number; readonly cents: number }
+  | { readonly kind: 'EXTRA'; readonly minutes: number; readonly cents: number };
+
 // What the driver paid on leaving, from the lot's pricing at entry: the figures behind "13 × 0,75 $".
 export interface ExitReceipt {
   readonly exitedAt: string;
   readonly durationMinutes: number;
   readonly increments: number;
   readonly incrementCents: number;
+  // What was really paid: the capture plus the surplus the card accepted.
   readonly totalCents: number;
   // The daily cap (or the card hold) held the total under increments × incrementCents.
   readonly capped: boolean;
+  // Empty for a stay of 24 hours or less; beyond, the days and the rest that make up the bill.
+  readonly lines: readonly ReceiptLine[];
+  // The part of a stay over 24 hours the card refused: owed, and not in totalCents (decision 027).
+  readonly unpaidCents: number;
 }
 
 // The same receipt when the exit was already done: the first tap's figures. Null when the barrier is open but Stripe could not be
