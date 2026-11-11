@@ -31,6 +31,15 @@ async function enterPricing(input: PricingInput) {
   await userEvent.click(screen.getByRole('button', { name: 'Enregistrer la tarification' }));
 }
 
+function factValueOf(label: string): HTMLElement | null {
+  const term = [...document.querySelectorAll('dt')].find((candidate) => candidate.textContent === label);
+  return term?.nextElementSibling instanceof HTMLElement ? term.nextElementSibling : null;
+}
+
+function factOf(label: string): string | undefined {
+  return factValueOf(label)?.textContent?.replace(/\s+/g, ' ');
+}
+
 const royPricing = { incrementCents: '1,00', incrementMinutes: '20', dailyCapCents: '18,00', holdQuota: '4' };
 
 describe('the pricing of a lot', () => {
@@ -40,9 +49,10 @@ describe('the pricing of a lot', () => {
 
     await enterPricing(royPricing);
 
-    expect(await screen.findByText('1,00 $ par 20 min')).toBeDefined();
-    expect(screen.getByText('18,00 $')).toBeDefined();
-    expect(screen.getByText('4 garanties')).toBeDefined();
+    await screen.findByText('1,00 $ par 20 min');
+    expect(factOf('Tarif')).toBe('1,00 $ par 20 min');
+    expect(factOf('Plafond journalier')).toBe('18,00 $');
+    expect(factOf('Places garanties')).toBe('4 garanties');
     expect(screen.getByRole('status').textContent).toMatch(/^Tarification enregistrée\./);
     expect(api.requests).toContain(`PUT /lots/${garageRoy.id}/pricing`);
     expect(api.lots.get('00000000-0000-4000-8000-000000000102')?.[0]?.pricing).toEqual({ incrementCents: 100, incrementMinutes: 20, dailyCapCents: 1800, holdQuota: 4 });
@@ -103,7 +113,8 @@ describe('the pricing of a lot', () => {
 
     await enterPricing({ holdQuota: '1' });
 
-    expect(await screen.findByText('1 garantie')).toBeDefined();
+    await screen.findByText('1 garantie');
+    expect(factOf('Places garanties')).toBe('1 garantie');
   });
 
   it('places an API refusal of the cap beside the cap', async () => {
@@ -136,23 +147,26 @@ describe('the facts of a lot', () => {
     installFakeApi({ signedInAs: sophie });
     renderDashboard({ path: `/lots/${parkingDemo.id}` });
 
-    expect(await screen.findByText('500, rue Peel, Montréal (Québec)')).toBeDefined();
-    expect(screen.getByText('45,50165')).toBeDefined();
-    expect(screen.getByText('-73,5673')).toBeDefined();
-    expect(screen.getByText('10')).toBeDefined();
-    expect(screen.getByText('En ligne')).toBeDefined();
-    expect(screen.getByText('1')).toBeDefined();
+    await screen.findByRole('heading', { level: 1, name: 'Parking Démo' });
+
+    expect(factOf('Adresse')).toBe('500, rue Peel, Montréal (Québec)');
+    expect(factOf('Latitude (degrés décimaux)')).toBe('45,50165');
+    expect(factOf('Longitude (degrés décimaux)')).toBe('-73,5673');
+    expect(factOf('Capacité')).toBe('10');
+    expect(factOf('État')).toBe('En ligne');
+    expect(factOf('Major de balise')).toBe('1');
   });
 
   it('sets the figures of Parking Démo in tabular mono, and its address and state in text', async () => {
     installFakeApi({ signedInAs: sophie });
     renderDashboard({ path: `/lots/${parkingDemo.id}` });
 
-    const address = await screen.findByText('500, rue Peel, Montréal (Québec)');
+    await screen.findByRole('heading', { level: 1, name: 'Parking Démo' });
 
-    expect(address.className).toBe('fact-value');
-    expect(screen.getByText('45,50165').className).toBe('fact-value fact-value-number');
-    expect(screen.getByText('10').className).toBe('fact-value fact-value-number');
-    expect(screen.getByText('0,75 $ par 15 min').className).toBe('fact-value fact-value-number');
+    expect(factValueOf('Adresse')?.className).toBe('fact-value');
+    expect(factValueOf('État')?.className).toBe('fact-value');
+    expect(factValueOf('Latitude (degrés décimaux)')?.className).toBe('fact-value fact-value-number');
+    expect(factValueOf('Capacité')?.className).toBe('fact-value fact-value-number');
+    expect(factValueOf('Tarif')?.className).toBe('fact-value fact-value-number');
   });
 });
