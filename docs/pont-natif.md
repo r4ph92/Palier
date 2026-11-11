@@ -35,13 +35,15 @@ Le contrat n'a pas de commande d'arrêt : `keepAlive(until)` avec un instant dé
 | `onAisleChanged(minor, ts)` | `minor` : allée la plus proche (0 pour la voie de sortie) ; `ts` : instant de la mesure | Ranging des balises |
 | `onLotExit(ts)` | `ts` : instant de la sortie | Sortie de la région du parking |
 | `onParkedDetected(confidence, ts)` | `confidence` : fiabilité de la détection ; `ts` : instant du passage à pied | Transition automotive vers walking |
-| `onQueueFlushed(count)` | `count` : nombre d'éléments envoyés | Fin de `flushOfflineQueue()` |
+| `onQueueFlushed(count)` | `count` : nombre d'éléments du tampon natif réémis | Fin de `flushOfflineQueue()` |
 
 ## Simuler les signaux en développement
 
 En build de développement (`__DEV__`, Expo Go), **Compte > Développeur > Signaux simulés** remplace le module natif par `SimulatedPositioningModule` (`apps/mobile/src/dev/`). Chaque bouton émet l'événement correspondant par la même interface que le module natif ; les commandes envoyées par le cœur apparaissent dans le journal (100 entrées, la plus récente en haut).
 
-« Réseau coupé » et « Réseau rétabli » sont hors contrat natif : ils n'écrivent qu'une ligne dans le journal (`setConnectivity`) ; l'état de connectivité sera ajouté avec la gestion hors ligne (P34, #26).
+« Réseau coupé » et « Réseau rétabli » sont hors contrat natif : `setConnectivity` écrit une ligne au journal et change la connectivité que lit l'app (`dev/SimulatedConnectivity.ts`, transmise par `DeveloperToolkit.connectivity`). Hors ligne, l'app garde les passages à pied dans sa file ; au retour du réseau, elle appelle `flushOfflineQueue()` puis renvoie sa file (#26, `docs/decisions/024`).
+
+La file hors ligne de l'app est distincte du tampon natif : le module natif réémet ses détections par `onParkedDetected` avec leur `ts` d'origine, et `onQueueFlushed(count)` ne compte que ce tampon, pas les signaux que l'app annonce « envoyés ».
 
 Les builds de production exécutent `NullPositioningModule` tant que les modules natifs iOS et Android (#19, #20) n'existent pas.
 
