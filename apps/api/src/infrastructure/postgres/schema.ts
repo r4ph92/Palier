@@ -5,3 +5,4 @@ export * from './gateSchema.ts';
 export * from './entrySchema.ts';
 export * from './operatorMemberSchema.ts';
 export * from './spotHoldSchema.ts';
+export * from './exitBeaconSchema.ts';
