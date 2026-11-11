@@ -1,6 +1,14 @@
 import type Stripe from 'stripe';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
-import type { AuthorizationRequest, CaptureOutcome, CaptureRequest, HoldRelease, PaymentAuthorizer } from '../../domain/entries/PaymentAuthorizer.ts';
+import type {
+  AuthorizationRequest,
+  CaptureOutcome,
+  CaptureRequest,
+  HoldRelease,
+  PaymentAuthorizer,
+  SurplusOutcome,
+  SurplusRequest,
+} from '../../domain/entries/PaymentAuthorizer.ts';
 
 const CURRENCY = 'cad';
 const AUTHORIZED = 'requires_capture';
@@ -17,10 +25,18 @@ interface CreatedIntent {
   readonly status: string;
 }
 
+// What the entry authorization says of the card and the operator account the surplus goes to.
+export interface EntryIntent {
+  readonly customer: string | { readonly id: string } | null;
+  readonly payment_method: string | { readonly id: string } | null;
+  readonly transfer_data?: { readonly destination: string | { readonly id: string } } | null;
+}
+
 // The part of the Stripe client the authorizer uses, so tests can pass a fake.
 export interface PaymentIntentsApi {
   readonly paymentIntents: {
     create(params: Stripe.PaymentIntentCreateParams, options: Stripe.RequestOptions): Promise<CreatedIntent>;
+    retrieve(paymentIntentId: string): Promise<EntryIntent>;
     cancel(paymentIntentId: string): Promise<unknown>;
     capture(paymentIntentId: string, params: Stripe.PaymentIntentCaptureParams, options: Stripe.RequestOptions): Promise<{ readonly amount_received: number }>;
   };
@@ -76,6 +92,17 @@ export class StripePaymentAuthorizer implements PaymentAuthorizer {
     }
   }
 
+  // The key names the session only: a second tap asking another amount is refused by Stripe rather than charged twice.
+  async chargeSurplus({ sessionId, paymentIntentId, amountCents }: SurplusRequest): Promise<SurplusOutcome> {
+    try {
+      const entry = await this.#stripe.paymentIntents.retrieve(paymentIntentId);
+      const intent = await this.#stripe.paymentIntents.create(surplusParameters(sessionId, amountCents, entry), { idempotencyKey: `exit-extra-${sessionId}` });
+      return { outcome: intent.status === SUCCEEDED ? 'charged' : 'failed' };
+    } catch {
+      return { outcome: 'failed' };
+    }
+  }
+
   // The idempotency key is the session, so Stripe's own retries never create a second hold for one entry.
   async #createIntent(request: AuthorizationRequest): Promise<CreatedIntent> {
     try {
@@ -101,6 +128,26 @@ function intentParameters(request: AuthorizationRequest): Stripe.PaymentIntentCr
     return parameters;
   }
   return { ...parameters, transfer_data: { destination: request.destinationAccountId } };
+}
+
+function surplusParameters(sessionId: string, amountCents: number, entry: EntryIntent): Stripe.PaymentIntentCreateParams {
+  const parameters: Stripe.PaymentIntentCreateParams = {
+    amount: amountCents,
+    currency: CURRENCY,
+    customer: idOf(entry.customer),
+    payment_method: idOf(entry.payment_method),
+    confirm: true,
+    off_session: true,
+    metadata: { sessionId, kind: 'surplus' },
+  };
+  return entry.transfer_data?.destination === undefined ? parameters : { ...parameters, transfer_data: { destination: idOf(entry.transfer_data.destination) } };
+}
+
+function idOf(reference: string | { readonly id: string } | null): string {
+  if (reference === null) {
+    throw new Error('The entry authorization has no card to charge.');
+  }
+  return typeof reference === 'string' ? reference : reference.id;
 }
 
 function capturedBefore(error: unknown): CaptureOutcome {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type Stripe from 'stripe';
 import type { AuthorizationRequest } from '../../src/domain/entries/PaymentAuthorizer.ts';
-import { StripePaymentAuthorizer, type PaymentIntentsApi } from '../../src/infrastructure/stripe/StripePaymentAuthorizer.ts';
+import { StripePaymentAuthorizer, type EntryIntent, type PaymentIntentsApi } from '../../src/infrastructure/stripe/StripePaymentAuthorizer.ts';
 
 const request: AuthorizationRequest = {
   sessionId: 'session-1',
@@ -19,8 +19,11 @@ function fakeStripe(created: Promise<{ id: string; status: string }>) {
   const capture = vi.fn<(paymentIntentId: string, params: Stripe.PaymentIntentCaptureParams, options: Stripe.RequestOptions) => Promise<{ amount_received: number }>>(() =>
     Promise.resolve({ amount_received: 975 }),
   );
-  const stripe: PaymentIntentsApi = { paymentIntents: { create, cancel, capture } };
-  return { stripe, create, cancel, capture };
+  const retrieve = vi.fn<(paymentIntentId: string) => Promise<EntryIntent>>(() =>
+    Promise.resolve({ customer: 'cus_julie', payment_method: 'pm_julie', transfer_data: { destination: 'acct_1Lavoie' } }),
+  );
+  const stripe: PaymentIntentsApi = { paymentIntents: { create, retrieve, cancel, capture } };
+  return { stripe, create, retrieve, cancel, capture };
 }
 
 describe('StripePaymentAuthorizer', () => {
@@ -163,6 +166,59 @@ describe('StripePaymentAuthorizer', () => {
       stripeCapture.mockRejectedValue(error);
 
       expect(await new StripePaymentAuthorizer(stripe).capture(capture)).toEqual({ outcome: 'failed' });
+    });
+  });
+
+  describe('chargeSurplus', () => {
+    const surplus = { sessionId: 'session-1', paymentIntentId: 'pi_1', amountCents: 1800 };
+
+    it('charges the entry card off session toward the same operator account, once per session', async () => {
+      const { stripe, create, retrieve } = fakeStripe(Promise.resolve({ id: 'pi_2', status: 'succeeded' }));
+
+      expect(await new StripePaymentAuthorizer(stripe).chargeSurplus(surplus)).toEqual({ outcome: 'charged' });
+      expect(retrieve).toHaveBeenCalledWith('pi_1');
+      expect(create).toHaveBeenCalledWith(
+        {
+          amount: 1800,
+          currency: 'cad',
+          customer: 'cus_julie',
+          payment_method: 'pm_julie',
+          confirm: true,
+          off_session: true,
+          metadata: { sessionId: 'session-1', kind: 'surplus' },
+          transfer_data: { destination: 'acct_1Lavoie' },
+        },
+        { idempotencyKey: 'exit-extra-session-1' },
+      );
+    });
+
+    it('keeps the charge on the platform when the entry had no operator account', async () => {
+      const { stripe, create, retrieve } = fakeStripe(Promise.resolve({ id: 'pi_2', status: 'succeeded' }));
+      retrieve.mockResolvedValue({ customer: 'cus_julie', payment_method: 'pm_julie' });
+
+      await new StripePaymentAuthorizer(stripe).chargeSurplus(surplus);
+
+      expect(create.mock.calls[0]?.[0]).not.toHaveProperty('transfer_data');
+    });
+
+    it.each(['requires_action', 'requires_payment_method'])('answers failed for a charge left in %s', async (status) => {
+      const { stripe } = fakeStripe(Promise.resolve({ id: 'pi_2', status }));
+
+      expect(await new StripePaymentAuthorizer(stripe).chargeSurplus(surplus)).toEqual({ outcome: 'failed' });
+    });
+
+    it('answers failed when the card refuses, without throwing', async () => {
+      const { stripe } = fakeStripe(Promise.reject(Object.assign(new Error('declined'), { type: 'StripeCardError' })));
+
+      expect(await new StripePaymentAuthorizer(stripe).chargeSurplus(surplus)).toEqual({ outcome: 'failed' });
+    });
+
+    it('answers failed when the entry authorization cannot be read', async () => {
+      const { stripe, retrieve, create } = fakeStripe(Promise.resolve({ id: 'pi_2', status: 'succeeded' }));
+      retrieve.mockRejectedValue(new Error('Stripe unreachable'));
+
+      expect(await new StripePaymentAuthorizer(stripe).chargeSurplus(surplus)).toEqual({ outcome: 'failed' });
+      expect(create).not.toHaveBeenCalled();
     });
   });
 });

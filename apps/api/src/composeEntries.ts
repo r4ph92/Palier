@@ -70,6 +70,9 @@ export function paymentAuthorizer(stripeKey: string | null, simulation: Payments
   if (simulation === 'capture-unreachable') {
     return new SimulatedPaymentAuthorizer({ capturesFail: true });
   }
+  if (simulation === 'surplus-declined') {
+    return new SimulatedPaymentAuthorizer({ surplusFails: true });
+  }
   if (stripeKey === null) {
     return null;
   }

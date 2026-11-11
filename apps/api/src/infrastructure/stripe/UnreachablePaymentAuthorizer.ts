@@ -1,5 +1,5 @@
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
-import type { CaptureOutcome, HoldRelease, PaymentAuthorizer } from '../../domain/entries/PaymentAuthorizer.ts';
+import type { CaptureOutcome, HoldRelease, PaymentAuthorizer, SurplusOutcome } from '../../domain/entries/PaymentAuthorizer.ts';
 
 // The test environment's "Stripe unreachable" switch: every call fails the way a Stripe outage does.
 export class UnreachablePaymentAuthorizer implements PaymentAuthorizer {
@@ -12,6 +12,10 @@ export class UnreachablePaymentAuthorizer implements PaymentAuthorizer {
   }
 
   capture(): Promise<CaptureOutcome> {
+    return Promise.resolve({ outcome: 'failed' });
+  }
+
+  chargeSurplus(): Promise<SurplusOutcome> {
     return Promise.resolve({ outcome: 'failed' });
   }
 }

@@ -11,6 +11,13 @@ describe('SimulatedPaymentAuthorizer', () => {
     expect(await payments.authorize(request)).toBe('pi_sim_session-1');
   });
 
+  it('charges a surplus unless the simulation declines it', async () => {
+    const surplus = { sessionId: 'session-1', paymentIntentId: 'pi_sim_session-1', amountCents: 1800 };
+
+    expect(await new SimulatedPaymentAuthorizer().chargeSurplus(surplus)).toEqual({ outcome: 'charged' });
+    expect(await new SimulatedPaymentAuthorizer({ surplusFails: true }).chargeSurplus(surplus)).toEqual({ outcome: 'failed' });
+  });
+
   it('releases a simulated hold', async () => {
     expect(await new SimulatedPaymentAuthorizer().cancel('pi_sim_session-1')).toBe('released');
   });

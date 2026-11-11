@@ -119,6 +119,9 @@ if (paymentsSimulation === 'success') {
 if (paymentsSimulation === 'capture-unreachable') {
   server.log.warn('PAYMENTS_SIMULATION=capture-unreachable: entry holds succeed, every capture at the exit fails and stays pending.');
 }
+if (paymentsSimulation === 'surplus-declined') {
+  server.log.warn('PAYMENTS_SIMULATION=surplus-declined: holds and captures succeed, the charge beyond the hold at the exit is refused.');
+}
 
 const stopSessionTokenPurge = startSessionTokenPurge(() => purgeEndedSessionTokens(sessionTokenRepository, systemClock()), server.log);
 // Every API instance may run it: the CREATED guard under the lot lock and Stripe's idempotent cancel make a second run harmless.
