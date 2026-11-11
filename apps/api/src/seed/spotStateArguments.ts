@@ -26,8 +26,9 @@ export function parseSpotStateArguments(argumentList: readonly string[]): SpotSt
   };
 }
 
-// Only a spot hold sets HELD: a spot moved there by hand would have no hold to release it.
-const SETTABLE_STATES = spotState.enumValues.filter((state) => state !== 'HELD');
+// Only a spot hold sets HELD and only an entry sets ASSIGNED: a spot moved there by hand would have no hold or session
+// to free it, and it would take room from the lot until fixed by hand (#110).
+const SETTABLE_STATES = spotState.enumValues.filter((state) => state !== 'HELD' && state !== 'ASSIGNED');
 
 function parseSpotState(rawState: string): SpotState {
   const state = SETTABLE_STATES.find((candidate) => candidate === rawState);

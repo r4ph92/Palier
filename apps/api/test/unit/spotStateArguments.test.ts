@@ -24,6 +24,16 @@ describe('parseSpotStateArguments', () => {
     expect(() => parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'A-1', '--state', 'HELD'])).toThrow(/Unknown state "HELD"/);
   });
 
+  it('refuses ASSIGNED, which only an entry sets', () => {
+    expect(() => parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'A-1', '--state', 'ASSIGNED'])).toThrow(/Unknown state "ASSIGNED"/);
+  });
+
+  it('does not offer HELD or ASSIGNED in the expected states', () => {
+    expect(() => parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'A-1', '--state', 'BROKEN'])).toThrow(
+      'Expected one of: AVAILABLE, OCCUPIED, OCCUPIED_UNKNOWN, OUT_OF_SERVICE.',
+    );
+  });
+
   it('shows the usage when an argument is missing', () => {
     expect(() => parseSpotStateArguments(['--lot', 'Parking Démo'])).toThrow(/Usage: npm run seed:spot-state/);
   });
