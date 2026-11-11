@@ -126,8 +126,11 @@ Le bouton « Hors ligne » joue un contrôleur qui a perdu le contact avec Palie
    clé est celle d'une autre barrière, « Vider la file » abandonne les passages et
    remet la console en ligne.
 5. La file est gardée dans `sessionStorage` (jamais la clé) : après un rechargement
-   la console redémarre hors ligne avec sa file, et rejoue dès qu'une clé de la
-   même barrière est saisie. Fermer l'onglet l'efface ; le navigateur prévient avant
+   la console redémarre hors ligne avec sa file (les boucles de la barrière
+   continuent de compter) ; saisir la clé de la même barrière puis appuyer sur
+   « Hors ligne » rejoue la file. Tant que la clé manque ou est refusée, la console
+   le dit et ne rejoue rien. Si la file est bloquée, les boucles sont désactivées et
+   la raison reste affichée jusqu'à « Vider la file ». Fermer l'onglet l'efface ; le navigateur prévient avant
    de quitter la page tant que des passages attendent.
 
 Un passage de plus de 7 jours est refusé (400 `CLOSED_AT_TOO_OLD`) et bloque tout le
