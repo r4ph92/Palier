@@ -70,7 +70,7 @@ export class PostgresExitRepository implements ExitRepository {
   async close({ sessionId, lotId, exitGateId, identification, exit }: ExitClosing): Promise<ClosedExit> {
     return orLotBusy(
       inLotLock(this.#database, lotId, async (tx) => {
-        const session = await closeSession(tx, sessionId, identification, exit);
+        const session = await closeSession(tx, sessionId, { identification, ...exit });
         if (session === null) {
           return { outcome: 'already', exit: await readPaidExit(tx, sessionId) } as const;
         }
@@ -84,7 +84,7 @@ export class PostgresExitRepository implements ExitRepository {
   async closeWithPendingCapture({ sessionId, lotId, exitGateId, identification, ...pending }: PendingExitClosing): Promise<ClosedPendingExit> {
     return orLotBusy(
       inLotLock(this.#database, lotId, async (tx): Promise<ClosedPendingExit> => {
-        const session = await closePendingSession(tx, sessionId, identification, pending);
+        const session = await closePendingSession(tx, sessionId, { identification, ...pending });
         if (session === null) {
           return { outcome: 'already' };
         }
@@ -93,6 +93,10 @@ export class PostgresExitRepository implements ExitRepository {
       }),
     );
   }
+}
+
+interface IdentifiedExit {
+  readonly identification: ExitIdentification;
 }
 
 interface GateOpening {
@@ -131,7 +135,7 @@ function paidExitOf(row: { readonly surplus_paid_cents: number; readonly unpaid_
 }
 
 // Null when the session is not leavable any more: another request closed it first.
-async function closeSession(tx: Transaction, sessionId: string, identification: ExitIdentification, { exitedAt, capturedCents, surplusPaidCents, unpaidCents }: PaidExit): Promise<ClosedSessionRow | null> {
+async function closeSession(tx: Transaction, sessionId: string, { identification, exitedAt, capturedCents, surplusPaidCents, unpaidCents }: PaidExit & IdentifiedExit): Promise<ClosedSessionRow | null> {
   const rows = await tx.execute<ClosedSessionRow>(sql`
     update parking_session
     set state = 'CLOSED_PAID', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = ${identification}, captured_cents = ${capturedCents},
@@ -152,7 +156,7 @@ async function readPaidExit(tx: Transaction, sessionId: string): Promise<PaidExi
 }
 
 // Null when the session is not leavable any more: another request closed it first.
-async function closePendingSession(tx: Transaction, sessionId: string, identification: ExitIdentification, { exitedAt, pendingCaptureCents, surplusPaidCents, unpaidCents }: Omit<PendingExitClosing, 'sessionId' | 'lotId' | 'exitGateId' | 'identification'>): Promise<ClosedSessionRow | null> {
+async function closePendingSession(tx: Transaction, sessionId: string, { identification, exitedAt, pendingCaptureCents, surplusPaidCents, unpaidCents }: Omit<PendingExitClosing, 'sessionId' | 'lotId' | 'exitGateId'>): Promise<ClosedSessionRow | null> {
   const rows = await tx.execute<ClosedSessionRow>(sql`
     update parking_session
     set state = 'CLOSED_CAPTURE_PENDING', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = ${identification},
