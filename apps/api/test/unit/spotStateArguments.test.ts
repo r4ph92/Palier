@@ -5,7 +5,13 @@ describe('parseSpotStateArguments', () => {
   it('reads the lot, the spot and the state', () => {
     const change = parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'A-1', '--state', 'OUT_OF_SERVICE']);
 
-    expect(change).toEqual({ lotName: 'Parking Démo', spotNumber: 'A-1', state: 'OUT_OF_SERVICE' });
+    expect(change).toEqual({ lotName: 'Parking Démo', spotNumber: 'A-1', state: 'OUT_OF_SERVICE', forceActiveSession: false });
+  });
+
+  it('reads the force flag for an active session', () => {
+    const change = parseSpotStateArguments(['--lot', 'Parking Démo', '--spot', 'B-3', '--state', 'AVAILABLE', '--force-active-session']);
+
+    expect(change.forceActiveSession).toBe(true);
   });
 
   it('refuses an unknown state', () => {
