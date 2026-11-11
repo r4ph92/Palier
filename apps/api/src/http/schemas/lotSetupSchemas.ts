@@ -30,16 +30,10 @@ export const lotPricingBodySchema = {
   },
 } as const;
 
+// A saved pricing always has its cap: the request's nullable cap, made required.
 const lotPricingSchema = {
-  type: 'object',
-  required: ['incrementCents', 'incrementMinutes', 'dailyCapCents', 'holdQuota'],
-  additionalProperties: false,
-  properties: {
-    incrementCents: { type: 'integer' },
-    incrementMinutes: { type: 'integer' },
-    dailyCapCents: { type: 'integer' },
-    holdQuota: { type: 'integer' },
-  },
+  ...lotPricingBodySchema,
+  properties: { ...lotPricingBodySchema.properties, dailyCapCents: { type: 'integer' } },
 } as const;
 
 const nullableNumber = { anyOf: [{ type: 'number' }, { type: 'null' }] } as const;
