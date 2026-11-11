@@ -8,14 +8,19 @@ export const PENDING_RECEIPT_POLL_MILLISECONDS = 15_000;
 // Any failure, a 404 included, only means "not yet": the next poll asks again, and Reçus holds the receipt either way.
 export function usePendingReceipt(client: ReceiptClient, sessionId: string): ExitReceipt | null {
   const [receipt, setReceipt] = useState<ExitReceipt | null>(null);
+  const found = receipt !== null;
+  // Once the receipt is here, the asking stops: the screen shows it until « Terminé ».
   useEffect(() => {
+    if (found) {
+      return undefined;
+    }
     let isOpen = true;
-    const timer = setInterval(() => askOnce(client, sessionId, (found) => isOpen && setReceipt(found)), PENDING_RECEIPT_POLL_MILLISECONDS);
+    const timer = setInterval(() => askOnce(client, sessionId, (next) => isOpen && setReceipt(next)), PENDING_RECEIPT_POLL_MILLISECONDS);
     return () => {
       isOpen = false;
       clearInterval(timer);
     };
-  }, [client, sessionId]);
+  }, [client, sessionId, found]);
   return receipt;
 }
 
