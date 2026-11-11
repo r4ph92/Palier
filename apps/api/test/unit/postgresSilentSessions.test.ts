@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LotBusyError } from '../../src/domain/LotBusyError.ts';
+import { LotBusyError } from '../../src/domain/lots/LotBusyError.ts';
 import { PostgresSilentSessionRepository } from '../../src/infrastructure/postgres/PostgresSilentSessionRepository.ts';
 import { PARKING_DEMO_LOCK_ID, parkingDemoLockRow } from './fakes/lotRows.ts';
 import { LOCK_NOT_AVAILABLE, ScriptedSql } from './fakes/scriptedSql.ts';

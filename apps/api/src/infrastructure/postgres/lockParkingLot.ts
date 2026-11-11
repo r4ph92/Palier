@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { PgTransactionConfig } from 'drizzle-orm/pg-core';
-import { LotBusyError } from '../../domain/LotBusyError.ts';
+import { LotBusyError } from '../../domain/lots/LotBusyError.ts';
 import type { Database, Transaction } from './database.ts';
 import { isLockTimeout, LIMIT_LOCK_WAIT } from './lockTimeout.ts';
 

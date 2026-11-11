@@ -1,4 +1,4 @@
-import { LotBusyError } from '../../src/domain/LotBusyError.ts';
+import { LotBusyError } from '../../src/domain/lots/LotBusyError.ts';
 import { describe, expect, it, vi } from 'vitest';
 import { expireSpotHolds, type HoldExpiryJob } from '../../src/domain/spotHolds/expireSpotHolds.ts';
 import type { SpotHoldRepository } from '../../src/domain/spotHolds/SpotHoldRepository.ts';

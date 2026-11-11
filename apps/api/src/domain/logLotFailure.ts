@@ -1,4 +1,4 @@
-import { LotBusyError } from './LotBusyError.ts';
+import { LotBusyError } from './lots/LotBusyError.ts';
 import type { JobLog } from './JobLog.ts';
 
 // A busy lot is routine and retried at the next check; any other failure keeps its error and stack.

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { LotBusyError } from '../../src/domain/LotBusyError.ts';
+import { LotBusyError } from '../../src/domain/lots/LotBusyError.ts';
 import { presumeSilentSessions, type SilentSessionJob } from '../../src/domain/parkingSessions/presumeSilentSessions.ts';
 import { FakeSilentSessionRepository, type FakeSilentSession } from './fakes/fakeSilentSessions.ts';
 
