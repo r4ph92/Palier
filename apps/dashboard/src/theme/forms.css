@@ -15,7 +15,7 @@
 }
 
 .fieldset {
-  gap: var(--space-small);
+  gap: var(--space-medium);
   margin: 0;
   padding: 0;
   border: 0;
