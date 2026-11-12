@@ -24,6 +24,11 @@ interface PricingRoute extends LotRoute {
   readonly Body: LotPricingRequest;
 }
 
+interface LotCreation {
+  readonly sources: LotSetupSources;
+  readonly limiter: SetupLimiter;
+}
+
 interface LotRoutesContext {
   readonly scope: FastifyInstance;
   readonly sources: LotSetupSources;
@@ -47,12 +52,12 @@ function registerCreateLotRoute({ scope, sources, onRequest }: LotRoutesContext,
       reply.header('Retry-After', LOT_CREATION_WINDOW_SECONDS);
       throw new DashboardHttpRefusal('TOO_MANY_LOTS');
     }
-    return reply.status(CREATED).send(await createLotRefundingRefusals(sources, limiter, userId, request.body));
+    return reply.status(CREATED).send(await createLotRefundingRefusals({ sources, limiter }, userId, request.body));
   });
 }
 
 // A refused creation took no beacon major, so it must not eat the member's hourly allowance.
-async function createLotRefundingRefusals(sources: LotSetupSources, limiter: SetupLimiter, userId: string, draft: LotDraft): Promise<DashboardLotDetails> {
+async function createLotRefundingRefusals({ sources, limiter }: LotCreation, userId: string, draft: LotDraft): Promise<DashboardLotDetails> {
   try {
     return await createLotOfMember(sources, userId, draft);
   } catch (error) {
