@@ -32,10 +32,12 @@ function LotUnavailable(failure: RetryableFailureProps) {
   return (
     <>
       <PageHeader eyebrow={text.lot.eyebrow} title={text.lot.unavailableTitle} />
-      <RetryableFailure {...failure} />
-      <AppLink href={HOME_PATH} className="text-link">
-        {text.lot.back}
-      </AppLink>
+      <div className="actions-row">
+        <RetryableFailure {...failure} />
+        <AppLink href={HOME_PATH} className="text-link">
+          {text.lot.back}
+        </AppLink>
+      </div>
     </>
   );
 }

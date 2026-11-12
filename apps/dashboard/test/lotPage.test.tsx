@@ -35,6 +35,9 @@ describe('lot page', () => {
     expect(screen.getByText('Stationnement')).toBeDefined();
     expect(screen.getByRole('alert').textContent).toBe('Une erreur est survenue. Réessayez dans un instant.');
     expect(screen.getByRole('link', { name: 'Retour aux stationnements' })).toBeDefined();
+    const actions = screen.getByRole('button', { name: 'Réessayer' }).parentElement;
+    expect(actions?.className).toBe('actions-row');
+    expect(actions?.contains(screen.getByRole('link', { name: 'Retour aux stationnements' }))).toBe(true);
     api.answers.delete(`GET /lots/${parkingDemo.id}`);
 
     await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
