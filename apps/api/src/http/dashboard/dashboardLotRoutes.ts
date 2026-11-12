@@ -47,8 +47,20 @@ function registerCreateLotRoute({ scope, sources, onRequest }: LotRoutesContext,
       reply.header('Retry-After', LOT_CREATION_WINDOW_SECONDS);
       throw new DashboardHttpRefusal('TOO_MANY_LOTS');
     }
-    return reply.status(CREATED).send(await createLotOfMember(sources, userId, request.body));
+    return reply.status(CREATED).send(await createLotRefundingRefusals(sources, limiter, userId, request.body));
   });
+}
+
+// A refused creation took no beacon major, so it must not eat the member's hourly allowance.
+async function createLotRefundingRefusals(sources: LotSetupSources, limiter: SetupLimiter, userId: string, draft: LotDraft): Promise<DashboardLotDetails> {
+  try {
+    return await createLotOfMember(sources, userId, draft);
+  } catch (error) {
+    if (error instanceof DashboardRefusedError) {
+      limiter.refund(userId);
+    }
+    throw error;
+  }
 }
 
 // A malformed id gets the same 404 as another operator's lot, so the answer never tells the two apart.

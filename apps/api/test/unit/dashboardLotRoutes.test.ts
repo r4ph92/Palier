@@ -45,6 +45,15 @@ describe('dashboard lot setup routes', () => {
     ]);
   });
 
+  it('does not count refused creations against the hourly allowance', async () => {
+    const cookies = await signIn(pierre);
+    for (let refused = 0; refused < LOT_CREATIONS_PER_HOUR; refused += 1) {
+      expect((await createLot(cookies, { ...garageRoyNord, name: '   ' })).statusCode).toBe(400);
+    }
+
+    expect((await createLot(cookies)).statusCode).toBe(201);
+  });
+
   it('lets Pierre create ten lots in an hour, refuses the eleventh with Retry-After, and still lets Sophie create hers', async () => {
     const cookies = await signIn(pierre);
     for (let created = 0; created < LOT_CREATIONS_PER_HOUR; created += 1) {
