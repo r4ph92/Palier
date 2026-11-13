@@ -8,7 +8,10 @@ function stubFetch(status: number, body?: unknown) {
 }
 
 describe('dashboard client', () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
 
   it('signs out with a POST that carries the dashboard header and no body', async () => {
     const fetchMock = stubFetch(204);
@@ -20,6 +23,7 @@ describe('dashboard client', () => {
       credentials: 'same-origin',
       headers: { accept: 'application/json', 'x-requested-with': 'palier-dashboard' },
       body: null,
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -28,7 +32,7 @@ describe('dashboard client', () => {
 
     await dashboardClient.lots();
 
-    expect(fetchMock).toHaveBeenCalledWith('/v1/dashboard/lots', { method: 'GET', credentials: 'same-origin', headers: { accept: 'application/json' } });
+    expect(fetchMock).toHaveBeenCalledWith('/v1/dashboard/lots', { method: 'GET', credentials: 'same-origin', headers: { accept: 'application/json' }, signal: expect.any(AbortSignal) });
   });
 
   it('saves pricing with a PUT that carries the dashboard header and the JSON body', async () => {
@@ -42,6 +46,17 @@ describe('dashboard client', () => {
       credentials: 'same-origin',
       headers: { accept: 'application/json', 'x-requested-with': 'palier-dashboard', 'content-type': 'application/json' },
       body: JSON.stringify(pricing),
+      signal: expect.any(AbortSignal),
     });
+  });
+
+  it('gives up on a request that gets no answer, so a hung poll fails instead of waiting forever', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('fetch', (_url: string, init: RequestInit) => new Promise((_resolve, reject) => init.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))));
+    const outcome = dashboardClient.lots().then(() => 'answered', () => 'failed');
+
+    await vi.advanceTimersByTimeAsync(25_000);
+
+    expect(await outcome).toBe('failed');
   });
 });
