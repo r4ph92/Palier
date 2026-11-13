@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { signOutDashboardUser } from '../../domain/dashboard/dashboardSessions.ts';
 import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
 import { registerDashboardLotRoutes } from './dashboardLotRoutes.ts';
+import { registerDashboardOccupancyRoutes } from './dashboardOccupancyRoutes.ts';
 import { registerDashboardOperatorRoutes } from './dashboardOperatorRoutes.ts';
 import { registerDashboardStripeRoutes } from './dashboardStripeRoutes.ts';
 import { clearDashboardCookie, dashboardCookieToken } from './dashboardSessionCookie.ts';
@@ -21,6 +22,7 @@ export async function registerDashboardRoutes(scope: FastifyInstance, dependenci
   registerSignOutRoute(scope, dependencies);
   registerDashboardOperatorRoutes(scope, dependencies);
   registerDashboardLotRoutes(scope, dependencies);
+  registerDashboardOccupancyRoutes(scope, dependencies);
   registerDashboardStripeRoutes(scope, dependencies);
   if (dependencies.testSignInEnabled) {
     registerDashboardTestSignInRoutes(scope, dependencies);

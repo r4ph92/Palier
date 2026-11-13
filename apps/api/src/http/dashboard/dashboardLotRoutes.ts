@@ -1,7 +1,7 @@
 import type { DashboardLotDetails } from '@palier/shared-types';
 import type { LotDraft } from '@palier/shared-types/lotDraft';
 import type { LotPricingRequest } from '@palier/shared-types/lotPricing';
-import type { FastifyInstance, FastifyRequest, onRequestAsyncHookHandler } from 'fastify';
+import type { FastifyInstance, onRequestAsyncHookHandler } from 'fastify';
 import { DashboardRefusedError } from '../../domain/dashboard/DashboardRefusedError.ts';
 import { createLotOfMember, findLotDetailsOfMember, setLotPricingOfMember, type LotSetupSources } from '../../domain/dashboard/lotSetup.ts';
 import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
@@ -9,6 +9,7 @@ import { lotIdParametersSchema } from '../schemas/dashboardSchemas.ts';
 import { dashboardLotDetailsSchema, lotDraftBodySchema, lotPricingBodySchema } from '../schemas/lotSetupSchemas.ts';
 import { DashboardHttpRefusal } from './DashboardHttpRefusal.ts';
 import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
+import { refuseMalformedLotId } from './refuseMalformedLotId.ts';
 import { requireDashboardUser, signedInDashboardUser } from './requireDashboardUser.ts';
 
 const CREATED = 201;
@@ -68,7 +69,6 @@ async function createLotRefundingRefusals({ sources, limiter }: LotCreation, use
   }
 }
 
-// A malformed id gets the same 404 as another operator's lot, so the answer never tells the two apart.
 function registerLotDetailsRoute({ scope, sources, onRequest }: LotRoutesContext): void {
   const schema = { params: lotIdParametersSchema, response: { 200: dashboardLotDetailsSchema } };
   scope.get<LotRoute>('/v1/dashboard/lots/:id', { onRequest, attachValidation: true, schema }, (request): Promise<DashboardLotDetails> => {
@@ -88,10 +88,4 @@ function registerLotPricingRoute({ scope, sources, onRequest }: LotRoutesContext
     const change = { userId: signedInDashboardUser(request).id, lotId: request.params.id, pricing: request.body };
     return setLotPricingOfMember(sources, change);
   });
-}
-
-function refuseMalformedLotId(request: FastifyRequest): void {
-  if (request.validationError?.validationContext === 'params') {
-    throw new DashboardRefusedError('LOT_NOT_FOUND');
-  }
 }

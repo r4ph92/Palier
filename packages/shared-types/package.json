@@ -33,6 +33,10 @@
       "types": "./src/dashboard.ts",
       "default": "./src/dashboard.ts"
     },
+    "./spotStates": {
+      "types": "./src/spotStates.ts",
+      "default": "./src/spotStates.ts"
+    },
     "./spotHolds": {
       "types": "./src/spotHolds.ts",
       "default": "./src/spotHolds.ts"

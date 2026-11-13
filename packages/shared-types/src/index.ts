@@ -1,10 +1,12 @@
 export type {
+  CounterGap,
   CreateOperatorRequest,
   DashboardErrorBody,
   DashboardErrorCode,
   DashboardLot,
   DashboardLotDetails,
   DashboardLotListResponse,
+  DashboardLotOccupancy,
   DashboardMeResponse,
   DashboardOperator,
   DashboardSignInResponse,
@@ -12,6 +14,7 @@ export type {
   DashboardTestUserListResponse,
   DashboardUser,
   KycStatus,
+  LevelSpotCounts,
   StripeOnboardingLink,
 } from './dashboard.ts';
 export type { LotDraft, LotDraftErrorCode, LotDraftErrors, LotDraftField } from './lotDraft.ts';
@@ -75,4 +78,5 @@ export type {
 } from './parkingSessions.ts';
 export type { PaymentMethodResponse, SavedCard, SavePaymentMethodRequest, SetupIntentResponse } from './paymentMethods.ts';
 export type { CurrentSpotHoldResponse, SpotHold, SpotHoldRefusalBody, SpotHoldRefusalCode, SpotHoldStatus } from './spotHolds.ts';
+export type { SpotState } from './spotStates.ts';
 export type { Vehicle, VehicleListResponse, VehicleNeeds } from './vehicles.ts';

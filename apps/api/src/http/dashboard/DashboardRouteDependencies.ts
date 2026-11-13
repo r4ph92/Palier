@@ -1,3 +1,4 @@
+import type { LevelOccupancyReader } from '../../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotSetupRepository } from '../../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../../domain/dashboard/OperatorRepository.ts';
 import type { OperatorStripeAccounts, OperatorStripeGateway } from '../../domain/dashboard/OperatorStripe.ts';
@@ -14,6 +15,7 @@ export interface DashboardRouteDependencies {
   readonly access: SessionAccess;
   readonly operators: OperatorRepository;
   readonly lots: LotSetupRepository;
+  readonly occupancy: LevelOccupancyReader;
   readonly testSignInEnabled: boolean;
   readonly secureCookies: boolean;
 }
