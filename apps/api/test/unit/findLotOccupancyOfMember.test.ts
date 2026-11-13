@@ -28,7 +28,7 @@ describe('reading the occupancy of a lot as a member', () => {
     });
   });
 
-  it('leaves out the assigned spots whose entry is not confirmed', async () => {
+  it('sums only the assigned spots whose entry is confirmed, leaving out what the reader does not count', async () => {
     const unconfirmed = { ...parkingDemoOccupancy, confirmedAssignedCount: 0 };
 
     const found = await findLotOccupancyOfMember(sourcesWith(unconfirmed), sophie.id, PARKING_DEMO_ID);
