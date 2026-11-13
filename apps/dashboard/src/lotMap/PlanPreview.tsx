@@ -1,14 +1,15 @@
 import type { AisleRectangle, DashboardMapAisle } from '@palier/shared-types';
-import { boundsOf } from '@palier/shared-types/aisleRectangle';
 import { useId } from 'react';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useText } from '../i18n/LanguageContext.tsx';
+import { planFrameOf } from './planFrame.ts';
+import type { DraftAisle } from './useAddAisleForm.ts';
 
 interface PlanPreviewProps {
   readonly levelCode: string;
   readonly aisles: readonly DashboardMapAisle[];
-  // The aisle being added, drawn dashed: a dashed outline, not a colour, tells it from the saved aisles.
-  readonly draft: AisleRectangle | null;
+  // The aisle being added, drawn dashed and labelled with its code: a dashed outline, not a colour, tells it from the saved aisles.
+  readonly draft: DraftAisle | null;
 }
 
 type DrawnAisle = DashboardMapAisle & { readonly rectangle: AisleRectangle };
@@ -35,17 +36,17 @@ interface PlanDrawingProps {
   readonly label: string;
   readonly descriptionId: string;
   readonly drawn: readonly DrawnAisle[];
-  readonly draft: AisleRectangle | null;
+  readonly draft: DraftAisle | null;
 }
 
 function PlanDrawing({ label, descriptionId, drawn, draft }: PlanDrawingProps) {
-  const { x, y, width, height } = boundsOf([...drawn.map(({ rectangle }) => rectangle), ...(draft === null ? [] : [draft])]);
+  const { x, y, width, height } = planFrameOf([...drawn.map(({ rectangle }) => rectangle), ...(draft === null ? [] : [draft.rectangle])]);
   return (
-    <svg role="img" aria-label={label} aria-describedby={descriptionId} viewBox={`${x} ${y} ${width} ${height}`}>
+    <svg role="img" aria-label={label} aria-describedby={descriptionId} viewBox={`${x} ${y} ${width} ${height}`} preserveAspectRatio="xMinYMid meet">
       {drawn.map((aisle) => (
         <PlanRectangle key={aisle.id} rectangle={aisle.rectangle} label={aisle.code} />
       ))}
-      {draft === null ? null : <PlanRectangle rectangle={draft} label="" isDraft />}
+      {draft === null ? null : <PlanRectangle rectangle={draft.rectangle} label={draft.label} isDraft />}
     </svg>
   );
 }
@@ -68,11 +69,9 @@ function PlanRectangle({ rectangle, label, isDraft = false }: PlanRectangleProps
   return (
     <g className={isDraft ? 'plan-aisle plan-aisle-draft' : 'plan-aisle'}>
       <rect x={rectangle.x} y={rectangle.y} width={rectangle.width} height={rectangle.height} vectorEffect="non-scaling-stroke" />
-      {label === '' ? null : (
-        <text x={rectangle.x + rectangle.width / 2} y={rectangle.y + rectangle.height / 2} fontSize={fontSize} textAnchor="middle" dominantBaseline="central">
-          {label}
-        </text>
-      )}
+      <text x={rectangle.x + rectangle.width / 2} y={rectangle.y + rectangle.height / 2} fontSize={fontSize} textAnchor="middle" dominantBaseline="central">
+        {label}
+      </text>
     </g>
   );
 }

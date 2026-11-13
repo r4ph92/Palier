@@ -34,7 +34,10 @@ describe('the map of a lot', () => {
       await userEvent.type(screen.getByRole('textbox', { name: label }), value);
     }
 
-    expect(screen.getByRole('img', { name: 'Plan du niveau P1' }).querySelector('.plan-aisle-draft')).not.toBeNull();
+    const draft = screen.getByRole('img', { name: 'Plan du niveau P1' }).querySelector('.plan-aisle-draft');
+    expect(draft?.textContent).toBe('Nouvelle');
+    await userEvent.type(screen.getByRole('textbox', { name: 'Code de l’allée' }), 'D');
+    expect(screen.getByRole('img', { name: 'Plan du niveau P1' }).querySelector('.plan-aisle-draft')?.textContent).toBe('D');
     expect(screen.getByText('Allée en cours d’ajout, en pointillé.')).toBeDefined();
   });
 

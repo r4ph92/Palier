@@ -39,6 +39,7 @@ export const frMap = {
   planLabel: 'Plan du niveau %{code}',
   planAisles: 'Allées dessinées : %{codes}.',
   planDraft: 'Allée en cours d’ajout, en pointillé.',
+  unnamedAisle: 'Nouvelle',
   planEmpty: 'Rien n’est encore dessiné sur ce niveau.',
   beaconsTitle: 'Balises',
   beaconsIntro: 'Programmez chaque balise avec l’UUID de la plateforme, le major du stationnement et le minor de son allée.',

@@ -30,10 +30,20 @@ function readAisle(values: FieldValues<AisleDraftField>, language: Language): Re
   return readFormOf(draft, aisleDraftErrors(draft));
 }
 
+export interface DraftAisle {
+  readonly rectangle: AisleRectangle;
+  readonly label: string;
+}
+
 // The rectangle typed so far, once the rule accepts it: the plan draws only a rectangle that could be saved.
-export function draftRectangleOf(values: FieldValues<AisleDraftField>, language: Language): AisleRectangle | null {
+// It carries the code typed so far, or the generic label while the code is empty.
+export function draftAisleOf(values: FieldValues<AisleDraftField>, language: Language, unnamedLabel: string): DraftAisle | null {
   const rectangle = rectangleOf(values, language);
-  return isAisleRectangle(rectangle) ? rectangle : null;
+  if (!isAisleRectangle(rectangle)) {
+    return null;
+  }
+  const code = canonicalCodeOf(values.code);
+  return { rectangle, label: code === '' ? unnamedLabel : code };
 }
 
 export interface AddAisleTarget {

@@ -7,7 +7,7 @@ import { TextField } from '../forms/TextField.tsx';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { PlanPreview } from './PlanPreview.tsx';
-import { draftRectangleOf, useAddAisleForm, type AddAisleTarget } from './useAddAisleForm.ts';
+import { draftAisleOf, useAddAisleForm, type AddAisleTarget } from './useAddAisleForm.ts';
 import { useMapLimitValues } from './useMapLimitValues.ts';
 
 type FieldOf = (name: AisleDraftField) => BoundField;
@@ -28,7 +28,7 @@ export function AddAisleForm({ lotId, level, onAdded }: AddAisleFormProps) {
       <TextField {...field('code')} label={text.map.aisleCodeLabel} hint={text.map.aisleCodeHint} />
       <TextField {...field('beaconMinor')} label={text.map.minorLabel} hint={text.map.minorHint} inputMode="numeric" />
       <RectangleFields field={field} hintId={`aisle-${level.id}-rectangle-hint`} limits={limits} />
-      <PlanPreview levelCode={level.code} aisles={level.aisles} draft={draftRectangleOf(form.values, language)} />
+      <PlanPreview levelCode={level.code} aisles={level.aisles} draft={draftAisleOf(form.values, language, text.map.unnamedAisle)} />
       <SubmitButton label={text.map.addAisle} busyLabel={text.map.addingAisle} busy={form.submitting} />
     </form>
   );

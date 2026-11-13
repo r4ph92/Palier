@@ -40,6 +40,7 @@ export const enMap: typeof frMap = {
   planLabel: 'Plan of level %{code}',
   planAisles: 'Drawn aisles: %{codes}.',
   planDraft: 'Aisle being added, dashed.',
+  unnamedAisle: 'New',
   planEmpty: 'Nothing is drawn on this level yet.',
   beaconsTitle: 'Beacons',
   beaconsIntro: 'Program each beacon with the platform UUID, the lot’s major and the minor of its aisle.',
