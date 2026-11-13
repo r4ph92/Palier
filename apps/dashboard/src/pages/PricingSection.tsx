@@ -1,4 +1,4 @@
-import type { LotPricing } from '@palier/shared-types';
+import type { LotPricingSettings } from '@palier/shared-types';
 import { formatMoney, NO_BREAK_SPACE } from '@palier/shared-types/money';
 import { Fact } from '../components/Fact.tsx';
 import { StateMark } from '../components/StateMark.tsx';
@@ -35,7 +35,7 @@ function NoPricing() {
   );
 }
 
-function PricingFacts({ pricing }: { readonly pricing: LotPricing }) {
+function PricingFacts({ pricing }: { readonly pricing: LotPricingSettings }) {
   const { text, language } = useLanguage();
   const rate = interpolate(text.pricing.rate, { amount: formatMoney(pricing.incrementCents, language), duration: durationOf(pricing.incrementMinutes) });
   return (

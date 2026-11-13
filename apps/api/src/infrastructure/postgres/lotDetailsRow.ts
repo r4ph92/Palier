@@ -1,5 +1,5 @@
 import type { DashboardLotDetails } from '@palier/shared-types';
-import type { LotPricing } from '@palier/shared-types/lotPricing';
+import type { LotPricingSettings } from '@palier/shared-types/lotPricing';
 import { parsePricingPolicy } from '../../domain/pricing/PricingPolicy.ts';
 
 // Postgres answers numeric columns as text, so the coordinates arrive as strings.
@@ -36,7 +36,7 @@ function degreesOf(column: string | null): number | null {
 }
 
 // The completeness check keeps policy and cap null together: a lot without them has no pricing yet.
-function pricingOf(row: LotDetailsRow): LotPricing | null {
+function pricingOf(row: LotDetailsRow): LotPricingSettings | null {
   if (row.daily_cap_cents === null) {
     return null;
   }
