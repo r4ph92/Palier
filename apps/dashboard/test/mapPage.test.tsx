@@ -146,6 +146,14 @@ describe('the map of a lot', () => {
     expect(screen.queryByText(/Garage Roy/)).toBeNull();
   });
 
+  it('heads the page with its title while the map loads, and says so to screen readers', async () => {
+    installFakeApi({ signedInAs: pierre, answers: { [`GET /lots/${garageRoy.id}/map`]: 'pending' } });
+    renderDashboard({ path: GARAGE_ROY_MAP });
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Plan et balises' })).toBeDefined();
+    expect(screen.getByRole('status').textContent).toBe('Chargement…');
+  });
+
   it('shows the map as unavailable with a retry, then opens it', async () => {
     const api = installFakeApi({ signedInAs: pierre, answers: { [`GET /lots/${garageRoy.id}/map`]: { status: 500 } } });
     renderDashboard({ path: GARAGE_ROY_MAP });
