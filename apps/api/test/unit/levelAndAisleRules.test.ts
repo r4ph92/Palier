@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { aisleDraftErrors, type AisleDraft } from '@palier/shared-types/aisleDraft';
 import { boundsOf, isAisleRectangle } from '@palier/shared-types/aisleRectangle';
+import { canonicalCodeOf } from '@palier/shared-types/displayText';
 import { firstFieldError } from '@palier/shared-types/fieldErrors';
 import { levelDraftErrors } from '@palier/shared-types/levelDraft';
 
@@ -76,5 +77,15 @@ describe('the bounds of a level plan', () => {
     ];
 
     expect(boundsOf(rectangles)).toEqual({ x: 200, y: 300, width: 120, height: 90 });
+  });
+});
+
+describe('the canonical form of a level or aisle code', () => {
+  it.each([
+    ['an accent typed decomposed', 'É3', 'É3'],
+    ['a no-break space', 'P 1', 'P 1'],
+    ['a narrow no-break space and a run of spaces', ' P   1 ', 'P 1'],
+  ])('reads %s as the code it looks like', (_case, typed, canonical) => {
+    expect(canonicalCodeOf(typed)).toBe(canonical);
   });
 });

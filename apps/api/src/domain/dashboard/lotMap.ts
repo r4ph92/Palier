@@ -1,5 +1,6 @@
 import type { DashboardLotMap, LevelOrderRequest } from '@palier/shared-types';
 import { aisleDraftErrors, type AisleDraft, type AisleRequest } from '@palier/shared-types/aisleDraft';
+import { canonicalCodeOf } from '@palier/shared-types/displayText';
 import { firstFieldError } from '@palier/shared-types/fieldErrors';
 import { levelDraftErrors, type LevelDraft } from '@palier/shared-types/levelDraft';
 import { DashboardRefusedError } from './DashboardRefusedError.ts';
@@ -60,18 +61,18 @@ async function changeLotMap(sources: LotMapSources, lot: MemberLot, write: (oper
 }
 
 function validatedLevelCode({ code }: LevelDraft): string {
-  const trimmedCode = code.trim();
-  const refusal = firstFieldError(levelDraftErrors({ code: trimmedCode }));
+  const canonicalCode = canonicalCodeOf(code);
+  const refusal = firstFieldError(levelDraftErrors({ code: canonicalCode }));
   if (refusal !== null) {
     throw new DashboardRefusedError(refusal);
   }
-  return trimmedCode;
+  return canonicalCode;
 }
 
 // Builds the rectangle from its four sides only, so map_polygon never stores a key the read boundary would refuse.
 function validatedAisle({ code, beaconMinor, rectangle = null }: AisleRequest): AisleDraft {
   const { x, y, width, height } = rectangle ?? NO_RECTANGLE;
-  const aisle = { code: code.trim(), beaconMinor, rectangle: { x, y, width, height } };
+  const aisle = { code: canonicalCodeOf(code), beaconMinor, rectangle: { x, y, width, height } };
   const refusal = firstFieldError(aisleDraftErrors(aisle));
   if (refusal !== null) {
     throw new DashboardRefusedError(refusal);

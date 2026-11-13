@@ -1,6 +1,7 @@
 import type { AisleRectangle, DashboardLotMap } from '@palier/shared-types';
 import { aisleDraftErrors, type AisleDraft, type AisleDraftField } from '@palier/shared-types/aisleDraft';
 import { isAisleRectangle, type AisleRectangleKey } from '@palier/shared-types/aisleRectangle';
+import { canonicalCodeOf } from '@palier/shared-types/displayText';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { readFormOf, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
@@ -25,7 +26,7 @@ function rectangleOf(values: FieldValues<AisleDraftField>, language: Language): 
 }
 
 function readAisle(values: FieldValues<AisleDraftField>, language: Language): ReadForm<AisleDraftField, AisleDraft> {
-  const draft = { code: values.code.trim(), beaconMinor: numberOrNaN(parseWholeNumber(values.beaconMinor, language)), rectangle: rectangleOf(values, language) };
+  const draft = { code: canonicalCodeOf(values.code), beaconMinor: numberOrNaN(parseWholeNumber(values.beaconMinor, language)), rectangle: rectangleOf(values, language) };
   return readFormOf(draft, aisleDraftErrors(draft));
 }
 

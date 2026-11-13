@@ -1,5 +1,6 @@
 import type { DashboardLotMap } from '@palier/shared-types';
 import { levelDraftErrors, type LevelDraft, type LevelDraftField } from '@palier/shared-types/levelDraft';
+import { canonicalCodeOf } from '@palier/shared-types/displayText';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { readFormOf, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
@@ -13,7 +14,7 @@ const FIELD_OF_CODE: Partial<Readonly<Record<DisplayedErrorCode, LevelDraftField
 };
 
 function readLevel(values: FieldValues<LevelDraftField>): ReadForm<LevelDraftField, LevelDraft> {
-  const draft = { code: values.code.trim() };
+  const draft = { code: canonicalCodeOf(values.code) };
   return readFormOf(draft, levelDraftErrors(draft));
 }
 

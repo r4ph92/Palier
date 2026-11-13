@@ -26,3 +26,8 @@ export function isValidDisplayText(text: string, { minimum, maximum }: TextLengt
     LETTER_OR_DIGIT.test(trimmedText)
   );
 }
+
+// Two codes that read the same are one code: accents composed (NFC), any run of spaces, no-break ones too, as one plain space.
+export function canonicalCodeOf(text: string): string {
+  return text.normalize('NFC').replace(/\s+/gu, ' ').trim();
+}
