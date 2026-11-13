@@ -1,6 +1,7 @@
 import type { DashboardErrorCode } from '@palier/shared-types';
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { DashboardRefusedError } from '../../domain/dashboard/DashboardRefusedError.ts';
+import { LOT_LOCK_WAIT_SECONDS } from '../../domain/lots/lotLockWait.ts';
 import { handleServerError } from '../handleServerError.ts';
 import { DashboardHttpRefusal } from './DashboardHttpRefusal.ts';
 
@@ -40,16 +41,13 @@ const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
   AISLE_RECTANGLE_INVALID: 400,
 };
 
-// The lot lock waits at most 3 s (LIMIT_LOCK_WAIT), so a busy lot is worth trying again a few seconds later.
-const LOT_BUSY_RETRY_AFTER_SECONDS = 3;
-
 export function handleDashboardError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {
   if (!(error instanceof DashboardRefusedError || error instanceof DashboardHttpRefusal)) {
     return handleServerError(error, request, reply);
   }
   const statusCode = STATUS_BY_REASON[error.reason];
   if (error.reason === 'LOT_BUSY') {
-    reply.header('Retry-After', LOT_BUSY_RETRY_AFTER_SECONDS);
+    reply.header('Retry-After', LOT_LOCK_WAIT_SECONDS);
   }
   return reply.status(statusCode).send({ statusCode, error: error.reason, message: error.message });
 }

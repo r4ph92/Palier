@@ -3,19 +3,9 @@ import type { AisleDraft } from '@palier/shared-types/aisleDraft';
 import { isMoveOfCurrentOrder } from '../../domain/dashboard/levelOrder.ts';
 import { LOT_MAP_WRITTEN, type LevelPlacement, type LotMapRefusal, type LotMapRepository, type LotMapWrite } from '../../domain/dashboard/LotMapRepository.ts';
 import type { Database, Transaction } from './database.ts';
-import { isLotBusy, LOT_LOCK_TRANSACTION, orLotBusy } from './lockParkingLot.ts';
-import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
+import { inOwnedLotLock, isLotBusy, isLotNotOwned, LOT_BUSY, LOT_NOT_OWNED, orLotBusy, type OwnedLot } from './lockParkingLot.ts';
 import { lotMapOf, type LotMapRow } from './lotMapRows.ts';
-import {
-  insertAisleStatement,
-  insertExitLaneStatement,
-  insertLevelStatement,
-  lockOwnedLotStatement,
-  readLevelIdsStatement,
-  readLotMapStatement,
-  reorderLevelsStatement,
-  type OwnedLot,
-} from './lotMapStatements.ts';
+import { insertAisleStatement, insertExitLaneStatement, insertLevelStatement, readLevelIdsStatement, readLotMapStatement, reorderLevelsStatement } from './lotMapStatements.ts';
 import { AISLE_CODE_UNIQUE, AISLE_MINOR_UNIQUE, LEVEL_CODE_UNIQUE } from './lotSchema.ts';
 import { violatedUniqueConstraintOf } from './uniqueViolation.ts';
 
@@ -57,18 +47,18 @@ export class PostgresLotMapRepository implements LotMapRepository {
   // Ownership is the first statement: another operator's lot is refused before any of its levels or aisles is read.
   async #writeInOwnedLot(lot: OwnedLot, write: LockedWrite): Promise<LotMapWrite> {
     try {
-      const outcome = await orLotBusy(this.#database.transaction((tx) => lockedWrite(tx, lot, write), LOT_LOCK_TRANSACTION));
-      return isLotBusy(outcome) ? 'LOT_BUSY' : outcome;
+      return writeOutcomeOf(await orLotBusy(inOwnedLotLock(this.#database, lot, write)));
     } catch (error) {
       return takenRefusalOrThrow(error);
     }
   }
 }
 
-async function lockedWrite(tx: Executor, lot: OwnedLot, write: LockedWrite): Promise<LotMapWrite> {
-  await tx.execute(LIMIT_LOCK_WAIT);
-  const locked = await tx.execute(lockOwnedLotStatement(lot));
-  return locked.length === 0 ? 'LOT_NOT_FOUND' : write(tx);
+function writeOutcomeOf(outcome: LotMapWrite | typeof LOT_BUSY | typeof LOT_NOT_OWNED): LotMapWrite {
+  if (isLotBusy(outcome)) {
+    return 'LOT_BUSY';
+  }
+  return isLotNotOwned(outcome) ? 'LOT_NOT_FOUND' : outcome;
 }
 
 async function addLevelWithExitLane(tx: Executor, lot: OwnedLot, code: string): Promise<LotMapWrite> {

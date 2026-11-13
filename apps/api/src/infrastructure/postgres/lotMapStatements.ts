@@ -3,15 +3,11 @@ import type { AisleDraft } from '@palier/shared-types/aisleDraft';
 import { EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { MAX_LEVELS_PER_LOT } from '@palier/shared-types/levelDraft';
 import type { LevelPlacement } from '../../domain/dashboard/LotMapRepository.ts';
+import type { OwnedLot } from './lockParkingLot.ts';
 import { AISLE_MINOR_UNIQUE } from './lotSchema.ts';
 
 // The code stored for the exit lane; the dashboard and the app show their own translated name.
 export const EXIT_LANE_CODE = 'Sortie';
-
-export interface OwnedLot {
-  readonly operatorId: string;
-  readonly lotId: string;
-}
 
 // Levels in display order, aisles by code with the exit lane last; a lot with no level reads as one row of nulls.
 export function readLotMapStatement({ operatorId, lotId }: OwnedLot): SQL {
@@ -24,11 +20,6 @@ export function readLotMapStatement({ operatorId, lotId }: OwnedLot): SQL {
     left join aisle on aisle.level_id = level.id
     where parking_lot.id = ${lotId} and parking_lot.operator_id = ${operatorId}
     order by level.display_order, level.code, aisle.is_exit_lane, aisle.code`;
-}
-
-// No key update, like lockParkingLot: entries and spot holds keep their lot lock order, and this one waits for them.
-export function lockOwnedLotStatement({ operatorId, lotId }: OwnedLot): SQL {
-  return sql`select id from parking_lot where id = ${lotId} and operator_id = ${operatorId} for no key update`;
 }
 
 // Appends after the last level; no row when the lot already has MAX_LEVELS_PER_LOT levels.
