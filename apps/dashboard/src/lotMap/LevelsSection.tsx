@@ -28,7 +28,7 @@ export function LevelsSection({ map, onSaved, onStale }: LevelsSectionProps) {
       </h2>
       <p className="lead">{map.levels.length === 0 ? text.map.noLevels : text.map.levelsHelp}</p>
       {map.levels.length === 0 ? null : <LevelOrderList lotId={map.lotId} levels={map.levels} onSaved={onSaved} onStale={onStale} />}
-      <AddLevelForm lotId={map.lotId} onAdded={onAdded} />
+      <AddLevelForm lotId={map.lotId} onAdded={onAdded} emphasis={map.levels.length === 0 ? 'primary' : 'secondary'} />
       <p role="status">{addedCode === null ? null : interpolate(text.map.levelAdded, { code: addedCode })}</p>
     </section>
   );

@@ -8,6 +8,16 @@ import { addAisle, addLevel, GARAGE_ROY_MAP, openGarageRoyMap, savedMap } from '
 import { renderDashboard } from './renderDashboard.tsx';
 
 describe('the map of a lot', () => {
+  it('fills only the first level’s button, then leaves the aisle form the one filled button', async () => {
+    await openGarageRoyMap();
+    expect(screen.getByRole('button', { name: 'Ajouter le niveau' }).className).toBe('primary-button');
+
+    await addLevel('P1');
+
+    expect(screen.getByRole('button', { name: 'Ajouter le niveau' }).className).toBe('secondary-button');
+    expect(screen.getByRole('button', { name: 'Ajouter l’allée' }).className).toBe('primary-button');
+  });
+
   it('shows the exit lane with the first level, then aisle A with minor 1 in the list and on the plan', async () => {
     const api = await openGarageRoyMap();
     await addLevel('P1');
