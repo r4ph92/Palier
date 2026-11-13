@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import type { DashboardApiError } from './DashboardApiError.ts';
 import { useResource, type Resource } from './useResource.ts';
 
@@ -36,10 +37,11 @@ function useLastValue<T>(resource: Resource<T>): LastValue<T> | null {
   return lastValue;
 }
 
+// flushSync starts the request within the tick, so its timeout counts from the tick and not from a later render.
 function usePolling(action: (() => void) | null, intervalMilliseconds: number): void {
   const poll = useCallback(() => {
     if (!document.hidden) {
-      action?.();
+      flushSync(() => action?.());
     }
   }, [action]);
   useTicks(action === null ? null : poll, intervalMilliseconds);
