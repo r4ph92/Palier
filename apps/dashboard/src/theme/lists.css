@@ -98,11 +98,7 @@
   overflow-wrap: anywhere;
 }
 
-.fact-value-number {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
+.fact-value-number,
 .figure {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -117,8 +113,6 @@
 }
 
 .gap-figure {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
   font-size: 30px;
   font-weight: 600;
   line-height: 1.2;
