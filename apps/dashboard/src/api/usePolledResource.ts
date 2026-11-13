@@ -37,7 +37,7 @@ function useLastValue<T>(resource: Resource<T>): LastValue<T> | null {
   return lastValue;
 }
 
-// flushSync starts the request within the tick, so its timeout counts from the tick and not from a later render.
+// flushSync starts the poll request in the same timer tick, so a fake-timer test can advance by the read timeout right after the tick.
 function usePolling(action: (() => void) | null, intervalMilliseconds: number): void {
   const poll = useCallback(() => {
     if (!document.hidden) {
