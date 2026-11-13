@@ -57,7 +57,7 @@ a(u'''<section>
   <figcaption>Le planificateur est la seule couche qui remonte : il appelle le domaine sans passer par HTTP.</figcaption></div></figure>''' % rd('out/cmp_api.svg'))
 
 a(u'''<div class="note"><b>Pourquoi le planificateur est dessiné à part.</b>
-  Les six tâches ne sont pas des détails d'exploitation : ce sont les transitions déclenchées par le temps, et elles portent quatre des règles métier les plus importantes du système — l'expiration d'un hold, l'annulation d'une entrée jamais passée, le garde-fou contre le téléphone déchargé, la réconciliation du compteur avec les places, la mise en vérification des sessions sans sortie. Les enfouir dans un <code>cron</code> les rendrait invisibles à la lecture du code.</div>''')
+  Les cinq tâches ne sont pas des détails d'exploitation : ce sont les transitions déclenchées par le temps, et elles portent quatre des règles métier les plus importantes du système — l'expiration d'un hold, l'annulation d'une entrée jamais passée, le garde-fou contre le téléphone déchargé, la mise en vérification des sessions sans sortie. Les enfouir dans un <code>cron</code> les rendrait invisibles à la lecture du code.</div>''')
 
 a(u'''<div class="tbl-scroll"><table>
   <caption>Ce que chaque composant du domaine décide</caption>
