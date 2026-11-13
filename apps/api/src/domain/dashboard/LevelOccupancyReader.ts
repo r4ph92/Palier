@@ -4,7 +4,6 @@ export interface LevelOccupancy {
   readonly lotName: string;
   readonly vehicleCount: number;
   readonly levels: readonly LevelSpotCounts[];
-  // ASSIGNED spots whose session has its entry confirmed: an admitted vehicle that has not yet crossed the loop is not counted.
   readonly confirmedAssignedCount: number;
 }
 
