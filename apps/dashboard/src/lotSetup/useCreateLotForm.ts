@@ -8,9 +8,12 @@ import { numberOrNaN, parseDecimal, parseWholeNumber } from './parseNumbers.ts';
 const EMPTY_DRAFT: FieldValues<LotDraftField> = { name: '', address: '', latitude: '', longitude: '', capacity: '' };
 
 const FIELD_OF_CODE: Readonly<Record<LotDraftErrorCode, LotDraftField>> = {
+  LOT_NAME_REQUIRED: 'name',
   LOT_NAME_INVALID: 'name',
+  LOT_ADDRESS_REQUIRED: 'address',
   LOT_ADDRESS_INVALID: 'address',
-  LOT_COORDINATES_INVALID: 'latitude',
+  LOT_LATITUDE_INVALID: 'latitude',
+  LOT_LONGITUDE_INVALID: 'longitude',
   LOT_CAPACITY_INVALID: 'capacity',
 };
 

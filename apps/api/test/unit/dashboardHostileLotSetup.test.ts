@@ -45,7 +45,7 @@ describe('hostile lot setup requests', () => {
   it.each([
     ['a name holding NUL', { name: 'Garage\u0000Nord' }, 'LOT_NAME_INVALID'],
     ['an address of zero-width spaces', { address: '​​' }, 'LOT_ADDRESS_INVALID'],
-    ['a latitude of 1e300', { latitude: 1e300 }, 'LOT_COORDINATES_INVALID'],
+    ['a latitude of 1e300', { latitude: 1e300 }, 'LOT_LATITUDE_INVALID'],
     ['a fractional capacity', { capacity: 40.5 }, 'FST_ERR_VALIDATION'],
     ['a capacity given as text', { capacity: '40' }, 'FST_ERR_VALIDATION'],
     ['a capacity past the limit', { capacity: 1e300 }, 'LOT_CAPACITY_INVALID'],

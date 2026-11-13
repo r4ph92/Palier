@@ -56,8 +56,10 @@ describe('creating a lot', () => {
     expect(document.activeElement).toBe(screen.getByRole('alert'));
     expect(screen.getByRole('alert').textContent).toBe('Corrigez les champs indiqués.');
     expect(screen.getByLabelText('Nom').getAttribute('aria-invalid')).toBe('true');
-    expect(screen.getByText('Le nom doit compter de 1 à 120 caractères, sans caractère invisible.').id).toBe('lot-name-error');
+    expect(screen.getByText('Entrez le nom du stationnement.').id).toBe('lot-name-error');
     expect(screen.getByLabelText('Latitude (degrés décimaux)').getAttribute('aria-describedby')).toBe('lot-latitude-hint lot-latitude-error');
+    expect(screen.getByText('Entrez la latitude en degrés décimaux, de -90 à 90.')).toBeDefined();
+    expect(screen.queryByText('Entrez la longitude en degrés décimaux, de -180 à 180.')).toBeNull();
     expect(screen.getByText('Entrez un nombre entier de places, de 0 à 10 000.')).toBeDefined();
     expect(api.requests).not.toContain('POST /lots');
   });
