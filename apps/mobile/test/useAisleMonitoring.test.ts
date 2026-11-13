@@ -3,8 +3,10 @@ import { renderHook } from '@testing-library/react-native';
 import { useAisleMonitoring } from '../src/positioning/useAisleMonitoring';
 import { julieAtB3 } from './fakeParkingSessionClient';
 import { positioningRig } from './positioningRig';
+import { PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
 
-const START_MAJOR_1 = 'startMonitoring uuid=B9407F30 major=1';
+const MONITORED_UUID = PLATFORM_BEACON_UUID.slice(0, 8);
+const START_MAJOR_1 = `startMonitoring uuid=${MONITORED_UUID} major=1`;
 
 async function monitor(session: CurrentParkingSession | null) {
   const rig = positioningRig();
@@ -49,7 +51,7 @@ describe('useAisleMonitoring', () => {
 
     await rerender({ current: julieAtB3({ sessionId: 'session-2', beaconMajor: 3 }) });
 
-    expect(commands()).toEqual([START_MAJOR_1, 'stopMonitoring', 'startMonitoring uuid=B9407F30 major=3']);
+    expect(commands()).toEqual([START_MAJOR_1, 'stopMonitoring', `startMonitoring uuid=${MONITORED_UUID} major=3`]);
   });
 
   it('restarts for the next session at the same lot', async () => {

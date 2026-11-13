@@ -3,8 +3,9 @@ import { SimulatedPositioningModule } from '../src/dev/SimulatedPositioningModul
 import { recordEvents } from '../src/dev/recordEvents';
 import { PositioningCore } from '../src/positioning/PositioningCore';
 import type { PositioningListener } from '../src/positioning/PositioningModule';
+import { PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
 
-const UUID = 'B9407F30-F5F8-466E-AFF9-25556B57FE6D';
+const UUID = PLATFORM_BEACON_UUID;
 const CLOCK = new Date(2026, 10, 4, 18, 2, 5);
 
 function createRig() {
@@ -35,7 +36,7 @@ describe('PositioningCore commands', () => {
       'stopMonitoring',
       'flushOfflineQueue',
       'keepAlive until=18 h 12 min 00 s',
-      'startMonitoring uuid=B9407F30 major=1',
+      `startMonitoring uuid=${UUID.slice(0, 8)} major=1`,
     ]);
   });
 });

@@ -64,6 +64,10 @@
     "./money": {
       "types": "./src/money.ts",
       "default": "./src/money.ts"
+    },
+    "./beacons": {
+      "types": "./src/beacons.ts",
+      "default": "./src/beacons.ts"
     }
   },
   "scripts": {

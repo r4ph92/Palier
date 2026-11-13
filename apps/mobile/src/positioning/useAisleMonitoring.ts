@@ -1,6 +1,6 @@
 import type { CurrentParkingSession } from '@palier/shared-types';
+import { PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
 import { useEffect } from 'react';
-import { DEVELOPMENT_BEACON_UUID } from './developmentBeacon';
 import type { PositioningCore } from './PositioningCore';
 
 // Monitoring follows the session and its lot, not each read: a minute's poll with the same session never restarts it,
@@ -12,7 +12,7 @@ export function useAisleMonitoring(positioning: PositioningCore, session: Curren
     if (sessionId === null || beaconMajor === null) {
       return;
     }
-    positioning.startMonitoring(DEVELOPMENT_BEACON_UUID, beaconMajor);
+    positioning.startMonitoring(PLATFORM_BEACON_UUID, beaconMajor);
     return () => positioning.stopMonitoring();
   }, [positioning, sessionId, beaconMajor]);
 }
