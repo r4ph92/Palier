@@ -28,15 +28,15 @@
   cursor: pointer;
 }
 
+.row-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .row-button:hover .row-name,
 .row-button:hover > span:first-child,
 .row-link:hover .row-name {
   text-decoration: underline;
-}
-
-.row-name {
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 
 .skeleton-row {
