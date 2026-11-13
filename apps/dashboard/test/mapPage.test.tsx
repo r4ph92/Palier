@@ -187,6 +187,18 @@ describe('the map of a lot', () => {
     expect(savedMap(api)?.levels[0]?.aisles.map(({ code }) => code)).toEqual(['A', 'Sortie']);
   });
 
+  it('says beside the code that the exit lane holds Sortie on its level', async () => {
+    const api = await openGarageRoyMap();
+    await addLevel('P1');
+
+    await addAisle({ code: 'Sortie', minor: '1' });
+
+    const codeBox = screen.getByRole('textbox', { name: 'Code de l’allée' });
+    expect(await screen.findByText('Ce code est celui de la voie de sortie de ce niveau. Choisissez-en un autre.')).toBeDefined();
+    expect(codeBox.getAttribute('aria-invalid')).toBe('true');
+    expect(savedMap(api)?.levels[0]?.aisles.map(({ code }) => code)).toEqual(['Sortie']);
+  });
+
   it('lists the platform UUID, the lot major and every minor under Balises', async () => {
     installFakeApi({ signedInAs: sophie });
     renderDashboard({ path: `/lots/${parkingDemo.id}/map` });

@@ -3,52 +3,31 @@ import type { DashboardLotMap } from '@palier/shared-types';
 import type { FastifyInstance } from 'fastify';
 import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
-import { nouvelOperateur, pierre, sophie } from './fakes/dashboardFixtures.ts';
-import { dashboardCookieFor, startDashboardServer, writeHeader } from './fakes/dashboardServer.ts';
+import { pierre, sophie } from './fakes/dashboardFixtures.ts';
+import { dashboardCookieFor, startDashboardServer } from './fakes/dashboardServer.ts';
 import type { FakeLotMapRepository } from './fakes/fakeLotMapRepository.ts';
+import { aisleA, levelIdOf, lotMapRoutesOf, type Cookies, type LotMapRoutes } from './fakes/lotMapRoutes.ts';
 
 const PLATFORM_UUID = '7B8098B8-9525-4406-AB73-4ABD2095EDC3';
-const aisleA = { code: 'A', beaconMinor: 1, rectangle: { x: 0, y: 0, width: 100, height: 40 } };
-const LOT_NOT_FOUND = { statusCode: 404, error: 'LOT_NOT_FOUND', message: 'No such lot.' };
-type Cookies = Record<string, string>;
 
 describe('dashboard lot map routes', () => {
   let server: FastifyInstance;
   let maps: FakeLotMapRepository;
+  let routes: LotMapRoutes;
 
   afterEach(() => server.close());
 
   async function signIn(user: typeof pierre): Promise<Cookies> {
     ({ server, lotMaps: maps } = startDashboardServer());
+    routes = lotMapRoutesOf(server);
     return dashboardCookieFor(server, user);
-  }
-
-  function readMap(cookies: Cookies, lotId = GARAGE_ROY_ID) {
-    return server.inject({ method: 'GET', url: `/v1/dashboard/lots/${lotId}/map`, cookies });
-  }
-
-  function addLevel(cookies: Cookies, code: string, lotId = GARAGE_ROY_ID) {
-    return server.inject({ method: 'POST', url: `/v1/dashboard/lots/${lotId}/levels`, cookies, headers: writeHeader, payload: { code } });
-  }
-
-  function reorder(cookies: Cookies, levelIds: readonly string[], fromLevelIds?: readonly string[]) {
-    const payload = fromLevelIds === undefined ? { levelIds } : { levelIds, fromLevelIds };
-    return server.inject({ method: 'PUT', url: `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels/order`, cookies, headers: writeHeader, payload });
-  }
-
-  function addAisle(cookies: Cookies, levelId: string, payload: object = aisleA) {
-    return server.inject({ method: 'POST', url: `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels/${levelId}/aisles`, cookies, headers: writeHeader, payload });
   }
 
   async function garageRoyWithP1AndP2(): Promise<{ cookies: Cookies; map: DashboardLotMap }> {
     const cookies = await signIn(pierre);
-    await addLevel(cookies, 'P1');
-    const map = (await addLevel(cookies, 'P2')).json<DashboardLotMap>();
+    await routes.addLevel(cookies, 'P1');
+    const map = (await routes.addLevel(cookies, 'P2')).json<DashboardLotMap>();
     return { cookies, map };
-  }
-
-  function levelIdOf(map: DashboardLotMap, code: string): string {
-    return map.levels.find((level) => level.code === code)?.id ?? '';
   }
 
   function parkingDemoP1(): string {
@@ -61,7 +40,7 @@ describe('dashboard lot map routes', () => {
 
       expect(map.levels.map(({ code, displayOrder }) => [code, displayOrder])).toEqual([['P1', 1], ['P2', 2]]);
 
-      const swapped = await reorder(cookies, [levelIdOf(map, 'P2'), levelIdOf(map, 'P1')]);
+      const swapped = await routes.reorder(cookies, [levelIdOf(map, 'P2'), levelIdOf(map, 'P1')]);
 
       expect(swapped.statusCode).toBe(200);
       expect(swapped.json<DashboardLotMap>().levels.map(({ code, displayOrder }) => [code, displayOrder])).toEqual([['P2', 1], ['P1', 2]]);
@@ -70,51 +49,52 @@ describe('dashboard lot map routes', () => {
     it('trims the code, and refuses a code the lot already has', async () => {
       const cookies = await signIn(pierre);
 
-      const added = await addLevel(cookies, '  P1 ');
-      const again = await addLevel(cookies, 'P1');
+      const added = await routes.addLevel(cookies, '  P1 ');
+      const again = await routes.addLevel(cookies, 'P1');
 
       expect(added.json<DashboardLotMap>().levels.map(({ code }) => code)).toEqual(['P1']);
       expect(again.statusCode).toBe(409);
       expect(again.json()).toMatchObject({ error: 'LEVEL_CODE_TAKEN' });
     });
 
-    it('refuses an empty code and a 21st level', async () => {
+    it('refuses an empty code and a 21st level, even one with a taken code, as the SQL does', async () => {
       const cookies = await signIn(pierre);
       for (let level = 1; level <= 20; level += 1) {
-        await addLevel(cookies, `P${level}`);
+        await routes.addLevel(cookies, `P${level}`);
       }
 
-      expect((await addLevel(cookies, '   ')).json()).toMatchObject({ statusCode: 400, error: 'LEVEL_CODE_INVALID' });
-      expect((await addLevel(cookies, 'P21')).json()).toMatchObject({ statusCode: 409, error: 'LEVEL_LIMIT_REACHED' });
+      expect((await routes.addLevel(cookies, '   ')).json()).toMatchObject({ statusCode: 400, error: 'LEVEL_CODE_INVALID' });
+      expect((await routes.addLevel(cookies, 'P21')).json()).toMatchObject({ statusCode: 409, error: 'LEVEL_LIMIT_REACHED' });
+      expect((await routes.addLevel(cookies, 'P1')).json()).toMatchObject({ statusCode: 409, error: 'LEVEL_LIMIT_REACHED' });
     });
 
     it('refuses an order that leaves out a level or names another lot’s, and keeps the order', async () => {
       const { cookies, map } = await garageRoyWithP1AndP2();
 
-      const missing = await reorder(cookies, [levelIdOf(map, 'P2')]);
-      const foreign = await reorder(cookies, [levelIdOf(map, 'P2'), parkingDemoP1()]);
+      const missing = await routes.reorder(cookies, [levelIdOf(map, 'P2')]);
+      const foreign = await routes.reorder(cookies, [levelIdOf(map, 'P2'), parkingDemoP1()]);
 
       for (const response of [missing, foreign]) {
         expect(response.statusCode).toBe(409);
         expect(response.json()).toMatchObject({ error: 'LEVEL_ORDER_INVALID' });
       }
-      expect((await readMap(cookies)).json<DashboardLotMap>().levels.map(({ code }) => code)).toEqual(['P1', 'P2']);
+      expect((await routes.readMap(cookies)).json<DashboardLotMap>().levels.map(({ code }) => code)).toEqual(['P1', 'P2']);
     });
 
     it('refuses a move made from the order another tab changed since, even one a step from the saved order', async () => {
       const cookies = await signIn(pierre);
-      await addLevel(cookies, 'P1');
-      await addLevel(cookies, 'P2');
-      const map = (await addLevel(cookies, 'P3')).json<DashboardLotMap>();
+      await routes.addLevel(cookies, 'P1');
+      await routes.addLevel(cookies, 'P2');
+      const map = (await routes.addLevel(cookies, 'P3')).json<DashboardLotMap>();
       const [p1, p2, p3] = [levelIdOf(map, 'P1'), levelIdOf(map, 'P2'), levelIdOf(map, 'P3')];
-      await reorder(cookies, [p2, p1, p3], [p1, p2, p3]);
-      await reorder(cookies, [p2, p3, p1], [p2, p1, p3]);
+      await routes.reorder(cookies, [p2, p1, p3], [p1, p2, p3]);
+      await routes.reorder(cookies, [p2, p3, p1], [p2, p1, p3]);
 
-      const stale = await reorder(cookies, [p2, p1, p3], [p1, p2, p3]);
+      const stale = await routes.reorder(cookies, [p2, p1, p3], [p1, p2, p3]);
 
       expect(stale.statusCode).toBe(409);
       expect(stale.json()).toMatchObject({ error: 'LEVEL_ORDER_INVALID' });
-      expect((await readMap(cookies)).json<DashboardLotMap>().levels.map(({ code }) => code)).toEqual(['P2', 'P3', 'P1']);
+      expect((await routes.readMap(cookies)).json<DashboardLotMap>().levels.map(({ code }) => code)).toEqual(['P2', 'P3', 'P1']);
     });
 
     it.each([
@@ -124,16 +104,16 @@ describe('dashboard lot map routes', () => {
     ])('answers 400 to %s', async (_case, levelIds) => {
       const cookies = await signIn(pierre);
 
-      expect((await reorder(cookies, levelIds)).statusCode).toBe(400);
+      expect((await routes.reorder(cookies, levelIds)).statusCode).toBe(400);
     });
   });
 
   describe('aisles', () => {
     it('gives Garage Roy its exit lane, minor 0, with its first level, and adds aisle A with minor 1 and its rectangle', async () => {
       const cookies = await signIn(pierre);
-      const withP1 = (await addLevel(cookies, 'P1')).json<DashboardLotMap>();
+      const withP1 = (await routes.addLevel(cookies, 'P1')).json<DashboardLotMap>();
 
-      const response = await addAisle(cookies, levelIdOf(withP1, 'P1'));
+      const response = await routes.addAisle(cookies, levelIdOf(withP1, 'P1'));
 
       expect(response.statusCode).toBe(200);
       expect(response.json<DashboardLotMap>().levels[0]?.aisles).toEqual([
@@ -159,31 +139,41 @@ describe('dashboard lot map routes', () => {
     ])('refuses %s with 400 and saves nothing', async (_case, payload, error) => {
       const { cookies, map } = await garageRoyWithP1AndP2();
 
-      const response = await addAisle(cookies, levelIdOf(map, 'P1'), payload);
+      const response = await routes.addAisle(cookies, levelIdOf(map, 'P1'), payload);
 
       expect(response.statusCode).toBe(400);
       expect(response.json()).toMatchObject({ error });
-      expect((await readMap(cookies)).json()).toEqual(map);
+      expect((await routes.readMap(cookies)).json()).toEqual(map);
     });
 
     it('refuses a minor another aisle of the lot uses, on another level too, and saves nothing', async () => {
       const { cookies, map } = await garageRoyWithP1AndP2();
-      const withA = (await addAisle(cookies, levelIdOf(map, 'P1'))).json<DashboardLotMap>();
+      const withA = (await routes.addAisle(cookies, levelIdOf(map, 'P1'))).json<DashboardLotMap>();
 
-      const response = await addAisle(cookies, levelIdOf(map, 'P2'), { ...aisleA, code: 'B' });
+      const response = await routes.addAisle(cookies, levelIdOf(map, 'P2'), { ...aisleA, code: 'B' });
 
       expect(response.statusCode).toBe(409);
       expect(response.json()).toMatchObject({ error: 'AISLE_MINOR_TAKEN' });
-      expect((await readMap(cookies)).json()).toEqual(withA);
+      expect((await routes.readMap(cookies)).json()).toEqual(withA);
     });
 
     it('refuses a code the level already has', async () => {
       const { cookies, map } = await garageRoyWithP1AndP2();
-      await addAisle(cookies, levelIdOf(map, 'P1'));
+      await routes.addAisle(cookies, levelIdOf(map, 'P1'));
 
-      const response = await addAisle(cookies, levelIdOf(map, 'P1'), { ...aisleA, beaconMinor: 2 });
+      const response = await routes.addAisle(cookies, levelIdOf(map, 'P1'), { ...aisleA, beaconMinor: 2 });
 
       expect(response.json()).toMatchObject({ statusCode: 409, error: 'AISLE_CODE_TAKEN' });
+    });
+
+    it('refuses the exit lane’s code on its level as reserved, and accepts it on another level', async () => {
+      const { cookies, map } = await garageRoyWithP1AndP2();
+
+      const onExitLaneLevel = await routes.addAisle(cookies, levelIdOf(map, 'P1'), { ...aisleA, code: 'Sortie' });
+      const onOtherLevel = await routes.addAisle(cookies, levelIdOf(map, 'P2'), { ...aisleA, code: 'Sortie' });
+
+      expect(onExitLaneLevel.json()).toEqual({ statusCode: 409, error: 'AISLE_CODE_RESERVED', message: "Sortie is the code of this level's exit lane; choose another code." });
+      expect(onOtherLevel.statusCode).toBe(200);
     });
   });
 
@@ -191,64 +181,10 @@ describe('dashboard lot map routes', () => {
     it('gives the platform UUID, the lot major and every minor, ready to program', async () => {
       const cookies = await signIn(sophie);
 
-      const map = (await readMap(cookies, PARKING_DEMO_ID)).json<DashboardLotMap>();
+      const map = (await routes.readMap(cookies, PARKING_DEMO_ID)).json<DashboardLotMap>();
 
       expect(map).toMatchObject({ lotId: PARKING_DEMO_ID, lotName: 'Parking Démo', platformUuid: PLATFORM_UUID, beaconMajor: 1 });
       expect(map.levels.flatMap(({ aisles }) => aisles.map(({ code, beaconMinor }) => [code, beaconMinor]))).toEqual([['A', 1], ['B', 2], ['Sortie', 0]]);
-    });
-  });
-
-  describe('another operator', () => {
-    it('answers Sophie not found on every route of Pierre’s lot, even with a taken code or minor, and changes nothing', async () => {
-      const { map } = await garageRoyWithP1AndP2();
-      const before = structuredClone(maps.levels);
-      const cookies = await dashboardCookieFor(server, sophie);
-      const p1 = levelIdOf(map, 'P1');
-
-      const responses = [
-        await readMap(cookies),
-        await addLevel(cookies, 'P1'),
-        await reorder(cookies, [levelIdOf(map, 'P2'), p1]),
-        await addAisle(cookies, p1),
-        await addAisle(cookies, p1, { ...aisleA, code: 'Sortie' }),
-      ];
-
-      for (const response of responses) {
-        expect(response.statusCode).toBe(404);
-        expect(response.json()).toEqual(LOT_NOT_FOUND);
-      }
-      expect(maps.levels).toEqual(before);
-    });
-
-    it('answers Pierre level not found when he adds an aisle under his lot to a level of Sophie’s', async () => {
-      const cookies = await signIn(pierre);
-      const before = structuredClone(maps.levels);
-
-      const response = await addAisle(cookies, parkingDemoP1(), { ...aisleA, beaconMinor: 9 });
-
-      expect(response.statusCode).toBe(404);
-      expect(response.json()).toMatchObject({ error: 'LEVEL_NOT_FOUND' });
-      expect(maps.levels).toEqual(before);
-    });
-
-    it('checks the body before the lot, so a refused body says nothing about whose lot it is', async () => {
-      const cookies = await signIn(sophie);
-
-      expect((await addLevel(cookies, '   ')).json()).toMatchObject({ statusCode: 400, error: 'LEVEL_CODE_INVALID' });
-    });
-
-    it('answers a member without an operator not found', async () => {
-      const cookies = await signIn(nouvelOperateur);
-
-      expect((await readMap(cookies)).json()).toEqual(LOT_NOT_FOUND);
-      expect((await addLevel(cookies, 'P1')).json()).toEqual(LOT_NOT_FOUND);
-    });
-
-    it('answers the same 404 for a malformed lot id or level id', async () => {
-      const cookies = await signIn(pierre);
-
-      expect((await readMap(cookies, 'not-a-uuid')).json()).toEqual(LOT_NOT_FOUND);
-      expect((await addAisle(cookies, 'not-a-uuid')).json()).toEqual(LOT_NOT_FOUND);
     });
   });
 
@@ -256,7 +192,7 @@ describe('dashboard lot map routes', () => {
     const cookies = await signIn(pierre);
     maps.busyLots.add(GARAGE_ROY_ID);
 
-    const response = await addLevel(cookies, 'P1');
+    const response = await routes.addLevel(cookies, 'P1');
 
     expect(response.statusCode).toBe(503);
     expect(response.headers['retry-after']).toBe('3');

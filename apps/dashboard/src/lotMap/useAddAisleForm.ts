@@ -15,6 +15,7 @@ const EMPTY_AISLE: FieldValues<AisleDraftField> = { code: '', beaconMinor: '', x
 const FIELD_OF_CODE: Partial<Readonly<Record<DisplayedErrorCode, AisleDraftField>>> = {
   AISLE_CODE_INVALID: 'code',
   AISLE_CODE_TAKEN: 'code',
+  AISLE_CODE_RESERVED: 'code',
   AISLE_MINOR_INVALID: 'beaconMinor',
   AISLE_MINOR_TAKEN: 'beaconMinor',
 };

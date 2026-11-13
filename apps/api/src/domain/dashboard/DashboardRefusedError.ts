@@ -1,20 +1,15 @@
 import type { DashboardErrorCode } from '@palier/shared-types';
-import type { AisleDraftErrorCode } from '@palier/shared-types/aisleDraft';
 import { LEGAL_NAME_LENGTH } from '@palier/shared-types/dashboard';
-import type { LevelDraftErrorCode } from '@palier/shared-types/levelDraft';
 import type { LotDraftErrorCode } from '@palier/shared-types/lotDraft';
 import type { PricingErrorCode } from '@palier/shared-types/lotPricing';
-import { LOT_MAP_MESSAGES } from './lotMapMessages.ts';
-import type { LotMapRefusal } from './LotMapRepository.ts';
+import { LOT_MAP_MESSAGES, type LotMapReason } from './lotMapMessages.ts';
 import { LOT_SETUP_MESSAGES } from './lotSetupMessages.ts';
 
 export type DashboardRefusalReason =
   | Extract<DashboardErrorCode, 'LEGAL_NAME_INVALID' | 'OPERATOR_EXISTS' | 'NO_OPERATOR' | 'LOT_NOT_FOUND' | 'OPERATOR_NOT_FOUND' | 'STRIPE_UNAVAILABLE'>
   | LotDraftErrorCode
   | PricingErrorCode
-  | LevelDraftErrorCode
-  | AisleDraftErrorCode
-  | LotMapRefusal;
+  | LotMapReason;
 
 const MESSAGES: Readonly<Record<DashboardRefusalReason, string>> = {
   LEGAL_NAME_INVALID: `The legal name must be ${LEGAL_NAME_LENGTH.minimum} to ${LEGAL_NAME_LENGTH.maximum} characters, with no invisible characters.`,

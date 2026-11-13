@@ -6,6 +6,7 @@ import { MAX_LEVELS_PER_LOT } from '@palier/shared-types/levelDraft';
 import { isMoveOfCurrentOrder } from '../../../src/domain/dashboard/levelOrder.ts';
 import { LOT_MAP_WRITTEN, type LevelPlacement, type LotMapRepository, type LotMapWrite } from '../../../src/domain/dashboard/LotMapRepository.ts';
 import { aisleRectangleOf } from '../../../src/domain/lots/AisleRectangle.ts';
+import { EXIT_LANE_CODE } from '../../../src/domain/lots/exitLane.ts';
 import { parkingDemoAisles, parkingDemoLevels } from '../../../src/seed/fixtures/parkingDemo.ts';
 import type { FakeLotStore } from './fakeLotSetupRepository.ts';
 
@@ -54,14 +55,14 @@ export class FakeLotMapRepository implements LotMapRepository {
   addLevel(operatorId: string, lotId: string, code: string): Promise<LotMapWrite> {
     return this.#write(operatorId, lotId, () => {
       const levels = this.#levelsOf(lotId);
-      if (levels.some((level) => level.code === code)) {
-        return 'LEVEL_CODE_TAKEN';
-      }
       if (levels.length >= MAX_LEVELS_PER_LOT) {
         return 'LEVEL_LIMIT_REACHED';
       }
+      if (levels.some((level) => level.code === code)) {
+        return 'LEVEL_CODE_TAKEN';
+      }
       const hasExitLane = levels.some(({ aisles }) => aisles.some(({ isExitLane }) => isExitLane));
-      const exitLane: DashboardMapAisle = { id: randomUUID(), code: 'Sortie', beaconMinor: EXIT_LANE_MINOR, isExitLane: true, rectangle: null };
+      const exitLane: DashboardMapAisle = { id: randomUUID(), code: EXIT_LANE_CODE, beaconMinor: EXIT_LANE_MINOR, isExitLane: true, rectangle: null };
       this.levels.push({ id: randomUUID(), lotId, code, displayOrder: levels.length + 1, aisles: hasExitLane ? [] : [exitLane] });
       return LOT_MAP_WRITTEN;
     });

@@ -1,3 +1,5 @@
+import { EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
+import { EXIT_LANE_CODE } from '../../domain/lots/exitLane.ts';
 import type { aisle, level, parkingLot, spot } from '../../infrastructure/postgres/schema.ts';
 import { LAVOIE_OPERATOR_ID } from './operators.ts';
 import { SEEDED_PRICING_POLICY } from './pricing.ts';
@@ -40,7 +42,7 @@ export const parkingTestPaliersAisles: (typeof aisle.$inferInsert)[] = [
   { id: AISLE_A_ID, levelId: LEVEL_P1_ID, lotId: PARKING_TEST_PALIERS_ID, code: 'A', beaconMinor: 1 },
   { id: AISLE_C_ID, levelId: LEVEL_P2_ID, lotId: PARKING_TEST_PALIERS_ID, code: 'C', beaconMinor: 2 },
   { id: AISLE_D_ID, levelId: LEVEL_P2_ID, lotId: PARKING_TEST_PALIERS_ID, code: 'D', beaconMinor: 3 },
-  { id: EXIT_LANE_ID, levelId: LEVEL_P1_ID, lotId: PARKING_TEST_PALIERS_ID, code: 'Sortie', beaconMinor: 0, isExitLane: true },
+  { id: EXIT_LANE_ID, levelId: LEVEL_P1_ID, lotId: PARKING_TEST_PALIERS_ID, code: EXIT_LANE_CODE, beaconMinor: EXIT_LANE_MINOR, isExitLane: true },
 ];
 
 export const parkingTestPaliersSpots: SpotFixture[] = [

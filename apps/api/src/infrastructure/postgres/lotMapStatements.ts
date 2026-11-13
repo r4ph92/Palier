@@ -3,11 +3,9 @@ import type { AisleDraft } from '@palier/shared-types/aisleDraft';
 import { EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { MAX_LEVELS_PER_LOT } from '@palier/shared-types/levelDraft';
 import type { LevelPlacement } from '../../domain/dashboard/LotMapRepository.ts';
+import { EXIT_LANE_CODE } from '../../domain/lots/exitLane.ts';
 import type { OwnedLot } from './lockParkingLot.ts';
 import { AISLE_MINOR_UNIQUE } from './lotSchema.ts';
-
-// The code stored for the exit lane; the dashboard and the app show their own translated name.
-export const EXIT_LANE_CODE = 'Sortie';
 
 // Levels in display order, aisles by code with the exit lane last; a lot with no level reads as one row of nulls.
 export function readLotMapStatement({ operatorId, lotId }: OwnedLot): SQL {

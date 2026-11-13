@@ -157,6 +157,7 @@ export const en: Dictionary = {
     LEVEL_NOT_FOUND: 'This level cannot be found. Reload the map.',
     AISLE_CODE_INVALID: 'The aisle code must be 1 to %{aisleCodeMaximum} characters, with no invisible characters.',
     AISLE_CODE_TAKEN: 'This level already has an aisle with this code.',
+    AISLE_CODE_RESERVED: 'This code belongs to the exit lane of this level. Choose another one.',
     AISLE_MINOR_INVALID: 'Enter a whole number from %{minorMinimum} to %{minorMaximum}. Minor 0 is reserved for the exit lane.',
     AISLE_MINOR_TAKEN: 'Another aisle of this parking lot already uses this minor.',
     AISLE_RECTANGLE_INVALID: 'Enter a whole number from 0 to %{gridMaximum}; width and height are at least 1.',
