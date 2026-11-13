@@ -9,10 +9,10 @@ describe('reading an amount with stray spaces or signs (QA #64)', () => {
     ['"1 8", digits split by a space', '1 8'],
     ['"$18$", a dollar sign on both sides', '$18$'],
   ])('refuses %s instead of reading another amount', (_case, text) => {
-    expect(parseAmount(text)).toEqual(INVALID);
+    expect(parseAmount(text, 'fr')).toEqual(INVALID);
   });
 
   it('still reads "1 000,00" with its thousands space', () => {
-    expect(parseAmount('1 000,00')).toEqual({ ok: true, value: 100_000 });
+    expect(parseAmount('1 000,00', 'fr')).toEqual({ ok: true, value: 100_000 });
   });
 });

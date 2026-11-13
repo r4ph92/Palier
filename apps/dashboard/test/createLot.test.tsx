@@ -59,7 +59,7 @@ describe('creating a lot', () => {
     expect(screen.getByText('Entrez le nom du stationnement.').id).toBe('lot-name-error');
     expect(screen.getByLabelText('Latitude (degrés décimaux)').getAttribute('aria-describedby')).toBe('lot-latitude-hint lot-latitude-error');
     expect(screen.getByText('Entrez la latitude en degrés décimaux, de -90 à 90.')).toBeDefined();
-    expect(screen.queryByText('Entrez la longitude en degrés décimaux, de -180 à 180.')).toBeNull();
+    expect(screen.getByText('Entrez la longitude en degrés décimaux, de -180 à 180.').id).toBe('lot-longitude-error');
     expect(screen.getByText('Entrez un nombre entier de places, de 0 à 10 000.')).toBeDefined();
     expect(api.requests).not.toContain('POST /lots');
   });

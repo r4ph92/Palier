@@ -36,12 +36,12 @@ function dailyCapOf(parsed: ParsedNumber): number | null {
   return !parsed.ok && parsed.reason === 'empty' ? null : numberOrNaN(parsed);
 }
 
-function readPricing(values: FieldValues<PricingField>): ReadForm<PricingField, LotPricingRequest> {
+function readPricing(values: FieldValues<PricingField>, language: Language): ReadForm<PricingField, LotPricingRequest> {
   const pricing: LotPricingRequest = {
-    incrementCents: numberOrNaN(parseAmount(values.incrementCents)),
-    incrementMinutes: numberOrNaN(parseWholeNumber(values.incrementMinutes)),
-    dailyCapCents: dailyCapOf(parseAmount(values.dailyCapCents)),
-    holdQuota: numberOrNaN(parseWholeNumber(values.holdQuota)),
+    incrementCents: numberOrNaN(parseAmount(values.incrementCents, language)),
+    incrementMinutes: numberOrNaN(parseWholeNumber(values.incrementMinutes, language)),
+    dailyCapCents: dailyCapOf(parseAmount(values.dailyCapCents, language)),
+    holdQuota: numberOrNaN(parseWholeNumber(values.holdQuota, language)),
   };
   return readFormOf(pricing, pricingErrors(pricing));
 }
@@ -58,7 +58,7 @@ export function usePricingForm({ lotId, pricing, onSaved }: PricingFormTarget): 
     await dashboardClient.setLotPricing(lotId, request);
     onSaved();
   };
-  const form = useFieldForm({ initialValues: valuesOf(pricing, language), read: readPricing, send, fieldOfCode: FIELD_OF_CODE });
+  const form = useFieldForm({ initialValues: valuesOf(pricing, language), read: (values) => readPricing(values, language), send, fieldOfCode: FIELD_OF_CODE });
   useAmountsInLanguage(form, language);
   return form;
 }
@@ -72,7 +72,7 @@ function useAmountsInLanguage(form: FieldForm<PricingField>, language: Language)
   }
   setShownIn(language);
   for (const field of AMOUNT_FIELDS) {
-    const amount = parseAmount(form.values[field]);
+    const amount = parseAmount(form.values[field], shownIn);
     if (amount.ok && form.errors[field] === undefined) {
       form.setValue(field, amountInputOf(amount.value, language));
     }
