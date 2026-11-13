@@ -3,7 +3,6 @@ import { GARAGE_ROY_ID } from '../../../src/seed/fixtures/garageRoy.ts';
 import { PARKING_DEMO_ID } from '../../../src/seed/fixtures/parkingDemo.ts';
 import type { FakeLotStore } from './fakeLotSetupRepository.ts';
 
-
 // The story's Parking Démo: 3 occupied, 1 assigned with its entry confirmed, 1 held, 1 occupied-unknown, 1 out of service, 3 free, 7 vehicles counted.
 export const parkingDemoOccupancy: LevelOccupancy = {
   lotName: 'Parking Démo',
@@ -13,7 +12,6 @@ export const parkingDemoOccupancy: LevelOccupancy = {
 };
 
 export const garageRoyOccupancy: LevelOccupancy = { lotName: 'Garage Roy', vehicleCount: 0, levels: [], confirmedAssignedCount: 0 };
-
 
 // Answers only for a lot of the operator asking, like the SQL does.
 export class FakeLevelOccupancyReader implements LevelOccupancyReader {

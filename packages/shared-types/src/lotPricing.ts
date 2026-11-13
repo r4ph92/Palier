@@ -12,20 +12,20 @@ export const DAILY_CAP_CENTS_LIMITS = { minimum: STRIPE_MINIMUM_CENTS, maximum: 
 export const HOLD_QUOTA_LIMITS = { minimum: 0, maximum: 50 } as const;
 export const DEFAULT_HOLD_QUOTA = 3;
 
-// D1: each started increment costs incrementCents, a day never costs more than dailyCapCents; holdQuota is the lot's guarantees at once.
-export interface LotPricing {
+// D1: each started increment costs incrementCents, and a day never costs more than dailyCapCents.
+export interface TariffPolicy {
   readonly incrementCents: number;
   readonly incrementMinutes: number;
   readonly dailyCapCents: number;
-  readonly holdQuota: number;
 }
+
+// What the pricing form sets: the tariff and the lot's guarantees at once.
+export type LotPricingSettings = TariffPolicy & { readonly holdQuota: number };
 
 // The form may send no cap: the rule then answers that it is required.
-export interface LotPricingRequest extends Omit<LotPricing, 'dailyCapCents'> {
-  readonly dailyCapCents: number | null;
-}
+export type LotPricingRequest = Omit<LotPricingSettings, 'dailyCapCents'> & { readonly dailyCapCents: number | null };
 
-export type PricingField = keyof LotPricing;
+export type PricingField = keyof LotPricingSettings;
 
 export type PricingErrorCode = Extract<
   DashboardErrorCode,

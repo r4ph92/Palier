@@ -10,15 +10,15 @@ describe('the rule for a new lot', () => {
   });
 
   it.each([
-    ['an empty name', { name: '   ' }, { name: 'LOT_NAME_INVALID' }],
+    ['a blank name', { name: '   ' }, { name: 'LOT_NAME_REQUIRED' }],
     ['a 121-character name', { name: 'x'.repeat(121) }, { name: 'LOT_NAME_INVALID' }],
     ['a name of zero-width spaces', { name: '​​' }, { name: 'LOT_NAME_INVALID' }],
     ['a name holding NUL', { name: 'Garage\u0000Nord' }, { name: 'LOT_NAME_INVALID' }],
-    ['an empty address', { address: '' }, { address: 'LOT_ADDRESS_INVALID' }],
+    ['an empty address', { address: '' }, { address: 'LOT_ADDRESS_REQUIRED' }],
     ['a 201-character address', { address: 'a'.repeat(201) }, { address: 'LOT_ADDRESS_INVALID' }],
-    ['a latitude past the pole', { latitude: 90.5 }, { latitude: 'LOT_COORDINATES_INVALID' }],
-    ['a longitude past the date line', { longitude: -180.5 }, { longitude: 'LOT_COORDINATES_INVALID' }],
-    ['a latitude that is not a number', { latitude: Number.NaN }, { latitude: 'LOT_COORDINATES_INVALID' }],
+    ['a latitude past the pole', { latitude: 90.5 }, { latitude: 'LOT_LATITUDE_INVALID' }],
+    ['a longitude past the date line', { longitude: -180.5 }, { longitude: 'LOT_LONGITUDE_INVALID' }],
+    ['a latitude that is not a number', { latitude: Number.NaN }, { latitude: 'LOT_LATITUDE_INVALID' }],
     ['a negative capacity', { capacity: -1 }, { capacity: 'LOT_CAPACITY_INVALID' }],
     ['a fractional capacity', { capacity: 40.5 }, { capacity: 'LOT_CAPACITY_INVALID' }],
     ['a capacity of 10 001', { capacity: 10_001 }, { capacity: 'LOT_CAPACITY_INVALID' }],
@@ -41,6 +41,6 @@ describe('the rule for a new lot', () => {
     const errors = lotDraftErrors({ name: '', address: '', latitude: 91, longitude: 181, capacity: -1 });
 
     expect(Object.keys(errors)).toEqual(['name', 'address', 'latitude', 'longitude', 'capacity']);
-    expect(firstFieldError(errors)).toBe('LOT_NAME_INVALID');
+    expect(firstFieldError(errors)).toBe('LOT_NAME_REQUIRED');
   });
 });

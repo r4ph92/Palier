@@ -30,7 +30,6 @@ body {
   top: var(--space-small);
 }
 
-.app-header,
 .actions-row {
   display: flex;
   flex-wrap: wrap;
@@ -43,6 +42,7 @@ body {
   margin: 0;
 }
 
+.app-header,
 .page {
   max-width: 720px;
   margin: 0 auto;

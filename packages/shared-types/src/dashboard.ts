@@ -1,5 +1,5 @@
 import { isValidDisplayText } from './displayText.ts';
-import type { LotPricing } from './lotPricing.ts';
+import type { LotPricingSettings } from './lotPricing.ts';
 import type { AisleRectangle } from './parkingSessions.ts';
 import type { SpotState } from './spotStates.ts';
 
@@ -47,14 +47,14 @@ export interface DashboardLot {
   readonly isOnline: boolean;
 }
 
-// Coordinates are null only for a lot made before #64; beaconMajor once the 16-bit majors run out.
+// Coordinates are null only for a lot made before #64; beaconMajor is null only for a lot inserted without one before #64, and past 65 535 the insert fails (decision 032).
 export interface DashboardLotDetails extends DashboardLot {
   readonly address: string;
   readonly latitude: number | null;
   readonly longitude: number | null;
   readonly capacity: number;
   readonly beaconMajor: number | null;
-  readonly pricing: LotPricing | null;
+  readonly pricing: LotPricingSettings | null;
 }
 
 export interface LevelSpotCounts {
@@ -130,9 +130,12 @@ export const DASHBOARD_ERROR_CODES = [
   'LOT_NOT_FOUND',
   'OPERATOR_NOT_FOUND',
   'STRIPE_UNAVAILABLE',
+  'LOT_NAME_REQUIRED',
   'LOT_NAME_INVALID',
+  'LOT_ADDRESS_REQUIRED',
   'LOT_ADDRESS_INVALID',
-  'LOT_COORDINATES_INVALID',
+  'LOT_LATITUDE_INVALID',
+  'LOT_LONGITUDE_INVALID',
   'LOT_CAPACITY_INVALID',
   'PRICING_INCREMENT_CENTS_INVALID',
   'PRICING_INCREMENT_MINUTES_INVALID',

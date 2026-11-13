@@ -7,7 +7,7 @@ const lockedLot = { id: PARKING_DEMO_LOCK_ID, name: 'Parking Démo', isOnline: t
 
 describe('the facts a spot hold is decided on', () => {
   it('takes the hold quota from the lot row read under the lock, without reading the lot again', async () => {
-    const scripted = new ScriptedSql().answer('read-spot-hold-facts', [{ own_active_hold: false, active_holds_in_lot: 3, held_spot_count: 3 }]);
+    const scripted = new ScriptedSql().answer('read-spot-hold-facts', [{ own_active_hold: false, active_holds_in_lot: 3, held_spot_count: 3, assigned_spot_count: 0 }]);
 
     const facts = await readSpotHoldFacts(scripted.executor(), lockedLot, 'driver-julie');
 

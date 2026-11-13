@@ -24,7 +24,7 @@ export type {
 export type { AisleDraft, AisleDraftErrorCode, AisleDraftErrors, AisleDraftField, AisleRequest } from './aisleDraft.ts';
 export type { LevelDraft, LevelDraftErrorCode, LevelDraftErrors, LevelDraftField } from './levelDraft.ts';
 export type { LotDraft, LotDraftErrorCode, LotDraftErrors, LotDraftField } from './lotDraft.ts';
-export type { LotPricing, LotPricingRequest, PricingErrorCode, PricingErrors, PricingField } from './lotPricing.ts';
+export type { LotPricingRequest, LotPricingSettings, TariffPolicy, PricingErrorCode, PricingErrors, PricingField } from './lotPricing.ts';
 export type { CurrentDriver, DriverProfile, SignInResponse, TestDriver, TestDriverListResponse } from './drivers.ts';
 export type {
   ActiveEntrySessionState,

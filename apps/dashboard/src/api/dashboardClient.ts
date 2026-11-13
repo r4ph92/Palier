@@ -18,6 +18,8 @@ import { DashboardApiError } from './DashboardApiError.ts';
 const BASE_PATH = '/v1/dashboard';
 const NO_CONTENT = 204;
 const JSON_TYPE = 'application/json';
+// Shorter than the 30 s occupancy poll, so an answer that never comes counts as a failed poll before the next one starts.
+export const REQUEST_TIMEOUT_MILLISECONDS = 20_000;
 
 interface DashboardRequest {
   readonly method: 'GET' | 'POST' | 'PUT';
@@ -41,11 +43,17 @@ function requestInit({ method, body }: DashboardRequest): RequestInit {
 }
 
 export async function dashboardRequest<T>(path: string, request: DashboardRequest = READ): Promise<T> {
-  const response = await fetch(`${BASE_PATH}${path}`, requestInit(request));
-  if (!response.ok) {
-    throw new DashboardApiError(response.status, await errorCodeOf(response));
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MILLISECONDS);
+  try {
+    const response = await fetch(`${BASE_PATH}${path}`, { ...requestInit(request), signal: controller.signal });
+    if (!response.ok) {
+      throw new DashboardApiError(response.status, await errorCodeOf(response));
+    }
+    return (response.status === NO_CONTENT ? undefined : await response.json()) as T;
+  } finally {
+    clearTimeout(timer);
   }
-  return (response.status === NO_CONTENT ? undefined : await response.json()) as T;
 }
 
 async function errorCodeOf(response: Response): Promise<string | undefined> {

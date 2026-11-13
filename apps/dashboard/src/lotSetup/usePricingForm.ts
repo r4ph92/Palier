@@ -1,4 +1,4 @@
-import { DEFAULT_HOLD_QUOTA, pricingErrors, type LotPricing, type LotPricingRequest, type PricingErrorCode, type PricingField } from '@palier/shared-types/lotPricing';
+import { DEFAULT_HOLD_QUOTA, pricingErrors, type LotPricingSettings, type LotPricingRequest, type PricingErrorCode, type PricingField } from '@palier/shared-types/lotPricing';
 import { useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import { readFormOf, useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
@@ -19,7 +19,7 @@ const AMOUNT_FIELDS = ['incrementCents', 'dailyCapCents'] as const satisfies rea
 
 const NO_PRICING_YET: FieldValues<PricingField> = { incrementCents: '', incrementMinutes: '', dailyCapCents: '', holdQuota: String(DEFAULT_HOLD_QUOTA) };
 
-function valuesOf(pricing: LotPricing | null, language: Language): FieldValues<PricingField> {
+function valuesOf(pricing: LotPricingSettings | null, language: Language): FieldValues<PricingField> {
   if (pricing === null) {
     return NO_PRICING_YET;
   }
@@ -36,19 +36,19 @@ function dailyCapOf(parsed: ParsedNumber): number | null {
   return !parsed.ok && parsed.reason === 'empty' ? null : numberOrNaN(parsed);
 }
 
-function readPricing(values: FieldValues<PricingField>): ReadForm<PricingField, LotPricingRequest> {
+function readPricing(values: FieldValues<PricingField>, language: Language): ReadForm<PricingField, LotPricingRequest> {
   const pricing: LotPricingRequest = {
-    incrementCents: numberOrNaN(parseAmount(values.incrementCents)),
-    incrementMinutes: numberOrNaN(parseWholeNumber(values.incrementMinutes)),
-    dailyCapCents: dailyCapOf(parseAmount(values.dailyCapCents)),
-    holdQuota: numberOrNaN(parseWholeNumber(values.holdQuota)),
+    incrementCents: numberOrNaN(parseAmount(values.incrementCents, language)),
+    incrementMinutes: numberOrNaN(parseWholeNumber(values.incrementMinutes, language)),
+    dailyCapCents: dailyCapOf(parseAmount(values.dailyCapCents, language)),
+    holdQuota: numberOrNaN(parseWholeNumber(values.holdQuota, language)),
   };
   return readFormOf(pricing, pricingErrors(pricing));
 }
 
 export interface PricingFormTarget {
   readonly lotId: string;
-  readonly pricing: LotPricing | null;
+  readonly pricing: LotPricingSettings | null;
   readonly onSaved: () => void;
 }
 
@@ -58,7 +58,7 @@ export function usePricingForm({ lotId, pricing, onSaved }: PricingFormTarget): 
     await dashboardClient.setLotPricing(lotId, request);
     onSaved();
   };
-  const form = useFieldForm({ initialValues: valuesOf(pricing, language), read: readPricing, send, fieldOfCode: FIELD_OF_CODE });
+  const form = useFieldForm({ initialValues: valuesOf(pricing, language), read: (values) => readPricing(values, language), send, fieldOfCode: FIELD_OF_CODE });
   useAmountsInLanguage(form, language);
   return form;
 }
@@ -72,7 +72,7 @@ function useAmountsInLanguage(form: FieldForm<PricingField>, language: Language)
   }
   setShownIn(language);
   for (const field of AMOUNT_FIELDS) {
-    const amount = parseAmount(form.values[field]);
+    const amount = parseAmount(form.values[field], shownIn);
     if (amount.ok && form.errors[field] === undefined) {
       form.setValue(field, amountInputOf(amount.value, language));
     }

@@ -1,4 +1,4 @@
-import type { DashboardLotDetails, LotDraft, LotPricing } from '@palier/shared-types';
+import type { DashboardLotDetails, LotDraft, LotPricingSettings } from '@palier/shared-types';
 import { type FakeApiState, type FakeResponse, refused, summaryOf } from './fakeDashboardData.ts';
 import { isMapRequest, routeMap } from './fakeMapRoutes.ts';
 
@@ -38,7 +38,7 @@ function routeLot({ occupancy, lots }: MemberLots, request: string, body: Record
     return readOccupancy(occupancy, lots, occupancyLotId);
   }
   const pricingLotId = PRICING_PATH.exec(request)?.[1];
-  return pricingLotId === undefined ? readLot(lots, request) : setPricing(lots, pricingLotId, body as unknown as LotPricing);
+  return pricingLotId === undefined ? readLot(lots, request) : setPricing(lots, pricingLotId, body as unknown as LotPricingSettings);
 }
 
 function readOccupancy(occupancies: FakeApiState['occupancy'], lots: readonly DashboardLotDetails[], lotId: string): FakeResponse {
@@ -61,7 +61,7 @@ function createLot(lots: DashboardLotDetails[], draft: LotDraft): FakeResponse {
   return { status: 201, body: created };
 }
 
-function setPricing(lots: DashboardLotDetails[], lotId: string, pricing: LotPricing): FakeResponse {
+function setPricing(lots: DashboardLotDetails[], lotId: string, pricing: LotPricingSettings): FakeResponse {
   const index = lots.findIndex(({ id }) => id === lotId);
   const lot = lots[index];
   if (lot === undefined) {

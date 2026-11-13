@@ -1,9 +1,7 @@
-// D1: each started increment costs incrementCents, and a day never costs more than dailyCapCents.
-export interface PricingPolicy {
-  readonly incrementCents: number;
-  readonly incrementMinutes: number;
-  readonly dailyCapCents: number;
-}
+import type { TariffPolicy } from '@palier/shared-types/lotPricing';
+
+// The one D1 tariff, shared with the dashboard form.
+export type PricingPolicy = TariffPolicy;
 
 export class PricingPolicyInvalidError extends Error {
   readonly lotId: string | undefined;
@@ -27,7 +25,7 @@ export function parsePricingPolicy(storedPolicy: unknown, dailyCapCents: number 
   return { incrementCents, incrementMinutes, dailyCapCents };
 }
 
-export type StoredPricingPolicy = Pick<PricingPolicy, 'incrementCents' | 'incrementMinutes'>;
+export type StoredPricingPolicy = Omit<TariffPolicy, 'dailyCapCents'>;
 
 // What the lot's jsonb column holds, the one shape parsePricingPolicy reads back.
 export function storedPricingPolicyOf({ incrementCents, incrementMinutes }: StoredPricingPolicy): StoredPricingPolicy {

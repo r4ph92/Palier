@@ -1,7 +1,7 @@
 import type { DashboardLotDetails } from '@palier/shared-types';
 import { firstFieldError } from '@palier/shared-types/fieldErrors';
 import { lotDraftErrors, type LotDraft } from '@palier/shared-types/lotDraft';
-import { pricingErrors, type LotPricing, type LotPricingRequest } from '@palier/shared-types/lotPricing';
+import { pricingErrors, type LotPricingSettings, type LotPricingRequest } from '@palier/shared-types/lotPricing';
 import { DashboardRefusedError } from './DashboardRefusedError.ts';
 import type { LotSetupRepository } from './LotSetupRepository.ts';
 import type { OperatorRepository } from './OperatorRepository.ts';
@@ -51,7 +51,7 @@ export async function findLotDetailsOfMember({ operators, lots }: LotSetupSource
   return lot;
 }
 
-function validatedPricing(pricing: LotPricingRequest): LotPricing {
+function validatedPricing(pricing: LotPricingRequest): LotPricingSettings {
   const { dailyCapCents } = pricing;
   const refusal = firstFieldError(pricingErrors(pricing));
   if (refusal !== null || dailyCapCents === null) {

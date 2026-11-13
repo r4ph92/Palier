@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DashboardLot, DashboardLotDetails } from '@palier/shared-types';
 import type { LotDraft } from '@palier/shared-types/lotDraft';
-import type { LotPricing } from '@palier/shared-types/lotPricing';
+import type { LotPricingSettings } from '@palier/shared-types/lotPricing';
 import type { LotSetupRepository } from '../../../src/domain/dashboard/LotSetupRepository.ts';
 import { GARAGE_ROY_ID } from '../../../src/seed/fixtures/garageRoy.ts';
 import { LAVOIE_OPERATOR_ID, ROY_OPERATOR_ID } from '../../../src/seed/fixtures/operators.ts';
@@ -13,7 +13,7 @@ export interface OwnedLot extends DashboardLotDetails {
 }
 
 const FIRST_CREATED_MAJOR = 4;
-export const seededPricing: LotPricing = { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500, holdQuota: 3 };
+export const seededPricing: LotPricingSettings = { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500, holdQuota: 3 };
 
 export const parkingDemoDetails: DashboardLotDetails = {
   id: PARKING_DEMO_ID,
@@ -87,7 +87,7 @@ export class FakeLotSetupRepository implements LotSetupRepository {
     return Promise.resolve(withoutOwner(created));
   }
 
-  updateLotPricing(operatorId: string, lotId: string, pricing: LotPricing): Promise<DashboardLotDetails | null> {
+  updateLotPricing(operatorId: string, lotId: string, pricing: LotPricingSettings): Promise<DashboardLotDetails | null> {
     const index = this.#store.indexOf(operatorId, lotId);
     const found = this.#store.owned[index];
     if (found === undefined) {
