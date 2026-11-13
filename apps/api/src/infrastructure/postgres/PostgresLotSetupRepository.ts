@@ -1,7 +1,7 @@
 import { sql, type SQL } from 'drizzle-orm';
 import type { DashboardLotDetails } from '@palier/shared-types';
 import type { LotDraft } from '@palier/shared-types/lotDraft';
-import type { LotPricing } from '@palier/shared-types/lotPricing';
+import type { LotPricingSettings } from '@palier/shared-types/lotPricing';
 import type { LotSetupRepository } from '../../domain/dashboard/LotSetupRepository.ts';
 import { storedPricingPolicyOf } from '../../domain/pricing/PricingPolicy.ts';
 import type { Database } from './database.ts';
@@ -29,7 +29,7 @@ export class PostgresLotSetupRepository implements LotSetupRepository {
   }
 
   // Open sessions keep the pricing copied at their entry (decision 011): only parking_lot changes.
-  updateLotPricing(operatorId: string, lotId: string, pricing: LotPricing): Promise<DashboardLotDetails | null> {
+  updateLotPricing(operatorId: string, lotId: string, pricing: LotPricingSettings): Promise<DashboardLotDetails | null> {
     return this.#detailsOf(sql`
       update parking_lot
       set pricing_policy = ${JSON.stringify(storedPricingPolicyOf(pricing))}::jsonb, daily_cap_cents = ${pricing.dailyCapCents}, hold_quota = ${pricing.holdQuota}

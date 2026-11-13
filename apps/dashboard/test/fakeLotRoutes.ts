@@ -1,4 +1,4 @@
-import type { DashboardLotDetails, LotDraft, LotPricing } from '@palier/shared-types';
+import type { DashboardLotDetails, LotDraft, LotPricingSettings } from '@palier/shared-types';
 import { type FakeApiState, type FakeResponse, refused, summaryOf } from './fakeDashboardData.ts';
 
 export const CREATED_LOT_ID = '00000000-0000-4000-8000-000000000299';
@@ -20,7 +20,7 @@ export function routeLots(state: FakeApiState, request: string, body: Record<str
     return createLot(lots, body as unknown as LotDraft);
   }
   const pricingLotId = PRICING_PATH.exec(request)?.[1];
-  return pricingLotId === undefined ? readLot(lots, request) : setPricing(lots, pricingLotId, body as unknown as LotPricing);
+  return pricingLotId === undefined ? readLot(lots, request) : setPricing(lots, pricingLotId, body as unknown as LotPricingSettings);
 }
 
 function refusedWithoutOperator(request: string): FakeResponse {
@@ -38,7 +38,7 @@ function createLot(lots: DashboardLotDetails[], draft: LotDraft): FakeResponse {
   return { status: 201, body: created };
 }
 
-function setPricing(lots: DashboardLotDetails[], lotId: string, pricing: LotPricing): FakeResponse {
+function setPricing(lots: DashboardLotDetails[], lotId: string, pricing: LotPricingSettings): FakeResponse {
   const index = lots.findIndex(({ id }) => id === lotId);
   const lot = lots[index];
   if (lot === undefined) {

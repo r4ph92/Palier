@@ -15,7 +15,7 @@ export type {
   StripeOnboardingLink,
 } from './dashboard.ts';
 export type { LotDraft, LotDraftErrorCode, LotDraftErrors, LotDraftField } from './lotDraft.ts';
-export type { LotPricing, LotPricingRequest, PricingErrorCode, PricingErrors, PricingField } from './lotPricing.ts';
+export type { LotPricingRequest, LotPricingSettings, TariffPolicy, PricingErrorCode, PricingErrors, PricingField } from './lotPricing.ts';
 export type { CurrentDriver, DriverProfile, SignInResponse, TestDriver, TestDriverListResponse } from './drivers.ts';
 export type {
   ActiveEntrySessionState,

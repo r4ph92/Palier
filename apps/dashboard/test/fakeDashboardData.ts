@@ -1,4 +1,4 @@
-import type { DashboardLot, DashboardLotDetails, DashboardMeResponse, DashboardOperator, DashboardUser, LotPricing } from '@palier/shared-types';
+import type { DashboardLot, DashboardLotDetails, DashboardMeResponse, DashboardOperator, DashboardUser, LotPricingSettings } from '@palier/shared-types';
 
 export const sophie: DashboardUser = { id: '00000000-0000-4000-8000-000000000601', firstName: 'Sophie', lastName: 'Lavoie' };
 export const pierre: DashboardUser = { id: '00000000-0000-4000-8000-000000000602', firstName: 'Pierre', lastName: 'Roy' };
@@ -7,7 +7,7 @@ export const julie: DashboardUser = { id: '00000000-0000-4000-8000-000000000501'
 
 export const lavoie: DashboardOperator = { id: '00000000-0000-4000-8000-000000000101', legalName: 'Stationnements Lavoie inc.', kycStatus: 'VERIFIED' };
 const roy: DashboardOperator = { id: '00000000-0000-4000-8000-000000000102', legalName: 'Garages Roy', kycStatus: 'NOT_STARTED' };
-const seededPricing: LotPricing = { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500, holdQuota: 3 };
+const seededPricing: LotPricingSettings = { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500, holdQuota: 3 };
 export const parkingDemo: DashboardLotDetails = {
   id: '00000000-0000-4000-8000-000000000201',
   name: 'Parking Démo',

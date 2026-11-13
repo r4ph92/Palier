@@ -1,4 +1,4 @@
-import { DEFAULT_HOLD_QUOTA, pricingErrors, type LotPricing, type LotPricingRequest, type PricingErrorCode, type PricingField } from '@palier/shared-types/lotPricing';
+import { DEFAULT_HOLD_QUOTA, pricingErrors, type LotPricingSettings, type LotPricingRequest, type PricingErrorCode, type PricingField } from '@palier/shared-types/lotPricing';
 import { useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import { readFormOf, useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
@@ -19,7 +19,7 @@ const AMOUNT_FIELDS = ['incrementCents', 'dailyCapCents'] as const satisfies rea
 
 const NO_PRICING_YET: FieldValues<PricingField> = { incrementCents: '', incrementMinutes: '', dailyCapCents: '', holdQuota: String(DEFAULT_HOLD_QUOTA) };
 
-function valuesOf(pricing: LotPricing | null, language: Language): FieldValues<PricingField> {
+function valuesOf(pricing: LotPricingSettings | null, language: Language): FieldValues<PricingField> {
   if (pricing === null) {
     return NO_PRICING_YET;
   }
@@ -48,7 +48,7 @@ function readPricing(values: FieldValues<PricingField>): ReadForm<PricingField, 
 
 export interface PricingFormTarget {
   readonly lotId: string;
-  readonly pricing: LotPricing | null;
+  readonly pricing: LotPricingSettings | null;
   readonly onSaved: () => void;
 }
 
