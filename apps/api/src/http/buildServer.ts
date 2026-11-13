@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { AccountWebhookReader, OperatorStripeAccounts, OperatorStripeGateway } from '../domain/dashboard/OperatorStripe.ts';
 import type { LevelOccupancyReader } from '../domain/dashboard/LevelOccupancyReader.ts';
+import type { LotMapRepository } from '../domain/dashboard/LotMapRepository.ts';
 import type { LotSetupRepository } from '../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../domain/dashboard/OperatorRepository.ts';
 import type { DriverRepository } from '../domain/drivers/DriverRepository.ts';
@@ -58,6 +59,7 @@ export interface ServerDependencies {
     readonly operatorRepository: OperatorRepository;
     readonly lotSetupRepository: LotSetupRepository;
     readonly levelOccupancy: LevelOccupancyReader;
+    readonly lotMaps: LotMapRepository;
     readonly currentParkingSessions: CurrentParkingSessionQuery;
     readonly parkingSessionBackdater: ParkingSessionBackdater;
     readonly parkedPresumptions: ParkedPresumptionRepository;
@@ -116,6 +118,7 @@ function dashboardDependencies(
     operators: repositories.operatorRepository,
     lots: repositories.lotSetupRepository,
     occupancy: repositories.levelOccupancy,
+    maps: repositories.lotMaps,
     stripe: operatorStripe?.gateway == null ? null : { accounts: operatorStripe.accounts, gateway: operatorStripe.gateway },
     testSignInEnabled: settings.testSignInEnabled === true,
     secureCookies: settings.secureCookies ?? true,
