@@ -1,5 +1,5 @@
 import { AISLE_MINOR_LIMITS } from './beacons.ts';
-import { AISLE_RECTANGLE_KEYS, isGridValue, type AisleRectangleKey } from './aisleRectangle.ts';
+import { AISLE_RECTANGLE_KEYS, GRID_CHECK_OF, type AisleRectangleKey } from './aisleRectangle.ts';
 import type { DashboardErrorCode } from './dashboard.ts';
 import { isValidDisplayText } from './displayText.ts';
 import { fieldErrorsOf, isWholeNumberWithin, type FieldErrors } from './fieldErrors.ts';
@@ -31,6 +31,6 @@ export function aisleDraftErrors({ code, beaconMinor, rectangle }: AisleDraft): 
   return fieldErrorsOf<AisleDraftField, AisleDraftErrorCode>([
     ['code', isValidDisplayText(code, AISLE_CODE_LENGTH) ? null : 'AISLE_CODE_INVALID'],
     ['beaconMinor', isWholeNumberWithin(beaconMinor, AISLE_MINOR_LIMITS) ? null : 'AISLE_MINOR_INVALID'],
-    ...AISLE_RECTANGLE_KEYS.map((key) => [key, isGridValue(key, rectangle[key]) ? null : 'AISLE_RECTANGLE_INVALID'] as const),
+    ...AISLE_RECTANGLE_KEYS.map((key) => [key, GRID_CHECK_OF[key](rectangle[key]) ? null : 'AISLE_RECTANGLE_INVALID'] as const),
   ]);
 }
