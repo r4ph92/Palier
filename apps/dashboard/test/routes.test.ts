@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lotPath, occupancyPath, routeOf } from '../src/navigation/routes.ts';
+import { lotPath, mapPath, occupancyPath, routeOf } from '../src/navigation/routes.ts';
 
 describe('dashboard addresses', () => {
   it('opens the lot page for an encoded lot id', () => {
@@ -12,6 +12,14 @@ describe('dashboard addresses', () => {
     expect(routeOf(occupancyPath(lotId))).toEqual({ page: 'occupancy', lotId });
     expect(routeOf(`${occupancyPath(lotId)}/`)).toEqual({ page: 'occupancy', lotId });
     expect(routeOf(`/lots/${lotId}/occupancy/extra`)).toEqual({ page: 'notFound' });
+  });
+
+  it('opens the map page for a lot, with or without a trailing slash', () => {
+    const lotId = '00000000-0000-4000-8000-000000000201';
+
+    expect(routeOf(mapPath(lotId))).toEqual({ page: 'map', lotId });
+    expect(routeOf(`${mapPath(lotId)}/`)).toEqual({ page: 'map', lotId });
+    expect(routeOf(`/lots/${lotId}/map/extra`)).toEqual({ page: 'notFound' });
   });
 
   it.each(['/lots/new', '/lots/new/'])('opens the new lot page at %s, not a lot whose id is "new"', (pathname) => {
