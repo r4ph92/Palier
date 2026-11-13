@@ -1,4 +1,4 @@
-import type { DashboardLot, DashboardLotDetails, DashboardMeResponse, DashboardOperator, DashboardUser, LotPricing } from '@palier/shared-types';
+import type { DashboardLot, DashboardLotDetails, DashboardLotOccupancy, DashboardMeResponse, DashboardOperator, DashboardUser, LotPricing } from '@palier/shared-types';
 
 export const sophie: DashboardUser = { id: '00000000-0000-4000-8000-000000000601', firstName: 'Sophie', lastName: 'Lavoie' };
 export const pierre: DashboardUser = { id: '00000000-0000-4000-8000-000000000602', firstName: 'Pierre', lastName: 'Roy' };
@@ -59,10 +59,34 @@ export interface FakeApiState {
   readonly answered: Promise<Response>[];
   // Each test starts from the seeded lots; creating a lot or saving pricing changes this copy.
   readonly lots: Map<string, DashboardLotDetails[]>;
+  // By lot id; a test replaces an entry to change what the next poll reads.
+  readonly occupancy: Map<string, DashboardLotOccupancy>;
 }
 
 const operatorsByUser = new Map<string, DashboardOperator>([[sophie.id, lavoie], [pierre.id, roy]]);
 const lotsByOperator = new Map<string, readonly DashboardLotDetails[]>([[lavoie.id, [parkingDemo, parkingTestPaliers]], [roy.id, [garageRoy]]]);
+
+// The story's Parking Démo: 3 occupied, 1 assigned with its entry confirmed, 1 held, 1 occupied-unknown, 1 out of service, 3 free, 7 vehicles counted.
+export const parkingDemoOccupancy: DashboardLotOccupancy = {
+  lotId: parkingDemo.id,
+  lotName: parkingDemo.name,
+  vehicleCount: 7,
+  levels: [{ code: 'P1', counts: { AVAILABLE: 3, HELD: 1, ASSIGNED: 1, OCCUPIED: 3, OCCUPIED_UNKNOWN: 1, OUT_OF_SERVICE: 1 } }],
+  occupiedOrAssignedCount: 5,
+  counterGap: { kind: 'SPOTS_TO_CHECK', spots: 2 },
+};
+
+export function seededOccupancy(): Map<string, DashboardLotOccupancy> {
+  const garageRoyOccupancy: DashboardLotOccupancy = {
+    lotId: garageRoy.id,
+    lotName: garageRoy.name,
+    vehicleCount: 0,
+    levels: [],
+    occupiedOrAssignedCount: 0,
+    counterGap: { kind: 'SPOTS_TO_CHECK', spots: 0 },
+  };
+  return new Map([[parkingDemo.id, parkingDemoOccupancy], [garageRoy.id, garageRoyOccupancy]]);
+}
 
 export function seededLots(): Map<string, DashboardLotDetails[]> {
   return new Map([...lotsByOperator].map(([operatorId, lots]) => [operatorId, [...lots]]));

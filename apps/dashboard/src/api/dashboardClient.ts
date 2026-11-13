@@ -1,6 +1,7 @@
 import type {
   DashboardLotDetails,
   DashboardLotListResponse,
+  DashboardLotOccupancy,
   DashboardMeResponse,
   DashboardOperator,
   LotDraft,
@@ -55,6 +56,7 @@ export const dashboardClient = {
     dashboardRequest<StripeOnboardingLink>(`/operators/${encodeURIComponent(operatorId)}/stripe-onboarding`, { method: 'POST' }),
   lots: () => dashboardRequest<DashboardLotListResponse>('/lots'),
   lot: (lotId: string) => dashboardRequest<DashboardLotDetails>(`/lots/${encodeURIComponent(lotId)}`),
+  lotOccupancy: (lotId: string) => dashboardRequest<DashboardLotOccupancy>(`/lots/${encodeURIComponent(lotId)}/occupancy`),
   createLot: (draft: LotDraft) => dashboardRequest<DashboardLotDetails>('/lots', { method: 'POST', body: draft }),
   setLotPricing: (lotId: string, pricing: LotPricingRequest) =>
     dashboardRequest<DashboardLotDetails>(`/lots/${encodeURIComponent(lotId)}/pricing`, { method: 'PUT', body: pricing }),

@@ -101,3 +101,15 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+
+.count-line {
+  margin: 0 0 var(--space-small);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.gap-line {
+  margin: var(--space-medium) 0 0;
+  font-size: 20px;
+  font-weight: 600;
+}

@@ -9,7 +9,7 @@ import { PageHeader } from '../components/PageHeader.tsx';
 import { RetryableFailure, type RetryableFailureProps } from '../components/RetryableFailure.tsx';
 import { formatCount, formatDegrees } from '../i18n/formatNumbers.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
-import { HOME_PATH } from '../navigation/routes.ts';
+import { HOME_PATH, occupancyPath } from '../navigation/routes.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
 import { PricingSection } from './PricingSection.tsx';
 
@@ -53,6 +53,11 @@ function LotDetails({ lot, onPricingSaved }: LotDetailsProps) {
     <>
       <PageHeader eyebrow={text.lot.eyebrow} title={lot.name} />
       <LotFacts lot={lot} />
+      <p>
+        <AppLink href={occupancyPath(lot.id)} className="text-link">
+          {text.lot.occupancyLink}
+        </AppLink>
+      </p>
       <PricingSection lotId={lot.id} pricing={lot.pricing} onSaved={onPricingSaved} />
       <AppLink href={HOME_PATH} className="text-link">
         {text.lot.back}

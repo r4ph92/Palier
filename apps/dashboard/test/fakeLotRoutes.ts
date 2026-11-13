@@ -3,6 +3,7 @@ import { type FakeApiState, type FakeResponse, refused, summaryOf } from './fake
 
 export const CREATED_LOT_ID = '00000000-0000-4000-8000-000000000299';
 const FIRST_CREATED_MAJOR = 4;
+const OCCUPANCY_PATH = /^GET \/lots\/([^/]+)\/occupancy$/;
 const PRICING_PATH = /^PUT \/lots\/([^/]+)\/pricing$/;
 
 // Only a member's own lots answer; any other id is not found, as in the API.
@@ -19,8 +20,26 @@ export function routeLots(state: FakeApiState, request: string, body: Record<str
   if (request === 'POST /lots') {
     return createLot(lots, body as unknown as LotDraft);
   }
+  return routeLot({ occupancy: state.occupancy, lots }, request, body);
+}
+
+interface MemberLots {
+  readonly occupancy: FakeApiState['occupancy'];
+  readonly lots: DashboardLotDetails[];
+}
+
+function routeLot({ occupancy, lots }: MemberLots, request: string, body: Record<string, unknown>): FakeResponse {
+  const occupancyLotId = OCCUPANCY_PATH.exec(request)?.[1];
+  if (occupancyLotId !== undefined) {
+    return readOccupancy(occupancy, lots, occupancyLotId);
+  }
   const pricingLotId = PRICING_PATH.exec(request)?.[1];
   return pricingLotId === undefined ? readLot(lots, request) : setPricing(lots, pricingLotId, body as unknown as LotPricing);
+}
+
+function readOccupancy(occupancies: FakeApiState['occupancy'], lots: readonly DashboardLotDetails[], lotId: string): FakeResponse {
+  const occupancy = lots.some(({ id }) => id === lotId) ? occupancies.get(lotId) : undefined;
+  return occupancy === undefined ? refused(404, 'LOT_NOT_FOUND') : { status: 200, body: occupancy };
 }
 
 function refusedWithoutOperator(request: string): FakeResponse {
