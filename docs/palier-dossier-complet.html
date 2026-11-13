@@ -1470,7 +1470,7 @@
         <tr><td>release_orphan_assignments</td><td class="t">5 min</td><td>Garde-fou 30 min contre le téléphone déchargé : la place assignée est présumée occupée, jamais libérée</td></tr>
         <tr><td>flag_stale_sessions</td><td class="t">quotidienne</td><td>Session sans sortie depuis sept jours : jamais facturée d'office, publiée au tableau de bord comme place à vérifier</td></tr>
         <tr><td>retry_captures</td><td class="t">1 min</td><td>Captures non abouties parce que Stripe était injoignable à la sortie : rejouées jusqu'à succès, reçu envoyé à ce moment</td></tr>
-        <tr><td>reconcile_counts</td><td class="t">1 min</td><td>Compare le compteur de passages au nombre de places occupées ; l'écart est publié au tableau de bord comme nombre de places à vérifier</td></tr>
+        <tr><td>reconcile_counts</td><td class="t">à la lecture</td><td>Plus une tâche : l'écart entre le compteur de passages et les places occupées ou attribuées est calculé à chaque lecture de l'occupation (<code>GET /v1/dashboard/lots/:id/occupancy</code>, décision 033) et publié au tableau de bord comme nombre de places à vérifier</td></tr>
         <tr><td>purge_expired_events</td><td class="t">quotidienne</td><td>Suppression des lignes dont <code>purge_after</code> est dépassé, anonymisation des sessions</td></tr>
       </tbody>
     </table>
@@ -1687,7 +1687,7 @@
 <div class="note"><b>Les deux branches d'exception sont des opérations à deux écritures.</b>
   Quand l'allée détectée contredit l'assignation, la place assignée passe à <code>OCCUPIED_UNKNOWN</code> avant même que l'usager réponde, et la place qu'il désigne passe à <code>OCCUPIED</code> ensuite. Quand il signale une place prise, la place signalée passe à <code>OCCUPIED_UNKNOWN</code> et une nouvelle place à <code>OCCUPIED</code> dans la même transaction (décision 022). Hors transaction, une coupure réseau entre les deux laisse une place fantôme, réservée pour personne et invisible à l'inventaire.</div>
 <div class="note warn"><b>La présomption est une décision, pas une approximation.</b>
-  Le système écrit <code>PARKED_PRESUMED</code> et <code>OCCUPIED</code> sur la seule foi du signal <em>walking</em> dans la bonne allée. Le risque accepté : un usager qui change d'allée après la transition sans être détecté. Le compteur de passages borne l'erreur cumulée, et la tâche <code>reconcile_counts</code> la rend visible. L'alternative — demander un tap à chaque stationnement — coûtait un geste à tout le monde pour corriger une erreur rare.</div>
+  Le système écrit <code>PARKED_PRESUMED</code> et <code>OCCUPIED</code> sur la seule foi du signal <em>walking</em> dans la bonne allée. Le risque accepté : un usager qui change d'allée après la transition sans être détecté. Le compteur de passages borne l'erreur cumulée, et l’écart du compteur, calculé à la lecture de l’occupation, la rend visible. L'alternative — demander un tap à chaque stationnement — coûtait un geste à tout le monde pour corriger une erreur rare.</div>
 </section>
 <section>
   <div class="sec-head"><h3>Séquence C — Sortie et facturation</h3><span class="tag">6 participants · 17 messages</span></div>
@@ -1928,7 +1928,7 @@
 <text class="t-cmp-s" x="442" y="677">présume occupée</text>
 <rect class="cmp cmp-warn" x="604" y="618" width="160" height="88" rx="3"/>
 <text class="t-cmp" x="618" y="644">reconcile_counts</text>
-<text class="t-cmp-s" x="618" y="663">1 min</text>
+<text class="t-cmp-s" x="618" y="663">à la lecture</text>
 <text class="t-cmp-s" x="618" y="677">compteur vs places</text>
 <rect class="cmp cmp-warn" x="780" y="618" width="160" height="88" rx="3"/>
 <text class="t-cmp" x="794" y="644">flag_stale</text>

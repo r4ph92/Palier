@@ -56,7 +56,7 @@ o.append(boxes([
     ("expire_holds", ["30 s", "HELD → AVAILABLE"]),
     ("cancel_unconfirmed", ["30 s", "aucun passage en 60 s"]),
     ("release_orphans", ["5 min", "présume occupée"]),
-    ("reconcile_counts", ["1 min", "compteur vs places"]),
+    ("reconcile_counts", ["à la lecture", "compteur vs places"]),
     ("flag_stale", ["quotidienne", "7 jours sans sortie"]),
     ("purge_events", ["quotidienne", "rétention 90 jours"]),
 ], 76, 618, 160, 176, 88, "cmp cmp-warn"))
