@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { pierre, sophie } from './fakes/dashboardFixtures.ts';
@@ -10,10 +10,13 @@ const UNKNOWN_LOT = '00000000-0000-4000-8000-000000000999';
 describe('GET /v1/dashboard/lots/:id/occupancy', () => {
   let server: FastifyInstance;
 
+  beforeEach(() => {
+    ({ server } = startDashboardServer());
+  });
+
   afterEach(() => server.close());
 
   async function occupancyOf(user: typeof sophie, lotId: string) {
-    ({ server } = startDashboardServer());
     const cookies = await dashboardCookieFor(server, user);
     return server.inject({ method: 'GET', url: `/v1/dashboard/lots/${lotId}/occupancy`, cookies });
   }
@@ -44,10 +47,9 @@ describe('GET /v1/dashboard/lots/:id/occupancy', () => {
   });
 
   it('refuses a visitor with no session', async () => {
-    ({ server } = startDashboardServer());
-
     const response = await server.inject({ method: 'GET', url: `/v1/dashboard/lots/${PARKING_DEMO_ID}/occupancy` });
 
     expect(response.statusCode).toBe(401);
+    expect(response.json()).toMatchObject({ error: 'UNAUTHORIZED' });
   });
 });
