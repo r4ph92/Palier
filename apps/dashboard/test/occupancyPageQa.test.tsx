@@ -120,6 +120,45 @@ describe('the occupancy page under attack', () => {
     expect(occupancyRequestCount(api.requests)).toBe(1);
   });
 
+  it('leaves the figures unflagged while a hung poll is under 20 seconds, and flags them at 20 seconds', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'setTimeout', 'clearTimeout'], shouldAdvanceTime: true });
+    installFakeApi({ signedInAs: sophie });
+    hangOccupancyPollsAfterFirstLoad();
+    renderDashboard({ path: OCCUPANCY_PATH });
+    await screen.findByText(lineOf('Écart : 2 places à vérifier'));
+
+    await advance(POLL_MILLISECONDS + 19_000);
+    expect(screen.queryByText(STALE_NOTE)).toBeNull();
+    await advance(1_000);
+
+    expect(screen.getByText(STALE_NOTE)).toBeDefined();
+    expect(screen.getByText(lineOf('Écart : 2 places à vérifier'))).toBeDefined();
+  });
+
+  it('skips polls while the tab is hidden and reads the figures again as soon as it shows', async () => {
+    let hidden = false;
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden });
+    try {
+      const api = installFakeApi({ signedInAs: sophie });
+      renderDashboard({ path: OCCUPANCY_PATH });
+      await screen.findByText(lineOf('Écart : 2 places à vérifier'));
+      hidden = true;
+      api.occupancy.set(parkingDemo.id, { ...parkingDemoOccupancy, vehicleCount: 6, counterGap: { kind: 'SPOTS_TO_CHECK', spots: 1 } });
+
+      await advance(2 * POLL_MILLISECONDS);
+      expect(occupancyRequestCount(api.requests)).toBe(1);
+      hidden = false;
+      await act(async () => {
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+
+      expect(await screen.findByText(lineOf('Écart : 1 place à vérifier'))).toBeDefined();
+      expect(occupancyRequestCount(api.requests)).toBe(2);
+    } finally {
+      Reflect.deleteProperty(document, 'hidden');
+    }
+  });
+
   it('words the counter below the places taken and the stale note in English', async () => {
     const api = installFakeApi({ signedInAs: sophie });
     api.occupancy.set(parkingDemo.id, { ...parkingDemoOccupancy, vehicleCount: 3, counterGap: { kind: 'COUNTER_BELOW', spots: 2 } });
