@@ -17,6 +17,8 @@ export interface FieldFormSetup<Field extends string, Value> {
   readonly read: (values: FieldValues<Field>) => ReadForm<Field, Value>;
   readonly send: (value: Value) => Promise<void>;
   readonly fieldOfCode: Partial<Readonly<Record<DisplayedErrorCode, Field>>>;
+  // Empties every field once a send succeeds, so the form is ready for the next entry; focus stays on the submit button.
+  readonly emptiesOnSuccess?: boolean;
 }
 
 export interface FieldForm<Field extends string> {
@@ -38,8 +40,9 @@ interface Outcome<Field extends string> {
 const ACCEPTED = { errors: {}, refusal: null } as const;
 
 export function useFieldForm<Field extends string, Value>(setup: FieldFormSetup<Field, Value>): FieldForm<Field> {
-  const { values, setValue, outcome, setOutcome } = useFieldValues(setup.initialValues);
-  const { attempt, submitting, submit } = useSubmit(values, useSender(setup, setOutcome));
+  const { values, setValue, outcome, setOutcome, reset } = useFieldValues(setup.initialValues);
+  const afterSuccess = setup.emptiesOnSuccess === true ? reset : () => undefined;
+  const { attempt, submitting, submit } = useSubmit(values, useSender(setup, { show: setOutcome, afterSuccess }));
   return { values, setValue, errors: outcome.errors, summary: summaryOf(outcome), attempt, submitting, submit };
 }
 
@@ -51,7 +54,11 @@ function useFieldValues<Field extends string>(initialValues: FieldValues<Field>)
     setValues((previous) => ({ ...previous, [field]: value }));
     setOutcome((previous) => ({ ...previous, errors: withoutField(previous.errors, field) }));
   };
-  return { values, setValue, outcome, setOutcome };
+  const reset = () => {
+    setValues(initialValues);
+    setOutcome(ACCEPTED);
+  };
+  return { values, setValue, outcome, setOutcome, reset };
 }
 
 function useSubmit<Field extends string>(values: FieldValues<Field>, sendValues: (values: FieldValues<Field>) => Promise<boolean>) {
@@ -68,8 +75,13 @@ function useSubmit<Field extends string>(values: FieldValues<Field>, sendValues:
   return { attempt, submitting: request.busy, submit };
 }
 
+interface SenderFollowUps<Field extends string> {
+  readonly show: (outcome: Outcome<Field>) => void;
+  readonly afterSuccess: () => void;
+}
+
 // Reads the form and sends it only when the shared rule accepts it; answers whether the request succeeded.
-function useSender<Field extends string, Value>({ read, send, fieldOfCode }: FieldFormSetup<Field, Value>, show: (outcome: Outcome<Field>) => void) {
+function useSender<Field extends string, Value>({ read, send, fieldOfCode }: FieldFormSetup<Field, Value>, { show, afterSuccess }: SenderFollowUps<Field>) {
   const refreshSession = useSessionRefresh();
   return async (values: FieldValues<Field>): Promise<boolean> => {
     const readForm = read(values);
@@ -80,6 +92,7 @@ function useSender<Field extends string, Value>({ read, send, fieldOfCode }: Fie
     show(ACCEPTED);
     try {
       await send(readForm.value);
+      afterSuccess();
       return true;
     } catch (failure) {
       show(refusalOutcome(asDashboardApiError(failure), fieldOfCode, refreshSession));

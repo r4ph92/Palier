@@ -4,8 +4,7 @@ import { isAisleRectangle, type AisleRectangleKey } from '@palier/shared-types/a
 import { canonicalCodeOf } from '@palier/shared-types/displayText';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
-import { readFormOf, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
-import { useResettingFieldForm } from '../forms/useResettingFieldForm.ts';
+import { readFormOf, useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
 import { useLanguage, type Language } from '../i18n/LanguageContext.tsx';
 import { numberOrNaN, parseWholeNumber } from '../lotSetup/parseNumbers.ts';
 
@@ -46,5 +45,5 @@ export interface AddAisleTarget {
 export function useAddAisleForm({ lotId, levelId, onAdded }: AddAisleTarget): FieldForm<AisleDraftField> {
   const { language } = useLanguage();
   const send = async (aisle: AisleDraft) => onAdded(await dashboardClient.addAisle(lotId, levelId, aisle), aisle.code);
-  return useResettingFieldForm({ initialValues: EMPTY_AISLE, read: (values) => readAisle(values, language), send, fieldOfCode: FIELD_OF_CODE });
+  return useFieldForm({ initialValues: EMPTY_AISLE, read: (values) => readAisle(values, language), send, fieldOfCode: FIELD_OF_CODE, emptiesOnSuccess: true });
 }

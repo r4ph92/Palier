@@ -3,8 +3,7 @@ import { levelDraftErrors, type LevelDraft, type LevelDraftField } from '@palier
 import { canonicalCodeOf } from '@palier/shared-types/displayText';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
-import { readFormOf, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
-import { useResettingFieldForm } from '../forms/useResettingFieldForm.ts';
+import { readFormOf, useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
 
 const EMPTY_LEVEL: FieldValues<LevelDraftField> = { code: '' };
 
@@ -25,5 +24,5 @@ export interface AddLevelTarget {
 
 export function useAddLevelForm({ lotId, onAdded }: AddLevelTarget): FieldForm<LevelDraftField> {
   const send = async (draft: LevelDraft) => onAdded(await dashboardClient.addLevel(lotId, draft), draft.code);
-  return useResettingFieldForm({ initialValues: EMPTY_LEVEL, read: readLevel, send, fieldOfCode: FIELD_OF_CODE });
+  return useFieldForm({ initialValues: EMPTY_LEVEL, read: readLevel, send, fieldOfCode: FIELD_OF_CODE, emptiesOnSuccess: true });
 }
