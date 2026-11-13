@@ -8,6 +8,7 @@ const LEVEL_P2_ID = '00000000-0000-4000-8000-000000000303';
 const AISLE_A_ID = '00000000-0000-4000-8000-000000000404';
 const AISLE_C_ID = '00000000-0000-4000-8000-000000000405';
 const AISLE_D_ID = '00000000-0000-4000-8000-000000000406';
+const EXIT_LANE_ID = '00000000-0000-4000-8000-000000000407';
 const VERIFIED_AT = new Date('2026-10-01T12:00:00Z');
 
 type SpotFixture = typeof spot.$inferInsert;
@@ -39,6 +40,7 @@ export const parkingTestPaliersAisles: (typeof aisle.$inferInsert)[] = [
   { id: AISLE_A_ID, levelId: LEVEL_P1_ID, lotId: PARKING_TEST_PALIERS_ID, code: 'A', beaconMinor: 1 },
   { id: AISLE_C_ID, levelId: LEVEL_P2_ID, lotId: PARKING_TEST_PALIERS_ID, code: 'C', beaconMinor: 2 },
   { id: AISLE_D_ID, levelId: LEVEL_P2_ID, lotId: PARKING_TEST_PALIERS_ID, code: 'D', beaconMinor: 3 },
+  { id: EXIT_LANE_ID, levelId: LEVEL_P1_ID, lotId: PARKING_TEST_PALIERS_ID, code: 'Sortie', beaconMinor: 0, isExitLane: true },
 ];
 
 export const parkingTestPaliersSpots: SpotFixture[] = [

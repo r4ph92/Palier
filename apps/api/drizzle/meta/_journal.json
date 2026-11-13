@@ -246,6 +246,13 @@
       "when": 1794609216210,
       "tag": "0034_lot_setup",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1794610961892,
+      "tag": "0035_aisle_minor_and_exit_lane",
+      "breakpoints": true
     }
   ]
 }
