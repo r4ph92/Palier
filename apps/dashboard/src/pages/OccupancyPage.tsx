@@ -19,16 +19,19 @@ import { NotFoundPage } from './NotFoundPage.tsx';
 
 const POLL_INTERVAL_MILLISECONDS = 30_000;
 const LOADING_ROWS = 3;
+const LOT_NOT_FOUND = 'LOT_NOT_FOUND';
+
+const isLotGone = (error: DashboardApiError): boolean => error.code === LOT_NOT_FOUND;
 
 type Levels = DashboardLotOccupancy['levels'];
 
 export function OccupancyPage({ lotId }: { readonly lotId: string }) {
-  const occupancy = usePolledResource(useCallback(() => dashboardClient.lotOccupancy(lotId), [lotId]), POLL_INTERVAL_MILLISECONDS);
+  const occupancy = usePolledResource(useCallback(() => dashboardClient.lotOccupancy(lotId), [lotId]), POLL_INTERVAL_MILLISECONDS, isLotGone);
   if (occupancy.status === 'loading') {
     return <OccupancyLoading />;
   }
   if (occupancy.status === 'failed') {
-    return occupancy.error.code === 'LOT_NOT_FOUND' ? <NotFoundPage /> : <OccupancyUnavailable lotId={lotId} {...occupancy} />;
+    return isLotGone(occupancy.error) ? <NotFoundPage /> : <OccupancyUnavailable lotId={lotId} {...occupancy} />;
   }
   return <OccupancyView occupancy={occupancy.value} isStale={occupancy.isStale} updatedAt={occupancy.updatedAt} />;
 }
