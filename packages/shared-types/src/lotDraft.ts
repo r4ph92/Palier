@@ -25,20 +25,28 @@ export type LotDraftErrorCode = Extract<
 
 export type LotDraftErrors = FieldErrors<LotDraftField, LotDraftErrorCode>;
 
+interface TextErrorCodes {
+  readonly required: LotDraftErrorCode;
+  readonly invalid: LotDraftErrorCode;
+}
+
+const NAME_CODES: TextErrorCodes = { required: 'LOT_NAME_REQUIRED', invalid: 'LOT_NAME_INVALID' };
+const ADDRESS_CODES: TextErrorCodes = { required: 'LOT_ADDRESS_REQUIRED', invalid: 'LOT_ADDRESS_INVALID' };
+
 // The one rule for a new lot, applied by the dashboard before sending and by the API before writing.
 export function lotDraftErrors(draft: LotDraft): LotDraftErrors {
   return fieldErrorsOf<LotDraftField, LotDraftErrorCode>([
-    ['name', textError(draft.name, LOT_NAME_LENGTH, 'LOT_NAME_REQUIRED', 'LOT_NAME_INVALID')],
-    ['address', textError(draft.address, LOT_ADDRESS_LENGTH, 'LOT_ADDRESS_REQUIRED', 'LOT_ADDRESS_INVALID')],
+    ['name', textError(draft.name, LOT_NAME_LENGTH, NAME_CODES)],
+    ['address', textError(draft.address, LOT_ADDRESS_LENGTH, ADDRESS_CODES)],
     ['latitude', isLatitude(draft.latitude) ? null : 'LOT_LATITUDE_INVALID'],
     ['longitude', isLongitude(draft.longitude) ? null : 'LOT_LONGITUDE_INVALID'],
     ['capacity', isWholeNumberWithin(draft.capacity, LOT_CAPACITY_LIMITS) ? null : 'LOT_CAPACITY_INVALID'],
   ]);
 }
 
-function textError(text: string, length: TextLength, requiredCode: LotDraftErrorCode, invalidCode: LotDraftErrorCode): LotDraftErrorCode | null {
+function textError(text: string, length: TextLength, codes: TextErrorCodes): LotDraftErrorCode | null {
   if (text.trim() === '') {
-    return requiredCode;
+    return codes.required;
   }
-  return isValidDisplayText(text, length) ? null : invalidCode;
+  return isValidDisplayText(text, length) ? null : codes.invalid;
 }
