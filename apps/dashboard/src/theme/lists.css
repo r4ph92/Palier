@@ -95,6 +95,7 @@
 
 .fact-value {
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .fact-value-number {
