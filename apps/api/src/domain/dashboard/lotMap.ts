@@ -40,8 +40,8 @@ export function addLevelOfMember(sources: LotMapSources, lot: MemberLot, draft: 
   return changeLotMap(sources, lot, (operatorId) => sources.maps.addLevel(operatorId, lot.lotId, code));
 }
 
-export function reorderLevelsOfMember(sources: LotMapSources, lot: MemberLot, { levelIds }: LevelOrderRequest): Promise<DashboardLotMap> {
-  return changeLotMap(sources, lot, (operatorId) => sources.maps.reorderLevels(operatorId, lot.lotId, levelIds));
+export function reorderLevelsOfMember(sources: LotMapSources, lot: MemberLot, order: LevelOrderRequest): Promise<DashboardLotMap> {
+  return changeLotMap(sources, lot, (operatorId) => sources.maps.reorderLevels(operatorId, lot.lotId, order));
 }
 
 export function addAisleOfMember(sources: LotMapSources, level: MemberLevel, request: AisleRequest): Promise<DashboardLotMap> {

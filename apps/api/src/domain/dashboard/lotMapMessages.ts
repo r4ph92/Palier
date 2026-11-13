@@ -8,7 +8,7 @@ export const LOT_MAP_MESSAGES: Readonly<Record<LevelDraftErrorCode | AisleDraftE
   LEVEL_CODE_INVALID: `The level code must be ${LEVEL_CODE_LENGTH.minimum} to ${LEVEL_CODE_LENGTH.maximum} characters, with no invisible characters.`,
   LEVEL_CODE_TAKEN: 'This lot already has a level with this code.',
   LEVEL_LIMIT_REACHED: `A lot has at most ${MAX_LEVELS_PER_LOT} levels.`,
-  LEVEL_ORDER_INVALID: 'The order must list every level of the lot once; reload the map.',
+  LEVEL_ORDER_INVALID: 'The order must move one level by one place from the current order; reload the map.',
   LEVEL_NOT_FOUND: 'No such level.',
   AISLE_CODE_INVALID: `The aisle code must be ${AISLE_CODE_LENGTH.minimum} to ${AISLE_CODE_LENGTH.maximum} characters, with no invisible characters.`,
   AISLE_CODE_TAKEN: 'This level already has an aisle with this code.',

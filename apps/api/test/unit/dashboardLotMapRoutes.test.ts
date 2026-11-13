@@ -31,8 +31,9 @@ describe('dashboard lot map routes', () => {
     return server.inject({ method: 'POST', url: `/v1/dashboard/lots/${lotId}/levels`, cookies, headers: writeHeader, payload: { code } });
   }
 
-  function reorder(cookies: Cookies, levelIds: readonly string[], lotId = GARAGE_ROY_ID) {
-    return server.inject({ method: 'PUT', url: `/v1/dashboard/lots/${lotId}/levels/order`, cookies, headers: writeHeader, payload: { levelIds } });
+  function reorder(cookies: Cookies, levelIds: readonly string[], fromLevelIds?: readonly string[]) {
+    const payload = fromLevelIds === undefined ? { levelIds } : { levelIds, fromLevelIds };
+    return server.inject({ method: 'PUT', url: `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels/order`, cookies, headers: writeHeader, payload });
   }
 
   function addAisle(cookies: Cookies, levelId: string, payload: object = aisleA) {
@@ -98,6 +99,22 @@ describe('dashboard lot map routes', () => {
         expect(response.json()).toMatchObject({ error: 'LEVEL_ORDER_INVALID' });
       }
       expect((await readMap(cookies)).json<DashboardLotMap>().levels.map(({ code }) => code)).toEqual(['P1', 'P2']);
+    });
+
+    it('refuses a move made from the order another tab changed since, even one a step from the saved order', async () => {
+      const cookies = await signIn(pierre);
+      await addLevel(cookies, 'P1');
+      await addLevel(cookies, 'P2');
+      const map = (await addLevel(cookies, 'P3')).json<DashboardLotMap>();
+      const [p1, p2, p3] = [levelIdOf(map, 'P1'), levelIdOf(map, 'P2'), levelIdOf(map, 'P3')];
+      await reorder(cookies, [p2, p1, p3], [p1, p2, p3]);
+      await reorder(cookies, [p2, p3, p1], [p2, p1, p3]);
+
+      const stale = await reorder(cookies, [p2, p1, p3], [p1, p2, p3]);
+
+      expect(stale.statusCode).toBe(409);
+      expect(stale.json()).toMatchObject({ error: 'LEVEL_ORDER_INVALID' });
+      expect((await readMap(cookies)).json<DashboardLotMap>().levels.map(({ code }) => code)).toEqual(['P2', 'P3', 'P1']);
     });
 
     it.each([

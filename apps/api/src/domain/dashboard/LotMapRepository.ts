@@ -1,4 +1,4 @@
-import type { DashboardErrorCode, DashboardLotMap } from '@palier/shared-types';
+import type { DashboardErrorCode, DashboardLotMap, LevelOrderRequest } from '@palier/shared-types';
 import type { AisleDraft } from '@palier/shared-types/aisleDraft';
 
 export type LotMapRefusal = Extract<
@@ -21,6 +21,7 @@ export interface LotMapRepository {
   readLotMap(operatorId: string, lotId: string): Promise<DashboardLotMap | null>;
   // Appends the level; the lot's first level also gets the exit lane, minor 0.
   addLevel(operatorId: string, lotId: string, code: string): Promise<LotMapWrite>;
-  reorderLevels(operatorId: string, lotId: string, levelIds: readonly string[]): Promise<LotMapWrite>;
+  // Refused as LEVEL_ORDER_INVALID unless it moves one level by one place from the current order.
+  reorderLevels(operatorId: string, lotId: string, order: LevelOrderRequest): Promise<LotMapWrite>;
   addAisle(operatorId: string, placement: LevelPlacement, aisle: AisleDraft): Promise<LotMapWrite>;
 }

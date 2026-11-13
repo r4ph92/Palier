@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import type { DashboardLotMap, DashboardMapAisle, DashboardMapLevel } from '@palier/shared-types';
+import type { DashboardLotMap, DashboardMapAisle, DashboardMapLevel, LevelOrderRequest } from '@palier/shared-types';
 import type { AisleDraft } from '@palier/shared-types/aisleDraft';
 import { EXIT_LANE_MINOR, PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
 import { MAX_LEVELS_PER_LOT } from '@palier/shared-types/levelDraft';
-import { isOrderOfEveryLevel } from '../../../src/domain/dashboard/levelOrder.ts';
+import { isMoveOfCurrentOrder } from '../../../src/domain/dashboard/levelOrder.ts';
 import type { LevelPlacement, LotMapRepository, LotMapWrite } from '../../../src/domain/dashboard/LotMapRepository.ts';
 import { aisleRectangleOf } from '../../../src/domain/lots/AisleRectangle.ts';
 import { parkingDemoAisles, parkingDemoLevels } from '../../../src/seed/fixtures/parkingDemo.ts';
@@ -67,13 +67,13 @@ export class FakeLotMapRepository implements LotMapRepository {
     });
   }
 
-  reorderLevels(operatorId: string, lotId: string, levelIds: readonly string[]): Promise<LotMapWrite> {
+  reorderLevels(operatorId: string, lotId: string, order: LevelOrderRequest): Promise<LotMapWrite> {
     return this.#write(operatorId, lotId, () => {
       const levels = this.#levelsOf(lotId);
-      if (!isOrderOfEveryLevel(levelIds, levels.map(({ id }) => id))) {
+      if (!isMoveOfCurrentOrder(order, levels.map(({ id }) => id))) {
         return 'LEVEL_ORDER_INVALID';
       }
-      levels.forEach((level) => (level.displayOrder = levelIds.indexOf(level.id) + 1));
+      levels.forEach((level) => (level.displayOrder = order.levelIds.indexOf(level.id) + 1));
       return null;
     });
   }

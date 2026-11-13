@@ -124,23 +124,26 @@ describe('reordering levels in Postgres', () => {
   it('numbers P2 then P1 from their place in the list, in one update', async () => {
     const scripted = lockedWithLevels(LEVEL_P1, LEVEL_P2);
 
-    expect(await repositoryOn(scripted).reorderLevels(ROY_OPERATOR, GARAGE_ROY_NORD, [LEVEL_P2, LEVEL_P1])).toBeNull();
+    expect(await repositoryOn(scripted).reorderLevels(ROY_OPERATOR, GARAGE_ROY_NORD, { levelIds: [LEVEL_P2, LEVEL_P1] })).toBeNull();
 
     expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'read-level-ids', 'reorder-levels']);
     const update = scripted.statement('reorder-levels');
     expect(update?.text).toMatch(/set display_order = ordered\.position::int\s+from unnest\(array\[\$1, \$2\]::uuid\[\]\) with ordinality as ordered\(id, position\)/);
     expect(update?.params).toEqual([LEVEL_P2, LEVEL_P1, GARAGE_ROY_NORD, ROY_OPERATOR]);
+    expect(scripted.statement('read-level-ids')?.text).toMatch(/order by level\.display_order, level\.code$/);
     expect(scripted.statement('read-level-ids')?.params).toEqual([GARAGE_ROY_NORD, ROY_OPERATOR]);
   });
 
   it.each([
-    ['a level of another lot', [LEVEL_P1, 'level-of-sophie']],
-    ['a missing level', [LEVEL_P1]],
-    ['a level twice', [LEVEL_P1, LEVEL_P1]],
-  ])('refuses an order with %s and changes nothing', async (_case, levelIds) => {
+    ['a level of another lot', { levelIds: [LEVEL_P1, 'level-of-sophie'] }],
+    ['a missing level', { levelIds: [LEVEL_P1] }],
+    ['a level twice', { levelIds: [LEVEL_P1, LEVEL_P1] }],
+    ['no change', { levelIds: [LEVEL_P1, LEVEL_P2] }],
+    ['a move made from an order the lot no longer has', { levelIds: [LEVEL_P2, LEVEL_P1], fromLevelIds: [LEVEL_P2, LEVEL_P1] }],
+  ])('refuses an order with %s and changes nothing', async (_case, order) => {
     const scripted = lockedWithLevels(LEVEL_P1, LEVEL_P2);
 
-    expect(await repositoryOn(scripted).reorderLevels(ROY_OPERATOR, GARAGE_ROY_NORD, levelIds)).toBe('LEVEL_ORDER_INVALID');
+    expect(await repositoryOn(scripted).reorderLevels(ROY_OPERATOR, GARAGE_ROY_NORD, order)).toBe('LEVEL_ORDER_INVALID');
     expect(scripted.count('reorder-levels')).toBe(0);
   });
 });

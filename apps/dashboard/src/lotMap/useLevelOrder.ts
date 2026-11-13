@@ -42,7 +42,7 @@ export function useLevelOrder({ lotId, levels, onSaved, onStale }: LevelOrderTar
   const [lastMove, setLastMove] = useState<LevelMove | null>(null);
   const move = (levelMove: LevelMove) =>
     request.run(async () => {
-      onSaved(await dashboardClient.reorderLevels(lotId, { levelIds: idsAfter(levels, levelMove) }));
+      onSaved(await dashboardClient.reorderLevels(lotId, { levelIds: idsAfter(levels, levelMove), fromLevelIds: levels.map(({ id }) => id) }));
       setLastMove(levelMove);
     }, (failure) => refusalOf(failure, followUps));
   return { saving: request.saving, error: request.error, lastMove, move };

@@ -1,7 +1,7 @@
 import type { DashboardLotMap } from '@palier/shared-types';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { garageRoy, installFakeApi, parkingDemo, pierre, sophie } from './fakeDashboardApi.ts';
 import type { FakeApiState } from './fakeDashboardData.ts';
 import { frenchLeftOnEnglishPage } from './frenchLeft.ts';
@@ -48,6 +48,11 @@ function levelCodes(): string[] {
   return within(list).getAllByRole('listitem').map((item) => item.querySelector('.row-name')?.textContent ?? '');
 }
 
+function orderBodies(): unknown[] {
+  const calls = vi.mocked(fetch).mock.calls as [string, RequestInit | undefined][];
+  return calls.filter(([url]) => url.endsWith('/levels/order')).map(([, init]) => JSON.parse(String(init?.body)));
+}
+
 function savedMap(api: FakeApiState): DashboardLotMap | undefined {
   return api.maps.get(garageRoy.id);
 }
@@ -68,6 +73,7 @@ describe('the map of a lot', () => {
     const [p1, p2] = savedMap(api)?.levels.map(({ id }) => id).reverse() ?? [];
     expect(api.requests.filter((request) => request === ORDER_REQUEST)).toHaveLength(1);
     expect(savedMap(api)?.levels.map(({ id }) => id)).toEqual([p2, p1]);
+    expect(orderBodies()).toEqual([{ levelIds: [p2, p1], fromLevelIds: [p1, p2] }]);
     expect(screen.getByText('P2, position 1 sur 2')).toBeDefined();
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Descendre P2' }));
   });

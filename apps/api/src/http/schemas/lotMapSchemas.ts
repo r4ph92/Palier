@@ -29,11 +29,13 @@ export const levelDraftBodySchema = {
   properties: { code: { type: 'string', maxLength: 1000 } },
 } as const;
 
+const levelIdsSchema = { type: 'array', minItems: 1, maxItems: MAX_LEVELS_PER_LOT, uniqueItems: true, items: uuidSchema } as const;
+
 export const levelOrderBodySchema = {
   type: 'object',
   required: ['levelIds'],
   additionalProperties: false,
-  properties: { levelIds: { type: 'array', minItems: 1, maxItems: MAX_LEVELS_PER_LOT, uniqueItems: true, items: uuidSchema } },
+  properties: { levelIds: levelIdsSchema, fromLevelIds: levelIdsSchema },
 } as const;
 
 // A number, not an integer, for the minor: 1.5 gets the rule's AISLE_MINOR_INVALID like 0 does.

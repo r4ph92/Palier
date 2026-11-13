@@ -55,11 +55,13 @@ export function insertExitLaneStatement(operatorId: string, levelId: string): SQ
     on conflict on constraint ${sql.identifier(AISLE_MINOR_UNIQUE)} do nothing`;
 }
 
+// In display order, the order the map shows.
 export function readLevelIdsStatement({ operatorId, lotId }: OwnedLot): SQL {
   return sql`
     select level.id from level
     join parking_lot on parking_lot.id = level.lot_id
-    where level.lot_id = ${lotId} and parking_lot.operator_id = ${operatorId}`;
+    where level.lot_id = ${lotId} and parking_lot.operator_id = ${operatorId}
+    order by level.display_order, level.code`;
 }
 
 // One statement renumbers every level from its place in the list, so no reader sees half an order.

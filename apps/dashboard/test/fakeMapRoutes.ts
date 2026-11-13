@@ -1,4 +1,4 @@
-import type { AisleDraft, DashboardLotMap, DashboardMapLevel } from '@palier/shared-types';
+import type { AisleDraft, DashboardLotMap, DashboardMapLevel, LevelOrderRequest } from '@palier/shared-types';
 import { type FakeResponse, refused } from './fakeDashboardData.ts';
 
 const MAP_REQUEST = /^(GET|POST|PUT) \/lots\/([^/]+)\/(map|levels|levels\/order|levels\/([^/]+)\/aisles)$/;
@@ -44,7 +44,7 @@ function changedMap(map: DashboardLotMap, request: string, { body, levelId }: Ma
     return withLevel(map, String(body['code']));
   }
   if (request === 'PUT levels/order') {
-    return reordered(map, body['levelIds'] as string[]);
+    return reordered(map, body as unknown as LevelOrderRequest);
   }
   return request.startsWith('POST levels/') ? withAisle(map, levelId, body as unknown as AisleDraft) : map;
 }
@@ -58,9 +58,10 @@ function withLevel(map: DashboardLotMap, code: string): DashboardLotMap | string
   return { ...map, levels: [...map.levels, level] };
 }
 
-function reordered(map: DashboardLotMap, levelIds: readonly string[]): DashboardLotMap | string {
+function reordered(map: DashboardLotMap, { levelIds, fromLevelIds }: LevelOrderRequest): DashboardLotMap | string {
   const levels = levelIds.map((id) => map.levels.find((level) => level.id === id));
-  if (levels.length !== map.levels.length || levels.some((level) => level === undefined)) {
+  const isStale = fromLevelIds?.join() !== map.levels.map(({ id }) => id).join();
+  if (isStale || levels.length !== map.levels.length || levels.some((level) => level === undefined)) {
     return 'LEVEL_ORDER_INVALID';
   }
   return { ...map, levels: levels.map((level, index) => ({ ...(level as DashboardMapLevel), displayOrder: index + 1 })) };

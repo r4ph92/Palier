@@ -1,6 +1,6 @@
-import type { DashboardLotMap } from '@palier/shared-types';
+import type { DashboardLotMap, LevelOrderRequest } from '@palier/shared-types';
 import type { AisleDraft } from '@palier/shared-types/aisleDraft';
-import { isOrderOfEveryLevel } from '../../domain/dashboard/levelOrder.ts';
+import { isMoveOfCurrentOrder } from '../../domain/dashboard/levelOrder.ts';
 import type { LevelPlacement, LotMapRefusal, LotMapRepository, LotMapWrite } from '../../domain/dashboard/LotMapRepository.ts';
 import type { Database, Transaction } from './database.ts';
 import { isLotBusy, LOT_LOCK_TRANSACTION, orLotBusy } from './lockParkingLot.ts';
@@ -43,8 +43,8 @@ export class PostgresLotMapRepository implements LotMapRepository {
     return this.#writeInOwnedLot({ operatorId, lotId }, (tx) => addLevelWithExitLane(tx, { operatorId, lotId }, code));
   }
 
-  reorderLevels(operatorId: string, lotId: string, levelIds: readonly string[]): Promise<LotMapWrite> {
-    return this.#writeInOwnedLot({ operatorId, lotId }, (tx) => reorderEveryLevel(tx, { operatorId, lotId }, levelIds));
+  reorderLevels(operatorId: string, lotId: string, order: LevelOrderRequest): Promise<LotMapWrite> {
+    return this.#writeInOwnedLot({ operatorId, lotId }, (tx) => reorderEveryLevel(tx, { operatorId, lotId }, order));
   }
 
   addAisle(operatorId: string, placement: LevelPlacement, aisle: AisleDraft): Promise<LotMapWrite> {
@@ -80,12 +80,12 @@ async function addLevelWithExitLane(tx: Executor, lot: OwnedLot, code: string): 
   return null;
 }
 
-async function reorderEveryLevel(tx: Executor, lot: OwnedLot, levelIds: readonly string[]): Promise<LotMapWrite> {
+async function reorderEveryLevel(tx: Executor, lot: OwnedLot, order: LevelOrderRequest): Promise<LotMapWrite> {
   const current = await tx.execute<{ readonly id: string }>(readLevelIdsStatement(lot));
-  if (!isOrderOfEveryLevel(levelIds, current.map(({ id }) => id))) {
+  if (!isMoveOfCurrentOrder(order, current.map(({ id }) => id))) {
     return 'LEVEL_ORDER_INVALID';
   }
-  await tx.execute(reorderLevelsStatement(lot, levelIds));
+  await tx.execute(reorderLevelsStatement(lot, order.levelIds));
   return null;
 }
 
