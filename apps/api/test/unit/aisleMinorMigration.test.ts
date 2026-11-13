@@ -21,7 +21,11 @@ describe('migration 0035, aisle minors and exit lanes', () => {
     expect(backfill).toBeLessThan(migration.indexOf('ADD CONSTRAINT'));
     expect(migration).toContain(`SELECT DISTINCT ON ("level"."lot_id") "level"."id", "level"."lot_id", 'Sortie', 0, true`);
     expect(migration).toContain(`WHERE NOT EXISTS (SELECT 1 FROM "aisle" WHERE "aisle"."lot_id" = "level"."lot_id" AND "aisle"."is_exit_lane")`);
-    expect(migration).toContain(`ORDER BY "level"."lot_id", "level"."display_order", "level"."code"`);
+    expect(migration).toContain(`ORDER BY "level"."lot_id", "level"."display_order", "level"."code";`);
+  });
+
+  it('stops the migration on any conflict, so no lot is left without its exit lane', () => {
+    expect(migration).not.toMatch(/ON CONFLICT/i);
   });
 
   it('seeds exactly one exit lane, with minor 0, in every lot that has levels', () => {
