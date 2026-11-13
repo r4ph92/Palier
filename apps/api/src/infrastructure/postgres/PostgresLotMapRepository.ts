@@ -1,7 +1,7 @@
 import type { DashboardLotMap, LevelOrderRequest } from '@palier/shared-types';
 import type { AisleDraft } from '@palier/shared-types/aisleDraft';
 import { isMoveOfCurrentOrder } from '../../domain/dashboard/levelOrder.ts';
-import type { LevelPlacement, LotMapRefusal, LotMapRepository, LotMapWrite } from '../../domain/dashboard/LotMapRepository.ts';
+import { LOT_MAP_WRITTEN, type LevelPlacement, type LotMapRefusal, type LotMapRepository, type LotMapWrite } from '../../domain/dashboard/LotMapRepository.ts';
 import type { Database, Transaction } from './database.ts';
 import { isLotBusy, LOT_LOCK_TRANSACTION, orLotBusy } from './lockParkingLot.ts';
 import { LIMIT_LOCK_WAIT } from './lockTimeout.ts';
@@ -50,7 +50,7 @@ export class PostgresLotMapRepository implements LotMapRepository {
   addAisle(operatorId: string, placement: LevelPlacement, aisle: AisleDraft): Promise<LotMapWrite> {
     return this.#writeInOwnedLot({ operatorId, lotId: placement.lotId }, async (tx) => {
       const inserted = await tx.execute(insertAisleStatement(operatorId, placement, aisle));
-      return inserted.length === 0 ? 'LEVEL_NOT_FOUND' : null;
+      return inserted.length === 0 ? 'LEVEL_NOT_FOUND' : LOT_MAP_WRITTEN;
     });
   }
 
@@ -77,7 +77,7 @@ async function addLevelWithExitLane(tx: Executor, lot: OwnedLot, code: string): 
     return 'LEVEL_LIMIT_REACHED';
   }
   await tx.execute(insertExitLaneStatement(lot.operatorId, inserted.id));
-  return null;
+  return LOT_MAP_WRITTEN;
 }
 
 async function reorderEveryLevel(tx: Executor, lot: OwnedLot, order: LevelOrderRequest): Promise<LotMapWrite> {
@@ -86,7 +86,7 @@ async function reorderEveryLevel(tx: Executor, lot: OwnedLot, order: LevelOrderR
     return 'LEVEL_ORDER_INVALID';
   }
   await tx.execute(reorderLevelsStatement(lot, order.levelIds));
-  return null;
+  return LOT_MAP_WRITTEN;
 }
 
 // A unique constraint refused the insert: the code or the minor is already taken in this lot or level.

@@ -72,7 +72,7 @@ describe('adding a level in Postgres', () => {
   it('locks the operator’s lot, appends the level and gives the lot its exit lane, minor 0, in one transaction', async () => {
     const scripted = new ScriptedSql().answer('lock-owned-lot', [{ id: GARAGE_ROY_NORD }]).answer('insert-level', [{ id: LEVEL_P1 }]);
 
-    expect(await repositoryOn(scripted).addLevel(ROY_OPERATOR, GARAGE_ROY_NORD, 'P1')).toBeNull();
+    expect(await repositoryOn(scripted).addLevel(ROY_OPERATOR, GARAGE_ROY_NORD, 'P1')).toBe('WRITTEN');
 
     expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'insert-level', 'insert-exit-lane']);
     expect(scripted.statements.every(({ onTransaction }) => onTransaction)).toBe(true);
@@ -124,7 +124,7 @@ describe('reordering levels in Postgres', () => {
   it('numbers P2 then P1 from their place in the list, in one update', async () => {
     const scripted = lockedWithLevels(LEVEL_P1, LEVEL_P2);
 
-    expect(await repositoryOn(scripted).reorderLevels(ROY_OPERATOR, GARAGE_ROY_NORD, { levelIds: [LEVEL_P2, LEVEL_P1] })).toBeNull();
+    expect(await repositoryOn(scripted).reorderLevels(ROY_OPERATOR, GARAGE_ROY_NORD, { levelIds: [LEVEL_P2, LEVEL_P1] })).toBe('WRITTEN');
 
     expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'read-level-ids', 'reorder-levels']);
     const update = scripted.statement('reorder-levels');
@@ -152,7 +152,7 @@ describe('adding an aisle in Postgres', () => {
   it('inserts aisle A with minor 1 and its rectangle only on a level of the operator’s lot', async () => {
     const scripted = new ScriptedSql().answer('lock-owned-lot', [{ id: GARAGE_ROY_NORD }]).answer('insert-aisle', [{ id: 'aisle-a' }]);
 
-    expect(await repositoryOn(scripted).addAisle(ROY_OPERATOR, placement, aisleA)).toBeNull();
+    expect(await repositoryOn(scripted).addAisle(ROY_OPERATOR, placement, aisleA)).toBe('WRITTEN');
 
     const insert = scripted.statement('insert-aisle');
     expect(insert?.text).toMatch(/where level\.id = \$4 and level\.lot_id = \$5 and parking_lot\.operator_id = \$6/);

@@ -4,7 +4,7 @@ import { canonicalCodeOf } from '@palier/shared-types/displayText';
 import { firstFieldError } from '@palier/shared-types/fieldErrors';
 import { levelDraftErrors, type LevelDraft } from '@palier/shared-types/levelDraft';
 import { DashboardRefusedError } from './DashboardRefusedError.ts';
-import type { LotMapRepository, LotMapWrite } from './LotMapRepository.ts';
+import { LOT_MAP_WRITTEN, type LotMapRepository, type LotMapWrite } from './LotMapRepository.ts';
 import type { OperatorRepository } from './OperatorRepository.ts';
 
 export interface LotMapSources {
@@ -21,17 +21,10 @@ export interface MemberLevel extends MemberLot {
   readonly levelId: string;
 }
 
-// Read like a missing rectangle: the rule refuses it as AISLE_RECTANGLE_INVALID.
-const NO_RECTANGLE = { x: Number.NaN, y: Number.NaN, width: Number.NaN, height: Number.NaN } as const;
+type OperatorWrite = (operatorId: string) => Promise<LotMapWrite>;
 
-// Another operator's lot and a lot that does not exist give the same answer, so ids reveal nothing.
-export async function readLotMapOfMember({ operators, maps }: LotMapSources, { userId, lotId }: MemberLot): Promise<DashboardLotMap> {
-  const operator = await operators.findOperatorOfMember(userId);
-  const map = operator === null ? null : await maps.readLotMap(operator.id, lotId);
-  if (map === null) {
-    throw new DashboardRefusedError('LOT_NOT_FOUND');
-  }
-  return map;
+export async function readLotMapOfMember(sources: LotMapSources, lot: MemberLot): Promise<DashboardLotMap> {
+  return readOwnedLotMap(sources.maps, await operatorIdOf(sources, lot), lot.lotId);
 }
 
 // Each rule runs before any read, so a refused body says nothing about whether the lot exists.
@@ -51,13 +44,31 @@ export function addAisleOfMember(sources: LotMapSources, level: MemberLevel, req
 }
 
 // Answers the whole map after the change, so the page shows what was saved, in the saved order.
-async function changeLotMap(sources: LotMapSources, lot: MemberLot, write: (operatorId: string) => Promise<LotMapWrite>): Promise<DashboardLotMap> {
-  const operator = await sources.operators.findOperatorOfMember(lot.userId);
-  const refusal = operator === null ? 'LOT_NOT_FOUND' : await write(operator.id);
-  if (refusal !== null) {
-    throw new DashboardRefusedError(refusal);
+async function changeLotMap(sources: LotMapSources, lot: MemberLot, write: OperatorWrite): Promise<DashboardLotMap> {
+  const operatorId = await operatorIdOf(sources, lot);
+  const outcome = await write(operatorId);
+  if (outcome !== LOT_MAP_WRITTEN) {
+    throw new DashboardRefusedError(outcome);
   }
-  return readLotMapOfMember(sources, lot);
+  return readOwnedLotMap(sources.maps, operatorId, lot.lotId);
+}
+
+// A member without an operator gets the same answer as anyone else on a lot that is not theirs.
+async function operatorIdOf({ operators }: LotMapSources, { userId }: MemberLot): Promise<string> {
+  const operator = await operators.findOperatorOfMember(userId);
+  if (operator === null) {
+    throw new DashboardRefusedError('LOT_NOT_FOUND');
+  }
+  return operator.id;
+}
+
+// Another operator's lot and a lot that does not exist give the same answer, so ids reveal nothing.
+async function readOwnedLotMap(maps: LotMapRepository, operatorId: string, lotId: string): Promise<DashboardLotMap> {
+  const map = await maps.readLotMap(operatorId, lotId);
+  if (map === null) {
+    throw new DashboardRefusedError('LOT_NOT_FOUND');
+  }
+  return map;
 }
 
 function validatedLevelCode({ code }: LevelDraft): string {
@@ -70,8 +81,11 @@ function validatedLevelCode({ code }: LevelDraft): string {
 }
 
 // Builds the rectangle from its four sides only, so map_polygon never stores a key the read boundary would refuse.
-function validatedAisle({ code, beaconMinor, rectangle = null }: AisleRequest): AisleDraft {
-  const { x, y, width, height } = rectangle ?? NO_RECTANGLE;
+function validatedAisle({ code, beaconMinor, rectangle }: AisleRequest): AisleDraft {
+  if (rectangle === undefined || rectangle === null) {
+    throw new DashboardRefusedError('AISLE_RECTANGLE_INVALID');
+  }
+  const { x, y, width, height } = rectangle;
   const aisle = { code: canonicalCodeOf(code), beaconMinor, rectangle: { x, y, width, height } };
   const refusal = firstFieldError(aisleDraftErrors(aisle));
   if (refusal !== null) {

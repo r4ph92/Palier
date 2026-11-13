@@ -4,7 +4,7 @@ import type { AisleDraft } from '@palier/shared-types/aisleDraft';
 import { EXIT_LANE_MINOR, PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
 import { MAX_LEVELS_PER_LOT } from '@palier/shared-types/levelDraft';
 import { isMoveOfCurrentOrder } from '../../../src/domain/dashboard/levelOrder.ts';
-import type { LevelPlacement, LotMapRepository, LotMapWrite } from '../../../src/domain/dashboard/LotMapRepository.ts';
+import { LOT_MAP_WRITTEN, type LevelPlacement, type LotMapRepository, type LotMapWrite } from '../../../src/domain/dashboard/LotMapRepository.ts';
 import { aisleRectangleOf } from '../../../src/domain/lots/AisleRectangle.ts';
 import { parkingDemoAisles, parkingDemoLevels } from '../../../src/seed/fixtures/parkingDemo.ts';
 import type { FakeLotStore } from './fakeLotSetupRepository.ts';
@@ -63,7 +63,7 @@ export class FakeLotMapRepository implements LotMapRepository {
       const hasExitLane = levels.some(({ aisles }) => aisles.some(({ isExitLane }) => isExitLane));
       const exitLane: DashboardMapAisle = { id: randomUUID(), code: 'Sortie', beaconMinor: EXIT_LANE_MINOR, isExitLane: true, rectangle: null };
       this.levels.push({ id: randomUUID(), lotId, code, displayOrder: levels.length + 1, aisles: hasExitLane ? [] : [exitLane] });
-      return null;
+      return LOT_MAP_WRITTEN;
     });
   }
 
@@ -74,7 +74,7 @@ export class FakeLotMapRepository implements LotMapRepository {
         return 'LEVEL_ORDER_INVALID';
       }
       levels.forEach((level) => (level.displayOrder = order.levelIds.indexOf(level.id) + 1));
-      return null;
+      return LOT_MAP_WRITTEN;
     });
   }
 
@@ -92,7 +92,7 @@ export class FakeLotMapRepository implements LotMapRepository {
         return 'AISLE_MINOR_TAKEN';
       }
       level.aisles.push({ id: randomUUID(), ...aisle, isExitLane: false });
-      return null;
+      return LOT_MAP_WRITTEN;
     });
   }
 

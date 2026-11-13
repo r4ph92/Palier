@@ -6,8 +6,9 @@ export type LotMapRefusal = Extract<
   'LOT_NOT_FOUND' | 'LOT_BUSY' | 'LEVEL_CODE_TAKEN' | 'LEVEL_LIMIT_REACHED' | 'LEVEL_ORDER_INVALID' | 'LEVEL_NOT_FOUND' | 'AISLE_CODE_TAKEN' | 'AISLE_MINOR_TAKEN'
 >;
 
-// Null when the change was written.
-export type LotMapWrite = LotMapRefusal | null;
+export const LOT_MAP_WRITTEN = 'WRITTEN';
+
+export type LotMapWrite = typeof LOT_MAP_WRITTEN | LotMapRefusal;
 
 export interface LevelPlacement {
   readonly lotId: string;
