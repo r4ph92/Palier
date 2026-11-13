@@ -2,7 +2,6 @@ import { PgDialect } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
 import { confirmedAssignedSpotOf } from '../../src/infrastructure/postgres/confirmedAssignedSpot.ts';
 import { PostgresLevelOccupancyReader } from '../../src/infrastructure/postgres/PostgresLevelOccupancyReader.ts';
-import { sql } from 'drizzle-orm';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
 
 const OPERATOR = 'operator-lavoie';
@@ -28,7 +27,7 @@ describe('the Postgres level occupancy reader', () => {
   });
 
   it('counts an assigned spot only when a session of that spot has its entry confirmed', async () => {
-    const text = new PgDialect().sqlToQuery(confirmedAssignedSpotOf(sql.raw('spot.id'))).sql;
+    const text = new PgDialect().sqlToQuery(confirmedAssignedSpotOf()).sql;
 
     expect(text).toContain("spot.state = 'ASSIGNED'");
     expect(text).toContain('parking_session.assigned_spot_id = spot.id');

@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
-import { SPOT_STATES, type SpotState } from '@palier/shared-types/spotStates';
 import type { LevelOccupancy, LevelOccupancyReader } from '../../domain/dashboard/LevelOccupancyReader.ts';
+import { SPOT_STATES, type SpotState } from '../../domain/spots/spotStates.ts';
 import { confirmedAssignedSpotOf } from './confirmedAssignedSpot.ts';
 import type { Database } from './database.ts';
 
@@ -27,7 +27,7 @@ export class PostgresLevelOccupancyReader implements LevelOccupancyReader {
     const rows = await this.#database.execute<OccupancyRow>(sql`
       select parking_lot.name as lot_name, parking_lot.vehicle_count, level.code as level_code, spot.state,
         count(spot.id)::int as spot_count,
-        (count(spot.id) filter (where ${confirmedAssignedSpotOf(sql.raw('spot.id'))}))::int as confirmed_assigned_count
+        (count(spot.id) filter (where ${confirmedAssignedSpotOf()}))::int as confirmed_assigned_count
       from parking_lot
       left join level on level.lot_id = parking_lot.id
       left join aisle on aisle.level_id = level.id
