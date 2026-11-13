@@ -5,7 +5,7 @@ import { fieldBinder, type BoundField } from '../forms/fieldBinder.ts';
 import { SubmitButton } from '../forms/SubmitButton.tsx';
 import { TextField } from '../forms/TextField.tsx';
 import { interpolate } from '../i18n/interpolate.ts';
-import { useText } from '../i18n/LanguageContext.tsx';
+import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { PlanPreview } from './PlanPreview.tsx';
 import { draftRectangleOf, useAddAisleForm, type AddAisleTarget } from './useAddAisleForm.ts';
 import { useMapLimitValues } from './useMapLimitValues.ts';
@@ -18,6 +18,7 @@ interface AddAisleFormProps extends Omit<AddAisleTarget, 'levelId'> {
 
 export function AddAisleForm({ lotId, level, onAdded }: AddAisleFormProps) {
   const text = useText();
+  const { language } = useLanguage();
   const form = useAddAisleForm({ lotId, levelId: level.id, onAdded });
   const limits = useMapLimitValues();
   const field = fieldBinder(form, `aisle-${level.id}`, limits);
@@ -27,7 +28,7 @@ export function AddAisleForm({ lotId, level, onAdded }: AddAisleFormProps) {
       <TextField {...field('code')} label={text.map.aisleCodeLabel} hint={text.map.aisleCodeHint} />
       <TextField {...field('beaconMinor')} label={text.map.minorLabel} hint={text.map.minorHint} inputMode="numeric" />
       <RectangleFields field={field} hintId={`aisle-${level.id}-rectangle-hint`} limits={limits} />
-      <PlanPreview levelCode={level.code} aisles={level.aisles} draft={draftRectangleOf(form.values)} />
+      <PlanPreview levelCode={level.code} aisles={level.aisles} draft={draftRectangleOf(form.values, language)} />
       <SubmitButton label={text.map.addAisle} busyLabel={text.map.addingAisle} busy={form.submitting} />
     </form>
   );
