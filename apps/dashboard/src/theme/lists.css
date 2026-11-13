@@ -102,14 +102,64 @@
   font-variant-numeric: tabular-nums;
 }
 
-.count-line {
-  margin: 0 0 var(--space-small);
+.figure {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
+.count-line {
+  margin: 0 0 var(--space-small);
+}
+
 .gap-line {
   margin: var(--space-medium) 0 0;
-  font-size: 20px;
+}
+
+.gap-figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 30px;
   font-weight: 600;
+  line-height: 1.2;
+}
+
+.stale-note {
+  margin: 0 0 var(--space-medium);
+  color: var(--muted);
+}
+
+.stale-note:empty {
+  margin: 0;
+}
+
+/* Wide enough for a few levels; more levels scroll sideways instead of squeezing the figures. */
+.table-scroll {
+  max-width: 480px;
+  overflow-x: auto;
+}
+
+.level-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.level-table th,
+.level-table td {
+  padding: var(--space-small) var(--space-small) var(--space-small) 0;
+  border-bottom: 1px solid var(--line);
+  font-weight: 400;
+  text-align: left;
+}
+
+.level-table th.figure,
+.level-table td.figure {
+  padding-right: 0;
+  padding-left: var(--space-medium);
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.level-table td.figure {
+  font-weight: 400;
 }
