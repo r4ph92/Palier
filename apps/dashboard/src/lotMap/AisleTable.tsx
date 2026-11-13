@@ -3,12 +3,7 @@ import { ColumnHeads } from '../components/ColumnHeads.tsx';
 import { formatCount } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
-
-// The exit lane is named by its role, never by its stored code, so the page reads in the operator's language.
-export function useAisleName(): (aisle: DashboardMapAisle) => string {
-  const text = useText();
-  return (aisle) => (aisle.isExitLane ? text.map.exitLane : aisle.code);
-}
+import { useAisleName } from './useAisleName.ts';
 
 export function AisleTable({ aisles }: { readonly aisles: readonly DashboardMapAisle[] }) {
   const text = useText();

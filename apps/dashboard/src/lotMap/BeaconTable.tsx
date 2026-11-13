@@ -2,7 +2,7 @@ import type { DashboardLotMap, DashboardMapLevel } from '@palier/shared-types';
 import { ColumnHeads } from '../components/ColumnHeads.tsx';
 import { Fact } from '../components/Fact.tsx';
 import { useText } from '../i18n/LanguageContext.tsx';
-import { useAisleName } from './AisleTable.tsx';
+import { useAisleName } from './useAisleName.ts';
 
 // Everything a technician types into the beacons' app: one UUID, the lot's major, then one minor per aisle.
 export function BeaconTable({ map }: { readonly map: DashboardLotMap }) {
