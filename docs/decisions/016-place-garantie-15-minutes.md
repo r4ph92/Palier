@@ -4,7 +4,7 @@
 
 **Décision.**
 - **Une garantie par conducteur, tous parkings confondus** : index unique partiel sur `spot_hold.user_id` des garanties `ACTIVE`. Un double tap ou deux demandes simultanées donnent une garantie et `HOLD_ALREADY_EXISTS`.
-- **Quota de 3 garanties par parking** (`SPOT_HOLD_QUOTA_PER_LOT`) et durée de 15 minutes, constantes du domaine : une colonne viendra quand un opérateur pourra les régler.
+- **Quota de garanties par parking** et durée de 15 minutes. Le quota était une constante (3) ; depuis #64 c'est la colonne `parking_lot.hold_quota` (3 par défaut, de 0 à 50), réglée avec la tarification et lue sous le verrou du parking (décision 032). La durée reste une constante du domaine.
 - **Place `HELD`** : la place est choisie par les règles d'attribution pour le véhicule par défaut (#43, #44), sous le verrou du parking de la décision 014, puis passe `HELD`. Elle sort du compte affiché à tous et de la place restante (`capacité − véhicules − places HELD`), par une seule règle, `hasRoomForAnotherVehicle`.
 - **Une seule horloge** : l'API lit l'heure une fois par demande et la passe à chaque instruction (`created_at`, `expires_at`, `state_changed_at` de la place) ; aucun `now()` de Postgres pour les garanties. L'horloge de test les pilote donc aussi (décision 011).
 - **Libération (#7)** : `DELETE /v1/holds/:id` passe la garantie `RELEASED` et sa place `AVAILABLE` (`state_changed_at` à l'heure de l'horloge unique), sous le verrou du parking comme une demande. Une garantie déjà passée `expiresAt` répond `HOLD_EXPIRED` 409 et n'est pas touchée : sa place revient avec #8, et le compte ne bouge qu'une fois. Celle d'un autre conducteur, une garantie inconnue ou déjà libérée répondent toutes `HOLD_NOT_FOUND` 404, au même corps.

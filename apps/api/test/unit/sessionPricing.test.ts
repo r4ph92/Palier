@@ -89,6 +89,7 @@ describe('parsePricingPolicy', () => {
     ['a zero increment length', { incrementCents: 75, incrementMinutes: 0 }, 2500],
     ['a negative increment price', { incrementCents: -75, incrementMinutes: 15 }, 2500],
     ['a zero daily cap', { incrementCents: 75, incrementMinutes: 15 }, 0],
+    ['a lot without a daily cap', { incrementCents: 75, incrementMinutes: 15 }, null],
   ])('refuses %s', (_case, storedPolicy, dailyCapCents) => {
     expect(() => parsePricingPolicy(storedPolicy, dailyCapCents)).toThrow(PricingPolicyInvalidError);
   });

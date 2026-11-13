@@ -43,6 +43,9 @@ export type StatementLabel =
   | 'read-level-aisles'
   | 'read-parked-question'
   | 'read-session-status'
+  | 'insert-lot'
+  | 'update-lot-pricing'
+  | 'read-lot-details'
   | 'read-lot-occupancy'
   | 'replay-passages'
   | 'unknown';
@@ -67,6 +70,9 @@ const dialect = new PgDialect();
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
+  ['insert-lot', /insert into parking_lot/],
+  ['update-lot-pricing', /update parking_lot\s+set pricing_policy/],
+  ['read-lot-details', /from parking_lot where id = \$1 and operator_id = \$2/],
   ['replay-passages', /insert into gate_passage[\s\S]*on conflict/],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],

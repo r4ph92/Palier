@@ -1,9 +1,7 @@
-// D1: each started increment costs incrementCents, and a day never costs more than dailyCapCents.
-export interface PricingPolicy {
-  readonly incrementCents: number;
-  readonly incrementMinutes: number;
-  readonly dailyCapCents: number;
-}
+import type { TariffPolicy } from '@palier/shared-types/lotPricing';
+
+// The one D1 tariff, shared with the dashboard form.
+export type PricingPolicy = TariffPolicy;
 
 export class PricingPolicyInvalidError extends Error {
   readonly lotId: string | undefined;
@@ -15,8 +13,8 @@ export class PricingPolicyInvalidError extends Error {
   }
 }
 
-// The lot stores increment and length in an untyped jsonb column and the cap in its own column.
-export function parsePricingPolicy(storedPolicy: unknown, dailyCapCents: number): PricingPolicy {
+// The lot stores increment and length in an untyped jsonb column and the cap in its own column, null on a lot without pricing.
+export function parsePricingPolicy(storedPolicy: unknown, dailyCapCents: number | null): PricingPolicy {
   if (typeof storedPolicy !== 'object' || storedPolicy === null) {
     throw new PricingPolicyInvalidError();
   }
@@ -27,11 +25,18 @@ export function parsePricingPolicy(storedPolicy: unknown, dailyCapCents: number)
   return { incrementCents, incrementMinutes, dailyCapCents };
 }
 
+export type StoredPricingPolicy = Omit<TariffPolicy, 'dailyCapCents'>;
+
+// What the lot's jsonb column holds, the one shape parsePricingPolicy reads back.
+export function storedPricingPolicyOf({ incrementCents, incrementMinutes }: StoredPricingPolicy): StoredPricingPolicy {
+  return { incrementCents, incrementMinutes };
+}
+
 export interface PricedLot {
   readonly id: string;
   // The lot's jsonb policy as stored.
   readonly pricingPolicy: unknown;
-  readonly dailyCapCents: number;
+  readonly dailyCapCents: number | null;
 }
 
 // The problem is returned, not thrown, so each caller turns it into its own refusal and keeps it as the cause to log.

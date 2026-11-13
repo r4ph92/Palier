@@ -28,6 +28,7 @@ export async function readSpotHoldFacts(tx: Pick<Transaction, 'execute'>, lot: L
     isLotOnline: lot.isOnline,
     hasOwnActiveHold: row.own_active_hold,
     activeHoldsInLot: row.active_holds_in_lot,
+    holdQuota: lot.holdQuota,
     occupancy: { capacity: lot.capacity, vehicleCount: lot.vehicleCount, heldSpotCount: row.held_spot_count, assignedSpotCount: row.assigned_spot_count },
   };
 }

@@ -1,10 +1,20 @@
-export type Route = { readonly page: 'home' } | { readonly page: 'lot'; readonly lotId: string } | { readonly page: 'notFound' };
+export type Route =
+  | { readonly page: 'home' }
+  | { readonly page: 'newLot' }
+  | { readonly page: 'lot'; readonly lotId: string }
+  | { readonly page: 'notFound' };
+
+export const NEW_LOT_PATH = '/lots/new';
 
 const LOT_PATH = /^\/lots\/([^/]+)\/?$/;
 
 export function routeOf(pathname: string): Route {
   if (pathname === '/' || pathname === '') {
     return { page: 'home' };
+  }
+  // Before the lot pattern, which "new" would match as a lot id.
+  if (pathname === NEW_LOT_PATH || pathname === `${NEW_LOT_PATH}/`) {
+    return { page: 'newLot' };
   }
   const lotId = decodedSegment(LOT_PATH.exec(pathname)?.[1]);
   return lotId === null ? { page: 'notFound' } : { page: 'lot', lotId };

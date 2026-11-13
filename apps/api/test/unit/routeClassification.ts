@@ -66,6 +66,8 @@ export const DASHBOARD_PROTECTED = [
   'POST /v1/dashboard/operators/:id/stripe-onboarding',
   'GET /v1/dashboard/lots',
   'GET /v1/dashboard/lots/:id',
+  'POST /v1/dashboard/lots',
+  'PUT /v1/dashboard/lots/:id/pricing',
 ];
 
 const DASHBOARD_OPEN = ['POST /v1/dashboard/sign-out', 'GET /v1/dashboard/test/users', 'POST /v1/dashboard/test/sign-in'];

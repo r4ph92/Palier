@@ -16,8 +16,16 @@ export interface GeoPosition {
 const LATITUDE_LIMIT_DEGREES = 90;
 const LONGITUDE_LIMIT_DEGREES = 180;
 
+export function isLatitude(degrees: number): boolean {
+  return Math.abs(degrees) <= LATITUDE_LIMIT_DEGREES;
+}
+
+export function isLongitude(degrees: number): boolean {
+  return Math.abs(degrees) <= LONGITUDE_LIMIT_DEGREES;
+}
+
 export function isOnEarth({ latitude, longitude }: GeoPosition): boolean {
-  return Math.abs(latitude) <= LATITUDE_LIMIT_DEGREES && Math.abs(longitude) <= LONGITUDE_LIMIT_DEGREES;
+  return isLatitude(latitude) && isLongitude(longitude);
 }
 
 export interface LotSummary {

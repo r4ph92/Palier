@@ -1,8 +1,10 @@
-import type { DashboardMeResponse } from '@palier/shared-types';
+import type { DashboardMeResponse, DashboardOperator } from '@palier/shared-types';
 import { AppHeader } from './components/AppHeader.tsx';
 import { LanguageProvider } from './i18n/LanguageContext.tsx';
 import { NavigationProvider, useNavigation } from './navigation/NavigationContext.tsx';
 import { PageFocusProvider } from './navigation/PageFocusContext.tsx';
+import type { Route } from './navigation/routes.ts';
+import { CreateLotPage } from './pages/CreateLotPage.tsx';
 import { CreateOperatorPage } from './pages/CreateOperatorPage.tsx';
 import { LoadingPage } from './pages/LoadingPage.tsx';
 import { LotPage } from './pages/LotPage.tsx';
@@ -66,5 +68,16 @@ function SignedInContent({ me, refresh }: { readonly me: DashboardMeResponse; re
   if (me.operator === null) {
     return <CreateOperatorPage firstName={me.user.firstName} onCreated={refresh} />;
   }
-  return route.page === 'lot' ? <LotPage key={route.lotId} lotId={route.lotId} /> : <OperatorHomePage operator={me.operator} />;
+  return <OperatorPage route={route} operator={me.operator} />;
+}
+
+function OperatorPage({ route, operator }: { readonly route: Exclude<Route, { page: 'notFound' }>; readonly operator: DashboardOperator }) {
+  switch (route.page) {
+    case 'home':
+      return <OperatorHomePage operator={operator} />;
+    case 'newLot':
+      return <CreateLotPage />;
+    case 'lot':
+      return <LotPage key={route.lotId} lotId={route.lotId} />;
+  }
 }

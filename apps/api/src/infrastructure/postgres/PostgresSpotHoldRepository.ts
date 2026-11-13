@@ -24,7 +24,7 @@ interface SpotHoldLotRow extends Record<string, unknown> {
   readonly id: string;
   readonly is_online: boolean;
   readonly pricing_policy: unknown;
-  readonly daily_cap_cents: number;
+  readonly daily_cap_cents: number | null;
   readonly stripe_account_id: string | null;
 }
 

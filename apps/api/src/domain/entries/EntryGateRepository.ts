@@ -5,7 +5,7 @@ export type GateIntegrationKind = 'DRY_CONTACT' | 'ACCESS_CONTROL_API' | 'SIMULA
 export interface EntryGateLot {
   readonly id: string;
   readonly isOnline: boolean;
-  readonly dailyCapCents: number;
+  readonly dailyCapCents: number | null;
   // The lot's jsonb policy as stored, read by parsePricingPolicy.
   readonly pricingPolicy: unknown;
   readonly capacity: number;

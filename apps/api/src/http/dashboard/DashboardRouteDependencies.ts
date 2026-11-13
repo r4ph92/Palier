@@ -1,3 +1,4 @@
+import type { LotSetupRepository } from '../../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../../domain/dashboard/OperatorRepository.ts';
 import type { OperatorStripeAccounts, OperatorStripeGateway } from '../../domain/dashboard/OperatorStripe.ts';
 import type { SessionAccess } from '../../domain/sessions/sessionTokens.ts';
@@ -12,6 +13,7 @@ export interface DashboardRouteDependencies {
   readonly stripe: DashboardStripeDependencies | null;
   readonly access: SessionAccess;
   readonly operators: OperatorRepository;
+  readonly lots: LotSetupRepository;
   readonly testSignInEnabled: boolean;
   readonly secureCookies: boolean;
 }

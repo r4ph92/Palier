@@ -17,6 +17,7 @@ export const parkingTestPaliersLot: typeof parkingLot.$inferInsert = {
   id: PARKING_TEST_PALIERS_ID,
   operatorId: LAVOIE_OPERATOR_ID,
   name: 'Parking Test Paliers',
+  address: '1000, rue Sanguinet, Montréal (Québec)',
   latitude: '45.505000',
   longitude: '-73.560000',
   beaconMajor: 3,

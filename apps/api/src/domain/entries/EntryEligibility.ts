@@ -59,7 +59,7 @@ export class EntryEligibility {
       payment: {
         customerId: prerequisites.customerId,
         paymentMethodId: prerequisites.paymentMethodId,
-        amountCents: gate.lot.dailyCapCents,
+        amountCents: pricing.dailyCapCents,
         destinationAccountId: gate.lot.operatorStripeAccountId,
       },
       pricing,

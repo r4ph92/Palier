@@ -1,12 +1,12 @@
 import type { DashboardOperator } from '@palier/shared-types';
-import { type FakeAnswer, type FakeApiState, type FakeResponse, lotsByOperator, meFor, testUsers } from './fakeDashboardData.ts';
+import { type FakeAnswer, type FakeApiState, type FakeResponse, meFor, refused, testUsers } from './fakeDashboardData.ts';
+import { routeLots } from './fakeLotRoutes.ts';
 
-const refused = (status: number, error: string): FakeResponse => ({ status, body: { statusCode: status, error, message: error } });
 
 export function routeRequest(state: FakeApiState, url: string, init: RequestInit = {}): FakeAnswer {
   const method = init.method ?? 'GET';
   const path = url.replace('/v1/dashboard', '');
-  const body = typeof init.body === 'string' ? (JSON.parse(init.body) as Record<string, string>) : {};
+  const body = typeof init.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : {};
   state.requests.push(`${method} ${path}`);
   const answer = state.answers.get(`${method} ${path}`);
   if (answer !== undefined) {
@@ -22,7 +22,7 @@ export function routeRequest(state: FakeApiState, url: string, init: RequestInit
   return state.me === null ? refused(401, 'UNAUTHORIZED') : routeSignedIn(state, `${method} ${path}`, body);
 }
 
-function routeTestRequest(state: FakeApiState, path: string, body: Record<string, string>): FakeResponse {
+function routeTestRequest(state: FakeApiState, path: string, body: Record<string, unknown>): FakeResponse {
   const user = testUsers.find(({ id }) => id === body['userId']);
   if (!state.testUsersListed) {
     return refused(404, 'Not Found');
@@ -34,29 +34,17 @@ function routeTestRequest(state: FakeApiState, path: string, body: Record<string
   return user === undefined ? refused(404, 'Not Found') : { status: 200, body: { user } };
 }
 
-function routeSignedIn(state: FakeApiState, request: string, body: Record<string, string>): FakeResponse {
+function routeSignedIn(state: FakeApiState, request: string, body: Record<string, unknown>): FakeResponse {
   if (request === 'GET /me') {
     return { status: 200, body: state.me };
   }
   if (request === 'POST /operators') {
-    return createOperator(state, body['legalName'] ?? '');
+    return createOperator(state, String(body['legalName'] ?? ''));
   }
   if (request.startsWith('POST /operators/') && request.endsWith('/stripe-onboarding')) {
     return startStripeOnboarding(state.me?.operator ?? null, request);
   }
-  return routeLots(state.me?.operator ?? null, request);
-}
-
-function routeLots(operator: DashboardOperator | null, request: string): FakeResponse {
-  if (operator === null) {
-    return request === 'GET /lots' ? refused(409, 'NO_OPERATOR') : refused(404, 'LOT_NOT_FOUND');
-  }
-  const lots = lotsByOperator.get(operator.id) ?? [];
-  if (request === 'GET /lots') {
-    return { status: 200, body: lots };
-  }
-  const lot = lots.find(({ id }) => request === `GET /lots/${id}`);
-  return lot === undefined ? refused(404, 'LOT_NOT_FOUND') : { status: 200, body: lot };
+  return routeLots(state, request, body);
 }
 
 function createOperator(state: FakeApiState, legalName: string): FakeResponse {

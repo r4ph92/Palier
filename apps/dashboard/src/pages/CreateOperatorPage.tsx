@@ -1,7 +1,7 @@
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
-import { StableLabel } from '../components/StableLabel.tsx';
+import { SubmitButton } from '../forms/SubmitButton.tsx';
 import { useText } from '../i18n/LanguageContext.tsx';
 import { interpolate } from '../i18n/interpolate.ts';
 import { LEGAL_NAME_LIMITS } from '../i18n/legalNameLimits.ts';
@@ -30,10 +30,13 @@ function CreateOperatorForm({ onCreated }: Pick<CreateOperatorPageProps, 'onCrea
   const form = useCreateOperatorForm(onCreated);
   return (
     <form className="form" noValidate aria-busy={form.submitting} onSubmit={(event) => void form.submit(event)}>
-      <LegalNameField value={form.legalName} onChange={form.setLegalName} error={form.error} />
-      <button type="submit" className="primary-button" aria-disabled={form.submitting}>
-        <StableLabel shown={form.submitting ? text.createOperator.submitting : text.createOperator.submit} widest={text.createOperator.submit} />
-      </button>
+      <LegalNameField
+        value={form.values.legalName}
+        onChange={(value) => form.setValue('legalName', value)}
+        error={form.errors.legalName ?? form.summary}
+        attempt={form.attempt}
+      />
+      <SubmitButton label={text.createOperator.submit} busyLabel={text.createOperator.submitting} busy={form.submitting} />
     </form>
   );
 }
@@ -41,10 +44,12 @@ function CreateOperatorForm({ onCreated }: Pick<CreateOperatorPageProps, 'onCrea
 interface LegalNameFieldProps {
   readonly value: string;
   readonly onChange: (value: string) => void;
+  // The form's only field: its own error, or the API's refusal, is the one alert.
   readonly error: DisplayedErrorCode | null;
+  readonly attempt: number;
 }
 
-function LegalNameField({ value, onChange, error }: LegalNameFieldProps) {
+function LegalNameField({ value, onChange, error, attempt }: LegalNameFieldProps) {
   const text = useText();
   return (
     <>
@@ -59,7 +64,7 @@ function LegalNameField({ value, onChange, error }: LegalNameFieldProps) {
         aria-invalid={error !== null}
       />
       <p id="legal-name-hint" className="field-hint">{interpolate(text.createOperator.legalNameHint, LEGAL_NAME_LIMITS)}</p>
-      {error === null ? null : <ErrorNotice id="legal-name-error" code={error} values={LEGAL_NAME_LIMITS} takesFocus />}
+      {error === null ? null : <ErrorNotice key={attempt} id="legal-name-error" code={error} values={LEGAL_NAME_LIMITS} takesFocus />}
     </>
   );
 }

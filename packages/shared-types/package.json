@@ -40,6 +40,26 @@
     "./spotNumber": {
       "types": "./src/spotNumber.ts",
       "default": "./src/spotNumber.ts"
+    },
+    "./lotDraft": {
+      "types": "./src/lotDraft.ts",
+      "default": "./src/lotDraft.ts"
+    },
+    "./lotPricing": {
+      "types": "./src/lotPricing.ts",
+      "default": "./src/lotPricing.ts"
+    },
+    "./fieldErrors": {
+      "types": "./src/fieldErrors.ts",
+      "default": "./src/fieldErrors.ts"
+    },
+    "./displayText": {
+      "types": "./src/displayText.ts",
+      "default": "./src/displayText.ts"
+    },
+    "./money": {
+      "types": "./src/money.ts",
+      "default": "./src/money.ts"
     }
   },
   "scripts": {

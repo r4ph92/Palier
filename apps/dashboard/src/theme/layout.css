@@ -30,6 +30,18 @@ body {
   top: var(--space-small);
 }
 
+.actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: var(--space-medium);
+}
+
+.actions-row > .error-notice {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 .app-header,
 .page {
   max-width: 720px;

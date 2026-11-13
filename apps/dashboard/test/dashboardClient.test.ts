@@ -30,4 +30,18 @@ describe('dashboard client', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/v1/dashboard/lots', { method: 'GET', credentials: 'same-origin', headers: { accept: 'application/json' } });
   });
+
+  it('saves pricing with a PUT that carries the dashboard header and the JSON body', async () => {
+    const fetchMock = stubFetch(200, {});
+    const pricing = { incrementCents: 100, incrementMinutes: 20, dailyCapCents: 1800, holdQuota: 4 };
+
+    await dashboardClient.setLotPricing('lot/1', pricing);
+
+    expect(fetchMock).toHaveBeenCalledWith('/v1/dashboard/lots/lot%2F1/pricing', {
+      method: 'PUT',
+      credentials: 'same-origin',
+      headers: { accept: 'application/json', 'x-requested-with': 'palier-dashboard', 'content-type': 'application/json' },
+      body: JSON.stringify(pricing),
+    });
+  });
 });

@@ -2,7 +2,7 @@ import type { DashboardUser } from '@palier/shared-types';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { installFakeApi, nouvelOperateur, parkingDemo, pierre, sophie } from './fakeDashboardApi.ts';
+import { garageRoy, installFakeApi, nouvelOperateur, parkingDemo, pierre, sophie } from './fakeDashboardApi.ts';
 import { frenchLeftOnEnglishPage } from './frenchLeft.ts';
 import { renderDashboard } from './renderDashboard.tsx';
 
@@ -19,6 +19,8 @@ const pages: readonly PageCase[] = [
   { page: 'operator home', signedInAs: sophie, englishHeading: 'Parking lots' },
   { page: 'lot', signedInAs: sophie, path: `/lots/${parkingDemo.id}`, englishHeading: 'Parking Démo' },
   { page: 'not found', signedInAs: pierre, path: `/lots/${parkingDemo.id}`, englishHeading: 'Not found' },
+  { page: 'new lot', signedInAs: pierre, path: '/lots/new', englishHeading: 'Create a parking lot' },
+  { page: 'lot without pricing', signedInAs: pierre, path: `/lots/${garageRoy.id}`, englishHeading: 'Garage Roy' },
 ];
 
 describe('English toggle', () => {

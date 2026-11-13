@@ -239,6 +239,13 @@
       "when": 1794409309210,
       "tag": "0033_gate_passage_replay_id",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794609216210,
+      "tag": "0034_lot_setup",
+      "breakpoints": true
     }
   ]
 }
