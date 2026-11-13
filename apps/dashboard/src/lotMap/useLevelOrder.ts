@@ -1,7 +1,8 @@
-import type { DashboardLotMap, DashboardMapLevel } from '@palier/shared-types';
-import { useRef, useState } from 'react';
+import type { DashboardLotMap, DashboardMapLevel, LevelOrderRequest } from '@palier/shared-types';
+import { useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import { asDashboardApiError, endsSession, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import { useGuardedRequest } from '../forms/useGuardedRequest.ts';
 import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
 
 export type MoveDirection = 'up' | 'down';
@@ -26,50 +27,56 @@ export interface LevelOrder {
   readonly move: (move: LevelMove) => Promise<void>;
 }
 
-// The ids in their new order, with the moved level swapped with its neighbour.
-function idsAfter(levels: readonly DashboardMapLevel[], { levelId, direction }: LevelMove): string[] {
-  const ids = levels.map(({ id }) => id);
-  const from = ids.indexOf(levelId);
-  const to = direction === 'up' ? from - 1 : from + 1;
-  [ids[from], ids[to]] = [ids[to] ?? levelId, levelId];
-  return ids;
-}
-
-// The list shows the order the API answers, never a guess: a refused move leaves the levels where they were.
-export function useLevelOrder({ lotId, levels, onSaved, onStale }: LevelOrderTarget): LevelOrder {
-  const followUps = { refreshSession: useSessionRefresh(), onStale };
-  const request = useGuardedRequest();
-  const [lastMove, setLastMove] = useState<LevelMove | null>(null);
-  const move = (levelMove: LevelMove) =>
-    request.run(async () => {
-      onSaved(await dashboardClient.reorderLevels(lotId, { levelIds: idsAfter(levels, levelMove), fromLevelIds: levels.map(({ id }) => id) }));
-      setLastMove(levelMove);
-    }, (failure) => refusalOf(failure, followUps));
-  return { saving: request.saving, error: request.error, lastMove, move };
-}
-
-// A ref, not state, guards the request: clicks in the same instant all see the state of the render before the first one.
-function useGuardedRequest() {
-  const inFlight = useRef(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<DisplayedErrorCode | null>(null);
-  const run = async (action: () => Promise<void>, refusal: (failure: unknown) => Promise<DisplayedErrorCode>) => {
-    if (inFlight.current) {
-      return;
-    }
-    inFlight.current = true;
-    setSaving(true);
-    const failure = await action().then(() => null, refusal);
-    inFlight.current = false;
-    setSaving(false);
-    setError(failure);
-  };
-  return { saving, error, run };
-}
-
 interface RefusalFollowUps {
   readonly refreshSession: () => Promise<void>;
   readonly onStale: () => Promise<boolean>;
+}
+
+const STEP: Readonly<Record<MoveDirection, number>> = { up: -1, down: 1 };
+
+// The list shows the order the API answers, never a guess: a refused move leaves the levels where they were.
+export function useLevelOrder(target: LevelOrderTarget): LevelOrder {
+  const request = useGuardedRequest();
+  const [lastMove, setLastMove] = useState<LevelMove | null>(null);
+  const { error, save } = useOrderSaver(target, setLastMove);
+  const move = async (levelMove: LevelMove) => {
+    const order = orderAfter(target.levels, levelMove);
+    if (order === null) {
+      return;
+    }
+    await request.run(() => save(order, levelMove));
+  };
+  return { saving: request.busy, error, lastMove, move };
+}
+
+function useOrderSaver({ lotId, onSaved, onStale }: LevelOrderTarget, onMoved: (move: LevelMove) => void) {
+  const refreshSession = useSessionRefresh();
+  const [error, setError] = useState<DisplayedErrorCode | null>(null);
+  const save = async (order: LevelOrderRequest, levelMove: LevelMove) => {
+    try {
+      onSaved(await dashboardClient.reorderLevels(lotId, order));
+      onMoved(levelMove);
+      setError(null);
+    } catch (failure) {
+      setError(await refusalOf(failure, { refreshSession, onStale }));
+    }
+  };
+  return { error, save };
+}
+
+// The level swapped with its neighbour; null for a level already at that end, which has nowhere to go.
+function orderAfter(levels: readonly DashboardMapLevel[], { levelId, direction }: LevelMove): LevelOrderRequest | null {
+  const fromLevelIds = levels.map(({ id }) => id);
+  const levelIds = [...fromLevelIds];
+  const from = levelIds.indexOf(levelId);
+  const to = from + STEP[direction];
+  const neighbour = levelIds[to];
+  if (from < 0 || neighbour === undefined) {
+    return null;
+  }
+  levelIds[from] = neighbour;
+  levelIds[to] = levelId;
+  return { levelIds, fromLevelIds };
 }
 
 async function refusalOf(failure: unknown, { refreshSession, onStale }: RefusalFollowUps): Promise<DisplayedErrorCode> {

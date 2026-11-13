@@ -1,6 +1,7 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { asDashboardApiError, endsSession, type DashboardApiError, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
+import { useGuardedRequest } from './useGuardedRequest.ts';
 
 export type FieldValues<Field extends string> = Readonly<Record<Field, string>>;
 export type FieldErrorCodes<Field extends string> = Partial<Readonly<Record<Field, DisplayedErrorCode>>>;
@@ -53,26 +54,18 @@ function useFieldValues<Field extends string>(initialValues: FieldValues<Field>)
   return { values, setValue, outcome, setOutcome };
 }
 
-// A ref, not state, guards the request: clicks in the same instant all see the state of the render before the first one.
 function useSubmit<Field extends string>(values: FieldValues<Field>, sendValues: (values: FieldValues<Field>) => Promise<boolean>) {
   const [attempt, setAttempt] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
-  const inFlight = useRef(false);
+  const request = useGuardedRequest();
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (inFlight.current) {
-      return;
-    }
-    inFlight.current = true;
-    setSubmitting(true);
-    const accepted = await sendValues(values);
-    inFlight.current = false;
-    setSubmitting(false);
-    if (!accepted) {
-      setAttempt((previous) => previous + 1);
-    }
+    await request.run(async () => {
+      if (!(await sendValues(values))) {
+        setAttempt((previous) => previous + 1);
+      }
+    });
   };
-  return { attempt, submitting, submit };
+  return { attempt, submitting: request.busy, submit };
 }
 
 // Reads the form and sends it only when the shared rule accepts it; answers whether the request succeeded.
