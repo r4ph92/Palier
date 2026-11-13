@@ -1,3 +1,4 @@
+import { enMap } from './enMap.ts';
 import type { Dictionary } from './fr.ts';
 
 export const en: Dictionary = {
@@ -69,6 +70,7 @@ export const en: Dictionary = {
     unavailableTitle: 'Parking lot unavailable',
     beaconMajorLabel: 'Beacon major',
     occupancyLink: 'Occupancy',
+    mapLink: 'Map and beacons',
   },
   occupancy: {
     title: 'Occupancy',
@@ -82,6 +84,7 @@ export const en: Dictionary = {
     counterBelow: 'Counter below occupied spots: %{count}',
     stale: 'Figures not updated. Trying again shortly.',
   },
+  map: enMap,
   spotStates: {
     AVAILABLE: 'Available',
     HELD: 'Held',

@@ -1,9 +1,13 @@
 import type {
+  AisleRequest,
   DashboardLotDetails,
   DashboardLotListResponse,
+  DashboardLotMap,
   DashboardLotOccupancy,
   DashboardMeResponse,
   DashboardOperator,
+  LevelDraft,
+  LevelOrderRequest,
   LotDraft,
   LotPricingRequest,
   StripeOnboardingLink,
@@ -21,6 +25,10 @@ interface DashboardRequest {
 }
 
 const READ: DashboardRequest = { method: 'GET' };
+
+function lotPathOf(lotId: string): string {
+  return `/lots/${encodeURIComponent(lotId)}`;
+}
 
 // The session travels in an HttpOnly cookie the page never sees; writes add the header the API demands against CSRF.
 function requestInit({ method, body }: DashboardRequest): RequestInit {
@@ -60,4 +68,10 @@ export const dashboardClient = {
   createLot: (draft: LotDraft) => dashboardRequest<DashboardLotDetails>('/lots', { method: 'POST', body: draft }),
   setLotPricing: (lotId: string, pricing: LotPricingRequest) =>
     dashboardRequest<DashboardLotDetails>(`/lots/${encodeURIComponent(lotId)}/pricing`, { method: 'PUT', body: pricing }),
+  lotMap: (lotId: string) => dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/map`),
+  addLevel: (lotId: string, draft: LevelDraft) => dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/levels`, { method: 'POST', body: draft }),
+  reorderLevels: (lotId: string, order: LevelOrderRequest) =>
+    dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/levels/order`, { method: 'PUT', body: order }),
+  addAisle: (lotId: string, levelId: string, aisle: AisleRequest) =>
+    dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/levels/${encodeURIComponent(levelId)}/aisles`, { method: 'POST', body: aisle }),
 };

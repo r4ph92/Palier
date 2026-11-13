@@ -1,4 +1,4 @@
-import type { DashboardLot, DashboardLotDetails, DashboardLotOccupancy, DashboardMeResponse, DashboardOperator, DashboardUser, LotPricing } from '@palier/shared-types';
+import type { DashboardLot, DashboardLotDetails, DashboardLotMap, DashboardLotOccupancy, DashboardMeResponse, DashboardOperator, DashboardUser, LotPricing } from '@palier/shared-types';
 
 export const sophie: DashboardUser = { id: '00000000-0000-4000-8000-000000000601', firstName: 'Sophie', lastName: 'Lavoie' };
 export const pierre: DashboardUser = { id: '00000000-0000-4000-8000-000000000602', firstName: 'Pierre', lastName: 'Roy' };
@@ -61,6 +61,8 @@ export interface FakeApiState {
   readonly lots: Map<string, DashboardLotDetails[]>;
   // By lot id; a test replaces an entry to change what the next poll reads.
   readonly occupancy: Map<string, DashboardLotOccupancy>;
+  // By lot id; level and aisle writes change this copy.
+  readonly maps: Map<string, DashboardLotMap>;
 }
 
 const operatorsByUser = new Map<string, DashboardOperator>([[sophie.id, lavoie], [pierre.id, roy]]);

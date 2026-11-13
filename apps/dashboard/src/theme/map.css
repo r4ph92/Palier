@@ -1,0 +1,121 @@
+/* Data tables: thin line rules between rows, no cards, numbers in mono (design.md, moves 2 and 3). */
+.data-table {
+  width: 100%;
+  margin-top: var(--space-medium);
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: var(--space-small) var(--space-small) var(--space-small) 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.data-table thead th {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.data-table tbody th {
+  font-weight: 600;
+}
+
+.number-cell {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.level-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-small) var(--space-medium);
+  padding: var(--space-small) 0;
+}
+
+.level-position {
+  min-width: 2ch;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.level-row .row-name {
+  flex: 1 1 8ch;
+  font-weight: 600;
+}
+
+.level-moves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-medium);
+}
+
+.text-button:disabled {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: default;
+}
+
+.text-button[aria-disabled='true']:not(:disabled) {
+  cursor: wait;
+}
+
+.rectangle-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14ch, 1fr));
+  gap: var(--space-medium);
+}
+
+.field-select {
+  max-width: 16ch;
+  font-family: var(--font-mono);
+}
+
+.plan-preview {
+  width: 100%;
+  margin: 0;
+}
+
+.plan-preview svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 320px;
+}
+
+.plan-preview figcaption {
+  margin-top: var(--space-small);
+  font-size: 14px;
+}
+
+.plan-aisle rect {
+  fill: var(--sunken);
+  stroke: var(--muted);
+  stroke-width: 1px;
+}
+
+.plan-aisle text {
+  fill: var(--ink);
+  font-family: var(--font-mono);
+}
+
+.plan-aisle-draft rect {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2px;
+  stroke-dasharray: 6 4;
+}
+
+.beacon-uuid {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+  user-select: all;
+}

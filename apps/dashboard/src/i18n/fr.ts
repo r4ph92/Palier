@@ -1,3 +1,5 @@
+import { frMap } from './frMap.ts';
+
 export const fr = {
   app: {
     name: 'Tableau de bord Palier',
@@ -67,6 +69,7 @@ export const fr = {
     unavailableTitle: 'Stationnement indisponible',
     beaconMajorLabel: 'Major de balise',
     occupancyLink: 'Occupation',
+    mapLink: 'Plan et balises',
   },
   occupancy: {
     title: 'Occupation',
@@ -80,6 +83,7 @@ export const fr = {
     counterBelow: 'Compteur inférieur aux places occupées : %{count}',
     stale: 'Données non mises à jour. Nouvel essai dans un instant.',
   },
+  map: frMap,
   spotStates: {
     AVAILABLE: 'Libre',
     HELD: 'Garantie',
@@ -141,13 +145,13 @@ export const fr = {
     LEVEL_CODE_INVALID: 'Le code du niveau doit compter de 1 à %{levelCodeMaximum} caractères, sans caractère invisible.',
     LEVEL_CODE_TAKEN: 'Ce stationnement a déjà un niveau avec ce code.',
     LEVEL_LIMIT_REACHED: 'Un stationnement compte au plus %{levelMaximum} niveaux.',
-    LEVEL_ORDER_INVALID: 'Les niveaux ont changé entre-temps. Le plan a été rechargé ; recommencez.',
+    LEVEL_ORDER_INVALID: 'Les niveaux ont changé entre-temps. Le plan a été rechargé; recommencez.',
     LEVEL_NOT_FOUND: 'Ce niveau est introuvable. Rechargez le plan.',
     AISLE_CODE_INVALID: 'Le code de l’allée doit compter de 1 à %{aisleCodeMaximum} caractères, sans caractère invisible.',
     AISLE_CODE_TAKEN: 'Ce niveau a déjà une allée avec ce code.',
     AISLE_MINOR_INVALID: 'Entrez un nombre entier de %{minorMinimum} à %{minorMaximum}. Le minor 0 est réservé à la voie de sortie.',
     AISLE_MINOR_TAKEN: 'Une autre allée de ce stationnement utilise déjà ce minor.',
-    AISLE_RECTANGLE_INVALID: 'Entrez un nombre entier de 0 à %{gridMaximum} ; la largeur et la hauteur valent au moins 1.',
+    AISLE_RECTANGLE_INVALID: 'Entrez un nombre entier de 0 à %{gridMaximum}; la largeur et la hauteur valent au moins 1.',
     FIELDS_INVALID: 'Corrigez les champs indiqués.',
     UNKNOWN: 'Une erreur est survenue. Réessayez dans un instant.',
   },

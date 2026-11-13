@@ -6,6 +6,7 @@ import './theme/tokens.css';
 import './theme/layout.css';
 import './theme/lists.css';
 import './theme/forms.css';
+import './theme/map.css';
 
 const root = document.getElementById('root');
 if (root === null) {
