@@ -1,7 +1,16 @@
-import type { GateIdentity, GateIdentifyRequest, GateIdentifyResponse, GatePassageRequest, GatePassageResponse, GatePresenceResponse } from '@palier/shared-types';
+import type {
+  GateIdentity,
+  GateIdentifyRequest,
+  GateIdentifyResponse,
+  GatePassageRequest,
+  GatePassageResponse,
+  GatePresenceResponse,
+  PassageReplayRequest,
+  PassageReplayResponse,
+} from '@palier/shared-types';
 import type { FromSchema } from 'json-schema-to-ts';
-import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
-import { idPathParametersSchema } from './uuidSchema.ts';
+import type { AssertTrue, MutuallyAssignable, WithMutableArrays } from './schemaMatchesType.ts';
+import { idPathParametersSchema, uuidSchema } from './uuidSchema.ts';
 
 const gateKindSchema = { type: 'string', enum: ['ENTRY', 'EXIT'] } as const;
 
@@ -41,6 +50,34 @@ export const passageResponseSchema = {
   },
 } as const;
 
+export const MAXIMUM_REPLAY_BATCH = 500;
+
+export const replayRequestSchema = {
+  type: 'object',
+  required: ['passages'],
+  additionalProperties: false,
+  properties: {
+    passages: {
+      type: 'array',
+      minItems: 1,
+      maxItems: MAXIMUM_REPLAY_BATCH,
+      items: {
+        type: 'object',
+        required: ['id', 'kind', 'closedAt'],
+        additionalProperties: false,
+        properties: { id: uuidSchema, kind: gateKindSchema, closedAt: { type: 'string', format: 'date-time' } },
+      },
+    },
+  },
+} as const;
+
+export const replayResponseSchema = {
+  type: 'object',
+  required: ['counted', 'duplicates', 'vehicleCount'],
+  additionalProperties: false,
+  properties: { counted: { type: 'integer' }, duplicates: { type: 'integer' }, vehicleCount: { type: 'integer' } },
+} as const;
+
 export const identifyRequestSchema = {
   type: 'object',
   required: ['identifier'],
@@ -77,3 +114,5 @@ export type ResponseSchemaMatchesPassageResponse = AssertTrue<
 export type RequestSchemaMatchesIdentifyRequest = AssertTrue<MutuallyAssignable<FromSchema<typeof identifyRequestSchema>, GateIdentifyRequest>>;
 export type ResponseSchemaMatchesIdentifyResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof identifyResponseSchema>, GateIdentifyResponse>>;
 export type ResponseSchemaMatchesPresenceResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof presenceResponseSchema>, GatePresenceResponse>>;
+export type RequestSchemaMatchesReplayRequest = AssertTrue<MutuallyAssignable<FromSchema<typeof replayRequestSchema>, WithMutableArrays<PassageReplayRequest>>>;
+export type ResponseSchemaMatchesReplayResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof replayResponseSchema>, PassageReplayResponse>>;

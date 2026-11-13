@@ -1,5 +1,5 @@
-import { formatPassageTime, translate, vehiclesInside } from './consoleText.js';
-import { isLoopEnabled } from './loopPress.js';
+import { formatPassageTime, messageText, pendingPassages, translate, vehiclesInside } from './consoleText.js';
+import { focusTargetAfterQueueAction, isLoopAvailable, isToggleAvailable, queueOf } from './offlineControls.js';
 import { isReaderEnabled } from './readerRead.js';
 import { isPresenceEnabled } from './vehiclePresence.js';
 
@@ -16,7 +16,9 @@ import { isPresenceEnabled } from './vehiclePresence.js';
  * @property {GateIdentity | null} identity
  * @property {GatePassageResponse[]} passages
  * @property {readonly GateCommand[]} commands
- * @property {{ key: TextKey, isError: boolean } | null} message
+ * @property {import('./consoleText.js').ConsoleMessage | null} message
+ * @property {import('./offlineControls.js').Connection} connection
+ * @property {boolean} isSending
  * @property {string} renderedCommandLines
  */
 
@@ -34,6 +36,8 @@ export function elementById(id) {
 
 export const deviceKeyInput = /** @type {HTMLInputElement} */ (elementById('device-key'));
 export const loopButtons = /** @type {HTMLButtonElement[]} */ ([...document.querySelectorAll('[data-loop]')]);
+export const offlineToggle = /** @type {HTMLButtonElement} */ (elementById('offline-toggle'));
+export const clearQueueButton = /** @type {HTMLButtonElement} */ (elementById('clear-queue'));
 export const plateInput = /** @type {HTMLInputElement} */ (elementById('plate-read'));
 export const readerButton = /** @type {HTMLButtonElement} */ (elementById('reader-send'));
 export const presenceButton = /** @type {HTMLButtonElement} */ (elementById('presence-send'));
@@ -45,9 +49,11 @@ export function render(state) {
   document.title = translate(state.language, 'pageTitle');
   renderStaticTexts(state);
   renderIdentity(state);
+  renderOffline(state);
   renderLoops(state);
-  readerButton.disabled = !isReaderEnabled(state);
-  presenceButton.disabled = !isPresenceEnabled(state);
+  const controls = { ...state, isOffline: state.connection.kind !== 'online' };
+  readerButton.disabled = !isReaderEnabled(controls);
+  presenceButton.disabled = !isPresenceEnabled(controls);
   renderMessage(state);
   renderCommands(state);
   renderPassages(state);
@@ -77,17 +83,50 @@ function renderIdentity(state) {
 }
 
 /** @param {ConsoleState} state */
+function renderOffline(state) {
+  const { connection } = state;
+  offlineToggle.setAttribute('aria-pressed', String(connection.kind !== 'online'));
+  offlineToggle.setAttribute('aria-disabled', String(!isToggleAvailable(state)));
+  deviceKeyInput.disabled = state.isSending || (connection.kind !== 'online' && state.identity !== null);
+  renderPending(state);
+  clearQueueButton.hidden = connection.kind !== 'blocked';
+  clearQueueButton.disabled = state.isSending;
+}
+
+// The line stays in the page, only emptied, so a screen reader announces the count when it appears.
+/** @param {ConsoleState} state */
+function renderPending(state) {
+  const { connection } = state;
+  const isShown = connection.kind !== 'online' || connection.hasReplayed;
+  const queue = queueOf(connection);
+  const pending = pendingPassages(queue?.items.length ?? 0, state.language);
+  const gate = queue?.gateName ?? '';
+  const line = gate === '' ? pending : translate(state.language, 'pendingForGate', { pending, gate });
+  elementById('pending').textContent = isShown ? line : '';
+}
+
+/** @param {ConsoleState} state */
+export function focusAfterQueueAction(state) {
+  (focusTargetAfterQueueAction(state) === 'offlineToggle' ? offlineToggle : deviceKeyInput).focus();
+}
+
+/** @param {ConsoleState} state */
 function renderLoops(state) {
   for (const button of loopButtons) {
-    button.disabled = !isLoopEnabled(/** @type {GateKind} */ (button.dataset['loop']), state);
+    button.disabled = !isLoopAvailable(/** @type {GateKind} */ (button.dataset['loop']), state);
+    button.setAttribute('aria-disabled', String(state.isSending));
   }
 }
 
 /** @param {ConsoleState} state */
 export function renderMessage(state) {
   const message = elementById('message');
-  message.textContent = state.message === null ? '' : translate(state.language, state.message.key);
+  message.textContent = state.message === null ? '' : messageText(state.language, state.message);
   message.classList.toggle('message-error', state.message?.isError === true);
+  const tone = state.message !== null && 'tone' in state.message ? state.message.tone : undefined;
+  message.classList.toggle('message-degraded', tone !== undefined);
+  message.classList.toggle('message-muted', tone === 'muted');
+  message.setAttribute('aria-busy', String(state.isSending));
 }
 
 /** @param {ConsoleState} state */

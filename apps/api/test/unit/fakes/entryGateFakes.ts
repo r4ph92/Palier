@@ -18,6 +18,7 @@ const parkingDemoLot = {
   capacity: 10,
   vehicleCount: 0,
   heldSpotCount: 0,
+  assignedSpotCount: 0,
   operatorStripeAccountId: LAVOIE_ACCOUNT,
 };
 
@@ -42,6 +43,7 @@ export const entreeRoyGate: EntryGate = {
     capacity: 10,
     vehicleCount: 0,
     heldSpotCount: 0,
+    assignedSpotCount: 0,
     operatorStripeAccountId: null,
   },
 };

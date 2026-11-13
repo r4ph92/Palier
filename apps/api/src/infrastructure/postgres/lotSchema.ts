@@ -36,7 +36,7 @@ export const parkingLot = pgTable(
       .unique()
       .default(sql`nextval('parking_lot_beacon_major_seq')`),
     pricingPolicy: jsonb('pricing_policy'),
-    // Null with the policy: a lot without pricing stays offline (decision 031).
+    // Null with the policy: a lot without pricing stays offline (decision 032).
     dailyCapCents: integer('daily_cap_cents'),
     holdQuota: integer('hold_quota').notNull().default(DEFAULT_HOLD_QUOTA),
     assignmentStrategy: assignmentStrategy('assignment_strategy').notNull().default('AISLE_BY_AISLE'),

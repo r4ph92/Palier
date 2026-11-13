@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { EntryGate, EntryGateRepository } from '../../domain/entries/EntryGateRepository.ts';
 import type { Database } from './database.ts';
-import { HELD_SPOT_COUNT } from './heldSpotCount.ts';
+import { ASSIGNED_SPOT_COUNT, HELD_SPOT_COUNT } from './heldSpotCount.ts';
 import { gate, operator, parkingLot } from './schema.ts';
 
 const entryGateColumns = {
@@ -17,6 +17,7 @@ const entryGateColumns = {
     capacity: parkingLot.capacity,
     vehicleCount: parkingLot.vehicleCount,
     heldSpotCount: HELD_SPOT_COUNT,
+    assignedSpotCount: ASSIGNED_SPOT_COUNT,
     operatorStripeAccountId: operator.stripeAccountId,
   },
 };

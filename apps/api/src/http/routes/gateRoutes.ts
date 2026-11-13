@@ -1,4 +1,4 @@
-import type { GateIdentifyRequest, GateIdentifyResponse, GateIdentity, GatePassageRequest, GatePassageResponse, GatePresenceResponse } from '@palier/shared-types';
+import type { GateIdentifyRequest, GateIdentifyResponse, GateIdentity, GatePassageRequest, GatePassageResponse, GatePresenceResponse, PassageReplayRequest, PassageReplayResponse } from '@palier/shared-types';
 import { isStorableDate } from '../../domain/time/storableDate.ts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { GateCommandCursor, GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
@@ -8,6 +8,7 @@ import type { PassageLedger } from '../../domain/gates/PassageLedger.ts';
 import type { ExitDependencies } from '../../domain/exits/exitParking.ts';
 import { identifyAtExit, type IdentifyOutcome } from '../../domain/exits/identifyAtExit.ts';
 import { recordVehicleAtExit } from '../../domain/exits/identifyByBeacon.ts';
+import { replayPassages } from '../../domain/gates/replayPassages.ts';
 import { recordPassage } from '../../domain/gates/recordPassage.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 import { authenticatedGateOf, createGateDeviceAuthentication } from '../gates/gateDeviceAuthentication.ts';
@@ -21,6 +22,8 @@ import {
   passageRequestSchema,
   passageResponseSchema,
   presenceResponseSchema,
+  replayRequestSchema,
+  replayResponseSchema,
   type GateIdParameters,
 } from '../schemas/gateSchemas.ts';
 
@@ -44,6 +47,11 @@ interface PassageRoute {
   Body: GatePassageRequest;
 }
 
+interface ReplayRoute {
+  Params: GateIdParameters;
+  Body: PassageReplayRequest;
+}
+
 interface IdentifyRoute {
   Params: GateIdParameters;
   Body: GateIdentifyRequest;
@@ -64,6 +72,7 @@ export function registerGateRoutes(server: FastifyInstance, dependencies: GateRo
       scope.setErrorHandler(handleGateError);
       registerIdentityRoute(scope);
       registerPassageRoute(scope, dependencies);
+      registerReplayRoute(scope, dependencies);
       registerIdentifyRoute(scope, readerExit);
       registerPresenceRoute(scope, readerExit);
       registerCommandsRoute(scope, dependencies.commands);
@@ -88,6 +97,16 @@ function registerPassageRoute(scope: FastifyInstance, dependencies: GateRouteDep
       closedAt: new Date(request.body.closedAt),
     };
     return recordPassage(command, { ledger: dependencies.ledger, clock: dependencies.clock, openingWindow: dependencies.openingWindow });
+  });
+}
+
+// The passages were counted by the controller during an outage: they keep their original times, and a repeated id counts once.
+function registerReplayRoute(scope: FastifyInstance, dependencies: GateRouteDependencies): void {
+  const schema = { params: gateIdParametersSchema, body: replayRequestSchema, response: { 200: replayResponseSchema } };
+  scope.post<ReplayRoute>('/:id/passages/replay', { schema }, async (request): Promise<PassageReplayResponse> => {
+    const passages = request.body.passages.map((passage) => ({ ...passage, closedAt: new Date(passage.closedAt) }));
+    const command = { gate: authenticatedGateOf(request), requestedGateId: request.params.id, passages };
+    return replayPassages(command, { ledger: dependencies.ledger, clock: dependencies.clock });
   });
 }
 

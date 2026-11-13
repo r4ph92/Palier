@@ -1,5 +1,5 @@
 {
-  "id": "50f094de-1522-411d-abfe-296800ff97f9",
+  "id": "191c048a-ef38-47d3-b4fa-53af0121d2a3",
   "prevId": "c52fbc1f-2e28-4c1f-9206-abf40a184953",
   "version": "7",
   "dialect": "postgresql",
@@ -611,12 +611,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "address": {
-          "name": "address",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
         "latitude": {
           "name": "latitude",
           "type": "numeric(9, 6)",
@@ -633,8 +627,7 @@
           "name": "beacon_major",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false,
-          "default": "nextval('parking_lot_beacon_major_seq')"
+          "notNull": false
         },
         "pricing_policy": {
           "name": "pricing_policy",
@@ -646,14 +639,7 @@
           "name": "daily_cap_cents",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
-        },
-        "hold_quota": {
-          "name": "hold_quota",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 3
+          "notNull": true
         },
         "assignment_strategy": {
           "name": "assignment_strategy",
@@ -755,22 +741,6 @@
         "parking_lot_vehicle_count_not_negative": {
           "name": "parking_lot_vehicle_count_not_negative",
           "value": "\"parking_lot\".\"vehicle_count\" >= 0"
-        },
-        "parking_lot_pricing_complete": {
-          "name": "parking_lot_pricing_complete",
-          "value": "(\"parking_lot\".\"pricing_policy\" is null) = (\"parking_lot\".\"daily_cap_cents\" is null)"
-        },
-        "parking_lot_daily_cap_positive": {
-          "name": "parking_lot_daily_cap_positive",
-          "value": "\"parking_lot\".\"daily_cap_cents\" > 0"
-        },
-        "parking_lot_online_has_pricing": {
-          "name": "parking_lot_online_has_pricing",
-          "value": "(not \"parking_lot\".\"is_online\") or \"parking_lot\".\"pricing_policy\" is not null"
-        },
-        "parking_lot_hold_quota_range": {
-          "name": "parking_lot_hold_quota_range",
-          "value": "\"parking_lot\".\"hold_quota\" between 0 and 50"
         }
       },
       "isRLSEnabled": false
@@ -1217,6 +1187,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "replay_id": {
+          "name": "replay_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -1237,6 +1213,27 @@
             }
           ],
           "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gate_passage_gate_id_replay_id_unique": {
+          "name": "gate_passage_gate_id_replay_id_unique",
+          "columns": [
+            {
+              "expression": "gate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "replay_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -2368,18 +2365,7 @@
     }
   },
   "schemas": {},
-  "sequences": {
-    "public.parking_lot_beacon_major_seq": {
-      "name": "parking_lot_beacon_major_seq",
-      "schema": "public",
-      "increment": "1",
-      "startWith": "4",
-      "minValue": "1",
-      "maxValue": "65535",
-      "cache": "1",
-      "cycle": false
-    }
-  },
+  "sequences": {},
   "roles": {},
   "policies": {},
   "views": {},

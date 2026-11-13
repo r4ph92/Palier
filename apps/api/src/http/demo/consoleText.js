@@ -37,6 +37,60 @@ export function formatPassageTime(moment, language) {
  * @returns {string}
  */
 export function vehiclesInside(count, language) {
-  const isSingular = language === 'fr' ? count <= 1 : count === 1;
-  return translate(language, isSingular ? 'vehiclesInsideOne' : 'vehiclesInsideOther', { count });
+  return translate(language, isSingular(count, language) ? 'vehiclesInsideOne' : 'vehiclesInsideOther', { count });
+}
+
+/**
+ * @param {number} count
+ * @param {Language} language
+ * @returns {string}
+ */
+export function pendingPassages(count, language) {
+  return translate(language, isSingular(count, language) ? 'pendingPassagesOne' : 'pendingPassagesOther', { count });
+}
+
+/**
+ * @param {number} count
+ * @param {number} vehicleCount
+ * @param {Language} language
+ * @returns {string}
+ */
+export function passagesReplayed(count, vehicleCount, language) {
+  const key = isSingular(count, language) ? 'passagesReplayedOne' : 'passagesReplayedOther';
+  return translate(language, key, { count, vehicles: vehiclesInside(vehicleCount, language) });
+}
+
+/**
+ * @typedef {{ key: TextKey, isError: boolean, tone?: 'degraded' | 'muted' }
+ *   | { replayed: { count: number, vehicleCount: number }, isError: false }} ConsoleMessage
+ */
+
+/**
+ * @param {Language} language
+ * @param {ConsoleMessage} message
+ * @returns {string}
+ */
+export function messageText(language, message) {
+  if ('replayed' in message) {
+    return passagesReplayed(message.replayed.count, message.replayed.vehicleCount, language);
+  }
+  return translate(language, message.key);
+}
+
+/**
+ * @param {ConsoleMessage | null} message
+ * @param {TextKey} key
+ * @returns {boolean}
+ */
+export function isMessageKey(message, key) {
+  return message !== null && 'key' in message && message.key === key;
+}
+
+/**
+ * @param {number} count
+ * @param {Language} language
+ * @returns {boolean}
+ */
+function isSingular(count, language) {
+  return language === 'fr' ? count <= 1 : count === 1;
 }

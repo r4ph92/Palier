@@ -4,10 +4,10 @@ import { garageRoyLot } from '../../src/seed/fixtures/garageRoy.ts';
 import { parkingDemoLot } from '../../src/seed/fixtures/parkingDemo.ts';
 import { parkingTestPaliersLot } from '../../src/seed/fixtures/parkingTestPaliers.ts';
 
-const migration = readFileSync(new URL('../../drizzle/0033_lot_setup.sql', import.meta.url), 'utf8');
+const migration = readFileSync(new URL('../../drizzle/0034_lot_setup.sql', import.meta.url), 'utf8');
 const SEQUENCE_START = 4;
 
-describe('migration 0033, lot setup', () => {
+describe('migration 0034, lot setup', () => {
   it('hands out 16-bit beacon majors from a sequence that starts after every major already taken', () => {
     expect(migration).toContain(`MAXVALUE 65535 START WITH ${SEQUENCE_START}`);
     expect(migration).toContain(`setval('parking_lot_beacon_major_seq', greatest((SELECT max("beacon_major") FROM "parking_lot"), 3) + 1, false)`);

@@ -36,6 +36,22 @@ describe('createGateApi', () => {
     });
   });
 
+  it('sends the queued passages to the replay route of the gate named in the path', async () => {
+    const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ counted: 1, duplicates: 0, vehicleCount: 4 }));
+    const passages = [{ id: '11111111-1111-4111-8111-111111111111', kind: 'EXIT', closedAt: pressedAt.toISOString() }] as const;
+
+    const response = await createGateApi(fetchFunction).replayPassages(DEVICE_KEY, 'gate-502', passages);
+
+    expect(response).toEqual({ status: 200, body: { counted: 1, duplicates: 0, vehicleCount: 4 } });
+    expect(fetchFunction).toHaveBeenCalledWith('/v1/gates/gate-502/passages/replay', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${DEVICE_KEY}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ passages }),
+      cache: 'no-store',
+      credentials: 'omit',
+    });
+  });
+
   it('reports the status of a refusal', async () => {
     const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
 

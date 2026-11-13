@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { decideSpotHoldRequest, type SpotHoldFacts } from '../../src/domain/spotHolds/decideSpotHoldRequest.ts';
 
-const roomForOne = { capacity: 10, vehicleCount: 7, heldSpotCount: 2 };
-const full = { capacity: 10, vehicleCount: 8, heldSpotCount: 2 };
+const roomForOne = { capacity: 10, vehicleCount: 7, heldSpotCount: 2, assignedSpotCount: 0 };
+const full = { capacity: 10, vehicleCount: 8, heldSpotCount: 2, assignedSpotCount: 0 };
 const openLot: SpotHoldFacts = { isLotOnline: true, hasOwnActiveHold: false, activeHoldsInLot: 0, holdQuota: 3, occupancy: roomForOne };
 
 describe('decideSpotHoldRequest', () => {

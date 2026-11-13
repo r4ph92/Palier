@@ -1,7 +1,8 @@
 import type { GateIdentity } from '@palier/shared-types';
 import { describe, expect, it, vi } from 'vitest';
 import type { ApiResponse, GateApi } from '../../src/http/demo/gateApi.js';
-import { isLoopEnabled, messageForStatus, pressLoop } from '../../src/http/demo/loopPress.js';
+import { messageForStatus } from '../../src/http/demo/gateIdentity.js';
+import { isLoopEnabled, pressLoop } from '../../src/http/demo/loopPress.js';
 
 const DEVICE_KEY = 'gkXGrHor9PJGFGYu4xrNZ5nMkid18rTHXBmuCuI63as';
 const pressedAt = new Date('2026-10-27T22:02:00Z');

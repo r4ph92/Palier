@@ -7,7 +7,7 @@ const garageRoyNord = { name: 'Garage Roy Nord', address: '8000, boulevard Saint
 const BURST = 50;
 const TOO_MANY_REQUESTS = 429;
 
-// Each created lot takes a beacon major for good from one platform-wide sequence that ends at 65 535 (decision 031).
+// Each created lot takes a beacon major for good from one platform-wide sequence that ends at 65 535 (decision 032).
 describe('a burst of lot creations by one operator (QA #64)', () => {
   let server: FastifyInstance;
 

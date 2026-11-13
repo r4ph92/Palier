@@ -1,13 +1,9 @@
-import { isStorableDate } from '../time/storableDate.ts';
-import type { GateKind, GatePassageResponse } from '@palier/shared-types';
+import type { GatePassageResponse } from '@palier/shared-types';
 import type { Clock } from '../time/Clock.ts';
 import type { AuthenticatedGate } from './AuthenticatedGate.ts';
 import type { OpeningWindow } from './OpeningWindow.ts';
-import type { PassageLedger, VehicleCountChange } from './PassageLedger.ts';
-import { PassageRefusedError } from './PassageRefusedError.ts';
-
-const ALLOWED_CLOCK_DRIFT_MILLISECONDS = 5 * 60 * 1000;
-const VEHICLE_COUNT_CHANGE: Record<GateKind, VehicleCountChange> = { ENTRY: 1, EXIT: -1 };
+import type { PassageLedger } from './PassageLedger.ts';
+import { ensureClosedAtIsPlausible, ensureGateMayReport, vehicleCountChangeFor } from './passageRules.ts';
 
 export interface PassageCommand {
   readonly gate: AuthenticatedGate;
@@ -26,9 +22,10 @@ export async function recordPassage(
   command: PassageCommand,
   collaborators: PassageCollaborators,
 ): Promise<GatePassageResponse> {
-  ensurePassageAllowed(command, collaborators.clock());
+  ensureGateMayReport(command.gate, command.requestedGateId);
+  ensureClosedAtIsPlausible(command.closedAt, collaborators.clock());
   const { gate, closedAt } = command;
-  const vehicleCountChange = VEHICLE_COUNT_CHANGE[gate.kind];
+  const vehicleCountChange = vehicleCountChangeFor(gate.kind);
   const confirmableOpenings = gate.kind === 'ENTRY' ? collaborators.openingWindow : null;
   const attachableOpenings = gate.kind === 'EXIT' ? collaborators.openingWindow : null;
   const recorded = await collaborators.ledger.recordPassage({
@@ -39,19 +36,4 @@ export async function recordPassage(
     attachableOpenings,
   });
   return { gateId: gate.id, lotId: gate.lotId, kind: gate.kind, closedAt: closedAt.toISOString(), ...recorded };
-}
-
-function ensurePassageAllowed(command: PassageCommand, now: Date): void {
-  if (command.gate.id !== command.requestedGateId) {
-    throw new PassageRefusedError('GATE_FORBIDDEN');
-  }
-  if (!command.gate.hasLoops) {
-    throw new PassageRefusedError('GATE_WITHOUT_LOOPS');
-  }
-  if (!isStorableDate(command.closedAt)) {
-    throw new PassageRefusedError('CLOSED_AT_INVALID');
-  }
-  if (command.closedAt.getTime() - now.getTime() > ALLOWED_CLOCK_DRIFT_MILLISECONDS) {
-    throw new PassageRefusedError('CLOSED_AT_IN_FUTURE');
-  }
 }

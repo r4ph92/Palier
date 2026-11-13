@@ -46,6 +46,8 @@ export type StatementLabel =
   | 'insert-lot'
   | 'update-lot-pricing'
   | 'read-lot-details'
+  | 'read-lot-occupancy'
+  | 'replay-passages'
   | 'unknown';
 
 export interface ExecutedStatement {
@@ -56,6 +58,9 @@ export interface ExecutedStatement {
 }
 
 export type Rows = readonly Record<string, unknown>[];
+
+// Parking Démo as seeded, answered to read-lot-occupancy: capacity 10, nobody inside, nothing held or admitted.
+export const PARKING_DEMO_OCCUPANCY_ROW = { capacity: 10, vehicle_count: 0, held_spot_count: 0, assigned_spot_count: 0 };
 
 // What Postgres raises when a lock wait passes lock_timeout.
 export const LOCK_NOT_AVAILABLE = { code: '55P03' };
@@ -68,6 +73,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['insert-lot', /insert into parking_lot/],
   ['update-lot-pricing', /update parking_lot\s+set pricing_policy/],
   ['read-lot-details', /from parking_lot where id = \$1 and operator_id = \$2/],
+  ['replay-passages', /insert into gate_passage[\s\S]*on conflict/],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],
   ['presume-silent-questions', /where lot_id = \$\d and state = 'PARKED_UNCONFIRMED' and parked_at/],
@@ -91,6 +97,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-session-status', /select ps\.id, ps\.state, ps\.entry_confirmed_at/],
   ['read-unchanged-session', /select state, parked_at from parking_session/],
   ['lock-lot', /from parking_lot[\s\S]*for no key update/],
+  ['read-lot-occupancy', /as assigned_spot_count\s+from parking_lot/],
   ['read-active-session', /with active as/],
   ['assign-held-spot', /state = 'HELD' for update skip locked/],
   ['claim-spot', /for update skip locked/],

@@ -1,6 +1,6 @@
 import type { FreeSpot } from '../domain/allocation/chooseSpot.ts';
 import { spotFits } from '../domain/allocation/chooseSpotFor.ts';
-import { hasRoomForAnotherVehicle, type LotOccupancy } from '../domain/occupancy/hasRoomForAnotherVehicle.ts';
+import { vehicleRoomLeft, type LotOccupancy } from '../domain/occupancy/hasRoomForAnotherVehicle.ts';
 import type { VehicleNeeds } from '../domain/vehicles/VehicleRepository.ts';
 
 export interface LotAdmissions {
@@ -9,10 +9,8 @@ export interface LotAdmissions {
   readonly needs: VehicleNeeds;
 }
 
-// Eligibility refuses the whole lot once its vehicles and held spots reach capacity; below that, the free spots that fit decide.
+// The free count shown before the run: the room left by vehicles, held spots and admitted entries caps the free spots that fit (#110).
 export function admissibleSpotCount({ occupancy, freeSpots, needs }: LotAdmissions): number {
-  if (!hasRoomForAnotherVehicle(occupancy)) {
-    return 0;
-  }
-  return freeSpots.filter((spot) => spotFits(needs, spot)).length;
+  const fitting = freeSpots.filter((spot) => spotFits(needs, spot)).length;
+  return Math.max(0, Math.min(vehicleRoomLeft(occupancy), fitting));
 }
