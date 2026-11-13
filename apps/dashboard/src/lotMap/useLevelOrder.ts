@@ -15,8 +15,8 @@ export interface LevelOrderTarget {
   readonly lotId: string;
   readonly levels: readonly DashboardMapLevel[];
   readonly onSaved: (map: DashboardLotMap) => void;
-  // The levels changed under the page: it reads the map again before the operator retries.
-  readonly onStale: () => Promise<void>;
+  // The levels changed under the page: it reads the map again before the operator retries; false when that read failed.
+  readonly onStale: () => Promise<boolean>;
 }
 
 export interface LevelOrder {
@@ -69,7 +69,7 @@ function useGuardedRequest() {
 
 interface RefusalFollowUps {
   readonly refreshSession: () => Promise<void>;
-  readonly onStale: () => Promise<void>;
+  readonly onStale: () => Promise<boolean>;
 }
 
 async function refusalOf(failure: unknown, { refreshSession, onStale }: RefusalFollowUps): Promise<DisplayedErrorCode> {
@@ -77,8 +77,8 @@ async function refusalOf(failure: unknown, { refreshSession, onStale }: RefusalF
   if (endsSession(error)) {
     void refreshSession();
   }
-  if (error.code === 'LEVEL_ORDER_INVALID') {
-    await onStale();
+  if (error.code !== 'LEVEL_ORDER_INVALID') {
+    return error.code;
   }
-  return error.code;
+  return (await onStale()) ? error.code : 'MAP_RELOAD_FAILED';
 }

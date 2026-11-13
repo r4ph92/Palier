@@ -115,6 +115,20 @@ describe('the map of a lot', () => {
     expect(api.requests.filter((request) => request === `GET /lots/${garageRoy.id}/map`)).toHaveLength(readsBefore + 1);
   });
 
+  it('says the map could not be reloaded when the read after a stale move fails too', async () => {
+    const api = await openGarageRoyMap();
+    await addLevel('P1');
+    await addLevel('P2');
+    api.answers.set(ORDER_REQUEST, { status: 409, body: { statusCode: 409, error: 'LEVEL_ORDER_INVALID', message: '' } });
+    api.answers.set(`GET /lots/${garageRoy.id}/map`, { status: 500 });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Monter P2' }));
+
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'Les niveaux ont changé entre-temps, et le plan n’a pas pu être rechargé. Rechargez la page avant de recommencer.',
+    );
+  });
+
   it('shows the exit lane with the first level, then aisle A with minor 1 in the list and on the plan', async () => {
     const api = await openGarageRoyMap();
     await addLevel('P1');

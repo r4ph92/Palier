@@ -161,6 +161,7 @@ export const en: Dictionary = {
     AISLE_MINOR_TAKEN: 'Another aisle of this parking lot already uses this minor.',
     AISLE_RECTANGLE_INVALID: 'Enter a whole number from 0 to %{gridMaximum}; width and height are at least 1.',
     FIELDS_INVALID: 'Fix the fields shown.',
+    MAP_RELOAD_FAILED: 'The levels changed in the meantime, and the map could not be reloaded. Reload the page before trying again.',
     UNKNOWN: 'Something went wrong. Try again in a moment.',
   },
 };

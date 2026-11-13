@@ -7,8 +7,8 @@ export interface LotMapState extends LoadedResource<DashboardLotMap> {
   // The map a write answered, shown in place of the first load: the page always shows what the API saved.
   readonly latest: DashboardLotMap | null;
   readonly show: (map: DashboardLotMap) => void;
-  // Reads the map again after a write refused because the page was out of date; a failed read keeps the map shown.
-  readonly refresh: () => Promise<void>;
+  // Reads the map again after a write refused because the page was out of date; false when that read failed too.
+  readonly refresh: () => Promise<boolean>;
 }
 
 export function useLotMap(lotId: string): LotMapState {
@@ -17,8 +17,9 @@ export function useLotMap(lotId: string): LotMapState {
   const refresh = useCallback(async () => {
     try {
       setLatest(await dashboardClient.lotMap(lotId));
+      return true;
     } catch {
-      // The refusal already shown tells the operator to reload.
+      return false;
     }
   }, [lotId]);
   return { ...loaded, latest, show: setLatest, refresh };

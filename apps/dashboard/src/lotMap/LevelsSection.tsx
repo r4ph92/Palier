@@ -11,7 +11,7 @@ export interface MapSectionProps {
 }
 
 interface LevelsSectionProps extends MapSectionProps {
-  readonly onStale: () => Promise<void>;
+  readonly onStale: () => Promise<boolean>;
 }
 
 export function LevelsSection({ map, onSaved, onStale }: LevelsSectionProps) {

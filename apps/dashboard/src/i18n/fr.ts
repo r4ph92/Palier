@@ -160,6 +160,7 @@ export const fr = {
     AISLE_MINOR_TAKEN: 'Une autre allée de ce stationnement utilise déjà ce minor.',
     AISLE_RECTANGLE_INVALID: 'Entrez un nombre entier de 0 à %{gridMaximum}; la largeur et la hauteur valent au moins 1.',
     FIELDS_INVALID: 'Corrigez les champs indiqués.',
+    MAP_RELOAD_FAILED: 'Les niveaux ont changé entre-temps, et le plan n’a pas pu être rechargé. Rechargez la page avant de recommencer.',
     UNKNOWN: 'Une erreur est survenue. Réessayez dans un instant.',
   },
 };

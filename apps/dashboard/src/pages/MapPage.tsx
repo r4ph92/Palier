@@ -40,7 +40,7 @@ function MapUnavailable({ lotId, ...failure }: RetryableFailureProps & { readonl
 interface MapViewProps {
   readonly map: DashboardLotMap;
   readonly onSaved: (map: DashboardLotMap) => void;
-  readonly onStale: () => Promise<void>;
+  readonly onStale: () => Promise<boolean>;
 }
 
 function MapView({ map, onSaved, onStale }: MapViewProps) {
