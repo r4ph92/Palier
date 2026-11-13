@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { AISLE_GRID_LIMIT, aisleRectangleOf } from '../../src/domain/lots/AisleRectangle.ts';
+import { AISLE_GRID_LIMIT } from '@palier/shared-types/aisleRectangle';
+import { aisleRectangleOf } from '../../src/domain/lots/AisleRectangle.ts';
 
 const rectangle = { x: 0, y: 50, width: 100, height: 40 };
 

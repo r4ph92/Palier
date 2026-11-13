@@ -68,6 +68,18 @@
     "./beacons": {
       "types": "./src/beacons.ts",
       "default": "./src/beacons.ts"
+    },
+    "./levelDraft": {
+      "types": "./src/levelDraft.ts",
+      "default": "./src/levelDraft.ts"
+    },
+    "./aisleDraft": {
+      "types": "./src/aisleDraft.ts",
+      "default": "./src/aisleDraft.ts"
+    },
+    "./aisleRectangle": {
+      "types": "./src/aisleRectangle.ts",
+      "default": "./src/aisleRectangle.ts"
     }
   },
   "scripts": {

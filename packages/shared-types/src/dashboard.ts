@@ -1,5 +1,6 @@
 import { isValidDisplayText } from './displayText.ts';
 import type { LotPricing } from './lotPricing.ts';
+import type { AisleRectangle } from './parkingSessions.ts';
 import type { SpotState } from './spotStates.ts';
 
 // Every mutating /v1/dashboard request carries this header; a cross-site form cannot set it.
@@ -76,6 +77,37 @@ export interface DashboardLotOccupancy {
   readonly counterGap: CounterGap;
 }
 
+// rectangle is null for the exit lane, which is not drawn, and for an aisle whose stored shape the read boundary refuses.
+export interface DashboardMapAisle {
+  readonly id: string;
+  readonly code: string;
+  readonly beaconMinor: number;
+  readonly isExitLane: boolean;
+  readonly rectangle: AisleRectangle | null;
+}
+
+// Levels come in display order, which is also the order spots are handed out in; aisles by code, the exit lane last.
+export interface DashboardMapLevel {
+  readonly id: string;
+  readonly code: string;
+  readonly displayOrder: number;
+  readonly aisles: readonly DashboardMapAisle[];
+}
+
+// What an operator needs to program the lot's beacons: the platform UUID, the lot's major and each aisle's minor.
+export interface DashboardLotMap {
+  readonly lotId: string;
+  readonly lotName: string;
+  readonly platformUuid: string;
+  readonly beaconMajor: number | null;
+  readonly levels: readonly DashboardMapLevel[];
+}
+
+// Every level of the lot, each once, in the new order.
+export interface LevelOrderRequest {
+  readonly levelIds: readonly string[];
+}
+
 export type DashboardLotListResponse = readonly DashboardLot[];
 
 export type DashboardTestUserListResponse = readonly DashboardUser[];
@@ -109,6 +141,17 @@ export const DASHBOARD_ERROR_CODES = [
   'PRICING_DAILY_CAP_BELOW_INCREMENT',
   'PRICING_HOLD_QUOTA_INVALID',
   'TOO_MANY_LOTS',
+  'LOT_BUSY',
+  'LEVEL_CODE_INVALID',
+  'LEVEL_CODE_TAKEN',
+  'LEVEL_LIMIT_REACHED',
+  'LEVEL_ORDER_INVALID',
+  'LEVEL_NOT_FOUND',
+  'AISLE_CODE_INVALID',
+  'AISLE_CODE_TAKEN',
+  'AISLE_MINOR_INVALID',
+  'AISLE_MINOR_TAKEN',
+  'AISLE_RECTANGLE_INVALID',
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];

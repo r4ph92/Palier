@@ -1,13 +1,20 @@
 import type { DashboardErrorCode } from '@palier/shared-types';
+import type { AisleDraftErrorCode } from '@palier/shared-types/aisleDraft';
 import { LEGAL_NAME_LENGTH } from '@palier/shared-types/dashboard';
+import type { LevelDraftErrorCode } from '@palier/shared-types/levelDraft';
 import type { LotDraftErrorCode } from '@palier/shared-types/lotDraft';
 import type { PricingErrorCode } from '@palier/shared-types/lotPricing';
+import { LOT_MAP_MESSAGES } from './lotMapMessages.ts';
+import type { LotMapRefusal } from './LotMapRepository.ts';
 import { LOT_SETUP_MESSAGES } from './lotSetupMessages.ts';
 
 export type DashboardRefusalReason =
   | Extract<DashboardErrorCode, 'LEGAL_NAME_INVALID' | 'OPERATOR_EXISTS' | 'NO_OPERATOR' | 'LOT_NOT_FOUND' | 'OPERATOR_NOT_FOUND' | 'STRIPE_UNAVAILABLE'>
   | LotDraftErrorCode
-  | PricingErrorCode;
+  | PricingErrorCode
+  | LevelDraftErrorCode
+  | AisleDraftErrorCode
+  | LotMapRefusal;
 
 const MESSAGES: Readonly<Record<DashboardRefusalReason, string>> = {
   LEGAL_NAME_INVALID: `The legal name must be ${LEGAL_NAME_LENGTH.minimum} to ${LEGAL_NAME_LENGTH.maximum} characters, with no invisible characters.`,
@@ -17,6 +24,7 @@ const MESSAGES: Readonly<Record<DashboardRefusalReason, string>> = {
   OPERATOR_NOT_FOUND: 'No such operator.',
   STRIPE_UNAVAILABLE: 'Stripe is unavailable right now.',
   ...LOT_SETUP_MESSAGES,
+  ...LOT_MAP_MESSAGES,
 };
 
 export class DashboardRefusedError extends Error {

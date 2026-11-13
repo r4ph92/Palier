@@ -24,12 +24,29 @@ const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
   PRICING_DAILY_CAP_BELOW_INCREMENT: 400,
   PRICING_HOLD_QUOTA_INVALID: 400,
   TOO_MANY_LOTS: 429,
+  LOT_BUSY: 503,
+  LEVEL_CODE_INVALID: 400,
+  LEVEL_CODE_TAKEN: 409,
+  LEVEL_LIMIT_REACHED: 409,
+  LEVEL_ORDER_INVALID: 409,
+  LEVEL_NOT_FOUND: 404,
+  AISLE_CODE_INVALID: 400,
+  AISLE_CODE_TAKEN: 409,
+  AISLE_MINOR_INVALID: 400,
+  AISLE_MINOR_TAKEN: 409,
+  AISLE_RECTANGLE_INVALID: 400,
 };
+
+// The lot lock waits at most 3 s (LIMIT_LOCK_WAIT), so a busy lot is worth trying again a few seconds later.
+const LOT_BUSY_RETRY_AFTER_SECONDS = 3;
 
 export function handleDashboardError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {
   if (!(error instanceof DashboardRefusedError || error instanceof DashboardHttpRefusal)) {
     return handleServerError(error, request, reply);
   }
   const statusCode = STATUS_BY_REASON[error.reason];
+  if (error.reason === 'LOT_BUSY') {
+    reply.header('Retry-After', LOT_BUSY_RETRY_AFTER_SECONDS);
+  }
   return reply.status(statusCode).send({ statusCode, error: error.reason, message: error.message });
 }
