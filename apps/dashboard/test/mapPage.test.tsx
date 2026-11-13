@@ -1,134 +1,13 @@
-import type { DashboardLotMap } from '@palier/shared-types';
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { garageRoy, installFakeApi, parkingDemo, pierre, sophie } from './fakeDashboardApi.ts';
-import type { FakeApiState } from './fakeDashboardData.ts';
 import { frenchLeftOnEnglishPage } from './frenchLeft.ts';
 import { PLATFORM_UUID } from './fakeMapData.ts';
+import { addAisle, addLevel, GARAGE_ROY_MAP, openGarageRoyMap, savedMap } from './mapPageSteps.ts';
 import { renderDashboard } from './renderDashboard.tsx';
 
-const GARAGE_ROY_MAP = `/lots/${garageRoy.id}/map`;
-const ORDER_REQUEST = `PUT /lots/${garageRoy.id}/levels/order`;
-
-async function openGarageRoyMap() {
-  const api = installFakeApi({ signedInAs: pierre });
-  renderDashboard({ path: GARAGE_ROY_MAP });
-  await screen.findByRole('heading', { level: 1, name: 'Plan et balises — Garage Roy' });
-  return api;
-}
-
-async function addLevel(code: string) {
-  const box = screen.getByRole('textbox', { name: 'Code du niveau' });
-  await userEvent.type(box, code);
-  await userEvent.click(screen.getByRole('button', { name: 'Ajouter le niveau' }));
-  await screen.findByText(`Niveau ${code} ajouté.`);
-}
-
-interface AisleInput {
-  readonly code: string;
-  readonly minor: string;
-  readonly rectangle?: readonly [string, string, string, string];
-}
-
-async function addAisle({ code, minor, rectangle = ['0', '0', '100', '40'] }: AisleInput) {
-  const labels = ['Code de l’allée', 'Minor de la balise de l’allée', 'x (depuis la gauche)', 'y (depuis le haut)', 'Largeur', 'Hauteur'];
-  const values = [code, minor, ...rectangle];
-  for (const [index, label] of labels.entries()) {
-    const box = screen.getByRole('textbox', { name: label });
-    const value = values[index] ?? '';
-    await userEvent.clear(box);
-    await userEvent.type(box, value);
-  }
-  await userEvent.click(screen.getByRole('button', { name: 'Ajouter l’allée' }));
-}
-
-function levelCodes(): string[] {
-  const list = screen.getByRole('list');
-  return within(list).getAllByRole('listitem').map((item) => item.querySelector('.row-name')?.textContent ?? '');
-}
-
-function orderBodies(): unknown[] {
-  const calls = vi.mocked(fetch).mock.calls as [string, RequestInit | undefined][];
-  return calls.filter(([url]) => url.endsWith('/levels/order')).map(([, init]) => JSON.parse(String(init?.body)));
-}
-
-function savedMap(api: FakeApiState): DashboardLotMap | undefined {
-  return api.maps.get(garageRoy.id);
-}
-
 describe('the map of a lot', () => {
-  it('starts Garage Roy empty, shows P1 then P2 once added, and swaps them with Monter P2', async () => {
-    const api = await openGarageRoyMap();
-    expect(screen.getByText(/^Aucun niveau\. Ajoutez le premier/)).toBeDefined();
-
-    await addLevel('P1');
-    await addLevel('P2');
-    expect(levelCodes()).toEqual(['P1', 'P2']);
-    expect((screen.getByRole('button', { name: 'Monter P1' }) as HTMLButtonElement).disabled).toBe(true);
-
-    await userEvent.click(screen.getByRole('button', { name: 'Monter P2' }));
-
-    await waitFor(() => expect(levelCodes()).toEqual(['P2', 'P1']));
-    const [p1, p2] = savedMap(api)?.levels.map(({ id }) => id).reverse() ?? [];
-    expect(api.requests.filter((request) => request === ORDER_REQUEST)).toHaveLength(1);
-    expect(savedMap(api)?.levels.map(({ id }) => id)).toEqual([p2, p1]);
-    expect(orderBodies()).toEqual([{ levelIds: [p2, p1], fromLevelIds: [p1, p2] }]);
-    expect(screen.getByText('P2, position 1 sur 2')).toBeDefined();
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Descendre P2' }));
-  });
-
-  it('keeps focus on Descendre P1 when P1 moves down but is not yet last', async () => {
-    await openGarageRoyMap();
-    await addLevel('P1');
-    await addLevel('P2');
-    await addLevel('P3');
-
-    await userEvent.click(screen.getByRole('button', { name: 'Descendre P1' }));
-
-    await waitFor(() => expect(levelCodes()).toEqual(['P2', 'P1', 'P3']));
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Descendre P1' }));
-  });
-
-  it('leaves the order as it was and says why when the move fails', async () => {
-    const api = await openGarageRoyMap();
-    await addLevel('P1');
-    await addLevel('P2');
-    api.answers.set(ORDER_REQUEST, { status: 500 });
-
-    await userEvent.click(screen.getByRole('button', { name: 'Monter P2' }));
-
-    expect((await screen.findByRole('alert')).textContent).toBe('Une erreur est survenue. Réessayez dans un instant.');
-    expect(levelCodes()).toEqual(['P1', 'P2']);
-  });
-
-  it('reads the map again when the levels changed under the page', async () => {
-    const api = await openGarageRoyMap();
-    await addLevel('P1');
-    await addLevel('P2');
-    api.answers.set(ORDER_REQUEST, { status: 409, body: { statusCode: 409, error: 'LEVEL_ORDER_INVALID', message: '' } });
-    const readsBefore = api.requests.filter((request) => request === `GET /lots/${garageRoy.id}/map`).length;
-
-    await userEvent.click(screen.getByRole('button', { name: 'Monter P2' }));
-
-    expect((await screen.findByRole('alert')).textContent).toMatch(/^Les niveaux ont changé entre-temps\./);
-    expect(api.requests.filter((request) => request === `GET /lots/${garageRoy.id}/map`)).toHaveLength(readsBefore + 1);
-  });
-
-  it('says the map could not be reloaded when the read after a stale move fails too', async () => {
-    const api = await openGarageRoyMap();
-    await addLevel('P1');
-    await addLevel('P2');
-    api.answers.set(ORDER_REQUEST, { status: 409, body: { statusCode: 409, error: 'LEVEL_ORDER_INVALID', message: '' } });
-    api.answers.set(`GET /lots/${garageRoy.id}/map`, { status: 500 });
-
-    await userEvent.click(screen.getByRole('button', { name: 'Monter P2' }));
-
-    expect((await screen.findByRole('alert')).textContent).toBe(
-      'Les niveaux ont changé entre-temps, et le plan n’a pas pu être rechargé. Rechargez la page avant de recommencer.',
-    );
-  });
-
   it('shows the exit lane with the first level, then aisle A with minor 1 in the list and on the plan', async () => {
     const api = await openGarageRoyMap();
     await addLevel('P1');

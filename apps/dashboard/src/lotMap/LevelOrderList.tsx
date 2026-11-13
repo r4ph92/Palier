@@ -1,12 +1,12 @@
 import type { DashboardMapLevel } from '@palier/shared-types';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { formatCount } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage } from '../i18n/LanguageContext.tsx';
 import { useLevelOrder, type LevelMove, type LevelOrderTarget, type MoveDirection } from './useLevelOrder.ts';
 
-type ButtonRefs = Map<string, HTMLButtonElement>;
+type ButtonRefs = RefObject<Map<string, HTMLButtonElement>>;
 
 const OTHER_DIRECTION: Readonly<Record<MoveDirection, MoveDirection>> = { up: 'down', down: 'up' };
 
@@ -16,14 +16,14 @@ function buttonKey(levelId: string, direction: MoveDirection): string {
 
 export function LevelOrderList(target: LevelOrderTarget) {
   const order = useLevelOrder(target);
-  // A registry the rows fill as they mount, kept for the page's life; never read to render.
-  const [buttons] = useState<ButtonRefs>(() => new Map());
+  const buttons: ButtonRefs = useRef(new Map());
+  const count = target.levels.length;
   useFocusOnMovedLevel(buttons, order.lastMove, target.levels);
   return (
     <>
       <ol className="row-list" aria-busy={order.saving}>
         {target.levels.map((level, index) => (
-          <LevelRow key={level.id} level={level} position={{ index, count: target.levels.length }} saving={order.saving} buttons={buttons} onMove={order.move} />
+          <LevelRow key={level.id} level={level} position={{ index, count }} saving={order.saving} buttons={buttons} onMove={order.move} />
         ))}
       </ol>
       <MovedStatus move={order.lastMove} levels={target.levels} />
@@ -38,9 +38,10 @@ function useFocusOnMovedLevel(buttons: ButtonRefs, move: LevelMove | null, level
     if (move === null) {
       return;
     }
-    const moved = buttons.get(buttonKey(move.levelId, move.direction));
-    const other = buttons.get(buttonKey(move.levelId, OTHER_DIRECTION[move.direction]));
-    (moved?.disabled === true ? other : moved)?.focus();
+    const moved = buttons.current.get(buttonKey(move.levelId, move.direction));
+    const other = buttons.current.get(buttonKey(move.levelId, OTHER_DIRECTION[move.direction]));
+    const focused = moved?.disabled === true ? other : moved;
+    focused?.focus();
   }, [buttons, move, levels]);
 }
 
@@ -52,37 +53,56 @@ interface LevelRowProps {
   readonly onMove: (move: LevelMove) => Promise<void>;
 }
 
+// A lone level has nowhere to move, so it shows no move button at all.
 function LevelRow({ level, position, saving, buttons, onMove }: LevelRowProps) {
-  const { text, language } = useLanguage();
+  const { language } = useLanguage();
   const moveButton = { level, saving, buttons, onMove };
   return (
     <li className="row level-row">
       <span className="level-position">{formatCount(position.index + 1, language)}</span>
       <span className="row-name">{level.code}</span>
-      <span className="level-moves">
-        <MoveButton {...moveButton} direction="up" label={text.map.moveUp} isAtEnd={position.index === 0} />
-        <MoveButton {...moveButton} direction="down" label={text.map.moveDown} isAtEnd={position.index === position.count - 1} />
-      </span>
+      {position.count < 2 ? null : (
+        <span className="level-moves">
+          <MoveButton {...moveButton} direction="up" isAtEnd={position.index === 0} />
+          <MoveButton {...moveButton} direction="down" isAtEnd={position.index === position.count - 1} />
+        </span>
+      )}
     </li>
   );
 }
 
 interface MoveButtonProps extends Omit<LevelRowProps, 'position'> {
   readonly direction: MoveDirection;
-  readonly label: string;
   readonly isAtEnd: boolean;
 }
 
-// disabled at an end, where the move makes no sense; aria-disabled while saving, so the pressed button keeps focus.
-function MoveButton({ level, saving, buttons, onMove, direction, label, isAtEnd }: MoveButtonProps) {
-  const key = buttonKey(level.id, direction);
-  const register = (element: HTMLButtonElement | null) => void (element === null ? buttons.delete(key) : buttons.set(key, element));
-  const move = () => void (saving ? undefined : onMove({ levelId: level.id, direction }));
+// A short visible verb, the level's code in the accessible name; disabled at an end, aria-disabled while saving so the pressed button keeps focus.
+function MoveButton({ level, saving, buttons, onMove, direction, isAtEnd }: MoveButtonProps) {
+  const { text } = useLanguage();
+  const register = registrationOf(buttons, buttonKey(level.id, direction));
+  const move = () => {
+    if (saving) {
+      return;
+    }
+    void onMove({ levelId: level.id, direction });
+  };
+  const labels = direction === 'up' ? text.map.moveUp : text.map.moveDown;
   return (
-    <button type="button" className="text-button" ref={register} disabled={isAtEnd} aria-disabled={saving} onClick={move}>
-      {interpolate(label, { code: level.code })}
+    <button type="button" className="text-button" ref={register} disabled={isAtEnd} aria-disabled={saving} aria-label={interpolate(labels.name, { code: level.code })} onClick={move}>
+      {labels.shown}
     </button>
   );
+}
+
+// Rows add their buttons as they mount and remove them as they unmount, so focus can follow a moved level.
+function registrationOf(buttons: ButtonRefs, key: string) {
+  return (element: HTMLButtonElement | null) => {
+    if (element === null) {
+      buttons.current.delete(key);
+      return;
+    }
+    buttons.current.set(key, element);
+  };
 }
 
 // Always in the page, so a screen reader announces each new position as it changes.
