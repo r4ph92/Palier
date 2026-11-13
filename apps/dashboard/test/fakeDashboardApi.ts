@@ -1,10 +1,10 @@
 import type { DashboardUser } from '@palier/shared-types';
 import { act } from '@testing-library/react';
 import { vi } from 'vitest';
-import { type FakeAnswer, type FakeApiState, meFor, seededLots } from './fakeDashboardData.ts';
+import { type FakeAnswer, type FakeApiState, meFor, seededLots, seededOccupancy } from './fakeDashboardData.ts';
 import { routeRequest } from './fakeDashboardRoutes.ts';
 
-export { garageRoy, julie, lavoie, nouvelOperateur, parkingDemo, pierre, sophie } from './fakeDashboardData.ts';
+export { garageRoy, julie, lavoie, nouvelOperateur, parkingDemo, parkingDemoOccupancy, pierre, sophie } from './fakeDashboardData.ts';
 
 interface FakeApiOptions {
   readonly signedInAs?: DashboardUser;
@@ -15,7 +15,7 @@ interface FakeApiOptions {
 // Stands in for the API behind the Vite proxy: same paths, same status codes, same error bodies.
 export function installFakeApi({ signedInAs, testUsersListed = true, answers = {} }: FakeApiOptions = {}): FakeApiState {
   const me = signedInAs === undefined ? null : meFor(signedInAs);
-  const state: FakeApiState = { me, testUsersListed, requests: [], answers: new Map(Object.entries(answers)), answered: [], lots: seededLots() };
+  const state: FakeApiState = { me, testUsersListed, requests: [], answers: new Map(Object.entries(answers)), answered: [], lots: seededLots(), occupancy: seededOccupancy() };
   vi.stubGlobal('fetch', vi.fn((input: string, init?: RequestInit) => toResponse(state, routeRequest(state, input, init))));
   return state;
 }

@@ -5,6 +5,7 @@ import type { GateRouteDependencies } from '../../../src/http/routes/gateRoutes.
 import { FakeDriverRepository } from '../fakeDriverRepository.ts';
 import { FakeVehicleRepository } from '../fakeVehicleRepository.ts';
 import { FakeCurrentParkingSessions } from './fakeCurrentParkingSessions.ts';
+import { FakeLevelOccupancyReader } from './fakeLevelOccupancyReader.ts';
 import { FakeLotSetupRepository } from './fakeLotSetupRepository.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
 import { FakeParkedAnswers } from './fakeParkedAnswers.ts';
@@ -50,6 +51,7 @@ export function fakeRepositories({
     vehicleRepository,
     operatorRepository,
     lotSetupRepository: new FakeLotSetupRepository(operatorRepository.lots),
+    levelOccupancy: new FakeLevelOccupancyReader(operatorRepository.lots),
     currentParkingSessions: parkingSessions,
     parkingSessionBackdater: parkingSessions,
     parkedPresumptions,

@@ -272,10 +272,10 @@ a(u"""<article id="d4" class="part">
 <div class="part-head"><div class="part-n">Document 04</div><h2>Architecture applicative</h2>
 <p>Le découpage en composants de l'API et de l'application mobile, et le contrat exact de la frontière entre le TypeScript et les modules natifs — l'endroit où le projet peut déraper.</p></div>
 <div class="wrap">""")
-a(sec(u"API — architecture en couches", u"4 couches · 21 composants", d4[0], u"Le domaine ne connaît ni HTTP ni Stripe : il reçoit des objets et rend des décisions. Le planificateur est la seule couche qui remonte : il appelle le domaine sans passer par HTTP."))
+a(sec(u"API — architecture en couches", u"4 couches · 20 composants", d4[0], u"Le domaine ne connaît ni HTTP ni Stripe : il reçoit des objets et rend des décisions. Le planificateur est la seule couche qui remonte : il appelle le domaine sans passer par HTTP."))
 a(tbl(table(D4, u"Ce que chaque composant du domaine décide")))
 a(note(u"Pourquoi le planificateur est dessiné à part.",
-       u"Ses tâches sont les transitions déclenchées par le temps, et elles portent des règles métier majeures : expiration d'un hold, annulation d'une entrée jamais passée, garde-fou du téléphone déchargé, réconciliation du compteur avec les places, rejeu des captures, mise en vérification des sessions sans sortie. Les enfouir dans un cron les rendrait invisibles à la lecture du code. Il tourne en instance unique, sous verrou consultatif Postgres."))
+       u"Ses tâches sont les transitions déclenchées par le temps, et elles portent des règles métier majeures : expiration d'un hold, annulation d'une entrée jamais passée, garde-fou du téléphone déchargé, rejeu des captures, mise en vérification des sessions sans sortie. Les enfouir dans un cron les rendrait invisibles à la lecture du code. Il tourne en instance unique, sous verrou consultatif Postgres."))
 a(u"""</section>""")
 a(sec(u"Application mobile", u"React Native + modules natifs", d4[1], u"Une seule base TypeScript, deux implémentations natives de la même frontière. Les modules Android sont en pointillé : le contrat existe, l'implémentation vient après le MVP."))
 a(note(u"Le contrat du pont est le livrable le plus important de cette page.",

@@ -1,5 +1,6 @@
 import { isValidDisplayText } from './displayText.ts';
 import type { LotPricingSettings } from './lotPricing.ts';
+import type { SpotState } from './spotStates.ts';
 
 // Every mutating /v1/dashboard request carries this header; a cross-site form cannot set it.
 export const DASHBOARD_CSRF_HEADER = 'x-requested-with';
@@ -53,6 +54,26 @@ export interface DashboardLotDetails extends DashboardLot {
   readonly capacity: number;
   readonly beaconMajor: number | null;
   readonly pricing: LotPricingSettings | null;
+}
+
+export interface LevelSpotCounts {
+  readonly code: string;
+  readonly counts: Readonly<Record<SpotState, number>>;
+}
+
+// SPOTS_TO_CHECK: the counter is above the places taken, and the difference needs a physical check. COUNTER_BELOW: the counter is under them.
+export interface CounterGap {
+  readonly kind: 'SPOTS_TO_CHECK' | 'COUNTER_BELOW';
+  readonly spots: number;
+}
+
+export interface DashboardLotOccupancy {
+  readonly lotId: string;
+  readonly lotName: string;
+  readonly vehicleCount: number;
+  readonly levels: readonly LevelSpotCounts[];
+  readonly occupiedOrAssignedCount: number;
+  readonly counterGap: CounterGap;
 }
 
 export type DashboardLotListResponse = readonly DashboardLot[];

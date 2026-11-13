@@ -556,7 +556,6 @@
         <tr><td>release_orphan_assignments</td><td class="t">5 min</td><td>Garde-fou 30 min contre le téléphone déchargé : la place assignée est présumée occupée, jamais libérée</td></tr>
         <tr><td>flag_stale_sessions</td><td class="t">quotidienne</td><td>Session sans sortie depuis sept jours : jamais facturée d'office, publiée au tableau de bord comme place à vérifier</td></tr>
         <tr><td>retry_captures</td><td class="t">1 min</td><td>Captures non abouties parce que Stripe était injoignable à la sortie : rejouées jusqu'à succès, reçu envoyé à ce moment</td></tr>
-        <tr><td>reconcile_counts</td><td class="t">1 min</td><td>Compare le compteur de passages au nombre de places occupées ; l'écart est publié au tableau de bord comme nombre de places à vérifier</td></tr>
         <tr><td>purge_expired_events</td><td class="t">quotidienne</td><td>Suppression des lignes dont <code>purge_after</code> est dépassé, anonymisation des sessions</td></tr>
       </tbody>
     </table>

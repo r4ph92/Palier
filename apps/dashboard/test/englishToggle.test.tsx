@@ -20,6 +20,7 @@ const pages: readonly PageCase[] = [
   { page: 'lot', signedInAs: sophie, path: `/lots/${parkingDemo.id}`, englishHeading: 'Parking Démo' },
   { page: 'not found', signedInAs: pierre, path: `/lots/${parkingDemo.id}`, englishHeading: 'Not found' },
   { page: 'new lot', signedInAs: pierre, path: '/lots/new', englishHeading: 'Create a parking lot' },
+  { page: 'occupancy', signedInAs: sophie, path: `/lots/${parkingDemo.id}/occupancy`, englishHeading: 'Occupancy — Parking Démo' },
   { page: 'lot without pricing', signedInAs: pierre, path: `/lots/${garageRoy.id}`, englishHeading: 'Garage Roy' },
 ];
 

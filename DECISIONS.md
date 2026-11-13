@@ -270,6 +270,10 @@ vérifier, affiché tel quel au tableau de bord. Un parking à population mixte
 (abonnés + Palier) garde ainsi un nombre exact même si les places individuelles
 sont floues.
 
+*Mise en œuvre (#71)* : pas de tâche `reconcile_counts`. L'écart est calculé à
+chaque lecture de l'occupation, que le tableau de bord relit toutes les 30 s
+(`docs/decisions/033`).
+
 **Q36** — La confirmation par tap devient facultative. Le signal *walking* dans
 l'allée assignée suffit : la place passe à `OCCUPIED`, la session à
 `PARKED_PRESUMED`. L'usager n'est sollicité que dans deux cas :

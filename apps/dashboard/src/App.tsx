@@ -9,6 +9,7 @@ import { CreateOperatorPage } from './pages/CreateOperatorPage.tsx';
 import { LoadingPage } from './pages/LoadingPage.tsx';
 import { LotPage } from './pages/LotPage.tsx';
 import { NotFoundPage } from './pages/NotFoundPage.tsx';
+import { OccupancyPage } from './pages/OccupancyPage.tsx';
 import { OperatorHomePage } from './pages/OperatorHomePage.tsx';
 import { SignInPage } from './pages/SignInPage.tsx';
 import { UnreachablePage } from './pages/UnreachablePage.tsx';
@@ -79,5 +80,7 @@ function OperatorPage({ route, operator }: { readonly route: Exclude<Route, { pa
       return <CreateLotPage />;
     case 'lot':
       return <LotPage key={route.lotId} lotId={route.lotId} />;
+    case 'occupancy':
+      return <OccupancyPage key={route.lotId} lotId={route.lotId} />;
   }
 }

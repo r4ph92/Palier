@@ -51,13 +51,13 @@ a(u'''<header class="mast">
 </header>''')
 
 a(u'''<section>
-  <div class="sec-head"><h2>API — architecture en couches</h2><span class="tag">4 couches · 21 composants</span></div>
+  <div class="sec-head"><h2>API — architecture en couches</h2><span class="tag">4 couches · 20 composants</span></div>
   <p class="lede">Le domaine ne connaît ni HTTP ni Stripe : il reçoit des objets et rend des décisions. C'est ce qui rend la logique d'allocation testable sans base de données ni réseau, et c'est la seule partie du système qu'un correcteur peut lire d'un bout à l'autre.</p>
   <figure><div class="fig"><div class="fig-scroll">%s</div>
   <figcaption>Le planificateur est la seule couche qui remonte : il appelle le domaine sans passer par HTTP.</figcaption></div></figure>''' % rd('out/cmp_api.svg'))
 
 a(u'''<div class="note"><b>Pourquoi le planificateur est dessiné à part.</b>
-  Les six tâches ne sont pas des détails d'exploitation : ce sont les transitions déclenchées par le temps, et elles portent quatre des règles métier les plus importantes du système — l'expiration d'un hold, l'annulation d'une entrée jamais passée, le garde-fou contre le téléphone déchargé, la réconciliation du compteur avec les places, la mise en vérification des sessions sans sortie. Les enfouir dans un <code>cron</code> les rendrait invisibles à la lecture du code.</div>''')
+  Les cinq tâches ne sont pas des détails d'exploitation : ce sont les transitions déclenchées par le temps, et elles portent quatre des règles métier les plus importantes du système — l'expiration d'un hold, l'annulation d'une entrée jamais passée, le garde-fou contre le téléphone déchargé, la mise en vérification des sessions sans sortie. Les enfouir dans un <code>cron</code> les rendrait invisibles à la lecture du code.</div>''')
 
 a(u'''<div class="tbl-scroll"><table>
   <caption>Ce que chaque composant du domaine décide</caption>

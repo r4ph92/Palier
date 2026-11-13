@@ -51,15 +51,14 @@ o.append(boxes([
     ("Signature HMAC", ["jetons de QR", "de borne"]),
 ], 76, 434, 192, 212, 88))
 
-o.append(band(60, 568, 1080, 152, "Planificateur", "aucun appelant externe : les six transitions déclenchées par le temps", "bd bd-warn"))
+o.append(band(60, 568, 1080, 152, "Planificateur", "aucun appelant externe : les cinq transitions déclenchées par le temps", "bd bd-warn"))
 o.append(boxes([
     ("expire_holds", ["30 s", "HELD → AVAILABLE"]),
     ("cancel_unconfirmed", ["30 s", "aucun passage en 60 s"]),
     ("release_orphans", ["5 min", "présume occupée"]),
-    ("reconcile_counts", ["1 min", "compteur vs places"]),
     ("flag_stale", ["quotidienne", "7 jours sans sortie"]),
     ("purge_events", ["quotidienne", "rétention 90 jours"]),
-], 76, 618, 160, 176, 88, "cmp cmp-warn"))
+], 76, 618, 192, 212, 88, "cmp cmp-warn"))
 
 # dependency arrow
 o.append('<path class="dep" d="M34,60 V520" marker-end="url(#ar4)"/>')
