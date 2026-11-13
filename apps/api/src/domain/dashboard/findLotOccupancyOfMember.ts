@@ -12,7 +12,10 @@ export interface LotOccupancySources {
 // Another operator's lot and a lot that does not exist give the same answer, so ids reveal nothing.
 export async function findLotOccupancyOfMember({ operators, occupancy }: LotOccupancySources, userId: string, lotId: string): Promise<DashboardLotOccupancy> {
   const operator = await operators.findOperatorOfMember(userId);
-  const read = operator === null ? null : await occupancy.readLevelOccupancy(operator.id, lotId);
+  if (operator === null) {
+    throw new DashboardRefusedError('LOT_NOT_FOUND');
+  }
+  const read = await occupancy.readLevelOccupancy(operator.id, lotId);
   if (read === null) {
     throw new DashboardRefusedError('LOT_NOT_FOUND');
   }
