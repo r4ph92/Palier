@@ -59,4 +59,18 @@ describe('dashboard client', () => {
 
     expect(await outcome).toBe('failed');
   });
+
+  it('never aborts a write, which may still commit on the server', async () => {
+    vi.useFakeTimers();
+    let signal: AbortSignal | null | undefined;
+    vi.stubGlobal('fetch', (_url: string, init: RequestInit) => {
+      signal = init.signal;
+      return new Promise(() => undefined);
+    });
+    void dashboardClient.createOperator('Stationnements Tremblay');
+
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(signal?.aborted).toBe(false);
+  });
 });
