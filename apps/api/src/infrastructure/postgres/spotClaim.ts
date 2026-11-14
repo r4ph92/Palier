@@ -4,6 +4,7 @@ import { chooseSpotFor } from '../../domain/allocation/chooseSpotFor.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import { activeSessionOf } from './activeSessionStates.ts';
 import type { Database, Transaction } from './database.ts';
+import { liveSpot } from './liveSpot.ts';
 import type { SpotState } from './lotSchema.ts';
 import type { SpotLabelRow } from './spotLabel.ts';
 
@@ -94,7 +95,7 @@ async function readFreeSpotsWhere(executor: Pick<Database, 'execute'>, lotId: st
     from spot s
     join aisle a on a.id = s.aisle_id
     join level l on l.id = a.level_id
-    where s.lot_id = ${lotId} and s.state = 'AVAILABLE' and s.retired_at is null${condition}`);
+    where s.lot_id = ${lotId} and s.state = 'AVAILABLE' and ${liveSpot('s')}${condition}`);
   return rows.map((row) => ({
     id: row.id,
     number: row.number,

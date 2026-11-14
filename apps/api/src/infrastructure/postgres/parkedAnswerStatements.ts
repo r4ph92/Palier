@@ -7,6 +7,7 @@ import type { SpotState } from '../../domain/spots/spotStates.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
 import type { Database, Transaction } from './database.ts';
 import { requireUpdatedRow } from './requireUpdatedRow.ts';
+import { liveSpot } from './liveSpot.ts';
 import { spot } from './lotSchema.ts';
 import { spotOf, type SpotLabelRow } from './spotLabel.ts';
 
@@ -79,7 +80,7 @@ export async function lockAnsweredSpot(tx: Executor, { lotId, spotNumber }: Spot
     from spot
     join aisle on aisle.id = spot.aisle_id
     join level on level.id = aisle.level_id
-    where spot.lot_id = ${lotId} and spot.retired_at is null and ${canonicalNumberOf(spot.number)} = ${canonicalSpotNumber(spotNumber)}
+    where spot.lot_id = ${lotId} and ${liveSpot()} and ${canonicalNumberOf(spot.number)} = ${canonicalSpotNumber(spotNumber)}
     order by spot.number
     for update of spot`);
   const named = paintedNumberNamed(rows.map(({ number }) => number), spotNumber);

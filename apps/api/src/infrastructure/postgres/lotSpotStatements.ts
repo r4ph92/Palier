@@ -4,6 +4,7 @@ import type { AislePlace, SpotBatch, SpotPlace } from '../../domain/dashboard/Lo
 import { activeSessionOf } from './activeSessionStates.ts';
 import { ACTIVE_SPOT_HOLD } from './activeSpotHold.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
+import { liveSpot } from './liveSpot.ts';
 
 // Prefix first, then the number at its end read as a number: A-2 before A-10, and B-7a after the A spots.
 const NATURAL_SPOT_ORDER = sql.raw(`regexp_replace(spot.number, '[0-9]+$', ''), substring(spot.number from '[0-9]+$')::numeric nulls first, spot.number`);
@@ -26,7 +27,7 @@ function ownedParkingAisle(operatorId: string, { lotId, aisleId }: AislePlace): 
 
 // A spot not retired, of a lot of this operator.
 function ownedLiveSpot(operatorId: string, { lotId, spotId }: SpotPlace): SQL {
-  return sql`spot.id = ${spotId} and spot.lot_id = ${lotId} and spot.retired_at is null and parking_lot.id = spot.lot_id and parking_lot.operator_id = ${operatorId}`;
+  return sql`spot.id = ${spotId} and spot.lot_id = ${lotId} and ${liveSpot()} and parking_lot.id = spot.lot_id and parking_lot.operator_id = ${operatorId}`;
 }
 
 function textArrayOf(values: readonly string[]): SQL {
@@ -37,11 +38,11 @@ function textArrayOf(values: readonly string[]): SQL {
 export function readAisleSpotsStatement(operatorId: string, aisle: AislePlace): SQL {
   return sql`
     select aisle.id as aisle_id, parking_lot.capacity,
-      (select count(*)::int from spot live where live.lot_id = parking_lot.id and live.retired_at is null) as spot_count,
+      (select count(*)::int from spot live where live.lot_id = parking_lot.id and ${liveSpot('live')}) as spot_count,
       spot.id, spot.number, spot.state, spot.is_ev, spot.is_accessible, spot.is_oversize, spot.distance_to_exit
     from aisle
     cross join parking_lot
-    left join spot on spot.aisle_id = aisle.id and spot.retired_at is null
+    left join spot on spot.aisle_id = aisle.id and ${liveSpot()}
     where ${ownedParkingAisle(operatorId, aisle)}
     order by ${NATURAL_SPOT_ORDER}`;
 }
@@ -53,7 +54,7 @@ export function readParkingAisleStatement(operatorId: string, aisle: AislePlace)
 export function countLiveSpotsStatement(operatorId: string, lotId: string): SQL {
   return sql`
     select count(spot.id)::int as spot_count from parking_lot
-    left join spot on spot.lot_id = parking_lot.id and spot.retired_at is null
+    left join spot on spot.lot_id = parking_lot.id and ${liveSpot()}
     where parking_lot.id = ${lotId} and parking_lot.operator_id = ${operatorId}`;
 }
 
@@ -62,7 +63,7 @@ export function firstTakenNumberStatement(operatorId: string, lotId: string, num
   return sql`
     select spot.number
     from unnest(${textArrayOf(numbers)}) with ordinality as wanted(number, position)
-    join spot on spot.lot_id = ${lotId} and spot.retired_at is null and ${canonicalNumberOf(sql.raw('spot.number'))} = ${canonicalNumberOf(sql.raw('wanted.number'))}
+    join spot on spot.lot_id = ${lotId} and ${liveSpot()} and ${canonicalNumberOf(sql.raw('spot.number'))} = ${canonicalNumberOf(sql.raw('wanted.number'))}
     join parking_lot on parking_lot.id = spot.lot_id and parking_lot.operator_id = ${operatorId}
     order by wanted.position, spot.number
     limit 1`;
