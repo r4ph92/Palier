@@ -1,7 +1,7 @@
 import type { DashboardAisleSpots, DashboardSpot } from '@palier/shared-types';
 import { useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
-import { followUpRefusal, type Refusal, type RefusalFollowUps } from '../api/followUpRefusal.ts';
+import { followUpRefusal, type Refusal, type StaleDataFollowUps } from '../api/followUpRefusal.ts';
 import { useGuardedRequest } from '../forms/useGuardedRequest.ts';
 import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
 
@@ -9,7 +9,7 @@ export interface SpotDeletionTarget {
   readonly lotId: string;
   readonly onDeleted: (spots: DashboardAisleSpots, spot: DashboardSpot) => void;
   readonly onRefused: (refusal: Refusal) => void;
-  readonly staleData: Omit<RefusalFollowUps, 'refreshSession'>;
+  readonly staleData: StaleDataFollowUps;
 }
 
 export interface SpotDeletion {

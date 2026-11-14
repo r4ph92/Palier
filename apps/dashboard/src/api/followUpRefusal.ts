@@ -1,8 +1,5 @@
 import { asDashboardApiError, endsSession, type DisplayedErrorCode } from './DashboardApiError.ts';
 
-// After these refusals the spot list on the page is out of date: it is read again before the operator retries.
-export const LIST_OUT_OF_DATE: readonly DisplayedErrorCode[] = ['LOT_BUSY', 'SPOT_NOT_FOUND'];
-
 export interface Refusal {
   readonly code: DisplayedErrorCode;
   readonly values: Readonly<Record<string, string>>;
@@ -15,6 +12,8 @@ export interface RefusalFollowUps {
   // Shown instead of the refusal when that read failed, since the refusal's sentence says the page was reloaded.
   readonly reloadFailedCode?: DisplayedErrorCode;
 }
+
+export type StaleDataFollowUps = Omit<RefusalFollowUps, 'refreshSession'>;
 
 // A 401 reads the session again; a refusal about stale data reads that data again before the page says why it refused.
 export async function followUpRefusal(failure: unknown, { refreshSession, refreshOn, reloadFailedCode = 'UNKNOWN' }: RefusalFollowUps): Promise<Refusal> {

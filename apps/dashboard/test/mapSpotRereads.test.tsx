@@ -52,6 +52,31 @@ describe('reading the page again after a refused spot change', () => {
   });
 });
 
+describe('editing a spot that was deleted meanwhile', () => {
+  async function saveEditOfGoneSpot(api: Awaited<ReturnType<typeof parkingDemoAisleA>>): Promise<void> {
+    api.answers.set(`PUT /lots/${parkingDemo.id}/spots/${api.spots.get(parkingDemo.id)?.[0]?.id ?? ''}`, refused(404, 'SPOT_NOT_FOUND'));
+    await userEvent.click(screen.getByRole('button', { name: 'Modifier A-1' }));
+    await userEvent.click(within(screen.getByRole('form', { name: 'Modifier la place A-1' })).getByRole('button', { name: 'Enregistrer la place' }));
+  }
+
+  it('closes the form and says the list was reloaded once the list is read again', async () => {
+    await saveEditOfGoneSpot(await parkingDemoAisleA());
+
+    expect((await screen.findByRole('alert')).textContent).toContain('rechargée');
+    expect(screen.queryByRole('form', { name: 'Modifier la place A-1' })).toBeNull();
+  });
+
+  it('says the page could not be reloaded when the list read fails, SPOT_RELOAD_FAILED', async () => {
+    const api = await parkingDemoAisleA();
+    api.answers.set(AISLE_A_SPOTS, { status: 500 });
+
+    await saveEditOfGoneSpot(api);
+
+    expect((await screen.findByRole('alert')).textContent).toBe('La page n’a pas pu être rechargée après ce refus. Rechargez la page avant de recommencer.');
+    expect(screen.queryByRole('form', { name: 'Modifier la place A-1' })).toBeNull();
+  });
+});
+
 describe('the spot table', () => {
   it('is named by its title and marks each state with a square', async () => {
     await parkingDemoAisleA();

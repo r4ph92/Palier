@@ -1,7 +1,10 @@
 import type { DashboardAisleSpots, DashboardSpot } from '@palier/shared-types';
 import { useState } from 'react';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
-import { LIST_OUT_OF_DATE, type Refusal, type RefusalFollowUps } from '../api/followUpRefusal.ts';
+import { type Refusal, type StaleDataFollowUps } from '../api/followUpRefusal.ts';
+
+// After these refusals the spot list on the page is out of date: it is read again before the operator retries.
+const LIST_OUT_OF_DATE: readonly DisplayedErrorCode[] = ['LOT_BUSY', 'SPOT_NOT_FOUND'];
 
 interface SpotChangeSources {
   readonly show: (spots: DashboardAisleSpots) => void;
@@ -28,7 +31,7 @@ export interface SpotChanges {
   readonly saved: (spots: DashboardAisleSpots, spot: DashboardSpot) => void;
   readonly deleted: (spots: DashboardAisleSpots, spot: DashboardSpot) => void;
   readonly refused: (refusal: Refusal) => void;
-  readonly staleData: Omit<RefusalFollowUps, 'refreshSession'>;
+  readonly staleData: StaleDataFollowUps;
 }
 
 // Every write shows the aisle's spots as the API answered them, then says what changed; the latest change replaces the last notice.

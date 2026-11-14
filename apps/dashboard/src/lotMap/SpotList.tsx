@@ -1,5 +1,6 @@
 import type { DashboardAisleSpots, DashboardMapAisle, DashboardSpot } from '@palier/shared-types';
 import { useState } from 'react';
+import type { Refusal } from '../api/followUpRefusal.ts';
 import { formatCount } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
@@ -78,16 +79,17 @@ function useSpotEditing(changes: SpotChanges, { focusAfterRender, titleId }: Edi
     setSpot(null);
     focusAfterRender(elementId);
   };
-  const cancel = () => closeFocusing(spot === null ? titleId : editButtonId(spot));
+  const closeReturningFocus = () => closeFocusing(spot === null ? titleId : editButtonId(spot));
   const saved = (spots: DashboardAisleSpots) => {
     if (spot !== null) {
       changes.saved(spots, spot);
     }
-    cancel();
+    closeReturningFocus();
   };
-  const gone = () => {
-    changes.refused({ code: 'SPOT_NOT_FOUND', values: {} });
-    setSpot(null);
+  const close = () => setSpot(null);
+  const gone = (refusal: Refusal) => {
+    changes.refused(refusal);
+    close();
   };
-  return { spot, open: setSpot, cancel, close: () => setSpot(null), saved, gone };
+  return { spot, open: setSpot, cancel: closeReturningFocus, close, saved, gone };
 }
