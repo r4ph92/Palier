@@ -330,7 +330,7 @@
         <tr><td>app_user</td><td class="t">oauth_provider, oauth_subject, email, stripe_customer_id, default_pm_id</td><td>Aucun mot de passe. Le client Stripe vit sur la plateforme, pas chez l'opérateur</td></tr>
         <tr><td>vehicle</td><td class="t">user_id, plate, province, is_default, transponder_id</td><td>Plusieurs plaques par compte ; <code>is_default</code> et <code>transponder_id</code> servent au rapprochement chez les opérateurs équipés d'ANPR ou de lecteurs de transpondeurs</td></tr>
         <tr><td>hold</td><td class="t">user_id, lot_id, spot_id, expires_at, status</td><td>Contrainte d'unicité sur <code>user_id</code> pour les holds actifs : un seul à la fois. Nommée <code>spot_hold</code> dans le code (#6, <code>docs/implementation.md</code>)</td></tr>
-        <tr><td>event_log</td><td class="t">session_id, lot_id, kind, payload jsonb, occurred_at, purge_after</td><td><code>purge_after</code> calculé à l'écriture — la rétention est une donnée, pas une règle enfouie dans un script</td></tr>
+        <tr><td>event_log</td><td class="t">sequence, session_id, lot_id, kind, payload jsonb, occurred_at, purge_after</td><td><code>purge_after</code> calculé à l'écriture — la rétention est une donnée, pas une règle enfouie dans un script : <code>occurred_at</code> + 2 160 h (90 jours). Chaque étape d'entrée et de stationnement s'y inscrit dans sa propre transaction (#156, sept genres, payload limité aux faits de l'étape) ; <code>(session_id, lot_id)</code> pointe vers une session du même parking. Index <code>(session_id, sequence)</code> pour la chronologie, dans l'ordre d'écriture, et <code>(purge_after)</code> pour la purge — voir <code>docs/decisions/037</code></td></tr>
       </tbody>
     </table>
   </div>

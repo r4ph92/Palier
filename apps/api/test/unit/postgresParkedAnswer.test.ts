@@ -38,6 +38,7 @@ function answerWith(sql: ScriptedSql, answer: SpotAnswer = julieAnswersB3) {
 }
 
 const WRITES = ['occupy-answered-spot', 'confirm-parked-spot'] as const;
+const LOGGED_WRITES = [...WRITES, 'append-session-event'] as const;
 
 describe('PostgresParkedAnswerRepository (story #21)', () => {
   it('places Julie in B-3 under the lot lock: lot, session, spot, then the spot write before the session write', async () => {
@@ -45,7 +46,7 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
 
     await expect(answerWith(sql)).resolves.toEqual({ outcome: 'confirmed', spot: B3 });
 
-    expect(sql.labels()).toEqual(['read-session-lot', 'limit-lock-wait', 'lock-lot', 'lock-answering-session', 'lock-answered-spot', ...WRITES]);
+    expect(sql.labels()).toEqual(['read-session-lot', 'limit-lock-wait', 'lock-lot', 'lock-answering-session', 'lock-answered-spot', ...LOGGED_WRITES]);
     expect(sql.statements.slice(1).every((statement) => statement.onTransaction)).toBe(true);
     expect(sql.isolationLevels).toEqual(['read committed']);
     expect(sql.statement('lock-lot')?.params).toEqual([LOT_ID]);
@@ -198,7 +199,7 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
 
     await expect(answerWith(sql, julieCorrectsToA3)).resolves.toEqual({ outcome: 'confirmed', spot: { number: 'A-3', levelCode: 'P1', aisleCode: 'A' } });
 
-    expect(sql.labels()).toEqual(['read-session-lot', 'limit-lock-wait', 'lock-lot', 'lock-answering-session', 'lock-answered-spot', ...CORRECTION_WRITES]);
+    expect(sql.labels()).toEqual(['read-session-lot', 'limit-lock-wait', 'lock-lot', 'lock-answering-session', 'lock-answered-spot', ...CORRECTION_WRITES, 'append-session-event']);
     expect(sql.statements.slice(1).every((statement) => statement.onTransaction)).toBe(true);
     expect(sql.statement('lock-answering-session')?.text).toMatch(/select ps\.state, ps\.assigned_spot_id, assigned\.state as assigned_spot_state/);
     expect(sql.statement('lock-answering-session')?.text).toMatch(/for update of ps, assigned$/);
@@ -224,7 +225,7 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
 
     await expect(answerWith(sql, { ...julieAnswersB3, spotNumber: 'A-1' })).resolves.toMatchObject({ outcome: 'confirmed', spot: { number: 'A-1' } });
 
-    expect(sql.labels().slice(-2)).toEqual(['occupy-answered-spot', 'confirm-parked-spot']);
+    expect(sql.labels().slice(-3)).toEqual(['occupy-answered-spot', 'confirm-parked-spot', 'append-session-event']);
     expect(sql.statement('occupy-answered-spot')?.params).toEqual([SPOT_A1_ID]);
     expect(sql.count('flag-assigned-spot')).toBe(0);
   });
@@ -241,7 +242,7 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
 
     await expect(answerWith(sql, julieCorrectsToA3)).resolves.toMatchObject({ outcome: 'confirmed', spot: { number: 'A-3' } });
 
-    expect(sql.labels().slice(-2)).toEqual(['occupy-answered-spot', 'confirm-parked-spot']);
+    expect(sql.labels().slice(-3)).toEqual(['occupy-answered-spot', 'confirm-parked-spot', 'append-session-event']);
     expect(sql.count('flag-assigned-spot')).toBe(0);
   });
 

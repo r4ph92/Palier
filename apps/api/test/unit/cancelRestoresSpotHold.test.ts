@@ -26,7 +26,7 @@ describe('cancelling an entry that used a hold', () => {
 
     await cancelOnRollback(scripted);
 
-    expect(scripted.labels()).toEqual(['read-session-lot', 'lock-lot', 'cancel-session', 'restore-spot-hold', 'free-held-spot']);
+    expect(scripted.labels()).toEqual(['read-session-lot', 'lock-lot', 'cancel-session', 'restore-spot-hold', 'free-held-spot', 'append-session-event']);
     expect(scripted.isolationLevels).toEqual(['read committed']);
     expect(spotStateAfter(scripted)).toBe('HELD');
   });
@@ -74,7 +74,8 @@ describe('cancelling an entry that used a hold', () => {
 
     await cancelOnRollback(scripted);
 
-    expect(scripted.statements.at(-1)?.text).toMatch(/update spot_hold set status = 'USED'/);
+    expect(scripted.labels().at(-2)).toBe('use-spot-hold');
+    expect(scripted.statements.at(-2)?.text).toMatch(/update spot_hold set status = 'USED'/);
   });
 
   it('restores nothing for an entry made without a hold', async () => {

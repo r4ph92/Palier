@@ -16,8 +16,10 @@ import {
   lockAnsweringSession,
   occupyAnsweredSpot,
   readSessionLot,
+  type AnsweredSpot,
   type AnsweringSession,
 } from './parkedAnswerStatements.ts';
+import { appendSessionEvent } from './sessionEventStatements.ts';
 
 // Lot, then session, then spot (decision 014); the spot is decided from its state read under the lock, then written (decisions 020, 021).
 export class PostgresParkedAnswerRepository implements ParkedAnswerRepository {
@@ -75,7 +77,24 @@ async function placeCar(tx: Transaction, answer: SpotAnswer, { lotId, session }:
   }
   await writeSpots(tx, placement, { answeredSpotId: spot.id, assignedSpotId: session.assignedSpot.id });
   await confirmParkedSpot(tx, answer.sessionId, spot.id);
+  await logParkingConfirmed(tx, { sessionId: answer.sessionId, lotId, spot });
   return { outcome: 'confirmed', spot: spot.label };
+}
+
+interface ConfirmedPlacement {
+  readonly sessionId: string;
+  readonly lotId: string;
+  readonly spot: AnsweredSpot;
+}
+
+// A correction of a presumed spot is an answer too, and is logged the same way.
+async function logParkingConfirmed(tx: Transaction, { sessionId, lotId, spot }: ConfirmedPlacement): Promise<void> {
+  await appendSessionEvent(tx, {
+    sessionId,
+    lotId,
+    occurredAt: 'parked_answered_at',
+    event: { kind: 'PARKING_CONFIRMED', payload: { spotId: spot.id, spotNumber: spot.label.number } },
+  });
 }
 
 interface PlacedSpotIds {

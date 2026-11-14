@@ -7,6 +7,7 @@ import type { SpotState } from '../../domain/spots/spotStates.ts';
 import { EXITABLE_COLUMNS, exitableSessionOf, LEAVABLE_STATES, paidExitOf, type ExitableRow } from './exitableSessionSql.ts';
 import { activeSessionOf } from './activeSessionStates.ts';
 import type { Database, Transaction } from './database.ts';
+import { storeOpenCommand } from './gateCommandStatements.ts';
 import { inLotLock, orLotBusy } from './lockParkingLot.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
 
@@ -135,7 +136,7 @@ interface GateOpening {
 
 async function openGate(tx: Transaction, { sessionId, lotId, exitGateId, session, now }: GateOpening): Promise<void> {
   await freeSpots(tx, { sessionId, session, now });
-  await tx.execute(sql`insert into gate_command (gate_id, lot_id, kind, session_id) values (${exitGateId}, ${lotId}, 'OPEN', ${sessionId})`);
+  await storeOpenCommand(tx, { gateId: exitGateId, lotId, sessionId });
 }
 
 // Null when the session is not leavable any more: another request closed it first.
