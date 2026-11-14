@@ -108,9 +108,10 @@ export async function confirmParkedSpot(tx: Executor, sessionId: string, spotId:
 
 // The loop confirmation made the spot OCCUPIED, and a correction flags it only after reading it OCCUPIED under its row lock;
 // any other state is a broken invariant, and rolls the session back.
+// A spot flagged already keeps the time and reason of its first flag, so the oldest stays first in the list.
 export async function flagAssignedSpotToCheck(tx: Executor, spotId: string, reason: SpotCheckReason): Promise<void> {
   const rows = await tx.execute(sql`
-    update spot set state = 'OCCUPIED_UNKNOWN', needs_check = true, needs_check_since = now(), needs_check_reason = ${reason}, state_changed_at = now()
+    update spot set state = 'OCCUPIED_UNKNOWN', needs_check = true, needs_check_since = coalesce(needs_check_since, now()), needs_check_reason = coalesce(needs_check_reason, ${reason}), state_changed_at = now()
     where id = ${spotId} and state = 'OCCUPIED'
     returning id`);
   requireUpdatedRow(rows, `Assigned spot ${spotId} of a session leaving it was not occupied.`);
