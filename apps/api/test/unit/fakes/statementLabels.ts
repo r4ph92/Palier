@@ -67,6 +67,14 @@ export type StatementLabel =
   | 'read-lot-gates'
   | 'read-owned-lot-id'
   | 'record-aisle-battery'
+  | 'count-vehicle'
+  | 'confirm-opening'
+  | 'occupy-confirmed-spot'
+  | 'attach-exit-passage'
+  | 'insert-gate-command'
+  | 'read-barrier-opened'
+  | 'backdate-entry'
+  | 'append-session-event'
   | 'unknown';
 
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
@@ -98,6 +106,13 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['record-aisle-battery', /update aisle set beacon_battery_percent[\s\S]*from parking_lot/],
   ['read-lot-gates', /gate\.last_heartbeat_at\s+from parking_lot/],
   ['record-reported-battery', /where lot_id = \$\d and beacon_minor = \$\d/],
+  ['count-vehicle', /insert into gate_passage/],
+  ['confirm-opening', /set state = 'ENTRY_CONFIRMED'/],
+  ['attach-exit-passage', /set exit_passage_at/],
+  ['occupy-confirmed-spot', /update spot set state = 'OCCUPIED', state_changed_at = now\(\)/],
+  ['insert-gate-command', /insert into gate_command/],
+  ['read-barrier-opened', /as opened/],
+  ['backdate-entry', /set entry_confirmed_at = /],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],
   ['presume-silent-questions', /where lot_id = \$\d and state = 'PARKED_UNCONFIRMED' and parked_at/],
@@ -137,6 +152,8 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-held-spot', /from \(select id, spot_id from spot_hold/],
   ['has-usable-spot-hold', /select 1 from spot_hold/],
   ['free-held-spot', /update spot set/],
+  // Last, so a step written together with its event in one statement keeps the step's label.
+  ['append-session-event', /insert into event_log/],
 ];
 
 export function labelOf(text: string): StatementLabel {

@@ -11,6 +11,8 @@ export interface ExecutedStatement {
   readonly text: string;
   readonly params: readonly unknown[];
   readonly onTransaction: boolean;
+  // Each database.transaction call (and each executor) gets its own number; null for a statement on the shared connection.
+  readonly transactionNumber: number | null;
 }
 
 export type Rows = readonly Record<string, unknown>[];
@@ -30,6 +32,7 @@ export class ScriptedSql {
   readonly insertedSessions: unknown[] = [];
   readonly #answers = new Map<StatementLabel, Rows[]>();
   readonly #failures = new Map<StatementLabel, unknown>();
+  #transactionCount = 0;
 
   answer(label: StatementLabel, ...rowLists: Rows[]): this {
     this.#answers.set(label, [...(this.#answers.get(label) ?? []), ...rowLists]);
@@ -55,13 +58,18 @@ export class ScriptedSql {
     return this.statements.filter((statement) => statement.label === label).length;
   }
 
+  // The transaction numbers of every statement with this label, in the order they ran.
+  transactionsOf(label: StatementLabel): (number | null)[] {
+    return this.statements.filter((statement) => statement.label === label).map(({ transactionNumber }) => transactionNumber);
+  }
+
   executor(): Pick<Transaction, 'execute'> {
     return this.#transaction() as unknown as Pick<Transaction, 'execute'>;
   }
 
   database(): Database {
     const database = {
-      execute: (query: SQL) => this.#run(query, false),
+      execute: (query: SQL) => this.#run(query, null),
       transaction: <T>(work: (tx: Transaction) => Promise<T>, config?: { isolationLevel?: string }) => {
         this.isolationLevels.push(config?.isolationLevel);
         return work(this.#transaction() as unknown as Transaction);
@@ -71,20 +79,22 @@ export class ScriptedSql {
   }
 
   #transaction() {
+    this.#transactionCount += 1;
+    const transactionNumber = this.#transactionCount;
     return {
-      execute: (query: SQL) => this.#run(query, true),
+      execute: (query: SQL) => this.#run(query, transactionNumber),
       insert: () => ({
         values: (values: unknown) => {
           this.insertedSessions.push(values);
-          return { returning: () => this.#record({ label: 'insert-session', text: '', params: [], onTransaction: true }) };
+          return { returning: () => this.#record({ label: 'insert-session', text: '', params: [], onTransaction: true, transactionNumber }) };
         },
       }),
     };
   }
 
-  #run(query: SQL, onTransaction: boolean): Promise<Rows> {
+  #run(query: SQL, transactionNumber: number | null): Promise<Rows> {
     const { sql, params } = dialect.sqlToQuery(query);
-    return this.#record({ label: labelOf(sql), text: sql, params, onTransaction });
+    return this.#record({ label: labelOf(sql), text: sql, params, onTransaction: transactionNumber !== null, transactionNumber });
   }
 
   #record(statement: ExecutedStatement): Promise<Rows> {
