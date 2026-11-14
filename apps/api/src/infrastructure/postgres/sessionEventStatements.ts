@@ -1,10 +1,8 @@
 import { sql, type SQL } from 'drizzle-orm';
-import { EVENT_RETENTION_HOURS, type SessionEvent } from '../../domain/sessionEvents/SessionEvent.ts';
+import { EVENT_RETENTION_HOURS, type ParkingPresumedPayload, type SessionEvent } from '../../domain/sessionEvents/SessionEvent.ts';
 import type { Transaction } from './database.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
-
-export const EVENT_LOG_COLUMNS = sql.raw('session_id, lot_id, kind, payload, occurred_at, purge_after');
 
 // occurredAt: the instant the step itself stored, read in the step's transaction, so the log never disagrees with the session.
 export interface SessionEventWrite {
@@ -16,14 +14,40 @@ export interface SessionEventWrite {
 
 // Always called with the step's own transaction: a step rolled back leaves no event.
 export async function appendSessionEvent(tx: Executor, { sessionId, lotId, occurredAt, event }: SessionEventWrite): Promise<void> {
-  await tx.execute(sql`
-    insert into event_log (${EVENT_LOG_COLUMNS})
-    select ${sessionId}::uuid, ${lotId}::uuid, ${event.kind}::text, ${JSON.stringify(event.payload)}::jsonb, step.occurred_at, ${purgeAfter(sql`step.occurred_at`)}
-    from (select ${occurredAt} as occurred_at) step`);
+  const row: SessionEventColumns = {
+    sessionId: sql`${sessionId}::uuid`,
+    lotId: sql`${lotId}::uuid`,
+    kind: sql`${event.kind}::text`,
+    payload: sql`${JSON.stringify(event.payload)}::jsonb`,
+    occurredAt: sql`step.occurred_at`,
+  };
+  await tx.execute(insertSessionEvents(row, sql`from (select ${occurredAt} as occurred_at) step`));
 }
 
-export function purgeAfter(occurredAt: SQL): SQL {
+// Each value of an event row, as an expression over the statement's source; purge_after is never given, it follows occurredAt.
+export interface SessionEventColumns {
+  readonly sessionId: SQL;
+  readonly lotId: SQL;
+  readonly kind: SQL;
+  readonly payload: SQL;
+  readonly occurredAt: SQL;
+}
+
+// The one insert into the log, one row per source row. source: the from clause and anything after it (order by, returning).
+export function insertSessionEvents({ sessionId, lotId, kind, payload, occurredAt }: SessionEventColumns, source: SQL): SQL {
+  return sql`
+    insert into event_log (session_id, lot_id, kind, payload, occurred_at, purge_after)
+    select ${sessionId}, ${lotId}, ${kind}, ${payload}, ${occurredAt}, ${purgeAfter(occurredAt)}
+    ${source}`;
+}
+
+function purgeAfter(occurredAt: SQL): SQL {
   return sql`${occurredAt} + make_interval(hours => ${EVENT_RETENTION_HOURS}::int)`;
+}
+
+// A presumption on the spot the statement joined as `spot`.
+export function presumedOnJoinedSpot(evidence: ParkingPresumedPayload['evidence']): SQL {
+  return jsonbObjectOf<ParkingPresumedPayload>({ evidence: sql.raw(`'${evidence}'`), spotId: sql`spot.id`, spotNumber: sql`spot.number` });
 }
 
 type SessionInstantColumn = 'entry_scan_at' | 'entry_confirmed_at' | 'parked_at' | 'parked_answered_at' | 'cancelled_at';

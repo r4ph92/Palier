@@ -1,8 +1,7 @@
 import { sql, type SQL } from 'drizzle-orm';
 import type { SilenceCheck } from '../../domain/parkingSessions/presumeSilentSessions.ts';
-import type { ParkingPresumedPayload } from '../../domain/sessionEvents/SessionEvent.ts';
 import type { Database, Transaction } from './database.ts';
-import { EVENT_LOG_COLUMNS, jsonbObjectOf, purgeAfter } from './sessionEventStatements.ts';
+import { insertSessionEvents, presumedOnJoinedSpot, type SessionEventColumns } from './sessionEventStatements.ts';
 
 type Executor = Pick<Transaction, 'execute'> | Pick<Database, 'execute'>;
 
@@ -44,13 +43,17 @@ export async function presumeUnansweredQuestions(executor: Executor, lotId: stri
 
 // One statement logs every session the update presumed, on its assigned spot, at the job's clock reading; one row returned per session.
 function withTimeoutEvents(presumption: SQL, now: Date): SQL {
-  const occurredAt = sql`${now.toISOString()}::timestamptz`;
-  const payload = jsonbObjectOf<ParkingPresumedPayload>({ evidence: sql`'TIMEOUT'`, spotId: sql`spot.id`, spotNumber: sql`spot.number` });
+  const timeoutEvent: SessionEventColumns = {
+    sessionId: sql`presumed.id`,
+    lotId: sql`presumed.lot_id`,
+    kind: sql`'PARKING_PRESUMED'`,
+    payload: presumedOnJoinedSpot('TIMEOUT'),
+    occurredAt: sql`${now.toISOString()}::timestamptz`,
+  };
   return sql`
     with presumed as (${presumption})
-    insert into event_log (${EVENT_LOG_COLUMNS})
-    select presumed.id, presumed.lot_id, 'PARKING_PRESUMED', ${payload}, ${occurredAt}, ${purgeAfter(occurredAt)}
-    from presumed
-    join spot on spot.id = presumed.assigned_spot_id
-    returning session_id`;
+    ${insertSessionEvents(timeoutEvent, sql`
+      from presumed
+      join spot on spot.id = presumed.assigned_spot_id
+      returning session_id`)}`;
 }
