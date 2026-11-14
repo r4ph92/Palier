@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { asDashboardApiError, endsSession, type DashboardApiError, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import { followUpRefusal, type Refusal, type RefusalFollowUps } from '../api/followUpRefusal.ts';
 import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
 import { useGuardedRequest } from './useGuardedRequest.ts';
 
@@ -17,6 +18,8 @@ export interface FieldFormSetup<Field extends string, Value> {
   readonly read: (values: FieldValues<Field>) => ReadForm<Field, Value>;
   readonly send: (value: Value) => Promise<void>;
   readonly fieldOfCode: Partial<Readonly<Record<DisplayedErrorCode, Field>>>;
+  // What the page reads again after a refusal that says it is out of date, before the form shows the refusal.
+  readonly staleData?: Omit<RefusalFollowUps, 'refreshSession'>;
   // Empties every field once a send succeeds, so the form is ready for the next entry; focus stays on the submit button.
   readonly emptiesOnSuccess?: boolean;
 }
@@ -84,7 +87,7 @@ interface SenderFollowUps<Field extends string> {
 }
 
 // Reads the form and sends it only when the shared rule accepts it; answers whether the request succeeded.
-function useSender<Field extends string, Value>({ read, send, fieldOfCode }: FieldFormSetup<Field, Value>, { show, afterSuccess }: SenderFollowUps<Field>) {
+function useSender<Field extends string, Value>({ read, send, fieldOfCode, staleData }: FieldFormSetup<Field, Value>, { show, afterSuccess }: SenderFollowUps<Field>) {
   const refreshSession = useSessionRefresh();
   return async (values: FieldValues<Field>): Promise<boolean> => {
     const readForm = read(values);
@@ -98,24 +101,16 @@ function useSender<Field extends string, Value>({ read, send, fieldOfCode }: Fie
       afterSuccess();
       return true;
     } catch (failure) {
-      show(refusalOutcome(asDashboardApiError(failure), fieldOfCode, refreshSession));
+      show(refusalOutcome(await followUpRefusal(failure, { refreshSession, ...staleData }), fieldOfCode));
       return false;
     }
   };
 }
 
-// A refusal that names a field goes beside it; any other goes in the summary. A 401 also reads the session again.
-function refusalOutcome<Field extends string>(
-  error: DashboardApiError,
-  fieldOfCode: FieldFormSetup<Field, unknown>['fieldOfCode'],
-  refreshSession: () => Promise<void>,
-): Outcome<Field> {
-  if (endsSession(error)) {
-    void refreshSession();
-  }
-  const field = fieldOfCode[error.code];
-  const { values } = error;
-  return field === undefined ? { errors: {}, refusal: error.code, values } : { errors: { [field]: error.code } as FieldErrorCodes<Field>, refusal: null, values };
+// A refusal that names a field goes beside it; any other goes in the summary.
+function refusalOutcome<Field extends string>({ code, values }: Refusal, fieldOfCode: FieldFormSetup<Field, unknown>['fieldOfCode']): Outcome<Field> {
+  const field = fieldOfCode[code];
+  return field === undefined ? { errors: {}, refusal: code, values } : { errors: { [field]: code } as FieldErrorCodes<Field>, refusal: null, values };
 }
 
 function summaryOf<Field extends string>({ errors, refusal }: Outcome<Field>): DisplayedErrorCode | null {

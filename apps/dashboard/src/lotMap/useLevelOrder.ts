@@ -1,7 +1,8 @@
 import type { DashboardLotMap, DashboardMapLevel, LevelOrderRequest } from '@palier/shared-types';
 import { useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
-import { asDashboardApiError, endsSession, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import { followUpRefusal } from '../api/followUpRefusal.ts';
 import { useGuardedRequest } from '../forms/useGuardedRequest.ts';
 import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
 
@@ -25,11 +26,6 @@ export interface LevelOrder {
   readonly error: DisplayedErrorCode | null;
   readonly lastMove: LevelMove | null;
   readonly move: (move: LevelMove) => Promise<void>;
-}
-
-interface RefusalFollowUps {
-  readonly refreshSession: () => Promise<void>;
-  readonly onStale: () => Promise<boolean>;
 }
 
 const STEP: Readonly<Record<MoveDirection, number>> = { up: -1, down: 1 };
@@ -58,7 +54,8 @@ function useOrderSaver({ lotId, onSaved, onStale }: LevelOrderTarget, onMoved: (
       onMoved(levelMove);
       setError(null);
     } catch (failure) {
-      setError(await refusalOf(failure, { refreshSession, onStale }));
+      const refreshOn = (code: DisplayedErrorCode) => (code === 'LEVEL_ORDER_INVALID' ? onStale() : null);
+      setError((await followUpRefusal(failure, { refreshSession, refreshOn, reloadFailedCode: 'MAP_RELOAD_FAILED' })).code);
     }
   };
   return { error, save };
@@ -77,15 +74,4 @@ function orderAfter(levels: readonly DashboardMapLevel[], { levelId, direction }
   levelIds[from] = neighbour;
   levelIds[to] = levelId;
   return { levelIds, fromLevelIds };
-}
-
-async function refusalOf(failure: unknown, { refreshSession, onStale }: RefusalFollowUps): Promise<DisplayedErrorCode> {
-  const error = asDashboardApiError(failure);
-  if (endsSession(error)) {
-    void refreshSession();
-  }
-  if (error.code !== 'LEVEL_ORDER_INVALID') {
-    return error.code;
-  }
-  return (await onStale()) ? error.code : 'MAP_RELOAD_FAILED';
 }
