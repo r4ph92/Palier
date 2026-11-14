@@ -98,6 +98,9 @@
   .spot-table .spot-state,
   .spot-table .state-mark {
     white-space: normal;
+  }
+
+  .spot-table .state-mark {
     align-items: baseline;
   }
 
@@ -113,6 +116,13 @@
 
   .spot-table .spot-distance {
     text-align: right;
+  }
+}
+
+/* Wide enough for the delete question, so opening it does not move the columns; below this the question's buttons wrap instead of overflowing the section. */
+@media (min-width: 761px) {
+  .spot-actions {
+    min-width: 13rem;
   }
 }
 
