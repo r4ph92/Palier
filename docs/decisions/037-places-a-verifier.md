@@ -1,4 +1,4 @@
-# 036 — Places à vérifier physiquement
+# 037 — Places à vérifier physiquement
 
 **Contexte.** #73 : Sophie Lavoie voit les places signalées pour une vérification physique et les lève une fois vérifiées. Le signalement n'était qu'un booléen (`spot.needs_check`) : ni l'heure, ni la raison n'étaient gardées, et le dossier (docs/02) prévoyait `GET /v1/lots/{id}/spots?needs_check=true`, une route de l'ancien modèle d'authentification.
 
