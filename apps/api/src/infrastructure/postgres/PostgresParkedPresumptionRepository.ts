@@ -6,11 +6,12 @@ import {
   type ParkedPresumptionRepository,
   type SessionAfterRefusal,
   type WalkingSignal,
+  wrongAisleOf,
 } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import type { Database } from './database.ts';
 import { isLotBusy, orLotBusy } from './lockParkingLot.ts';
 import { presumeOnFoot } from './onFootPresumption.ts';
-import { aisleDetectedOf, askWhereParked, readWalkFacts, type WrongAisleWalk } from './wrongAisleWalk.ts';
+import { askWhereParked, readWalkFacts, type WrongAisleWalk } from './wrongAisleWalk.ts';
 
 interface SessionAfterRefusalRow extends Record<string, unknown> {
   readonly state: EntrySessionState;
@@ -31,7 +32,7 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
 
   async presume(signal: WalkingSignal): Promise<ParkedPresumption> {
     if (signal.detectedAisleMinor === null) {
-      return this.#recordedOrRefused(signal, await presumeOnFoot(this.#database, { signal, assignedSpotId: null, detectedAisle: null }));
+      return this.#recordedOrRefused(signal, await presumeOnFoot(this.#database, { signal, assignedSpotId: null, assignedAisleSeen: null }));
     }
     for (let attempt = 0; attempt < MAX_WALK_ATTEMPTS; attempt += 1) {
       const walk = await this.#walkOnFacts(signal);
@@ -48,11 +49,11 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
     if (facts?.state !== 'ENTRY_CONFIRMED') {
       return classifyRefusedSignal(facts);
     }
-    const detectedAisle = aisleDetectedOf(facts);
-    if (detectedAisle?.isAssignedAisle === false) {
-      return this.#askWhereParked({ signal, facts, detectedAisle });
+    const wrongAisle = wrongAisleOf(facts);
+    if (wrongAisle !== null) {
+      return this.#askWhereParked({ signal, facts, wrongAisle });
     }
-    const parkedAt = await presumeOnFoot(this.#database, { signal, assignedSpotId: facts.assignedSpotId, detectedAisle });
+    const parkedAt = await presumeOnFoot(this.#database, { signal, assignedSpotId: facts.assignedSpotId, assignedAisleSeen: facts.detectedAisle });
     return parkedAt === null ? null : { outcome: 'recorded', state: 'PARKED_PRESUMED', parkedAt };
   }
 

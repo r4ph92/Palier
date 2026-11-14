@@ -1,7 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
-import { wrongAisleOf, type DetectedAisle, type SessionAfterRefusal, type WalkAisles, type WalkingSignal } from '../../domain/parkingSessions/ParkedPresumption.ts';
-import type { AisleDetectedPayload } from '../../domain/sessionEvents/SessionEvent.ts';
+import { type DetectedAisle, type SessionAfterRefusal, type WalkAisles, type WalkingSignal } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import { clampedParkedAt } from './clampedParkedAt.ts';
 import type { Database, Transaction } from './database.ts';
 import { inLotLock } from './lockParkingLot.ts';
@@ -33,7 +32,7 @@ interface UnconfirmedWalkRow extends Record<string, unknown> {
 export interface WrongAisleWalk {
   readonly signal: WalkingSignal;
   readonly facts: WalkFacts;
-  readonly detectedAisle: AisleDetectedPayload;
+  readonly wrongAisle: DetectedAisle;
 }
 
 // Minors are unique within a lot, so the detected aisle is looked for across every level; an exit lane is no place to park.
@@ -67,15 +66,6 @@ function detectedAisleOf({ detected_aisle_id, detected_aisle_code, detected_aisl
   return { id: detected_aisle_id, code: detected_aisle_code, beaconMinor: detected_aisle_minor };
 }
 
-// The drivable aisle the walk was seen in, as the log keeps it; null when the signal named none the lot knows.
-export function aisleDetectedOf(facts: WalkFacts): AisleDetectedPayload | null {
-  const { detectedAisle } = facts;
-  if (detectedAisle === null) {
-    return null;
-  }
-  return { aisleId: detectedAisle.id, aisleCode: detectedAisle.code, beaconMinor: detectedAisle.beaconMinor, isAssignedAisle: wrongAisleOf(facts) === null };
-}
-
 // Two writes under the lot lock (docs/03, sequence B): the session waits for the driver's answer, and its assigned spot is flagged to check.
 // Null when the session left ENTRY_CONFIRMED or its spot changed since the facts were read.
 export function askWhereParked(database: Database, walk: WrongAisleWalk): Promise<Date | null> {
@@ -91,19 +81,19 @@ export function askWhereParked(database: Database, walk: WrongAisleWalk): Promis
 }
 
 // At the walking instant the session keeps, the one the driver is asked about.
-async function logWrongAisle(tx: Transaction, { signal, facts, detectedAisle }: WrongAisleWalk): Promise<void> {
+async function logWrongAisle(tx: Transaction, { signal, facts, wrongAisle }: WrongAisleWalk): Promise<void> {
   await appendSessionEvent(tx, {
     sessionId: signal.sessionId,
     lotId: facts.lotId,
     occurredAt: 'parked_at',
-    event: { kind: 'AISLE_DETECTED', payload: detectedAisle },
+    event: { kind: 'AISLE_DETECTED', payload: { aisleId: wrongAisle.id, aisleCode: wrongAisle.code, beaconMinor: wrongAisle.beaconMinor, isAssignedAisle: false } },
   });
 }
 
-async function markSessionUnconfirmed(tx: Transaction, { signal, facts, detectedAisle }: WrongAisleWalk): Promise<UnconfirmedWalkRow | undefined> {
+async function markSessionUnconfirmed(tx: Transaction, { signal, facts, wrongAisle }: WrongAisleWalk): Promise<UnconfirmedWalkRow | undefined> {
   const [row] = await tx.execute<UnconfirmedWalkRow>(sql`
     update parking_session
-    set state = 'PARKED_UNCONFIRMED', parked_aisle_id = ${detectedAisle.aisleId}, parked_at = ${clampedParkedAt(signal.detectedAt)}
+    set state = 'PARKED_UNCONFIRMED', parked_aisle_id = ${wrongAisle.id}, parked_at = ${clampedParkedAt(signal.detectedAt)}
     where id = ${signal.sessionId} and user_id = ${signal.driverId} and state = 'ENTRY_CONFIRMED' and assigned_spot_id = ${facts.assignedSpotId}
     returning parked_at, assigned_spot_id`);
   return row;
