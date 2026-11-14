@@ -63,12 +63,17 @@ export class PostgresLotMapRepository implements LotMapRepository {
   }
 
   async recordBeaconBattery(operatorId: string, placement: AislePlacement, reading: RecordedBatteryReading): Promise<LotMapWrite> {
-    const owned = await this.#database.execute(readOwnedLotIdStatement({ operatorId, lotId: placement.lotId }));
-    if (owned.length === 0) {
-      return 'LOT_NOT_FOUND';
-    }
     const recorded = await this.#database.execute(recordAisleBatteryStatement(operatorId, placement, reading));
-    return recorded.length === 0 ? 'AISLE_NOT_FOUND' : LOT_MAP_WRITTEN;
+    if (recorded.length > 0) {
+      return LOT_MAP_WRITTEN;
+    }
+    return this.#batteryRefusalOf({ operatorId, lotId: placement.lotId });
+  }
+
+  // Read only after a write that changed nothing, to tell another operator's lot from an aisle that is not in the lot.
+  async #batteryRefusalOf(lot: OwnedLot): Promise<LotMapRefusal> {
+    const owned = await this.#database.execute(readOwnedLotIdStatement(lot));
+    return owned.length === 0 ? 'LOT_NOT_FOUND' : 'AISLE_NOT_FOUND';
   }
 
   // Ownership is the first statement: another operator's lot is refused before any of its levels or aisles is read.

@@ -76,7 +76,7 @@ export function insertAisleStatement(operatorId: string, { lotId, levelId }: Lev
     returning id`;
 }
 
-// Ownership alone, without the lot lock: a battery reading changes no spot.
+// Ownership alone, without the lot lock: names the refusal of a battery reading that changed no row.
 export function readOwnedLotIdStatement({ operatorId, lotId }: OwnedLot): SQL {
   return sql`select parking_lot.id from parking_lot where parking_lot.id = ${lotId} and parking_lot.operator_id = ${operatorId}`;
 }

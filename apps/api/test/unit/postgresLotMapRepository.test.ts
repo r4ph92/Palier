@@ -182,27 +182,27 @@ describe('recording a beacon battery reading in Postgres', () => {
   const placement = { lotId: GARAGE_ROY_NORD, aisleId: 'aisle-a' };
   const reading = { percent: 15, reportedAt: READ_AT };
 
-  it("checks the operator's lot first, then writes on the aisle of that lot only", async () => {
-    const scripted = new ScriptedSql().answer('read-owned-lot-id', [{ id: GARAGE_ROY_NORD }]).answer('record-aisle-battery', [{ id: 'aisle-a' }]);
+  it("writes on the aisle of the operator's lot in one statement, without reading the lot first", async () => {
+    const scripted = new ScriptedSql().answer('record-aisle-battery', [{ id: 'aisle-a' }]);
 
     expect(await repositoryOn(scripted).recordBeaconBattery(ROY_OPERATOR, placement, reading)).toBe('WRITTEN');
-    expect(scripted.labels()).toEqual(['read-owned-lot-id', 'record-aisle-battery']);
-    expect(scripted.statement('read-owned-lot-id')?.params).toEqual([GARAGE_ROY_NORD, ROY_OPERATOR]);
+    expect(scripted.labels()).toEqual(['record-aisle-battery']);
     const write = scripted.statement('record-aisle-battery');
     expect(write?.text).toMatch(/where aisle\.id = \$3 and aisle\.lot_id = \$4 and parking_lot\.id = aisle\.lot_id and parking_lot\.operator_id = \$5\s+returning aisle\.id/);
     expect(write?.params).toEqual([15, READ_AT.toISOString(), 'aisle-a', GARAGE_ROY_NORD, ROY_OPERATOR]);
     expect(scripted.isolationLevels).toEqual([]);
   });
 
-  it("answers LOT_NOT_FOUND for another operator's lot without writing", async () => {
-    const scripted = new ScriptedSql().answer('read-owned-lot-id', []);
+  it("answers LOT_NOT_FOUND for another operator's lot, whose aisles the write never matched", async () => {
+    const scripted = new ScriptedSql().answer('record-aisle-battery', []).answer('read-owned-lot-id', []);
 
     expect(await repositoryOn(scripted).recordBeaconBattery('operator-lavoie', placement, reading)).toBe('LOT_NOT_FOUND');
-    expect(scripted.count('record-aisle-battery')).toBe(0);
+    expect(scripted.labels()).toEqual(['record-aisle-battery', 'read-owned-lot-id']);
+    expect(scripted.statement('read-owned-lot-id')?.params).toEqual([GARAGE_ROY_NORD, 'operator-lavoie']);
   });
 
-  it('answers AISLE_NOT_FOUND when no aisle of the lot was written', async () => {
-    const scripted = new ScriptedSql().answer('read-owned-lot-id', [{ id: GARAGE_ROY_NORD }]).answer('record-aisle-battery', []);
+  it("answers AISLE_NOT_FOUND when the lot is the operator's but no aisle of it was written", async () => {
+    const scripted = new ScriptedSql().answer('record-aisle-battery', []).answer('read-owned-lot-id', [{ id: GARAGE_ROY_NORD }]);
 
     expect(await repositoryOn(scripted).recordBeaconBattery(ROY_OPERATOR, placement, reading)).toBe('AISLE_NOT_FOUND');
   });
