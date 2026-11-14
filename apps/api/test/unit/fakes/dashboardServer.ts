@@ -8,6 +8,7 @@ import { nouvelOperateur, pierre, sophie } from './dashboardFixtures.ts';
 import { fakeOperatorStripe } from './fakeOperatorStripe.ts';
 import { FakeLotEquipmentReader } from './fakeLotEquipmentReader.ts';
 import { FakeLotMapRepository } from './fakeLotMapRepository.ts';
+import { FakeLotSpotRepository } from './fakeLotSpotRepository.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
 import { fakeGateDependencies, fakeRepositories } from './serverDependencies.ts';
 
@@ -20,15 +21,16 @@ export function startDashboardServer(settings: ServerSettings = { testSignInEnab
   const stripe = fakeOperatorStripe(operatorRepository);
   const lotMaps = new FakeLotMapRepository(operatorRepository.lots);
   const lotEquipment = new FakeLotEquipmentReader(operatorRepository.lots);
+  const lotSpots = new FakeLotSpotRepository(operatorRepository.lots, lotMaps);
   const { testClock } = composeClock(settings.testSignInEnabled === true);
   const server: FastifyInstance = buildServer({
     gates: fakeGateDependencies(),
-    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment },
+    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment, lotSpots },
     operatorStripe: stripe.dependencies,
     testClock,
     settings,
   });
-  return { server, driverRepository, lots: operatorRepository.lots, lotMaps, lotEquipment, testClock, ...stripe };
+  return { server, driverRepository, lots: operatorRepository.lots, lotMaps, lotEquipment, lotSpots, testClock, ...stripe };
 }
 
 // Signs in through the test route and returns the cookie the browser would send back.

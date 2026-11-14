@@ -23,10 +23,19 @@ export interface RecordBatteryTarget {
   readonly lotId: string;
   readonly aisleId: string;
   readonly onRecorded: (map: DashboardLotMap, percent: number) => void;
+  // Reads the map again when the aisle is gone, since the refusal's sentence says the map was reloaded.
+  readonly onStale: () => Promise<boolean>;
 }
 
-export function useRecordBatteryForm({ lotId, aisleId, onRecorded }: RecordBatteryTarget): FieldForm<BeaconBatteryField> {
+export function useRecordBatteryForm({ lotId, aisleId, onRecorded, onStale }: RecordBatteryTarget): FieldForm<BeaconBatteryField> {
   const { language } = useLanguage();
   const send = async (reading: BeaconBatteryReading) => onRecorded(await dashboardClient.recordBeaconBattery(lotId, aisleId, reading), reading.percent);
-  return useFieldForm({ initialValues: EMPTY_READING, read: (values) => readReading(values, language), send, fieldOfCode: FIELD_OF_CODE, emptiesOnSuccess: true });
+  return useFieldForm({
+    initialValues: EMPTY_READING,
+    read: (values) => readReading(values, language),
+    send,
+    fieldOfCode: FIELD_OF_CODE,
+    staleData: { refreshOn: (code) => (code === 'AISLE_NOT_FOUND' ? onStale() : null), reloadFailedCode: 'SPOT_RELOAD_FAILED' },
+    emptiesOnSuccess: true,
+  });
 }

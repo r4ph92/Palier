@@ -3,6 +3,7 @@ import type { LevelOccupancy, LevelOccupancyReader } from '../../domain/dashboar
 import { SPOT_STATES, type SpotState } from '../../domain/spots/spotStates.ts';
 import { confirmedAssignedSpotOf } from './confirmedAssignedSpot.ts';
 import type { Database } from './database.ts';
+import { liveSpot } from './liveSpot.ts';
 
 type OccupancyRow = {
   readonly lot_name: string;
@@ -31,7 +32,7 @@ export class PostgresLevelOccupancyReader implements LevelOccupancyReader {
       from parking_lot
       left join level on level.lot_id = parking_lot.id
       left join aisle on aisle.level_id = level.id
-      left join spot on spot.aisle_id = aisle.id
+      left join spot on spot.aisle_id = aisle.id and ${liveSpot()}
       where parking_lot.id = ${lotId} and parking_lot.operator_id = ${operatorId}
       group by parking_lot.id, level.id, spot.state
       order by level.display_order, level.code`);

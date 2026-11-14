@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, smallint, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, smallint, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { BATTERY_PERCENT_LIMITS } from '@palier/shared-types/beaconBattery';
 import { AISLE_MINOR_LIMITS, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { DEFAULT_HOLD_QUOTA, HOLD_QUOTA_LIMITS } from '@palier/shared-types/lotPricing';
@@ -65,6 +65,8 @@ export const LEVEL_CODE_UNIQUE = 'level_lot_id_code_unique';
 export const AISLE_CODE_UNIQUE = 'aisle_level_id_code_unique';
 export const AISLE_MINOR_UNIQUE = 'aisle_lot_id_beacon_minor_unique';
 export const AISLE_MINOR_MATCHES_LANE = 'aisle_beacon_minor_matches_lane';
+// Partial: a retired spot keeps its number for its history, and the number is free again for a new spot.
+const SPOT_NUMBER_UNIQUE = 'spot_lot_id_number_unique';
 
 export const level = pgTable(
   'level',
@@ -134,6 +136,8 @@ export const spot = pgTable(
     needsCheck: boolean('needs_check').notNull().default(false),
     sensorState: sensorState('sensor_state'),
     sensorAt: timestamp('sensor_at', { withTimezone: true }),
+    // Set when an operator deletes a spot that sessions, holds or reports still point at (decision 035).
+    retiredAt: timestamp('retired_at', { withTimezone: true }),
   },
   (table) => [
     foreignKey({
@@ -141,7 +145,8 @@ export const spot = pgTable(
       columns: [table.aisleId, table.lotId],
       foreignColumns: [aisle.id, aisle.lotId],
     }),
-    unique('spot_lot_id_number_unique').on(table.lotId, table.number),
+    uniqueIndex(SPOT_NUMBER_UNIQUE).on(table.lotId, table.number).where(sql`${table.retiredAt} is null`),
+    check('spot_retired_out_of_service', sql`${table.retiredAt} is null or ${table.state} = 'OUT_OF_SERVICE'`),
     index('spot_lot_id_canonical_number_index').on(table.lotId, canonicalNumberOf(table.number)),
     unique('spot_id_lot_id_unique').on(table.id, table.lotId),
     index('spot_aisle_id_lot_id_index').on(table.aisleId, table.lotId),

@@ -15,6 +15,7 @@ import { useBatteryLimitValues } from './useBatteryLimitValues.ts';
 interface BeaconTableProps {
   readonly map: DashboardLotMap;
   readonly onSaved: (map: DashboardLotMap) => void;
+  readonly onStale: () => Promise<boolean>;
 }
 
 interface RecordedBattery {
@@ -22,13 +23,16 @@ interface RecordedBattery {
   readonly percent: number;
 }
 
-type RecordBattery = (map: DashboardLotMap, recorded: RecordedBattery) => void;
+interface BatteryRecording {
+  readonly onRecorded: (map: DashboardLotMap, recorded: RecordedBattery) => void;
+  readonly onStale: () => Promise<boolean>;
+}
 
 // Everything a technician types into the beacons' app, one UUID, the lot's major, then one minor per aisle, and what each battery read last.
-export function BeaconTable({ map, onSaved }: BeaconTableProps) {
+export function BeaconTable({ map, onSaved, onStale }: BeaconTableProps) {
   const text = useText();
   const [recorded, setRecorded] = useState<RecordedBattery | null>(null);
-  const record: RecordBattery = (saved, reading) => {
+  const onRecorded = (saved: DashboardLotMap, reading: RecordedBattery) => {
     setRecorded(reading);
     onSaved(saved);
   };
@@ -39,7 +43,7 @@ export function BeaconTable({ map, onSaved }: BeaconTableProps) {
       </h2>
       <p className="lead">{text.map.beaconsIntro}</p>
       <BeaconFacts map={map} />
-      {map.levels.length === 0 ? <p className="muted">{text.map.noBeacons}</p> : <BatteryTable map={map} onRecorded={record} />}
+      {map.levels.length === 0 ? <p className="muted">{text.map.noBeacons}</p> : <BatteryTable map={map} recording={{ onRecorded, onStale }} />}
       <RecordedNote recorded={recorded} />
     </section>
   );
@@ -59,7 +63,7 @@ function BeaconFacts({ map }: { readonly map: DashboardLotMap }) {
   );
 }
 
-function BatteryTable({ map, onRecorded }: { readonly map: DashboardLotMap; readonly onRecorded: RecordBattery }) {
+function BatteryTable({ map, recording }: { readonly map: DashboardLotMap; readonly recording: BatteryRecording }) {
   const text = useText();
   const limits = useBatteryLimitValues();
   const columns = [text.map.levelColumn, text.map.aisleColumn, text.map.minorColumn, text.map.batteryColumn, text.map.readingColumn];
@@ -71,7 +75,7 @@ function BatteryTable({ map, onRecorded }: { readonly map: DashboardLotMap; read
           <ColumnHeads labels={columns} />
           <tbody>
             {map.levels.map((level) => (
-              <LevelBeaconRows key={level.id} lotId={map.lotId} level={level} onRecorded={onRecorded} />
+              <LevelBeaconRows key={level.id} lotId={map.lotId} level={level} recording={recording} />
             ))}
           </tbody>
         </table>
@@ -83,11 +87,11 @@ function BatteryTable({ map, onRecorded }: { readonly map: DashboardLotMap; read
 interface LevelBeaconRowsProps {
   readonly lotId: string;
   readonly level: DashboardMapLevel;
-  readonly onRecorded: RecordBattery;
+  readonly recording: BatteryRecording;
 }
 
-function LevelBeaconRows({ lotId, level, onRecorded }: LevelBeaconRowsProps) {
-  return level.aisles.map((aisle) => <BeaconRow key={aisle.id} row={{ lotId, levelCode: level.code, aisle }} onRecorded={onRecorded} />);
+function LevelBeaconRows({ lotId, level, recording }: LevelBeaconRowsProps) {
+  return level.aisles.map((aisle) => <BeaconRow key={aisle.id} row={{ lotId, levelCode: level.code, aisle }} recording={recording} />);
 }
 
 interface BeaconRowData {
@@ -96,7 +100,7 @@ interface BeaconRowData {
   readonly aisle: DashboardMapAisle;
 }
 
-function BeaconRow({ row: { lotId, levelCode, aisle }, onRecorded }: { readonly row: BeaconRowData; readonly onRecorded: RecordBattery }) {
+function BeaconRow({ row: { lotId, levelCode, aisle }, recording }: { readonly row: BeaconRowData; readonly recording: BatteryRecording }) {
   const { text, language } = useLanguage();
   const aisleName = useAisleName()(aisle);
   const mark = batteryMarkOf(aisle, text.map, language);
@@ -109,10 +113,21 @@ function BeaconRow({ row: { lotId, levelCode, aisle }, onRecorded }: { readonly 
         <StateMark tone={mark.tone} label={<FiguresInText text={mark.label} />} />
       </td>
       <td className="wrapping-cell">
-        <RecordBatteryForm lotId={lotId} aisleId={aisle.id} aisleName={aisleName} onRecorded={(map, percent) => onRecorded(map, { aisleName, percent })} />
+        <BeaconRowForm target={{ lotId, aisleId: aisle.id, aisleName }} recording={recording} />
       </td>
     </tr>
   );
+}
+
+interface BeaconRowTarget {
+  readonly lotId: string;
+  readonly aisleId: string;
+  readonly aisleName: string;
+}
+
+function BeaconRowForm({ target, recording }: { readonly target: BeaconRowTarget; readonly recording: BatteryRecording }) {
+  const { aisleName } = target;
+  return <RecordBatteryForm {...target} onRecorded={(map, percent) => recording.onRecorded(map, { aisleName, percent })} onStale={recording.onStale} />;
 }
 
 // Mounted with the table and empty until a reading is saved, so the confirmation is announced.

@@ -24,3 +24,7 @@ export function formatDayAndMonth(moment: Date, language: Language): string {
   const options: Intl.DateTimeFormatOptions = language === 'fr' ? { day: 'numeric', month: 'long' } : { month: 'short', day: 'numeric' };
   return new Intl.DateTimeFormat(language === 'fr' ? 'fr-CA' : 'en', options).format(moment);
 }
+
+export function formatMetres(metres: number, language: Language): string {
+  return new Intl.NumberFormat(language, { style: 'unit', unit: 'meter' }).format(metres);
+}

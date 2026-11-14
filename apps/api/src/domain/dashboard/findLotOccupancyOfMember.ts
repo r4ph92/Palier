@@ -10,7 +10,7 @@ export interface LotOccupancySources extends LotEquipmentSources {
 
 // The figures and the gates are read side by side: neither read depends on the other.
 export async function findLotOccupancyOfMember(sources: LotOccupancySources, lot: MemberLot): Promise<DashboardLotOccupancy> {
-  const operatorId = await operatorIdOfMember(sources.operators, lot.userId);
+  const operatorId = await operatorIdOfMember(sources.operators, lot);
   const [occupancy, gates] = await Promise.all([sources.occupancy.readLevelOccupancy(operatorId, lot.lotId), sources.equipment.readLotGates(operatorId, lot.lotId)]);
   const read = ownedLotOrNotFound(occupancy);
   const occupiedOrAssignedCount = occupiedOrAssignedCountOf(read);

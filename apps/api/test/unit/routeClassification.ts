@@ -77,6 +77,10 @@ export const DASHBOARD_PROTECTED = [
   'PUT /v1/dashboard/lots/:id/levels/order',
   'POST /v1/dashboard/lots/:id/levels/:levelId/aisles',
   'PUT /v1/dashboard/lots/:id/aisles/:aisleId/beacon-battery',
+  'GET /v1/dashboard/lots/:id/aisles/:aisleId/spots',
+  'POST /v1/dashboard/lots/:id/aisles/:aisleId/spots',
+  'PUT /v1/dashboard/lots/:id/spots/:spotId',
+  'DELETE /v1/dashboard/lots/:id/spots/:spotId',
 ];
 
 const DASHBOARD_OPEN = ['POST /v1/dashboard/sign-out', 'GET /v1/dashboard/test/users', 'POST /v1/dashboard/test/sign-in'];
@@ -90,7 +94,7 @@ export function methodOf(route: string): string {
 }
 
 export function urlOf(route: string): string {
-  return (route.split(' ')[1] ?? '').replace(':id', SAMPLE_UUID).replace(':sessionId', SAMPLE_UUID).replace(':levelId', SAMPLE_UUID).replace(':aisleId', SAMPLE_UUID).replace(':minor', '1');
+  return (route.split(' ')[1] ?? '').replace(/:(id|sessionId|levelId|aisleId|spotId)\b/g, SAMPLE_UUID).replace(':minor', '1');
 }
 
 // Only JSON bodies carry an error code: some routes answer with no body, and the console serves HTML, CSS, scripts and fonts.

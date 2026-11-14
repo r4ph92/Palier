@@ -127,6 +127,25 @@ export interface DashboardLotEquipment {
   readonly gates: readonly DashboardGateHealth[];
 }
 
+// A spot of an aisle as the operator manages it; a retired spot is never listed.
+export interface DashboardSpot {
+  readonly id: string;
+  readonly number: string;
+  readonly state: SpotState;
+  readonly isEv: boolean;
+  readonly isAccessible: boolean;
+  readonly isOversize: boolean;
+  readonly distanceToExit: number;
+}
+
+// The aisle's spots in natural order (A-2 before A-10), with the lot's spot count and capacity: the page warns when spots outnumber it.
+export interface DashboardAisleSpots {
+  readonly aisleId: string;
+  readonly spots: readonly DashboardSpot[];
+  readonly spotCount: number;
+  readonly capacity: number;
+}
+
 // Every level of the lot, each once, in the new order; fromLevelIds is the order the page showed when the operator moved a level.
 export interface LevelOrderRequest {
   readonly levelIds: readonly string[];
@@ -183,6 +202,12 @@ export const DASHBOARD_ERROR_CODES = [
   'AISLE_RECTANGLE_INVALID',
   'AISLE_NOT_FOUND',
   'BATTERY_PERCENT_INVALID',
+  'SPOT_NOT_FOUND',
+  'SPOT_RANGE_INVALID',
+  'SPOT_DISTANCE_INVALID',
+  'SPOT_LIMIT_REACHED',
+  'SPOT_NUMBER_TAKEN',
+  'SPOT_IN_USE',
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];
@@ -191,4 +216,6 @@ export interface DashboardErrorBody {
   readonly statusCode: number;
   readonly error: string;
   readonly message: string;
+  // Fills the dictionary sentence of the code, like the taken spot number of SPOT_NUMBER_TAKEN.
+  readonly values?: Readonly<Record<string, string>>;
 }

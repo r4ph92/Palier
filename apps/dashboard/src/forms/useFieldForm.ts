@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { asDashboardApiError, endsSession, type DashboardApiError, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import { asDashboardApiError, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import { followUpRefusal, type Refusal, type StaleDataFollowUps } from '../api/followUpRefusal.ts';
 import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
 import { useGuardedRequest } from './useGuardedRequest.ts';
 
@@ -17,6 +18,10 @@ export interface FieldFormSetup<Field extends string, Value> {
   readonly read: (values: FieldValues<Field>) => ReadForm<Field, Value>;
   readonly send: (value: Value) => Promise<void>;
   readonly fieldOfCode: Partial<Readonly<Record<DisplayedErrorCode, Field>>>;
+  // What the page reads again after a refusal that says it is out of date, before the form shows the refusal.
+  readonly staleData?: StaleDataFollowUps;
+  // Runs once the refusal is known, after the page read again what it called out of date: the code the API answered, then the refusal shown.
+  readonly afterRefusal?: (answeredCode: DisplayedErrorCode, refusal: Refusal) => void;
   // Empties every field once a send succeeds, so the form is ready for the next entry; focus stays on the submit button.
   readonly emptiesOnSuccess?: boolean;
 }
@@ -26,6 +31,8 @@ export interface FieldForm<Field extends string> {
   readonly setValue: (field: Field, value: string) => void;
   readonly errors: FieldErrorCodes<Field>;
   readonly summary: DisplayedErrorCode | null;
+  // Fill the refusal's sentence, beside its field or in the summary: the taken number of SPOT_NUMBER_TAKEN.
+  readonly refusalValues: Readonly<Record<string, string>>;
   // Changes with each refused submit, so the summary takes focus again even when its text stays the same.
   readonly attempt: number;
   readonly submitting: boolean;
@@ -35,15 +42,16 @@ export interface FieldForm<Field extends string> {
 interface Outcome<Field extends string> {
   readonly errors: FieldErrorCodes<Field>;
   readonly refusal: DisplayedErrorCode | null;
+  readonly values: Readonly<Record<string, string>>;
 }
 
-const ACCEPTED = { errors: {}, refusal: null } as const;
+const ACCEPTED = { errors: {}, refusal: null, values: {} } as const;
 
 export function useFieldForm<Field extends string, Value>(setup: FieldFormSetup<Field, Value>): FieldForm<Field> {
   const { values, setValue, outcome, setOutcome, reset } = useFieldValues(setup.initialValues);
   const afterSuccess = setup.emptiesOnSuccess === true ? reset : () => undefined;
   const { attempt, submitting, submit } = useSubmit(values, useSender(setup, { show: setOutcome, afterSuccess }));
-  return { values, setValue, errors: outcome.errors, summary: summaryOf(outcome), attempt, submitting, submit };
+  return { values, setValue, errors: outcome.errors, summary: summaryOf(outcome), refusalValues: outcome.values, attempt, submitting, submit };
 }
 
 // Editing a field clears its own error only, so the others stay beside their fields until fixed.
@@ -81,37 +89,40 @@ interface SenderFollowUps<Field extends string> {
 }
 
 // Reads the form and sends it only when the shared rule accepts it; answers whether the request succeeded.
-function useSender<Field extends string, Value>({ read, send, fieldOfCode }: FieldFormSetup<Field, Value>, { show, afterSuccess }: SenderFollowUps<Field>) {
-  const refreshSession = useSessionRefresh();
+function useSender<Field extends string, Value>(setup: FieldFormSetup<Field, Value>, { show, afterSuccess }: SenderFollowUps<Field>) {
+  const refuse = useRefusal(setup, show);
   return async (values: FieldValues<Field>): Promise<boolean> => {
-    const readForm = read(values);
+    const readForm = setup.read(values);
     if (!readForm.ok) {
-      show({ errors: readForm.errors, refusal: null });
+      show({ errors: readForm.errors, refusal: null, values: {} });
       return false;
     }
     show(ACCEPTED);
     try {
-      await send(readForm.value);
+      await setup.send(readForm.value);
       afterSuccess();
       return true;
     } catch (failure) {
-      show(refusalOutcome(asDashboardApiError(failure), fieldOfCode, refreshSession));
+      await refuse(failure);
       return false;
     }
   };
 }
 
-// A refusal that names a field goes beside it; any other goes in the summary. A 401 also reads the session again.
-function refusalOutcome<Field extends string>(
-  error: DashboardApiError,
-  fieldOfCode: FieldFormSetup<Field, unknown>['fieldOfCode'],
-  refreshSession: () => Promise<void>,
-): Outcome<Field> {
-  if (endsSession(error)) {
-    void refreshSession();
-  }
-  const field = fieldOfCode[error.code];
-  return field === undefined ? { errors: {}, refusal: error.code } : { errors: { [field]: error.code } as FieldErrorCodes<Field>, refusal: null };
+// Follows the refusal up, shows it, then tells the form that owns it what the API had answered.
+function useRefusal<Field extends string, Value>({ fieldOfCode, staleData, afterRefusal }: FieldFormSetup<Field, Value>, show: (outcome: Outcome<Field>) => void) {
+  const refreshSession = useSessionRefresh();
+  return async (failure: unknown): Promise<void> => {
+    const refusal = await followUpRefusal(failure, { refreshSession, ...staleData });
+    show(refusalOutcome(refusal, fieldOfCode));
+    afterRefusal?.(asDashboardApiError(failure).code, refusal);
+  };
+}
+
+// A refusal that names a field goes beside it; any other goes in the summary.
+function refusalOutcome<Field extends string>({ code, values }: Refusal, fieldOfCode: FieldFormSetup<Field, unknown>['fieldOfCode']): Outcome<Field> {
+  const field = fieldOfCode[code];
+  return field === undefined ? { errors: {}, refusal: code, values } : { errors: { [field]: code } as FieldErrorCodes<Field>, refusal: null, values };
 }
 
 function summaryOf<Field extends string>({ errors, refusal }: Outcome<Field>): DisplayedErrorCode | null {

@@ -1,3 +1,4 @@
+import { enSpots } from './enSpots.ts';
 import type { frMap } from './frMap.ts';
 
 export const enMap: typeof frMap = {
@@ -57,4 +58,5 @@ export const enMap: typeof frMap = {
   recordBattery: { shown: 'Save', name: 'Save the battery of beacon %{aisle}' },
   recordingBattery: 'Saving…',
   batteryRecorded: 'Battery of beacon %{aisle} saved: %{percent}.',
+  spots: enSpots,
 };

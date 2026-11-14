@@ -3,6 +3,7 @@ import type { AccountWebhookReader, OperatorStripeAccounts, OperatorStripeGatewa
 import type { LevelOccupancyReader } from '../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotEquipmentReader } from '../domain/dashboard/LotEquipmentReader.ts';
 import type { LotMapRepository } from '../domain/dashboard/LotMapRepository.ts';
+import type { LotSpotRepository } from '../domain/dashboard/LotSpotRepository.ts';
 import type { LotSetupRepository } from '../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../domain/dashboard/OperatorRepository.ts';
 import type { DriverRepository } from '../domain/drivers/DriverRepository.ts';
@@ -62,6 +63,7 @@ export interface ServerDependencies {
     readonly levelOccupancy: LevelOccupancyReader;
     readonly lotMaps: LotMapRepository;
     readonly lotEquipment: LotEquipmentReader;
+    readonly lotSpots: LotSpotRepository;
     readonly currentParkingSessions: CurrentParkingSessionQuery;
     readonly parkingSessionBackdater: ParkingSessionBackdater;
     readonly parkedPresumptions: ParkedPresumptionRepository;
@@ -122,6 +124,7 @@ function dashboardDependencies({ repositories, settings = {}, operatorStripe, te
     maps: repositories.lotMaps,
     equipment: repositories.lotEquipment,
     clock: composedClockOf(settings, repositories, testClock),
+    spots: repositories.lotSpots,
     stripe: operatorStripe?.gateway == null ? null : { accounts: operatorStripe.accounts, gateway: operatorStripe.gateway },
     testSignInEnabled: settings.testSignInEnabled === true,
     secureCookies: settings.secureCookies ?? true,

@@ -1,6 +1,7 @@
 export type {
   CounterGap,
   CreateOperatorRequest,
+  DashboardAisleSpots,
   DashboardErrorBody,
   DashboardErrorCode,
   DashboardGateHealth,
@@ -15,6 +16,7 @@ export type {
   DashboardMeResponse,
   DashboardOperator,
   DashboardSignInResponse,
+  DashboardSpot,
   DashboardTestSignInRequest,
   DashboardTestUserListResponse,
   DashboardUser,
@@ -25,6 +27,7 @@ export type {
 } from './dashboard.ts';
 export type { BatteryStatus, BeaconBatteryErrorCode, BeaconBatteryErrors, BeaconBatteryField, BeaconBatteryReading } from './beaconBattery.ts';
 export type { AisleDraft, AisleDraftErrorCode, AisleDraftErrors, AisleDraftField, AisleRequest } from './aisleDraft.ts';
+export type { AddSpotsRequest, SpotAttributes, SpotDraftErrorCode, SpotDraftErrors, SpotDraftField, SpotRange } from './spotDraft.ts';
 export type { LevelDraft, LevelDraftErrorCode, LevelDraftErrors, LevelDraftField } from './levelDraft.ts';
 export type { LotDraft, LotDraftErrorCode, LotDraftErrors, LotDraftField } from './lotDraft.ts';
 export type { LotPricingRequest, LotPricingSettings, TariffPolicy, PricingErrorCode, PricingErrors, PricingField } from './lotPricing.ts';

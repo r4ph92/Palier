@@ -10,6 +10,7 @@ import { renderDashboard } from './renderDashboard.tsx';
 
 const MAP_PATH = `/lots/${parkingDemo.id}/map`;
 const AISLE_A = parkingDemoMap.levels[0]?.aisles[0] as DashboardMapAisle;
+const MAP_REQUEST = `GET /lots/${parkingDemo.id}/map`;
 const BATTERY_REQUEST = `PUT /lots/${parkingDemo.id}/aisles/${AISLE_A.id}/beacon-battery`;
 const WHITESPACE = /\s+/g;
 
@@ -90,13 +91,14 @@ describe('the beacon batteries on the map', () => {
     expect(api.requests.filter((request) => request === BATTERY_REQUEST)).toHaveLength(0);
   });
 
-  it('says the aisle is gone when the API no longer finds it', async () => {
+  it('reads the map again and says so when the API no longer finds the aisle', async () => {
     const api = await openMap();
     api.answers.set(BATTERY_REQUEST, { status: 404, body: { statusCode: 404, error: 'AISLE_NOT_FOUND', message: 'AISLE_NOT_FOUND' } });
 
     await recordBattery('A', '15');
 
-    expect(await within(beaconRow('A')).findByRole('alert')).toHaveProperty('textContent', 'Cette allée est introuvable. Rechargez le plan.');
+    expect(await within(beaconRow('A')).findByRole('alert')).toHaveProperty('textContent', 'Cette allée est introuvable. Le plan a été rechargé.');
+    expect(api.requests.filter((request) => request === MAP_REQUEST)).toHaveLength(2);
     expect(batteryOf('A')).toBe('Pile inconnue');
   });
 

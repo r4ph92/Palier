@@ -8,6 +8,7 @@ import type { Clock } from '../time/Clock.ts';
 import { DashboardRefusedError } from './DashboardRefusedError.ts';
 import { LOT_MAP_WRITTEN, type LotMapRepository, type LotMapWrite } from './LotMapRepository.ts';
 import { lotMapViewOf } from './lotMapView.ts';
+import type { MemberAisle } from './lotSpots.ts';
 import { operatorIdOfMember, ownedLotOrNotFound, type MemberLot, type MemberOperators } from './memberOperator.ts';
 
 export interface LotMapSources {
@@ -21,14 +22,10 @@ export interface MemberLevel extends MemberLot {
   readonly levelId: string;
 }
 
-export interface MemberAisle extends MemberLot {
-  readonly aisleId: string;
-}
-
 type OperatorWrite = (operatorId: string) => Promise<LotMapWrite>;
 
 export async function readLotMapOfMember(sources: LotMapSources, lot: MemberLot): Promise<DashboardLotMap> {
-  return readOwnedLotMap(sources, await operatorIdOfMember(sources.operators, lot.userId), lot.lotId);
+  return readOwnedLotMap(sources, await operatorIdOfMember(sources.operators, lot), lot.lotId);
 }
 
 // Each rule runs before any read, so a refused body says nothing about whether the lot exists.
@@ -59,7 +56,7 @@ export function recordBeaconBatteryOfMember(sources: LotMapSources, aisle: Membe
 
 // Answers the whole map after the change, so the page shows what was saved, in the saved order.
 async function changeLotMap(sources: LotMapSources, lot: MemberLot, write: OperatorWrite): Promise<DashboardLotMap> {
-  const operatorId = await operatorIdOfMember(sources.operators, lot.userId);
+  const operatorId = await operatorIdOfMember(sources.operators, lot);
   const outcome = await write(operatorId);
   if (outcome !== LOT_MAP_WRITTEN) {
     throw new DashboardRefusedError(outcome);

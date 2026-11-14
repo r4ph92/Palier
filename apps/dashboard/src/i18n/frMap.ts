@@ -1,3 +1,5 @@
+import { frSpots } from './frSpots.ts';
+
 // The lot map page's text, kept apart so each dictionary file stays short.
 export const frMap = {
   title: 'Plan et balises',
@@ -56,4 +58,5 @@ export const frMap = {
   recordBattery: { shown: 'Enregistrer', name: 'Enregistrer la pile de la balise %{aisle}' },
   recordingBattery: 'Enregistrement…',
   batteryRecorded: 'Pile de la balise %{aisle} enregistrée\u00a0: %{percent}.',
+  spots: frSpots,
 };

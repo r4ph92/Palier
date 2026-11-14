@@ -12,7 +12,7 @@ import {
 } from '../../domain/dashboard/LotMapRepository.ts';
 import type { RecordedBatteryReading } from '../../domain/equipment/batteryReadings.ts';
 import type { Database, Transaction } from './database.ts';
-import { inOwnedLotLock, isLotBusy, isLotNotOwned, LOT_BUSY, LOT_NOT_OWNED, orLotBusy, type OwnedLot } from './lockParkingLot.ts';
+import type { OwnedLot } from './lockParkingLot.ts';
 import { lotMapOf, type LotMapRow } from './lotMapRows.ts';
 import {
   insertAisleStatement,
@@ -25,6 +25,7 @@ import {
   reorderLevelsStatement,
 } from './lotMapStatements.ts';
 import { AISLE_CODE_UNIQUE, AISLE_MINOR_UNIQUE, LEVEL_CODE_UNIQUE } from './lotSchema.ts';
+import { writeInOwnedLot } from './ownedLotWrite.ts';
 import { violatedUniqueConstraintOf } from './uniqueViolation.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
@@ -76,21 +77,13 @@ export class PostgresLotMapRepository implements LotMapRepository {
     return owned.length === 0 ? 'LOT_NOT_FOUND' : 'AISLE_NOT_FOUND';
   }
 
-  // Ownership is the first statement: another operator's lot is refused before any of its levels or aisles is read.
   async #writeInOwnedLot(lot: OwnedLot, write: LockedWrite): Promise<LotMapWrite> {
     try {
-      return writeOutcomeOf(await orLotBusy(inOwnedLotLock(this.#database, lot, write)));
+      return await writeInOwnedLot(this.#database, lot, write);
     } catch (error) {
       return takenRefusalOrThrow(error);
     }
   }
-}
-
-function writeOutcomeOf(outcome: LotMapWrite | typeof LOT_BUSY | typeof LOT_NOT_OWNED): LotMapWrite {
-  if (isLotBusy(outcome)) {
-    return 'LOT_BUSY';
-  }
-  return isLotNotOwned(outcome) ? 'LOT_NOT_FOUND' : outcome;
 }
 
 async function addLevelWithExitLane(tx: Executor, lot: OwnedLot, code: string): Promise<LotMapWrite> {

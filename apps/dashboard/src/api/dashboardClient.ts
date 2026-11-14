@@ -1,5 +1,7 @@
 import type {
+  AddSpotsRequest,
   AisleRequest,
+  DashboardAisleSpots,
   DashboardLotDetails,
   DashboardLotEquipment,
   DashboardLotListResponse,
@@ -11,6 +13,7 @@ import type {
   LevelOrderRequest,
   LotDraft,
   LotPricingRequest,
+  SpotAttributes,
   StripeOnboardingLink,
 } from '@palier/shared-types';
 import type { BeaconBatteryReading } from '@palier/shared-types/beaconBattery';
@@ -24,7 +27,7 @@ const JSON_TYPE = 'application/json';
 const READ_TIMEOUT_MILLISECONDS = 20_000;
 
 interface DashboardRequest {
-  readonly method: 'GET' | 'POST' | 'PUT';
+  readonly method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   readonly body?: object;
 }
 
@@ -51,7 +54,8 @@ export async function dashboardRequest<T>(path: string, request: DashboardReques
   try {
     const response = await fetch(`${BASE_PATH}${path}`, { ...requestInit(request), signal: controller.signal });
     if (!response.ok) {
-      throw new DashboardApiError(response.status, await errorCodeOf(response));
+      const { error, values } = await errorBodyOf(response);
+      throw new DashboardApiError(response.status, error, values);
     }
     return (response.status === NO_CONTENT ? undefined : await response.json()) as T;
   } finally {
@@ -59,12 +63,38 @@ export async function dashboardRequest<T>(path: string, request: DashboardReques
   }
 }
 
-async function errorCodeOf(response: Response): Promise<string | undefined> {
+interface ErrorBody {
+  readonly error: string | undefined;
+  readonly values: Readonly<Record<string, string>>;
+}
+
+// Only text values fill a sentence: anything else in the body is left out.
+async function errorBodyOf(response: Response): Promise<ErrorBody> {
   try {
-    return ((await response.json()) as { error?: string }).error;
+    const { error, values } = (await response.json()) as { error?: string; values?: unknown };
+    return { error, values: textValuesOf(values) };
   } catch {
-    return undefined;
+    return { error: undefined, values: {} };
   }
+}
+
+function textValuesOf(values: unknown): Readonly<Record<string, string>> {
+  if (typeof values !== 'object' || values === null) {
+    return {};
+  }
+  return Object.fromEntries(Object.entries(values).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+}
+
+function aislePathOf(lotId: string, aisleId: string): string {
+  return `${lotPathOf(lotId)}/aisles/${encodeURIComponent(aisleId)}`;
+}
+
+function spotsPathOf(lotId: string, aisleId: string): string {
+  return `${aislePathOf(lotId, aisleId)}/spots`;
+}
+
+function spotPathOf(lotId: string, spotId: string): string {
+  return `${lotPathOf(lotId)}/spots/${encodeURIComponent(spotId)}`;
 }
 
 export const dashboardClient = {
@@ -86,6 +116,12 @@ export const dashboardClient = {
   addAisle: (lotId: string, levelId: string, aisle: AisleRequest) =>
     dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/levels/${encodeURIComponent(levelId)}/aisles`, { method: 'POST', body: aisle }),
   recordBeaconBattery: (lotId: string, aisleId: string, reading: BeaconBatteryReading) =>
-    dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/aisles/${encodeURIComponent(aisleId)}/beacon-battery`, { method: 'PUT', body: reading }),
+    dashboardRequest<DashboardLotMap>(`${aislePathOf(lotId, aisleId)}/beacon-battery`, { method: 'PUT', body: reading }),
   lotEquipment: (lotId: string) => dashboardRequest<DashboardLotEquipment>(`${lotPathOf(lotId)}/equipment`),
+  aisleSpots: (lotId: string, aisleId: string) => dashboardRequest<DashboardAisleSpots>(spotsPathOf(lotId, aisleId)),
+  addSpots: (lotId: string, aisleId: string, request: AddSpotsRequest) =>
+    dashboardRequest<DashboardAisleSpots>(spotsPathOf(lotId, aisleId), { method: 'POST', body: request }),
+  changeSpot: (lotId: string, spotId: string, attributes: SpotAttributes) =>
+    dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'PUT', body: attributes }),
+  deleteSpot: (lotId: string, spotId: string) => dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'DELETE' }),
 };

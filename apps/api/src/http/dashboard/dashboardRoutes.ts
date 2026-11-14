@@ -5,6 +5,7 @@ import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts
 import { registerDashboardEquipmentRoutes } from './dashboardEquipmentRoutes.ts';
 import { registerDashboardLotMapRoutes } from './dashboardLotMapRoutes.ts';
 import { registerDashboardLotRoutes } from './dashboardLotRoutes.ts';
+import { registerDashboardLotSpotRoutes } from './dashboardLotSpotRoutes.ts';
 import { registerDashboardOccupancyRoutes } from './dashboardOccupancyRoutes.ts';
 import { registerDashboardOperatorRoutes } from './dashboardOperatorRoutes.ts';
 import { registerDashboardStripeRoutes } from './dashboardStripeRoutes.ts';
@@ -27,6 +28,7 @@ export async function registerDashboardRoutes(scope: FastifyInstance, dependenci
   registerDashboardOccupancyRoutes(scope, dependencies);
   registerDashboardLotMapRoutes(scope, dependencies);
   registerDashboardEquipmentRoutes(scope, dependencies);
+  registerDashboardLotSpotRoutes(scope, dependencies);
   registerDashboardStripeRoutes(scope, dependencies);
   if (dependencies.testSignInEnabled) {
     registerDashboardTestSignInRoutes(scope, dependencies);

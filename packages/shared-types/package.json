@@ -88,6 +88,10 @@
     "./gates": {
       "types": "./src/gates.ts",
       "default": "./src/gates.ts"
+    },
+    "./spotDraft": {
+      "types": "./src/spotDraft.ts",
+      "default": "./src/spotDraft.ts"
     }
   },
   "scripts": {

@@ -3,6 +3,7 @@ import { useText } from '../i18n/LanguageContext.tsx';
 import { AislesSection } from '../lotMap/AislesSection.tsx';
 import { BeaconTable } from '../lotMap/BeaconTable.tsx';
 import { LevelsSection } from '../lotMap/LevelsSection.tsx';
+import { SpotsSection } from '../lotMap/SpotsSection.tsx';
 import { useLotMap } from '../lotMap/useLotMap.ts';
 import { LotSubpageFailure, LotSubpageFrame, LotSubpageLoading, type LotSubpage } from './LotSubpage.tsx';
 
@@ -33,7 +34,8 @@ function MapView({ page, map, onSaved, onStale }: MapViewProps) {
     <LotSubpageFrame page={page} lotName={map.lotName}>
       <LevelsSection map={map} onSaved={onSaved} onStale={onStale} />
       <AislesSection map={map} onSaved={onSaved} />
-      <BeaconTable map={map} onSaved={onSaved} />
+      <SpotsSection map={map} onStale={onStale} />
+      <BeaconTable map={map} onSaved={onSaved} onStale={onStale} />
     </LotSubpageFrame>
   );
 }

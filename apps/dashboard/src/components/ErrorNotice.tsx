@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { useText } from '../i18n/LanguageContext.tsx';
-import { interpolate } from '../i18n/interpolate.ts';
+import { interpolateKeepingValuesWhole } from '../i18n/interpolateKeepingValuesWhole.tsx';
 
 interface ErrorNoticeProps {
   readonly code: DisplayedErrorCode;
@@ -22,7 +22,7 @@ export function ErrorNotice({ code, id, values = {}, takesFocus = false }: Error
   }, [takesFocus]);
   return (
     <p ref={noticeRef} id={id} role="alert" tabIndex={takesFocus ? -1 : undefined} className="error-notice">
-      {interpolate(text.errors[code], values)}
+      {interpolateKeepingValuesWhole(text.errors[code], values)}
     </p>
   );
 }

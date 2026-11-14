@@ -7,6 +7,7 @@ import type { SpotState } from '../../domain/spots/spotStates.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
 import type { Database, Transaction } from './database.ts';
 import { requireUpdatedRow } from './requireUpdatedRow.ts';
+import { liveSpot } from './liveSpot.ts';
 import { spot } from './lotSchema.ts';
 import { spotOf, type SpotLabelRow } from './spotLabel.ts';
 
@@ -71,15 +72,15 @@ export interface SpotNumberInLot {
   readonly spotNumber: string;
 }
 
-// The number is looked up in the session's lot only: another lot's « C-1 » is unknown here. Painted numbers have no
-// fixed shape (« P1-12 », « B-7a »), so every spot equal without case, spaces or dashes is locked, then one is named.
+// The number is looked up among the live spots of the session's lot only: another lot's « C-1 », or a retired one, is unknown here.
+// Painted numbers have no fixed shape (« P1-12 », « B-7a »), so every spot equal without case, spaces or dashes is locked, then one is named.
 export async function lockAnsweredSpot(tx: Executor, { lotId, spotNumber }: SpotNumberInLot): Promise<AnsweredSpot | null> {
   const rows = await tx.execute<AnsweredSpotRow>(sql`
     select spot.id, spot.state, spot.number, aisle.code as aisle_code, level.code as level_code
     from spot
     join aisle on aisle.id = spot.aisle_id
     join level on level.id = aisle.level_id
-    where spot.lot_id = ${lotId} and ${canonicalNumberOf(spot.number)} = ${canonicalSpotNumber(spotNumber)}
+    where spot.lot_id = ${lotId} and ${liveSpot()} and ${canonicalNumberOf(spot.number)} = ${canonicalSpotNumber(spotNumber)}
     order by spot.number
     for update of spot`);
   const named = paintedNumberNamed(rows.map(({ number }) => number), spotNumber);

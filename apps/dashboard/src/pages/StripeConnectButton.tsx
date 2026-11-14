@@ -21,7 +21,7 @@ export function StripeConnectButton({ operatorId, kycStatus }: StripeConnectButt
     <>
       {onboarding.error === null ? null : <ErrorNotice code={onboarding.error} takesFocus />}
       <button type="button" className="primary-button" aria-disabled={onboarding.redirecting} onClick={() => void onboarding.start()}>
-        <StableLabel shown={onboarding.redirecting ? text.home.redirecting : label} widest={text.home.resumeStripe} />
+        <StableLabel shown={onboarding.redirecting ? text.home.redirecting : label} reserved={[text.home.resumeStripe, text.home.redirecting]} />
       </button>
     </>
   );

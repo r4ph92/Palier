@@ -1,0 +1,199 @@
+/* The spot list of an aisle on the map page (#66). */
+/* Text buttons are 44 px tall for touch; the negative margin puts their words on the same line as the other cells' text. */
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-medium);
+  margin-block: calc((1lh - var(--touch-target)) / 2);
+}
+
+.capacity-warning {
+  margin: var(--space-medium) 0 0;
+}
+
+/* Words never break inside: a spot number, a state or a button label wraps whole or not at all. */
+.spot-table th,
+.spot-table td {
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.spot-number,
+.spot-distance,
+.spot-state,
+.spot-actions,
+.spot-table thead th {
+  white-space: nowrap;
+}
+
+.spot-number,
+.spot-distance {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.spot-edit-row > td {
+  padding-bottom: var(--space-large);
+}
+
+.spot-notice {
+  margin: var(--space-small) 0 0;
+}
+
+.spot-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-medium);
+  margin-top: var(--space-medium);
+}
+
+/* The dimmed edge button stays focusable; unlike disabled, it keeps keyboard focus when the last page is reached. */
+.spot-pager .text-button[aria-disabled='true'] {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: default;
+}
+
+/* Save and cancel sit on one line: the filled button's top margin would push its words below the cancel link's. */
+.spot-edit-form .actions-row {
+  align-items: center;
+}
+
+.spot-edit-form .secondary-button {
+  margin-top: 0;
+}
+
+/* Wide screens: columns breathe, the actions share one line, and distances line up on their units. */
+@media (min-width: 681px) {
+  .data-table.spot-table th,
+  .data-table.spot-table td {
+    padding-inline-end: var(--space-medium);
+  }
+
+  .spot-table {
+    width: 100%;
+  }
+
+  .row-actions .text-button {
+    white-space: nowrap;
+  }
+
+  /* Headers wrap between words; the actions keep Modifier and Supprimer on one line. */
+  .spot-table thead th {
+    white-space: normal;
+  }
+
+  .spot-table .row-actions:not(.delete-question) {
+    flex-wrap: nowrap;
+  }
+
+  /* « Gabarit large » stays whole; the attributes wrap between one another. */
+  .spot-attribute {
+    white-space: nowrap;
+  }
+
+  /* « Occupée, inconnue » may wrap between its words so a long spot number still fits the section at 681 px. */
+  .spot-table .spot-state,
+  .spot-table .state-mark {
+    white-space: normal;
+  }
+
+  .spot-table .state-mark {
+    align-items: baseline;
+  }
+
+  /* The question takes a line of its own, with Confirmer and Annuler under it. */
+  .delete-question {
+    margin-block: 0;
+  }
+
+  .delete-question > span {
+    flex-basis: 100%;
+    white-space: normal;
+  }
+
+  .spot-table .spot-distance {
+    text-align: right;
+  }
+}
+
+/* Wide enough for the delete question, so opening it does not move the columns; below this the question's buttons wrap instead of overflowing the section. */
+@media (min-width: 761px) {
+  .spot-actions {
+    min-width: 13rem;
+  }
+}
+
+/* Narrow screens stack each row: number and state, then attributes · distance, then the actions. */
+@media (max-width: 680px) {
+  .spot-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .row-actions {
+    margin-block: 0;
+  }
+
+  .spot-table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-small);
+    padding: var(--space-small) 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* The line break between number and state, and attributes · distance. */
+  .spot-table tbody tr::before {
+    content: '';
+    flex-basis: 100%;
+    order: 3;
+  }
+
+  .spot-table tbody th,
+  .spot-table tbody td {
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .spot-number {
+    flex: 1 0 auto;
+    order: 1;
+  }
+
+  .spot-state {
+    order: 2;
+  }
+
+  .spot-attributes {
+    order: 4;
+  }
+
+  .spot-distance {
+    order: 5;
+  }
+
+  .spot-distance::before {
+    content: '· ';
+  }
+
+  .spot-actions {
+    flex-basis: 100%;
+    order: 6;
+    white-space: normal;
+  }
+
+  .spot-edit-row {
+    display: block;
+  }
+
+  .spot-edit-row > td {
+    display: block;
+  }
+}

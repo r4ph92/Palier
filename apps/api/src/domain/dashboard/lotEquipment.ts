@@ -11,7 +11,7 @@ export interface LotEquipmentSources {
 }
 
 export async function readLotEquipmentOfMember({ operators, equipment, clock }: LotEquipmentSources, lot: MemberLot): Promise<DashboardLotEquipment> {
-  const operatorId = await operatorIdOfMember(operators, lot.userId);
+  const operatorId = await operatorIdOfMember(operators, lot);
   const gates = ownedLotOrNotFound(await equipment.readLotGates(operatorId, lot.lotId));
   const now = clock();
   return { lotId: lot.lotId, lotName: gates.lotName, now: now.toISOString(), gates: gates.gates.map((gate) => gateHealthView(gate, now)) };

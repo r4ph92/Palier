@@ -33,5 +33,6 @@ export const spotHold = pgTable(
     uniqueIndex('spot_hold_one_active_per_user_index').on(table.userId).where(ACTIVE_SPOT_HOLD),
     uniqueIndex('spot_hold_one_active_per_spot_index').on(table.spotId).where(ACTIVE_SPOT_HOLD),
     index('spot_hold_active_by_lot_index').on(table.lotId).where(ACTIVE_SPOT_HOLD),
+    index('spot_hold_spot_id_lot_id_index').on(table.spotId, table.lotId),
   ],
 );

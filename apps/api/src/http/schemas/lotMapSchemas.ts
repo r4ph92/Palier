@@ -15,12 +15,6 @@ const rectangleSchema = {
   properties: { x: gridNumber, y: gridNumber, width: gridNumber, height: gridNumber },
 } as const;
 
-export const lotAisleParametersSchema = {
-  type: 'object',
-  required: ['id', 'aisleId'],
-  properties: { id: uuidSchema, aisleId: uuidSchema },
-} as const;
-
 export const lotLevelParametersSchema = {
   type: 'object',
   required: ['id', 'levelId'],

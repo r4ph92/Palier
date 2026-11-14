@@ -9,6 +9,7 @@ import { FakeLevelOccupancyReader } from './fakeLevelOccupancyReader.ts';
 import { FakeLotEquipmentReader } from './fakeLotEquipmentReader.ts';
 import { FakeLotMapRepository } from './fakeLotMapRepository.ts';
 import { FakeLotSetupRepository } from './fakeLotSetupRepository.ts';
+import { FakeLotSpotRepository } from './fakeLotSpotRepository.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
 import { FakeParkedAnswers } from './fakeParkedAnswers.ts';
 import { FakeParkedPresumptions } from './fakeParkedPresumptions.ts';
@@ -52,6 +53,7 @@ export function fakeRepositories({
   parkedAnswers = new FakeParkedAnswers(),
   spotTakenReports = new FakeSpotTakenReports(),
 }: FakeRepositoryChoices = {}): ServerDependencies['repositories'] {
+  const lotMaps = new FakeLotMapRepository(operatorRepository.lots);
   return {
     lotAvailabilityRepository,
     driverRepository,
@@ -61,8 +63,9 @@ export function fakeRepositories({
     operatorRepository,
     lotSetupRepository: new FakeLotSetupRepository(operatorRepository.lots),
     levelOccupancy: new FakeLevelOccupancyReader(operatorRepository.lots),
-    lotMaps: new FakeLotMapRepository(operatorRepository.lots),
+    lotMaps,
     lotEquipment: new FakeLotEquipmentReader(operatorRepository.lots),
+    lotSpots: new FakeLotSpotRepository(operatorRepository.lots, lotMaps),
     currentParkingSessions: parkingSessions,
     parkingSessionBackdater: parkingSessions,
     parkedPresumptions,
