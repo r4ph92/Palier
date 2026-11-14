@@ -72,7 +72,7 @@ export type StatementLabel =
   | 'occupy-confirmed-spot'
   | 'attach-exit-passage'
   | 'insert-gate-command'
-  | 'read-barrier-opened'
+  | 'log-entry-without-loop'
   | 'backdate-entry'
   | 'append-session-event'
   | 'unknown';
@@ -111,7 +111,6 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['attach-exit-passage', /set exit_passage_at/],
   ['occupy-confirmed-spot', /update spot set state = 'OCCUPIED', state_changed_at = now\(\)/],
   ['insert-gate-command', /insert into gate_command/],
-  ['read-barrier-opened', /as was_barrier_opened/],
   ['backdate-entry', /set entry_confirmed_at = /],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],
@@ -152,6 +151,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-held-spot', /from \(select id, spot_id from spot_hold/],
   ['has-usable-spot-hold', /select 1 from spot_hold/],
   ['free-held-spot', /update spot set/],
+  ['log-entry-without-loop', /insert into event_log[\s\S]*'NO_LOOP'/],
   // Last, so a step written together with its event in one statement keeps the step's label.
   ['append-session-event', /insert into event_log/],
 ];

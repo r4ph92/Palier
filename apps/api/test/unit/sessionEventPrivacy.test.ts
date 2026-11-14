@@ -6,7 +6,7 @@ import { PostgresPassageLedger } from '../../src/infrastructure/postgres/Postgre
 import { PostgresSilentSessionRepository } from '../../src/infrastructure/postgres/PostgresSilentSessionRepository.ts';
 import { PostgresUnconfirmedEntryRepository } from '../../src/infrastructure/postgres/PostgresUnconfirmedEntryRepository.ts';
 import { SimulatedGateCommander } from '../../src/infrastructure/postgres/SimulatedGateCommander.ts';
-import { appendedSessionEvents, builtPayloadKeys } from './fakes/appendedSessionEvents.ts';
+import { appendedSessionEvents, builtPayloads } from './fakes/appendedSessionEvents.ts';
 import { entreeDemo } from './fakes/gateFixtures.ts';
 import { PARKING_DEMO_OCCUPANCY_ROW, ScriptedSql } from './fakes/scriptedSql.ts';
 
@@ -21,14 +21,14 @@ const PARKED_AT = { parked_at: NOW.toISOString() };
 
 type LoggedPayloads = [kind: string, keys: string[]][];
 
-// A statement that writes its step and its events together binds the detected aisle as JSON and builds the presumption in SQL.
+// A statement that writes its step and its events together binds the detected aisle as JSON and builds the other payloads in SQL.
 function loggedPayloads(scripted: ScriptedSql): LoggedPayloads {
   const appended: LoggedPayloads = appendedSessionEvents(scripted).map(({ kind, payload }) => [String(kind), Object.keys(payload).sort()]);
   const built: LoggedPayloads = scripted.statements
     .filter(({ label }) => label !== 'append-session-event' && label !== 'read-walk-facts')
     .flatMap(({ text, params }) => [
       ...params.filter((param) => typeof param === 'string' && param.startsWith('{')).map((json): [string, string[]] => ['AISLE_DETECTED', Object.keys(JSON.parse(String(json)) as object).sort()]),
-      ...builtPayloadKeys(text).map((keys): [string, string[]] => ['PARKING_PRESUMED', keys.sort()]),
+      ...builtPayloads(text).map(({ kind, keys }): [string, string[]] => [kind, keys.sort()]),
     ]);
   return [...appended, ...built];
 }

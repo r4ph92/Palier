@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PostgresSilentSessionRepository } from '../../src/infrastructure/postgres/PostgresSilentSessionRepository.ts';
-import { builtPayloadKeys } from './fakes/appendedSessionEvents.ts';
+import { builtPayloads } from './fakes/appendedSessionEvents.ts';
 import { parkingDemoLockRow } from './fakes/lotRows.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
 
@@ -52,6 +52,6 @@ describe('no signal for 30 minutes (story #156, decision 030)', () => {
     expect(text).toContain(`'PARKING_PRESUMED', jsonb_build_object('evidence', 'TIMEOUT', 'spotId', spot.id, 'spotNumber', spot.number)`);
     expect(text).toMatch(/\$(\d+)::timestamptz, \$(\d+)::timestamptz \+ make_interval\(hours => \$\d+::int\) from presumed/);
     expect(statement?.params.slice(-3)).toEqual([NOW.toISOString(), NOW.toISOString(), 2160]);
-    expect(builtPayloadKeys(text)).toEqual([['evidence', 'spotId', 'spotNumber']]);
+    expect(builtPayloads(text)).toEqual([{ kind: 'PARKING_PRESUMED', keys: ['evidence', 'spotId', 'spotNumber'] }]);
   });
 });

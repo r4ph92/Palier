@@ -31,12 +31,21 @@ export function onlyAppendedSessionEvent(scripted: ScriptedSql): AppendedSession
   return events[0] as AppendedSessionEvent;
 }
 
-// The keys of every jsonb_build_object in a statement, for payloads built from the rows the statement writes: key, value, key, value.
-export function builtPayloadKeys(text: string): string[][] {
-  return [...text.matchAll(/jsonb_build_object\(([^)]*)\)/g)].map(([, pairs]) =>
-    (pairs ?? '')
+export interface BuiltPayload {
+  readonly kind: string;
+  readonly keys: string[];
+}
+
+// One level of parentheses inside the object, for a value such as exists (select …).
+const KIND_THEN_BUILT_OBJECT = /'([A-Z_]+)', jsonb_build_object\(((?:[^()]|\([^()]*\))*)\)/g;
+
+// The kind and keys of every payload a statement builds from the rows it writes: 'KIND', jsonb_build_object(key, value, key, value).
+export function builtPayloads(text: string): BuiltPayload[] {
+  return [...text.matchAll(KIND_THEN_BUILT_OBJECT)].map(([, kind, pairs]) => ({
+    kind: kind ?? '',
+    keys: (pairs ?? '')
       .split(', ')
       .filter((_item, index) => index % 2 === 0)
       .map((key) => key.replaceAll("'", '')),
-  );
+  }));
 }

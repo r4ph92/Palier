@@ -51,8 +51,14 @@ export interface ParkingConfirmedPayload {
   readonly spotNumber: string;
 }
 
-// NO_LOOP: the cancellation job, wasBarrierOpened telling whether a barrier command existed; ADMISSION_FAILED: the entry undone by its own request.
-export type EntryCancelledPayload = { readonly reason: 'NO_LOOP'; readonly wasBarrierOpened: boolean } | { readonly reason: 'ADMISSION_FAILED' };
+// The cancellation job's: wasBarrierOpened tells whether a barrier command existed for the session.
+export interface EntryWithoutLoopPayload {
+  readonly reason: 'NO_LOOP';
+  readonly wasBarrierOpened: boolean;
+}
+
+// ADMISSION_FAILED: the entry undone by its own request.
+export type EntryCancelledPayload = EntryWithoutLoopPayload | { readonly reason: 'ADMISSION_FAILED' };
 
 export interface SessionEventPayloads {
   readonly ENTRY_SCANNED: EntryScannedPayload;

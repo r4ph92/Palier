@@ -46,7 +46,7 @@ export class PostgresUnconfirmedEntryRepository implements UnconfirmedEntryRepos
       await lockParkingLot(tx, entry.lotId);
       const cancelled = await cancelCreatedSession(tx, entry.sessionId, this.#clock());
       if (cancelled) {
-        await logEntryWithoutLoop(tx, entry);
+        await logEntryWithoutLoop(tx, entry.sessionId);
       }
       return cancelled;
     }, LOT_LOCK_TRANSACTION);
