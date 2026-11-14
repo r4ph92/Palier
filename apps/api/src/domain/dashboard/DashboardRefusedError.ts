@@ -4,6 +4,7 @@ import type { LotDraftErrorCode } from '@palier/shared-types/lotDraft';
 import type { PricingErrorCode } from '@palier/shared-types/lotPricing';
 import { LOT_MAP_MESSAGES, type LotMapReason } from './lotMapMessages.ts';
 import { LOT_SPOT_MESSAGES, type LotSpotReason } from './lotSpotMessages.ts';
+import { SPOT_CHECK_MESSAGES, type SpotCheckRefusalReason } from './spotCheckMessages.ts';
 import { LOT_SETUP_MESSAGES } from './lotSetupMessages.ts';
 
 export type DashboardRefusalReason =
@@ -11,7 +12,8 @@ export type DashboardRefusalReason =
   | LotDraftErrorCode
   | PricingErrorCode
   | LotMapReason
-  | LotSpotReason;
+  | LotSpotReason
+  | SpotCheckRefusalReason;
 
 const MESSAGES: Readonly<Record<DashboardRefusalReason, string>> = {
   LEGAL_NAME_INVALID: `The legal name must be ${LEGAL_NAME_LENGTH.minimum} to ${LEGAL_NAME_LENGTH.maximum} characters, with no invisible characters.`,
@@ -23,6 +25,7 @@ const MESSAGES: Readonly<Record<DashboardRefusalReason, string>> = {
   ...LOT_SETUP_MESSAGES,
   ...LOT_MAP_MESSAGES,
   ...LOT_SPOT_MESSAGES,
+  ...SPOT_CHECK_MESSAGES,
 };
 
 export class DashboardRefusedError extends Error {

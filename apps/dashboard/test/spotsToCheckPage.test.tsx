@@ -61,7 +61,7 @@ describe('the spots to check page', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Place A-1 vérifiée' }));
 
     const alert = await within(rowOf('A-1')).findByRole('alert');
-    expect(alert.textContent).toBe('Place encore attribuée à une session — attendez la sortie');
+    expect(alert.textContent).toBe('Place encore attribuée à une session — attendez la sortie.');
     expect(document.activeElement).toBe(alert);
     expect(screen.getByRole('button', { name: 'Place A-1 vérifiée' }).getAttribute('aria-describedby')).toBe(alert.id);
     expect(screen.getByRole('rowheader', { name: 'A-1' })).toBeDefined();

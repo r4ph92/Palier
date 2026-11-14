@@ -1,4 +1,5 @@
 import { enMap } from './enMap.ts';
+import { enSpotCheckMessages } from './spotCheckMessages.ts';
 import type { Dictionary } from './fr.ts';
 
 export const en: Dictionary = {
@@ -185,7 +186,7 @@ export const en: Dictionary = {
     SPOT_LIMIT_REACHED: 'A parking lot has at most %{spotsPerLotMaximum} spots.',
     SPOT_NUMBER_TAKEN: 'This number already exists in this parking lot: %{number}.',
     SPOT_IN_USE: 'Spot in use — try again after the vehicle leaves: %{number}.',
-    SPOT_STILL_ASSIGNED: 'Spot still assigned to a session — wait for the exit',
+    ...enSpotCheckMessages,
     FIELDS_INVALID: 'Fix the fields shown.',
     GRID_POSITION_INVALID: 'A whole number from 0 to %{gridMaximum}.',
     GRID_LENGTH_INVALID: 'A whole number from 1 to %{gridMaximum}.',

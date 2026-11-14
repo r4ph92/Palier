@@ -12,5 +12,4 @@ export const LOT_SPOT_MESSAGES: Readonly<Record<Exclude<LotSpotReason, 'LOT_NOT_
   SPOT_LIMIT_REACHED: `A lot has at most ${MAX_SPOTS_PER_LOT} spots.`,
   SPOT_NUMBER_TAKEN: 'This number already exists in this lot.',
   SPOT_IN_USE: 'Spot in use; try again after the vehicle leaves.',
-  SPOT_STILL_ASSIGNED: 'Spot still assigned to a session; wait for the exit.',
 };

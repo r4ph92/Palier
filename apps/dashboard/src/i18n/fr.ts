@@ -1,4 +1,5 @@
 import { frMap } from './frMap.ts';
+import { frSpotCheckMessages } from './spotCheckMessages.ts';
 
 export const fr = {
   app: {
@@ -184,7 +185,7 @@ export const fr = {
     SPOT_LIMIT_REACHED: 'Un stationnement compte au plus %{spotsPerLotMaximum} places.',
     SPOT_NUMBER_TAKEN: 'Ce numéro existe déjà dans ce parking\u00a0: %{number}.',
     SPOT_IN_USE: 'Place utilisée — réessayez après la sortie\u00a0: %{number}.',
-    SPOT_STILL_ASSIGNED: 'Place encore attribuée à une session — attendez la sortie',
+    ...frSpotCheckMessages,
     FIELDS_INVALID: 'Corrigez les champs indiqués.',
     GRID_POSITION_INVALID: 'Un nombre entier de 0 à %{gridMaximum}.',
     GRID_LENGTH_INVALID: 'Un nombre entier de 1 à %{gridMaximum}.',
