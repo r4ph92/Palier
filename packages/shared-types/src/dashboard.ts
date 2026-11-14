@@ -1,3 +1,4 @@
+import type { BatteryStatus } from './beaconBattery.ts';
 import { isValidDisplayText } from './displayText.ts';
 import type { GateHealth, GateKind } from './gates.ts';
 import type { LotPricingSettings } from './lotPricing.ts';
@@ -87,6 +88,10 @@ export interface DashboardMapAisle {
   readonly beaconMinor: number;
   readonly isExitLane: boolean;
   readonly rectangle: AisleRectangle | null;
+  // The last reading of the aisle's beacon battery, and what it means now: UNKNOWN past 90 days (decision 035).
+  readonly batteryPercent: number | null;
+  readonly batteryReportedAt: string | null;
+  readonly batteryStatus: BatteryStatus;
 }
 
 // Levels come in display order, which is also the order spots are handed out in; aisles by code, the exit lane last.

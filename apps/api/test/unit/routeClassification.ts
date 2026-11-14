@@ -76,6 +76,7 @@ export const DASHBOARD_PROTECTED = [
   'POST /v1/dashboard/lots/:id/levels',
   'PUT /v1/dashboard/lots/:id/levels/order',
   'POST /v1/dashboard/lots/:id/levels/:levelId/aisles',
+  'PUT /v1/dashboard/lots/:id/aisles/:aisleId/beacon-battery',
 ];
 
 const DASHBOARD_OPEN = ['POST /v1/dashboard/sign-out', 'GET /v1/dashboard/test/users', 'POST /v1/dashboard/test/sign-in'];

@@ -1,10 +1,19 @@
-import type { DashboardLotMap, LevelOrderRequest } from '@palier/shared-types';
+import type { BeaconBatteryReading, DashboardLotMap, LevelOrderRequest } from '@palier/shared-types';
 import type { AisleRequest } from '@palier/shared-types/aisleDraft';
 import type { LevelDraft } from '@palier/shared-types/levelDraft';
 import type { FastifyInstance, FastifyRequest, onRequestAsyncHookHandler } from 'fastify';
-import { addAisleOfMember, addLevelOfMember, readLotMapOfMember, reorderLevelsOfMember, type LotMapSources, type MemberLot } from '../../domain/dashboard/lotMap.ts';
+import {
+  addAisleOfMember,
+  addLevelOfMember,
+  readLotMapOfMember,
+  recordBeaconBatteryOfMember,
+  reorderLevelsOfMember,
+  type LotMapSources,
+} from '../../domain/dashboard/lotMap.ts';
+import type { MemberLot } from '../../domain/dashboard/memberOperator.ts';
+import { batteryReadingBodySchema } from '../schemas/beaconBatterySchemas.ts';
 import { lotIdParametersSchema } from '../schemas/dashboardSchemas.ts';
-import { aisleBodySchema, dashboardLotMapSchema, levelDraftBodySchema, levelOrderBodySchema, lotLevelParametersSchema } from '../schemas/lotMapSchemas.ts';
+import { aisleBodySchema, dashboardLotMapSchema, levelDraftBodySchema, levelOrderBodySchema, lotAisleParametersSchema, lotLevelParametersSchema } from '../schemas/lotMapSchemas.ts';
 import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
 import { refuseMalformedLotId } from './refuseMalformedLotId.ts';
 import { requireDashboardUser, signedInDashboardUser } from './requireDashboardUser.ts';
@@ -17,6 +26,10 @@ interface LevelParams extends LotParams {
   readonly levelId: string;
 }
 
+interface AisleParams extends LotParams {
+  readonly aisleId: string;
+}
+
 interface MapRoutesContext {
   readonly scope: FastifyInstance;
   readonly sources: LotMapSources;
@@ -26,12 +39,13 @@ interface MapRoutesContext {
 
 const response = { 200: dashboardLotMapSchema };
 
-export function registerDashboardLotMapRoutes(scope: FastifyInstance, { access, operators, maps }: DashboardRouteDependencies): void {
-  const context: MapRoutesContext = { scope, sources: { operators, maps }, onRequest: requireDashboardUser(access.sessions) };
+export function registerDashboardLotMapRoutes(scope: FastifyInstance, { access, operators, maps, clock }: DashboardRouteDependencies): void {
+  const context: MapRoutesContext = { scope, sources: { operators, maps, clock }, onRequest: requireDashboardUser(access.sessions) };
   registerReadMapRoute(context);
   registerAddLevelRoute(context);
   registerReorderLevelsRoute(context);
   registerAddAisleRoute(context);
+  registerBeaconBatteryRoute(context);
 }
 
 function registerReadMapRoute({ scope, sources, onRequest }: MapRoutesContext): void {
@@ -67,6 +81,16 @@ function registerAddAisleRoute({ scope, sources, onRequest }: MapRoutesContext):
   scope.post<{ readonly Params: LevelParams; readonly Body: AisleRequest }>(route, { onRequest, attachValidation: true, schema }, (request): Promise<DashboardLotMap> => {
     refuseMalformedRequest(request);
     return addAisleOfMember(sources, { ...memberLotOf(request), levelId: request.params.levelId }, request.body);
+  });
+}
+
+// The exit lane's beacon is an aisle too, so its battery is recorded the same way.
+function registerBeaconBatteryRoute({ scope, sources, onRequest }: MapRoutesContext): void {
+  const schema = { params: lotAisleParametersSchema, body: batteryReadingBodySchema, response };
+  const route = '/v1/dashboard/lots/:id/aisles/:aisleId/beacon-battery';
+  scope.put<{ readonly Params: AisleParams; readonly Body: BeaconBatteryReading }>(route, { onRequest, attachValidation: true, schema }, (request): Promise<DashboardLotMap> => {
+    refuseMalformedRequest(request);
+    return recordBeaconBatteryOfMember(sources, { ...memberLotOf(request), aisleId: request.params.aisleId }, request.body);
   });
 }
 

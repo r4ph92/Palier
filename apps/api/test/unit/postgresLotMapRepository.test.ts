@@ -10,7 +10,10 @@ const LEVEL_P2 = 'level-p2';
 const aisleA = { code: 'A', beaconMinor: 1, rectangle: { x: 0, y: 0, width: 100, height: 40 } };
 const placement = { lotId: GARAGE_ROY_NORD, levelId: LEVEL_P1 };
 const lotRow = { lot_name: 'Garage Roy Nord', beacon_major: 4 };
-const noAisle = { aisle_id: null, aisle_code: null, beacon_minor: null, is_exit_lane: null, map_polygon: null };
+const noBattery = { beacon_battery_percent: null, beacon_battery_reported_at: null };
+const noAisle = { aisle_id: null, aisle_code: null, beacon_minor: null, is_exit_lane: null, map_polygon: null, ...noBattery };
+const READ_AT = new Date('2026-11-13T19:05:00Z');
+const lowBattery = { beacon_battery_percent: 15, beacon_battery_reported_at: '2026-11-13 19:05:00+00' };
 const p1Row = { ...lotRow, level_id: LEVEL_P1, level_code: 'P1', display_order: 1 };
 const p2Row = { ...lotRow, level_id: LEVEL_P2, level_code: 'P2', display_order: 2 };
 
@@ -25,8 +28,8 @@ function repositoryOn(scripted: ScriptedSql) {
 describe('reading the map of a lot from Postgres', () => {
   it('groups aisles under their level, in the order of the statement, with the platform UUID and the lot major', async () => {
     const scripted = new ScriptedSql().answer('read-lot-map', [
-      { ...p1Row, aisle_id: 'aisle-a', aisle_code: 'A', beacon_minor: 1, is_exit_lane: false, map_polygon: aisleA.rectangle },
-      { ...p1Row, aisle_id: 'exit', aisle_code: 'Sortie', beacon_minor: 0, is_exit_lane: true, map_polygon: null },
+      { ...p1Row, aisle_id: 'aisle-a', aisle_code: 'A', beacon_minor: 1, is_exit_lane: false, map_polygon: aisleA.rectangle, ...lowBattery },
+      { ...p1Row, aisle_id: 'exit', aisle_code: 'Sortie', beacon_minor: 0, is_exit_lane: true, map_polygon: null, ...noBattery },
       { ...p2Row, ...noAisle },
     ]);
 
@@ -43,8 +46,8 @@ describe('reading the map of a lot from Postgres', () => {
           code: 'P1',
           displayOrder: 1,
           aisles: [
-            { id: 'aisle-a', code: 'A', beaconMinor: 1, isExitLane: false, rectangle: aisleA.rectangle },
-            { id: 'exit', code: 'Sortie', beaconMinor: 0, isExitLane: true, rectangle: null },
+            { id: 'aisle-a', code: 'A', beaconMinor: 1, isExitLane: false, rectangle: aisleA.rectangle, batteryPercent: 15, batteryReportedAt: READ_AT },
+            { id: 'exit', code: 'Sortie', beaconMinor: 0, isExitLane: true, rectangle: null, batteryPercent: null, batteryReportedAt: null },
           ],
         },
         { id: LEVEL_P2, code: 'P2', displayOrder: 2, aisles: [] },
@@ -172,5 +175,35 @@ describe('adding an aisle in Postgres', () => {
     const scripted = new ScriptedSql().answer('lock-owned-lot', [{ id: GARAGE_ROY_NORD }]).fail('insert-aisle', uniqueViolation(constraint));
 
     expect(await repositoryOn(scripted).addAisle(ROY_OPERATOR, placement, aisleA)).toBe(refusal);
+  });
+});
+
+describe('recording a beacon battery reading in Postgres', () => {
+  const placement = { lotId: GARAGE_ROY_NORD, aisleId: 'aisle-a' };
+  const reading = { percent: 15, reportedAt: READ_AT };
+
+  it("checks the operator's lot first, then writes on the aisle of that lot only", async () => {
+    const scripted = new ScriptedSql().answer('read-owned-lot-id', [{ id: GARAGE_ROY_NORD }]).answer('record-aisle-battery', [{ id: 'aisle-a' }]);
+
+    expect(await repositoryOn(scripted).recordBeaconBattery(ROY_OPERATOR, placement, reading)).toBe('WRITTEN');
+    expect(scripted.labels()).toEqual(['read-owned-lot-id', 'record-aisle-battery']);
+    expect(scripted.statement('read-owned-lot-id')?.params).toEqual([GARAGE_ROY_NORD, ROY_OPERATOR]);
+    const write = scripted.statement('record-aisle-battery');
+    expect(write?.text).toMatch(/where aisle\.id = \$3 and aisle\.lot_id = \$4 and parking_lot\.id = aisle\.lot_id and parking_lot\.operator_id = \$5\s+returning aisle\.id/);
+    expect(write?.params).toEqual([15, READ_AT.toISOString(), 'aisle-a', GARAGE_ROY_NORD, ROY_OPERATOR]);
+    expect(scripted.isolationLevels).toEqual([]);
+  });
+
+  it("answers LOT_NOT_FOUND for another operator's lot without writing", async () => {
+    const scripted = new ScriptedSql().answer('read-owned-lot-id', []);
+
+    expect(await repositoryOn(scripted).recordBeaconBattery('operator-lavoie', placement, reading)).toBe('LOT_NOT_FOUND');
+    expect(scripted.count('record-aisle-battery')).toBe(0);
+  });
+
+  it('answers AISLE_NOT_FOUND when no aisle of the lot was written', async () => {
+    const scripted = new ScriptedSql().answer('read-owned-lot-id', [{ id: GARAGE_ROY_NORD }]).answer('record-aisle-battery', []);
+
+    expect(await repositoryOn(scripted).recordBeaconBattery(ROY_OPERATOR, placement, reading)).toBe('AISLE_NOT_FOUND');
   });
 });

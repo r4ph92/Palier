@@ -9,6 +9,7 @@ import type { FakeLotMapRepository } from './fakes/fakeLotMapRepository.ts';
 import { aisleA, levelIdOf, lotMapRoutesOf, type Cookies, type LotMapRoutes } from './fakes/lotMapRoutes.ts';
 
 const PLATFORM_UUID = '7B8098B8-9525-4406-AB73-4ABD2095EDC3';
+const UNREAD_BATTERY = { batteryPercent: null, batteryReportedAt: null, batteryStatus: 'UNKNOWN' };
 
 describe('dashboard lot map routes', () => {
   let server: FastifyInstance;
@@ -129,8 +130,8 @@ describe('dashboard lot map routes', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.json<DashboardLotMap>().levels[0]?.aisles).toEqual([
-        { id: expect.any(String), ...aisleA, isExitLane: false },
-        { id: expect.any(String), code: 'Sortie', beaconMinor: 0, isExitLane: true, rectangle: null },
+        { id: expect.any(String), ...aisleA, isExitLane: false, ...UNREAD_BATTERY },
+        { id: expect.any(String), code: 'Sortie', beaconMinor: 0, isExitLane: true, rectangle: null, ...UNREAD_BATTERY },
       ]);
     });
 

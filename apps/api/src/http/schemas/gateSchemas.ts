@@ -1,5 +1,4 @@
 import type {
-  BeaconBatteryReading,
   GateIdentity,
   GateIdentifyRequest,
   GateIdentifyResponse,
@@ -34,14 +33,6 @@ export const batteryReportParametersSchema = {
   type: 'object',
   required: ['id', 'minor'],
   properties: { id: uuidSchema, minor: { type: 'string', pattern: '^(0|[1-9][0-9]{0,4})$' } },
-} as const;
-
-// A number, not an integer: 1.5 gets the rule's BATTERY_PERCENT_INVALID like 101 does.
-export const batteryReadingBodySchema = {
-  type: 'object',
-  required: ['percent'],
-  additionalProperties: false,
-  properties: { percent: { type: 'number' } },
 } as const;
 
 export const passageRequestSchema = {
@@ -133,4 +124,3 @@ export type ResponseSchemaMatchesIdentifyResponse = AssertTrue<MutuallyAssignabl
 export type ResponseSchemaMatchesPresenceResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof presenceResponseSchema>, GatePresenceResponse>>;
 export type RequestSchemaMatchesReplayRequest = AssertTrue<MutuallyAssignable<FromSchema<typeof replayRequestSchema>, WithMutableArrays<PassageReplayRequest>>>;
 export type ResponseSchemaMatchesReplayResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof replayResponseSchema>, PassageReplayResponse>>;
-export type BatteryReadingSchemaMatches = AssertTrue<MutuallyAssignable<FromSchema<typeof batteryReadingBodySchema>, BeaconBatteryReading>>;

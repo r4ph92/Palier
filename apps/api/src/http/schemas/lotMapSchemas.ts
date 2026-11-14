@@ -15,6 +15,12 @@ const rectangleSchema = {
   properties: { x: gridNumber, y: gridNumber, width: gridNumber, height: gridNumber },
 } as const;
 
+export const lotAisleParametersSchema = {
+  type: 'object',
+  required: ['id', 'aisleId'],
+  properties: { id: uuidSchema, aisleId: uuidSchema },
+} as const;
+
 export const lotLevelParametersSchema = {
   type: 'object',
   required: ['id', 'levelId'],
@@ -52,7 +58,7 @@ export const aisleBodySchema = {
 
 const mapAisleSchema = {
   type: 'object',
-  required: ['id', 'code', 'beaconMinor', 'isExitLane', 'rectangle'],
+  required: ['id', 'code', 'beaconMinor', 'isExitLane', 'rectangle', 'batteryPercent', 'batteryReportedAt', 'batteryStatus'],
   additionalProperties: false,
   properties: {
     id: { type: 'string' },
@@ -60,6 +66,9 @@ const mapAisleSchema = {
     beaconMinor: { type: 'integer' },
     isExitLane: { type: 'boolean' },
     rectangle: { anyOf: [rectangleSchema, { type: 'null' }] },
+    batteryPercent: { type: ['integer', 'null'] },
+    batteryReportedAt: { type: ['string', 'null'] },
+    batteryStatus: { type: 'string', enum: ['OK', 'LOW', 'UNKNOWN'] },
   },
 } as const;
 

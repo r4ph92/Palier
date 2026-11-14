@@ -3,7 +3,8 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import { recordHeartbeat, type GateReportSources } from '../../domain/equipment/recordHeartbeat.ts';
 import { reportBeaconBattery } from '../../domain/equipment/reportBeaconBattery.ts';
 import { authenticatedGateOf } from '../gates/gateDeviceAuthentication.ts';
-import { batteryReportParametersSchema, batteryReadingBodySchema, gateIdParametersSchema, type BatteryReportParameters, type GateIdParameters } from '../schemas/gateSchemas.ts';
+import { batteryReadingBodySchema } from '../schemas/beaconBatterySchemas.ts';
+import { batteryReportParametersSchema, gateIdParametersSchema, type BatteryReportParameters, type GateIdParameters } from '../schemas/gateSchemas.ts';
 
 const NO_CONTENT = 204;
 

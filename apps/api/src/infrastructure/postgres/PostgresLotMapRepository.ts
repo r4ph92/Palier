@@ -1,11 +1,29 @@
-import type { DashboardLotMap, LevelOrderRequest } from '@palier/shared-types';
+import type { LevelOrderRequest } from '@palier/shared-types';
 import type { AisleDraft } from '@palier/shared-types/aisleDraft';
 import { isMoveOfCurrentOrder } from '../../domain/dashboard/levelOrder.ts';
-import { LOT_MAP_WRITTEN, type LevelPlacement, type LotMapRefusal, type LotMapRepository, type LotMapWrite } from '../../domain/dashboard/LotMapRepository.ts';
+import {
+  LOT_MAP_WRITTEN,
+  type AislePlacement,
+  type LevelPlacement,
+  type LotMapRefusal,
+  type LotMapRepository,
+  type LotMapWrite,
+  type StoredBatteryReading,
+  type StoredLotMap,
+} from '../../domain/dashboard/LotMapRepository.ts';
 import type { Database, Transaction } from './database.ts';
 import { inOwnedLotLock, isLotBusy, isLotNotOwned, LOT_BUSY, LOT_NOT_OWNED, orLotBusy, type OwnedLot } from './lockParkingLot.ts';
 import { lotMapOf, type LotMapRow } from './lotMapRows.ts';
-import { insertAisleStatement, insertExitLaneStatement, insertLevelStatement, readLevelIdsStatement, readLotMapStatement, reorderLevelsStatement } from './lotMapStatements.ts';
+import {
+  insertAisleStatement,
+  insertExitLaneStatement,
+  insertLevelStatement,
+  readLevelIdsStatement,
+  readLotMapStatement,
+  readOwnedLotIdStatement,
+  recordAisleBatteryStatement,
+  reorderLevelsStatement,
+} from './lotMapStatements.ts';
 import { AISLE_CODE_UNIQUE, AISLE_MINOR_UNIQUE, LEVEL_CODE_UNIQUE } from './lotSchema.ts';
 import { violatedUniqueConstraintOf } from './uniqueViolation.ts';
 
@@ -25,7 +43,7 @@ export class PostgresLotMapRepository implements LotMapRepository {
     this.#database = database;
   }
 
-  async readLotMap(operatorId: string, lotId: string): Promise<DashboardLotMap | null> {
+  async readLotMap(operatorId: string, lotId: string): Promise<StoredLotMap | null> {
     return lotMapOf(lotId, await this.#database.execute<LotMapRow>(readLotMapStatement({ operatorId, lotId })));
   }
 
@@ -42,6 +60,15 @@ export class PostgresLotMapRepository implements LotMapRepository {
       const inserted = await tx.execute(insertAisleStatement(operatorId, placement, aisle));
       return inserted.length === 0 ? 'LEVEL_NOT_FOUND' : LOT_MAP_WRITTEN;
     });
+  }
+
+  async recordBeaconBattery(operatorId: string, placement: AislePlacement, reading: StoredBatteryReading): Promise<LotMapWrite> {
+    const owned = await this.#database.execute(readOwnedLotIdStatement({ operatorId, lotId: placement.lotId }));
+    if (owned.length === 0) {
+      return 'LOT_NOT_FOUND';
+    }
+    const recorded = await this.#database.execute(recordAisleBatteryStatement(operatorId, placement, reading));
+    return recorded.length === 0 ? 'AISLE_NOT_FOUND' : LOT_MAP_WRITTEN;
   }
 
   // Ownership is the first statement: another operator's lot is refused before any of its levels or aisles is read.
