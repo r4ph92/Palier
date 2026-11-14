@@ -172,6 +172,7 @@ export const en: Dictionary = {
     GRID_POSITION_INVALID: 'A whole number from 0 to %{gridMaximum}.',
     GRID_LENGTH_INVALID: 'A whole number from 1 to %{gridMaximum}.',
     MAP_RELOAD_FAILED: 'The levels changed in the meantime, and the map could not be reloaded. Reload the page before trying again.',
+    SPOT_RANGE_UNREADABLE: 'These numbers cannot be read. Write a range like A-1 to A-20, or one number like A-7.',
     UNKNOWN: 'Something went wrong. Try again in a moment.',
   },
 };

@@ -11,7 +11,6 @@ export type AddSpotsField = 'range' | SpotAttributeField;
 
 const EMPTY_SPOTS: FieldValues<AddSpotsField> = { range: '', ...EMPTY_ATTRIBUTES };
 
-// Text that reads as no range at all: the shared rule refuses it like a range it can read but not accept.
 const UNREADABLE_RANGE: SpotRange = { prefix: '', first: '', last: '' };
 
 const FIELD_OF_CODE: Partial<Readonly<Record<DisplayedErrorCode, AddSpotsField>>> = {
@@ -20,9 +19,12 @@ const FIELD_OF_CODE: Partial<Readonly<Record<DisplayedErrorCode, AddSpotsField>>
   SPOT_DISTANCE_INVALID: 'distanceToExit',
 };
 
+// Numbers that read as no range get their own error: a mistyped separator is never sent as one spot.
 function readSpots(values: FieldValues<AddSpotsField>, language: Language): ReadForm<AddSpotsField, AddSpotsRequest> {
-  const request = { range: parseSpotRange(values.range) ?? UNREADABLE_RANGE, attributes: attributesOf(values, language) };
-  return readFormOf(request, addSpotsErrors(request));
+  const range = parseSpotRange(values.range);
+  const request = { range: range ?? UNREADABLE_RANGE, attributes: attributesOf(values, language) };
+  const errors = addSpotsErrors(request);
+  return readFormOf(request, range === null ? { ...errors, range: 'SPOT_RANGE_UNREADABLE' } : errors);
 }
 
 export interface AddSpotsTarget {
