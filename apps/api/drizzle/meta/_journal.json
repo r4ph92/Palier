@@ -253,13 +253,6 @@
       "when": 1794610961892,
       "tag": "0035_aisle_minor_and_exit_lane",
       "breakpoints": true
-    },
-    {
-      "idx": 36,
-      "version": "7",
-      "when": 1794617091064,
-      "tag": "0036_equipment_health",
-      "breakpoints": true
     }
   ]
 }
