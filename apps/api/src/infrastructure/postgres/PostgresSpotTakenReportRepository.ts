@@ -34,7 +34,7 @@ async function reportUnderLotLock(tx: Transaction, report: SpotTakenReport, lotI
     return { outcome: plan.refusal };
   }
   if (plan.flagsReported) {
-    await flagAssignedSpotToCheck(tx, session.assignedSpot.id);
+    await flagAssignedSpotToCheck(tx, session.assignedSpot.id, 'REPORTED_TAKEN');
   }
   await recordReportedSpot(tx, { sessionId: report.sessionId, spotId: session.assignedSpot.id, lotId });
   return moveDriver(tx, { sessionId: report.sessionId, lotId, session });

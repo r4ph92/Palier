@@ -122,6 +122,22 @@ export interface DashboardAisleSpots {
   readonly capacity: number;
 }
 
+export const SPOT_CHECK_REASONS = ['WRONG_AISLE', 'REPORTED_TAKEN'] as const;
+
+// Why a spot was flagged for a physical check: its driver parked in another aisle, or reported it taken.
+export type SpotCheckReason = (typeof SPOT_CHECK_REASONS)[number];
+
+// A flagged spot of a lot, oldest flag first. The reason is null for a flag raised before reasons were recorded.
+export interface DashboardSpotToCheck {
+  readonly spotId: string;
+  readonly number: string;
+  readonly levelCode: string;
+  readonly aisleCode: string;
+  readonly since: string;
+  readonly reason: SpotCheckReason | null;
+  readonly state: SpotState;
+}
+
 // Every level of the lot, each once, in the new order; fromLevelIds is the order the page showed when the operator moved a level.
 export interface LevelOrderRequest {
   readonly levelIds: readonly string[];
@@ -183,6 +199,7 @@ export const DASHBOARD_ERROR_CODES = [
   'SPOT_LIMIT_REACHED',
   'SPOT_NUMBER_TAKEN',
   'SPOT_IN_USE',
+  'SPOT_STILL_ASSIGNED',
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];

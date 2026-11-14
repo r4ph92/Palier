@@ -92,7 +92,7 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
 
     await reportWith(sql);
 
-    expect(sql.statement('flag-assigned-spot')?.params).toEqual([SPOT_A1_ID]);
+    expect(sql.statement('flag-assigned-spot')?.params).toEqual(['REPORTED_TAKEN', SPOT_A1_ID]);
     const recorded = sql.statement('record-reported-spot');
     expect(recorded?.text).toMatch(/values \(\$\d+, \$\d+, \$\d+\)\s+on conflict do nothing/);
     expect(recorded?.params).toEqual([SESSION_ID, SPOT_A1_ID, LOT_ID]);

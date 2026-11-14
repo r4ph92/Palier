@@ -63,9 +63,9 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
     await walkWith(sql);
 
     const flag = sql.statement('flag-assigned-spot');
-    expect(flag?.text).toMatch(/set state = 'OCCUPIED_UNKNOWN', needs_check = true, state_changed_at = now\(\)/);
+    expect(flag?.text).toMatch(/set state = 'OCCUPIED_UNKNOWN', needs_check = true, needs_check_since = now\(\), needs_check_reason = \$\d+, state_changed_at = now\(\)/);
     expect(flag?.text).toMatch(/where id = \$\d+ and state = 'OCCUPIED'/);
-    expect(flag?.params).toEqual([SPOT_A1_ID]);
+    expect(flag?.params).toEqual(['WRONG_AISLE', SPOT_A1_ID]);
   });
 
   it("looks the detected aisle up by its minor in the session's lot, leaving exit lanes out", async () => {
@@ -159,7 +159,7 @@ describe('a walk racing a spot-taken report (story #23)', () => {
 
     expect(sql.count('read-walk-facts')).toBe(2);
     expect(sql.statements.filter(({ label }) => label === 'ask-where-parked')[1]?.params).toContain(SPOT_A2_ID);
-    expect(sql.statement('flag-assigned-spot')?.params).toEqual([SPOT_A2_ID]);
+    expect(sql.statement('flag-assigned-spot')?.params).toEqual(['WRONG_AISLE', SPOT_A2_ID]);
   });
 
   it('reads the facts twice at most, then classifies the session as read back', async () => {

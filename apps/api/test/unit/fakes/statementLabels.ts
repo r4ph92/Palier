@@ -62,6 +62,11 @@ export type StatementLabel =
   | 'retire-spot'
   | 'read-live-spot'
   | 'replay-passages'
+  | 'close-session'
+  | 'lock-exit-spots'
+  | 'free-exit-spots'
+  | 'read-spots-to-check'
+  | 'clear-spot-check'
   | 'unknown';
 
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
@@ -87,6 +92,11 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['update-lot-pricing', /update parking_lot\s+set pricing_policy/],
   ['read-lot-details', /from parking_lot where id = \$1 and operator_id = \$2/],
   ['read-level-occupancy', /as confirmed_assigned_count/],
+  ['close-session', /set state = 'CLOSED_PAID'/],
+  ['lock-exit-spots', /as held_by_another_session/],
+  ['free-exit-spots', /needs_check = needs_check or/],
+  ['read-spots-to-check', /as needs_check_since/],
+  ['clear-spot-check', /set needs_check = false/],
   ['replay-passages', /insert into gate_passage[\s\S]*on conflict/],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],

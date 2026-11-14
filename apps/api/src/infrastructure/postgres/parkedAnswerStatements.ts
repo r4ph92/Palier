@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
+import type { AssignedSpot, EntrySessionState, SpotCheckReason } from '@palier/shared-types';
 import { canonicalSpotNumber } from '@palier/shared-types/spotNumber';
 import type { SpotAnswer } from '../../domain/parkingSessions/ParkedAnswer.ts';
 import { paintedNumberNamed } from '../../domain/spots/paintedSpotNumber.ts';
@@ -90,7 +90,7 @@ export async function lockAnsweredSpot(tx: Executor, { lotId, spotNumber }: Spot
 // The state was read under the lock just before: a zero-row update is a broken invariant, and rolls the answer back.
 export async function occupyAnsweredSpot(tx: Executor, spotId: string): Promise<void> {
   const rows = await tx.execute(sql`
-    update spot set state = 'OCCUPIED', needs_check = false, state_changed_at = now()
+    update spot set state = 'OCCUPIED', needs_check = false, needs_check_since = null, needs_check_reason = null, state_changed_at = now()
     where id = ${spotId} and state in ('AVAILABLE', 'OCCUPIED_UNKNOWN')
     returning id`);
   requireUpdatedRow(rows, `Answered spot ${spotId} could not be occupied.`);
@@ -107,9 +107,9 @@ export async function confirmParkedSpot(tx: Executor, sessionId: string, spotId:
 
 // The loop confirmation made the spot OCCUPIED, and a correction flags it only after reading it OCCUPIED under its row lock;
 // any other state is a broken invariant, and rolls the session back.
-export async function flagAssignedSpotToCheck(tx: Executor, spotId: string): Promise<void> {
+export async function flagAssignedSpotToCheck(tx: Executor, spotId: string, reason: SpotCheckReason): Promise<void> {
   const rows = await tx.execute(sql`
-    update spot set state = 'OCCUPIED_UNKNOWN', needs_check = true, state_changed_at = now()
+    update spot set state = 'OCCUPIED_UNKNOWN', needs_check = true, needs_check_since = now(), needs_check_reason = ${reason}, state_changed_at = now()
     where id = ${spotId} and state = 'OCCUPIED'
     returning id`);
   requireUpdatedRow(rows, `Assigned spot ${spotId} of a session leaving it was not occupied.`);

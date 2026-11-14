@@ -85,7 +85,7 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
     await answerWith(sql);
 
     const occupy = sql.statement('occupy-answered-spot');
-    expect(occupy?.text).toMatch(/set state = 'OCCUPIED', needs_check = false, state_changed_at = now\(\)\s+where id = \$\d+ and state in \('AVAILABLE', 'OCCUPIED_UNKNOWN'\)/);
+    expect(occupy?.text).toMatch(/set state = 'OCCUPIED', needs_check = false, needs_check_since = null, needs_check_reason = null, state_changed_at = now\(\)\s+where id = \$\d+ and state in \('AVAILABLE', 'OCCUPIED_UNKNOWN'\)/);
     const confirm = sql.statement('confirm-parked-spot');
     expect(confirm?.text).toMatch(/set state = 'PARKED_CONFIRMED', confirmed_spot_id = \$\d+, parked_answered_at = now\(\)/);
     expect(confirm?.text).toMatch(/where id = \$\d+ and state in \('PARKED_UNCONFIRMED', 'PARKED_PRESUMED'\)/);
@@ -204,7 +204,7 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
     expect(sql.statement('lock-answering-session')?.text).toMatch(/for update of ps, assigned$/);
     expect(sql.statement('occupy-answered-spot')?.params).toEqual([SPOT_A3_ID]);
     expect(sql.statement('flag-assigned-spot')?.text).toMatch(/set state = 'OCCUPIED_UNKNOWN', needs_check = true[\s\S]*where id = \$\d+ and state = 'OCCUPIED'/);
-    expect(sql.statement('flag-assigned-spot')?.params).toEqual([SPOT_A1_ID]);
+    expect(sql.statement('flag-assigned-spot')?.params).toEqual(['WRONG_AISLE', SPOT_A1_ID]);
     expect(sql.statement('confirm-parked-spot')?.params).toEqual([SPOT_A3_ID, SESSION_ID]);
   });
 

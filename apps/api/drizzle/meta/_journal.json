@@ -260,6 +260,13 @@
       "when": 1794615092536,
       "tag": "0036_spot_retirement",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1794616827574,
+      "tag": "0037_spot_needs_check_reason",
+      "breakpoints": true
     }
   ]
 }

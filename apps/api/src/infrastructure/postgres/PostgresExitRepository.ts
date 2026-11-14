@@ -184,7 +184,9 @@ async function freeSpots(tx: Transaction, { sessionId, session, now }: SpotsToFr
     return;
   }
   await tx.execute(sql`
-    update spot set needs_check = needs_check or state = 'OCCUPIED_UNKNOWN', state = 'AVAILABLE', state_changed_at = ${now.toISOString()}::timestamptz
+    update spot set needs_check = needs_check or state = 'OCCUPIED_UNKNOWN',
+      needs_check_since = coalesce(needs_check_since, case when state = 'OCCUPIED_UNKNOWN' then ${now.toISOString()}::timestamptz end),
+      state = 'AVAILABLE', state_changed_at = ${now.toISOString()}::timestamptz
     where id in (${sql.join(freed.map((id) => sql`${id}`), sql`, `)})`);
 }
 

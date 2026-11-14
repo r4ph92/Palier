@@ -88,6 +88,6 @@ async function writeSpots(tx: Transaction, { occupiesAnswered, flagsAssigned }: 
     await occupyAnsweredSpot(tx, answeredSpotId);
   }
   if (flagsAssigned) {
-    await flagAssignedSpotToCheck(tx, assignedSpotId);
+    await flagAssignedSpotToCheck(tx, assignedSpotId, 'WRONG_AISLE');
   }
 }

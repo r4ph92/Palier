@@ -126,6 +126,9 @@ export const spot = pgTable(
     isOversize: boolean('is_oversize').notNull().default(false),
     distanceToExit: integer('distance_to_exit').notNull(),
     needsCheck: boolean('needs_check').notNull().default(false),
+    // When and why the spot was flagged; null together with needs_check false. A flag kept from before reasons were recorded has no reason.
+    needsCheckSince: timestamp('needs_check_since', { withTimezone: true }),
+    needsCheckReason: text('needs_check_reason'),
     sensorState: sensorState('sensor_state'),
     sensorAt: timestamp('sensor_at', { withTimezone: true }),
     // Set when an operator deletes a spot that sessions, holds or reports still point at (decision 035).
@@ -138,6 +141,11 @@ export const spot = pgTable(
       foreignColumns: [aisle.id, aisle.lotId],
     }),
     uniqueIndex(SPOT_NUMBER_UNIQUE).on(table.lotId, table.number).where(sql`${table.retiredAt} is null`),
+    check('spot_needs_check_since_matches_flag', sql`${table.needsCheck} = (${table.needsCheckSince} is not null)`),
+    check('spot_needs_check_reason_known', sql`${table.needsCheckReason} in ('WRONG_AISLE', 'REPORTED_TAKEN')`),
+    index('spot_to_check_by_lot_index')
+      .on(table.lotId)
+      .where(sql`${table.needsCheck} and ${table.retiredAt} is null`),
     check('spot_retired_out_of_service', sql`${table.retiredAt} is null or ${table.state} = 'OUT_OF_SERVICE'`),
     index('spot_lot_id_canonical_number_index').on(table.lotId, canonicalNumberOf(table.number)),
     unique('spot_id_lot_id_unique').on(table.id, table.lotId),
