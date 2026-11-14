@@ -10,11 +10,11 @@ import {
   type LevelPlacement,
   type LotMapRepository,
   type LotMapWrite,
-  type StoredBatteryReading,
   type StoredLotMap,
   type StoredMapAisle,
   type StoredMapLevel,
 } from '../../../src/domain/dashboard/LotMapRepository.ts';
+import type { RecordedBatteryReading } from '../../../src/domain/equipment/batteryReadings.ts';
 import { aisleRectangleOf } from '../../../src/domain/lots/AisleRectangle.ts';
 import { parkingDemoAisles, parkingDemoLevels } from '../../../src/seed/fixtures/parkingDemo.ts';
 import type { FakeLotStore } from './fakeLotSetupRepository.ts';
@@ -109,7 +109,7 @@ export class FakeLotMapRepository implements LotMapRepository {
   }
 
   // No lot lock in the SQL, so a busy lot does not refuse a reading.
-  recordBeaconBattery(operatorId: string, { lotId, aisleId }: AislePlacement, { percent, reportedAt }: StoredBatteryReading): Promise<LotMapWrite> {
+  recordBeaconBattery(operatorId: string, { lotId, aisleId }: AislePlacement, { percent, reportedAt }: RecordedBatteryReading): Promise<LotMapWrite> {
     if (this.#lots.indexOf(operatorId, lotId) < 0) {
       return Promise.resolve('LOT_NOT_FOUND');
     }

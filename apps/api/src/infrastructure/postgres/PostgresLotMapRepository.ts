@@ -8,9 +8,9 @@ import {
   type LotMapRefusal,
   type LotMapRepository,
   type LotMapWrite,
-  type StoredBatteryReading,
   type StoredLotMap,
 } from '../../domain/dashboard/LotMapRepository.ts';
+import type { RecordedBatteryReading } from '../../domain/equipment/batteryReadings.ts';
 import type { Database, Transaction } from './database.ts';
 import { inOwnedLotLock, isLotBusy, isLotNotOwned, LOT_BUSY, LOT_NOT_OWNED, orLotBusy, type OwnedLot } from './lockParkingLot.ts';
 import { lotMapOf, type LotMapRow } from './lotMapRows.ts';
@@ -62,7 +62,7 @@ export class PostgresLotMapRepository implements LotMapRepository {
     });
   }
 
-  async recordBeaconBattery(operatorId: string, placement: AislePlacement, reading: StoredBatteryReading): Promise<LotMapWrite> {
+  async recordBeaconBattery(operatorId: string, placement: AislePlacement, reading: RecordedBatteryReading): Promise<LotMapWrite> {
     const owned = await this.#database.execute(readOwnedLotIdStatement({ operatorId, lotId: placement.lotId }));
     if (owned.length === 0) {
       return 'LOT_NOT_FOUND';

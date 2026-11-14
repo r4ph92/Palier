@@ -1,5 +1,6 @@
 import type { DashboardErrorCode, DashboardLotMap, DashboardMapAisle, DashboardMapLevel, LevelOrderRequest } from '@palier/shared-types';
 import type { AisleDraft } from '@palier/shared-types/aisleDraft';
+import type { RecordedBatteryReading } from '../equipment/batteryReadings.ts';
 
 export type LotMapRefusal = Extract<
   DashboardErrorCode,
@@ -28,11 +29,6 @@ export interface AislePlacement {
   readonly aisleId: string;
 }
 
-export interface StoredBatteryReading {
-  readonly percent: number;
-  readonly reportedAt: Date;
-}
-
 // The map as stored: the domain adds what each battery reading means at the moment of the read.
 export interface StoredMapAisle extends Omit<DashboardMapAisle, 'batteryReportedAt' | 'batteryStatus'> {
   readonly batteryReportedAt: Date | null;
@@ -57,5 +53,5 @@ export interface LotMapRepository {
   reorderLevels(operatorId: string, lotId: string, order: LevelOrderRequest): Promise<LotMapWrite>;
   addAisle(operatorId: string, placement: LevelPlacement, aisle: AisleDraft): Promise<LotMapWrite>;
   // No lot lock: a reading changes no spot. The latest reading wins.
-  recordBeaconBattery(operatorId: string, placement: AislePlacement, reading: StoredBatteryReading): Promise<LotMapWrite>;
+  recordBeaconBattery(operatorId: string, placement: AislePlacement, reading: RecordedBatteryReading): Promise<LotMapWrite>;
 }
