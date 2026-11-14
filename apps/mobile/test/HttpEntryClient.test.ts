@@ -45,6 +45,7 @@ describe('HttpEntryClient', () => {
     [409, 'PREREQUISITES_MISSING'],
     [429, 'TOO_MANY_ENTRIES'],
     [503, 'GATE_UNAVAILABLE'],
+    [503, 'GATE_SILENT'],
     [503, 'PAYMENTS_UNAVAILABLE'],
   ])('reports a %i with the API reason %s', async (status, code) => {
     const { client } = clientAnswering(jsonResponse({ statusCode: status, error: code, message: 'refused' }, status));

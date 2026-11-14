@@ -8,6 +8,7 @@ describe('ScanScreen refusals', () => {
     ['NOT_AN_ENTRY_GATE', 'Ce QR n’est pas une borne d’entrée', 'This QR is not an entry terminal'],
     ['LOT_NOT_IN_SERVICE', 'Ce parking n’est pas en service', 'This lot is not in service'],
     ['GATE_UNAVAILABLE', 'Cette borne n’est pas disponible', 'This terminal is not available'],
+    ['GATE_SILENT', 'Borne hors service — entrée impossible', 'Terminal out of service — entry not possible'],
     ['PREREQUISITES_MISSING', 'Ajoutez une plaque et une carte avant d’entrer', 'Add a plate and a card before entering'],
     ['OPERATOR_NOT_PAYABLE', 'Ce parking n’accepte pas les paiements pour le moment', 'This lot cannot take payments right now'],
     ['LOT_FULL', 'Complet — la barrière reste fermée', 'Full — the barrier stays closed'],
