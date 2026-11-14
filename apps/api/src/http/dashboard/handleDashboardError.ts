@@ -40,6 +40,13 @@ const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
   AISLE_MINOR_INVALID: 400,
   AISLE_MINOR_TAKEN: 409,
   AISLE_RECTANGLE_INVALID: 400,
+  AISLE_NOT_FOUND: 404,
+  SPOT_NOT_FOUND: 404,
+  SPOT_RANGE_INVALID: 400,
+  SPOT_DISTANCE_INVALID: 400,
+  SPOT_LIMIT_REACHED: 409,
+  SPOT_NUMBER_TAKEN: 409,
+  SPOT_IN_USE: 409,
 };
 
 export function handleDashboardError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {
@@ -50,5 +57,9 @@ export function handleDashboardError(error: FastifyError, request: FastifyReques
   if (error.reason === 'LOT_BUSY') {
     reply.header('Retry-After', LOT_LOCK_WAIT_SECONDS);
   }
-  return reply.status(statusCode).send({ statusCode, error: error.reason, message: error.message });
+  return reply.status(statusCode).send({ statusCode, error: error.reason, message: error.message, ...valuesOf(error) });
+}
+
+function valuesOf(error: DashboardRefusedError | DashboardHttpRefusal): { readonly values?: Readonly<Record<string, string>> } {
+  return error instanceof DashboardRefusedError && Object.keys(error.values).length > 0 ? { values: error.values } : {};
 }
