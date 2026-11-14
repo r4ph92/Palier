@@ -1,11 +1,12 @@
 import type { DashboardSpotToCheck } from '@palier/shared-types';
+import { clearDecisionOf } from '../../../src/domain/dashboard/clearDecisionOf.ts';
 import type { SpotPlace } from '../../../src/domain/dashboard/LotSpotRepository.ts';
 import type { SpotCheckRefusal, SpotCheckRepository } from '../../../src/domain/dashboard/SpotCheckRepository.ts';
 import type { FakeLotMapRepository } from './fakeLotMapRepository.ts';
 import type { FakeLotStore } from './fakeLotSetupRepository.ts';
 import type { FakeLotSpotRepository, FakeSpot } from './fakeLotSpotRepository.ts';
 
-// Keeps the rules the SQL keeps: the operator's lot, live flagged spots oldest first, and a clear only on a free spot nothing holds.
+// Keeps the rules the SQL keeps: the operator's lot and live flagged spots oldest first; clearDecisionOf decides a clear, as in Postgres.
 export class FakeSpotCheckRepository implements SpotCheckRepository {
   readonly busyLots = new Set<string>();
   readonly #lots: FakeLotStore;
@@ -37,7 +38,8 @@ export class FakeSpotCheckRepository implements SpotCheckRepository {
     if (spot === undefined) {
       return Promise.resolve('SPOT_NOT_FOUND');
     }
-    if (spot.check !== null && (spot.state !== 'AVAILABLE' || spot.isHeldBySession)) {
+    const decision = clearDecisionOf({ state: spot.state, needsCheck: spot.check !== null, heldBySession: spot.isHeldBySession });
+    if (decision === 'STILL_ASSIGNED') {
       return Promise.resolve('SPOT_STILL_ASSIGNED');
     }
     spot.check = null;
