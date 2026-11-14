@@ -101,7 +101,7 @@ export const fr = {
     sinceColumn: 'Depuis',
     reasonColumn: 'Raison',
     checkColumn: 'Vérification',
-    place: '%{level} · allée %{aisle}',
+    place: '%{level} · allée\u00a0%{aisle}',
     reasons: { WRONG_AISLE: 'allée différente', WRONG_SPOT: 'autre place de l’allée', REPORTED_TAKEN: 'place signalée prise', NOT_RECORDED: 'raison non enregistrée' },
     checked: { shown: 'Vérifiée', name: 'Place %{number} vérifiée' },
     cleared: 'Place %{number} vérifiée.',
