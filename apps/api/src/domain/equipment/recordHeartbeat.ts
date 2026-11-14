@@ -1,5 +1,5 @@
 import type { AuthenticatedGate } from '../gates/AuthenticatedGate.ts';
-import { ensureOwnGate } from '../gates/passageRules.ts';
+import { ensureOwnGate } from '../gates/ownGate.ts';
 import type { Clock } from '../time/Clock.ts';
 import type { EquipmentReports } from './EquipmentReports.ts';
 

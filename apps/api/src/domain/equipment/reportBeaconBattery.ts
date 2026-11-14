@@ -2,7 +2,7 @@ import { beaconBatteryErrors } from '@palier/shared-types/beaconBattery';
 import { AISLE_MINOR_LIMITS, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { isWholeNumberWithin } from '@palier/shared-types/fieldErrors';
 import type { AuthenticatedGate } from '../gates/AuthenticatedGate.ts';
-import { ensureOwnGate } from '../gates/passageRules.ts';
+import { ensureOwnGate } from '../gates/ownGate.ts';
 import { EquipmentReportRefusedError } from './EquipmentReportRefusedError.ts';
 import type { GateReportSources } from './recordHeartbeat.ts';
 

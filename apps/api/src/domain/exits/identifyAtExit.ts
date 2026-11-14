@@ -1,4 +1,5 @@
 import type { AuthenticatedGate } from '../gates/AuthenticatedGate.ts';
+import { ensureOwnGate } from '../gates/ownGate.ts';
 import { PassageRefusedError } from '../gates/PassageRefusedError.ts';
 import { readPlate, readTransponder } from '../vehicles/plate.ts';
 import { payAndClose, type ExitDependencies, type ExitOutcome } from './exitParking.ts';
@@ -58,9 +59,7 @@ function outcomeOf(left: ExitOutcome, kind: ReadIdentifierKind): IdentifyOutcome
 
 // The gate must be the one of the device key and read something; the identifier must be one the reader could have read.
 function readerKeyOf({ gate, requestedGateId, identifier }: IdentifyRequest): ReadKey {
-  if (gate.id !== requestedGateId) {
-    throw new PassageRefusedError('GATE_FORBIDDEN');
-  }
+  ensureOwnGate(gate, requestedGateId);
   if (gate.kind !== 'EXIT' || gate.exitIdKind === 'NONE') {
     throw new PassageRefusedError('GATE_WITHOUT_READER');
   }

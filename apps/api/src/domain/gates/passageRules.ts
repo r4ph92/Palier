@@ -1,6 +1,7 @@
 import type { GateKind } from '@palier/shared-types';
 import { isStorableDate } from '../time/storableDate.ts';
 import type { AuthenticatedGate } from './AuthenticatedGate.ts';
+import { ensureOwnGate } from './ownGate.ts';
 import { PassageRefusedError } from './PassageRefusedError.ts';
 import type { VehicleCountChange } from './PassageLedger.ts';
 
@@ -9,13 +10,6 @@ const VEHICLE_COUNT_CHANGE: Record<GateKind, VehicleCountChange> = { ENTRY: 1, E
 
 export function vehicleCountChangeFor(kind: GateKind): VehicleCountChange {
   return VEHICLE_COUNT_CHANGE[kind];
-}
-
-// A key speaks only for its own gate, whatever id the path names.
-export function ensureOwnGate(gate: AuthenticatedGate, requestedGateId: string): void {
-  if (gate.id !== requestedGateId) {
-    throw new PassageRefusedError('GATE_FORBIDDEN');
-  }
 }
 
 export function ensureGateMayReport(gate: AuthenticatedGate, requestedGateId: string): void {
