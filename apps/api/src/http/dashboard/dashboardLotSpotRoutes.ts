@@ -31,7 +31,7 @@ export function registerDashboardLotSpotRoutes(scope: FastifyInstance, { access,
   registerReadSpotsRoute(context);
   registerAddSpotsRoute(context);
   registerChangeSpotRoute(context);
-  registerRetireSpotRoute(context);
+  registerRemoveSpotRoute(context);
 }
 
 // A malformed aisle or spot id answers the lot's 404 too: the answer never tells which id was wrong.
@@ -60,7 +60,7 @@ function registerChangeSpotRoute({ scope, sources, onRequest }: SpotRoutesContex
   });
 }
 
-function registerRetireSpotRoute({ scope, sources, onRequest }: SpotRoutesContext): void {
+function registerRemoveSpotRoute({ scope, sources, onRequest }: SpotRoutesContext): void {
   const schema = { params: lotSpotParametersSchema, response: { 200: dashboardAisleSpotsSchema } };
   scope.delete<{ readonly Params: SpotParams }>(SPOT_ROUTE, { onRequest, attachValidation: true, schema }, (request): Promise<DashboardAisleSpots> => {
     refuseMalformedRequest(request);

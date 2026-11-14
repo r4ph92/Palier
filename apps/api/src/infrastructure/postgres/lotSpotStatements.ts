@@ -4,8 +4,7 @@ import type { AislePlace, SpotBatch, SpotPlace } from '../../domain/dashboard/Lo
 import { activeSessionOf } from './activeSessionStates.ts';
 import { ACTIVE_SPOT_HOLD } from './activeSpotHold.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
-import { liveSpotCountOf } from './heldSpotCount.ts';
-import { liveSpot } from './liveSpot.ts';
+import { liveSpot, liveSpotCountOf } from './liveSpot.ts';
 
 // Prefix first, then the number at its end read as a number: A-2 before A-10, and B-7a after the A spots.
 const NATURAL_SPOT_ORDER = sql.raw(`regexp_replace(spot.number, '[0-9]+$', ''), substring(spot.number from '[0-9]+$')::numeric nulls first, spot.number`);
