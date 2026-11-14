@@ -1,5 +1,5 @@
 import type { DashboardSpot, SpotState } from '@palier/shared-types';
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { StableLabel } from '../components/StableLabel.tsx';
 import { StateMark, type StateTone } from '../components/StateMark.tsx';
 import { formatMetres } from '../i18n/formatNumbers.ts';
@@ -118,10 +118,19 @@ function SpotRow({ spot, deletion, onEdit }: RowProps) {
 function AttributesCell({ spot }: { readonly spot: DashboardSpot }) {
   const { spots: text } = useText().map;
   const labels = flagLabelsOf(text);
-  const attributes = SPOT_FLAGS.filter((flag) => spot[flag]).map((flag) => labels[flag]);
+  const attributes = SPOT_FLAGS.filter((flag) => spot[flag]);
   return (
     <td role="cell" className="spot-attributes">
-      {attributes.length === 0 ? <span className="muted">{text.noAttribute}</span> : attributes.join(', ')}
+      {attributes.length === 0 ? (
+        <span className="muted">{text.noAttribute}</span>
+      ) : (
+        attributes.map((flag, index) => (
+          <Fragment key={flag}>
+            {index === 0 ? null : ', '}
+            <span className="spot-attribute">{labels[flag]}</span>
+          </Fragment>
+        ))
+      )}
     </td>
   );
 }

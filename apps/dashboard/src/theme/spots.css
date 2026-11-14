@@ -80,18 +80,27 @@
     white-space: nowrap;
   }
 
-  /* « Gabarit large » stays on one line. */
-  .spot-table .spot-attributes {
-    min-width: 14ch;
+  /* Headers wrap between words; the actions keep Modifier and Supprimer on one line. */
+  .spot-table thead th {
+    white-space: normal;
   }
 
-  /* The question takes a line of its own, with Confirmer and Annuler under it. */
+  .spot-table .row-actions:not(.delete-question) {
+    flex-wrap: nowrap;
+  }
+
+  /* « Gabarit large » stays whole; the attributes wrap between one another. */
+  .spot-attribute {
+    white-space: nowrap;
+  }
+
   /* « Occupée, inconnue » may wrap between its words so a long spot number still fits the section at 681 px. */
   .spot-table .spot-state,
   .spot-table .state-mark {
     white-space: normal;
   }
 
+  /* The question takes a line of its own, with Confirmer and Annuler under it. */
   .delete-question {
     margin-block: 0;
   }
