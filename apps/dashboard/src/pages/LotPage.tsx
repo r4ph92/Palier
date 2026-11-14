@@ -9,7 +9,7 @@ import { PageHeader } from '../components/PageHeader.tsx';
 import { RetryableFailure, type RetryableFailureProps } from '../components/RetryableFailure.tsx';
 import { formatCount, formatDegrees } from '../i18n/formatNumbers.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
-import { HOME_PATH, mapPath, occupancyPath } from '../navigation/routes.ts';
+import { HOME_PATH, mapPath, occupancyPath, spotsToCheckPath } from '../navigation/routes.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
 import { PricingSection } from './PricingSection.tsx';
 
@@ -68,6 +68,9 @@ function LotLinks({ lotId }: { readonly lotId: string }) {
     <p className="actions-row">
       <AppLink href={occupancyPath(lotId)} className="text-link">
         {text.lot.occupancyLink}
+      </AppLink>
+      <AppLink href={spotsToCheckPath(lotId)} className="text-link">
+        {text.spotsToCheck.title}
       </AppLink>
       <AppLink href={mapPath(lotId)} className="text-link">
         {text.lot.mapLink}

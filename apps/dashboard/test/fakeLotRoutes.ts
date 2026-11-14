@@ -1,6 +1,7 @@
 import type { DashboardLotDetails, LotDraft, LotPricingSettings } from '@palier/shared-types';
 import { type FakeApiState, type FakeResponse, refused, summaryOf } from './fakeDashboardData.ts';
 import { isMapRequest, routeMap } from './fakeMapRoutes.ts';
+import { isSpotCheckRequest, routeSpotChecks } from './fakeSpotCheckRoutes.ts';
 import { isSpotRequest, routeSpots } from './fakeSpotRoutes.ts';
 
 export const CREATED_LOT_ID = '00000000-0000-4000-8000-000000000299';
@@ -25,6 +26,9 @@ export function routeLots(state: FakeApiState, request: string, body: Record<str
   const ownedLotIds = new Set(lots.map(({ id }) => id));
   if (isMapRequest(request)) {
     return routeMap({ maps: state.maps, ownedLotIds }, request, body);
+  }
+  if (isSpotCheckRequest(request)) {
+    return routeSpotChecks({ spotsToCheck: state.spotsToCheck, ownedLotIds }, request);
   }
   if (isSpotRequest(request)) {
     return routeSpots({ state, ownedLotIds }, request, body);

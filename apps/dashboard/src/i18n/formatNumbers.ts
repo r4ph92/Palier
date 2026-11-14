@@ -18,3 +18,7 @@ export function formatClockTime(moment: Date, language: Language): string {
 export function formatMetres(metres: number, language: Language): string {
   return new Intl.NumberFormat(language, { style: 'unit', unit: 'meter' }).format(metres);
 }
+
+export function formatDateTime(moment: Date, language: Language): string {
+  return new Intl.DateTimeFormat(language === 'fr' ? 'fr-CA' : 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(moment);
+}

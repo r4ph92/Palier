@@ -4,6 +4,7 @@ export type Route =
   | { readonly page: 'lot'; readonly lotId: string }
   | { readonly page: 'occupancy'; readonly lotId: string }
   | { readonly page: 'map'; readonly lotId: string }
+  | { readonly page: 'spotsToCheck'; readonly lotId: string }
   | { readonly page: 'notFound' };
 
 export const NEW_LOT_PATH = '/lots/new';
@@ -11,6 +12,7 @@ export const NEW_LOT_PATH = '/lots/new';
 const LOT_PATH = /^\/lots\/([^/]+)\/?$/;
 const OCCUPANCY_PATH = /^\/lots\/([^/]+)\/occupancy\/?$/;
 const MAP_PATH = /^\/lots\/([^/]+)\/map\/?$/;
+const SPOTS_TO_CHECK_PATH = /^\/lots\/([^/]+)\/spots-to-check\/?$/;
 
 export function routeOf(pathname: string): Route {
   if (pathname === '/' || pathname === '') {
@@ -31,6 +33,7 @@ export function routeOf(pathname: string): Route {
 const LOT_SUBPAGES = [
   ['occupancy', OCCUPANCY_PATH],
   ['map', MAP_PATH],
+  ['spotsToCheck', SPOTS_TO_CHECK_PATH],
 ] as const;
 
 function lotSubpageOf(pathname: string): Route | null {
@@ -65,6 +68,10 @@ export function occupancyPath(lotId: string): string {
 
 export function mapPath(lotId: string): string {
   return `${lotPath(lotId)}/map`;
+}
+
+export function spotsToCheckPath(lotId: string): string {
+  return `${lotPath(lotId)}/spots-to-check`;
 }
 
 export const HOME_PATH = '/';

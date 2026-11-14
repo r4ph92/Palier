@@ -13,6 +13,7 @@ import { NotFoundPage } from './pages/NotFoundPage.tsx';
 import { OccupancyPage } from './pages/OccupancyPage.tsx';
 import { OperatorHomePage } from './pages/OperatorHomePage.tsx';
 import { SignInPage } from './pages/SignInPage.tsx';
+import { SpotsToCheckPage } from './pages/SpotsToCheckPage.tsx';
 import { UnreachablePage } from './pages/UnreachablePage.tsx';
 import { SessionRefreshContext } from './session/SessionRefreshContext.tsx';
 import { useDashboardSession, type Session } from './session/useDashboardSession.ts';
@@ -85,5 +86,7 @@ function OperatorPage({ route, operator }: { readonly route: Exclude<Route, { pa
       return <OccupancyPage key={route.lotId} lotId={route.lotId} />;
     case 'map':
       return <MapPage key={route.lotId} lotId={route.lotId} />;
+    case 'spotsToCheck':
+      return <SpotsToCheckPage key={route.lotId} lotId={route.lotId} />;
   }
 }
