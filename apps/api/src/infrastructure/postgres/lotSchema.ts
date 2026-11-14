@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, smallint, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { BATTERY_PERCENT_LIMITS } from '@palier/shared-types/beaconBattery';
 import { AISLE_MINOR_LIMITS, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { DEFAULT_HOLD_QUOTA, HOLD_QUOTA_LIMITS } from '@palier/shared-types/lotPricing';
 import { SPOT_STATES } from '../../domain/spots/spotStates.ts';
@@ -91,6 +92,8 @@ export const aisle = pgTable(
     beaconMinor: integer('beacon_minor').notNull(),
     mapPolygon: jsonb('map_polygon'),
     isExitLane: boolean('is_exit_lane').notNull().default(false),
+    beaconBatteryPercent: smallint('beacon_battery_percent'),
+    beaconBatteryReportedAt: timestamp('beacon_battery_reported_at', { withTimezone: true }),
   },
   (table) => [
     foreignKey({
@@ -107,6 +110,11 @@ export const aisle = pgTable(
       AISLE_MINOR_MATCHES_LANE,
       sql`(${table.isExitLane} and ${table.beaconMinor} = ${sql.raw(String(EXIT_LANE_MINOR))}) or (not ${table.isExitLane} and ${table.beaconMinor} between ${sql.raw(String(AISLE_MINOR_LIMITS.minimum))} and ${sql.raw(String(AISLE_MINOR_LIMITS.maximum))})`,
     ),
+    check(
+      'aisle_beacon_battery_percent_range',
+      sql`${table.beaconBatteryPercent} between ${sql.raw(String(BATTERY_PERCENT_LIMITS.minimum))} and ${sql.raw(String(BATTERY_PERCENT_LIMITS.maximum))}`,
+    ),
+    check('aisle_beacon_battery_reading_complete', sql`(${table.beaconBatteryPercent} is null) = (${table.beaconBatteryReportedAt} is null)`),
   ],
 );
 

@@ -157,6 +157,8 @@ export const DASHBOARD_ERROR_CODES = [
   'AISLE_MINOR_INVALID',
   'AISLE_MINOR_TAKEN',
   'AISLE_RECTANGLE_INVALID',
+  'AISLE_NOT_FOUND',
+  'BATTERY_PERCENT_INVALID',
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];

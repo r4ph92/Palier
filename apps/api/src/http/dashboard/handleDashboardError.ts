@@ -40,6 +40,8 @@ const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
   AISLE_MINOR_INVALID: 400,
   AISLE_MINOR_TAKEN: 409,
   AISLE_RECTANGLE_INVALID: 400,
+  AISLE_NOT_FOUND: 404,
+  BATTERY_PERCENT_INVALID: 400,
 };
 
 export function handleDashboardError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {

@@ -80,6 +80,10 @@
     "./aisleRectangle": {
       "types": "./src/aisleRectangle.ts",
       "default": "./src/aisleRectangle.ts"
+    },
+    "./beaconBattery": {
+      "types": "./src/beaconBattery.ts",
+      "default": "./src/beaconBattery.ts"
     }
   },
   "scripts": {

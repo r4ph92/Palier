@@ -1,5 +1,8 @@
 export type GateKind = 'ENTRY' | 'EXIT';
 
+// NEVER_HEARD: no heartbeat since the gate was set up; SILENT: none for more than 2 minutes (decision 035).
+export type GateHealth = 'ONLINE' | 'SILENT' | 'NEVER_HEARD';
+
 export interface GateIdentity {
   readonly id: string;
   readonly name: string;

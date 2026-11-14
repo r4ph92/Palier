@@ -160,6 +160,8 @@ export const fr = {
     AISLE_MINOR_INVALID: 'Entrez un nombre entier de %{minorMinimum} à %{minorMaximum}. Le minor 0 est réservé à la voie de sortie.',
     AISLE_MINOR_TAKEN: 'Une autre allée de ce stationnement utilise déjà ce minor.',
     AISLE_RECTANGLE_INVALID: 'Le rectangle demande x et y de 0 à %{gridMaximum}, une largeur et une hauteur de 1 à %{gridMaximum}.',
+    AISLE_NOT_FOUND: 'Cette allée est introuvable. Rechargez le plan.',
+    BATTERY_PERCENT_INVALID: 'Entrez un pourcentage entier de %{percentMinimum} à %{percentMaximum}.',
     FIELDS_INVALID: 'Corrigez les champs indiqués.',
     GRID_POSITION_INVALID: 'Un nombre entier de 0 à %{gridMaximum}.',
     GRID_LENGTH_INVALID: 'Un nombre entier de 1 à %{gridMaximum}.',

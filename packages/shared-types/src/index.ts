@@ -21,6 +21,7 @@ export type {
   LevelSpotCounts,
   StripeOnboardingLink,
 } from './dashboard.ts';
+export type { BatteryStatus, BeaconBatteryErrorCode, BeaconBatteryErrors, BeaconBatteryField, BeaconBatteryReading } from './beaconBattery.ts';
 export type { AisleDraft, AisleDraftErrorCode, AisleDraftErrors, AisleDraftField, AisleRequest } from './aisleDraft.ts';
 export type { LevelDraft, LevelDraftErrorCode, LevelDraftErrors, LevelDraftField } from './levelDraft.ts';
 export type { LotDraft, LotDraftErrorCode, LotDraftErrors, LotDraftField } from './lotDraft.ts';
@@ -44,6 +45,7 @@ export type {
   GateIdentifyRequest,
   GateIdentifyResponse,
   GateIdentity,
+  GateHealth,
   GateKind,
   GatePassageRequest,
   GatePassageResponse,

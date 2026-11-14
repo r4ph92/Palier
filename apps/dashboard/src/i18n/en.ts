@@ -161,6 +161,8 @@ export const en: Dictionary = {
     AISLE_MINOR_INVALID: 'Enter a whole number from %{minorMinimum} to %{minorMaximum}. Minor 0 is reserved for the exit lane.',
     AISLE_MINOR_TAKEN: 'Another aisle of this parking lot already uses this minor.',
     AISLE_RECTANGLE_INVALID: 'The rectangle needs x and y from 0 to %{gridMaximum}, and a width and a height from 1 to %{gridMaximum}.',
+    AISLE_NOT_FOUND: 'This aisle cannot be found. Reload the map.',
+    BATTERY_PERCENT_INVALID: 'Enter a whole percentage from %{percentMinimum} to %{percentMaximum}.',
     FIELDS_INVALID: 'Fix the fields shown.',
     GRID_POSITION_INVALID: 'A whole number from 0 to %{gridMaximum}.',
     GRID_LENGTH_INVALID: 'A whole number from 1 to %{gridMaximum}.',
