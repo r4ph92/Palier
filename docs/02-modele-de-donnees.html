@@ -281,6 +281,8 @@
         <tr><td>is_oversize</td><td class="t">bool</td><td>Gabarit large</td></tr>
         <tr><td>distance_to_exit</td><td class="t">int</td><td>Mètres jusqu'à la sortie piétonne ; critère de tri secondaire</td></tr>
         <tr><td>needs_check</td><td class="t">bool</td><td>Place sortie d'un <code>OCCUPIED_UNKNOWN</code> : réassignée en dernier recours</td></tr>
+        <tr><td>needs_check_since</td><td class="t">timestamptz null</td><td>Heure du signalement ; nulle si et seulement si <code>needs_check</code> est faux</td></tr>
+        <tr><td>needs_check_reason</td><td class="t">text null</td><td><code>WRONG_AISLE</code> · <code>REPORTED_TAKEN</code> — nulle pour un signalement antérieur à #73 ou levé par la sortie</td></tr>
         <tr><td>sensor_state</td><td class="t">enum null</td><td><code>FREE</code> · <code>OCCUPIED</code> — nul sans capteur. Fait autorité sur l'occupation quand le parking est en mode <code>SENSORS</code></td></tr>
         <tr><td>sensor_at</td><td class="t">timestamptz null</td><td>Dernier relevé du capteur ; un capteur muet doit apparaître au tableau de bord</td></tr>
       </tbody>
@@ -528,7 +530,8 @@
         <tr><td>PUT /v1/lots/{id}/pricing</td><td>Politique tarifaire ; refuse l'enregistrement si le plafond journalier est absent</td></tr>
         <tr><td>PUT /v1/lots/{id}/map</td><td>Paliers, allées, places et attributs ; associe chaque allée à son <code>minor</code> de balise</td></tr>
         <tr><td>GET /v1/lots/{id}/occupancy</td><td>Occupation en direct par palier et par état, compteur de passages, et écart entre les deux</td></tr>
-        <tr><td>GET /v1/lots/{id}/spots?needs_check=true</td><td>Places à vérifier physiquement</td></tr>
+        <tr><td>GET /v1/dashboard/lots/{id}/spots-to-check</td><td>Places à vérifier physiquement, avec l'heure et la raison du signalement, la plus ancienne d'abord</td></tr>
+        <tr><td>POST /v1/dashboard/lots/{id}/spots/{spotId}/check-cleared</td><td>« Vérifiée » : lève le signalement d'une place libre ; refuse une place encore attribuée à une session (<code>SPOT_STILL_ASSIGNED</code>)</td></tr>
       </tbody>
     </table>
   </div>
