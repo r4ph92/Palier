@@ -123,3 +123,35 @@
   overflow-wrap: anywhere;
   user-select: all;
 }
+
+/* Five columns with a form in the last: on a narrow screen the table scrolls sideways instead of crushing the form; tabbing to a row's form scrolls it into view. */
+.wide-table-scroll {
+  overflow-x: auto;
+}
+
+/* A reading per beacon row: the field and its outlined button side by side, the errors above them. */
+.row-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-small);
+  min-width: 18ch;
+}
+
+.row-form > .error-notice {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.row-form .field {
+  flex: 1 1 8ch;
+  max-width: 24ch;
+}
+
+.row-form .field-input {
+  max-width: 8ch;
+}
+
+.row-form .secondary-button {
+  margin-top: 0;
+}

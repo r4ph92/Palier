@@ -75,6 +75,10 @@
   background: var(--danger);
 }
 
+.state-mark-warning {
+  box-shadow: inset 0 0 0 2px var(--danger);
+}
+
 .state-mark-muted {
   background: var(--muted);
 }
@@ -157,4 +161,16 @@
 
 .level-table td.figure {
   font-weight: 400;
+}
+
+/* The one alarm of the occupancy page: a ruled band above the figures, not a coloured box. */
+.silent-gates-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-small) var(--space-medium);
+  margin: 0 0 var(--space-large);
+  padding: var(--space-small) 0;
+  border-block: 1px solid var(--danger);
+  font-weight: 600;
 }

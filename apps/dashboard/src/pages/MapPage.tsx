@@ -62,7 +62,7 @@ function MapView({ map, onSaved, onStale }: MapViewProps) {
       <PageHeader eyebrow={text.lot.eyebrow} title={`${text.map.title} — ${map.lotName}`} />
       <LevelsSection map={map} onSaved={onSaved} onStale={onStale} />
       <AislesSection map={map} onSaved={onSaved} />
-      <BeaconTable map={map} />
+      <BeaconTable map={map} onSaved={onSaved} />
       <AppLink href={lotPath(map.lotId)} className="text-link">
         {text.map.back}
       </AppLink>

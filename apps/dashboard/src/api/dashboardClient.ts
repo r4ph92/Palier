@@ -1,6 +1,7 @@
 import type {
   AisleRequest,
   DashboardLotDetails,
+  DashboardLotEquipment,
   DashboardLotListResponse,
   DashboardLotMap,
   DashboardLotOccupancy,
@@ -12,6 +13,7 @@ import type {
   LotPricingRequest,
   StripeOnboardingLink,
 } from '@palier/shared-types';
+import type { BeaconBatteryReading } from '@palier/shared-types/beaconBattery';
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
 import { DashboardApiError } from './DashboardApiError.ts';
 
@@ -83,4 +85,7 @@ export const dashboardClient = {
     dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/levels/order`, { method: 'PUT', body: order }),
   addAisle: (lotId: string, levelId: string, aisle: AisleRequest) =>
     dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/levels/${encodeURIComponent(levelId)}/aisles`, { method: 'POST', body: aisle }),
+  recordBeaconBattery: (lotId: string, aisleId: string, reading: BeaconBatteryReading) =>
+    dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/aisles/${encodeURIComponent(aisleId)}/beacon-battery`, { method: 'PUT', body: reading }),
+  lotEquipment: (lotId: string) => dashboardRequest<DashboardLotEquipment>(`${lotPathOf(lotId)}/equipment`),
 };

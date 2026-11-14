@@ -12,13 +12,15 @@ export interface TextFieldProps {
   readonly messageValues: Readonly<Record<string, string>>;
   readonly inputMode?: 'decimal' | 'numeric' | 'text';
   readonly autoComplete?: string;
+  // In a table row the column header shows what to type; the label still names the field for a screen reader.
+  readonly hidesLabel?: boolean;
 }
 
-export function TextField({ id, label, hint, value, onChange, error, messageValues, inputMode = 'text', autoComplete = 'off' }: TextFieldProps) {
+export function TextField({ id, label, hint, value, onChange, error, messageValues, inputMode = 'text', autoComplete = 'off', hidesLabel = false }: TextFieldProps) {
   const describedBy = [hint === undefined ? null : `${id}-hint`, error === undefined ? null : `${id}-error`].filter((part) => part !== null);
   return (
     <div className="field">
-      <label htmlFor={id} className="field-label">{label}</label>
+      <label htmlFor={id} className={hidesLabel ? 'visually-hidden' : 'field-label'}>{label}</label>
       <input
         id={id}
         className="field-input"

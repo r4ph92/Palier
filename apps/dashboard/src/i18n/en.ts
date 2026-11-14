@@ -1,3 +1,4 @@
+import { enEquipment } from './enEquipment.ts';
 import { enMap } from './enMap.ts';
 import type { Dictionary } from './fr.ts';
 
@@ -71,6 +72,7 @@ export const en: Dictionary = {
     beaconMajorLabel: 'Beacon major',
     occupancyLink: 'Occupancy',
     mapLink: 'Map and beacons',
+    equipmentLink: 'Equipment',
   },
   occupancy: {
     title: 'Occupancy',
@@ -85,10 +87,15 @@ export const en: Dictionary = {
     occupiedOrAssigned: 'Spots occupied or assigned: %{count}',
     spotsToCheck: { one: 'Gap: %{count} spot to check', other: 'Gap: %{count} spots to check' },
     counterBelow: 'Counter below occupied spots: %{count}',
+    silentGates: { one: 'Silent terminal: %{names}', other: 'Silent terminals: %{names}' },
+    equipmentLink: 'See equipment',
+  },
+  polling: {
     stale: 'Figures not updated. Trying again shortly.',
     lastUpdate: 'Last updated: %{time}',
   },
   map: enMap,
+  equipment: enEquipment,
   spotStates: {
     AVAILABLE: 'Available',
     HELD: 'Held',

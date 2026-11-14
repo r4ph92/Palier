@@ -1,3 +1,4 @@
+import { frEquipment } from './frEquipment.ts';
 import { frMap } from './frMap.ts';
 
 export const fr = {
@@ -70,6 +71,7 @@ export const fr = {
     beaconMajorLabel: 'Major de balise',
     occupancyLink: 'Occupation',
     mapLink: 'Plan et balises',
+    equipmentLink: 'Équipement',
   },
   occupancy: {
     title: 'Occupation',
@@ -84,10 +86,15 @@ export const fr = {
     occupiedOrAssigned: 'Places occupées ou attribuées\u00a0: %{count}',
     spotsToCheck: { one: 'Écart\u00a0: %{count} place à vérifier', other: 'Écart\u00a0: %{count} places à vérifier' },
     counterBelow: 'Compteur inférieur aux places occupées\u00a0: %{count}',
+    silentGates: { one: 'Borne muette\u00a0: %{names}', other: 'Bornes muettes\u00a0: %{names}' },
+    equipmentLink: 'Voir l’équipement',
+  },
+  polling: {
     stale: 'Données non mises à jour. Nouvel essai dans un instant.',
     lastUpdate: 'Dernière mise à jour\u00a0: %{time}',
   },
   map: frMap,
+  equipment: frEquipment,
   spotStates: {
     AVAILABLE: 'Libre',
     HELD: 'Garantie',

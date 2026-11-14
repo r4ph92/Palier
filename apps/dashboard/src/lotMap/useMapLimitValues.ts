@@ -1,5 +1,6 @@
 import { AISLE_CODE_LENGTH } from '@palier/shared-types/aisleDraft';
 import { AISLE_GRID_LIMIT } from '@palier/shared-types/aisleRectangle';
+import { BATTERY_PERCENT_LIMITS } from '@palier/shared-types/beaconBattery';
 import { AISLE_MINOR_LIMITS } from '@palier/shared-types/beacons';
 import { LEVEL_CODE_LENGTH, MAX_LEVELS_PER_LOT } from '@palier/shared-types/levelDraft';
 import { useMemo } from 'react';
@@ -14,6 +15,8 @@ function limitValuesIn(language: Language): Readonly<Record<string, string>> {
     minorMinimum: formatCount(AISLE_MINOR_LIMITS.minimum, language),
     minorMaximum: formatCount(AISLE_MINOR_LIMITS.maximum, language),
     gridMaximum: formatCount(AISLE_GRID_LIMIT, language),
+    percentMinimum: formatCount(BATTERY_PERCENT_LIMITS.minimum, language),
+    percentMaximum: formatCount(BATTERY_PERCENT_LIMITS.maximum, language),
   };
 }
 

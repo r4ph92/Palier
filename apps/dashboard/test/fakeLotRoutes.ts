@@ -6,6 +6,7 @@ export const CREATED_LOT_ID = '00000000-0000-4000-8000-000000000299';
 const FIRST_CREATED_MAJOR = 4;
 const OCCUPANCY_PATH = /^GET \/lots\/([^/]+)\/occupancy$/;
 const PRICING_PATH = /^PUT \/lots\/([^/]+)\/pricing$/;
+const EQUIPMENT_PATH = /^GET \/lots\/([^/]+)\/equipment$/;
 
 // Only a member's own lots answer; any other id is not found, as in the API.
 export function routeLots(state: FakeApiState, request: string, body: Record<string, unknown>): FakeResponse {
@@ -24,26 +25,31 @@ export function routeLots(state: FakeApiState, request: string, body: Record<str
   if (isMapRequest(request)) {
     return routeMap({ maps: state.maps, ownedLotIds: new Set(lots.map(({ id }) => id)) }, request, body);
   }
-  return routeLot({ occupancy: state.occupancy, lots }, request, body);
+  return routeLot({ occupancy: state.occupancy, equipment: state.equipment, lots }, request, body);
 }
 
 interface MemberLots {
   readonly occupancy: FakeApiState['occupancy'];
+  readonly equipment: FakeApiState['equipment'];
   readonly lots: DashboardLotDetails[];
 }
 
-function routeLot({ occupancy, lots }: MemberLots, request: string, body: Record<string, unknown>): FakeResponse {
+function routeLot({ occupancy, equipment, lots }: MemberLots, request: string, body: Record<string, unknown>): FakeResponse {
   const occupancyLotId = OCCUPANCY_PATH.exec(request)?.[1];
   if (occupancyLotId !== undefined) {
-    return readOccupancy(occupancy, lots, occupancyLotId);
+    return readOwned(occupancy, lots, occupancyLotId);
+  }
+  const equipmentLotId = EQUIPMENT_PATH.exec(request)?.[1];
+  if (equipmentLotId !== undefined) {
+    return readOwned(equipment, lots, equipmentLotId);
   }
   const pricingLotId = PRICING_PATH.exec(request)?.[1];
   return pricingLotId === undefined ? readLot(lots, request) : setPricing(lots, pricingLotId, body as unknown as LotPricingSettings);
 }
 
-function readOccupancy(occupancies: FakeApiState['occupancy'], lots: readonly DashboardLotDetails[], lotId: string): FakeResponse {
-  const occupancy = lots.some(({ id }) => id === lotId) ? occupancies.get(lotId) : undefined;
-  return occupancy === undefined ? refused(404, 'LOT_NOT_FOUND') : { status: 200, body: occupancy };
+function readOwned(byLot: ReadonlyMap<string, unknown>, lots: readonly DashboardLotDetails[], lotId: string): FakeResponse {
+  const read = lots.some(({ id }) => id === lotId) ? byLot.get(lotId) : undefined;
+  return read === undefined ? refused(404, 'LOT_NOT_FOUND') : { status: 200, body: read };
 }
 
 function refusedWithoutOperator(request: string): FakeResponse {

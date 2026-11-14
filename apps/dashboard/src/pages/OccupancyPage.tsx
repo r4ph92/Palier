@@ -9,13 +9,14 @@ import { CountedText } from '../components/CountedText.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { RetryableFailure } from '../components/RetryableFailure.tsx';
 import { SkeletonRows } from '../components/SkeletonRows.tsx';
+import { StaleNote } from '../components/StaleNote.tsx';
 import { StateMark } from '../components/StateMark.tsx';
-import { formatClockTime, formatCount } from '../i18n/formatNumbers.ts';
-import { interpolate } from '../i18n/interpolate.ts';
+import { formatCount } from '../i18n/formatNumbers.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { pluralFormOf } from '../i18n/plural.ts';
 import { lotPath } from '../navigation/routes.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
+import { SilentGatesBanner } from './SilentGatesBanner.tsx';
 
 const POLL_INTERVAL_MILLISECONDS = 30_000;
 const LOADING_ROWS = 3;
@@ -80,26 +81,13 @@ function OccupancyView({ occupancy, isStale, updatedAt }: OccupancyViewProps) {
     <>
       <PageHeader eyebrow={text.lot.eyebrow} title={`${text.occupancy.title} — ${occupancy.lotName}`} />
       <StaleNote isStale={isStale} updatedAt={updatedAt} />
+      <SilentGatesBanner lotId={occupancy.lotId} gateNames={occupancy.silentGateNames} />
       <CounterSummary occupancy={occupancy} />
       {occupancy.levels.length === 0 ? <p className="muted">{text.occupancy.noLevels}</p> : <LevelsTable levels={occupancy.levels} />}
       <AppLink href={lotPath(occupancy.lotId)} className="text-link">
         {text.occupancy.back}
       </AppLink>
     </>
-  );
-}
-
-// Mounted from the first figures on and empty until a poll fails: a live region only announces text added after it exists.
-function StaleNote({ isStale, updatedAt }: { readonly isStale: boolean; readonly updatedAt: Date }) {
-  const { text, language } = useLanguage();
-  return (
-    <div role="status" className="stale-note">
-      {isStale ? (
-        <>
-          <span>{text.occupancy.stale}</span> <span>{interpolate(text.occupancy.lastUpdate, { time: formatClockTime(updatedAt, language) })}</span>
-        </>
-      ) : null}
-    </div>
   );
 }
 
