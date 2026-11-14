@@ -11,14 +11,19 @@ export function parseLotList(body: unknown): LotListResponse {
 }
 
 function isLotSummary(candidate: unknown): candidate is LotSummary {
-  const { id, name, freeSpots, freeSpotsByCategory, location } = asRecord(candidate);
+  const { id, name, freeSpots, capacity, freeSpotsByCategory, location } = asRecord(candidate);
   return (
     typeof id === 'string' &&
     typeof name === 'string' &&
     Number.isInteger(freeSpots) &&
+    isSpotCount(capacity) &&
     isSpotCountByCategory(freeSpotsByCategory) &&
     (location === null || isGeoPosition(location))
   );
+}
+
+function isSpotCount(candidate: unknown): candidate is number {
+  return Number.isInteger(candidate) && (candidate as number) >= 0;
 }
 
 function isSpotCountByCategory(candidate: unknown): candidate is SpotCountByCategory {
