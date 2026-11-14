@@ -6,6 +6,7 @@ import { FakeDriverRepository } from '../fakeDriverRepository.ts';
 import { FakeVehicleRepository } from '../fakeVehicleRepository.ts';
 import { FakeCurrentParkingSessions } from './fakeCurrentParkingSessions.ts';
 import { FakeLevelOccupancyReader } from './fakeLevelOccupancyReader.ts';
+import { FakeLotEquipmentReader } from './fakeLotEquipmentReader.ts';
 import { FakeLotMapRepository } from './fakeLotMapRepository.ts';
 import { FakeLotSetupRepository } from './fakeLotSetupRepository.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
@@ -61,6 +62,7 @@ export function fakeRepositories({
     lotSetupRepository: new FakeLotSetupRepository(operatorRepository.lots),
     levelOccupancy: new FakeLevelOccupancyReader(operatorRepository.lots),
     lotMaps: new FakeLotMapRepository(operatorRepository.lots),
+    lotEquipment: new FakeLotEquipmentReader(operatorRepository.lots),
     currentParkingSessions: parkingSessions,
     parkingSessionBackdater: parkingSessions,
     parkedPresumptions,

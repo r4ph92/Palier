@@ -58,6 +58,7 @@ export type StatementLabel =
   | 'replay-passages'
   | 'record-heartbeat'
   | 'record-reported-battery'
+  | 'read-lot-gates'
   | 'unknown';
 
 export interface ExecutedStatement {
@@ -93,6 +94,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-level-occupancy', /as confirmed_assigned_count/],
   ['replay-passages', /insert into gate_passage[\s\S]*on conflict/],
   ['record-heartbeat', /update gate set last_heartbeat_at/],
+  ['read-lot-gates', /gate\.last_heartbeat_at\s+from parking_lot/],
   ['record-reported-battery', /where lot_id = \$\d and beacon_minor = \$\d/],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],

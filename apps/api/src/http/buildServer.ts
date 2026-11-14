@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { AccountWebhookReader, OperatorStripeAccounts, OperatorStripeGateway } from '../domain/dashboard/OperatorStripe.ts';
 import type { LevelOccupancyReader } from '../domain/dashboard/LevelOccupancyReader.ts';
+import type { LotEquipmentReader } from '../domain/dashboard/LotEquipmentReader.ts';
 import type { LotMapRepository } from '../domain/dashboard/LotMapRepository.ts';
 import type { LotSetupRepository } from '../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../domain/dashboard/OperatorRepository.ts';
@@ -60,6 +61,7 @@ export interface ServerDependencies {
     readonly lotSetupRepository: LotSetupRepository;
     readonly levelOccupancy: LevelOccupancyReader;
     readonly lotMaps: LotMapRepository;
+    readonly lotEquipment: LotEquipmentReader;
     readonly currentParkingSessions: CurrentParkingSessionQuery;
     readonly parkingSessionBackdater: ParkingSessionBackdater;
     readonly parkedPresumptions: ParkedPresumptionRepository;
@@ -96,7 +98,7 @@ export function buildServer({ repositories, gates, cardGateway, entries, exits, 
   server.setErrorHandler(handleServerError);
   server.decorateRequest('driver', null);
   void server.register(async (appScope) => registerAppRoutes(appScope, { repositories, cardGateway, entries, exits, spotHolds, testClock, settings }));
-  void server.register(async (dashboardScope) => registerDashboardRoutes(dashboardScope, dashboardDependencies(repositories, settings, operatorStripe)));
+  void server.register(async (dashboardScope) => registerDashboardRoutes(dashboardScope, dashboardDependencies({ repositories, settings, operatorStripe, testClock })));
   if (operatorStripe?.webhookReader != null) {
     registerStripeWebhookRoute(server, { reader: operatorStripe.webhookReader, accounts: operatorStripe.accounts });
   }
@@ -111,17 +113,15 @@ export function buildServer({ repositories, gates, cardGateway, entries, exits, 
 }
 
 // The dashboard has its own scope, outside the app's: the minimum app version does not apply to a browser.
-function dashboardDependencies(
-  repositories: ServerDependencies['repositories'],
-  settings: ServerSettings,
-  operatorStripe: OperatorStripeDependencies | undefined,
-): DashboardRouteDependencies {
+function dashboardDependencies({ repositories, settings = {}, operatorStripe, testClock }: Omit<ServerDependencies, 'gates'>): DashboardRouteDependencies {
   return {
     access: { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository },
     operators: repositories.operatorRepository,
     lots: repositories.lotSetupRepository,
     occupancy: repositories.levelOccupancy,
     maps: repositories.lotMaps,
+    equipment: repositories.lotEquipment,
+    clock: composedClockOf(settings, repositories, testClock),
     stripe: operatorStripe?.gateway == null ? null : { accounts: operatorStripe.accounts, gateway: operatorStripe.gateway },
     testSignInEnabled: settings.testSignInEnabled === true,
     secureCookies: settings.secureCookies ?? true,

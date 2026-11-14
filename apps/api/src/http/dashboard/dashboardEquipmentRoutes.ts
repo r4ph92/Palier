@@ -1,0 +1,22 @@
+import type { DashboardLotEquipment } from '@palier/shared-types';
+import type { FastifyInstance } from 'fastify';
+import { readLotEquipmentOfMember } from '../../domain/dashboard/lotEquipment.ts';
+import { lotIdParametersSchema } from '../schemas/dashboardSchemas.ts';
+import { dashboardLotEquipmentSchema } from '../schemas/lotEquipmentSchemas.ts';
+import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
+import { refuseMalformedLotId } from './refuseMalformedLotId.ts';
+import { requireDashboardUser, signedInDashboardUser } from './requireDashboardUser.ts';
+
+interface EquipmentRoute {
+  readonly Params: { readonly id: string };
+}
+
+export function registerDashboardEquipmentRoutes(scope: FastifyInstance, { access, operators, equipment, clock }: DashboardRouteDependencies): void {
+  // onRequest, not preHandler: params validation runs before preHandler, so a visitor without a session is refused first.
+  const onRequest = requireDashboardUser(access.sessions);
+  const schema = { params: lotIdParametersSchema, response: { 200: dashboardLotEquipmentSchema } };
+  scope.get<EquipmentRoute>('/v1/dashboard/lots/:id/equipment', { onRequest, attachValidation: true, schema }, (request): Promise<DashboardLotEquipment> => {
+    refuseMalformedLotId(request);
+    return readLotEquipmentOfMember({ operators, equipment, clock }, { userId: signedInDashboardUser(request).id, lotId: request.params.id });
+  });
+}

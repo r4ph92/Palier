@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PostgresEquipmentReports } from '../../src/infrastructure/postgres/PostgresEquipmentReports.ts';
+import { PostgresLotEquipmentReader } from '../../src/infrastructure/postgres/PostgresLotEquipmentReader.ts';
 import { entreeDemo } from './fakes/gateFixtures.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
 
@@ -30,5 +31,38 @@ describe('equipment reports in Postgres', () => {
     const scripted = new ScriptedSql().answer('record-reported-battery', []);
 
     expect(await new PostgresEquipmentReports(scripted.database()).recordBeaconBattery(report)).toBe(false);
+  });
+});
+
+describe('reading the gates of a lot from Postgres', () => {
+  const lotRow = { lot_name: 'Parking Démo' };
+
+  it("reads only the operator's lot, entry gates first, without the QR secret or the endpoint", async () => {
+    const scripted = new ScriptedSql().answer('read-lot-gates', [
+      { ...lotRow, gate_id: 'entree', gate_name: 'Entrée Démo', gate_kind: 'ENTRY', last_heartbeat_at: '2026-11-13 19:05:00+00' },
+      { ...lotRow, gate_id: 'sortie', gate_name: 'Sortie Démo', gate_kind: 'EXIT', last_heartbeat_at: null },
+    ]);
+
+    const gates = await new PostgresLotEquipmentReader(scripted.database()).readLotGates('operator-lavoie', entreeDemo.lotId);
+
+    expect(gates).toEqual({
+      lotName: 'Parking Démo',
+      gates: [
+        { id: 'entree', name: 'Entrée Démo', kind: 'ENTRY', lastHeartbeatAt: at },
+        { id: 'sortie', name: 'Sortie Démo', kind: 'EXIT', lastHeartbeatAt: null },
+      ],
+    });
+    const statement = scripted.statement('read-lot-gates');
+    expect(statement?.text).toMatch(/where parking_lot\.id = \$1 and parking_lot\.operator_id = \$2\s+order by gate\.kind, gate\.name$/);
+    expect(statement?.text).not.toMatch(/qr_secret|endpoint/);
+    expect(statement?.params).toEqual([entreeDemo.lotId, 'operator-lavoie']);
+  });
+
+  it('reads a lot without gates as an empty list, and another operator\'s lot as absent', async () => {
+    const withoutGates = new ScriptedSql().answer('read-lot-gates', [{ ...lotRow, gate_id: null, gate_name: null, gate_kind: null, last_heartbeat_at: null }]);
+    const notOwned = new ScriptedSql().answer('read-lot-gates', []);
+
+    expect(await new PostgresLotEquipmentReader(withoutGates.database()).readLotGates('operator-lavoie', entreeDemo.lotId)).toEqual({ lotName: 'Parking Démo', gates: [] });
+    expect(await new PostgresLotEquipmentReader(notOwned.database()).readLotGates('operator-roy', entreeDemo.lotId)).toBeNull();
   });
 });

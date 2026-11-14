@@ -1,4 +1,5 @@
 import { isValidDisplayText } from './displayText.ts';
+import type { GateHealth, GateKind } from './gates.ts';
 import type { LotPricingSettings } from './lotPricing.ts';
 import type { AisleRectangle } from './parkingSessions.ts';
 import type { SpotState } from './spotStates.ts';
@@ -75,6 +76,8 @@ export interface DashboardLotOccupancy {
   readonly levels: readonly LevelSpotCounts[];
   readonly occupiedOrAssignedCount: number;
   readonly counterGap: CounterGap;
+  // Gates silent for more than 2 minutes, named in the warning above the figures.
+  readonly silentGateNames: readonly string[];
 }
 
 // rectangle is null for the exit lane, which is not drawn, and for an aisle whose stored shape the read boundary refuses.
@@ -101,6 +104,22 @@ export interface DashboardLotMap {
   readonly platformUuid: string;
   readonly beaconMajor: number | null;
   readonly levels: readonly DashboardMapLevel[];
+}
+
+export interface DashboardGateHealth {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: GateKind;
+  readonly health: GateHealth;
+  readonly lastHeartbeatAt: string | null;
+}
+
+// now is the server's clock, so the page tells today from another day as the server judged the gates.
+export interface DashboardLotEquipment {
+  readonly lotId: string;
+  readonly lotName: string;
+  readonly now: string;
+  readonly gates: readonly DashboardGateHealth[];
 }
 
 // Every level of the lot, each once, in the new order; fromLevelIds is the order the page showed when the operator moved a level.
