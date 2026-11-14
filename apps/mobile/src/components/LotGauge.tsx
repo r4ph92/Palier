@@ -18,7 +18,7 @@ export function LotGauge({ freeSpots, capacity }: LotGaugeProps) {
   const colors = useColors();
   const share = freeShare(freeSpots, capacity);
   return (
-    <View style={styles.row}>
+    <View style={styles.gauge}>
       <View testID="lot-gauge" style={[styles.track, { backgroundColor: colors.sunken }]}>
         <View testID="lot-gauge-fill" style={{ width: `${share * 100}%`, backgroundColor: share >= LOW_SHARE ? colors.free : colors.low }} />
       </View>
@@ -38,7 +38,8 @@ export function freeShare(freeSpots: number, capacity: number): number {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.small },
-  track: { flex: 1, height: GAUGE_HEIGHT, flexDirection: 'row' },
-  ratio: { fontVariant: ['tabular-nums'] },
+  // The ratio goes under a full-width track, so every row's gauge has the same length and large text never squeezes it.
+  gauge: { gap: spacing.extraSmall },
+  track: { alignSelf: 'stretch', height: GAUGE_HEIGHT, flexDirection: 'row' },
+  ratio: { alignSelf: 'flex-end', fontVariant: ['tabular-nums'] },
 });

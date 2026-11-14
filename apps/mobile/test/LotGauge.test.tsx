@@ -22,6 +22,13 @@ describe('LotGauge', () => {
     expect(screen.getByText('42 / 120')).toBeOnTheScreen();
   });
 
+  it('spans the full row width, whatever the length of the ratio', async () => {
+    await render(<LotGauge freeSpots={1000} capacity={1200} />);
+
+    expect(screen.getByTestId('lot-gauge')).toHaveStyle({ alignSelf: 'stretch' });
+    expect(screen.getByTestId('lot-gauge')).not.toHaveStyle({ flex: 1 });
+  });
+
   it('stays free at exactly a quarter of the lot free', async () => {
     await render(<LotGauge freeSpots={25} capacity={100} />);
 
