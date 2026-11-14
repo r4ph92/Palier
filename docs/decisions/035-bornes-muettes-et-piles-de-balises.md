@@ -35,3 +35,9 @@
 Après l'annulation, aucune borne n'a de signal et aucune allée de lecture.
 
 **Conséquences.** Une démo dont Entrée Démo a déjà battu doit garder la console ouverte pour les entrées suivantes : deux minutes sans signal, et l'entrée est refusée. Un onglet caché ralentit les minuteries à environ une fois par minute, sous les 120 s ; `docs/demo-console.md` le note.
+
+**Compromis acceptés (test d'intrusion du 14 novembre 2026).**
+
+- **Oracle de présence.** Un conducteur connecté qui scanne une borne obtient `GATE_SILENT` si la borne est muette et `PREREQUISITES_MISSING` si un prérequis manque : il peut donc deviner si la console d'une entrée est active. L'information est faible et les scans refusés ne sont pas limités en débit ; la limitation est un suivi, hors de cette histoire.
+- **Horloge de test.** La route d'horloge de test déplace l'instant qui décide du silence d'une borne sur les instances de développement et de démonstration. Pour la démo, garder `/v1/test/*` hors du réseau local.
+- **Lectures de pile sans source.** Une lecture de pile ne garde pas d'où elle vient (clé de barrière ou saisie d'un opérateur) ; la dernière écriture l'emporte, comme pour le signal des bornes.
