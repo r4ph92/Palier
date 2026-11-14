@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
-import { wrongAisleOf, type SessionAfterRefusal, type WalkAisles, type WalkingSignal } from '../../domain/parkingSessions/ParkedPresumption.ts';
+import { wrongAisleOf, type DetectedAisle, type SessionAfterRefusal, type WalkAisles, type WalkingSignal } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import type { AisleDetectedPayload } from '../../domain/sessionEvents/SessionEvent.ts';
 import { clampedParkedAt } from './clampedParkedAt.ts';
 import type { Database, Transaction } from './database.ts';
@@ -9,12 +9,9 @@ import { flagAssignedSpotToCheck } from './parkedAnswerStatements.ts';
 import { appendSessionEvent } from './sessionEventStatements.ts';
 
 // assignedSpotId guards the walk's write: a spot-taken report may move the session to another spot after this read.
-// The detected aisle's code and minor are null exactly when its id is.
 export interface WalkFacts extends SessionAfterRefusal, WalkAisles {
   readonly lotId: string;
   readonly assignedSpotId: string;
-  readonly detectedAisleCode: string | null;
-  readonly detectedAisleMinor: number | null;
 }
 
 interface WalkFactsRow extends Record<string, unknown> {
@@ -58,19 +55,25 @@ function walkFactsOf(row: WalkFactsRow): WalkFacts {
     lotId: row.lot_id,
     assignedSpotId: row.assigned_spot_id,
     assignedAisleId: row.assigned_aisle_id,
-    detectedAisleId: row.detected_aisle_id,
-    detectedAisleCode: row.detected_aisle_code,
-    detectedAisleMinor: row.detected_aisle_minor,
+    detectedAisle: detectedAisleOf(row),
   };
+}
+
+// The left join gives the three columns together, or none of them.
+function detectedAisleOf({ detected_aisle_id, detected_aisle_code, detected_aisle_minor }: WalkFactsRow): DetectedAisle | null {
+  if (detected_aisle_id === null || detected_aisle_code === null || detected_aisle_minor === null) {
+    return null;
+  }
+  return { id: detected_aisle_id, code: detected_aisle_code, beaconMinor: detected_aisle_minor };
 }
 
 // The drivable aisle the walk was seen in, as the log keeps it; null when the signal named none the lot knows.
 export function aisleDetectedOf(facts: WalkFacts): AisleDetectedPayload | null {
-  const { detectedAisleId, detectedAisleCode, detectedAisleMinor } = facts;
-  if (detectedAisleId === null || detectedAisleCode === null || detectedAisleMinor === null) {
+  const { detectedAisle } = facts;
+  if (detectedAisle === null) {
     return null;
   }
-  return { aisleId: detectedAisleId, aisleCode: detectedAisleCode, beaconMinor: detectedAisleMinor, isAssignedAisle: wrongAisleOf(facts) === null };
+  return { aisleId: detectedAisle.id, aisleCode: detectedAisle.code, beaconMinor: detectedAisle.beaconMinor, isAssignedAisle: wrongAisleOf(facts) === null };
 }
 
 // Two writes under the lot lock (docs/03, sequence B): the session waits for the driver's answer, and its assigned spot is flagged to check.

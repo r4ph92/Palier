@@ -71,6 +71,6 @@ export class FakeParkedPresumptions implements ParkedPresumptionRepository {
 function wrongAisleMinorOf(session: StoredWalkingSession, detectedAisleMinor: number | null): number | null {
   const isKnownAisle = detectedAisleMinor !== null && LOT_AISLE_MINORS.has(detectedAisleMinor);
   const assignedAisleId = String(session.assignedAisleMinor ?? AISLE_A_MINOR);
-  const wrongAisleId = wrongAisleOf({ assignedAisleId, detectedAisleId: isKnownAisle ? String(detectedAisleMinor) : null });
-  return wrongAisleId === null ? null : Number(wrongAisleId);
+  const detectedAisle = isKnownAisle ? { id: String(detectedAisleMinor), code: String(detectedAisleMinor), beaconMinor: detectedAisleMinor } : null;
+  return wrongAisleOf({ assignedAisleId, detectedAisle })?.beaconMinor ?? null;
 }
