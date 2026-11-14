@@ -44,10 +44,9 @@ async function attemptClear(lotId: string, spot: DashboardSpotToCheck, followUps
   }
 }
 
-// Focus stays in the list: on the row that takes the cleared one's place, or the one before it, or the status line once the list is empty.
-function focusIdAfterClearing(spots: readonly DashboardSpotToCheck[], cleared: DashboardSpotToCheck): string {
-  const index = spots.findIndex(({ spotId }) => spotId === cleared.spotId);
-  const neighbour = spots[index + 1] ?? spots[index - 1];
+// Focus stays in the list the API answered: on the row now at the cleared one's place, or the last row, or the status line once the list is empty.
+function focusIdAfterClearing(remaining: readonly DashboardSpotToCheck[], clearedIndex: number): string {
+  const neighbour = remaining[Math.min(clearedIndex, remaining.length - 1)];
   return neighbour === undefined ? SPOT_CHECK_STATUS_ID : checkButtonId(neighbour.spotId);
 }
 
@@ -73,7 +72,8 @@ export function useSpotCheckClearing(lotId: string, initial: DashboardSpotsToChe
         setStatus({ ...IDLE, refusal: { ...outcome.refusal, spotId: spot.spotId } });
         return;
       }
-      focusAfterRender(focusIdAfterClearing(spots, spot));
+      const clearedIndex = spots.findIndex(({ spotId }) => spotId === spot.spotId);
+      focusAfterRender(focusIdAfterClearing(outcome.answer.spots, clearedIndex));
       setSpots(outcome.answer.spots);
       setStatus({ ...IDLE, clearedNumber: spot.number });
     });
