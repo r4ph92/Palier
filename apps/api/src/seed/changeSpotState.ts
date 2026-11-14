@@ -1,6 +1,7 @@
-import { and, count, eq, inArray, isNull, ne, or, type SQL } from 'drizzle-orm';
+import { and, count, eq, inArray, ne, or, type SQL } from 'drizzle-orm';
 import type { Database, Transaction } from '../infrastructure/postgres/database.ts';
 import { ACTIVE_SESSION } from '../infrastructure/postgres/activeSessionStates.ts';
+import { isLiveSpot } from '../infrastructure/postgres/liveSpot.ts';
 import { parkingLot, parkingSession, spot } from '../infrastructure/postgres/schema.ts';
 import { activeSessionRefusal, decideActiveSessionRule } from './activeSessionRule.ts';
 import type { SpotStateChange } from './spotStateArguments.ts';
@@ -35,7 +36,6 @@ async function countActiveSessionsOnSpots(tx: Transaction, spotIds: readonly str
   return row?.total ?? 0;
 }
 
-// A retired spot keeps its number for its history; the live spot of that number is the one a tester means.
-export function liveSpotNamed(inLot: SQL, spotNumber: string): SQL | undefined {
-  return and(inLot, eq(spot.number, spotNumber), isNull(spot.retiredAt), ne(spot.state, 'HELD'));
+function liveSpotNamed(inLot: SQL, spotNumber: string): SQL | undefined {
+  return and(inLot, eq(spot.number, spotNumber), isLiveSpot, ne(spot.state, 'HELD'));
 }

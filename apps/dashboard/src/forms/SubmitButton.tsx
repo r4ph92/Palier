@@ -14,7 +14,7 @@ interface SubmitButtonProps {
 export function SubmitButton({ label, busyLabel, busy, emphasis = 'primary' }: SubmitButtonProps) {
   return (
     <button type="submit" className={`${emphasis}-button`} aria-disabled={busy}>
-      <StableLabel shown={busy ? busyLabel : label} widest={label} />
+      <StableLabel shown={busy ? busyLabel : label} reserved={[label, busyLabel]} />
     </button>
   );
 }

@@ -41,7 +41,7 @@ describe('who may change the spots of a lot', () => {
       await routes.readSpots(sophieCookies, aisleId),
       await routes.addSpots(sophieCookies, aisleId, spotsOf('Z-', '1', '2')),
       await routes.changeSpot(sophieCookies, spotId, { ...standard, isEv: true }),
-      await routes.retireSpot(sophieCookies, spotId),
+      await routes.removeSpot(sophieCookies, spotId),
     ];
 
     expect(answers.map((answer) => [answer.statusCode, answer.json().error])).toEqual([
@@ -61,7 +61,7 @@ describe('who may change the spots of a lot', () => {
     const read = await onParkingDemo.readSpots(sophieCookies, aisleId);
     const added = await onParkingDemo.addSpots(sophieCookies, aisleId, spotsOf('Z-', '1', '2'));
     const changed = await onParkingDemo.changeSpot(sophieCookies, spotId, { ...standard, isEv: true });
-    const retired = await onParkingDemo.retireSpot(sophieCookies, spotId);
+    const retired = await onParkingDemo.removeSpot(sophieCookies, spotId);
 
     expect([read, added].map((answer) => [answer.statusCode, answer.json().error])).toEqual([[404, 'AISLE_NOT_FOUND'], [404, 'AISLE_NOT_FOUND']]);
     expect([changed, retired].map((answer) => [answer.statusCode, answer.json().error])).toEqual([[404, 'SPOT_NOT_FOUND'], [404, 'SPOT_NOT_FOUND']]);
@@ -75,7 +75,7 @@ describe('who may change the spots of a lot', () => {
     const onParkingTestPaliers = lotSpotRoutesOf(server, PARKING_TEST_PALIERS_ID);
 
     const added = await onParkingTestPaliers.addSpots(sophieCookies, parkingDemoAisle, spotsOf('Z-', '1', '2'));
-    const retired = await onParkingTestPaliers.retireSpot(sophieCookies, parkingDemoSpotId());
+    const retired = await onParkingTestPaliers.removeSpot(sophieCookies, parkingDemoSpotId());
 
     expect(added.json()).toMatchObject({ statusCode: 404, error: 'AISLE_NOT_FOUND' });
     expect(retired.json()).toMatchObject({ statusCode: 404, error: 'SPOT_NOT_FOUND' });
@@ -87,7 +87,7 @@ describe('who may change the spots of a lot', () => {
     const pierreCookies = await dashboardCookieFor(server, pierre);
 
     expect((await routes.readSpots(pierreCookies, MALFORMED_ID)).json()).toMatchObject({ statusCode: 404, error: 'LOT_NOT_FOUND' });
-    expect((await lotSpotRoutesOf(server, PARKING_DEMO_ID).retireSpot(sophieCookies, MALFORMED_ID)).json()).toMatchObject({ statusCode: 404, error: 'LOT_NOT_FOUND' });
+    expect((await lotSpotRoutesOf(server, PARKING_DEMO_ID).removeSpot(sophieCookies, MALFORMED_ID)).json()).toMatchObject({ statusCode: 404, error: 'LOT_NOT_FOUND' });
     expect((await routes.changeSpot(pierreCookies, MALFORMED_ID, standard)).json()).toMatchObject({ statusCode: 404, error: 'LOT_NOT_FOUND' });
   });
 

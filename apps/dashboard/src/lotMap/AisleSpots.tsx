@@ -8,7 +8,7 @@ import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { AddSpotsForm } from './AddSpotsForm.tsx';
 import { SpotList } from './SpotList.tsx';
 import { useAisleSpots } from './useAisleSpots.ts';
-import { useSpotStatus } from './useSpotStatus.ts';
+import { useSpotChanges } from './useSpotChanges.ts';
 
 const LOADING_ROWS = 3;
 
@@ -19,11 +19,11 @@ export interface AisleSpotsProps {
   readonly onStale: () => Promise<boolean>;
 }
 
-// The selected aisle's spots: loading, a failure with a retry, then the list, the capacity warning and the add form.
+// The selected aisle's spots: loading, a failure with a retry, then the capacity warning, the add form and the list.
 export function AisleSpots({ lotId, aisle, onStale }: AisleSpotsProps) {
   const text = useText();
   const { resource, reload, isReloading, latest, show, refresh } = useAisleSpots(lotId, aisle.id);
-  const status = useSpotStatus({ show, refresh, onStale });
+  const changes = useSpotChanges({ show, refresh, onStale });
   if (resource.status === 'loading') {
     return <SkeletonRows count={LOADING_ROWS} label={text.app.loading} />;
   }
@@ -34,9 +34,8 @@ export function AisleSpots({ lotId, aisle, onStale }: AisleSpotsProps) {
   return (
     <>
       <CapacityWarning spots={spots} />
-      <SpotList lotId={lotId} aisle={aisle} spots={spots.spots} status={status} />
-      <AddSpotsForm lotId={lotId} aisleId={aisle.id} onAdded={(saved, count) => status.added(saved, { count, aisle: aisle.code })} onRefused={status.refused} />
-      <p role="status">{status.message}</p>
+      <AddSpotsForm lotId={lotId} aisleId={aisle.id} onAdded={(saved, count) => changes.added(saved, { count, aisle: aisle.code })} staleData={changes.staleData} />
+      <SpotList lotId={lotId} aisle={aisle} spots={spots.spots} changes={changes} />
     </>
   );
 }

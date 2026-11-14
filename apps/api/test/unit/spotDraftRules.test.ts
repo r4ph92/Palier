@@ -10,6 +10,11 @@ describe('reading a range of spot numbers', () => {
     ['A-1 to A-20', aisleA],
     ['  A-1 À A-20  ', aisleA],
     ['A-1 TO A-20', aisleA],
+    ['A-1 a A-20', aisleA],
+    ['A-1 au A-20', aisleA],
+    ['A-1 AU A-20', aisleA],
+    ['P1-12', { prefix: 'P1-', first: '12', last: '12' }],
+    ['AB12', { prefix: 'AB', first: '12', last: '12' }],
     ['A-1 à A-20', aisleA],
     ['A-7', { prefix: 'A-', first: '7', last: '7' }],
     ['1 à 20', { prefix: '', first: '1', last: '20' }],
@@ -26,6 +31,12 @@ describe('reading a range of spot numbers', () => {
     ['an end without digits', 'A-1 à A-'],
     ['three ends', 'A-1 à A-5 à A-9'],
     ['nothing', '   '],
+    ['a dash between the ends', 'A-1 - A-20'],
+    ['ends run together', 'A-1-A-20'],
+    ['an unknown separator', 'A-1 jusqu’à A-20'],
+    ['one number with a space', 'A 7'],
+    ['one number without a letter', '7'],
+    ['one number with a prefix of dashes', '--7'],
   ])('reads nothing from %s', (_case, text) => {
     expect(parseSpotRange(text)).toBeNull();
   });
@@ -56,6 +67,8 @@ describe('the rule for spots added to an aisle', () => {
     ['a prefix ending in a digit', { prefix: 'A1', first: '5', last: '6' }],
     ['a sign that is not a digit', { prefix: 'A-', first: '-1', last: '2' }],
     ['an invisible character', { prefix: 'A​-', first: '1', last: '2' }],
+    ['a prefix of dashes only', { prefix: '---', first: '1', last: '2' }],
+    ['a prefix of a dash and a space', { prefix: '- ', first: '1', last: '2' }],
   ])('refuses %s', (_case, range) => {
     expect(addSpotsErrors({ range, attributes: standard })).toEqual({ range: 'SPOT_RANGE_INVALID' });
   });

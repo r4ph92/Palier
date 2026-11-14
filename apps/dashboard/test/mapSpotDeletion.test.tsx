@@ -29,7 +29,7 @@ describe('deleting a spot', () => {
 
     expect(await screen.findByText('Place A-1 supprimée.')).toBeDefined();
     expect(spotNumbers()).toEqual(['A-2', 'A-3']);
-    expect(document.activeElement).toBe(screen.getByRole('heading', { level: 3, name: 'Places de l’allée A' }));
+    expect(document.activeElement).toBe(screen.getByRole('heading', { level: 3, name: 'Allée A — 2\u00a0places enregistrées' }));
     expect(api.spots.get(parkingDemo.id)?.map(({ number }) => number)).toEqual(['A-2', 'A-3']);
   });
 
@@ -39,7 +39,7 @@ describe('deleting a spot', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Supprimer A-3' }));
     await userEvent.click(screen.getByRole('button', { name: 'Confirmer la suppression de A-3' }));
 
-    expect((await screen.findByRole('alert')).textContent).toBe('Place utilisée — réessayez après la sortie.');
+    expect((await screen.findByRole('alert')).textContent).toBe('Place utilisée — réessayez après la sortie\u00a0: A-3.');
     expect(spotNumbers()).toEqual(['A-1', 'A-2', 'A-3']);
   });
 
@@ -73,8 +73,8 @@ describe('reading the spots of an aisle', () => {
 
     await userEvent.selectOptions(spotsRegion().getByRole('combobox', { name: 'Allée affichée' }), 'P1 · allée B');
 
-    expect(await screen.findByText('Aucune place dans cette allée.')).toBeDefined();
-    expect(spotsRegion().getByRole('heading', { level: 3, name: 'Places de l’allée B' })).toBeDefined();
+    expect(await screen.findByText('Aucune place dans cette allée. Ajoutez-en avec le formulaire ci-dessus.')).toBeDefined();
+    expect(spotsRegion().getByRole('heading', { level: 3, name: 'Allée B — 0\u00a0place enregistrée' })).toBeDefined();
   });
 
   it('shows the spots, their attributes and their forms entirely in English', async () => {

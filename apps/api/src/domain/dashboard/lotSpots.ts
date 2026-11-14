@@ -35,18 +35,18 @@ export function changeSpotOfMember(sources: LotSpotSources, spot: MemberSpot, re
   return changeSpots(sources, spot, (operatorId) => sources.spots.changeSpot(operatorId, { lotId: spot.lotId, spotId: spot.spotId }, attributes));
 }
 
-export function retireSpotOfMember(sources: LotSpotSources, spot: MemberSpot): Promise<DashboardAisleSpots> {
-  return changeSpots(sources, spot, (operatorId) => sources.spots.retireSpot(operatorId, { lotId: spot.lotId, spotId: spot.spotId }));
+export function removeSpotOfMember(sources: LotSpotSources, spot: MemberSpot): Promise<DashboardAisleSpots> {
+  return changeSpots(sources, spot, (operatorId) => sources.spots.removeSpot(operatorId, { lotId: spot.lotId, spotId: spot.spotId }));
 }
 
 // Answers the aisle's spots after the change, so the page shows what was saved and the lot's new spot count.
 async function changeSpots(sources: LotSpotSources, member: MemberLot, write: OperatorWrite): Promise<DashboardAisleSpots> {
   const operatorId = await operatorIdOfMember(sources.operators, member);
   const outcome = await write(operatorId);
-  if (typeof outcome === 'string') {
-    throw new DashboardRefusedError(outcome);
+  if (outcome.kind === 'refused') {
+    throw new DashboardRefusedError(outcome.reason);
   }
-  if ('takenNumber' in outcome) {
+  if (outcome.kind === 'numberTaken') {
     throw new DashboardRefusedError('SPOT_NUMBER_TAKEN', { number: outcome.takenNumber });
   }
   return readOwnedAisleSpots(sources.spots, operatorId, { lotId: member.lotId, aisleId: outcome.aisleId });

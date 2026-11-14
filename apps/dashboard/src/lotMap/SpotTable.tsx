@@ -1,54 +1,126 @@
-import type { DashboardSpot } from '@palier/shared-types';
-import { ColumnHeads } from '../components/ColumnHeads.tsx';
+import type { DashboardSpot, SpotState } from '@palier/shared-types';
+import type { ReactNode } from 'react';
+import { StableLabel } from '../components/StableLabel.tsx';
+import { StateMark, type StateTone } from '../components/StateMark.tsx';
 import { formatMetres } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
-import { flagLabelsOf } from './SpotAttributeFields.tsx';
-import { SPOT_FLAGS } from './spotFormValues.ts';
+import { closesOnEscape } from './closesOnEscape.ts';
+import { flagLabelsOf, SPOT_FLAGS } from './spotFormValues.ts';
 import { useFocusWhen } from './useFocusWhen.ts';
 import type { SpotDeletion } from './useSpotDeletion.ts';
 
+const COLUMN_COUNT = 5;
+
+const STATE_TONES: Readonly<Record<SpotState, StateTone>> = {
+  AVAILABLE: 'free',
+  HELD: 'muted',
+  ASSIGNED: 'muted',
+  OCCUPIED: 'muted',
+  OCCUPIED_UNKNOWN: 'muted',
+  OUT_OF_SERVICE: 'danger',
+};
+
 interface SpotTableProps {
   readonly spots: readonly DashboardSpot[];
+  readonly labelledBy: string;
   readonly deletion: SpotDeletion;
   readonly onEdit: (spot: DashboardSpot) => void;
+  readonly editing: EditRow | null;
 }
+
+// The edit form, shown in a row right after the spot it edits.
+export interface EditRow {
+  readonly spotId: string;
+  readonly form: ReactNode;
+}
+
+type RowProps = Pick<SpotTableProps, 'deletion' | 'onEdit'> & { readonly spot: DashboardSpot };
 
 export function editButtonId(spot: DashboardSpot): string {
   return `spot-${spot.id}-edit`;
 }
 
-export function SpotTable({ spots, deletion, onEdit }: SpotTableProps) {
-  const { spots: text } = useText().map;
+// Explicit roles keep the table a table for screen readers when narrow screens stack each row.
+export function SpotTable({ spots, labelledBy, deletion, onEdit, editing }: SpotTableProps) {
   return (
-    <table className="data-table" aria-busy={deletion.deleting}>
-      <ColumnHeads labels={[text.numberColumn, text.attributesColumn, text.distanceColumn, text.stateColumn, text.actionsColumn]} />
-      <tbody>
+    <table className="data-table spot-table" role="table" aria-labelledby={labelledBy} aria-busy={deletion.deleting}>
+      <SpotTableHead />
+      <tbody role="rowgroup">
         {spots.map((spot) => (
-          <SpotRow key={spot.id} spot={spot} deletion={deletion} onEdit={onEdit} />
+          <SpotRows key={spot.id} spot={spot} deletion={deletion} onEdit={onEdit} editForm={editing?.spotId === spot.id ? editing.form : null} />
         ))}
       </tbody>
     </table>
   );
 }
 
-function SpotRow({ spot, deletion, onEdit }: { readonly spot: DashboardSpot } & Omit<SpotTableProps, 'spots'>) {
-  const { text, language } = useLanguage();
-  const labels = flagLabelsOf(text.map.spots);
-  const attributes = SPOT_FLAGS.filter((flag) => spot[flag]).map((flag) => labels[flag]);
+function SpotTableHead() {
+  const { spots: text } = useText().map;
   return (
-    <tr>
-      <th scope="row">{spot.number}</th>
-      <td>{attributes.length === 0 ? <span className="muted">{text.map.spots.noAttribute}</span> : attributes.join(', ')}</td>
-      <td className="number-cell">{formatMetres(spot.distanceToExit, language)}</td>
-      <td>{text.spotStates[spot.state]}</td>
-      <td>{deletion.confirming?.id === spot.id ? <DeleteConfirmation spot={spot} deletion={deletion} /> : <RowActions spot={spot} deletion={deletion} onEdit={onEdit} />}</td>
+    <thead role="rowgroup">
+      <tr role="row">
+        {[text.numberColumn, text.attributesColumn, text.distanceColumn, text.stateColumn].map((label) => (
+          <th key={label} scope="col" role="columnheader">
+            {label}
+          </th>
+        ))}
+        <th scope="col" role="columnheader">
+          <span className="visually-hidden">{text.actionsColumn}</span>
+        </th>
+      </tr>
+    </thead>
+  );
+}
+
+function SpotRows({ editForm, ...row }: RowProps & { readonly editForm: ReactNode }) {
+  return (
+    <>
+      <SpotRow {...row} />
+      {editForm === null ? null : (
+        <tr role="row" className="spot-edit-row">
+          <td role="cell" colSpan={COLUMN_COUNT}>
+            {editForm}
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+function SpotRow({ spot, deletion, onEdit }: RowProps) {
+  const { text, language } = useLanguage();
+  return (
+    <tr role="row">
+      <th scope="row" role="rowheader" className="spot-number">
+        {spot.number}
+      </th>
+      <AttributesCell spot={spot} />
+      <td role="cell" className="spot-distance">
+        {formatMetres(spot.distanceToExit, language)}
+      </td>
+      <td role="cell" className="spot-state">
+        <StateMark tone={STATE_TONES[spot.state]} label={text.spotStates[spot.state]} />
+      </td>
+      <td role="cell" className="spot-actions">
+        {deletion.confirming?.id === spot.id ? <DeleteConfirmation spot={spot} deletion={deletion} /> : <RowActions spot={spot} deletion={deletion} onEdit={onEdit} />}
+      </td>
     </tr>
   );
 }
 
-// A row whose question was just cancelled gives focus back to its delete button.
-function RowActions({ spot, deletion, onEdit }: { readonly spot: DashboardSpot } & Omit<SpotTableProps, 'spots'>) {
+function AttributesCell({ spot }: { readonly spot: DashboardSpot }) {
+  const { spots: text } = useText().map;
+  const labels = flagLabelsOf(text);
+  const attributes = SPOT_FLAGS.filter((flag) => spot[flag]).map((flag) => labels[flag]);
+  return (
+    <td role="cell" className="spot-attributes">
+      {attributes.length === 0 ? <span className="muted">{text.noAttribute}</span> : attributes.join(', ')}
+    </td>
+  );
+}
+
+function RowActions({ spot, deletion, onEdit }: RowProps) {
   const { spots: text } = useText().map;
   const values = { number: spot.number };
   const deleteRef = useFocusWhen<HTMLButtonElement>(deletion.cancelledId === spot.id);
@@ -64,15 +136,16 @@ function RowActions({ spot, deletion, onEdit }: { readonly spot: DashboardSpot }
   );
 }
 
-// The confirm button takes focus as the row asks.
+// The confirm button takes focus as the row asks; Escape cancels like the cancel button.
 function DeleteConfirmation({ spot, deletion }: { readonly spot: DashboardSpot; readonly deletion: SpotDeletion }) {
   const { spots: text } = useText().map;
   const confirmRef = useFocusWhen<HTMLButtonElement>(true);
+  const label = interpolate(text.confirmDeleteButton.name, { number: spot.number });
   return (
-    <span className="row-actions">
+    <span className="row-actions" onKeyDown={(event) => closesOnEscape(event, deletion.cancel)}>
       <span>{interpolate(text.confirmDelete, { number: spot.number })}</span>
-      <button type="button" ref={confirmRef} className="text-button" aria-label={interpolate(text.confirmDeleteButton.name, { number: spot.number })} aria-disabled={deletion.deleting} onClick={() => void deletion.confirm()}>
-        {deletion.deleting ? text.deleting : text.confirmDeleteButton.shown}
+      <button type="button" ref={confirmRef} className="text-button" aria-label={label} aria-disabled={deletion.deleting} onClick={() => void deletion.confirm()}>
+        <StableLabel shown={deletion.deleting ? text.deleting : text.confirmDeleteButton.shown} reserved={[text.deleting, text.confirmDeleteButton.shown]} />
       </button>
       <button type="button" className="text-button" onClick={deletion.cancel}>
         {text.cancel}

@@ -10,7 +10,7 @@ describe('the spots of an aisle', () => {
 
     await addSpots('A-1 à A-20');
 
-    expect((await screen.findByText('20 places ajoutées à l’allée A.')).getAttribute('role')).toBe('status');
+    expect((await screen.findByText('20 places ajoutées à l’allée A.')).closest('[role="status"]')).not.toBeNull();
     expect(spotNumbers()).toEqual(Array.from({ length: 20 }, (_, index) => `A-${index + 1}`));
     expect(within(rowOf('A-7')).getByText('Aucun')).toBeDefined();
     expect(rowOf('A-7').textContent).toMatch(/30\sm/);
@@ -61,6 +61,16 @@ describe('the spots of an aisle', () => {
     await addSpots(range);
 
     expect(addForm().getByRole('textbox', { name: label }).getAttribute('aria-invalid')).toBe('true');
+    expect(api.requests.some((request) => request.startsWith('POST') && request.endsWith('/spots'))).toBe(false);
+  });
+
+  it.each(['A-1 - A-20', 'A-1-A-20', 'A 7'])('says beside the field that « %s » cannot be read, and sends nothing', async (range) => {
+    const api = await garageRoyAisleA();
+
+    await addSpots(range);
+
+    const rangeBox = addForm().getByRole('textbox', { name: 'Numéros des places' });
+    expect(document.getElementById(`${rangeBox.id}-error`)?.textContent).toBe('Numéros illisibles. Écrivez une plage comme A-1 à A-20, ou un seul numéro comme A-7.');
     expect(api.requests.some((request) => request.startsWith('POST') && request.endsWith('/spots'))).toBe(false);
   });
 

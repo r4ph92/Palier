@@ -1,7 +1,7 @@
 import type { DashboardSpot } from '@palier/shared-types';
 import type { SpotAttributes } from '@palier/shared-types/spotDraft';
-import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import type { FieldValues } from '../forms/useFieldForm.ts';
+import type { Dictionary } from '../i18n/fr.ts';
 import type { Language } from '../i18n/LanguageContext.tsx';
 import { numberOrNaN, parseWholeNumber } from '../lotSetup/parseNumbers.ts';
 
@@ -31,5 +31,6 @@ export function attributeValuesOf(spot: DashboardSpot): FieldValues<SpotAttribut
   return { isEv: flagValue('isEv'), isAccessible: flagValue('isAccessible'), isOversize: flagValue('isOversize'), distanceToExit: String(spot.distanceToExit) };
 }
 
-// After these refusals the list on the page is out of date: it is read again before the operator retries.
-export const LIST_OUT_OF_DATE: readonly DisplayedErrorCode[] = ['LOT_BUSY', 'SPOT_NOT_FOUND'];
+export function flagLabelsOf(spots: Dictionary['map']['spots']): Readonly<Record<SpotFlag, string>> {
+  return { isEv: spots.electric, isAccessible: spots.accessible, isOversize: spots.oversize };
+}

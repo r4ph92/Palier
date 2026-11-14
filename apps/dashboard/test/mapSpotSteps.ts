@@ -20,7 +20,7 @@ export async function garageRoyAisleA(): Promise<FakeApiState> {
   const api = await openGarageRoyMap();
   await addLevel('P1');
   await addAisle({ code: 'A', minor: '1' });
-  await screen.findByText('Aucune place dans cette allée.');
+  await screen.findByText('Aucune place dans cette allée. Ajoutez-en avec le formulaire ci-dessus.');
   return api;
 }
 
@@ -32,11 +32,17 @@ export async function parkingDemoAisleA(): Promise<FakeApiState> {
   return api;
 }
 
+// Pasted, not typed key by key: these steps run in many tests, and typing each key kept them near the test timeout.
 export async function addSpots(range: string, distance = '30'): Promise<void> {
   const form = addForm();
-  await userEvent.type(form.getByRole('textbox', { name: 'Numéros des places' }), range);
-  await userEvent.type(form.getByRole('textbox', { name: 'Distance de la sortie, en mètres' }), distance);
+  await pasteInto(form.getByRole('textbox', { name: 'Numéros des places' }), range);
+  await pasteInto(form.getByRole('textbox', { name: 'Distance de la sortie, en mètres' }), distance);
   await userEvent.click(form.getByRole('button', { name: 'Ajouter les places' }));
+}
+
+async function pasteInto(box: HTMLElement, text: string): Promise<void> {
+  await userEvent.click(box);
+  await userEvent.paste(text);
 }
 
 export function rowOf(number: string): HTMLElement {

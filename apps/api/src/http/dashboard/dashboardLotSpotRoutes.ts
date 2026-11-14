@@ -1,7 +1,7 @@
 import type { DashboardAisleSpots } from '@palier/shared-types';
 import type { AddSpotsRequest, SpotAttributes } from '@palier/shared-types/spotDraft';
 import type { FastifyInstance, FastifyReply, FastifyRequest, onRequestAsyncHookHandler } from 'fastify';
-import { addSpotsOfMember, changeSpotOfMember, readAisleSpotsOfMember, retireSpotOfMember, type LotSpotSources, type MemberAisle, type MemberSpot } from '../../domain/dashboard/lotSpots.ts';
+import { addSpotsOfMember, changeSpotOfMember, readAisleSpotsOfMember, removeSpotOfMember, type LotSpotSources, type MemberAisle, type MemberSpot } from '../../domain/dashboard/lotSpots.ts';
 import { addSpotsBodySchema, dashboardAisleSpotsSchema, lotAisleParametersSchema, lotSpotParametersSchema, spotAttributesBodySchema } from '../schemas/lotSpotSchemas.ts';
 import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
 import { memberLotOf, refuseMalformedRequest, type LotParams } from './memberRequest.ts';
@@ -64,7 +64,7 @@ function registerRetireSpotRoute({ scope, sources, onRequest }: SpotRoutesContex
   const schema = { params: lotSpotParametersSchema, response: { 200: dashboardAisleSpotsSchema } };
   scope.delete<{ readonly Params: SpotParams }>(SPOT_ROUTE, { onRequest, attachValidation: true, schema }, (request): Promise<DashboardAisleSpots> => {
     refuseMalformedRequest(request);
-    return retireSpotOfMember(sources, memberSpotOf(request));
+    return removeSpotOfMember(sources, memberSpotOf(request));
   });
 }
 

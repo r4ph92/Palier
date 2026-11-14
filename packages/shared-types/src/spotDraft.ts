@@ -11,8 +11,13 @@ const RANGE_DIGITS = /^\d{1,6}$/;
 // What a painted sign shows: ASCII letters, digits, spaces and dashes, never a leading space. Empty is allowed: « 1 à 20 ».
 const RANGE_PREFIX = /^(?:[A-Za-z0-9-][A-Za-z0-9 -]*)?$/;
 const ENDS_WITH_DIGIT = /\d$/;
-const RANGE_SEPARATOR = /\s+(?:à|to)\s+/iu;
+const HAS_LETTER_OR_DIGIT = /[A-Za-z0-9]/;
+const HAS_LETTER = /[A-Za-z]/;
+// « à », « a », « au » and « to », in either language: an operator types whichever comes first.
+const RANGE_SEPARATOR = /\s+(?:à|au|a|to)\s+/iu;
 const NUMBER_AND_DIGITS = /^(.*?)(\d+)$/su;
+// One number alone: letters and digits, at most one dash and only before the digits, so « A-1-A-20 » is not one spot.
+const SINGLE_NUMBER = /^([A-Za-z0-9]*?-?)(\d+)$/u;
 
 // Language-neutral: the dashboard reads « A-1 à A-20 » or « A-1 to A-20 » into { prefix: 'A-', first: '1', last: '20' }.
 // first keeps its digits as typed, so « A-01 à A-20 » numbers the spots A-01 to A-20.
@@ -62,8 +67,9 @@ export function isValidSpotRange(range: SpotRange): boolean {
 }
 
 // A prefix ending in a digit would read as part of the number: « A1 » then « 5 » is A15, which the form never sends.
+// A prefix of dashes and spaces only reads as no prefix to a driver: « ---1 » is « 1 ».
 function isValidPrefix(prefix: string): boolean {
-  return RANGE_PREFIX.test(prefix) && !ENDS_WITH_DIGIT.test(prefix);
+  return RANGE_PREFIX.test(prefix) && !ENDS_WITH_DIGIT.test(prefix) && (prefix === '' || HAS_LETTER_OR_DIGIT.test(prefix));
 }
 
 function hasValidBounds(range: SpotRange): boolean {
@@ -85,22 +91,35 @@ function spotNumberOf({ prefix, first }: SpotRange, value: number): string {
   return `${prefix}${String(value).padStart(first.length, '0')}`;
 }
 
-// « A-1 à A-20 », « A-1 to A-20 » (either word in either language) or one number « A-7 »; null when it reads as neither.
+// « A-1 à A-20 », « A-1 to A-20 » or one number « A-7 »; null when it reads as neither, so a mistyped separator is never one spot.
 // The prefixes must match exactly; the rule then checks the range itself.
 export function parseSpotRange(text: string): SpotRange | null {
   const ends = text.normalize('NFC').trim().split(RANGE_SEPARATOR);
+  const [startText = '', endText] = ends;
   if (ends.length > 2) {
     return null;
   }
-  const start = numberAndDigitsOf(ends[0] ?? '');
-  const end = numberAndDigitsOf(ends.at(-1) ?? '');
+  return endText === undefined ? singleSpotOf(startText) : rangeOf(startText, endText);
+}
+
+function rangeOf(startText: string, endText: string): SpotRange | null {
+  const start = prefixAndDigitsOf(NUMBER_AND_DIGITS, startText);
+  const end = prefixAndDigitsOf(NUMBER_AND_DIGITS, endText);
   if (start === null || end === null || start.prefix !== end.prefix) {
     return null;
   }
   return { prefix: start.prefix, first: start.digits, last: end.digits };
 }
 
-function numberAndDigitsOf(number: string): { readonly prefix: string; readonly digits: string } | null {
-  const match = NUMBER_AND_DIGITS.exec(number);
+function singleSpotOf(text: string): SpotRange | null {
+  const number = prefixAndDigitsOf(SINGLE_NUMBER, text);
+  if (number === null || !HAS_LETTER.test(number.prefix)) {
+    return null;
+  }
+  return { prefix: number.prefix, first: number.digits, last: number.digits };
+}
+
+function prefixAndDigitsOf(shape: RegExp, number: string): { readonly prefix: string; readonly digits: string } | null {
+  const match = shape.exec(number);
   return match === null ? null : { prefix: match[1] ?? '', digits: match[2] ?? '' };
 }

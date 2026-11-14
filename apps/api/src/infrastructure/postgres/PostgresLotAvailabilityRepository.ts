@@ -1,9 +1,10 @@
-import { and, asc, count, eq, inArray, isNull, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, inArray } from 'drizzle-orm';
 import type { LotAvailabilityRepository } from '../../domain/lots/LotAvailabilityRepository.ts';
 import type { OnlineLot } from '../../domain/lots/OnlineLot.ts';
 import type { AvailableSpotGroup } from '../../domain/occupancy/availableByCategory.ts';
 import type { Database } from './database.ts';
 import { ASSIGNED_SPOT_COUNT, HELD_SPOT_COUNT } from './heldSpotCount.ts';
+import { isLiveSpot } from './liveSpot.ts';
 import { onlineLotFromRow } from './onlineLotRow.ts';
 import { parkingLot, spot } from './schema.ts';
 
@@ -46,12 +47,7 @@ export class PostgresLotAvailabilityRepository implements LotAvailabilityReposit
     return this.#database
       .select({ lotId: spot.lotId, isEv: spot.isEv, isAccessible: spot.isAccessible, isOversize: spot.isOversize, count: count() })
       .from(spot)
-      .where(availableLiveSpotsIn(lotIds))
+      .where(and(inArray(spot.lotId, [...lotIds]), eq(spot.state, 'AVAILABLE'), isLiveSpot))
       .groupBy(spot.lotId, spot.isEv, spot.isAccessible, spot.isOversize);
   }
-}
-
-// A retired spot is out of service too, so the state alone would skip it; the column says so where the count is read.
-export function availableLiveSpotsIn(lotIds: readonly string[]): SQL | undefined {
-  return and(inArray(spot.lotId, [...lotIds]), eq(spot.state, 'AVAILABLE'), isNull(spot.retiredAt));
 }
