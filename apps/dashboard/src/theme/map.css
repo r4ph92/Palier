@@ -150,6 +150,16 @@
   white-space: normal;
 }
 
+.wide-table-scroll .data-table tbody th {
+  min-width: 12ch;
+}
+
+/* Room for the focus ring of the last control, which the scroll box would clip. */
+.wide-table-scroll .data-table th:last-child,
+.wide-table-scroll .data-table td:last-child {
+  padding-right: var(--space-small);
+}
+
 /* A reading per beacon row: the errors above, then the field and its outlined button, always side by side. */
 .row-form {
   display: flex;
@@ -162,22 +172,35 @@
 }
 
 .row-form-controls {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-small);
+  display: grid;
+  grid-template-columns: max-content max-content;
+  align-items: start;
+  column-gap: var(--space-small);
 }
 
-/* Sized by its content, not the full row: the field widens only for its error, up to 24 characters. */
+/* Its children join the controls grid; the error wraps at 24 characters. */
 .row-form .field {
+  display: contents;
   width: auto;
   max-width: 24ch;
 }
 
 /* Room for 100 or a typed "15 %", padding included. */
 .row-form .field-input {
+  grid-row: 1;
+  grid-column: 1;
   width: 7ch;
 }
 
 .row-form .secondary-button {
+  grid-row: 1;
+  grid-column: 2;
   margin-top: 0;
+}
+
+/* The field error sits on its own row under both columns, so Save stays next to the input. */
+.row-form .field .error-notice {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  margin: 0;
 }

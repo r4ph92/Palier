@@ -9,7 +9,10 @@ function cssOf(file: string): string {
 // The declarations of the rule whose selector list is exactly this one, as written in the file.
 function ruleOf(css: string, selector: string): string {
   const start = css.indexOf(`${selector} {`);
-  return start === -1 ? '' : css.slice(start, css.indexOf('}', start));
+  if (start === -1) {
+    throw new Error(`No rule for ${selector}`);
+  }
+  return css.slice(start, css.indexOf('}', start));
 }
 
 const mapCss = cssOf('map.css');
@@ -37,6 +40,14 @@ describe('the tables of the beacons and the gates at 375 and 1440 px (#76 round 
     expect(ruleOf(mapCss, '.row-form .field')).not.toContain('flex:');
     expect(ruleOf(mapCss, '.row-form .field')).toContain('width: auto');
     expect(ruleOf(mapCss, '.row-form-controls')).not.toContain('flex-wrap');
+  });
+
+  it('keeps the Save button next to the input and puts a field error on its own row, and keeps the focus ring of the last column and the row names whole', () => {
+    expect(ruleOf(mapCss, '.row-form-controls')).toContain('grid-template-columns: max-content max-content');
+    expect(ruleOf(mapCss, '.row-form .field')).toContain('display: contents');
+    expect(ruleOf(mapCss, '.row-form .field .error-notice')).toContain('grid-column: 1 / -1');
+    expect(ruleOf(mapCss, '.wide-table-scroll .data-table th:last-child,\n.wide-table-scroll .data-table td:last-child')).toContain('padding-right: var(--space-small)');
+    expect(ruleOf(mapCss, '.wide-table-scroll .data-table tbody th')).toContain('min-width: 12ch');
   });
 
   it('spaces a lead that follows a table, keeps an inline link on the sentence line and the banner in its own weight', () => {
