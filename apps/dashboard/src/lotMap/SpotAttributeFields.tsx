@@ -8,7 +8,6 @@ interface SpotAttributeFieldsProps {
   readonly hint?: string | undefined;
 }
 
-// The three attributes as boxes to tick under one legend, then the distance to the exit.
 export function SpotAttributeFields({ field, hint }: SpotAttributeFieldsProps) {
   const text = useText();
   return (

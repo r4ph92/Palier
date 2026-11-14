@@ -120,7 +120,6 @@ function AttributesCell({ spot }: { readonly spot: DashboardSpot }) {
   );
 }
 
-// A row whose question was just cancelled gives focus back to its delete button.
 function RowActions({ spot, deletion, onEdit }: RowProps) {
   const { spots: text } = useText().map;
   const values = { number: spot.number };

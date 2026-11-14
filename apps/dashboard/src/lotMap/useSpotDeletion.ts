@@ -13,10 +13,8 @@ export interface SpotDeletionTarget {
 }
 
 export interface SpotDeletion {
-  // The spot whose row asks to confirm; null when no row does.
   readonly confirming: DashboardSpot | null;
   readonly ask: (spot: DashboardSpot) => void;
-  // Closes the question; the row's delete button then takes focus back.
   readonly cancel: () => void;
   readonly cancelledId: string | null;
   readonly deleting: boolean;
