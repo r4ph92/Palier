@@ -99,7 +99,7 @@ export const en: Dictionary = {
     reasonColumn: 'Reason',
     checkColumn: 'Check',
     place: '%{level} · aisle %{aisle}',
-    reasons: { WRONG_AISLE: 'different aisle', REPORTED_TAKEN: 'spot reported taken', NOT_RECORDED: 'reason not recorded' },
+    reasons: { WRONG_AISLE: 'different aisle', WRONG_SPOT: 'another spot in the aisle', REPORTED_TAKEN: 'spot reported taken', NOT_RECORDED: 'reason not recorded' },
     checked: { shown: 'Checked', name: 'Spot %{number} checked' },
     checking: 'Checking…',
     cleared: 'Spot %{number} checked.',

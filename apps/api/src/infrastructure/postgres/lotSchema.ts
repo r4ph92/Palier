@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { boolean, check, type AnyPgColumn, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { AISLE_MINOR_LIMITS, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { DEFAULT_HOLD_QUOTA, HOLD_QUOTA_LIMITS } from '@palier/shared-types/lotPricing';
+import { SPOT_CHECK_REASONS } from '@palier/shared-types/dashboard';
 import { SPOT_STATES } from '../../domain/spots/spotStates.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
 
@@ -9,6 +10,7 @@ export const kycStatus = pgEnum('kyc_status', ['NOT_STARTED', 'PENDING', 'ACTION
 export const assignmentStrategy = pgEnum('assignment_strategy', ['AISLE_BY_AISLE']);
 export const occupancySource = pgEnum('occupancy_source', ['DECLARATIVE', 'SENSORS']);
 export const spotState = pgEnum('spot_state', SPOT_STATES);
+export const spotCheckReason = pgEnum('spot_check_reason', SPOT_CHECK_REASONS);
 export const sensorState = pgEnum('sensor_state', ['FREE', 'OCCUPIED']);
 
 export const operator = pgTable('operator', {
@@ -115,7 +117,7 @@ export const aisle = pgTable(
 function needsCheckConstraints(table: { readonly lotId: AnyPgColumn; readonly needsCheck: AnyPgColumn; readonly needsCheckSince: AnyPgColumn; readonly needsCheckReason: AnyPgColumn; readonly retiredAt: AnyPgColumn }) {
   return [
     check('spot_needs_check_since_matches_flag', sql`${table.needsCheck} = (${table.needsCheckSince} is not null)`),
-    check('spot_needs_check_reason_known', sql`${table.needsCheckReason} in ('WRONG_AISLE', 'REPORTED_TAKEN')`),
+    check('spot_needs_check_reason_only_when_flagged', sql`${table.needsCheck} or ${table.needsCheckReason} is null`),
     index('spot_to_check_by_lot_index')
       .on(table.lotId)
       .where(sql`${table.needsCheck} and ${table.retiredAt} is null`),
@@ -138,7 +140,7 @@ export const spot = pgTable(
     needsCheck: boolean('needs_check').notNull().default(false),
     // When and why the spot was flagged; null together with needs_check false. A flag kept from before reasons were recorded has no reason.
     needsCheckSince: timestamp('needs_check_since', { withTimezone: true }),
-    needsCheckReason: text('needs_check_reason'),
+    needsCheckReason: spotCheckReason('needs_check_reason'),
     sensorState: sensorState('sensor_state'),
     sensorAt: timestamp('sensor_at', { withTimezone: true }),
     // Set when an operator deletes a spot that sessions, holds or reports still point at (decision 035).

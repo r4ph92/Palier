@@ -1,4 +1,4 @@
-import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
+import type { AssignedSpot, EntrySessionState, SpotCheckReason } from '@palier/shared-types';
 import type { SpotState } from '../spots/spotStates.ts';
 
 // Trimmed, otherwise as typed, so an exact painted number wins over its canonical match (decision 020).
@@ -70,6 +70,13 @@ export interface SpotWrites {
 export type Placement =
   | { readonly outcome: 'refused'; readonly refusal: Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service'> }
   | ({ readonly outcome: 'placed' } & SpotWrites);
+
+type CorrectionReason = Extract<SpotCheckReason, 'WRONG_AISLE' | 'WRONG_SPOT'>;
+
+// A car found elsewhere than its assigned spot: in the same aisle the driver only took another spot, in another aisle the walk was wrong.
+export function correctionReasonOf(assignedAisleId: string, answeredAisleId: string): CorrectionReason {
+  return assignedAisleId === answeredAisleId ? 'WRONG_SPOT' : 'WRONG_AISLE';
+}
 
 export function placementOf({ sessionState, assignedSpot, answeredSpot }: PlacementFacts): Placement {
   const isPresumed = sessionState === 'PARKED_PRESUMED';

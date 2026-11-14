@@ -1,5 +1,6 @@
 import type { AssignedSpot } from '@palier/shared-types';
 import {
+  correctionReasonOf,
   decideSessionAnswer,
   placementOf,
   type ParkedAnswer,
@@ -16,6 +17,7 @@ import {
   lockAnsweringSession,
   occupyAnsweredSpot,
   readSessionLot,
+  type AnsweredSpot,
   type AnsweringSession,
 } from './parkedAnswerStatements.ts';
 
@@ -73,21 +75,21 @@ async function placeCar(tx: Transaction, answer: SpotAnswer, { lotId, session }:
   if (placement.outcome === 'refused') {
     return { outcome: placement.refusal };
   }
-  await writeSpots(tx, placement, { answeredSpotId: spot.id, assignedSpotId: session.assignedSpot.id });
+  await writeSpots(tx, placement, { answered: spot, assigned: session.assignedSpot });
   await confirmParkedSpot(tx, answer.sessionId, spot.id);
   return { outcome: 'confirmed', spot: spot.label };
 }
 
-interface PlacedSpotIds {
-  readonly answeredSpotId: string;
-  readonly assignedSpotId: string;
+interface PlacedSpots {
+  readonly answered: AnsweredSpot;
+  readonly assigned: AnsweringSession['assignedSpot'];
 }
 
-async function writeSpots(tx: Transaction, { occupiesAnswered, flagsAssigned }: SpotWrites, { answeredSpotId, assignedSpotId }: PlacedSpotIds): Promise<void> {
+async function writeSpots(tx: Transaction, { occupiesAnswered, flagsAssigned }: SpotWrites, { answered, assigned }: PlacedSpots): Promise<void> {
   if (occupiesAnswered) {
-    await occupyAnsweredSpot(tx, answeredSpotId);
+    await occupyAnsweredSpot(tx, answered.id);
   }
   if (flagsAssigned) {
-    await flagAssignedSpotToCheck(tx, assignedSpotId, 'WRONG_AISLE');
+    await flagAssignedSpotToCheck(tx, assigned.id, correctionReasonOf(assigned.aisleId, answered.aisleId));
   }
 }

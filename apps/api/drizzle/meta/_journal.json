@@ -267,6 +267,13 @@
       "when": 1794616827574,
       "tag": "0037_spot_needs_check_reason",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794631207159,
+      "tag": "0038_spot_check_reason_enum",
+      "breakpoints": true
     }
   ]
 }
