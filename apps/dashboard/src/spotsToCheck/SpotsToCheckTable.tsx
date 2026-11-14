@@ -18,14 +18,16 @@ type RowProps = Pick<SpotsToCheckTableProps, 'clearing'> & { readonly spot: Dash
 // Explicit roles keep the table a table for screen readers when narrow screens stack each row.
 export function SpotsToCheckTable({ spots, clearing, labelledBy }: SpotsToCheckTableProps) {
   return (
-    <table className="data-table check-table" role="table" aria-labelledby={labelledBy}>
-      <SpotsToCheckHead />
-      <tbody role="rowgroup">
-        {spots.map((spot) => (
-          <SpotToCheckRow key={spot.spotId} spot={spot} clearing={clearing} />
-        ))}
-      </tbody>
-    </table>
+    <div className="check-table-box">
+      <table className="data-table stacked-table check-table" role="table" aria-labelledby={labelledBy}>
+        <SpotsToCheckHead />
+        <tbody role="rowgroup">
+          {spots.map((spot) => (
+            <SpotToCheckRow key={spot.spotId} spot={spot} clearing={clearing} />
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -50,7 +52,7 @@ function SpotsToCheckHead() {
 function SpotToCheckRow({ spot, clearing }: RowProps) {
   return (
     <tr role="row" className="check-row" aria-busy={clearing.clearingId === spot.spotId}>
-      <th scope="row" role="rowheader" className="check-number">
+      <th scope="row" role="rowheader" className="check-number number-cell">
         {spot.number}
       </th>
       <PlaceCells spot={spot} />
@@ -89,7 +91,7 @@ function ReasonCell({ reason }: { readonly reason: DashboardSpotToCheck['reason'
 function SinceCell({ since }: { readonly since: string }) {
   const { language } = useLanguage();
   return (
-    <td role="cell" className="check-since">
+    <td role="cell" className="check-since number-cell">
       <time dateTime={since}>{formatRecentDateTime(new Date(since), language, new Date())}</time>
     </td>
   );
@@ -100,7 +102,7 @@ function SpotStateMark({ spot }: { readonly spot: DashboardSpotToCheck }) {
   const { spotStates, spotsToCheck } = useText();
   const heldByASession = spot.state === 'AVAILABLE' && !spot.clearable;
   const tone: StateTone = spot.clearable ? 'free' : 'muted';
-  return <StateMark tone={tone} label={heldByASession ? spotsToCheck.heldBySession : spotStates[spot.state]} />;
+  return <StateMark tone={tone} label={heldByASession ? spotsToCheck.heldBySession : spotStates[spot.state]} wraps />;
 }
 
 function CheckedButton({ spot, clearing }: RowProps) {

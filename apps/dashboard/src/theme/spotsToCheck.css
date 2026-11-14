@@ -1,26 +1,17 @@
-/* The spots to check of a lot (#73), laid out like the spot list of #66. */
-.check-table th,
-.check-table td {
-  overflow-wrap: normal;
-  hyphens: none;
-}
-
+/* The spots to check of a lot; its stacking is shared in stackedTable.css. The spot, its time and the button keep whole, the other cells wrap between words. */
 .check-number,
-.check-place,
-.check-state,
 .check-since,
-.check-table thead th {
+.check-action .text-button {
   white-space: nowrap;
-}
-
-.check-number,
-.check-since {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
 }
 
 .check-action {
   min-width: 14ch;
+}
+
+/* A long spot number may still make the table wider than the section: it then scrolls in its own box, never the page. */
+.check-table-box {
+  overflow-x: auto;
 }
 
 .check-status {
@@ -32,37 +23,8 @@
   cursor: wait;
 }
 
-/* Narrow screens stack each row: number and state, then place · time, then the reason, then the button. */
+/* Narrow screens: number and state, then place · time, then the reason, then the button. */
 @media (max-width: 680px) {
-  .check-table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
-  .check-table tbody tr {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 var(--space-small);
-    padding: var(--space-small) 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .check-table tbody tr::before {
-    content: '';
-    flex-basis: 100%;
-    order: 3;
-  }
-
-  .check-table tbody th,
-  .check-table tbody td {
-    padding: 0;
-    border-bottom: 0;
-  }
-
   .check-number {
     flex: 1 0 auto;
     order: 1;
@@ -93,6 +55,5 @@
     flex-basis: 100%;
     order: 7;
     min-width: 0;
-    white-space: normal;
   }
 }
