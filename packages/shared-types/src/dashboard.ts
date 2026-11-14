@@ -106,7 +106,7 @@ export interface DashboardLotMap {
 // Every level of the lot, each once, in the new order; fromLevelIds is the order the page showed when the operator moved a level.
 export interface LevelOrderRequest {
   readonly levelIds: readonly string[];
-  readonly fromLevelIds?: readonly string[];
+  readonly fromLevelIds: readonly string[];
 }
 
 export type DashboardLotListResponse = readonly DashboardLot[];
