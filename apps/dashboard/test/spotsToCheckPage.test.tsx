@@ -77,6 +77,18 @@ describe('the spots to check page', () => {
     expect(api.spotsToCheck.get(parkingDemo.id)).toHaveLength(2);
   });
 
+  it('says why a spot that is not free and held by no session stays in the list', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    const [occupied] = seededFlags();
+    api.spotsToCheck.set(parkingDemo.id, [{ ...occupied, heldBySession: false }]);
+    renderDashboard({ path: PAGE });
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Place A-1 vérifiée' }));
+
+    const alert = await within(rowOf('A-1')).findByRole('alert');
+    expect(alert.textContent).toBe('Place non libre et retenue par aucune session — elle reste à vérifier tant qu’elle n’est pas libre.');
+  });
+
   it('shows the busy lot message and keeps the row when the lot is busy', async () => {
     const busy = { status: 503, body: { error: 'LOT_BUSY' } };
     installFakeApi({ signedInAs: sophie, answers: { [`POST /lots/${parkingDemo.id}/spots/${PARKING_DEMO_B2_ID}/check-cleared`]: busy } });

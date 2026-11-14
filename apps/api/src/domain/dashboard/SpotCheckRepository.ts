@@ -1,7 +1,7 @@
 import type { DashboardErrorCode, DashboardSpotsToCheck } from '@palier/shared-types';
 import type { SpotPlace } from './LotSpotRepository.ts';
 
-export type SpotCheckRefusal = Extract<DashboardErrorCode, 'LOT_NOT_FOUND' | 'LOT_BUSY' | 'SPOT_NOT_FOUND' | 'SPOT_STILL_ASSIGNED'>;
+export type SpotCheckRefusal = Extract<DashboardErrorCode, 'LOT_NOT_FOUND' | 'LOT_BUSY' | 'SPOT_NOT_FOUND' | 'SPOT_STILL_ASSIGNED' | 'SPOT_NOT_FREE'>;
 
 // Every statement names the operator; a clear first locks the operator's lot, so another operator's lot is LOT_NOT_FOUND before anything else is read.
 export interface SpotCheckRepository {

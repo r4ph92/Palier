@@ -86,7 +86,7 @@ describe('story #73 attack surface: spots to check and clearing them', () => {
 
   // Mass assignment: the clear has no body schema. A smuggled body must not override the real state that the guard reads.
   it('ignores a request body that tries to pass a held spot off as clearable, and refuses it all the same', async () => {
-    const held = flag('B-2', 'OCCUPIED_UNKNOWN');
+    const held = flag('B-2', 'ASSIGNED');
 
     const response = await server.inject({
       method: 'POST',

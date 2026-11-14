@@ -48,6 +48,7 @@ const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
   SPOT_NUMBER_TAKEN: 409,
   SPOT_IN_USE: 409,
   SPOT_STILL_ASSIGNED: 409,
+  SPOT_NOT_FREE: 409,
 };
 
 export function handleDashboardError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {

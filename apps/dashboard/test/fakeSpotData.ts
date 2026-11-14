@@ -25,7 +25,7 @@ export const PARKING_DEMO_B2_ID = '00000000-0000-4000-8000-000000000702';
 // Parking Démo as the story has it: A-1 flagged when Julie parked in another aisle, B-2 when Marc reported it taken. A-1 is still occupied.
 export function seededSpotsToCheck(): Map<string, DashboardSpotToCheck[]> {
   const flagged: DashboardSpotToCheck[] = [
-    { spotId: PARKING_DEMO_A1_ID, number: 'A-1', levelCode: 'P1', aisleCode: 'A', since: '2026-11-13T14:05:00.000Z', reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN', clearable: false, heldBySession: false },
+    { spotId: PARKING_DEMO_A1_ID, number: 'A-1', levelCode: 'P1', aisleCode: 'A', since: '2026-11-13T14:05:00.000Z', reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN', clearable: false, heldBySession: true },
     { spotId: PARKING_DEMO_B2_ID, number: 'B-2', levelCode: 'P1', aisleCode: 'B', since: '2026-11-13T15:20:00.000Z', reason: 'REPORTED_TAKEN', state: 'AVAILABLE', clearable: true, heldBySession: false },
   ];
   return new Map([[parkingDemo.id, flagged]]);

@@ -41,8 +41,8 @@ export class FakeSpotCheckRepository implements SpotCheckRepository {
       return Promise.resolve('SPOT_NOT_FOUND');
     }
     const decision = clearDecisionOf({ state: spot.state, needsCheck: spot.check !== null, heldBySession: spot.isHeldBySession });
-    if (decision === 'STILL_ASSIGNED') {
-      return Promise.resolve('SPOT_STILL_ASSIGNED');
+    if (decision !== 'CLEAR' && decision !== 'ALREADY_CLEAR') {
+      return Promise.resolve(decision);
     }
     spot.check = null;
     return Promise.resolve('CLEARED');

@@ -38,11 +38,8 @@ async function clearUnheldSpot(tx: Pick<Transaction, 'execute'>, operatorId: str
     return 'SPOT_NOT_FOUND';
   }
   const decision = clearDecisionOf({ state: row.state, needsCheck: row.needs_check, heldBySession: row.held_by_session });
-  if (decision === 'STILL_ASSIGNED') {
-    return 'SPOT_STILL_ASSIGNED';
-  }
   if (decision === 'CLEAR') {
     requireUpdatedRow(await tx.execute(clearSpotCheckStatement(operatorId, spot)), `Spot ${spot.spotId} could not be cleared under its lock.`);
   }
-  return 'CLEARED';
+  return decision === 'CLEAR' || decision === 'ALREADY_CLEAR' ? 'CLEARED' : decision;
 }

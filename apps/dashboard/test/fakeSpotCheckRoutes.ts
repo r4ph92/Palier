@@ -27,10 +27,16 @@ export function routeSpotChecks({ spotsToCheck, lots }: MemberSpotChecks, reques
 }
 
 function clearSpot(spotsToCheck: FakeApiState['spotsToCheck'], { lot, spotId }: { readonly lot: DashboardLotDetails; readonly spotId: string }, flagged: readonly DashboardSpotToCheck[]): FakeResponse {
-  if (flagged.some((spot) => spot.spotId === spotId && !spot.clearable)) {
-    return refused(409, 'SPOT_STILL_ASSIGNED');
+  const refusedSpot = flagged.find((spot) => spot.spotId === spotId && !spot.clearable);
+  if (refusedSpot !== undefined) {
+    return refused(409, refusalOf(refusedSpot));
   }
   const remaining = flagged.filter((spot) => spot.spotId !== spotId);
   spotsToCheck.set(lot.id, remaining);
   return { status: 200, body: { lotName: lot.name, spots: remaining } };
+}
+
+// As the API's clearDecisionOf: a session or a hold still has it, or it is not free with nothing to wait for.
+function refusalOf({ state, heldBySession }: DashboardSpotToCheck): 'SPOT_STILL_ASSIGNED' | 'SPOT_NOT_FREE' {
+  return heldBySession || ['AVAILABLE', 'HELD', 'ASSIGNED'].includes(state) ? 'SPOT_STILL_ASSIGNED' : 'SPOT_NOT_FREE';
 }

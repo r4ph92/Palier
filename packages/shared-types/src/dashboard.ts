@@ -210,6 +210,7 @@ export const DASHBOARD_ERROR_CODES = [
   'SPOT_NUMBER_TAKEN',
   'SPOT_IN_USE',
   'SPOT_STILL_ASSIGNED',
+  'SPOT_NOT_FREE',
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];

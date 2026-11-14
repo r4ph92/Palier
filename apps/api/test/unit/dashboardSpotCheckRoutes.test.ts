@@ -100,7 +100,7 @@ describe('the spots flagged for a physical check, and clearing them', () => {
   });
 
   it.each([
-    ['still occupied-unknown', { state: 'OCCUPIED_UNKNOWN' }],
+    ['still occupied-unknown under an active session', { state: 'OCCUPIED_UNKNOWN', isHeldBySession: true }],
     ['assigned', { state: 'ASSIGNED' }],
     ['held', { state: 'HELD' }],
     ['free but held by an active session', { state: 'AVAILABLE', isHeldBySession: true }],
@@ -113,6 +113,21 @@ describe('the spots flagged for a physical check, and clearing them', () => {
 
     expect(response.statusCode).toBe(409);
     expect(response.json<DashboardErrorBody>()).toMatchObject({ error: STILL_ASSIGNED.code, message: STILL_ASSIGNED.message });
+    expect(spots.spots).toEqual(before);
+  });
+
+  it.each([
+    ['out of service', { state: 'OUT_OF_SERVICE' }],
+    ['occupied-unknown with no session', { state: 'OCCUPIED_UNKNOWN' }],
+  ] as const)('refuses a flagged spot that is %s with SPOT_NOT_FREE, and changes nothing', async (_label, notFree) => {
+    flagA1AndB2();
+    Object.assign(spotNamed('A-1'), notFree);
+    const before = structuredClone(spots.spots);
+
+    const response = await clear(sophieCookies, spotNamed('A-1').id);
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json<DashboardErrorBody>()).toMatchObject({ error: 'SPOT_NOT_FREE', message: 'Spot not free and held by no session; it stays flagged until it is free.' });
     expect(spots.spots).toEqual(before);
   });
 

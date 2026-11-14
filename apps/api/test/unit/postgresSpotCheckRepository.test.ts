@@ -67,7 +67,7 @@ describe('clearing the check of a spot in Postgres', () => {
   });
 
   it.each([
-    ['occupied-unknown', { ...free, state: 'OCCUPIED_UNKNOWN' }],
+    ['occupied-unknown with an active session', { ...free, state: 'OCCUPIED_UNKNOWN', held_by_session: true }],
     ['assigned', { ...free, state: 'ASSIGNED' }],
     ['held', { ...free, state: 'HELD' }],
     ['free with an active session pointing at it', { ...free, held_by_session: true }],
@@ -75,6 +75,16 @@ describe('clearing the check of a spot in Postgres', () => {
     const scripted = lockedLot().answer('lock-spot-to-clear', [row]);
 
     expect(await repositoryOn(scripted).clearSpotCheck(SOPHIE_OPERATOR, spotB2)).toBe('SPOT_STILL_ASSIGNED');
+    expect(scripted.count('clear-spot-check')).toBe(0);
+  });
+
+  it.each([
+    ['out of service', { ...free, state: 'OUT_OF_SERVICE' }],
+    ['occupied-unknown with no session', { ...free, state: 'OCCUPIED_UNKNOWN' }],
+  ])('refuses a spot that is %s as SPOT_NOT_FREE and writes nothing', async (_label, row) => {
+    const scripted = lockedLot().answer('lock-spot-to-clear', [row]);
+
+    expect(await repositoryOn(scripted).clearSpotCheck(SOPHIE_OPERATOR, spotB2)).toBe('SPOT_NOT_FREE');
     expect(scripted.count('clear-spot-check')).toBe(0);
   });
 
