@@ -152,6 +152,8 @@ export const fr = {
     overDay: 'Plafond de 24\u00A0h dépassé — le surplus sera facturé à la sortie',
     pending: 'Entrée en attente de confirmation',
     parkedInLead: 'Garé en ',
+    spotPanelEyebrow: 'Votre place',
+    spotPanelPlace: 'Palier\u00A0%{level} · Allée\u00A0%{aisle}',
     updatedAtLead: 'Mis à jour à ',
     offline: 'Hors ligne, montant au dernier relevé',
     detectionOff: 'Détection automatique désactivée\u00A0— votre place sera présumée occupée après 30\u00A0min',

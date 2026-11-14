@@ -1,4 +1,4 @@
-import { act, screen, userEvent } from '@testing-library/react-native';
+import { act, screen, userEvent, within } from '@testing-library/react-native';
 import { PalierStatusError } from '../src/api/LotsClient';
 import { SESSION_REFRESH_MILLISECONDS } from '../src/parkingSessions/useCurrentParkingSession';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
@@ -55,7 +55,8 @@ describe('the current session over its life', () => {
     await advance(SESSION_REFRESH_MILLISECONDS);
 
     expect(screen.getByText('Montant à ce jour : 9,75 $', visibleText)).toBeOnTheScreen();
-    expect(screen.getByText('A-1 · Palier P1 · Allée A', visibleText)).toBeOnTheScreen();
+    expect(within(screen.getByTestId('spot-panel')).getByText('A-1', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('Palier P1 · Allée A', visibleText)).toBeOnTheScreen();
   });
 
   it('opens on the session in English after a relaunch, with the amount, cap and entry time', async () => {

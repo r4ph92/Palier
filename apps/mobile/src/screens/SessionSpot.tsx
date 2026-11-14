@@ -1,7 +1,7 @@
 import type { AssignedSpot, CurrentParkingSession, EntrySessionState } from '@palier/shared-types';
 import { useState } from 'react';
-import { SpotWithState } from '../components/SpotLine';
 import { SpotNumberText } from '../components/SpotNumberText';
+import { SpotPanel } from '../components/SpotPanel';
 import { useAccessibilityFocusOn } from '../components/useAccessibilityFocusOn';
 import { useAnnouncement } from '../components/useAnnouncement';
 import { i18n } from '../i18n/i18n';
@@ -29,7 +29,7 @@ export function SessionSpot({ session, arrival, shouldFocusOnArrival }: SessionS
   useAnnouncement(arrival === 'walked' ? status : null);
   const statusContent = spotLead === null ? undefined : <SpotStatus spot={session.spot} lead={spotLead} />;
   const markColor = session.state === 'CREATED' ? colors.muted : colors.free;
-  return <SpotWithState ref={ref} spot={session.spot} statusLabel={status} statusContent={statusContent} markColor={markColor} />;
+  return <SpotPanel ref={ref} spot={session.spot} statusLabel={status} statusContent={statusContent} markColor={markColor} />;
 }
 
 interface SpotFocus {
