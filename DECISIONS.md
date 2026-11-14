@@ -448,6 +448,10 @@ service », et ouvre la sortie sans condition en comptant localement les passage
 rejoués à la reconnexion. Perdre quelques captures vaut mieux qu'un parking
 qui retient ses usagers.
 
+*Mise en œuvre (#76)* : côté Palier, une borne sans signal de vie depuis plus de
+2 minutes refuse l'entrée (`GATE_SILENT`) ; la sortie n'est jamais refusée
+(`docs/decisions/035`).
+
 **Q48** : L'usager sans l'app ne rejoindra jamais le Wi-Fi du garage, et l'usager
 avec l'app pas toujours. Les deux bornes doivent être couvertes en cellulaire,
 mesuré lors de l'adhésion : `parking_lot.cell_verified_at`, au même rang que
