@@ -5,7 +5,7 @@ import { EVENT_RETENTION_HOURS, SESSION_EVENT_KINDS } from '../../src/domain/ses
 import { appendSessionEvent, jsonbObjectOf } from '../../src/infrastructure/postgres/sessionEventStatements.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
 
-const migration = readFileSync(new URL('../../drizzle/0036_session_event_log.sql', import.meta.url), 'utf8');
+const migration = readFileSync(new URL('../../drizzle/0038_session_event_log.sql', import.meta.url), 'utf8');
 const SESSION_ID = '00000000-0000-4000-8000-000000000951';
 const LOT_ID = '00000000-0000-4000-8000-000000000201';
 const GATE_ID = '00000000-0000-4000-8000-000000000701';
@@ -14,7 +14,7 @@ function oneLine(text: string | undefined): string {
   return (text ?? '').replace(/\s+/g, ' ').trim();
 }
 
-describe('migration 0036, the visit event log (story #156)', () => {
+describe('migration 0038, the visit event log (story #156)', () => {
   it('keeps the session, the lot, the kind, the payload, the instant and the purge date of each event', () => {
     expect(migration).toContain('"session_id" uuid NOT NULL');
     expect(migration).toContain('"lot_id" uuid NOT NULL');

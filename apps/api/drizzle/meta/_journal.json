@@ -267,6 +267,13 @@
       "when": 1794635091616,
       "tag": "0037_equipment_health",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794636795065,
+      "tag": "0038_session_event_log",
+      "breakpoints": true
     }
   ]
 }
