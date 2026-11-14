@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
-import { type DetectedAisle, type SessionAfterRefusal, type WalkAisles, type WalkingSignal } from '../../domain/parkingSessions/ParkedPresumption.ts';
+import type { DetectedAisle, SessionAfterRefusal, WalkAisles, WalkingSignal } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import { clampedParkedAt } from './clampedParkedAt.ts';
 import type { Database, Transaction } from './database.ts';
 import { inLotLock } from './lockParkingLot.ts';
