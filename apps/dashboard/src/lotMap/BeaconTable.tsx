@@ -10,7 +10,7 @@ import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { batteryMarkOf } from './batteryMark.ts';
 import { RecordBatteryForm } from './RecordBatteryForm.tsx';
 import { useAisleName } from './useAisleName.ts';
-import { useMapLimitValues } from './useMapLimitValues.ts';
+import { useBatteryLimitValues } from './useBatteryLimitValues.ts';
 
 interface BeaconTableProps {
   readonly map: DashboardLotMap;
@@ -61,7 +61,7 @@ function BeaconFacts({ map }: { readonly map: DashboardLotMap }) {
 
 function BatteryTable({ map, onRecorded }: { readonly map: DashboardLotMap; readonly onRecorded: RecordBattery }) {
   const text = useText();
-  const limits = useMapLimitValues();
+  const limits = useBatteryLimitValues();
   const columns = [text.map.levelColumn, text.map.aisleColumn, text.map.minorColumn, text.map.batteryColumn, text.map.readingColumn];
   return (
     <>

@@ -4,7 +4,7 @@ import { SubmitButton } from '../forms/SubmitButton.tsx';
 import { TextField } from '../forms/TextField.tsx';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useText } from '../i18n/LanguageContext.tsx';
-import { useMapLimitValues } from './useMapLimitValues.ts';
+import { useBatteryLimitValues } from './useBatteryLimitValues.ts';
 import { useRecordBatteryForm, type RecordBatteryTarget } from './useRecordBatteryForm.ts';
 
 interface RecordBatteryFormProps extends RecordBatteryTarget {
@@ -15,7 +15,7 @@ interface RecordBatteryFormProps extends RecordBatteryTarget {
 export function RecordBatteryForm({ aisleName, ...target }: RecordBatteryFormProps) {
   const text = useText();
   const form = useRecordBatteryForm(target);
-  const limits = useMapLimitValues();
+  const limits = useBatteryLimitValues();
   const field = fieldBinder(form, `battery-${target.aisleId}`, limits);
   return (
     <form className="row-form" noValidate aria-busy={form.submitting} onSubmit={(event) => void form.submit(event)}>
