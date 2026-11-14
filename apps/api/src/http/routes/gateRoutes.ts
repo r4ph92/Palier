@@ -32,7 +32,8 @@ import {
 export interface GateRouteDependencies {
   readonly deviceKeys: GateDeviceKeyRepository;
   readonly ledger: PassageLedger;
-  readonly clock: Clock;
+  // The gate clock passages are judged by; heartbeats and battery reports take ComposedGateDependencies.healthClock.
+  readonly passageClock: Clock;
   readonly commands: GateCommandFeed;
   readonly openingWindow: OpeningWindow;
   readonly equipment: EquipmentReports;
@@ -106,7 +107,7 @@ function registerPassageRoute(scope: FastifyInstance, dependencies: GateRouteDep
       requestedGateId: request.params.id,
       closedAt: new Date(request.body.closedAt),
     };
-    return recordPassage(command, { ledger: dependencies.ledger, clock: dependencies.clock, openingWindow: dependencies.openingWindow });
+    return recordPassage(command, { ledger: dependencies.ledger, clock: dependencies.passageClock, openingWindow: dependencies.openingWindow });
   });
 }
 
@@ -116,7 +117,7 @@ function registerReplayRoute(scope: FastifyInstance, dependencies: GateRouteDepe
   scope.post<ReplayRoute>('/:id/passages/replay', { schema }, async (request): Promise<PassageReplayResponse> => {
     const passages = request.body.passages.map((passage) => ({ ...passage, closedAt: new Date(passage.closedAt) }));
     const command = { gate: authenticatedGateOf(request), requestedGateId: request.params.id, passages };
-    return replayPassages(command, { ledger: dependencies.ledger, clock: dependencies.clock });
+    return replayPassages(command, { ledger: dependencies.ledger, clock: dependencies.passageClock });
   });
 }
 

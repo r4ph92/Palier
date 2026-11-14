@@ -13,7 +13,7 @@ describe('POST /v1/gates/:id/passages/replay, batch rules', () => {
 
   function startServer(vehicleCount: number): void {
     ledger = new FakePassageLedger(vehicleCount);
-    const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger, clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW, equipment: new FakeEquipmentReports() };
+    const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger, passageClock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW, equipment: new FakeEquipmentReports() };
     server = buildServer(serverDependencies({ gates }));
   }
 

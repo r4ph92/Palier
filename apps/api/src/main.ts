@@ -98,7 +98,7 @@ const server = buildServer({
   gates: {
     deviceKeys: new PostgresGateDeviceKeyRepository(connection.database),
     ledger: new PostgresPassageLedger(connection.database),
-    clock: systemClock,
+    passageClock: systemClock,
     commands: new PostgresGateCommandFeed(connection.database),
     openingWindow,
     equipment: new PostgresEquipmentReports(connection.database),

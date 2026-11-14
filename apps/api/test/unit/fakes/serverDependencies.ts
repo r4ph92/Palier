@@ -23,7 +23,7 @@ export function fakeGateDependencies(): GateRouteDependencies {
   return {
     deviceKeys: new FakeGateDeviceKeyRepository(),
     ledger: new FakePassageLedger(),
-    clock: () => NOW,
+    passageClock: () => NOW,
     commands: new FakeGateCommandFeed(),
     openingWindow: SIXTY_SECOND_WINDOW,
     equipment: new FakeEquipmentReports(),

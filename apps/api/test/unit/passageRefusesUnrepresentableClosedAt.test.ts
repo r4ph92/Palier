@@ -14,7 +14,7 @@ describe('POST /v1/gates/:id/passage with a closedAt JavaScript cannot represent
     'refuses %s with 400 and counts nothing instead of answering 500',
     async (closedAt) => {
       ledger = new FakePassageLedger(0);
-      const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger, clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW, equipment: new FakeEquipmentReports() };
+      const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger, passageClock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW, equipment: new FakeEquipmentReports() };
       server = buildServer(serverDependencies({ gates }));
 
       const response = await server.inject({

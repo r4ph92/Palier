@@ -16,7 +16,7 @@ describe('GET /v1/gates/me/commands', () => {
   let server: FastifyInstance;
 
   function startServer(commands: FakeGateCommandFeed) {
-    const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger: new FakePassageLedger(), clock: () => NOW, commands, openingWindow: SIXTY_SECOND_WINDOW, equipment: new FakeEquipmentReports() };
+    const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger: new FakePassageLedger(), passageClock: () => NOW, commands, openingWindow: SIXTY_SECOND_WINDOW, equipment: new FakeEquipmentReports() };
     server = buildServer(serverDependencies({ gates }));
   }
 
