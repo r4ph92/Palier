@@ -89,4 +89,18 @@ describe('createGateApi', () => {
 
     expect(fetchFunction.mock.calls[0]?.[0]).toBe('/v1/gates/me/commands');
   });
+
+  it('beats with the key alone: no body and no content type, like a presence', async () => {
+    const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }));
+
+    const response = await createGateApi(fetchFunction).postHeartbeat(DEVICE_KEY, 'gate-501');
+
+    expect(response).toEqual({ status: 204, body: null });
+    expect(fetchFunction).toHaveBeenCalledWith('/v1/gates/gate-501/heartbeat', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${DEVICE_KEY}` },
+      cache: 'no-store',
+      credentials: 'omit',
+    });
+  });
 });

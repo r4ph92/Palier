@@ -1,6 +1,7 @@
 import { COMMAND_POLL_MILLISECONDS } from './commandFeed.js';
 import { createCommandRefresh } from './commandPolling.js';
 import { createGateApi } from './gateApi.js';
+import { createHeartbeat, scheduleHeartbeat } from './gateHeartbeat.js';
 import {
   clearQueueButton,
   deviceKeyInput,
@@ -43,6 +44,8 @@ const state = {
   isSending: false,
   renderedCommandLines: '',
 };
+
+const heartbeat = createHeartbeat(state, api, () => render(state));
 
 /** @param {PressOutcome} outcome */
 function applyOutcome(outcome) {
@@ -102,7 +105,10 @@ function onOfflineToggled() {
     const request = { connection: state.connection, deviceKey: state.deviceKey, identity: state.identity };
     applyPatch(await toggleOffline(request, api));
   }, busyMessage);
-  return toggled.then(() => focusAfterQueueAction(state));
+  return toggled.then(() => {
+    focusAfterQueueAction(state);
+    void heartbeat.beat();
+  });
 }
 
 function onQueueCleared() {
@@ -146,6 +152,7 @@ deviceKeyInput.addEventListener('input', () => {
   state.message = statusMessageOf(state.connection);
   state.commands = [];
   render(state);
+  void heartbeat.restart();
 });
 
 for (const button of loopButtons) {
@@ -162,3 +169,4 @@ for (const button of languageButtons) {
 render(state);
 const refreshCommands = createCommandRefresh(state, api);
 setInterval(() => void refreshCommands(), COMMAND_POLL_MILLISECONDS);
+scheduleHeartbeat(heartbeat);
