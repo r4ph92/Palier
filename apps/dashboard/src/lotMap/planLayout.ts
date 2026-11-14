@@ -7,24 +7,53 @@ const MINIMUM_SIDE_SHARE = 0.08;
 // A code reads at this share of the frame's longer side, about 12 to 16 px at the widths the preview takes.
 const LABEL_SHARE = 0.035;
 
-// A mono glyph is about this share of the font size wide.
-const GLYPH_WIDTH_SHARE = 0.6;
+// A mono glyph is 0.6 em wide; the estimate errs wide, since a label box only ever grows the frame.
+const GLYPH_WIDTH_SHARE = 0.65;
+
+// Emoji and East Asian wide characters take two glyph widths.
+const WIDE_CHARACTER = /[\p{Extended_Pictographic}\u1100-\u115F\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFF60\uFFE0-\uFFE6]/u;
+
+export interface PlanAisleShape {
+  readonly rectangle: AisleRectangle;
+  readonly label: string;
+}
+
+// box is the area the label's glyphs take on the grid, inside or beside its aisle.
+export interface LabelPlacement {
+  readonly kind: 'inside' | 'beside';
+  readonly x: number;
+  readonly y: number;
+  readonly fontSize: number;
+  readonly anchor: 'start' | 'middle';
+  readonly baseline: 'hanging' | 'central';
+  readonly box: AisleRectangle;
+}
+
+export interface PlacedAisle {
+  readonly drawn: AisleRectangle;
+  readonly label: string;
+  readonly placement: LabelPlacement;
+}
 
 export interface PlanLayout {
   readonly frame: AisleRectangle;
-  readonly minimumSide: number;
-  readonly labelSize: number;
+  readonly aisles: readonly PlacedAisle[];
 }
 
-export type LabelPlacement =
-  | { readonly kind: 'inside'; readonly x: number; readonly y: number; readonly fontSize: number }
-  | { readonly kind: 'beside'; readonly x: number; readonly y: number; readonly fontSize: number; readonly baseline: 'hanging' | 'central' | 'auto' };
+// Two passes: the second sizes the thinnest aisle against the frame the first one found, labels included,
+// so a frame grown to hold a label never shrinks an aisle back to a hairline.
+export function planLayoutOf(aisles: readonly PlanAisleShape[]): PlanLayout {
+  const firstPass = layoutWith(aisles, shorterSideOf(planFrameOf(aisles.map(({ rectangle }) => rectangle))) * MINIMUM_SIDE_SHARE);
+  return layoutWith(aisles, shorterSideOf(firstPass.frame) * MINIMUM_SIDE_SHARE);
+}
 
-// Framed around the aisles as drawn, each at least the minimum side.
-export function planLayoutOf(rectangles: readonly AisleRectangle[]): PlanLayout {
-  const minimumSide = shorterSideOf(planFrameOf(rectangles)) * MINIMUM_SIDE_SHARE;
-  const frame = planFrameOf(rectangles.map((rectangle) => drawnRectangleOf(rectangle, minimumSide)));
-  return { frame, minimumSide, labelSize: longerSideOf(frame) * LABEL_SHARE };
+// The frame holds every drawn aisle and every label box, with the frame's margin, so nothing is cut by the svg's edge.
+function layoutWith(aisles: readonly PlanAisleShape[], minimumSide: number): PlanLayout {
+  const drawn = aisles.map(({ rectangle, label }) => ({ drawn: drawnRectangleOf(rectangle, minimumSide), label }));
+  const drawnFrame = planFrameOf(drawn.map((aisle) => aisle.drawn));
+  const labelSize = longerSideOf(drawnFrame) * LABEL_SHARE;
+  const placed = drawn.map((aisle) => ({ ...aisle, placement: labelPlacementOf(aisle.drawn, aisle.label, { frame: drawnFrame, labelSize }) }));
+  return { frame: planFrameOf(placed.flatMap(({ drawn: rectangle, placement }) => [rectangle, placement.box])), aisles: placed };
 }
 
 // Grown to the minimum side around its true centre, so a thin aisle stays where it is on the level.
@@ -34,30 +63,48 @@ export function drawnRectangleOf(rectangle: AisleRectangle, minimumSide: number)
   return { x: rectangle.x - (width - rectangle.width) / 2, y: rectangle.y - (height - rectangle.height) / 2, width, height };
 }
 
-// Inside when the code fits at a readable size; otherwise beside the aisle: below, to its right, or above, the first with room in the frame.
-export function labelPlacementOf(drawn: AisleRectangle, label: string, layout: PlanLayout): LabelPlacement {
-  const fontSize = Math.min(drawn.width, drawn.height) / 2;
-  if (fontSize >= layout.labelSize && widthOf(label, fontSize) <= drawn.width) {
-    return { kind: 'inside', x: drawn.x + drawn.width / 2, y: drawn.y + drawn.height / 2, fontSize };
-  }
-  return besidePlacementOf(drawn, label, layout);
+interface LabelRoom {
+  readonly frame: AisleRectangle;
+  readonly labelSize: number;
 }
 
-function besidePlacementOf(drawn: AisleRectangle, label: string, { frame, labelSize }: PlanLayout): LabelPlacement {
+// Inside when the code fits at a readable size; otherwise beside the aisle.
+function labelPlacementOf(drawn: AisleRectangle, label: string, room: LabelRoom): LabelPlacement {
+  const fontSize = Math.min(drawn.width, drawn.height) / 2;
+  const width = widthOf(label, fontSize);
+  if (fontSize < room.labelSize || width > drawn.width) {
+    return besidePlacementOf(drawn, widthOf(label, room.labelSize), room);
+  }
+  const x = drawn.x + drawn.width / 2;
+  const y = drawn.y + drawn.height / 2;
+  const box = { x: x - width / 2, y: y - fontSize / 2, width, height: fontSize };
+  return { kind: 'inside', x, y, fontSize, anchor: 'middle', baseline: 'central', box };
+}
+
+// Below, to the right, or above: the first that stays within the aisles' own frame, below otherwise. The frame then grows to hold it.
+function besidePlacementOf(drawn: AisleRectangle, width: number, { frame, labelSize }: LabelRoom): LabelPlacement {
   const gap = labelSize / 2;
-  const below = drawn.y + drawn.height + gap;
-  if (below + labelSize <= frame.y + frame.height) {
-    return { kind: 'beside', x: drawn.x, y: below, fontSize: labelSize, baseline: 'hanging' };
-  }
-  const right = drawn.x + drawn.width + gap;
-  if (right + widthOf(label, labelSize) <= frame.x + frame.width) {
-    return { kind: 'beside', x: right, y: drawn.y + drawn.height / 2, fontSize: labelSize, baseline: 'central' };
-  }
-  return { kind: 'beside', x: drawn.x, y: drawn.y - gap, fontSize: labelSize, baseline: 'auto' };
+  const candidates: readonly LabelPlacement[] = [
+    besideAt({ x: drawn.x, y: drawn.y + drawn.height + gap, width, height: labelSize }, 'hanging'),
+    besideAt({ x: drawn.x + drawn.width + gap, y: drawn.y + drawn.height / 2 - labelSize / 2, width, height: labelSize }, 'central'),
+    besideAt({ x: drawn.x, y: drawn.y - gap - labelSize, width, height: labelSize }, 'hanging'),
+  ];
+  const [below] = candidates as [LabelPlacement, ...LabelPlacement[]];
+  return candidates.find(({ box }) => isWithin(box, frame)) ?? below;
+}
+
+function besideAt(box: AisleRectangle, baseline: LabelPlacement['baseline']): LabelPlacement {
+  const y = baseline === 'hanging' ? box.y : box.y + box.height / 2;
+  return { kind: 'beside', x: box.x, y, fontSize: box.height, anchor: 'start', baseline, box };
 }
 
 function widthOf(label: string, fontSize: number): number {
-  return [...label].length * fontSize * GLYPH_WIDTH_SHARE;
+  const glyphs = [...label].reduce((count, character) => count + (WIDE_CHARACTER.test(character) ? 2 : 1), 0);
+  return glyphs * fontSize * GLYPH_WIDTH_SHARE;
+}
+
+export function isWithin(inner: AisleRectangle, outer: AisleRectangle): boolean {
+  return inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.width <= outer.x + outer.width && inner.y + inner.height <= outer.y + outer.height;
 }
 
 function shorterSideOf({ width, height }: AisleRectangle): number {
