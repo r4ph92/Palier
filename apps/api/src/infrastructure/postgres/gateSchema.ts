@@ -20,6 +20,8 @@ export const gate = pgTable(
     exitIdKind: exitIdKind('exit_id_kind').notNull().default('NONE'),
     qrSecret: text('qr_secret'),
     verifiedAt: timestamp('verified_at', { withTimezone: true }),
+    // Stamped by the server clock on each heartbeat; null until the controller first beats.
+    lastHeartbeatAt: timestamp('last_heartbeat_at', { withTimezone: true }),
   },
   (table) => [
     unique('gate_lot_id_name_unique').on(table.lotId, table.name),

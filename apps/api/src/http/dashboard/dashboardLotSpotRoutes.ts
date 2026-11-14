@@ -4,12 +4,8 @@ import type { FastifyInstance, FastifyReply, FastifyRequest, onRequestAsyncHookH
 import { addSpotsOfMember, changeSpotOfMember, readAisleSpotsOfMember, removeSpotOfMember, type LotSpotSources, type MemberAisle } from '../../domain/dashboard/lotSpots.ts';
 import { addSpotsBodySchema, dashboardAisleSpotsSchema, lotAisleParametersSchema, lotSpotParametersSchema, spotAttributesBodySchema } from '../schemas/lotSpotSchemas.ts';
 import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
-import { memberLotOf, memberSpotOf, refuseMalformedRequest, SPOT_ROUTE, type LotParams, type SpotParams } from './memberRequest.ts';
+import { memberLotOf, memberSpotOf, refuseMalformedRequest, SPOT_ROUTE, type AisleParams, type SpotParams } from './memberRequest.ts';
 import { requireDashboardUser } from './requireDashboardUser.ts';
-
-interface AisleParams extends LotParams {
-  readonly aisleId: string;
-}
 
 interface SpotRoutesContext {
   readonly scope: FastifyInstance;

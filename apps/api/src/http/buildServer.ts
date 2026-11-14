@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { AccountWebhookReader, OperatorStripeAccounts, OperatorStripeGateway } from '../domain/dashboard/OperatorStripe.ts';
 import type { LevelOccupancyReader } from '../domain/dashboard/LevelOccupancyReader.ts';
+import type { LotEquipmentReader } from '../domain/dashboard/LotEquipmentReader.ts';
 import type { LotMapRepository } from '../domain/dashboard/LotMapRepository.ts';
 import type { LotSpotRepository } from '../domain/dashboard/LotSpotRepository.ts';
 import type { SpotCheckRepository } from '../domain/dashboard/SpotCheckRepository.ts';
@@ -62,6 +63,7 @@ export interface ServerDependencies {
     readonly lotSetupRepository: LotSetupRepository;
     readonly levelOccupancy: LevelOccupancyReader;
     readonly lotMaps: LotMapRepository;
+    readonly lotEquipment: LotEquipmentReader;
     readonly lotSpots: LotSpotRepository;
     readonly spotChecks: SpotCheckRepository;
     readonly currentParkingSessions: CurrentParkingSessionQuery;
@@ -100,11 +102,14 @@ export function buildServer({ repositories, gates, cardGateway, entries, exits, 
   server.setErrorHandler(handleServerError);
   server.decorateRequest('driver', null);
   void server.register(async (appScope) => registerAppRoutes(appScope, { repositories, cardGateway, entries, exits, spotHolds, testClock, settings }));
-  void server.register(async (dashboardScope) => registerDashboardRoutes(dashboardScope, dashboardDependencies(repositories, settings, operatorStripe)));
+  void server.register(async (dashboardScope) => registerDashboardRoutes(dashboardScope, dashboardDependencies({ repositories, settings, operatorStripe, testClock })));
   if (operatorStripe?.webhookReader != null) {
     registerStripeWebhookRoute(server, { reader: operatorStripe.webhookReader, accounts: operatorStripe.accounts });
   }
-  registerGateRoutes(server, gates, exits === undefined ? undefined : { exit: exits, clock: testToolsFor(settings, repositories, testClock)?.testClock.now ?? systemClock });
+  void server.register(async (gateScope) => {
+    const composedClock = composedClockOf(settings, repositories, testClock);
+    registerGateRoutes(gateScope, gates, { readerExit: exits === undefined ? undefined : { exit: exits, clock: composedClock }, healthClock: composedClock });
+  });
   if (settings.demoMode === true) {
     registerDemoConsoleRoutes(server);
   }
@@ -112,17 +117,15 @@ export function buildServer({ repositories, gates, cardGateway, entries, exits, 
 }
 
 // The dashboard has its own scope, outside the app's: the minimum app version does not apply to a browser.
-function dashboardDependencies(
-  repositories: ServerDependencies['repositories'],
-  settings: ServerSettings,
-  operatorStripe: OperatorStripeDependencies | undefined,
-): DashboardRouteDependencies {
+function dashboardDependencies({ repositories, settings = {}, operatorStripe, testClock }: Omit<ServerDependencies, 'gates'>): DashboardRouteDependencies {
   return {
     access: { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository },
     operators: repositories.operatorRepository,
     lots: repositories.lotSetupRepository,
     occupancy: repositories.levelOccupancy,
     maps: repositories.lotMaps,
+    equipment: repositories.lotEquipment,
+    clock: composedClockOf(settings, repositories, testClock),
     spots: repositories.lotSpots,
     spotChecks: repositories.spotChecks,
     stripe: operatorStripe?.gateway == null ? null : { accounts: operatorStripe.accounts, gateway: operatorStripe.gateway },
@@ -168,6 +171,11 @@ function registerParkingSessionRoutes(server: FastifyInstance, driverAccess: Dri
 }
 
 type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock' | 'operatorStripe'> & Pick<ServerDependencies, 'testClock'>;
+
+// The clock the app's routes share: the test clock exactly when test sign-in is on.
+function composedClockOf(settings: ServerSettings, repositories: ServerDependencies['repositories'], testClock: TestClock | undefined): Clock {
+  return testToolsFor(settings, repositories, testClock)?.testClock.now ?? systemClock;
+}
 
 // Test sign-in is the one switch for every test-only tool: without it sessions and holds run in real time and nothing moves them.
 function testToolsFor(

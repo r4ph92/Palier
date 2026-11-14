@@ -1,0 +1,21 @@
+// The spots to check page's text, kept apart so each dictionary file stays short.
+export const frSpotsToCheck = {
+  title: 'Places à vérifier',
+  titleInLot: 'Places à vérifier — %{lot}',
+  count: { one: '%{count} place à vérifier', other: '%{count} places à vérifier' },
+  back: 'Retour au stationnement',
+  hint: 'Allez voir sur place, puis marquez la place comme vérifiée\u00a0: elle sera de nouveau attribuée normalement.',
+  spotColumn: 'Place',
+  placeColumn: 'Niveau et allée',
+  stateColumn: 'État',
+  heldBySession: 'Retenue par une session',
+  sinceColumn: 'Depuis',
+  reasonColumn: 'Raison',
+  checkColumn: 'Vérification',
+  place: '%{level} · allée\u00a0%{aisle}',
+  reasons: { WRONG_AISLE: 'allée différente', WRONG_SPOT: 'autre place de l’allée', REPORTED_TAKEN: 'place signalée prise', NOT_RECORDED: 'raison non enregistrée' },
+  checked: { shown: 'Vérifiée', name: 'Place %{number} vérifiée' },
+  cleared: 'Place %{number} vérifiée.',
+  empty: 'Aucune place à vérifier.',
+  emptyHint: 'Une place apparaît ici quand un conducteur s’est garé ailleurs que prévu ou l’a signalée prise.',
+};

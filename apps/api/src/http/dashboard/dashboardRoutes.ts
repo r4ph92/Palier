@@ -2,6 +2,7 @@ import fastifyCookie from '@fastify/cookie';
 import type { FastifyInstance } from 'fastify';
 import { signOutDashboardUser } from '../../domain/dashboard/dashboardSessions.ts';
 import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
+import { registerDashboardEquipmentRoutes } from './dashboardEquipmentRoutes.ts';
 import { registerDashboardLotMapRoutes } from './dashboardLotMapRoutes.ts';
 import { registerDashboardLotRoutes } from './dashboardLotRoutes.ts';
 import { registerDashboardLotSpotRoutes } from './dashboardLotSpotRoutes.ts';
@@ -27,6 +28,7 @@ export async function registerDashboardRoutes(scope: FastifyInstance, dependenci
   registerDashboardLotRoutes(scope, dependencies);
   registerDashboardOccupancyRoutes(scope, dependencies);
   registerDashboardLotMapRoutes(scope, dependencies);
+  registerDashboardEquipmentRoutes(scope, dependencies);
   registerDashboardLotSpotRoutes(scope, dependencies);
   registerDashboardSpotCheckRoutes(scope, dependencies);
   registerDashboardStripeRoutes(scope, dependencies);

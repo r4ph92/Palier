@@ -4,6 +4,7 @@ import { buildServer } from '../../src/http/buildServer.ts';
 import {
   ENTREE_DEMO_KEY,
   entreeDemo,
+  FakeEquipmentReports,
   FakeGateCommandFeed,
   FakeGateDeviceKeyRepository,
   FakePassageLedger,
@@ -22,7 +23,7 @@ describe('gate routes', () => {
 
   function startServer(vehicleCount = 0, deviceKeys = new FakeGateDeviceKeyRepository()): void {
     ledger = new FakePassageLedger(vehicleCount);
-    server = buildServer(serverDependencies({ gates: { deviceKeys, ledger, clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW } }));
+    server = buildServer(serverDependencies({ gates: { deviceKeys, ledger, passageClock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW, equipment: new FakeEquipmentReports() } }));
   }
 
   function postPassage(gateId: string, headers: Record<string, string>, payload: object = { closedAt: NOW.toISOString() }) {

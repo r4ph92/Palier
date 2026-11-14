@@ -1,32 +1,27 @@
 import type { DashboardLotOccupancy } from '@palier/shared-types';
 import { computeCounterGap } from './counterGap.ts';
-import { DashboardRefusedError } from './DashboardRefusedError.ts';
 import type { LevelOccupancy, LevelOccupancyReader } from './LevelOccupancyReader.ts';
-import type { OperatorRepository } from './OperatorRepository.ts';
+import { silentGateNamesOf, type LotEquipmentSources } from './lotEquipment.ts';
+import { operatorIdOfMember, ownedLotOrNotFound, type MemberLot } from './memberOperator.ts';
 
-export interface LotOccupancySources {
-  readonly operators: Pick<OperatorRepository, 'findOperatorOfMember'>;
+export interface LotOccupancySources extends LotEquipmentSources {
   readonly occupancy: LevelOccupancyReader;
 }
 
-// Another operator's lot and a lot that does not exist give the same answer, so ids reveal nothing.
-export async function findLotOccupancyOfMember({ operators, occupancy }: LotOccupancySources, userId: string, lotId: string): Promise<DashboardLotOccupancy> {
-  const operator = await operators.findOperatorOfMember(userId);
-  if (operator === null) {
-    throw new DashboardRefusedError('LOT_NOT_FOUND');
-  }
-  const read = await occupancy.readLevelOccupancy(operator.id, lotId);
-  if (read === null) {
-    throw new DashboardRefusedError('LOT_NOT_FOUND');
-  }
+// The figures and the gates are read side by side: neither read depends on the other.
+export async function findLotOccupancyOfMember(sources: LotOccupancySources, lot: MemberLot): Promise<DashboardLotOccupancy> {
+  const operatorId = await operatorIdOfMember(sources.operators, lot);
+  const [occupancy, gates] = await Promise.all([sources.occupancy.readLevelOccupancy(operatorId, lot.lotId), sources.equipment.readLotGates(operatorId, lot.lotId)]);
+  const read = ownedLotOrNotFound(occupancy);
   const occupiedOrAssignedCount = occupiedOrAssignedCountOf(read);
   return {
-    lotId,
+    lotId: lot.lotId,
     lotName: read.lotName,
     vehicleCount: read.vehicleCount,
     levels: read.levels,
     occupiedOrAssignedCount,
     counterGap: computeCounterGap(read.vehicleCount, occupiedOrAssignedCount),
+    silentGateNames: silentGateNamesOf(ownedLotOrNotFound(gates).gates, sources.clock()),
   };
 }
 

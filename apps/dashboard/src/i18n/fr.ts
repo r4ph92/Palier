@@ -1,4 +1,6 @@
+import { frEquipment } from './frEquipment.ts';
 import { frMap } from './frMap.ts';
+import { frSpotsToCheck } from './frSpotsToCheck.ts';
 import { frSpotCheckMessages } from './spotCheckMessages.ts';
 
 export const fr = {
@@ -71,9 +73,11 @@ export const fr = {
     beaconMajorLabel: 'Major de balise',
     occupancyLink: 'Occupation',
     mapLink: 'Plan et balises',
+    equipmentLink: 'Équipement',
   },
   occupancy: {
     title: 'Occupation',
+    unavailableTitle: 'Occupation indisponible',
     back: 'Retour au stationnement',
     levelsTitle: 'Places par niveau',
     tableCaption: 'Places par état et par niveau',
@@ -85,30 +89,16 @@ export const fr = {
     occupiedOrAssigned: 'Places occupées ou attribuées\u00a0: %{count}',
     spotsToCheck: { one: 'Écart\u00a0: %{count} place à vérifier', other: 'Écart\u00a0: %{count} places à vérifier' },
     counterBelow: 'Compteur inférieur aux places occupées\u00a0: %{count}',
+    silentGates: { one: 'Borne muette\u00a0: %{names}', other: 'Bornes muettes\u00a0: %{names}' },
+    equipmentLink: 'Voir l’équipement',
+  },
+  polling: {
     stale: 'Données non mises à jour. Nouvel essai dans un instant.',
     lastUpdate: 'Dernière mise à jour\u00a0: %{time}',
   },
-  spotsToCheck: {
-    title: 'Places à vérifier',
-    titleInLot: 'Places à vérifier — %{lot}',
-    count: { one: '%{count} place à vérifier', other: '%{count} places à vérifier' },
-    back: 'Retour au stationnement',
-    hint: 'Allez voir sur place, puis marquez la place comme vérifiée\u00a0: elle sera de nouveau attribuée normalement.',
-    spotColumn: 'Place',
-    placeColumn: 'Niveau et allée',
-    stateColumn: 'État',
-    heldBySession: 'Retenue par une session',
-    sinceColumn: 'Depuis',
-    reasonColumn: 'Raison',
-    checkColumn: 'Vérification',
-    place: '%{level} · allée\u00a0%{aisle}',
-    reasons: { WRONG_AISLE: 'allée différente', WRONG_SPOT: 'autre place de l’allée', REPORTED_TAKEN: 'place signalée prise', NOT_RECORDED: 'raison non enregistrée' },
-    checked: { shown: 'Vérifiée', name: 'Place %{number} vérifiée' },
-    cleared: 'Place %{number} vérifiée.',
-    empty: 'Aucune place à vérifier.',
-    emptyHint: 'Une place apparaît ici quand un conducteur s’est garé ailleurs que prévu ou l’a signalée prise.',
-  },
+  spotsToCheck: frSpotsToCheck,
   map: frMap,
+  equipment: frEquipment,
   spotStates: {
     AVAILABLE: 'Libre',
     HELD: 'Garantie',
@@ -182,6 +172,7 @@ export const fr = {
     AISLE_MINOR_TAKEN: 'Une autre allée de ce stationnement utilise déjà ce minor.',
     AISLE_RECTANGLE_INVALID: 'Le rectangle demande x et y de 0 à %{gridMaximum}, une largeur et une hauteur de 1 à %{gridMaximum}.',
     AISLE_NOT_FOUND: 'Cette allée est introuvable. Le plan a été rechargé.',
+    BATTERY_PERCENT_INVALID: 'Entrez un pourcentage entier de %{percentMinimum} à %{percentMaximum}.',
     SPOT_NOT_FOUND: 'Cette place est introuvable. La liste des places a été rechargée.',
     SPOT_RANGE_INVALID: 'Entrez une plage comme A-1 à A-20\u00a0: le même préfixe aux deux bouts, en lettres, chiffres, espaces ou tirets, à partir de 1, %{spotsPerAddMaximum} places au plus.',
     SPOT_DISTANCE_INVALID: 'Entrez un nombre entier de mètres, de 0 à %{distanceMaximum}.',

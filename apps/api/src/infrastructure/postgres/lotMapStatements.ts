@@ -2,7 +2,9 @@ import { sql, type SQL } from 'drizzle-orm';
 import type { AisleDraft } from '@palier/shared-types/aisleDraft';
 import { EXIT_LANE_CODE, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { MAX_LEVELS_PER_LOT } from '@palier/shared-types/levelDraft';
-import type { LevelPlacement } from '../../domain/dashboard/LotMapRepository.ts';
+import type { AislePlacement, LevelPlacement } from '../../domain/dashboard/LotMapRepository.ts';
+import type { RecordedBatteryReading } from '../../domain/equipment/batteryReadings.ts';
+import { beaconBatteryAssignment } from './beaconBatteryAssignment.ts';
 import type { OwnedLot } from './lockParkingLot.ts';
 import { AISLE_MINOR_UNIQUE } from './lotSchema.ts';
 
@@ -11,7 +13,8 @@ export function readLotMapStatement({ operatorId, lotId }: OwnedLot): SQL {
   return sql`
     select parking_lot.name as lot_name, parking_lot.beacon_major,
       level.id as level_id, level.code as level_code, level.display_order,
-      aisle.id as aisle_id, aisle.code as aisle_code, aisle.beacon_minor, aisle.is_exit_lane, aisle.map_polygon
+      aisle.id as aisle_id, aisle.code as aisle_code, aisle.beacon_minor, aisle.is_exit_lane, aisle.map_polygon,
+      aisle.beacon_battery_percent, aisle.beacon_battery_reported_at
     from parking_lot
     left join level on level.lot_id = parking_lot.id
     left join aisle on aisle.level_id = level.id
@@ -71,4 +74,18 @@ export function insertAisleStatement(operatorId: string, { lotId, levelId }: Lev
     join parking_lot on parking_lot.id = level.lot_id
     where level.id = ${levelId} and level.lot_id = ${lotId} and parking_lot.operator_id = ${operatorId}
     returning id`;
+}
+
+// Ownership alone, without the lot lock: names the refusal of a battery reading that changed no row.
+export function readOwnedLotIdStatement({ operatorId, lotId }: OwnedLot): SQL {
+  return sql`select parking_lot.id from parking_lot where parking_lot.id = ${lotId} and parking_lot.operator_id = ${operatorId}`;
+}
+
+// No row when the aisle is not one of this operator's lot.
+export function recordAisleBatteryStatement(operatorId: string, { lotId, aisleId }: AislePlacement, reading: RecordedBatteryReading): SQL {
+  return sql`
+    update aisle set ${beaconBatteryAssignment(reading)}
+    from parking_lot
+    where aisle.id = ${aisleId} and aisle.lot_id = ${lotId} and parking_lot.id = aisle.lot_id and parking_lot.operator_id = ${operatorId}
+    returning aisle.id`;
 }

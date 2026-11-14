@@ -4,9 +4,11 @@ export type {
   DashboardAisleSpots,
   DashboardErrorBody,
   DashboardErrorCode,
+  DashboardGateHealth,
   DashboardLot,
   DashboardLotDetails,
   DashboardLotListResponse,
+  DashboardLotEquipment,
   DashboardLotMap,
   DashboardLotOccupancy,
   DashboardMapAisle,
@@ -26,6 +28,7 @@ export type {
   SpotCheckReason,
   StripeOnboardingLink,
 } from './dashboard.ts';
+export type { BatteryStatus, BeaconBatteryErrorCode, BeaconBatteryErrors, BeaconBatteryField, BeaconBatteryReading } from './beaconBattery.ts';
 export type { AisleDraft, AisleDraftErrorCode, AisleDraftErrors, AisleDraftField, AisleRequest } from './aisleDraft.ts';
 export type { AddSpotsRequest, SpotAttributes, SpotDraftErrorCode, SpotDraftErrors, SpotDraftField, SpotRange } from './spotDraft.ts';
 export type { LevelDraft, LevelDraftErrorCode, LevelDraftErrors, LevelDraftField } from './levelDraft.ts';
@@ -50,6 +53,7 @@ export type {
   GateIdentifyRequest,
   GateIdentifyResponse,
   GateIdentity,
+  GateHealth,
   GateKind,
   GatePassageRequest,
   GatePassageResponse,

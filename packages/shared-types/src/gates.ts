@@ -1,5 +1,11 @@
 export type GateKind = 'ENTRY' | 'EXIT';
 
+// Four missed beats of the console's 30 s heartbeat (decision 036).
+export const SILENT_GATE_AFTER_MINUTES = 2;
+
+// NEVER_HEARD: no heartbeat since the gate was set up; SILENT: none for more than SILENT_GATE_AFTER_MINUTES.
+export type GateHealth = 'ONLINE' | 'SILENT' | 'NEVER_HEARD';
+
 export interface GateIdentity {
   readonly id: string;
   readonly name: string;

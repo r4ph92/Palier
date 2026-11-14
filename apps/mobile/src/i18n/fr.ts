@@ -124,6 +124,7 @@ export const fr = {
       NOT_AN_ENTRY_GATE: 'Ce QR n’est pas une borne d’entrée',
       LOT_NOT_IN_SERVICE,
       GATE_UNAVAILABLE: 'Cette borne n’est pas disponible',
+      GATE_SILENT: 'Borne hors service — entrée impossible',
       PREREQUISITES_MISSING: 'Ajoutez une plaque et une carte avant d’entrer',
       OPERATOR_NOT_PAYABLE: 'Ce parking n’accepte pas les paiements pour le moment',
       LOT_FULL: 'Complet — la barrière reste fermée',

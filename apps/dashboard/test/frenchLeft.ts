@@ -1,9 +1,10 @@
 import { seededNames } from './fakeDashboardData.ts';
+import { gateNames } from './fakeEquipmentData.ts';
 import { translatedFrenchFragments } from './frenchStrings.ts';
 
 // French fragments still on the page after switching to English; seeded names are data, not copy.
 export function frenchLeftOnEnglishPage(): string[] {
-  const shown = seededNames.reduce((text, name) => text.replaceAll(name, ''), textNodesOf(document.body).join(' '));
+  const shown = [...seededNames, ...gateNames].reduce((text, name) => text.replaceAll(name, ''), textNodesOf(document.body).join(' '));
   return translatedFrenchFragments().filter((fragment) => containsAsWords(shown, fragment));
 }
 

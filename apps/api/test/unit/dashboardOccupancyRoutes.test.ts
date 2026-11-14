@@ -32,6 +32,7 @@ describe('GET /v1/dashboard/lots/:id/occupancy', () => {
       levels: [{ code: 'P1', counts: { AVAILABLE: 3, HELD: 1, ASSIGNED: 1, OCCUPIED: 3, OCCUPIED_UNKNOWN: 1, OUT_OF_SERVICE: 1 } }],
       occupiedOrAssignedCount: 5,
       counterGap: { kind: 'SPOTS_TO_CHECK', spots: 2 },
+      silentGateNames: [],
     });
   });
 

@@ -101,6 +101,14 @@ secondes l'un de l'autre, dans l'ordre qu'on veut.
    commandes de sa barrière : chaque entrée admise par l'app s'affiche sous
    « Commandes » (« Ouverture commandée · 18 h 02 »), la plus récente en haut.
 
+5. La console envoie aussi un signal de vie (`POST /v1/gates/:id/heartbeat`) dès
+   qu'une clé bien formée est saisie, au retour en ligne, puis toutes les 30 s. Le
+   tableau de bord montre la borne « En ligne » ; sans signal depuis plus de 2 minutes,
+   elle est « Muette » et refuse les entrées (décision 036). Une fois qu'Entrée Démo a
+   battu, il faut donc garder la console ouverte pour les entrées suivantes. Un onglet
+   caché ralentit les minuteries à environ une fois par minute, ce qui reste sous les
+   2 minutes. Sur 401 ou 403, les signaux s'arrêtent jusqu'à la prochaine saisie de la clé.
+
 Messages : « Clé d'appareil refusée » (clé inconnue, mal formée ou révoquée),
 « Accès refusé pour cette barrière » (403), « Cette barrière n'a pas de
 boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouton
@@ -197,6 +205,7 @@ lot : voir la décision 031.
 
 ## API utilisée
 
+- `POST /v1/gates/:id/heartbeat` (sans corps) : 204. `POST /v1/gates/:id/beacons/:minor/battery`, corps `{ "percent": 15 }` : 204 ; 404 `BEACON_NOT_FOUND` pour un minor absent du parking de la barrière, 400 `BATTERY_PERCENT_INVALID` hors de 0 à 100. Voir `docs/decisions/036`.
 - `POST /v1/gates/:id/presence` (clé d'une barrière de sortie, sans corps) : `{ outcome: 'waiting' | 'opened' | 'fallback' }` ; 409 `GATE_NOT_EXIT` pour une barrière d'entrée. Voir `docs/decisions/029`.
 
 - `GET /v1/gates/me` : `{ id, name, kind, lotName }` de la barrière de la clé.

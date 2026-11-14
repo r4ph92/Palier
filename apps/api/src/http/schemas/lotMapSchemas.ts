@@ -52,7 +52,7 @@ export const aisleBodySchema = {
 
 const mapAisleSchema = {
   type: 'object',
-  required: ['id', 'code', 'beaconMinor', 'isExitLane', 'rectangle'],
+  required: ['id', 'code', 'beaconMinor', 'isExitLane', 'rectangle', 'batteryPercent', 'batteryReportedAt', 'batteryStatus'],
   additionalProperties: false,
   properties: {
     id: { type: 'string' },
@@ -60,6 +60,9 @@ const mapAisleSchema = {
     beaconMinor: { type: 'integer' },
     isExitLane: { type: 'boolean' },
     rectangle: { anyOf: [rectangleSchema, { type: 'null' }] },
+    batteryPercent: { type: ['integer', 'null'] },
+    batteryReportedAt: { type: ['string', 'null'] },
+    batteryStatus: { type: 'string', enum: ['OK', 'LOW', 'UNKNOWN'] },
   },
 } as const;
 

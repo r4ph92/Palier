@@ -1,4 +1,4 @@
-import type { DashboardLot, DashboardLotDetails, DashboardLotMap, DashboardLotOccupancy, DashboardMeResponse, DashboardOperator, DashboardSpotToCheck, DashboardUser, LotPricingSettings } from '@palier/shared-types';
+import type { DashboardLot, DashboardLotDetails, DashboardLotEquipment, DashboardLotMap, DashboardLotOccupancy, DashboardMeResponse, DashboardOperator, DashboardSpotToCheck, DashboardUser, LotPricingSettings } from '@palier/shared-types';
 import type { FakeSpot } from './fakeSpotData.ts';
 
 export const sophie: DashboardUser = { id: '00000000-0000-4000-8000-000000000601', firstName: 'Sophie', lastName: 'Lavoie' };
@@ -64,6 +64,8 @@ export interface FakeApiState {
   readonly occupancy: Map<string, DashboardLotOccupancy>;
   // By lot id; level and aisle writes change this copy.
   readonly maps: Map<string, DashboardLotMap>;
+  // By lot id; a test replaces an entry to make a gate fall silent before the next poll.
+  readonly equipment: Map<string, DashboardLotEquipment>;
   // By lot id, every live spot of the lot; spot writes change this copy.
   readonly spots: Map<string, FakeSpot[]>;
   // By lot id, the spots flagged for a check, oldest first; a clear changes this copy.
@@ -81,6 +83,7 @@ export const parkingDemoOccupancy: DashboardLotOccupancy = {
   levels: [{ code: 'P1', counts: { AVAILABLE: 3, HELD: 1, ASSIGNED: 1, OCCUPIED: 3, OCCUPIED_UNKNOWN: 1, OUT_OF_SERVICE: 1 } }],
   occupiedOrAssignedCount: 5,
   counterGap: { kind: 'SPOTS_TO_CHECK', spots: 2 },
+  silentGateNames: [],
 };
 
 export function seededOccupancy(): Map<string, DashboardLotOccupancy> {
@@ -91,6 +94,7 @@ export function seededOccupancy(): Map<string, DashboardLotOccupancy> {
     levels: [],
     occupiedOrAssignedCount: 0,
     counterGap: { kind: 'SPOTS_TO_CHECK', spots: 0 },
+    silentGateNames: [],
   };
   return new Map([[parkingDemo.id, parkingDemoOccupancy], [garageRoy.id, garageRoyOccupancy]]);
 }

@@ -3,6 +3,8 @@ import { garageRoy, parkingDemo } from './fakeDashboardData.ts';
 
 export const PLATFORM_UUID = '7B8098B8-9525-4406-AB73-4ABD2095EDC3';
 
+export const NO_BATTERY_READING = { batteryPercent: null, batteryReportedAt: null, batteryStatus: 'UNKNOWN' } as const;
+
 // Parking Démo as seeded: P1 with aisles A and B drawn one above the other, and the exit lane.
 export const parkingDemoMap: DashboardLotMap = {
   lotId: parkingDemo.id,
@@ -15,9 +17,9 @@ export const parkingDemoMap: DashboardLotMap = {
       code: 'P1',
       displayOrder: 1,
       aisles: [
-        { id: '00000000-0000-4000-8000-000000000401', code: 'A', beaconMinor: 1, isExitLane: false, rectangle: { x: 0, y: 0, width: 100, height: 40 } },
-        { id: '00000000-0000-4000-8000-000000000402', code: 'B', beaconMinor: 2, isExitLane: false, rectangle: { x: 0, y: 50, width: 100, height: 40 } },
-        { id: '00000000-0000-4000-8000-000000000403', code: 'Sortie', beaconMinor: 0, isExitLane: true, rectangle: null },
+        { id: '00000000-0000-4000-8000-000000000401', code: 'A', beaconMinor: 1, isExitLane: false, rectangle: { x: 0, y: 0, width: 100, height: 40 }, ...NO_BATTERY_READING },
+        { id: '00000000-0000-4000-8000-000000000402', code: 'B', beaconMinor: 2, isExitLane: false, rectangle: { x: 0, y: 50, width: 100, height: 40 }, ...NO_BATTERY_READING },
+        { id: '00000000-0000-4000-8000-000000000403', code: 'Sortie', beaconMinor: 0, isExitLane: true, rectangle: null, ...NO_BATTERY_READING },
       ],
     },
   ],

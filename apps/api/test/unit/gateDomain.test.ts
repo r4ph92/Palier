@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { authenticateDeviceKey } from '../../src/domain/gates/authenticateDeviceKey.ts';
+import { GateForbiddenError } from '../../src/domain/gates/GateForbiddenError.ts';
 import { hashDeviceKey } from '../../src/domain/gates/hashDeviceKey.ts';
-import { PassageRefusedError } from '../../src/domain/gates/PassageRefusedError.ts';
 import { recordPassage, type PassageCommand } from '../../src/domain/gates/recordPassage.ts';
 import {
   ENTREE_DEMO_KEY,
@@ -108,7 +108,7 @@ describe('recordPassage', () => {
     const ledger = new FakePassageLedger(0);
     const command = { gate: entreeDemo, requestedGateId: sortieDemo.id, closedAt: now };
 
-    await expect(recordPassage(command, { ledger, clock, openingWindow })).rejects.toEqual(new PassageRefusedError('GATE_FORBIDDEN'));
+    await expect(recordPassage(command, { ledger, clock, openingWindow })).rejects.toBeInstanceOf(GateForbiddenError);
     expect(ledger.entries).toEqual([]);
   });
 

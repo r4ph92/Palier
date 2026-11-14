@@ -1,10 +1,11 @@
 import { AISLE_CODE_LENGTH, type AisleDraftErrorCode } from '@palier/shared-types/aisleDraft';
 import { AISLE_GRID_LIMIT } from '@palier/shared-types/aisleRectangle';
+import { BATTERY_PERCENT_LIMITS, type BeaconBatteryErrorCode } from '@palier/shared-types/beaconBattery';
 import { AISLE_MINOR_LIMITS, EXIT_LANE_CODE } from '@palier/shared-types/beacons';
 import { LEVEL_CODE_LENGTH, MAX_LEVELS_PER_LOT, type LevelDraftErrorCode } from '@palier/shared-types/levelDraft';
 import type { LotMapRefusal } from './LotMapRepository.ts';
 
-export type LotMapReason = LevelDraftErrorCode | AisleDraftErrorCode | LotMapRefusal;
+export type LotMapReason = LevelDraftErrorCode | AisleDraftErrorCode | BeaconBatteryErrorCode | LotMapRefusal;
 
 export const LOT_MAP_MESSAGES: Readonly<Record<Exclude<LotMapReason, 'LOT_NOT_FOUND'>, string>> = {
   LEVEL_CODE_INVALID: `The level code must be ${LEVEL_CODE_LENGTH.minimum} to ${LEVEL_CODE_LENGTH.maximum} characters, with no invisible characters.`,
@@ -19,4 +20,6 @@ export const LOT_MAP_MESSAGES: Readonly<Record<Exclude<LotMapReason, 'LOT_NOT_FO
   AISLE_MINOR_TAKEN: 'Another aisle of this lot already uses this beacon minor.',
   AISLE_RECTANGLE_INVALID: `The rectangle needs x and y from 0 to ${AISLE_GRID_LIMIT}, and a width and a height above 0 up to ${AISLE_GRID_LIMIT}.`,
   LOT_BUSY: 'The parking lot is busy; try again.',
+  AISLE_NOT_FOUND: 'No such aisle.',
+  BATTERY_PERCENT_INVALID: `The battery reading must be a whole percent from ${BATTERY_PERCENT_LIMITS.minimum} to ${BATTERY_PERCENT_LIMITS.maximum}.`,
 };

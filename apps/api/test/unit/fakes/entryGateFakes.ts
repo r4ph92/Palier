@@ -27,6 +27,7 @@ export const entreeDemoGate: EntryGate = {
   kind: 'ENTRY',
   integrationKind: 'SIMULATED',
   qrSecret: ENTREE_DEMO_SECRET,
+  lastHeartbeatAt: null,
   lot: parkingDemoLot,
 };
 export const sortieDemoGate: EntryGate = { ...entreeDemoGate, id: sortieDemo.id, kind: 'EXIT', qrSecret: SORTIE_DEMO_SECRET };
@@ -35,6 +36,7 @@ export const entreeRoyGate: EntryGate = {
   kind: 'ENTRY',
   integrationKind: 'DRY_CONTACT',
   qrSecret: ENTREE_ROY_SECRET,
+  lastHeartbeatAt: null,
   lot: {
     id: '00000000-0000-4000-8000-000000000202',
     isOnline: false,

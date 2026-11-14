@@ -1,5 +1,5 @@
-import type { DashboardLotMap, DashboardMapAisle, DashboardMapLevel } from '@palier/shared-types';
 import { PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
+import type { StoredLotMap, StoredMapAisle, StoredMapLevel } from '../../domain/dashboard/LotMapRepository.ts';
 import { aisleRectangleOf } from '../../domain/lots/AisleRectangle.ts';
 
 export interface LotMapRow extends Record<string, unknown> {
@@ -13,13 +13,15 @@ export interface LotMapRow extends Record<string, unknown> {
   readonly beacon_minor: number | null;
   readonly is_exit_lane: boolean | null;
   readonly map_polygon: unknown;
+  readonly beacon_battery_percent: number | null;
+  readonly beacon_battery_reported_at: Date | string | null;
 }
 
 type LevelRow = LotMapRow & { readonly level_id: string; readonly level_code: string; readonly display_order: number };
 type AisleRow = LevelRow & { readonly aisle_id: string; readonly aisle_code: string; readonly beacon_minor: number; readonly is_exit_lane: boolean };
 
 // Rows come ordered by level then aisle; null when the operator has no lot with this id.
-export function lotMapOf(lotId: string, rows: readonly LotMapRow[]): DashboardLotMap | null {
+export function lotMapOf(lotId: string, rows: readonly LotMapRow[]): StoredLotMap | null {
   const [first] = rows;
   if (first === undefined) {
     return null;
@@ -27,8 +29,8 @@ export function lotMapOf(lotId: string, rows: readonly LotMapRow[]): DashboardLo
   return { lotId, lotName: first.lot_name, platformUuid: PLATFORM_BEACON_UUID, beaconMajor: first.beacon_major, levels: levelsOf(rows) };
 }
 
-function levelsOf(rows: readonly LotMapRow[]): DashboardMapLevel[] {
-  const levels = new Map<string, DashboardMapLevel & { readonly aisles: DashboardMapAisle[] }>();
+function levelsOf(rows: readonly LotMapRow[]): StoredMapLevel[] {
+  const levels = new Map<string, StoredMapLevel & { readonly aisles: StoredMapAisle[] }>();
   for (const row of rows.filter(isLevelRow)) {
     const level = levels.get(row.level_id) ?? { id: row.level_id, code: row.level_code, displayOrder: row.display_order, aisles: [] };
     levels.set(row.level_id, level);
@@ -40,10 +42,15 @@ function levelsOf(rows: readonly LotMapRow[]): DashboardMapLevel[] {
 }
 
 // A shape the read boundary refuses is shown undrawn, like the exit lane.
-function aisleOf(row: AisleRow): DashboardMapAisle {
+function aisleOf(row: AisleRow): StoredMapAisle {
   const reading = aisleRectangleOf(row.map_polygon);
   const rectangle = reading.kind === 'drawn' ? reading.rectangle : null;
-  return { id: row.aisle_id, code: row.aisle_code, beaconMinor: row.beacon_minor, isExitLane: row.is_exit_lane, rectangle };
+  return { id: row.aisle_id, code: row.aisle_code, beaconMinor: row.beacon_minor, isExitLane: row.is_exit_lane, rectangle, ...batteryOf(row) };
+}
+
+function batteryOf(row: AisleRow): Pick<StoredMapAisle, 'batteryPercent' | 'batteryReportedAt'> {
+  const reportedAt = row.beacon_battery_reported_at;
+  return { batteryPercent: row.beacon_battery_percent, batteryReportedAt: reportedAt === null ? null : new Date(reportedAt) };
 }
 
 function isLevelRow(row: LotMapRow): row is LevelRow {

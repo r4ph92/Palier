@@ -9,7 +9,7 @@ import { PageHeader } from '../components/PageHeader.tsx';
 import { RetryableFailure, type RetryableFailureProps } from '../components/RetryableFailure.tsx';
 import { formatCount, formatDegrees } from '../i18n/formatNumbers.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
-import { HOME_PATH, mapPath, occupancyPath, spotsToCheckPath } from '../navigation/routes.ts';
+import { equipmentPath, HOME_PATH, mapPath, occupancyPath, spotsToCheckPath } from '../navigation/routes.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
 import { PricingSection } from './PricingSection.tsx';
 
@@ -74,6 +74,9 @@ function LotLinks({ lotId }: { readonly lotId: string }) {
       </AppLink>
       <AppLink href={mapPath(lotId)} className="text-link">
         {text.lot.mapLink}
+      </AppLink>
+      <AppLink href={equipmentPath(lotId)} className="text-link">
+        {text.lot.equipmentLink}
       </AppLink>
     </p>
   );

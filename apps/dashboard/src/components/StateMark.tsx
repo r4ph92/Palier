@@ -1,6 +1,12 @@
 import type { ReactNode } from 'react';
 
-export type StateTone = 'free' | 'danger' | 'muted';
+// warning is a hollow square: something to look at, not yet a failure (design.md, gesture 4).
+export type StateTone = 'free' | 'danger' | 'warning' | 'muted';
+
+export interface StateMarkContent {
+  readonly tone: StateTone;
+  readonly label: string;
+}
 
 interface StateMarkProps {
   readonly tone: StateTone;

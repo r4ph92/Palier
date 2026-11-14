@@ -8,6 +8,7 @@
  * @property {(deviceKey: string, gateId: string, passages: readonly PassageReplayItem[]) => Promise<ApiResponse>} replayPassages
  * @property {(deviceKey: string, gateId: string, identifier: string) => Promise<ApiResponse>} postIdentify
  * @property {(deviceKey: string, gateId: string) => Promise<ApiResponse>} postPresence
+ * @property {(deviceKey: string, gateId: string) => Promise<ApiResponse>} postHeartbeat
  * @property {(deviceKey: string, after: CommandCursor | null) => Promise<ApiResponse>} fetchCommands
  */
 
@@ -31,6 +32,8 @@ export function createGateApi(fetchFunction) {
     postIdentify: (deviceKey, gateId, identifier) => postJson(deviceKey, gatePath(gateId, 'identify'), { identifier }),
     postPresence: (deviceKey, gateId) =>
       request(fetchFunction, gatePath(gateId, 'presence'), { method: 'POST', headers: authorization(deviceKey) }),
+    postHeartbeat: (deviceKey, gateId) =>
+      request(fetchFunction, gatePath(gateId, 'heartbeat'), { method: 'POST', headers: authorization(deviceKey) }),
     fetchCommands: (deviceKey, after) => request(fetchFunction, commandsUrl(after), { headers: authorization(deviceKey) }),
   };
 }

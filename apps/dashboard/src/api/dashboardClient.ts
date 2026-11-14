@@ -3,6 +3,7 @@ import type {
   AisleRequest,
   DashboardAisleSpots,
   DashboardLotDetails,
+  DashboardLotEquipment,
   DashboardLotListResponse,
   DashboardLotMap,
   DashboardLotOccupancy,
@@ -16,6 +17,7 @@ import type {
   SpotAttributes,
   StripeOnboardingLink,
 } from '@palier/shared-types';
+import type { BeaconBatteryReading } from '@palier/shared-types/beaconBattery';
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
 import { DashboardApiError } from './DashboardApiError.ts';
 
@@ -84,8 +86,12 @@ function textValuesOf(values: unknown): Readonly<Record<string, string>> {
   return Object.fromEntries(Object.entries(values).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
 }
 
+function aislePathOf(lotId: string, aisleId: string): string {
+  return `${lotPathOf(lotId)}/aisles/${encodeURIComponent(aisleId)}`;
+}
+
 function spotsPathOf(lotId: string, aisleId: string): string {
-  return `${lotPathOf(lotId)}/aisles/${encodeURIComponent(aisleId)}/spots`;
+  return `${aislePathOf(lotId, aisleId)}/spots`;
 }
 
 function spotPathOf(lotId: string, spotId: string): string {
@@ -110,6 +116,9 @@ export const dashboardClient = {
     dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/levels/order`, { method: 'PUT', body: order }),
   addAisle: (lotId: string, levelId: string, aisle: AisleRequest) =>
     dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/levels/${encodeURIComponent(levelId)}/aisles`, { method: 'POST', body: aisle }),
+  recordBeaconBattery: (lotId: string, aisleId: string, reading: BeaconBatteryReading) =>
+    dashboardRequest<DashboardLotMap>(`${aislePathOf(lotId, aisleId)}/beacon-battery`, { method: 'PUT', body: reading }),
+  lotEquipment: (lotId: string) => dashboardRequest<DashboardLotEquipment>(`${lotPathOf(lotId)}/equipment`),
   aisleSpots: (lotId: string, aisleId: string) => dashboardRequest<DashboardAisleSpots>(spotsPathOf(lotId, aisleId)),
   addSpots: (lotId: string, aisleId: string, request: AddSpotsRequest) =>
     dashboardRequest<DashboardAisleSpots>(spotsPathOf(lotId, aisleId), { method: 'POST', body: request }),

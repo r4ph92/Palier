@@ -55,6 +55,7 @@ export type EntryRefusalCode =
   | 'NOT_AN_ENTRY_GATE'
   | 'LOT_NOT_IN_SERVICE'
   | 'GATE_UNAVAILABLE'
+  | 'GATE_SILENT'
   | 'OPERATOR_NOT_PAYABLE'
   | 'PREREQUISITES_MISSING'
   | 'LOT_FULL'

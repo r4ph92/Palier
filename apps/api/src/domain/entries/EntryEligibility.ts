@@ -1,6 +1,7 @@
 import { findDriverPrerequisites, type DriverPrerequisites, type DriverPrerequisiteSources } from '../drivers/driverPrerequisites.ts';
 import { checkLotTerms, type LotTermsRefusal } from '../lots/lotTerms.ts';
 import type { EntryPolicy } from '../payments/EntryPolicy.ts';
+import { gateHealthOf } from '../equipment/gateHealth.ts';
 import { hasRoomForAnotherVehicle } from '../occupancy/hasRoomForAnotherVehicle.ts';
 import type { PricingPolicy } from '../pricing/PricingPolicy.ts';
 import type { SpotHoldRepository, UsableSpotHoldQuery } from '../spotHolds/SpotHoldRepository.ts';
@@ -49,22 +50,10 @@ export class EntryEligibility {
   async check({ driverId, qrContent, now }: EntryAttempt): Promise<EligibleEntry> {
     const gate = await this.#recognizedGate(qrContent);
     const pricing = this.#admittingLotPricing(gate);
+    requireListeningGate(gate, now);
     await this.#requireRoom({ driverId, lotId: gate.lot.id, now }, gate);
     const prerequisites = await this.#driverPrerequisites(driverId);
-    return {
-      driverId,
-      now,
-      gate: { id: gate.id, lotId: gate.lot.id },
-      vehicle: prerequisites.vehicle,
-      payment: {
-        customerId: prerequisites.customerId,
-        paymentMethodId: prerequisites.paymentMethodId,
-        amountCents: pricing.dailyCapCents,
-        destinationAccountId: gate.lot.operatorStripeAccountId,
-      },
-      pricing,
-      cardLast4: prerequisites.cardLast4,
-    };
+    return eligibleEntryOf({ driverId, now }, { gate, pricing, prerequisites });
   }
 
   // A malformed token, an unknown gate and a wrong signature get the same refusal, so a QR reveals nothing.
@@ -112,6 +101,37 @@ export class EntryEligibility {
       throw new EntryRefusedError('PREREQUISITES_MISSING');
     }
     return prerequisites;
+  }
+}
+
+interface EntryFacts {
+  readonly gate: EntryGate;
+  readonly pricing: PricingPolicy;
+  readonly prerequisites: DriverPrerequisites;
+}
+
+function eligibleEntryOf({ driverId, now }: Omit<EntryAttempt, 'qrContent'>, { gate, pricing, prerequisites }: EntryFacts): EligibleEntry {
+  return {
+    driverId,
+    now,
+    gate: { id: gate.id, lotId: gate.lot.id },
+    vehicle: prerequisites.vehicle,
+    payment: {
+      customerId: prerequisites.customerId,
+      paymentMethodId: prerequisites.paymentMethodId,
+      amountCents: pricing.dailyCapCents,
+      destinationAccountId: gate.lot.operatorStripeAccountId,
+    },
+    pricing,
+    cardLast4: prerequisites.cardLast4,
+  };
+}
+
+// A gate that stopped beating may not open its barrier, so nothing is reserved or authorized for it (Q47).
+// A gate never heard is admitted: gates set up before heartbeats existed keep working until their controller first beats.
+function requireListeningGate(gate: EntryGate, now: Date): void {
+  if (gateHealthOf(gate.lastHeartbeatAt, now) === 'SILENT') {
+    throw new EntryRefusedError('GATE_SILENT');
   }
 }
 

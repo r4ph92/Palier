@@ -14,6 +14,10 @@ export interface SpotParams extends LotParams {
 
 export const SPOT_ROUTE = '/v1/dashboard/lots/:id/spots/:spotId';
 
+export interface AisleParams extends LotParams {
+  readonly aisleId: string;
+}
+
 // A malformed id answers 404 like the read; a malformed body is the caller's mistake and answers 400.
 export function refuseMalformedRequest(request: FastifyRequest): void {
   refuseMalformedLotId(request);
