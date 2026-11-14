@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const migration = readFileSync(new URL('../../drizzle/0037_spot_needs_check_reason.sql', import.meta.url), 'utf8');
+const migration = readFileSync(new URL('../../drizzle/0038_spot_needs_check_reason.sql', import.meta.url), 'utf8');
 
-describe('migration 0037, the time and reason of a spot check flag', () => {
+describe('migration 0038, the time and reason of a spot check flag', () => {
   it('keeps the reasons to the three the code writes', () => {
     expect(migration).toContain(`CREATE TYPE "public"."spot_check_reason" AS ENUM('WRONG_AISLE', 'WRONG_SPOT', 'REPORTED_TAKEN')`);
     expect(migration).toContain('ADD COLUMN "needs_check_reason" "spot_check_reason"');
