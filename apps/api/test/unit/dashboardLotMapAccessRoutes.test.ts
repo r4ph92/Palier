@@ -34,17 +34,18 @@ describe('dashboard lot map routes for anyone but the lot’s operator', () => {
   }
 
   it('answers Sophie not found on every route of Pierre’s lot, even with a taken code or minor, and changes nothing', async () => {
-    const { map } = await garageRoyWithP1AndP2();
+    const { cookies: pierreCookies, map } = await garageRoyWithP1AndP2();
+    const p1 = levelIdOf(map, 'P1');
+    await routes.addAisle(pierreCookies, p1);
     const before = structuredClone(maps.levels);
     const cookies = await dashboardCookieFor(server, sophie);
-    const p1 = levelIdOf(map, 'P1');
 
     const responses = [
       await routes.readMap(cookies),
       await routes.addLevel(cookies, 'P1'),
       await routes.reorder(cookies, [levelIdOf(map, 'P2'), p1]),
       await routes.addAisle(cookies, p1),
-      await routes.addAisle(cookies, p1, { ...aisleA, code: 'Sortie' }),
+      await routes.addAisle(cookies, p1, { ...aisleA, beaconMinor: 2 }),
     ];
 
     for (const response of responses) {

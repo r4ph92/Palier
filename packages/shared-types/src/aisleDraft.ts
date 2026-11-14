@@ -1,4 +1,4 @@
-import { AISLE_MINOR_LIMITS } from './beacons.ts';
+import { AISLE_MINOR_LIMITS, EXIT_LANE_CODE } from './beacons.ts';
 import { AISLE_RECTANGLE_KEYS, GRID_CHECK_OF, type AisleRectangleKey } from './aisleRectangle.ts';
 import type { DashboardErrorCode } from './dashboard.ts';
 import { isValidDisplayText } from './displayText.ts';
@@ -21,7 +21,7 @@ export interface AisleRequest extends Omit<AisleDraft, 'rectangle'> {
 
 export type AisleDraftField = 'code' | 'beaconMinor' | AisleRectangleKey;
 
-export type AisleDraftErrorCode = Extract<DashboardErrorCode, 'AISLE_CODE_INVALID' | 'AISLE_MINOR_INVALID' | 'AISLE_RECTANGLE_INVALID'>;
+export type AisleDraftErrorCode = Extract<DashboardErrorCode, 'AISLE_CODE_INVALID' | 'AISLE_CODE_RESERVED' | 'AISLE_MINOR_INVALID' | 'AISLE_RECTANGLE_INVALID'>;
 
 export type AisleDraftErrors = FieldErrors<AisleDraftField, AisleDraftErrorCode>;
 
@@ -29,8 +29,16 @@ export type AisleDraftErrors = FieldErrors<AisleDraftField, AisleDraftErrorCode>
 // The one rule for a new aisle, applied by the dashboard before sending and by the API before writing.
 export function aisleDraftErrors({ code, beaconMinor, rectangle }: AisleDraft): AisleDraftErrors {
   return fieldErrorsOf<AisleDraftField, AisleDraftErrorCode>([
-    ['code', isValidDisplayText(code, AISLE_CODE_LENGTH) ? null : 'AISLE_CODE_INVALID'],
+    ['code', codeErrorOf(code)],
     ['beaconMinor', isWholeNumberWithin(beaconMinor, AISLE_MINOR_LIMITS) ? null : 'AISLE_MINOR_INVALID'],
     ...AISLE_RECTANGLE_KEYS.map((key) => [key, GRID_CHECK_OF[key](rectangle[key]) ? null : 'AISLE_RECTANGLE_INVALID'] as const),
   ]);
+}
+
+// The exit lane's code is reserved to it on every level, so no aisle a driver parks in can be read as the exit.
+function codeErrorOf(code: string): AisleDraftErrorCode | null {
+  if (!isValidDisplayText(code, AISLE_CODE_LENGTH)) {
+    return 'AISLE_CODE_INVALID';
+  }
+  return code === EXIT_LANE_CODE ? 'AISLE_CODE_RESERVED' : null;
 }

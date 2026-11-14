@@ -1,5 +1,4 @@
-import { EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
-import { EXIT_LANE_CODE } from '../../domain/lots/exitLane.ts';
+import { EXIT_LANE_CODE, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import type { aisle, level, parkingLot, spot } from '../../infrastructure/postgres/schema.ts';
 import { LAVOIE_OPERATOR_ID } from './operators.ts';
 import { SEEDED_PRICING_POLICY } from './pricing.ts';

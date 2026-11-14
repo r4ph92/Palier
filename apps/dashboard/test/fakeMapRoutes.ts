@@ -73,7 +73,7 @@ function withAisle(map: DashboardLotMap, levelId: string, aisle: AisleDraft): Da
     return 'LEVEL_NOT_FOUND';
   }
   if (level.aisles.some(({ code }) => code === aisle.code)) {
-    return level.aisles.some(({ code, isExitLane }) => isExitLane && code === aisle.code) ? 'AISLE_CODE_RESERVED' : 'AISLE_CODE_TAKEN';
+    return 'AISLE_CODE_TAKEN';
   }
   if (map.levels.some(({ aisles }) => aisles.some(({ beaconMinor }) => beaconMinor === aisle.beaconMinor))) {
     return 'AISLE_MINOR_TAKEN';

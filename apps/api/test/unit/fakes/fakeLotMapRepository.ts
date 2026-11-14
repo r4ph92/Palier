@@ -1,12 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import type { DashboardLotMap, DashboardMapAisle, DashboardMapLevel, LevelOrderRequest } from '@palier/shared-types';
 import type { AisleDraft } from '@palier/shared-types/aisleDraft';
-import { EXIT_LANE_MINOR, PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
+import { EXIT_LANE_CODE, EXIT_LANE_MINOR, PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
 import { MAX_LEVELS_PER_LOT } from '@palier/shared-types/levelDraft';
 import { isMoveOfCurrentOrder } from '../../../src/domain/dashboard/levelOrder.ts';
 import { LOT_MAP_WRITTEN, type LevelPlacement, type LotMapRepository, type LotMapWrite } from '../../../src/domain/dashboard/LotMapRepository.ts';
 import { aisleRectangleOf } from '../../../src/domain/lots/AisleRectangle.ts';
-import { EXIT_LANE_CODE } from '../../../src/domain/lots/exitLane.ts';
 import { parkingDemoAisles, parkingDemoLevels } from '../../../src/seed/fixtures/parkingDemo.ts';
 import type { FakeLotStore } from './fakeLotSetupRepository.ts';
 

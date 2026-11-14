@@ -156,7 +156,7 @@ export const fr = {
     LEVEL_NOT_FOUND: 'Ce niveau est introuvable. Rechargez le plan.',
     AISLE_CODE_INVALID: 'Le code de l’allée doit compter de 1 à %{aisleCodeMaximum} caractères, sans caractère invisible.',
     AISLE_CODE_TAKEN: 'Ce niveau a déjà une allée avec ce code.',
-    AISLE_CODE_RESERVED: 'Ce code est celui de la voie de sortie de ce niveau. Choisissez-en un autre.',
+    AISLE_CODE_RESERVED: 'Ce code est réservé à la voie de sortie. Choisissez-en un autre.',
     AISLE_MINOR_INVALID: 'Entrez un nombre entier de %{minorMinimum} à %{minorMaximum}. Le minor 0 est réservé à la voie de sortie.',
     AISLE_MINOR_TAKEN: 'Une autre allée de ce stationnement utilise déjà ce minor.',
     AISLE_RECTANGLE_INVALID: 'Le rectangle demande x et y de 0 à %{gridMaximum}, une largeur et une hauteur de 1 à %{gridMaximum}.',

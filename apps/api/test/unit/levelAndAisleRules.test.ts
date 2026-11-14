@@ -45,6 +45,10 @@ describe('the rule for a new aisle', () => {
     expect(aisleDraftErrors({ ...aisleA, code: 'A'.repeat(11) })).toEqual({ code: 'AISLE_CODE_INVALID' });
   });
 
+  it('refuses Sortie, the exit lane’s code, as reserved on any level', () => {
+    expect(aisleDraftErrors({ ...aisleA, code: 'Sortie' })).toEqual({ code: 'AISLE_CODE_RESERVED' });
+  });
+
   it('refuses each side of a rectangle off the grid on its own field', () => {
     const rectangle = { x: -1, y: 10_001, width: 0, height: Number.NaN };
 

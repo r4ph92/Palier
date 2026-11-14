@@ -178,14 +178,13 @@ describe('dashboard lot map routes', () => {
       expect(response.json()).toMatchObject({ statusCode: 409, error: 'AISLE_CODE_TAKEN' });
     });
 
-    it('refuses the exit lane’s code on its level as reserved, and accepts it on another level', async () => {
+    it.each(['P1', 'P2'])('refuses the exit lane’s code on %s as reserved, typed with a no-break space too, and saves nothing', async (code) => {
       const { cookies, map } = await garageRoyWithP1AndP2();
 
-      const onExitLaneLevel = await routes.addAisle(cookies, levelIdOf(map, 'P1'), { ...aisleA, code: 'Sortie' });
-      const onOtherLevel = await routes.addAisle(cookies, levelIdOf(map, 'P2'), { ...aisleA, code: 'Sortie' });
+      const response = await routes.addAisle(cookies, levelIdOf(map, code), { ...aisleA, code: '\u00a0Sortie ' });
 
-      expect(onExitLaneLevel.json()).toEqual({ statusCode: 409, error: 'AISLE_CODE_RESERVED', message: "Sortie is the code of this level's exit lane; choose another code." });
-      expect(onOtherLevel.statusCode).toBe(200);
+      expect(response.json()).toEqual({ statusCode: 400, error: 'AISLE_CODE_RESERVED', message: 'Sortie is reserved for the exit lane; choose another code.' });
+      expect((await routes.readMap(cookies)).json()).toEqual(map);
     });
   });
 
