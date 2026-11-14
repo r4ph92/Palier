@@ -5,8 +5,9 @@ function isDashboardErrorCode(code: string | undefined): code is DashboardErrorC
   return DASHBOARD_ERROR_CODES.some((known) => known === code);
 }
 
-// Never from the API: FIELDS_INVALID heads a form whose fields show their own errors; MAP_RELOAD_FAILED follows a stale move the page could not read again.
-export type DisplayedErrorCode = DashboardErrorCode | 'FIELDS_INVALID' | 'MAP_RELOAD_FAILED' | 'UNKNOWN';
+// Never from the API: FIELDS_INVALID heads a form whose fields show their own errors; MAP_RELOAD_FAILED follows a stale move
+// the page could not read again; GRID_POSITION_INVALID and GRID_LENGTH_INVALID sit beside one side of an aisle's rectangle.
+export type DisplayedErrorCode = DashboardErrorCode | 'FIELDS_INVALID' | 'MAP_RELOAD_FAILED' | 'GRID_POSITION_INVALID' | 'GRID_LENGTH_INVALID' | 'UNKNOWN';
 
 // The page shows a dictionary sentence for the code, never the API's English message.
 export class DashboardApiError extends Error {

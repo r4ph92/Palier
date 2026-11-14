@@ -29,7 +29,7 @@ export const enMap: typeof frMap = {
   minorLabel: 'Minor of the aisle’s beacon',
   minorHint: 'From %{minorMinimum} to %{minorMaximum}, unique in the parking lot. 0 belongs to the exit lane.',
   rectangleLegend: 'Rectangle on the level plan',
-  rectangleHint: 'In grid units, from 0 to %{gridMaximum}. x and y place the top-left corner.',
+  rectangleHint: 'Each value, in grid units, runs from 0 to %{gridMaximum}. x and y place the top-left corner.',
   xLabel: 'x (from the left)',
   yLabel: 'y (from the top)',
   widthLabel: 'Width',

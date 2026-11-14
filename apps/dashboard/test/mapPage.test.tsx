@@ -147,7 +147,8 @@ describe('the map of a lot', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Add the aisle' }));
 
     expect(screen.getByRole('alert').textContent).toBe('Fix the fields shown.');
-    expect(screen.getAllByText('Enter a whole number from 0 to 10,000; width and height are at least 1.')).toHaveLength(4);
+    expect(screen.getAllByText('A whole number from 0 to 10,000.')).toHaveLength(2);
+    expect(screen.getAllByText('A whole number from 1 to 10,000.')).toHaveLength(2);
     expect(frenchLeftOnEnglishPage()).toEqual([]);
   });
 

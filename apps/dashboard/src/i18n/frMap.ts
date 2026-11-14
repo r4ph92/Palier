@@ -28,7 +28,7 @@ export const frMap = {
   minorLabel: 'Minor de la balise de l’allée',
   minorHint: 'De %{minorMinimum} à %{minorMaximum}, unique dans le stationnement. Le 0 est celui de la voie de sortie.',
   rectangleLegend: 'Rectangle sur le plan du niveau',
-  rectangleHint: 'En unités de la grille, de 0 à %{gridMaximum}. x et y placent le coin supérieur gauche.',
+  rectangleHint: 'Chaque valeur, en unités de la grille, va de 0 à %{gridMaximum}. x et y placent le coin supérieur gauche.',
   xLabel: 'x (depuis la gauche)',
   yLabel: 'y (depuis le haut)',
   widthLabel: 'Largeur',

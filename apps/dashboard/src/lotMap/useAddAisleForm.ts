@@ -1,10 +1,10 @@
 import type { AisleRectangle, DashboardLotMap } from '@palier/shared-types';
-import { aisleDraftErrors, type AisleDraft, type AisleDraftField } from '@palier/shared-types/aisleDraft';
-import { isAisleRectangle, type AisleRectangleKey } from '@palier/shared-types/aisleRectangle';
+import { aisleDraftErrors, type AisleDraft, type AisleDraftErrors, type AisleDraftField } from '@palier/shared-types/aisleDraft';
+import { AISLE_RECTANGLE_KEYS, isAisleRectangle, type AisleRectangleKey } from '@palier/shared-types/aisleRectangle';
 import { canonicalCodeOf } from '@palier/shared-types/displayText';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
-import { readFormOf, useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
+import { readFormOf, useFieldForm, type FieldErrorCodes, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
 import { useLanguage, type Language } from '../i18n/LanguageContext.tsx';
 import { numberOrNaN, parseWholeNumber } from '../lotSetup/parseNumbers.ts';
 
@@ -27,7 +27,23 @@ function rectangleOf(values: FieldValues<AisleDraftField>, language: Language): 
 
 function readAisle(values: FieldValues<AisleDraftField>, language: Language): ReadForm<AisleDraftField, AisleDraft> {
   const draft = { code: canonicalCodeOf(values.code), beaconMinor: numberOrNaN(parseWholeNumber(values.beaconMinor, language)), rectangle: rectangleOf(values, language) };
-  return readFormOf(draft, aisleDraftErrors(draft));
+  return readFormOf(draft, shownErrorsOf(aisleDraftErrors(draft)));
+}
+
+// Each side of the rectangle says its own bounds beside it: x and y may be 0, a width or a height may not.
+const RECTANGLE_SIDE_ERROR: Readonly<Record<AisleRectangleKey, DisplayedErrorCode>> = {
+  x: 'GRID_POSITION_INVALID',
+  y: 'GRID_POSITION_INVALID',
+  width: 'GRID_LENGTH_INVALID',
+  height: 'GRID_LENGTH_INVALID',
+};
+
+function shownErrorsOf(errors: AisleDraftErrors): FieldErrorCodes<AisleDraftField> {
+  const shown: Partial<Record<AisleDraftField, DisplayedErrorCode>> = { ...errors };
+  for (const side of AISLE_RECTANGLE_KEYS.filter((key) => errors[key] !== undefined)) {
+    shown[side] = RECTANGLE_SIDE_ERROR[side];
+  }
+  return shown;
 }
 
 export interface DraftAisle {
