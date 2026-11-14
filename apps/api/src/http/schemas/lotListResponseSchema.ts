@@ -34,7 +34,7 @@ export const lotListResponseSchema = {
       id: { type: 'string' },
       name: { type: 'string' },
       freeSpots: { type: 'integer' },
-      capacity: { type: 'integer' },
+      capacity: { type: 'integer', minimum: 0 },
       freeSpotsByCategory: spotCountByCategorySchema,
       location: locationSchema,
     },
