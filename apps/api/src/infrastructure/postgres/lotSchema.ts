@@ -138,7 +138,7 @@ export const spot = pgTable(
     isOversize: boolean('is_oversize').notNull().default(false),
     distanceToExit: integer('distance_to_exit').notNull(),
     needsCheck: boolean('needs_check').notNull().default(false),
-    // When and why the spot was flagged; null together with needs_check false. A flag kept from before reasons were recorded has no reason.
+    // When and why the spot was flagged; null together with needs_check false. A flag from before reasons were recorded, or set by the seed:spot-state script, has no reason.
     needsCheckSince: timestamp('needs_check_since', { withTimezone: true }),
     needsCheckReason: spotCheckReason('needs_check_reason'),
     sensorState: sensorState('sensor_state'),
