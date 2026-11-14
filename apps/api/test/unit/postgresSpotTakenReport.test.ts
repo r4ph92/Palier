@@ -199,7 +199,7 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
     await reportWith(sql);
 
     const read = sql.statement('read-free-spots');
-    expect(read?.text).toMatch(/s\.state = 'AVAILABLE' and not exists \(/);
+    expect(read?.text).toMatch(/s\.state = 'AVAILABLE' and s\.retired_at is null and not exists \(/);
     expect(read?.text).toMatch(/where \(holder\.assigned_spot_id = s\.id or holder\.confirmed_spot_id = s\.id\) and holder\.state in \('CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED'\)/);
   });
 

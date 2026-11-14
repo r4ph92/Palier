@@ -52,6 +52,20 @@ interface StateColumns {
   readonly pendingCaptureCents: AnyPgColumn;
 }
 
+interface SpotColumns {
+  readonly assignedSpotId: AnyPgColumn;
+  readonly confirmedSpotId: AnyPgColumn;
+  readonly lotId: AnyPgColumn;
+}
+
+// Deleting a spot asks whether any session ever pointed at it (decision 035).
+function spotHistoryIndexes(table: SpotColumns) {
+  return [
+    index('parking_session_assigned_spot_id_lot_id_index').on(table.assignedSpotId, table.lotId),
+    index('parking_session_confirmed_spot_id_lot_id_index').on(table.confirmedSpotId, table.lotId),
+  ];
+}
+
 // Compared as text: a check on the enum itself would block the next migration that recreates the enum.
 function stateChecks(table: StateColumns) {
   return [
@@ -144,6 +158,7 @@ export const parkingSession = pgTable(
     uniqueIndex('parking_session_one_active_per_spot_index').on(table.assignedSpotId).where(ACTIVE_SESSION),
     uniqueIndex('parking_session_one_active_per_confirmed_spot_index').on(table.confirmedSpotId).where(ACTIVE_SESSION),
     index('parking_session_hold_release_pending_index').on(table.holdReleaseAttemptedAt.asc().nullsFirst(), table.id).where(sql`${table.holdReleasePending}`),
+    ...spotHistoryIndexes(table),
     index('parking_session_awaiting_signal_by_lot_index').on(table.lotId).where(sql`${table.state} in ('ENTRY_CONFIRMED', 'PARKED_UNCONFIRMED')`),
   ],
 );
@@ -161,6 +176,7 @@ export const parkingSessionReportedSpot = pgTable(
     primaryKey({ name: 'parking_session_reported_spot_pk', columns: [table.sessionId, table.spotId] }),
     sameLotForeignKey('parking_session_reported_spot_session_in_same_lot_fk', [table.sessionId, table.lotId], parkingSession),
     sameLotForeignKey('parking_session_reported_spot_spot_in_same_lot_fk', [table.spotId, table.lotId], spot),
+    index('parking_session_reported_spot_spot_id_lot_id_index').on(table.spotId, table.lotId),
   ],
 );
 

@@ -1,6 +1,7 @@
-import { and, count, eq, inArray, ne, or } from 'drizzle-orm';
+import { and, count, eq, inArray, ne, or, type SQL } from 'drizzle-orm';
 import type { Database, Transaction } from '../infrastructure/postgres/database.ts';
 import { ACTIVE_SESSION } from '../infrastructure/postgres/activeSessionStates.ts';
+import { isLiveSpot } from '../infrastructure/postgres/liveSpot.ts';
 import { parkingLot, parkingSession, spot } from '../infrastructure/postgres/schema.ts';
 import { activeSessionRefusal, decideActiveSessionRule } from './activeSessionRule.ts';
 import type { SpotStateChange } from './spotStateArguments.ts';
@@ -11,7 +12,7 @@ import type { SpotStateChange } from './spotStateArguments.ts';
 export async function changeSpotState(database: Database, change: SpotStateChange): Promise<{ readonly activeSessionStillPoints: boolean }> {
   return database.transaction(async (tx) => {
     const lotsWithName = tx.select({ id: parkingLot.id }).from(parkingLot).where(eq(parkingLot.name, change.lotName));
-    const spotNamed = and(inArray(spot.lotId, lotsWithName), eq(spot.number, change.spotNumber), ne(spot.state, 'HELD'));
+    const spotNamed = liveSpotNamed(inArray(spot.lotId, lotsWithName), change.spotNumber);
     // Lot names are not unique: every spot of that number in a lot of that name changes, as before.
     const lockedIds = (await tx.select({ id: spot.id }).from(spot).where(spotNamed).for('update')).map((row) => row.id);
     if (lockedIds.length === 0) {
@@ -33,4 +34,8 @@ async function countActiveSessionsOnSpots(tx: Transaction, spotIds: readonly str
     .from(parkingSession)
     .where(and(ACTIVE_SESSION, or(inArray(parkingSession.assignedSpotId, spotIds), inArray(parkingSession.confirmedSpotId, spotIds))));
   return row?.total ?? 0;
+}
+
+function liveSpotNamed(inLot: SQL, spotNumber: string): SQL | undefined {
+  return and(inLot, eq(spot.number, spotNumber), isLiveSpot, ne(spot.state, 'HELD'));
 }

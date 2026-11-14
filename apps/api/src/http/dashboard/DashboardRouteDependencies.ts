@@ -1,5 +1,6 @@
 import type { LevelOccupancyReader } from '../../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotMapRepository } from '../../domain/dashboard/LotMapRepository.ts';
+import type { LotSpotRepository } from '../../domain/dashboard/LotSpotRepository.ts';
 import type { LotSetupRepository } from '../../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../../domain/dashboard/OperatorRepository.ts';
 import type { OperatorStripeAccounts, OperatorStripeGateway } from '../../domain/dashboard/OperatorStripe.ts';
@@ -18,6 +19,7 @@ export interface DashboardRouteDependencies {
   readonly lots: LotSetupRepository;
   readonly occupancy: LevelOccupancyReader;
   readonly maps: LotMapRepository;
+  readonly spots: LotSpotRepository;
   readonly testSignInEnabled: boolean;
   readonly secureCookies: boolean;
 }

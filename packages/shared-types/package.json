@@ -80,6 +80,10 @@
     "./aisleRectangle": {
       "types": "./src/aisleRectangle.ts",
       "default": "./src/aisleRectangle.ts"
+    },
+    "./spotDraft": {
+      "types": "./src/spotDraft.ts",
+      "default": "./src/spotDraft.ts"
     }
   },
   "scripts": {

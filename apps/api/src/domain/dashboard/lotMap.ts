@@ -5,16 +5,11 @@ import { firstFieldError } from '@palier/shared-types/fieldErrors';
 import { levelDraftErrors, type LevelDraft } from '@palier/shared-types/levelDraft';
 import { DashboardRefusedError } from './DashboardRefusedError.ts';
 import { LOT_MAP_WRITTEN, type LotMapRepository, type LotMapWrite } from './LotMapRepository.ts';
-import type { OperatorRepository } from './OperatorRepository.ts';
+import { operatorIdOfMember, type MemberLot, type MemberOperators } from './memberOperator.ts';
 
 export interface LotMapSources {
-  readonly operators: Pick<OperatorRepository, 'findOperatorOfMember'>;
+  readonly operators: MemberOperators;
   readonly maps: LotMapRepository;
-}
-
-export interface MemberLot {
-  readonly userId: string;
-  readonly lotId: string;
 }
 
 export interface MemberLevel extends MemberLot {
@@ -24,7 +19,7 @@ export interface MemberLevel extends MemberLot {
 type OperatorWrite = (operatorId: string) => Promise<LotMapWrite>;
 
 export async function readLotMapOfMember(sources: LotMapSources, lot: MemberLot): Promise<DashboardLotMap> {
-  return readOwnedLotMap(sources.maps, await operatorIdOf(sources, lot), lot.lotId);
+  return readOwnedLotMap(sources.maps, await operatorIdOfMember(sources.operators, lot), lot.lotId);
 }
 
 // Each rule runs before any read, so a refused body says nothing about whether the lot exists.
@@ -45,21 +40,12 @@ export function addAisleOfMember(sources: LotMapSources, level: MemberLevel, req
 
 // Answers the whole map after the change, so the page shows what was saved, in the saved order.
 async function changeLotMap(sources: LotMapSources, lot: MemberLot, write: OperatorWrite): Promise<DashboardLotMap> {
-  const operatorId = await operatorIdOf(sources, lot);
+  const operatorId = await operatorIdOfMember(sources.operators, lot);
   const outcome = await write(operatorId);
   if (outcome !== LOT_MAP_WRITTEN) {
     throw new DashboardRefusedError(outcome);
   }
   return readOwnedLotMap(sources.maps, operatorId, lot.lotId);
-}
-
-// A member without an operator gets the same answer as anyone else on a lot that is not theirs.
-async function operatorIdOf({ operators }: LotMapSources, { userId }: MemberLot): Promise<string> {
-  const operator = await operators.findOperatorOfMember(userId);
-  if (operator === null) {
-    throw new DashboardRefusedError('LOT_NOT_FOUND');
-  }
-  return operator.id;
 }
 
 // Another operator's lot and a lot that does not exist give the same answer, so ids reveal nothing.

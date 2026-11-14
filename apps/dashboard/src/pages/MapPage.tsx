@@ -7,6 +7,7 @@ import { useText } from '../i18n/LanguageContext.tsx';
 import { AislesSection } from '../lotMap/AislesSection.tsx';
 import { BeaconTable } from '../lotMap/BeaconTable.tsx';
 import { LevelsSection } from '../lotMap/LevelsSection.tsx';
+import { SpotsSection } from '../lotMap/SpotsSection.tsx';
 import { useLotMap } from '../lotMap/useLotMap.ts';
 import { lotPath } from '../navigation/routes.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
@@ -62,6 +63,7 @@ function MapView({ map, onSaved, onStale }: MapViewProps) {
       <PageHeader eyebrow={text.lot.eyebrow} title={`${text.map.title} — ${map.lotName}`} />
       <LevelsSection map={map} onSaved={onSaved} onStale={onStale} />
       <AislesSection map={map} onSaved={onSaved} />
+      <SpotsSection map={map} onStale={onStale} />
       <BeaconTable map={map} />
       <AppLink href={lotPath(map.lotId)} className="text-link">
         {text.map.back}

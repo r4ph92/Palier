@@ -10,6 +10,9 @@ function keyPaths(dictionary: object, prefix = ''): string[] {
   );
 }
 
+// The story names this spot attribute « Accessible » in French and "Accessible" in English (#66).
+const SPELLED_ALIKE: ReadonlySet<string> = new Set(['Accessible']);
+
 describe('dashboard dictionaries', () => {
   it('has the same keys in French and English', () => {
     expect(keyPaths(en)).toEqual(keyPaths(fr));
@@ -22,9 +25,9 @@ describe('dashboard dictionaries', () => {
     expect(strings.filter((text) => text.trim() === '')).toEqual([]);
   });
 
-  it('translates every French string', () => {
+  it('translates every French string, but for the words both languages spell alike', () => {
     const french = leafStrings(fr);
 
-    expect(leafStrings(en).filter((text, index) => text === french[index])).toEqual([]);
+    expect(leafStrings(en).filter((text, index) => text === french[index] && !SPELLED_ALIKE.has(text))).toEqual([]);
   });
 });

@@ -123,3 +123,26 @@
   overflow-wrap: anywhere;
   user-select: all;
 }
+
+.subsection-title {
+  margin: var(--space-large) 0 0;
+  font-size: 18px;
+}
+
+.check-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-small);
+  min-height: var(--touch-target);
+}
+
+.check-field input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+.field-select-wide {
+  max-width: 32ch;
+}

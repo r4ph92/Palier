@@ -59,7 +59,7 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
     expect(sql.statement('read-session-lot')?.params).toEqual([SESSION_ID, JULIE_ID]);
     expect(sql.statement('lock-answering-session')?.text).toMatch(/where ps\.id = \$\d+ and ps\.user_id = \$\d+\s+for update of ps/);
     const lookup = sql.statement('lock-answered-spot');
-    expect(lookup?.text).toMatch(/where spot\.lot_id = \$\d+ and upper\(regexp_replace\("spot"\."number", '\[\[:space:\]–—-\]', '', 'g'\)\) = \$\d+/);
+    expect(lookup?.text).toMatch(/where spot\.lot_id = \$\d+ and spot\.retired_at is null and upper\(regexp_replace\("spot"\."number", '\[\[:space:\]–—-\]', '', 'g'\)\) = \$\d+/);
     expect(lookup?.text).toMatch(/order by spot\.number\s+for update of spot/);
     expect(lookup?.text).not.toMatch(/limit/);
     expect(lookup?.params).toEqual([LOT_ID, 'B3']);

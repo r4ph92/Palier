@@ -4,6 +4,7 @@ import type { OnlineLot } from '../../domain/lots/OnlineLot.ts';
 import type { AvailableSpotGroup } from '../../domain/occupancy/availableByCategory.ts';
 import type { Database } from './database.ts';
 import { ASSIGNED_SPOT_COUNT, HELD_SPOT_COUNT } from './heldSpotCount.ts';
+import { isLiveSpot } from './liveSpot.ts';
 import { onlineLotFromRow } from './onlineLotRow.ts';
 import { parkingLot, spot } from './schema.ts';
 
@@ -46,7 +47,7 @@ export class PostgresLotAvailabilityRepository implements LotAvailabilityReposit
     return this.#database
       .select({ lotId: spot.lotId, isEv: spot.isEv, isAccessible: spot.isAccessible, isOversize: spot.isOversize, count: count() })
       .from(spot)
-      .where(and(inArray(spot.lotId, [...lotIds]), eq(spot.state, 'AVAILABLE')))
+      .where(and(inArray(spot.lotId, [...lotIds]), eq(spot.state, 'AVAILABLE'), isLiveSpot))
       .groupBy(spot.lotId, spot.isEv, spot.isAccessible, spot.isOversize);
   }
 }

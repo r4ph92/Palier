@@ -1,3 +1,5 @@
+import { frSpots } from './frSpots.ts';
+
 // The lot map page's text, kept apart so each dictionary file stays short.
 export const frMap = {
   title: 'Plan et balises',
@@ -48,4 +50,5 @@ export const frMap = {
   noMajor: 'Aucun major attribué',
   levelColumn: 'Niveau',
   noBeacons: 'Aucune balise à programmer\u00a0: ajoutez d’abord un niveau.',
+  spots: frSpots,
 };

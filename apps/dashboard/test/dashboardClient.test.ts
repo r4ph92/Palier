@@ -73,4 +73,14 @@ describe('dashboard client', () => {
 
     expect(signal?.aborted).toBe(false);
   });
+
+  it('deletes a spot with a DELETE on its own path, and keeps only the text values of a refusal', async () => {
+    const fetchMock = stubFetch(409, { statusCode: 409, error: 'SPOT_NUMBER_TAKEN', values: { number: 'A-3', count: 3, other: { nested: true } } });
+
+    const refusal = await dashboardClient.deleteSpot('lot/1', 'spot 7').catch((failure: unknown) => failure);
+
+    expect(fetchMock.mock.calls[0]).toEqual(['/v1/dashboard/lots/lot%2F1/spots/spot%207', expect.objectContaining({ method: 'DELETE' })]);
+    expect(refusal).toMatchObject({ status: 409, code: 'SPOT_NUMBER_TAKEN', values: { number: 'A-3' } });
+    expect(Object.keys((refusal as { values: object }).values)).toEqual(['number']);
+  });
 });

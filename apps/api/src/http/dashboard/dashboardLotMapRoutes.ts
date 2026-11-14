@@ -1,17 +1,14 @@
 import type { DashboardLotMap, LevelOrderRequest } from '@palier/shared-types';
 import type { AisleRequest } from '@palier/shared-types/aisleDraft';
 import type { LevelDraft } from '@palier/shared-types/levelDraft';
-import type { FastifyInstance, FastifyRequest, onRequestAsyncHookHandler } from 'fastify';
-import { addAisleOfMember, addLevelOfMember, readLotMapOfMember, reorderLevelsOfMember, type LotMapSources, type MemberLot } from '../../domain/dashboard/lotMap.ts';
+import type { FastifyInstance, onRequestAsyncHookHandler } from 'fastify';
+import { addAisleOfMember, addLevelOfMember, readLotMapOfMember, reorderLevelsOfMember, type LotMapSources } from '../../domain/dashboard/lotMap.ts';
 import { lotIdParametersSchema } from '../schemas/dashboardSchemas.ts';
 import { aisleBodySchema, dashboardLotMapSchema, levelDraftBodySchema, levelOrderBodySchema, lotLevelParametersSchema } from '../schemas/lotMapSchemas.ts';
 import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
+import { memberLotOf, refuseMalformedRequest, type LotParams } from './memberRequest.ts';
 import { refuseMalformedLotId } from './refuseMalformedLotId.ts';
-import { requireDashboardUser, signedInDashboardUser } from './requireDashboardUser.ts';
-
-interface LotParams {
-  readonly id: string;
-}
+import { requireDashboardUser } from './requireDashboardUser.ts';
 
 interface LevelParams extends LotParams {
   readonly levelId: string;
@@ -68,16 +65,4 @@ function registerAddAisleRoute({ scope, sources, onRequest }: MapRoutesContext):
     refuseMalformedRequest(request);
     return addAisleOfMember(sources, { ...memberLotOf(request), levelId: request.params.levelId }, request.body);
   });
-}
-
-// A malformed id answers 404 like the read; a malformed body is the caller's mistake and answers 400.
-function refuseMalformedRequest(request: FastifyRequest): void {
-  refuseMalformedLotId(request);
-  if (request.validationError !== undefined) {
-    throw request.validationError;
-  }
-}
-
-function memberLotOf(request: FastifyRequest<{ readonly Params: LotParams }>): MemberLot {
-  return { userId: signedInDashboardUser(request).id, lotId: request.params.id };
 }
