@@ -13,7 +13,7 @@ const spotCountsSchema = {
 
 export const dashboardLotOccupancySchema = {
   type: 'object',
-  required: ['lotId', 'lotName', 'vehicleCount', 'levels', 'occupiedOrAssignedCount', 'counterGap'],
+  required: ['lotId', 'lotName', 'vehicleCount', 'levels', 'occupiedOrAssignedCount', 'counterGap', 'silentGateNames'],
   additionalProperties: false,
   properties: {
     lotId: { type: 'string' },
@@ -30,6 +30,7 @@ export const dashboardLotOccupancySchema = {
       additionalProperties: false,
       properties: { kind: { type: 'string', enum: ['SPOTS_TO_CHECK', 'COUNTER_BELOW'] }, spots: count },
     },
+    silentGateNames: { type: 'array', items: { type: 'string' } },
   },
 } as const;
 

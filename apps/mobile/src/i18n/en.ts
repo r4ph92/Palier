@@ -124,6 +124,7 @@ export const en: Translations = {
       NOT_AN_ENTRY_GATE: 'This QR is not an entry terminal',
       LOT_NOT_IN_SERVICE,
       GATE_UNAVAILABLE: 'This terminal is not available',
+      GATE_SILENT: 'Terminal out of service — entry not possible',
       PREREQUISITES_MISSING: 'Add a plate and a card before entering',
       OPERATOR_NOT_PAYABLE: 'This lot cannot take payments right now',
       LOT_FULL: 'Full — the barrier stays closed',

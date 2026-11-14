@@ -62,6 +62,11 @@ export type StatementLabel =
   | 'retire-spot'
   | 'read-live-spot'
   | 'replay-passages'
+  | 'record-heartbeat'
+  | 'record-reported-battery'
+  | 'read-lot-gates'
+  | 'read-owned-lot-id'
+  | 'record-aisle-battery'
   | 'unknown';
 
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
@@ -88,6 +93,11 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-lot-details', /from parking_lot where id = \$1 and operator_id = \$2/],
   ['read-level-occupancy', /as confirmed_assigned_count/],
   ['replay-passages', /insert into gate_passage[\s\S]*on conflict/],
+  ['record-heartbeat', /update gate set last_heartbeat_at/],
+  ['read-owned-lot-id', /select parking_lot\.id from parking_lot where parking_lot\.id = \$1 and parking_lot\.operator_id = \$2/],
+  ['record-aisle-battery', /update aisle set beacon_battery_percent[\s\S]*from parking_lot/],
+  ['read-lot-gates', /gate\.last_heartbeat_at\s+from parking_lot/],
+  ['record-reported-battery', /where lot_id = \$\d and beacon_minor = \$\d/],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],
   ['presume-silent-questions', /where lot_id = \$\d and state = 'PARKED_UNCONFIRMED' and parked_at/],

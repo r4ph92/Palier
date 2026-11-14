@@ -15,10 +15,12 @@ import { connectToDatabase } from './infrastructure/postgres/database.ts';
 import { PostgresCurrentParkingSessionQuery } from './infrastructure/postgres/PostgresCurrentParkingSessionQuery.ts';
 import { PostgresExitRepository } from './infrastructure/postgres/PostgresExitRepository.ts';
 import { PostgresDriverRepository } from './infrastructure/postgres/PostgresDriverRepository.ts';
+import { PostgresEquipmentReports } from './infrastructure/postgres/PostgresEquipmentReports.ts';
 import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateCommandFeed.ts';
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
 import { PostgresLevelOccupancyReader } from './infrastructure/postgres/PostgresLevelOccupancyReader.ts';
+import { PostgresLotEquipmentReader } from './infrastructure/postgres/PostgresLotEquipmentReader.ts';
 import { PostgresLotMapRepository } from './infrastructure/postgres/PostgresLotMapRepository.ts';
 import { PostgresLotSpotRepository } from './infrastructure/postgres/PostgresLotSpotRepository.ts';
 import { PostgresLotSetupRepository } from './infrastructure/postgres/PostgresLotSetupRepository.ts';
@@ -86,6 +88,7 @@ const server = buildServer({
     lotSetupRepository: new PostgresLotSetupRepository(connection.database),
     levelOccupancy: new PostgresLevelOccupancyReader(connection.database),
     lotMaps: new PostgresLotMapRepository(connection.database),
+    lotEquipment: new PostgresLotEquipmentReader(connection.database),
     lotSpots: new PostgresLotSpotRepository(connection.database),
     currentParkingSessions: new PostgresCurrentParkingSessionQuery(connection.database, exitBeaconWindow),
     parkingSessionBackdater: new PostgresParkingSessionBackdater(connection.database),
@@ -97,9 +100,10 @@ const server = buildServer({
   gates: {
     deviceKeys: new PostgresGateDeviceKeyRepository(connection.database),
     ledger: new PostgresPassageLedger(connection.database),
-    clock: systemClock,
+    passageClock: systemClock,
     commands: new PostgresGateCommandFeed(connection.database),
     openingWindow,
+    equipment: new PostgresEquipmentReports(connection.database),
   },
   testClock,
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),

@@ -1,4 +1,6 @@
+import type { BatteryStatus } from './beaconBattery.ts';
 import { isValidDisplayText } from './displayText.ts';
+import type { GateHealth, GateKind } from './gates.ts';
 import type { LotPricingSettings } from './lotPricing.ts';
 import type { AisleRectangle } from './parkingSessions.ts';
 import type { SpotState } from './spotStates.ts';
@@ -75,6 +77,8 @@ export interface DashboardLotOccupancy {
   readonly levels: readonly LevelSpotCounts[];
   readonly occupiedOrAssignedCount: number;
   readonly counterGap: CounterGap;
+  // Gates silent for more than 2 minutes, named in the warning above the figures.
+  readonly silentGateNames: readonly string[];
 }
 
 // rectangle is null for the exit lane, which is not drawn, and for an aisle whose stored shape the read boundary refuses.
@@ -84,6 +88,10 @@ export interface DashboardMapAisle {
   readonly beaconMinor: number;
   readonly isExitLane: boolean;
   readonly rectangle: AisleRectangle | null;
+  // The last reading of the aisle's beacon battery, and what it means now: UNKNOWN past 90 days (decision 036).
+  readonly batteryPercent: number | null;
+  readonly batteryReportedAt: string | null;
+  readonly batteryStatus: BatteryStatus;
 }
 
 // Levels come in display order, which is also the order spots are handed out in; aisles by code, the exit lane last.
@@ -101,6 +109,22 @@ export interface DashboardLotMap {
   readonly platformUuid: string;
   readonly beaconMajor: number | null;
   readonly levels: readonly DashboardMapLevel[];
+}
+
+export interface DashboardGateHealth {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: GateKind;
+  readonly health: GateHealth;
+  readonly lastHeartbeatAt: string | null;
+}
+
+// now is the server's clock, so the page tells today from another day as the server judged the gates.
+export interface DashboardLotEquipment {
+  readonly lotId: string;
+  readonly lotName: string;
+  readonly now: string;
+  readonly gates: readonly DashboardGateHealth[];
 }
 
 // A spot of an aisle as the operator manages it; a retired spot is never listed.
@@ -177,6 +201,7 @@ export const DASHBOARD_ERROR_CODES = [
   'AISLE_MINOR_TAKEN',
   'AISLE_RECTANGLE_INVALID',
   'AISLE_NOT_FOUND',
+  'BATTERY_PERCENT_INVALID',
   'SPOT_NOT_FOUND',
   'SPOT_RANGE_INVALID',
   'SPOT_DISTANCE_INVALID',

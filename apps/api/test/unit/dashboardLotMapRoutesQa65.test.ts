@@ -135,6 +135,9 @@ describe('dashboard lot map routes under attack (QA #65)', () => {
       beaconMinor: 5,
       isExitLane: false,
       rectangle,
+      batteryPercent: null,
+      batteryReportedAt: null,
+      batteryStatus: 'UNKNOWN',
     });
   });
 });

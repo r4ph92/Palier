@@ -1,4 +1,5 @@
 import type { AuthenticatedGate } from '../gates/AuthenticatedGate.ts';
+import { ensureOwnGate } from '../gates/ownGate.ts';
 import { PassageRefusedError } from '../gates/PassageRefusedError.ts';
 import { openingWindowOf } from '../gates/OpeningWindow.ts';
 import { payAndClose, type ExitDependencies, type ExitOutcome } from './exitParking.ts';
@@ -92,9 +93,7 @@ export interface VehiclePresence {
 
 // The console saw a vehicle on the exit gate's arming loop; it opens the barrier when exactly one app reported the beacon.
 export async function recordVehicleAtExit(dependencies: ExitDependencies, { gate, requestedGateId, now }: VehiclePresence): Promise<BeaconExitOutcome> {
-  if (gate.id !== requestedGateId) {
-    throw new PassageRefusedError('GATE_FORBIDDEN');
-  }
+  ensureOwnGate(gate, requestedGateId);
   if (gate.kind !== 'EXIT') {
     throw new PassageRefusedError('GATE_NOT_EXIT');
   }

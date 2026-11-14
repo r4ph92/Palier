@@ -120,6 +120,17 @@ body {
   max-width: 60ch;
 }
 
+/* A lead that follows a table or a list rather than a title gets the same space above as below. */
+.lead-after-content {
+  margin-top: var(--space-large);
+}
+
+/* A link inside a sentence keeps the sentence's line height: inline links are exempt from the 44 px target (WCAG 2.5.8). */
+.lead .text-link {
+  display: inline;
+  min-height: 0;
+}
+
 .muted {
   color: var(--muted);
 }

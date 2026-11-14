@@ -2,6 +2,7 @@ import type { GateIdentifyRequest, GateIdentifyResponse, GateIdentity, GatePassa
 import { isStorableDate } from '../../domain/time/storableDate.ts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { GateCommandCursor, GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
+import type { EquipmentReports } from '../../domain/equipment/EquipmentReports.ts';
 import type { GateDeviceKeyRepository } from '../../domain/gates/GateDeviceKeyRepository.ts';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import type { PassageLedger } from '../../domain/gates/PassageLedger.ts';
@@ -13,6 +14,7 @@ import { recordPassage } from '../../domain/gates/recordPassage.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 import { authenticatedGateOf, createGateDeviceAuthentication } from '../gates/gateDeviceAuthentication.ts';
 import { handleGateError } from '../gates/handleGateError.ts';
+import { registerGateHealthRoutes } from './gateHealthRoutes.ts';
 import { gateCommandListSchema, gateCommandsQuerySchema, type GateCommandsQuery } from '../schemas/entrySchemas.ts';
 import {
   gateIdentitySchema,
@@ -30,9 +32,11 @@ import {
 export interface GateRouteDependencies {
   readonly deviceKeys: GateDeviceKeyRepository;
   readonly ledger: PassageLedger;
-  readonly clock: Clock;
+  // The gate clock passages are judged by; heartbeats and battery reports take ComposedGateDependencies.healthClock.
+  readonly passageClock: Clock;
   readonly commands: GateCommandFeed;
   readonly openingWindow: OpeningWindow;
+  readonly equipment: EquipmentReports;
 }
 
 const BAD_REQUEST = 400;
@@ -63,8 +67,14 @@ export interface ReaderExitDependencies {
   readonly clock: Clock;
 }
 
-// The reader exit is missing in a server composed without payments: a reader then gets 503, like the tap.
-export function registerGateRoutes(server: FastifyInstance, dependencies: GateRouteDependencies, readerExit?: ReaderExitDependencies): void {
+export interface ComposedGateDependencies {
+  // Missing in a server composed without payments: a reader then gets 503, like the tap.
+  readonly readerExit: ReaderExitDependencies | undefined;
+  // The test clock when it is active, so moving it makes a gate silent; passages keep the gate clock.
+  readonly healthClock: Clock;
+}
+
+export function registerGateRoutes(server: FastifyInstance, dependencies: GateRouteDependencies, { readerExit, healthClock }: ComposedGateDependencies): void {
   void server.register(
     async (scope) => {
       scope.decorateRequest('authenticatedGate', null);
@@ -76,6 +86,7 @@ export function registerGateRoutes(server: FastifyInstance, dependencies: GateRo
       registerIdentifyRoute(scope, readerExit);
       registerPresenceRoute(scope, readerExit);
       registerCommandsRoute(scope, dependencies.commands);
+      registerGateHealthRoutes(scope, { reports: dependencies.equipment, clock: healthClock });
     },
     { prefix: '/v1/gates' },
   );
@@ -96,7 +107,7 @@ function registerPassageRoute(scope: FastifyInstance, dependencies: GateRouteDep
       requestedGateId: request.params.id,
       closedAt: new Date(request.body.closedAt),
     };
-    return recordPassage(command, { ledger: dependencies.ledger, clock: dependencies.clock, openingWindow: dependencies.openingWindow });
+    return recordPassage(command, { ledger: dependencies.ledger, clock: dependencies.passageClock, openingWindow: dependencies.openingWindow });
   });
 }
 
@@ -106,7 +117,7 @@ function registerReplayRoute(scope: FastifyInstance, dependencies: GateRouteDepe
   scope.post<ReplayRoute>('/:id/passages/replay', { schema }, async (request): Promise<PassageReplayResponse> => {
     const passages = request.body.passages.map((passage) => ({ ...passage, closedAt: new Date(passage.closedAt) }));
     const command = { gate: authenticatedGateOf(request), requestedGateId: request.params.id, passages };
-    return replayPassages(command, { ledger: dependencies.ledger, clock: dependencies.clock });
+    return replayPassages(command, { ledger: dependencies.ledger, clock: dependencies.passageClock });
   });
 }
 

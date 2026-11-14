@@ -126,7 +126,7 @@ describe('the map of a lot', () => {
 
     expect(beacons.getByText(PLATFORM_UUID)).toBeDefined();
     expect(beacons.getByText('Major du stationnement').nextElementSibling?.textContent).toBe('1');
-    const rows = beacons.getAllByRole('row').slice(1).map((row) => [...row.children].map((cell) => cell.textContent));
+    const rows = beacons.getAllByRole('row').slice(1).map((row) => [...row.children].slice(0, 3).map((cell) => cell.textContent));
     expect(rows).toEqual([['P1', 'A', '1'], ['P1', 'B', '2'], ['P1', 'Voie de sortie', '0']]);
   });
 

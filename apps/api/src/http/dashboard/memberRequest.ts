@@ -7,6 +7,10 @@ export interface LotParams {
   readonly id: string;
 }
 
+export interface AisleParams extends LotParams {
+  readonly aisleId: string;
+}
+
 // A malformed id answers 404 like the read; a malformed body is the caller's mistake and answers 400.
 export function refuseMalformedRequest(request: FastifyRequest): void {
   refuseMalformedLotId(request);

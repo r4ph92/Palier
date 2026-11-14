@@ -81,6 +81,14 @@
       "types": "./src/aisleRectangle.ts",
       "default": "./src/aisleRectangle.ts"
     },
+    "./beaconBattery": {
+      "types": "./src/beaconBattery.ts",
+      "default": "./src/beaconBattery.ts"
+    },
+    "./gates": {
+      "types": "./src/gates.ts",
+      "default": "./src/gates.ts"
+    },
     "./spotDraft": {
       "types": "./src/spotDraft.ts",
       "default": "./src/spotDraft.ts"

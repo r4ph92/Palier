@@ -5,6 +5,7 @@ const MESSAGES: Record<EntryRefusalCode, string> = {
   NOT_AN_ENTRY_GATE: 'This QR is not an entry terminal.',
   LOT_NOT_IN_SERVICE: 'This lot is not in service.',
   GATE_UNAVAILABLE: 'This gate cannot be opened by Palier right now.',
+  GATE_SILENT: 'This terminal stopped answering; entry is not possible.',
   OPERATOR_NOT_PAYABLE: 'This lot cannot take payments right now.',
   PREREQUISITES_MISSING: 'Add a plate and a card before entering.',
   LOT_FULL: 'This lot is full.',

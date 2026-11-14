@@ -20,6 +20,7 @@ export interface EntryGate {
   readonly kind: GateKind;
   readonly integrationKind: GateIntegrationKind;
   readonly qrSecret: string | null;
+  readonly lastHeartbeatAt: Date | null;
   readonly lot: EntryGateLot;
 }
 

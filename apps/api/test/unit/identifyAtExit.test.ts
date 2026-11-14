@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { identifyAtExit, type IdentifyRequest } from '../../src/domain/exits/identifyAtExit.ts';
 import type { AuthenticatedGate } from '../../src/domain/gates/AuthenticatedGate.ts';
-import { PassageRefusedError } from '../../src/domain/gates/PassageRefusedError.ts';
+import { GateForbiddenError } from '../../src/domain/gates/GateForbiddenError.ts';
 import { FakePaymentAuthorizer } from './fakes/entryFakes.ts';
 import { FakeExits, julieInside, type ReadKeys } from './fakes/fakeExits.ts';
 import { entreeDemo, sortieDemo } from './fakes/gateFixtures.ts';
@@ -130,7 +130,7 @@ describe('identifyAtExit', () => {
   it('refuses a request that names another gate than the one of the device key', async () => {
     const { payments, identify } = setup();
 
-    await expect(identify('ABC123', { requestedGateId: 'another-gate' })).rejects.toBeInstanceOf(PassageRefusedError);
+    await expect(identify('ABC123', { requestedGateId: 'another-gate' })).rejects.toBeInstanceOf(GateForbiddenError);
     expect(payments.captured).toEqual([]);
   });
 

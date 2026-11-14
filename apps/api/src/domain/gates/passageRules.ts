@@ -1,6 +1,7 @@
 import type { GateKind } from '@palier/shared-types';
 import { isStorableDate } from '../time/storableDate.ts';
 import type { AuthenticatedGate } from './AuthenticatedGate.ts';
+import { ensureOwnGate } from './ownGate.ts';
 import { PassageRefusedError } from './PassageRefusedError.ts';
 import type { VehicleCountChange } from './PassageLedger.ts';
 
@@ -12,9 +13,7 @@ export function vehicleCountChangeFor(kind: GateKind): VehicleCountChange {
 }
 
 export function ensureGateMayReport(gate: AuthenticatedGate, requestedGateId: string): void {
-  if (gate.id !== requestedGateId) {
-    throw new PassageRefusedError('GATE_FORBIDDEN');
-  }
+  ensureOwnGate(gate, requestedGateId);
   if (!gate.hasLoops) {
     throw new PassageRefusedError('GATE_WITHOUT_LOOPS');
   }

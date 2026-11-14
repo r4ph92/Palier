@@ -1,3 +1,4 @@
+import { enEquipment } from './enEquipment.ts';
 import { enMap } from './enMap.ts';
 import type { Dictionary } from './fr.ts';
 
@@ -71,9 +72,11 @@ export const en: Dictionary = {
     beaconMajorLabel: 'Beacon major',
     occupancyLink: 'Occupancy',
     mapLink: 'Map and beacons',
+    equipmentLink: 'Equipment',
   },
   occupancy: {
     title: 'Occupancy',
+    unavailableTitle: 'Occupancy unavailable',
     back: 'Back to the parking lot',
     levelsTitle: 'Spots by level',
     tableCaption: 'Spots by state and by level',
@@ -85,10 +88,15 @@ export const en: Dictionary = {
     occupiedOrAssigned: 'Spots occupied or assigned: %{count}',
     spotsToCheck: { one: 'Gap: %{count} spot to check', other: 'Gap: %{count} spots to check' },
     counterBelow: 'Counter below occupied spots: %{count}',
+    silentGates: { one: 'Silent terminal: %{names}', other: 'Silent terminals: %{names}' },
+    equipmentLink: 'See equipment',
+  },
+  polling: {
     stale: 'Figures not updated. Trying again shortly.',
     lastUpdate: 'Last updated: %{time}',
   },
   map: enMap,
+  equipment: enEquipment,
   spotStates: {
     AVAILABLE: 'Available',
     HELD: 'Held',
@@ -162,6 +170,7 @@ export const en: Dictionary = {
     AISLE_MINOR_TAKEN: 'Another aisle of this parking lot already uses this minor.',
     AISLE_RECTANGLE_INVALID: 'The rectangle needs x and y from 0 to %{gridMaximum}, and a width and a height from 1 to %{gridMaximum}.',
     AISLE_NOT_FOUND: 'This aisle could not be found. The map was reloaded.',
+    BATTERY_PERCENT_INVALID: 'Enter a whole percentage from %{percentMinimum} to %{percentMaximum}.',
     SPOT_NOT_FOUND: 'This spot could not be found. The spot list was reloaded.',
     SPOT_RANGE_INVALID: 'Enter a range like A-1 to A-20: the same prefix at both ends, in letters, digits, spaces or dashes, from 1 up, %{spotsPerAddMaximum} spots at most.',
     SPOT_DISTANCE_INVALID: 'Enter a whole number of metres, from 0 to %{distanceMaximum}.',

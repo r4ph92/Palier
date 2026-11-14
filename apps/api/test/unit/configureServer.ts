@@ -1,3 +1,4 @@
+import type { EntryGateRepository } from '../../src/domain/entries/EntryGateRepository.ts';
 import type { Clock } from '../../src/domain/time/Clock.ts';
 import type { FastifyInstance } from 'fastify';
 import { spotHoldServicesOf } from '../../src/composeSpotHolds.ts';
@@ -28,13 +29,19 @@ interface ServerOptions {
   readonly minimumAppVersion?: string;
   readonly entryClock?: Clock;
   readonly deviceKeys?: FakeGateDeviceKeyRepository;
+  readonly entryGates?: EntryGateRepository;
 }
 
 // The one place route tests build the real server over fake repositories.
-export function configureServer({ testSignInEnabled = false, demoMode = false, minimumAppVersion, entryClock, deviceKeys }: ServerOptions = {}) {
+export function configureServer({ testSignInEnabled = false, demoMode = false, minimumAppVersion, entryClock, deviceKeys, entryGates }: ServerOptions = {}) {
   const driverRepository = new FakeDriverRepository();
   const vehicleRepository = new FakeVehicleRepository();
-  const entries = fakeEntries({ drivers: driverRepository, vehicles: vehicleRepository, ...(entryClock === undefined ? {} : { clock: entryClock }) });
+  const entries = fakeEntries({
+    drivers: driverRepository,
+    vehicles: vehicleRepository,
+    ...(entryClock === undefined ? {} : { clock: entryClock }),
+    ...(entryGates === undefined ? {} : { gates: entryGates }),
+  });
   const parkingSessions = new FakeCurrentParkingSessions();
   const parkedPresumptions = new FakeParkedPresumptions();
   const parkedAnswers = new FakeParkedAnswers();

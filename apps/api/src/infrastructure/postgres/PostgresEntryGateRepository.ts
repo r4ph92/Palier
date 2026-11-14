@@ -9,6 +9,7 @@ const entryGateColumns = {
   kind: gate.kind,
   integrationKind: gate.integrationKind,
   qrSecret: gate.qrSecret,
+  lastHeartbeatAt: gate.lastHeartbeatAt,
   lot: {
     id: parkingLot.id,
     isOnline: parkingLot.isOnline,

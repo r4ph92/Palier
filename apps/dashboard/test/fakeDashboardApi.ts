@@ -3,6 +3,7 @@ import { act } from '@testing-library/react';
 import { vi } from 'vitest';
 import { type FakeAnswer, type FakeApiState, meFor, seededLots, seededOccupancy } from './fakeDashboardData.ts';
 import { routeRequest } from './fakeDashboardRoutes.ts';
+import { seededEquipment } from './fakeEquipmentData.ts';
 import { seededMaps } from './fakeMapData.ts';
 import { seededSpots } from './fakeSpotData.ts';
 
@@ -17,7 +18,8 @@ interface FakeApiOptions {
 // Stands in for the API behind the Vite proxy: same paths, same status codes, same error bodies.
 export function installFakeApi({ signedInAs, testUsersListed = true, answers = {} }: FakeApiOptions = {}): FakeApiState {
   const me = signedInAs === undefined ? null : meFor(signedInAs);
-  const state: FakeApiState = { me, testUsersListed, requests: [], answers: new Map(Object.entries(answers)), answered: [], lots: seededLots(), occupancy: seededOccupancy(), maps: seededMaps(), spots: seededSpots() };
+  const seeded = { lots: seededLots(), occupancy: seededOccupancy(), maps: seededMaps(), equipment: seededEquipment(), spots: seededSpots() };
+  const state: FakeApiState = { me, testUsersListed, requests: [], answers: new Map(Object.entries(answers)), answered: [], ...seeded };
   vi.stubGlobal('fetch', vi.fn((input: string, init?: RequestInit) => toResponse(state, routeRequest(state, input, init))));
   return state;
 }
