@@ -1,5 +1,5 @@
 {
-  "id": "124b347c-8149-4836-82f0-3cc09dbf8ad5",
+  "id": "e623efb3-e3f7-49b7-ba7b-9f5b0bbd7823",
   "prevId": "12a22ca5-9769-49d3-bbc0-408e74ccc7c4",
   "version": "7",
   "dialect": "postgresql",
@@ -866,7 +866,8 @@
         },
         "needs_check_reason": {
           "name": "needs_check_reason",
-          "type": "text",
+          "type": "spot_check_reason",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
         },
@@ -1044,9 +1045,9 @@
           "name": "spot_needs_check_since_matches_flag",
           "value": "\"spot\".\"needs_check\" = (\"spot\".\"needs_check_since\" is not null)"
         },
-        "spot_needs_check_reason_known": {
-          "name": "spot_needs_check_reason_known",
-          "value": "\"spot\".\"needs_check_reason\" in ('WRONG_AISLE', 'REPORTED_TAKEN')"
+        "spot_needs_check_reason_only_when_flagged": {
+          "name": "spot_needs_check_reason_only_when_flagged",
+          "value": "\"spot\".\"needs_check\" or \"spot\".\"needs_check_reason\" is null"
         },
         "spot_retired_out_of_service": {
           "name": "spot_retired_out_of_service",
@@ -2455,6 +2456,15 @@
       "values": [
         "FREE",
         "OCCUPIED"
+      ]
+    },
+    "public.spot_check_reason": {
+      "name": "spot_check_reason",
+      "schema": "public",
+      "values": [
+        "WRONG_AISLE",
+        "WRONG_SPOT",
+        "REPORTED_TAKEN"
       ]
     },
     "public.spot_state": {
