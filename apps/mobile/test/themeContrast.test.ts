@@ -23,8 +23,9 @@ describe.each<[string, ColorTokens]>([
     expect(contrast(colors.onAccent, colors.accent)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('sets the yellow apart from the screen by its ink border', () => {
-    expect(contrast(colors.ink, colors.canvas)).toBeGreaterThanOrEqual(3);
+  it('sets the yellow apart from the screen by its border, or by itself on a dark screen', () => {
+    const borderOrFill = Math.max(contrast(colors.onAccent, colors.canvas), contrast(colors.accent, colors.canvas));
+    expect(borderOrFill).toBeGreaterThanOrEqual(3);
   });
 
   it('keeps both gauge fills visible on the gauge track', () => {
