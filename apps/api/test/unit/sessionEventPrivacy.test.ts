@@ -94,8 +94,8 @@ describe('what the visit log keeps (story #156)', () => {
 
     expect([...byKind.keys()].sort()).toEqual([
       'AISLE_DETECTED aisleCode,aisleId,beaconMinor,isAssignedAisle',
-      'ENTRY_CANCELLED opened,reason',
       'ENTRY_CANCELLED reason',
+      'ENTRY_CANCELLED reason,wasBarrierOpened',
       'ENTRY_LOOP_CLOSED gateId',
       'ENTRY_SCANNED aisleCode,gateId,levelCode,plate,spotId,spotNumber',
       'GATE_OPENED commandId,direction,gateId',

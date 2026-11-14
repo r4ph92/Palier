@@ -36,7 +36,7 @@ export interface SessionInLot {
 }
 
 interface BarrierOpenedRow extends Record<string, unknown> {
-  readonly opened: boolean;
+  readonly was_barrier_opened: boolean;
 }
 
 // With the loop and the job's cancellation, every logged scan ends in a closing event.
@@ -49,14 +49,14 @@ export async function logFailedAdmission(tx: Transaction, { sessionId, lotId }: 
   });
 }
 
-// opened tells an entry whose barrier opened and no car crossed from one stopped before its barrier (decision 035).
+// wasBarrierOpened tells an entry whose barrier opened and no car crossed from one stopped before its barrier (decision 035).
 export async function logEntryWithoutLoop(tx: Transaction, { sessionId, lotId }: SessionInLot): Promise<void> {
   const [row] = await tx.execute<BarrierOpenedRow>(sql`
-    select exists (select 1 from gate_command where session_id = ${sessionId} and kind = 'OPEN') as opened`);
+    select exists (select 1 from gate_command where session_id = ${sessionId} and kind = 'OPEN') as was_barrier_opened`);
   await appendSessionEvent(tx, {
     sessionId,
     lotId,
     occurredAt: 'cancelled_at',
-    event: { kind: 'ENTRY_CANCELLED', payload: { reason: 'NO_LOOP', opened: row?.opened === true } },
+    event: { kind: 'ENTRY_CANCELLED', payload: { reason: 'NO_LOOP', wasBarrierOpened: row?.was_barrier_opened === true } },
   });
 }

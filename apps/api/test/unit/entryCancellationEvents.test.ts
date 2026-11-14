@@ -19,7 +19,7 @@ function cancelOnRollback(scripted: ScriptedSql) {
 
 describe('no loop within 60 s after the opening (story #156, decision 013)', () => {
   it('logs the cancellation in the cancellation transaction, after the session and its spot', async () => {
-    const scripted = new ScriptedSql().answer('cancel-session', [cancelledRow]).answer('read-barrier-opened', [{ opened: true }]);
+    const scripted = new ScriptedSql().answer('cancel-session', [cancelledRow]).answer('read-barrier-opened', [{ was_barrier_opened: true }]);
 
     await expect(cancelByJob(scripted)).resolves.toBe(true);
 
@@ -29,23 +29,23 @@ describe('no loop within 60 s after the opening (story #156, decision 013)', () 
   });
 
   it('logs the reason, at the cancelled_at the session stored', async () => {
-    const scripted = new ScriptedSql().answer('cancel-session', [cancelledRow]).answer('read-barrier-opened', [{ opened: true }]);
+    const scripted = new ScriptedSql().answer('cancel-session', [cancelledRow]).answer('read-barrier-opened', [{ was_barrier_opened: true }]);
 
     await cancelByJob(scripted);
 
     const cancelled = onlyAppendedSessionEvent(scripted);
     expect(cancelled.kind).toBe('ENTRY_CANCELLED');
-    expect(cancelled.payload).toEqual({ reason: 'NO_LOOP', opened: true });
+    expect(cancelled.payload).toEqual({ reason: 'NO_LOOP', wasBarrierOpened: true });
     expect([cancelled.sessionId, cancelled.lotId]).toEqual([SESSION_ID, LOT_ID]);
     expect(cancelled.occurredAtText).toMatch(/select "cancelled_at" from parking_session where id = \$\d+/);
   });
 
   it('tells an entry stopped before its barrier, which has no OPEN command', async () => {
-    const scripted = new ScriptedSql().answer('cancel-session', [cancelledRow]).answer('read-barrier-opened', [{ opened: false }]);
+    const scripted = new ScriptedSql().answer('cancel-session', [cancelledRow]).answer('read-barrier-opened', [{ was_barrier_opened: false }]);
 
     await cancelByJob(scripted);
 
-    expect(onlyAppendedSessionEvent(scripted).payload).toEqual({ reason: 'NO_LOOP', opened: false });
+    expect(onlyAppendedSessionEvent(scripted).payload).toEqual({ reason: 'NO_LOOP', wasBarrierOpened: false });
     const read = scripted.statement('read-barrier-opened');
     expect(read?.text).toMatch(/exists \(select 1 from gate_command where session_id = \$1 and kind = 'OPEN'\)/);
     expect(read?.params).toEqual([SESSION_ID]);

@@ -111,7 +111,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['attach-exit-passage', /set exit_passage_at/],
   ['occupy-confirmed-spot', /update spot set state = 'OCCUPIED', state_changed_at = now\(\)/],
   ['insert-gate-command', /insert into gate_command/],
-  ['read-barrier-opened', /as opened/],
+  ['read-barrier-opened', /as was_barrier_opened/],
   ['backdate-entry', /set entry_confirmed_at = /],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],
