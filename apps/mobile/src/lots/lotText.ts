@@ -20,11 +20,11 @@ export function lotAccessibilityLabel({ lot, distanceMetres }: NearbyLot): strin
   return [lot.name, ...distance, ...spokenAvailability(lot)].join(SPOKEN_SEPARATOR);
 }
 
-function spokenAvailability({ freeSpots, freeSpotsByCategory }: LotSummary): string[] {
+function spokenAvailability({ freeSpots, capacity, freeSpotsByCategory }: LotSummary): string[] {
   if (freeSpots === 0) {
     return [i18n.t('home.fullAccessibilityLabel')];
   }
-  return [`${freeSpots} ${i18n.t('home.freeSpotsLabel', { count: freeSpots })}`, ...categoryCounts(freeSpotsByCategory, ' ')];
+  return [i18n.t('home.freeSpotsOutOf', { count: freeSpots, capacity }), ...categoryCounts(freeSpotsByCategory, ' ')];
 }
 
 function categoryCounts(counts: SpotCountByCategory, space: string): string[] {
