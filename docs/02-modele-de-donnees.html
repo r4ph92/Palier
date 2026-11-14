@@ -531,7 +531,7 @@
         <tr><td>PUT /v1/lots/{id}/map</td><td>Paliers, allées, places et attributs ; associe chaque allée à son <code>minor</code> de balise</td></tr>
         <tr><td>GET /v1/lots/{id}/occupancy</td><td>Occupation en direct par palier et par état, compteur de passages, et écart entre les deux</td></tr>
         <tr><td>GET /v1/dashboard/lots/{id}/spots-to-check</td><td>Places à vérifier physiquement, avec le nom du parking, l'heure, la raison et l'état de chaque signalement, la plus ancienne d'abord</td></tr>
-        <tr><td>POST /v1/dashboard/lots/{id}/spots/{spotId}/check-cleared</td><td>« Vérifiée » : lève le signalement d'une place libre ; refuse une place encore attribuée à une session (<code>SPOT_STILL_ASSIGNED</code>)</td></tr>
+        <tr><td>POST /v1/dashboard/lots/{id}/spots/{spotId}/check-cleared</td><td>« Vérifiée » : lève le signalement d'une place libre ; refuse une place encore attribuée à une session (<code>SPOT_STILL_ASSIGNED</code>) ou une place non libre qu'aucune session ne retient (<code>SPOT_NOT_FREE</code>)</td></tr>
       </tbody>
     </table>
   </div>
