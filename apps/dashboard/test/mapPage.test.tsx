@@ -36,6 +36,19 @@ describe('the map of a lot', () => {
     expect(screen.getByRole('textbox', { name: 'Code de l’allée' })).toHaveProperty('value', '');
   });
 
+  it('draws a 10 000 × 40 aisle as a visible strip, with its code beside it', async () => {
+    await openGarageRoyMap();
+    await addLevel('P1');
+
+    await addAisle({ code: 'NORD', minor: '1', rectangle: ['0', '0', '10000', '40'] });
+
+    await screen.findByText('Allée NORD ajoutée au niveau P1.');
+    const plan = screen.getByRole('img', { name: 'Plan du niveau P1' });
+    const [, , frameWidth = 0, frameHeight = 0] = (plan.getAttribute('viewBox') ?? '').split(' ').map(Number);
+    expect(Number(plan.querySelector('rect')?.getAttribute('height')) / Math.min(frameWidth, frameHeight)).toBeGreaterThan(0.07);
+    expect(plan.querySelector('.plan-label-beside')?.textContent).toBe('NORD');
+  });
+
   it('draws the aisle being typed dashed, once its rectangle is on the grid', async () => {
     await openGarageRoyMap();
     await addLevel('P1');
