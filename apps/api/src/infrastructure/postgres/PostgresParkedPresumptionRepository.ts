@@ -21,7 +21,7 @@ interface SessionAfterRefusalRow extends Record<string, unknown> {
 const MAX_WALK_ATTEMPTS = 2;
 
 // The walk in the spot's aisle writes no spot and takes no lot lock: the loop confirmation already made the spot OCCUPIED (decision 019);
-// its events go in the same statement (decision 035). A walk in another aisle flags that spot under the lot lock and asks the driver
+// its events go in the same statement (decision 037). A walk in another aisle flags that spot under the lot lock and asks the driver
 // where they parked (decision 020).
 export class PostgresParkedPresumptionRepository implements ParkedPresumptionRepository {
   readonly #database: Database;

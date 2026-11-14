@@ -8,7 +8,7 @@ type SessionInstantColumn = 'entry_scan_at' | 'entry_confirmed_at' | 'parked_at'
 export type EventInstant = SessionInstantColumn | SQL;
 
 // occurredAt: the instant the step itself stored, read in the step's transaction, so the event matches its step's column. Two exceptions
-// (decision 035): an unanswered question presumed by silence logs the job's clock while parked_at keeps the question's instant, and the
+// (decision 037): an unanswered question presumed by silence logs the job's clock while parked_at keeps the question's instant, and the
 // test-clock backdate shifts the events but not gate_command.issued_at, parked_answered_at or cancelled_at.
 export interface SessionEventWrite {
   readonly sessionId: string;

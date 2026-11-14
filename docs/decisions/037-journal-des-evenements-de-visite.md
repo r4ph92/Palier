@@ -1,4 +1,4 @@
-# 035 — Journal des événements de visite
+# 037 — Journal des événements de visite
 
 **Contexte.** #156 : Sophie Lavoie veut que chaque étape d'entrée et de stationnement d'une visite soit inscrite au moment où elle a lieu, avec sa date de purge, pour que la chronologie de la session (#72) et la réponse à une contestation de paiement reposent sur ce qui s'est passé et quand, pas sur le dernier état de la session. `docs/02` prévoyait `event_log` (session, parking, genre, payload, instant, purge calculée à l'écriture) ; aucune table n'existait.
 

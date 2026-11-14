@@ -15,4 +15,4 @@
 
 **Conséquences.** L'app n'a aucun contrôle d'horloge et ne compte pas le temps elle-même : elle relit la session chaque minute. Le SQL de la lecture et du recul n'est vérifié que sur la base de la voie (décisions 002 et 005).
 
-**Amendée par 035 (#156).** Reculer une session décale aussi, dans la même instruction, l'instant et la date de purge de ses événements au journal de visite ; `gate_command.issued_at`, `parked_answered_at` et `cancelled_at` restent inchangés.
+**Amendée par 037 (#156).** Reculer une session décale aussi, dans la même instruction, l'instant et la date de purge de ses événements au journal de visite ; `gate_command.issued_at`, `parked_answered_at` et `cancelled_at` restent inchangés.

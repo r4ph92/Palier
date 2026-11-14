@@ -1,4 +1,4 @@
-// 90 days counted in hours, so a purge date never moves with a daylight saving change (decision 035).
+// 90 days counted in hours, so a purge date never moves with a daylight saving change (decision 037).
 export const EVENT_RETENTION_HOURS = 2160;
 
 export const SESSION_EVENT_KINDS = [

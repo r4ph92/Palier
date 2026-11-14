@@ -5,7 +5,7 @@ import { parkingSession, sameLotForeignKey } from './entrySchema.ts';
 
 const KIND_LIST = SESSION_EVENT_KINDS.map((kind) => `'${kind}'`).join(', ');
 
-// Append-only log of each step of a visit (decision 035). sequence is the order of writing, which the timeline follows:
+// Append-only log of each step of a visit (decision 037). sequence is the order of writing, which the timeline follows:
 // occurred_at keeps each step's own clock, so two events may read out of order when a gate or the test clock runs ahead.
 export const eventLog = pgTable(
   'event_log',

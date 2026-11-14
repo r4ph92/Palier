@@ -46,7 +46,7 @@ export async function logFailedAdmission(tx: Transaction, { sessionId, lotId }: 
   });
 }
 
-// wasBarrierOpened tells an entry whose barrier opened and no car crossed from one stopped before its barrier (decision 035).
+// wasBarrierOpened tells an entry whose barrier opened and no car crossed from one stopped before its barrier (decision 037).
 const WITHOUT_LOOP = jsonbObjectOf<EntryWithoutLoopPayload>({
   reason: sql`'NO_LOOP'`,
   wasBarrierOpened: sql`exists (select 1 from gate_command where gate_command.session_id = cancelled.id and gate_command.kind = 'OPEN')`,
