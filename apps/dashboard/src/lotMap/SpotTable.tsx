@@ -4,6 +4,7 @@ import { StableLabel } from '../components/StableLabel.tsx';
 import { StateMark, type StateTone } from '../components/StateMark.tsx';
 import { formatMetres } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
+import { interpolateKeepingValuesWhole } from '../i18n/interpolateKeepingValuesWhole.tsx';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { closesOnEscape } from './closesOnEscape.ts';
 import { flagLabelsOf, SPOT_FLAGS } from './spotFormValues.ts';
@@ -148,7 +149,7 @@ function DeleteConfirmation({ spot, deletion }: { readonly spot: DashboardSpot; 
   const label = interpolate(text.confirmDeleteButton.name, { number: spot.number });
   return (
     <span className="row-actions delete-question" onKeyDown={(event) => closesOnEscape(event, deletion.cancel)}>
-      <span>{interpolate(text.confirmDelete, { number: spot.number })}</span>
+      <span>{interpolateKeepingValuesWhole(text.confirmDelete, { number: spot.number })}</span>
       <button type="button" ref={confirmRef} className="text-button" aria-label={label} aria-disabled={deletion.deleting} onClick={() => void deletion.confirm()}>
         <StableLabel shown={deletion.deleting ? text.deleting : text.confirmDeleteButton.shown} reserved={[text.deleting, text.confirmDeleteButton.shown]} />
       </button>
