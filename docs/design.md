@@ -35,7 +35,7 @@ Les contrastes des jetons sont vérifiés par `apps/mobile/test/themeContrast.te
 ## Gestes signatures
 
 1. Surtitre en mono, majuscules, interlettrage large, couleur `muted`, au-dessus du titre de chaque écran.
-2. Titre d'écran souligné d'un filet `ink` de 2 pt ; les lignes de liste sont séparées par des filets fins `line`, sans cartes ni ombres.
+2. Titre d'écran souligné d'un filet `ink` de 2 pt, ouvert à gauche par une barre `accent` de 56 × 6 pt ; l'onglet choisi porte une barre `accent` de 4 pt sur le filet du haut de la barre d'onglets ; les lignes de liste sont séparées par des filets fins `line`, sans cartes ni ombres.
 3. Tout chiffre (places, montants à venir) en IBM Plex Mono, chiffres tabulaires ; dans une ligne de parking, le nombre de places libres (30 pt, aligné à droite) est l'élément le plus grand, son libellé reste petit et `muted`.
 4. Un état se montre par un carré plein de 8 pt dans la couleur sémantique suivi du mot, jamais par une pastille colorée. Un état à surveiller, pas encore une panne (« Pile inconnue »), prend un carré vide de 8 pt cerclé de `danger` sur 2 pt ; le mot porte le sens (#76).
 5. Une seule action principale par vue : bouton plein `accent`, bordure `onAccent` de 3 pt, angles droits, libellé `onAccent` en Archivo 600.
