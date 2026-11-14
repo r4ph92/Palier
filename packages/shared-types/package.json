@@ -84,6 +84,10 @@
     "./beaconBattery": {
       "types": "./src/beaconBattery.ts",
       "default": "./src/beaconBattery.ts"
+    },
+    "./gates": {
+      "types": "./src/gates.ts",
+      "default": "./src/gates.ts"
     }
   },
   "scripts": {

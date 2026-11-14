@@ -1,10 +1,10 @@
 import { AISLE_CODE_LENGTH } from '@palier/shared-types/aisleDraft';
 import { AISLE_GRID_LIMIT } from '@palier/shared-types/aisleRectangle';
-import { BATTERY_PERCENT_LIMITS } from '@palier/shared-types/beaconBattery';
+import { BATTERY_PERCENT_LIMITS, BATTERY_READING_LIFETIME_DAYS, LOW_BATTERY_PERCENT } from '@palier/shared-types/beaconBattery';
 import { AISLE_MINOR_LIMITS } from '@palier/shared-types/beacons';
 import { LEVEL_CODE_LENGTH, MAX_LEVELS_PER_LOT } from '@palier/shared-types/levelDraft';
 import { useMemo } from 'react';
-import { formatCount } from '../i18n/formatNumbers.ts';
+import { formatCount, formatPercent } from '../i18n/formatNumbers.ts';
 import { useLanguage, type Language } from '../i18n/LanguageContext.tsx';
 
 function limitValuesIn(language: Language): Readonly<Record<string, string>> {
@@ -17,6 +17,8 @@ function limitValuesIn(language: Language): Readonly<Record<string, string>> {
     gridMaximum: formatCount(AISLE_GRID_LIMIT, language),
     percentMinimum: formatCount(BATTERY_PERCENT_LIMITS.minimum, language),
     percentMaximum: formatCount(BATTERY_PERCENT_LIMITS.maximum, language),
+    lowPercent: formatPercent(LOW_BATTERY_PERCENT, language),
+    lifetimeDays: formatCount(BATTERY_READING_LIFETIME_DAYS, language),
   };
 }
 

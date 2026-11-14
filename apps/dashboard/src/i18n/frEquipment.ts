@@ -4,7 +4,7 @@ export const frEquipment = {
   back: 'Retour au stationnement',
   unavailableTitle: 'Équipement indisponible',
   gatesTitle: 'Bornes',
-  gatesIntro: 'Une borne sans signal depuis plus de 2 minutes est muette. Une borne d’entrée muette refuse les entrées jusqu’à son retour.',
+  gatesIntro: 'Une borne sans signal depuis plus de %{minutes} minutes est muette. Une borne d’entrée muette refuse les entrées jusqu’à son retour.',
   noGates: 'Aucune borne n’est installée dans ce stationnement.',
   nameColumn: 'Borne',
   kindColumn: 'Sens',

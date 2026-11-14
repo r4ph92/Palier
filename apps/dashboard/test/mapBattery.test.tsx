@@ -50,6 +50,12 @@ describe('the beacon batteries on the map', () => {
     expect(toneOf('A')).toBe('state-mark-warning');
   });
 
+  it('states the low threshold and the reading lifetime of the shared battery rule', async () => {
+    await openMap();
+
+    expect(screen.getByText(/^Une pile à/).textContent?.replace(WHITESPACE, ' ')).toMatch(/^Une pile à 20 % ou moins est faible\. Sans lecture depuis 90 jours, elle est inconnue\./);
+  });
+
   it('records 15 % for aisle A’s beacon and shows it low, in red, without reloading the map', async () => {
     const api = await openMap();
 

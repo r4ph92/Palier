@@ -1,10 +1,9 @@
 import type { AisleDraft, DashboardLotMap, DashboardMapLevel, LevelOrderRequest } from '@palier/shared-types';
-import { beaconBatteryErrors } from '@palier/shared-types/beaconBattery';
+import { beaconBatteryErrors, LOW_BATTERY_PERCENT } from '@palier/shared-types/beaconBattery';
 import { type FakeResponse, refused } from './fakeDashboardData.ts';
 import { NO_BATTERY_READING } from './fakeMapData.ts';
 
 const MAP_REQUEST = /^(GET|POST|PUT) \/lots\/([^/]+)\/(map|levels|levels\/order|levels\/([^/]+)\/aisles|aisles\/([^/]+)\/beacon-battery)$/;
-const LOW_BATTERY_PERCENT = 20;
 // What the fake API stamps on a reading, so a test can read the time the page shows.
 export const FAKE_READING_TIME = '2026-11-13T19:05:00.000Z';
 const STATUS_BY_REFUSAL: Readonly<Record<string, number>> = { LEVEL_NOT_FOUND: 404, AISLE_NOT_FOUND: 404, BATTERY_PERCENT_INVALID: 400 };

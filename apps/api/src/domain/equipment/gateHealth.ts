@@ -1,7 +1,9 @@
 import type { GateHealth } from '@palier/shared-types';
+import { SILENT_GATE_AFTER_MINUTES } from '@palier/shared-types/gates';
 
-// Four missed beats of the console's 30 s heartbeat (decision 035).
-export const SILENT_AFTER_MILLISECONDS = 2 * 60 * 1000;
+const MILLISECONDS_PER_MINUTE = 60 * 1000;
+
+export const SILENT_AFTER_MILLISECONDS = SILENT_GATE_AFTER_MINUTES * MILLISECONDS_PER_MINUTE;
 
 export function gateHealthOf(lastHeartbeatAt: Date | null, now: Date): GateHealth {
   if (lastHeartbeatAt === null) {

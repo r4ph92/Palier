@@ -1,17 +1,20 @@
 import type { DashboardGateHealth, DashboardLotEquipment } from '@palier/shared-types';
+import { SILENT_GATE_AFTER_MINUTES } from '@palier/shared-types/gates';
 import { ColumnHeads } from '../components/ColumnHeads.tsx';
 import { StateMark } from '../components/StateMark.tsx';
+import { formatCount } from '../i18n/formatNumbers.ts';
+import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { gateHealthMarkOf } from './gateHealthMark.ts';
 
 export function GatesSection({ equipment }: { readonly equipment: DashboardLotEquipment }) {
-  const text = useText();
+  const { text, language } = useLanguage();
   return (
     <section className="section" aria-labelledby="gates-title">
       <h2 id="gates-title" className="section-title">
         {text.equipment.gatesTitle}
       </h2>
-      <p className="lead">{text.equipment.gatesIntro}</p>
+      <p className="lead">{interpolate(text.equipment.gatesIntro, { minutes: formatCount(SILENT_GATE_AFTER_MINUTES, language) })}</p>
       {equipment.gates.length === 0 ? <p className="muted">{text.equipment.noGates}</p> : <GateTable equipment={equipment} />}
     </section>
   );

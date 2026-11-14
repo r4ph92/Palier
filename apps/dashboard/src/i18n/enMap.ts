@@ -49,7 +49,7 @@ export const enMap: typeof frMap = {
   noMajor: 'No major assigned',
   levelColumn: 'Level',
   noBeacons: 'No beacons to program: add a level first.',
-  batteryHelp: 'A battery at 20% or less is low. With no reading for 90 days, it is unknown. Enter the level read on the beacon to update it.',
+  batteryHelp: 'A battery at %{lowPercent} or less is low. With no reading for %{lifetimeDays} days, it is unknown. Enter the level read on the beacon to update it.',
   batteryColumn: 'Battery',
   readingColumn: 'New reading',
   battery: { LOW: 'Low battery · %{percent}', OK: 'Battery OK · %{percent}', UNKNOWN: 'Unknown battery' },

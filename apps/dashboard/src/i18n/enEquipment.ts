@@ -5,7 +5,7 @@ export const enEquipment: typeof frEquipment = {
   back: 'Back to the parking lot',
   unavailableTitle: 'Equipment unavailable',
   gatesTitle: 'Terminals',
-  gatesIntro: 'A terminal with no signal for more than 2 minutes is silent. A silent entry terminal refuses entries until it is back.',
+  gatesIntro: 'A terminal with no signal for more than %{minutes} minutes is silent. A silent entry terminal refuses entries until it is back.',
   noGates: 'No terminals are installed in this parking lot.',
   nameColumn: 'Terminal',
   kindColumn: 'Direction',

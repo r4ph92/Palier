@@ -51,6 +51,7 @@ describe('the equipment page', () => {
     expect(stateOf('Sortie Démo')).toBe('Aucun signal reçu');
     expect(toneOf('Sortie Démo')).toBe('state-mark-muted');
     expect(screen.getAllByRole('cell').map((cell) => cell.textContent)).toContain('Sortie');
+    expect(screen.getByText(/^Une borne sans signal depuis plus de 2 minutes est muette\./)).toBeDefined();
   });
 
   it('shows a gate fallen silent within one poll, in red with the time of its last signal', async () => {

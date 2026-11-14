@@ -48,7 +48,7 @@ export const frMap = {
   noMajor: 'Aucun major attribué',
   levelColumn: 'Niveau',
   noBeacons: 'Aucune balise à programmer\u00a0: ajoutez d’abord un niveau.',
-  batteryHelp: 'Une pile à 20\u00a0% ou moins est faible. Sans lecture depuis 90 jours, elle est inconnue. Entrez le niveau lu sur la balise pour le mettre à jour.',
+  batteryHelp: 'Une pile à %{lowPercent} ou moins est faible. Sans lecture depuis %{lifetimeDays} jours, elle est inconnue. Entrez le niveau lu sur la balise pour le mettre à jour.',
   batteryColumn: 'Pile',
   readingColumn: 'Nouvelle lecture',
   battery: { LOW: 'Pile faible · %{percent}', OK: 'Pile OK · %{percent}', UNKNOWN: 'Pile inconnue' },
