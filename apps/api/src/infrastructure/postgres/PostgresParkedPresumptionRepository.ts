@@ -2,20 +2,15 @@ import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
 import {
   classifyRefusedSignal,
-  wrongAisleOf,
   type ParkedPresumption,
   type ParkedPresumptionRepository,
   type SessionAfterRefusal,
   type WalkingSignal,
 } from '../../domain/parkingSessions/ParkedPresumption.ts';
-import { clampedParkedAt } from './clampedParkedAt.ts';
 import type { Database } from './database.ts';
 import { isLotBusy, orLotBusy } from './lockParkingLot.ts';
-import { askWhereParked, readWalkFacts, type WrongAisleWalk } from './wrongAisleWalk.ts';
-
-interface ParkedAtRow extends Record<string, unknown> {
-  readonly parked_at: Date | string;
-}
+import { presumeOnFoot } from './onFootPresumption.ts';
+import { aisleDetectedOf, askWhereParked, readWalkFacts, type WrongAisleWalk } from './wrongAisleWalk.ts';
 
 interface SessionAfterRefusalRow extends Record<string, unknown> {
   readonly state: EntrySessionState;
@@ -24,8 +19,9 @@ interface SessionAfterRefusalRow extends Record<string, unknown> {
 
 const MAX_WALK_ATTEMPTS = 2;
 
-// The walk in the spot's aisle writes no spot and takes no lot lock: the loop confirmation already made the spot OCCUPIED (decision 019).
-// A walk in another aisle flags that spot under the lot lock and asks the driver where they parked (decision 020).
+// The walk in the spot's aisle writes no spot and takes no lot lock: the loop confirmation already made the spot OCCUPIED (decision 019);
+// its events go in the same statement (decision 035). A walk in another aisle flags that spot under the lot lock and asks the driver
+// where they parked (decision 020).
 export class PostgresParkedPresumptionRepository implements ParkedPresumptionRepository {
   readonly #database: Database;
 
@@ -35,7 +31,7 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
 
   async presume(signal: WalkingSignal): Promise<ParkedPresumption> {
     if (signal.detectedAisleMinor === null) {
-      return this.#recordedOrRefused(signal, await this.#presumeConfirmedEntry(signal, null));
+      return this.#recordedOrRefused(signal, await presumeOnFoot(this.#database, { signal, assignedSpotId: null, detectedAisle: null }));
     }
     for (let attempt = 0; attempt < MAX_WALK_ATTEMPTS; attempt += 1) {
       const walk = await this.#walkOnFacts(signal);
@@ -52,11 +48,11 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
     if (facts?.state !== 'ENTRY_CONFIRMED') {
       return classifyRefusedSignal(facts);
     }
-    const aisleId = wrongAisleOf(facts);
-    if (aisleId !== null) {
-      return this.#askWhereParked({ signal, facts, aisleId });
+    const detectedAisle = aisleDetectedOf(facts);
+    if (detectedAisle?.isAssignedAisle === false) {
+      return this.#askWhereParked({ signal, facts, detectedAisle });
     }
-    const parkedAt = await this.#presumeConfirmedEntry(signal, facts.assignedSpotId);
+    const parkedAt = await presumeOnFoot(this.#database, { signal, assignedSpotId: facts.assignedSpotId, detectedAisle });
     return parkedAt === null ? null : { outcome: 'recorded', state: 'PARKED_PRESUMED', parkedAt };
   }
 
@@ -73,17 +69,6 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
       return parkedAt;
     }
     return parkedAt === null ? null : { outcome: 'recorded', state: 'PARKED_UNCONFIRMED', parkedAt };
-  }
-
-  // assignedSpotId: the spot the walk's facts were read with, when they were; the update then waits for that spot only.
-  async #presumeConfirmedEntry({ sessionId, driverId, detectedAt }: WalkingSignal, assignedSpotId: string | null): Promise<Date | null> {
-    const sameSpot = assignedSpotId === null ? sql.empty() : sql` and assigned_spot_id = ${assignedSpotId}`;
-    const [row] = await this.#database.execute<ParkedAtRow>(sql`
-      update parking_session
-      set state = 'PARKED_PRESUMED', presumed_by = 'WALK', parked_at = ${clampedParkedAt(detectedAt)}
-      where id = ${sessionId} and user_id = ${driverId} and state = 'ENTRY_CONFIRMED'${sameSpot}
-      returning parked_at`);
-    return row === undefined ? null : new Date(row.parked_at);
   }
 
   async #readSessionAfterRefusal({ sessionId, driverId }: WalkingSignal): Promise<SessionAfterRefusal | null> {
