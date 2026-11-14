@@ -12,14 +12,13 @@ const LOT_ID = '00000000-0000-4000-8000-000000000101';
 const SPOT_B3_ID = '00000000-0000-4000-8000-0000000003b3';
 const SPOT_A1_ID = '00000000-0000-4000-8000-0000000003a1';
 const AISLE_A_ID = '00000000-0000-4000-8000-0000000002a1';
-const AISLE_B_ID = '00000000-0000-4000-8000-0000000002b1';
 const B3 = { number: 'B-3', levelCode: 'P1', aisleCode: 'B' };
 const NO_CONFIRMED_SPOT = { assigned_spot_id: SPOT_A1_ID, assigned_aisle_id: AISLE_A_ID, assigned_spot_state: 'OCCUPIED', number: null, aisle_code: null, level_code: null };
 
 const julieAnswersB3: SpotAnswer = { sessionId: SESSION_ID, driverId: JULIE_ID, spotNumber: 'B-3' };
 
 function spotRow(state: SpotState, number = 'B-3') {
-  return { id: SPOT_B3_ID, aisle_id: number.startsWith('A') ? AISLE_A_ID : AISLE_B_ID, state, number, aisle_code: number.charAt(0), level_code: 'P1' };
+  return { id: SPOT_B3_ID, aisle_id: AISLE_A_ID, state, number, aisle_code: number.charAt(0), level_code: 'P1' };
 }
 
 function asked(spotState: SpotState | null = 'AVAILABLE', sessionState: EntrySessionState = 'PARKED_UNCONFIRMED') {
@@ -185,11 +184,11 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
   const julieCorrectsToA3: SpotAnswer = { ...julieAnswersB3, spotNumber: 'A-3' };
   const CORRECTION_WRITES = ['occupy-answered-spot', 'flag-assigned-spot', 'confirm-parked-spot'] as const;
 
-  function presumedNaming(spot: { readonly id: string; readonly aisleId?: string; readonly state: SpotState; readonly number: string }, assignedSpotState: SpotState = 'OCCUPIED') {
+  function presumedNaming(spot: { readonly id: string; readonly state: SpotState; readonly number: string }, assignedSpotState: SpotState = 'OCCUPIED') {
     return new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
       .answer('lock-answering-session', [{ state: 'PARKED_PRESUMED', ...NO_CONFIRMED_SPOT, assigned_spot_state: assignedSpotState }])
-      .answer('lock-answered-spot', [{ ...spot, aisle_id: spot.aisleId ?? AISLE_A_ID, aisle_code: 'A', level_code: 'P1' }])
+      .answer('lock-answered-spot', [{ ...spot, aisle_id: AISLE_A_ID, aisle_code: 'A', level_code: 'P1' }])
       .answer('occupy-answered-spot', [{ id: spot.id }])
       .answer('flag-assigned-spot', [{ id: SPOT_A1_ID }])
       .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
@@ -208,14 +207,6 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
     expect(sql.statement('flag-assigned-spot')?.text).toMatch(/set state = 'OCCUPIED_UNKNOWN', needs_check = true[\s\S]*where id = \$\d+ and state = 'OCCUPIED'/);
     expect(sql.statement('flag-assigned-spot')?.params).toEqual(['WRONG_SPOT', SPOT_A1_ID]);
     expect(sql.statement('confirm-parked-spot')?.params).toEqual([SPOT_A3_ID, SESSION_ID]);
-  });
-
-  it('flags A-1 as WRONG_AISLE when the car is in a spot of another aisle', async () => {
-    const sql = presumedNaming({ id: SPOT_B3_ID, aisleId: AISLE_B_ID, state: 'AVAILABLE', number: 'B-3' });
-
-    await answerWith(sql, julieAnswersB3);
-
-    expect(sql.statement('flag-assigned-spot')?.params).toEqual(['WRONG_AISLE', SPOT_A1_ID]);
   });
 
   it('confirms the presumption on A-1, without any spot write, when Julie names A-1 itself', async () => {

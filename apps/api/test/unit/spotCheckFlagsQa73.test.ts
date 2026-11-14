@@ -16,14 +16,14 @@ const SPOT_B4_ID = '00000000-0000-4000-8000-0000000003b4';
 const WALKED_AT = new Date('2026-11-14T01:29:06Z');
 
 // Live run 2026-11-14 (qa-feature.log): Éric, presumed in A-2 after a walk seen in aisle A, answered A-3; A-2 was listed as « allée différente ».
-function ericPresumedInA2AnswersA3() {
+function ericPresumedInA2Answers(answered: { readonly id: string; readonly aisleId: string; readonly number: string; readonly aisleCode: string }) {
   return new ScriptedSql()
     .answer('read-session-lot', [{ lot_id: LOT_ID }])
     .answer('lock-answering-session', [
       { state: 'PARKED_PRESUMED', assigned_spot_id: SPOT_A2_ID, assigned_aisle_id: AISLE_A_ID, assigned_spot_state: 'OCCUPIED', number: null, aisle_code: null, level_code: null },
     ])
-    .answer('lock-answered-spot', [{ id: SPOT_A3_ID, aisle_id: AISLE_A_ID, state: 'AVAILABLE', number: 'A-3', aisle_code: 'A', level_code: 'P1' }])
-    .answer('occupy-answered-spot', [{ id: SPOT_A3_ID }])
+    .answer('lock-answered-spot', [{ id: answered.id, aisle_id: answered.aisleId, state: 'AVAILABLE', number: answered.number, aisle_code: answered.aisleCode, level_code: 'P1' }])
+    .answer('occupy-answered-spot', [{ id: answered.id }])
     .answer('flag-assigned-spot', [{ id: SPOT_A2_ID }])
     .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
 }
@@ -41,13 +41,21 @@ function ericInFlaggedB4WalksInAisleA() {
 
 describe('spot check flags under attack (QA #73)', () => {
   it('does not tell the operator « allée différente » when the driver parked in another spot of the same aisle', async () => {
-    const sql = ericPresumedInA2AnswersA3();
+    const sql = ericPresumedInA2Answers({ id: SPOT_A3_ID, aisleId: AISLE_A_ID, number: 'A-3', aisleCode: 'A' });
     const answer: SpotAnswer = { sessionId: SESSION_ID, driverId: ERIC_ID, spotNumber: 'A-3' };
 
     await new PostgresParkedAnswerRepository(sql.database()).answer(answer);
 
     expect(sql.statement('flag-assigned-spot')?.params).not.toContain('WRONG_AISLE');
     expect(sql.statement('flag-assigned-spot')?.params).toContain('WRONG_SPOT');
+  });
+
+  it('still tells the operator « allée différente » when the driver parked in a spot of another aisle', async () => {
+    const sql = ericPresumedInA2Answers({ id: SPOT_B4_ID, aisleId: AISLE_B_ID, number: 'B-4', aisleCode: 'B' });
+
+    await new PostgresParkedAnswerRepository(sql.database()).answer({ sessionId: SESSION_ID, driverId: ERIC_ID, spotNumber: 'B-4' });
+
+    expect(sql.statement('flag-assigned-spot')?.params).toContain('WRONG_AISLE');
   });
 
   it('keeps the time and reason of the first flag when a spot already flagged is flagged again, so the oldest stays first', async () => {
