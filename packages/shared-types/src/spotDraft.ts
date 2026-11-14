@@ -14,10 +14,10 @@ const ENDS_WITH_DIGIT = /\d$/;
 const HAS_LETTER_OR_DIGIT = /[A-Za-z0-9]/;
 const HAS_LETTER = /[A-Za-z]/;
 // « à », « a », « au » and « to », in either language: an operator types whichever comes first.
-const RANGE_SEPARATOR = /\s+(?:à|au|a|to)\s+/iu;
+const RANGE_SEPARATOR = /\s+(?:à|au|a|to)\s+/giu;
 const NUMBER_AND_DIGITS = /^(.*?)(\d+)$/su;
-// One number alone: letters and digits, at most one dash and only before the digits, so « A-1-A-20 » is not one spot.
-const SINGLE_NUMBER = /^([A-Za-z0-9]*?-?)(\d+)$/u;
+// One number alone has the shape of a range end, but at most one dash and only before the digits, so « A-1-A-20 » is not one spot.
+const SINGLE_NUMBER = /^([A-Za-z0-9 ]*?-?)(\d+)$/u;
 
 // Language-neutral: the dashboard reads « A-1 à A-20 » or « A-1 to A-20 » into { prefix: 'A-', first: '1', last: '20' }.
 // first keeps its digits as typed, so « A-01 à A-20 » numbers the spots A-01 to A-20.
@@ -94,12 +94,19 @@ function spotNumberOf({ prefix, first }: SpotRange, value: number): string {
 // « A-1 à A-20 », « A-1 to A-20 » or one number « A-7 »; null when it reads as neither, so a mistyped separator is never one spot.
 // The prefixes must match exactly; the rule then checks the range itself.
 export function parseSpotRange(text: string): SpotRange | null {
-  const ends = text.normalize('NFC').trim().split(RANGE_SEPARATOR);
-  const [startText = '', endText] = ends;
-  if (ends.length > 2) {
-    return null;
+  const normalized = text.normalize('NFC').trim();
+  return rangeAtAnySeparator(normalized) ?? singleSpotOf(normalized);
+}
+
+// A separator word can sit inside a prefix (« Zone a 1 à Zone a 3 »): only a split where both sides read as range ends counts.
+function rangeAtAnySeparator(text: string): SpotRange | null {
+  for (const separator of text.matchAll(RANGE_SEPARATOR)) {
+    const range = rangeOf(text.slice(0, separator.index), text.slice(separator.index + separator[0].length));
+    if (range !== null) {
+      return range;
+    }
   }
-  return endText === undefined ? singleSpotOf(startText) : rangeOf(startText, endText);
+  return null;
 }
 
 function rangeOf(startText: string, endText: string): SpotRange | null {

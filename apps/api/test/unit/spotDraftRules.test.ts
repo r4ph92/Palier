@@ -19,6 +19,8 @@ describe('reading a range of spot numbers', () => {
     ['A-7', { prefix: 'A-', first: '7', last: '7' }],
     ['1 à 20', { prefix: '', first: '1', last: '20' }],
     ['A-01 à A-20', { prefix: 'A-', first: '01', last: '20' }],
+    ['A 7', { prefix: 'A ', first: '7', last: '7' }],
+    ['Zone a 1 à Zone a 3', { prefix: 'Zone a ', first: '1', last: '3' }],
     ['P1 B 3 à P1 B 9', { prefix: 'P1 B ', first: '3', last: '9' }],
   ])('reads « %s » in either language', (text, range) => {
     expect(parseSpotRange(text)).toEqual(range);
@@ -34,7 +36,6 @@ describe('reading a range of spot numbers', () => {
     ['a dash between the ends', 'A-1 - A-20'],
     ['ends run together', 'A-1-A-20'],
     ['an unknown separator', 'A-1 jusqu’à A-20'],
-    ['one number with a space', 'A 7'],
     ['one number without a letter', '7'],
     ['one number with a prefix of dashes', '--7'],
   ])('reads nothing from %s', (_case, text) => {
