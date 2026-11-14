@@ -21,7 +21,7 @@ describe('PostgresParkingSessionBackdater', () => {
 
     expect(scripted.labels()).toEqual(['backdate-entry']);
     const text = oneLine(scripted.statement('backdate-entry')?.text);
-    expect(text).toMatch(/^with previous as \( select id, \$\d+::timestamptz - entry_scan_at as delta from parking_session where id = \$\d+ and state in \([^)]*\) for update \)/);
+    expect(text).toMatch(/^with previous as \( select id, make_interval\(secs => extract\(epoch from \$\d+::timestamptz - entry_scan_at\)\) as delta from parking_session where id = \$\d+ and state in \([^)]*\) for update \)/);
     expect(scripted.statement('backdate-entry')?.params).toEqual([ENTERED_AT.toISOString(), SESSION_ID, ENTERED_AT.toISOString()]);
   });
 

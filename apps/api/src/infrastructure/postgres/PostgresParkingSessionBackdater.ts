@@ -18,11 +18,12 @@ export class PostgresParkingSessionBackdater implements ParkingSessionBackdater 
 
 // One statement: the delta is read from the locked row before any write, then moves the session's instants and its logged events alike,
 // so the log keeps its order and its 2160 h purge rule. A gate command, an answer or a cancellation keeps its own instant (decision 035).
+// The delta is elapsed seconds: a difference in days would add calendar days, an hour off across a daylight saving change.
 function backdateStatement(sessionId: string, enteredAt: Date): SQL {
   const instant = sql`${enteredAt.toISOString()}::timestamptz`;
   return sql`
     with previous as (
-      select id, ${instant} - entry_scan_at as delta from parking_session where id = ${sessionId} and ${ACTIVE_SESSION} for update
+      select id, make_interval(secs => extract(epoch from ${instant} - entry_scan_at)) as delta from parking_session where id = ${sessionId} and ${ACTIVE_SESSION} for update
     ), backdated as (
       update parking_session
       set entry_confirmed_at = entry_confirmed_at + previous.delta, parked_at = parked_at + previous.delta, entry_scan_at = ${instant}
