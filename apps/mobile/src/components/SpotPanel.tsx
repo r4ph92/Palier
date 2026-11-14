@@ -9,8 +9,10 @@ import { typography } from '../theme/typography';
 import { spotLabel } from './SpotLine';
 import { StateMark } from './StateMark';
 
-// The number is already the largest thing on the screen: past this, « A-12 » would no longer fit a phone's width.
+// The number is already the largest thing on the screen: it grows a little with Dynamic Type, then shrinks to stay on one line,
+// down to the size of the scan screen's spot for a long number like « P2-A-104 » (up to 16 characters).
 const PANEL_NUMBER_MAX_FONT_SCALE = 1.3;
+const PANEL_NUMBER_MIN_FONT_SCALE = 0.5;
 const PANEL_BORDER_WIDTH = 3;
 
 interface SpotPanelProps {
@@ -45,11 +47,24 @@ function SpotSign({ spot }: { readonly spot: AssignedSpot }) {
           {spot.levelCode}
         </Text>
       </View>
-      <Text maxFontSizeMultiplier={PANEL_NUMBER_MAX_FONT_SCALE} style={[typography.spotPanelNumber, onAccent]}>
-        {unbrokenSpotNumber(spot)}
-      </Text>
+      <SpotSignNumber spot={spot} />
       <Text style={[typography.bodyStrong, onAccent]}>{i18n.t('session.spotPanel.place', { level: spot.levelCode, aisle: spot.aisleCode })}</Text>
     </View>
+  );
+}
+
+function SpotSignNumber({ spot }: { readonly spot: AssignedSpot }) {
+  const colors = useColors();
+  return (
+    <Text
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={PANEL_NUMBER_MIN_FONT_SCALE}
+      maxFontSizeMultiplier={PANEL_NUMBER_MAX_FONT_SCALE}
+      style={[typography.spotPanelNumber, { color: colors.onAccent }]}
+    >
+      {unbrokenSpotNumber(spot)}
+    </Text>
   );
 }
 

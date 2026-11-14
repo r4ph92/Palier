@@ -72,6 +72,15 @@ describe('CurrentParkingSessionScreen', () => {
     expect(screen.getByText('A-1', visibleText)).toHaveProp('maxFontSizeMultiplier', 1.3);
   });
 
+  it('keeps a long spot number on one line, shrinking it to fit', async () => {
+    await showSession(julieAtParkingDemo({ spot: { number: 'P2-A-104', levelCode: 'P2', aisleCode: 'A' } }));
+
+    const number = screen.getByText('P2-A-104', visibleText);
+    expect(number).toHaveProp('numberOfLines', 1);
+    expect(number).toHaveProp('adjustsFontSizeToFit', true);
+    expect(number).toHaveProp('minimumFontScale', 0.5);
+  });
+
   it('labels the panel in English', async () => {
     await showSession(julieAtParkingDemo(), 'en');
 
