@@ -26,23 +26,29 @@ export function SpotPanel({ spot, statusLabel, statusContent, markColor, ref }: 
   const colors = useColors();
   return (
     <View ref={ref} accessible accessibilityLabel={`${spotLabel(spot)}. ${statusLabel}`} style={styles.group}>
-      <View testID="spot-panel" style={[styles.panel, { backgroundColor: colors.accent, borderColor: colors.onAccent }]}>
-        <View style={styles.eyebrowRow}>
-          <Text style={[typography.eyebrow, styles.eyebrow, { color: colors.onAccent }]}>{i18n.t('session.spotPanelEyebrow')}</Text>
-          <Text testID="spot-panel-level" style={[typography.eyebrow, styles.level, { color: colors.onAccent, borderColor: colors.onAccent }]}>
-            {spot.levelCode}
-          </Text>
-        </View>
-        <Text maxFontSizeMultiplier={PANEL_NUMBER_MAX_FONT_SCALE} style={[typography.spotPanelNumber, { color: colors.onAccent }]}>
-          {unbrokenSpotNumber(spot)}
-        </Text>
-        <Text style={[typography.bodyStrong, { color: colors.onAccent }]}>
-          {i18n.t('session.spotPanelPlace', { level: spot.levelCode, aisle: spot.aisleCode })}
-        </Text>
-      </View>
+      <SpotSign spot={spot} />
       <StateMark color={markColor}>
         {statusContent ?? <Text style={[typography.bodyStrong, { color: colors.ink }]}>{statusLabel}</Text>}
       </StateMark>
+    </View>
+  );
+}
+
+function SpotSign({ spot }: { readonly spot: AssignedSpot }) {
+  const colors = useColors();
+  const onAccent = { color: colors.onAccent };
+  return (
+    <View testID="spot-panel" style={[styles.panel, { backgroundColor: colors.accent, borderColor: colors.onAccent }]}>
+      <View style={styles.eyebrowRow}>
+        <Text style={[typography.eyebrow, styles.eyebrow, onAccent]}>{i18n.t('session.spotPanel.eyebrow')}</Text>
+        <Text testID="spot-panel-level" style={[typography.eyebrow, styles.level, onAccent, { borderColor: colors.onAccent }]}>
+          {spot.levelCode}
+        </Text>
+      </View>
+      <Text maxFontSizeMultiplier={PANEL_NUMBER_MAX_FONT_SCALE} style={[typography.spotPanelNumber, onAccent]}>
+        {unbrokenSpotNumber(spot)}
+      </Text>
+      <Text style={[typography.bodyStrong, onAccent]}>{i18n.t('session.spotPanel.place', { level: spot.levelCode, aisle: spot.aisleCode })}</Text>
     </View>
   );
 }

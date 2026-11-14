@@ -152,8 +152,6 @@ export const en: Translations = {
     overDay: '24-hour cap exceeded — the extra will be billed at exit',
     pending: 'Entry awaiting confirmation',
     parkedInLead: 'Parked in ',
-    spotPanelEyebrow: 'Your spot',
-    spotPanelPlace: 'Level\u00A0%{level} · Aisle\u00A0%{aisle}',
     updatedAtLead: 'Updated ',
     offline: 'Offline, amount as of last check',
     detectionOff: 'Automatic detection is off\u00A0— your spot will be assumed occupied after 30\u00A0min',
