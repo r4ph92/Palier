@@ -8,6 +8,7 @@ import './theme/lists.css';
 import './theme/forms.css';
 import './theme/map.css';
 import './theme/spots.css';
+import './theme/spotsToCheck.css';
 
 const root = document.getElementById('root');
 if (root === null) {

@@ -19,6 +19,9 @@ export function formatMetres(metres: number, language: Language): string {
   return new Intl.NumberFormat(language, { style: 'unit', unit: 'meter' }).format(metres);
 }
 
-export function formatDateTime(moment: Date, language: Language): string {
-  return new Intl.DateTimeFormat(language === 'fr' ? 'fr-CA' : 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(moment);
+// The year is left out for this year's moments: a flag is read the day it is raised, not years later.
+export function formatRecentDateTime(moment: Date, language: Language, now: Date): string {
+  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
+  const wanted: Intl.DateTimeFormatOptions = moment.getFullYear() === now.getFullYear() ? options : { ...options, year: 'numeric' };
+  return new Intl.DateTimeFormat(language === 'fr' ? 'fr-CA' : 'en', wanted).format(moment);
 }

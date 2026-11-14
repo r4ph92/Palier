@@ -6,11 +6,16 @@ import { AppLink } from '../components/AppLink.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { RetryableFailure, type RetryableFailureProps } from '../components/RetryableFailure.tsx';
 import { SkeletonRows } from '../components/SkeletonRows.tsx';
+import { StateMark } from '../components/StateMark.tsx';
 import { interpolate } from '../i18n/interpolate.ts';
-import { useText } from '../i18n/LanguageContext.tsx';
+import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
+import { pluralOf } from '../i18n/plural.ts';
+import { SpotPager } from '../lotMap/SpotPager.tsx';
+import { useSpotPage } from '../lotMap/useSpotPage.ts';
 import { lotPath } from '../navigation/routes.ts';
+import { SPOT_CHECK_STATUS_ID } from '../spotsToCheck/spotCheckIds.ts';
 import { SpotsToCheckTable } from '../spotsToCheck/SpotsToCheckTable.tsx';
-import { useSpotCheckClearing } from '../spotsToCheck/useSpotCheckClearing.ts';
+import { useSpotCheckClearing, type SpotCheckClearing } from '../spotsToCheck/useSpotCheckClearing.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
 
 const LOADING_ROWS = 3;
@@ -45,18 +50,54 @@ function SpotsToCheckUnavailable({ lotId, ...failure }: RetryableFailureProps & 
   );
 }
 
+const COUNT_ID = 'spots-to-check-count';
+
 function SpotsToCheckView({ lotId, initial }: { readonly lotId: string; readonly initial: DashboardSpotsToCheck }) {
   const { spotsToCheck: text, lot } = useText();
   const clearing = useSpotCheckClearing(lotId, initial);
   return (
     <>
-      <PageHeader eyebrow={lot.eyebrow} title={text.title} />
-      <p className="muted">{text.hint}</p>
-      <p role="status" className="muted">
-        {clearing.clearedNumber === null ? null : interpolate(text.cleared, { number: clearing.clearedNumber })}
-      </p>
-      {clearing.spots.length === 0 ? <p className="muted">{text.empty}</p> : <SpotsToCheckTable clearing={clearing} />}
+      <PageHeader eyebrow={lot.eyebrow} title={interpolate(text.titleInLot, { lot: initial.lotName })} />
+      <ClearedStatus number={clearing.clearedNumber} />
+      {clearing.spots.length === 0 ? <EmptyList /> : <FlaggedSpots clearing={clearing} />}
       <BackLink lotId={lotId} />
+    </>
+  );
+}
+
+function FlaggedSpots({ clearing }: { readonly clearing: SpotCheckClearing }) {
+  const { text, language } = useLanguage();
+  const page = useSpotPage(clearing.spots, noop);
+  return (
+    <>
+      <p id={COUNT_ID} className="number-cell">
+        {pluralOf(text.spotsToCheck.count, clearing.spots.length, language)}
+      </p>
+      <p className="muted">{text.spotsToCheck.hint}</p>
+      <SpotPager page={page} />
+      <SpotsToCheckTable spots={page.spots} clearing={clearing} labelledBy={COUNT_ID} />
+    </>
+  );
+}
+
+function noop(): void {}
+
+// The line takes focus when the last flag is cleared, since the button that had it is gone.
+function ClearedStatus({ number }: { readonly number: string | null }) {
+  const { spotsToCheck: text } = useText();
+  return (
+    <p role="status" id={SPOT_CHECK_STATUS_ID} tabIndex={-1} className="check-status">
+      {number === null ? null : <StateMark tone="free" label={interpolate(text.cleared, { number })} />}
+    </p>
+  );
+}
+
+function EmptyList() {
+  const { spotsToCheck: text } = useText();
+  return (
+    <>
+      <p>{text.empty}</p>
+      <p className="muted">{text.emptyHint}</p>
     </>
   );
 }

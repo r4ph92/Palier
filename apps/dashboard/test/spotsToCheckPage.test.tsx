@@ -1,13 +1,22 @@
+import type { DashboardSpotToCheck } from '@palier/shared-types';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { installFakeApi, parkingDemo, pierre, sophie } from './fakeDashboardApi.ts';
-import { PARKING_DEMO_A1_ID, PARKING_DEMO_B2_ID } from './fakeSpotData.ts';
+import { PARKING_DEMO_A1_ID, PARKING_DEMO_B2_ID, seededSpotsToCheck } from './fakeSpotData.ts';
 import { frenchLeftOnEnglishPage } from './frenchLeft.ts';
 import { renderDashboard } from './renderDashboard.tsx';
 
 const PAGE = `/lots/${parkingDemo.id}/spots-to-check`;
 const rowOf = (number: string): HTMLElement => screen.getByRole('rowheader', { name: number }).closest('tr') as HTMLElement;
+
+function seededFlags(): [DashboardSpotToCheck, DashboardSpotToCheck] {
+  const [aisleA, aisleB] = seededSpotsToCheck().get(parkingDemo.id) ?? [];
+  if (aisleA === undefined || aisleB === undefined) {
+    throw new Error('The seeded Parking Démo has two flagged spots.');
+  }
+  return [aisleA, aisleB];
+}
 
 async function openSpotsToCheck(path = PAGE) {
   const api = installFakeApi({ signedInAs: sophie });
@@ -23,7 +32,7 @@ describe('the spots to check page', () => {
     expect(within(rowOf('A-1')).getByText('P1 · allée A')).toBeDefined();
     expect(within(rowOf('A-1')).getByText('allée différente')).toBeDefined();
     expect(within(rowOf('B-2')).getByText('place signalée prise')).toBeDefined();
-    expect(within(rowOf('A-1')).getByText(/2026/)).toBeDefined();
+    expect(within(rowOf('A-1')).getByText(/nov/)).toBeDefined();
     expect(rowOf('A-1').querySelector('time')?.getAttribute('datetime')).toBe('2026-11-13T14:05:00.000Z');
   });
 
@@ -102,7 +111,7 @@ describe('the spots to check page', () => {
 
     await userEvent.click(await screen.findByRole('link', { name: 'Places à vérifier' }));
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Places à vérifier' })).toBeDefined();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Places à vérifier — Parking Démo' })).toBeDefined();
     expect(window.location.pathname).toBe(PAGE);
   });
 
@@ -111,10 +120,91 @@ describe('the spots to check page', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'English' }));
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Spots to check' })).toBeDefined();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Spots to check — Parking Démo' })).toBeDefined();
     expect(screen.getByText('different aisle')).toBeDefined();
     expect(screen.getByRole('button', { name: 'Spot B-2 checked' })).toBeDefined();
     expect(frenchLeftOnEnglishPage()).toEqual([]);
-    await waitFor(() => expect(document.title).toBe('Spots to check · Palier dashboard'));
+    await waitFor(() => expect(document.title).toBe('Spots to check — Parking Démo · Palier dashboard'));
+  });
+
+  it('names the lot in the title and counts the flagged spots', async () => {
+    await openSpotsToCheck();
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Places à vérifier — Parking Démo' })).toBeDefined();
+    expect(screen.getByRole('table', { name: '2 places à vérifier' })).toBeDefined();
+  });
+
+  it('shows the state of each spot, a free spot an active session holds not reading as free', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    const [occupied, free] = seededFlags();
+    api.spotsToCheck.set(parkingDemo.id, [{ ...occupied, state: 'AVAILABLE', clearable: false }, { ...free, state: 'AVAILABLE', clearable: true }]);
+    renderDashboard({ path: PAGE });
+    await screen.findByRole('table');
+
+    expect(within(rowOf('A-1')).getByText('Retenue par une session')).toBeDefined();
+    expect(within(rowOf('B-2')).getByText('Libre')).toBeDefined();
+  });
+
+  it('keeps the label Vérifiée on the button while the spot is being cleared', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    api.answers.set(`POST /lots/${parkingDemo.id}/spots/${PARKING_DEMO_B2_ID}/check-cleared`, 'pending');
+    renderDashboard({ path: PAGE });
+    await userEvent.click(await screen.findByRole('button', { name: 'Place B-2 vérifiée' }));
+
+    expect(rowOf('B-2').getAttribute('aria-busy')).toBe('true');
+    expect(within(rowOf('B-2')).getByRole('button').textContent).toBe('Vérifiée');
+  });
+
+  it('puts focus on the status line when the last flagged spot is cleared', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    api.spotsToCheck.set(parkingDemo.id, (api.spotsToCheck.get(parkingDemo.id) ?? []).slice(1));
+    renderDashboard({ path: PAGE });
+    await userEvent.click(await screen.findByRole('button', { name: 'Place B-2 vérifiée' }));
+
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('status')));
+  });
+
+  it('puts focus on the following spot’s button after a clear', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    const [first, second] = seededFlags();
+    api.spotsToCheck.set(parkingDemo.id, [{ ...first, clearable: true, state: 'AVAILABLE' }, { ...second, clearable: true }]);
+    renderDashboard({ path: PAGE });
+    await userEvent.click(await screen.findByRole('button', { name: 'Place A-1 vérifiée' }));
+
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Place B-2 vérifiée' })));
+  });
+
+  it('reads the list again when a clear answers that the spot is gone, and says so', async () => {
+    const clearRequest = `POST /lots/${parkingDemo.id}/spots/${PARKING_DEMO_B2_ID}/check-cleared`;
+    const api = installFakeApi({ signedInAs: sophie, answers: { [clearRequest]: { status: 404, body: { error: 'SPOT_NOT_FOUND' } } } });
+    renderDashboard({ path: PAGE });
+    await userEvent.click(await screen.findByRole('button', { name: 'Place B-2 vérifiée' }));
+
+    expect((await within(rowOf('B-2')).findByRole('alert')).textContent).toBe('Cette place est introuvable. La liste des places a été rechargée.');
+    expect(api.requests.filter((request) => request === `GET /lots/${parkingDemo.id}/spots-to-check`)).toHaveLength(2);
+  });
+
+  it('shows 50 spots at a time, with the pager, when many are flagged', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    const [template] = seededFlags();
+    const many = Array.from({ length: 64 }, (_, index) => ({ ...template, spotId: `spot-${index}`, number: `C-${index + 1}`, clearable: true }));
+    api.spotsToCheck.set(parkingDemo.id, many);
+    renderDashboard({ path: PAGE });
+
+    await screen.findByRole('table', { name: '64 places à vérifier' });
+
+    expect(screen.getAllByRole('rowheader')).toHaveLength(50);
+    expect(screen.getByText('1–50 sur 64')).toBeDefined();
+    await userEvent.click(screen.getByRole('button', { name: 'Suivantes' }));
+    expect(screen.getAllByRole('rowheader')).toHaveLength(14);
+  });
+
+  it('says when a spot appears in the list, in the empty state', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    api.spotsToCheck.set(parkingDemo.id, []);
+    renderDashboard({ path: PAGE });
+
+    expect(await screen.findByText('Aucune place à vérifier.')).toBeDefined();
+    expect(screen.getByText(/Une place apparaît ici/)).toBeDefined();
   });
 });
