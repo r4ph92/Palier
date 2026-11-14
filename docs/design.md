@@ -20,12 +20,17 @@ partir, où le chiffre des places libres est l'information principale.
 | `line` | `#D2D6CE` | `#2C322D` | Filets entre les lignes (décoratif) |
 | `free` | `#2E7D4F` | `#63B487` | Carré « places libres », et carré d’un état favorable de la session du conducteur (« Entrée confirmée », « Garé en A-1 ») ; jamais en texte sur fond clair : 4,3:1 |
 | `danger` | `#9C3A2A` | `#D9705E` | Carré « complet » |
+| `low` | `#B45F06` | `#E09A3E` | Remplissage de la jauge d’occupation sous 25 % libre ; jamais en texte |
+| `accent` | `#F5C400` | `#F5C400` | Jaune de signalisation : bouton principal, panneau de place, onglet choisi, marque du titre ; un fond ou un trait, jamais une couleur de texte |
+| `onAccent` | `#191C1A` | `#191C1A` | Texte et bordure sur `accent` (11:1) |
 
 Polices : **Archivo** (texte, titres en 600) et **IBM Plex Mono** (surtitres et
 chiffres, `tabular-nums`), embarquées par `@expo-google-fonts`. Espacement sur
 une grille de 4 (4, 8, 16, 24, 40). Cibles tactiles d'au moins 44 pt.
 Contrastes vérifiés : `ink` 16:1 et `muted` 7,5:1 sur `canvas` en clair ;
-8:1 et plus en sombre.
+8:1 et plus en sombre. Le jaune `accent` ne contraste pas avec `canvas` en
+clair : il est toujours cerné d’une bordure `ink` ou posé sur un filet `ink`.
+Les contrastes des jetons sont vérifiés par `apps/mobile/test/themeContrast.test.ts`.
 
 ## Gestes signatures
 
