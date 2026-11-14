@@ -15,7 +15,7 @@ describe('deleting a spot', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Supprimer A-1' }));
 
-    expect(within(rowOf('A-1')).getByText('Supprimer A-1 ?')).toBeDefined();
+    expect(within(rowOf('A-1')).getByText((_text, element) => element?.textContent?.replace(/\s/g, ' ') === 'Supprimer A-1 ?')).toBeDefined();
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Confirmer la suppression de A-1' }));
     await userEvent.click(within(rowOf('A-1')).getByRole('button', { name: 'Annuler' }));
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Supprimer A-1' }));

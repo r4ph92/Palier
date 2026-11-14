@@ -3,8 +3,7 @@ import type { SpotAttributes } from '@palier/shared-types/spotDraft';
 import type { AislePlace, SpotBatch, SpotPlace } from '../../domain/dashboard/LotSpotRepository.ts';
 import { ACTIVE_SPOT_HOLD } from './activeSpotHold.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
-import { liveSpotCountOf } from './heldSpotCount.ts';
-import { liveSpot } from './liveSpot.ts';
+import { liveSpot, liveSpotCountOf } from './liveSpot.ts';
 import { sessionHoldsSpot } from './sessionHoldsSpot.ts';
 
 // Prefix first, then the number at its end read as a number: A-2 before A-10, and B-7a after the A spots.

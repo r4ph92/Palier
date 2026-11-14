@@ -19,7 +19,7 @@ export const frSpots = {
   edit: { shown: 'Modifier', name: 'Modifier %{number}' },
   delete: { shown: 'Supprimer', name: 'Supprimer %{number}' },
   confirmDelete: 'Supprimer %{number}\u00a0?',
-  page: { range: '%{first}–%{last} sur %{count}', previous: 'Précédentes', next: 'Suivantes', label: 'Pages de la liste des places' },
+  page: { range: '%{first}–%{last} sur %{count}', previous: 'Précédentes', next: 'Suivantes', label: 'Pages de la liste des places', labelBelow: 'Pages de la liste des places, sous le tableau' },
   confirmDeleteButton: { shown: 'Confirmer', name: 'Confirmer la suppression de %{number}' },
   deleting: 'Suppression…',
   cancel: 'Annuler',

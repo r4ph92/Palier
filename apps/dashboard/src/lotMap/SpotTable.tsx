@@ -1,9 +1,10 @@
 import type { DashboardSpot, SpotState } from '@palier/shared-types';
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { StableLabel } from '../components/StableLabel.tsx';
 import { StateMark, type StateTone } from '../components/StateMark.tsx';
 import { formatMetres } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
+import { interpolateKeepingValuesWhole } from '../i18n/interpolateKeepingValuesWhole.tsx';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { closesOnEscape } from './closesOnEscape.ts';
 import { flagLabelsOf, SPOT_FLAGS } from './spotFormValues.ts';
@@ -60,16 +61,21 @@ function SpotTableHead() {
   return (
     <thead role="rowgroup">
       <tr role="row">
-        {[text.numberColumn, text.attributesColumn, text.distanceColumn, text.stateColumn].map((label) => (
-          <th key={label} scope="col" role="columnheader">
-            {label}
-          </th>
-        ))}
-        <th scope="col" role="columnheader">
-          <span className="visually-hidden">{text.actionsColumn}</span>
-        </th>
+        <SpotColumnHead label={text.numberColumn} />
+        <SpotColumnHead label={text.attributesColumn} />
+        <SpotColumnHead label={text.distanceColumn} className="spot-distance" />
+        <SpotColumnHead label={text.stateColumn} />
+        <SpotColumnHead label={<span className="visually-hidden">{text.actionsColumn}</span>} />
       </tr>
     </thead>
+  );
+}
+
+function SpotColumnHead({ label, className }: { readonly label: ReactNode; readonly className?: string }) {
+  return (
+    <th scope="col" role="columnheader" className={className}>
+      {label}
+    </th>
   );
 }
 
@@ -112,10 +118,19 @@ function SpotRow({ spot, deletion, onEdit }: RowProps) {
 function AttributesCell({ spot }: { readonly spot: DashboardSpot }) {
   const { spots: text } = useText().map;
   const labels = flagLabelsOf(text);
-  const attributes = SPOT_FLAGS.filter((flag) => spot[flag]).map((flag) => labels[flag]);
+  const attributes = SPOT_FLAGS.filter((flag) => spot[flag]);
   return (
     <td role="cell" className="spot-attributes">
-      {attributes.length === 0 ? <span className="muted">{text.noAttribute}</span> : attributes.join(', ')}
+      {attributes.length === 0 ? (
+        <span className="muted">{text.noAttribute}</span>
+      ) : (
+        attributes.map((flag, index) => (
+          <Fragment key={flag}>
+            {index === 0 ? null : ', '}
+            <span className="spot-attribute">{labels[flag]}</span>
+          </Fragment>
+        ))
+      )}
     </td>
   );
 }
@@ -142,8 +157,8 @@ function DeleteConfirmation({ spot, deletion }: { readonly spot: DashboardSpot; 
   const confirmRef = useFocusWhen<HTMLButtonElement>(true);
   const label = interpolate(text.confirmDeleteButton.name, { number: spot.number });
   return (
-    <span className="row-actions" onKeyDown={(event) => closesOnEscape(event, deletion.cancel)}>
-      <span>{interpolate(text.confirmDelete, { number: spot.number })}</span>
+    <span className="row-actions delete-question" onKeyDown={(event) => closesOnEscape(event, deletion.cancel)}>
+      <span>{interpolateKeepingValuesWhole(text.confirmDelete, { number: spot.number })}</span>
       <button type="button" ref={confirmRef} className="text-button" aria-label={label} aria-disabled={deletion.deleting} onClick={() => void deletion.confirm()}>
         <StableLabel shown={deletion.deleting ? text.deleting : text.confirmDeleteButton.shown} reserved={[text.deleting, text.confirmDeleteButton.shown]} />
       </button>

@@ -1,7 +1,11 @@
 import type { DashboardAisleSpots, DashboardSpot } from '@palier/shared-types';
 import { useState } from 'react';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
-import { LIST_OUT_OF_DATE, type Refusal, type RefusalFollowUps } from '../api/followUpRefusal.ts';
+import { type Refusal, type StaleDataFollowUps } from '../api/followUpRefusal.ts';
+import type { PageRequest } from './useSpotPage.ts';
+
+// After these refusals the spot list on the page is out of date: it is read again before the operator retries.
+const LIST_OUT_OF_DATE: readonly DisplayedErrorCode[] = ['LOT_BUSY', 'SPOT_NOT_FOUND'];
 
 interface SpotChangeSources {
   readonly show: (spots: DashboardAisleSpots) => void;
@@ -24,25 +28,35 @@ export interface SpotChanges {
   readonly notice: SpotNotice | null;
   // Changes with every notice, so the same refusal twice takes focus twice.
   readonly noticeKey: number;
-  readonly added: (spots: DashboardAisleSpots, added: AddedSpots) => void;
+  // Asks the list to turn to the page showing the first spot just added.
+  readonly pageRequest: PageRequest;
+  readonly added: (spots: DashboardAisleSpots, added: AddedSpots, firstSpotId: string | null) => void;
   readonly saved: (spots: DashboardAisleSpots, spot: DashboardSpot) => void;
   readonly deleted: (spots: DashboardAisleSpots, spot: DashboardSpot) => void;
   readonly refused: (refusal: Refusal) => void;
-  readonly staleData: Omit<RefusalFollowUps, 'refreshSession'>;
+  readonly staleData: StaleDataFollowUps;
+}
+
+interface LastChange {
+  readonly notice: SpotNotice | null;
+  readonly noticeKey: number;
+  readonly pageSpotId: string | null;
 }
 
 // Every write shows the aisle's spots as the API answered them, then says what changed; the latest change replaces the last notice.
 export function useSpotChanges({ show, refresh, onStale }: SpotChangeSources): SpotChanges {
-  const [{ notice, noticeKey }, setState] = useState<{ readonly notice: SpotNotice | null; readonly noticeKey: number }>({ notice: null, noticeKey: 0 });
-  const setNotice = (next: SpotNotice) => setState((previous) => ({ notice: next, noticeKey: previous.noticeKey + 1 }));
-  const showWith = (spots: DashboardAisleSpots, changed: SpotNotice) => {
+  const [{ notice, noticeKey, pageSpotId }, setState] = useState<LastChange>({ notice: null, noticeKey: 0, pageSpotId: null });
+  const setNotice = (next: SpotNotice, nextPageSpotId: string | null = null) =>
+    setState((previous) => ({ notice: next, noticeKey: previous.noticeKey + 1, pageSpotId: nextPageSpotId }));
+  const showWith = (spots: DashboardAisleSpots, changed: SpotNotice, nextPageSpotId: string | null = null) => {
     show(spots);
-    setNotice(changed);
+    setNotice(changed, nextPageSpotId);
   };
   return {
     notice,
     noticeKey,
-    added: (spots, added) => showWith(spots, { kind: 'added', added }),
+    pageRequest: { key: noticeKey, spotId: pageSpotId },
+    added: (spots, added, firstSpotId) => showWith(spots, { kind: 'added', added }, firstSpotId),
     saved: (spots, { number }) => showWith(spots, { kind: 'saved', number }),
     deleted: (spots, { number }) => showWith(spots, { kind: 'deleted', number }),
     refused: (refusal) => setNotice({ kind: 'refused', refusal }),

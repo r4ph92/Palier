@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DashboardAisleSpots, DashboardSpot, SpotCheckReason } from '@palier/shared-types';
 import { MAX_SPOTS_PER_LOT, type SpotAttributes } from '@palier/shared-types/spotDraft';
 import { canonicalSpotNumber } from '@palier/shared-types/spotNumber';
-import { spotsRefused, spotsWritten, type AislePlace, type LotSpotRepository, type LotSpotWrite, type SpotBatch, type SpotPlace } from '../../../src/domain/dashboard/LotSpotRepository.ts';
+import { spotNumberTaken, spotsRefused, spotsWritten, type AislePlace, type LotSpotRepository, type LotSpotWrite, type SpotBatch, type SpotPlace } from '../../../src/domain/dashboard/LotSpotRepository.ts';
 import type { SpotState } from '../../../src/domain/spots/spotStates.ts';
 import { parkingDemoSpots } from '../../../src/seed/fixtures/parkingDemo.ts';
 import type { FakeLotMapRepository } from './fakeLotMapRepository.ts';
@@ -61,7 +61,7 @@ export class FakeLotSpotRepository implements LotSpotRepository {
       }
       const taken = this.#firstTaken(lotId, numbers);
       if (taken !== undefined) {
-        return { kind: 'numberTaken', takenNumber: taken };
+        return spotNumberTaken(taken);
       }
       this.spots.push(...numbers.map((number) => newSpot({ lotId, aisleId }, number, attributes)));
       return spotsWritten(aisleId);

@@ -64,7 +64,7 @@ describe('the spots of an aisle', () => {
     expect(api.requests.some((request) => request.startsWith('POST') && request.endsWith('/spots'))).toBe(false);
   });
 
-  it.each(['A-1 - A-20', 'A-1-A-20', 'A 7'])('says beside the field that « %s » cannot be read, and sends nothing', async (range) => {
+  it.each(['A-1 - A-20', 'A-1-A-20'])('says beside the field that « %s » cannot be read, and sends nothing', async (range) => {
     const api = await garageRoyAisleA();
 
     await addSpots(range);

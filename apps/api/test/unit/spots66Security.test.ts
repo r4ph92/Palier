@@ -1,3 +1,4 @@
+import type { SQL } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { describe, expect, it } from 'vitest';
 import {
@@ -15,33 +16,31 @@ import {
 // Pentest #66 — durable proof of the security invariants of the spot statements (story/66-spots-attributes).
 // Live proof of the running build is in .claude/work/66-spots-attributes/pentest.log; this pins the invariants in code.
 const dialect = new PgDialect();
-const render = (statement: { queryChunks?: unknown } | import('drizzle-orm').SQL) => dialect.sqlToQuery(statement as import('drizzle-orm').SQL);
+const render = (statement: SQL) => dialect.sqlToQuery(statement);
 
-const OP = 'operator-roy';
+const OPERATOR = 'operator-roy';
 const LOT = 'lot-roy-nord';
 const AISLE = { lotId: LOT, aisleId: 'aisle-a' };
 const SPOT = { lotId: LOT, spotId: 'spot-a3' };
-const ATTRS = { isEv: true, isAccessible: false, isOversize: false, distanceToExit: 12 };
+const ATTRIBUTES = { isEv: true, isAccessible: false, isOversize: false, distanceToExit: 12 };
 
-const everyWrite = [
-  ['read-aisle-spots', readAisleSpotsStatement(OP, AISLE)],
-  ['read-parking-aisle', readParkingAisleStatement(OP, AISLE)],
-  ['count-live-spots', countLiveSpotsStatement(OP, LOT)],
-  ['find-taken-number', firstTakenNumberStatement(OP, LOT, ['A-3'])],
-  ['insert-spots', insertSpotsStatement(OP, AISLE, { numbers: ['A-3'], attributes: ATTRS })],
-  ['change-spot', changeSpotStatement(OP, SPOT, ATTRS)],
-  ['delete-unused-spot', deleteSpotWithoutHistoryStatement(OP, SPOT)],
-  ['retire-spot', retireSpotStatement(OP, SPOT)],
-  ['read-live-spot', readLiveSpotStatement(OP, SPOT)],
+const everyStatement = [
+  ['read-aisle-spots', readAisleSpotsStatement(OPERATOR, AISLE)],
+  ['read-parking-aisle', readParkingAisleStatement(OPERATOR, AISLE)],
+  ['count-live-spots', countLiveSpotsStatement(OPERATOR, LOT)],
+  ['find-taken-number', firstTakenNumberStatement(OPERATOR, LOT, ['A-3'])],
+  ['insert-spots', insertSpotsStatement(OPERATOR, AISLE, { numbers: ['A-3'], attributes: ATTRIBUTES })],
+  ['change-spot', changeSpotStatement(OPERATOR, SPOT, ATTRIBUTES)],
+  ['delete-unused-spot', deleteSpotWithoutHistoryStatement(OPERATOR, SPOT)],
+  ['retire-spot', retireSpotStatement(OPERATOR, SPOT)],
+  ['read-live-spot', readLiveSpotStatement(OPERATOR, SPOT)],
 ] as const;
 
 describe('spot statements are scoped to the operator and never trust ids or numbers as SQL', () => {
-  it.each(everyWrite)('%s names the operator and binds every id as a parameter', (_label, statement) => {
+  it.each(everyStatement)('%s names the operator and binds every id as a parameter', (_label, statement) => {
     const { sql, params } = render(statement);
-    // Tenant scope: the operator predicate is present and bound, so another operator's lot is never touched.
     expect(sql).toMatch(/operator_id = \$\d+/);
-    expect(params).toContain(OP);
-    // The lot/aisle/spot ids reach the query only as parameters, never inlined into the text.
+    expect(params).toContain(OPERATOR);
     expect(sql).not.toContain(LOT);
     expect(sql).not.toContain('aisle-a');
     expect(sql).not.toContain('spot-a3');
@@ -49,7 +48,7 @@ describe('spot statements are scoped to the operator and never trust ids or numb
 
   it('binds attacker-controlled spot numbers as parameters, so SQL in a number is inert', () => {
     const evil = ["'); drop table spot;--", '<script>alert(1)</script>', 'A-3'];
-    for (const statement of [firstTakenNumberStatement(OP, LOT, evil), insertSpotsStatement(OP, AISLE, { numbers: evil, attributes: ATTRS })]) {
+    for (const statement of [firstTakenNumberStatement(OPERATOR, LOT, evil), insertSpotsStatement(OPERATOR, AISLE, { numbers: evil, attributes: ATTRIBUTES })]) {
       const { sql, params } = render(statement);
       expect(sql).not.toContain('drop table');
       expect(sql).not.toContain('<script>');
@@ -62,17 +61,17 @@ describe('spot statements are scoped to the operator and never trust ids or numb
 
 describe('retired spots stay out of every read, count and reuse check', () => {
   it.each([
-    ['read-aisle-spots', readAisleSpotsStatement(OP, AISLE)],
-    ['count-live-spots', countLiveSpotsStatement(OP, LOT)],
-    ['find-taken-number', firstTakenNumberStatement(OP, LOT, ['A-3'])],
-    ['change-spot', changeSpotStatement(OP, SPOT, ATTRS)],
-    ['read-live-spot', readLiveSpotStatement(OP, SPOT)],
+    ['read-aisle-spots', readAisleSpotsStatement(OPERATOR, AISLE)],
+    ['count-live-spots', countLiveSpotsStatement(OPERATOR, LOT)],
+    ['find-taken-number', firstTakenNumberStatement(OPERATOR, LOT, ['A-3'])],
+    ['change-spot', changeSpotStatement(OPERATOR, SPOT, ATTRIBUTES)],
+    ['read-live-spot', readLiveSpotStatement(OPERATOR, SPOT)],
   ] as const)('%s filters on retired_at is null', (_label, statement) => {
     expect(render(statement).sql).toContain('retired_at is null');
   });
 
   it('inserts spots only through the operator-owned, non-exit parking aisle', () => {
-    const { sql } = render(insertSpotsStatement(OP, AISLE, { numbers: ['A-3'], attributes: ATTRS }));
+    const { sql } = render(insertSpotsStatement(OPERATOR, AISLE, { numbers: ['A-3'], attributes: ATTRIBUTES }));
     expect(sql).toContain('insert into spot');
     expect(sql).toMatch(/not aisle\.is_exit_lane/);
     expect(sql).toMatch(/operator_id = \$\d+/);
@@ -81,7 +80,7 @@ describe('retired spots stay out of every read, count and reuse check', () => {
 
 describe('a spot in use or with history is never silently deleted', () => {
   it('retire requires a free, unheld, unassigned spot and marks it out of service', () => {
-    const { sql } = render(retireSpotStatement(OP, SPOT));
+    const { sql } = render(retireSpotStatement(OPERATOR, SPOT));
     expect(sql).toContain("state = 'OUT_OF_SERVICE'");
     expect(sql).toContain('retired_at = now()');
     expect(sql).toContain("spot.state in ('AVAILABLE', 'OUT_OF_SERVICE')");
@@ -90,7 +89,7 @@ describe('a spot in use or with history is never silently deleted', () => {
   });
 
   it('hard delete is refused for any spot a session, hold or report ever pointed at', () => {
-    const { sql } = render(deleteSpotWithoutHistoryStatement(OP, SPOT));
+    const { sql } = render(deleteSpotWithoutHistoryStatement(OPERATOR, SPOT));
     expect(sql).toContain('delete from spot');
     expect(sql).toMatch(/not exists \(select 1 from parking_session past where past\.assigned_spot_id = spot\.id/);
     expect(sql).toMatch(/not exists \(select 1 from parking_session past where past\.confirmed_spot_id = spot\.id/);

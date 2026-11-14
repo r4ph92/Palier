@@ -6,6 +6,7 @@ import { formatCount } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { AddSpotsForm } from './AddSpotsForm.tsx';
+import { firstAddedSpotId } from './firstAddedSpotId.ts';
 import { SpotList } from './SpotList.tsx';
 import { useAisleSpots } from './useAisleSpots.ts';
 import { useSpotChanges } from './useSpotChanges.ts';
@@ -34,7 +35,7 @@ export function AisleSpots({ lotId, aisle, onStale }: AisleSpotsProps) {
   return (
     <>
       <CapacityWarning spots={spots} />
-      <AddSpotsForm lotId={lotId} aisleId={aisle.id} onAdded={(saved, count) => changes.added(saved, { count, aisle: aisle.code })} staleData={changes.staleData} />
+      <AddSpotsForm lotId={lotId} aisleId={aisle.id} onAdded={(saved, count) => changes.added(saved, { count, aisle: aisle.code }, firstAddedSpotId(spots, saved))} staleData={changes.staleData} />
       <SpotList lotId={lotId} aisle={aisle} spots={spots.spots} changes={changes} />
     </>
   );

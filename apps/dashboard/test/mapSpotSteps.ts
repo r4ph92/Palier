@@ -54,3 +54,8 @@ export function spotNumbers(): string[] {
     .queryAllByRole('rowheader')
     .map((cell) => cell.textContent ?? '');
 }
+
+// The pager appears above and below the table; the one above is first.
+export function nextPageButton(): HTMLElement {
+  return screen.getAllByRole('button', { name: 'Suivantes' })[0] as HTMLElement;
+}

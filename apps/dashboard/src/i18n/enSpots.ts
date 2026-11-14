@@ -20,7 +20,7 @@ export const enSpots: typeof frSpots = {
   edit: { shown: 'Edit', name: 'Edit %{number}' },
   delete: { shown: 'Delete', name: 'Delete %{number}' },
   confirmDelete: 'Delete %{number}?',
-  page: { range: '%{first}–%{last} of %{count}', previous: 'Previous', next: 'Next', label: 'Spot list pages' },
+  page: { range: '%{first}–%{last} of %{count}', previous: 'Previous', next: 'Next', label: 'Spot list pages', labelBelow: 'Spot list pages, below the table' },
   confirmDeleteButton: { shown: 'Confirm', name: 'Confirm deleting %{number}' },
   deleting: 'Deleting…',
   cancel: 'Cancel',

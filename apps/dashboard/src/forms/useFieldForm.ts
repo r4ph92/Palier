@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
-import { followUpRefusal, type Refusal, type RefusalFollowUps } from '../api/followUpRefusal.ts';
+import { asDashboardApiError, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import { followUpRefusal, type Refusal, type StaleDataFollowUps } from '../api/followUpRefusal.ts';
 import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
 import { useGuardedRequest } from './useGuardedRequest.ts';
 
@@ -19,7 +19,9 @@ export interface FieldFormSetup<Field extends string, Value> {
   readonly send: (value: Value) => Promise<void>;
   readonly fieldOfCode: Partial<Readonly<Record<DisplayedErrorCode, Field>>>;
   // What the page reads again after a refusal that says it is out of date, before the form shows the refusal.
-  readonly staleData?: Omit<RefusalFollowUps, 'refreshSession'>;
+  readonly staleData?: StaleDataFollowUps;
+  // Runs once the refusal is known, after the page read again what it called out of date: the code the API answered, then the refusal shown.
+  readonly afterRefusal?: (answeredCode: DisplayedErrorCode, refusal: Refusal) => void;
   // Empties every field once a send succeeds, so the form is ready for the next entry; focus stays on the submit button.
   readonly emptiesOnSuccess?: boolean;
 }
@@ -87,23 +89,33 @@ interface SenderFollowUps<Field extends string> {
 }
 
 // Reads the form and sends it only when the shared rule accepts it; answers whether the request succeeded.
-function useSender<Field extends string, Value>({ read, send, fieldOfCode, staleData }: FieldFormSetup<Field, Value>, { show, afterSuccess }: SenderFollowUps<Field>) {
-  const refreshSession = useSessionRefresh();
+function useSender<Field extends string, Value>(setup: FieldFormSetup<Field, Value>, { show, afterSuccess }: SenderFollowUps<Field>) {
+  const refuse = useRefusal(setup, show);
   return async (values: FieldValues<Field>): Promise<boolean> => {
-    const readForm = read(values);
+    const readForm = setup.read(values);
     if (!readForm.ok) {
       show({ errors: readForm.errors, refusal: null, values: {} });
       return false;
     }
     show(ACCEPTED);
     try {
-      await send(readForm.value);
+      await setup.send(readForm.value);
       afterSuccess();
       return true;
     } catch (failure) {
-      show(refusalOutcome(await followUpRefusal(failure, { refreshSession, ...staleData }), fieldOfCode));
+      await refuse(failure);
       return false;
     }
+  };
+}
+
+// Follows the refusal up, shows it, then tells the form that owns it what the API had answered.
+function useRefusal<Field extends string, Value>({ fieldOfCode, staleData, afterRefusal }: FieldFormSetup<Field, Value>, show: (outcome: Outcome<Field>) => void) {
+  const refreshSession = useSessionRefresh();
+  return async (failure: unknown): Promise<void> => {
+    const refusal = await followUpRefusal(failure, { refreshSession, ...staleData });
+    show(refusalOutcome(refusal, fieldOfCode));
+    afterRefusal?.(asDashboardApiError(failure).code, refusal);
   };
 }
 

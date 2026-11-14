@@ -2,11 +2,14 @@ import type { DashboardSpotsToCheck, DashboardSpotToCheck } from '@palier/shared
 import { useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import { type DisplayedErrorCode } from '../api/DashboardApiError.ts';
-import { followUpRefusal, LIST_OUT_OF_DATE, type Refusal, type RefusalFollowUps } from '../api/followUpRefusal.ts';
+import { followUpRefusal, type Refusal, type RefusalFollowUps } from '../api/followUpRefusal.ts';
 import { useGuardedRequest } from '../forms/useGuardedRequest.ts';
 import { useFocusAfterRender } from '../lotMap/useFocusAfterRender.ts';
 import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
 import { checkButtonId, SPOT_CHECK_STATUS_ID } from './spotCheckIds.ts';
+
+// After these refusals the flagged list on the page is out of date: it is read again before the operator retries.
+const LIST_OUT_OF_DATE: readonly DisplayedErrorCode[] = ['LOT_BUSY', 'SPOT_NOT_FOUND'];
 
 export interface RowRefusal extends Refusal {
   readonly spotId: string;

@@ -1,6 +1,6 @@
 import type { DashboardAisleSpots } from '@palier/shared-types';
 import { MAX_SPOTS_PER_LOT, type SpotAttributes } from '@palier/shared-types/spotDraft';
-import { spotsRefused, spotsWritten, type AislePlace, type LotSpotRepository, type LotSpotWrite, type SpotBatch, type SpotPlace } from '../../domain/dashboard/LotSpotRepository.ts';
+import { spotNumberTaken, spotsRefused, spotsWritten, type AislePlace, type LotSpotRepository, type LotSpotWrite, type SpotBatch, type SpotPlace } from '../../domain/dashboard/LotSpotRepository.ts';
 import type { Database, Transaction } from './database.ts';
 import { aisleSpotsOf, type AisleSpotRow } from './lotSpotRows.ts';
 import {
@@ -73,7 +73,7 @@ async function insertSpots(tx: Executor, { operatorId, aisle, batch }: SpotInser
   }
   const [taken] = await tx.execute<{ readonly number: string }>(firstTakenNumberStatement(operatorId, aisle.lotId, batch.numbers));
   if (taken !== undefined) {
-    return { kind: 'numberTaken', takenNumber: taken.number };
+    return spotNumberTaken(taken.number);
   }
   await tx.execute(insertSpotsStatement(operatorId, aisle, batch));
   return spotsWritten(aisle.aisleId);

@@ -2,7 +2,7 @@ import type { DashboardAisleSpots } from '@palier/shared-types';
 import { addSpotsErrors, parseSpotRange, spotCountOf, type AddSpotsRequest, type SpotRange } from '@palier/shared-types/spotDraft';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
-import type { RefusalFollowUps } from '../api/followUpRefusal.ts';
+import type { StaleDataFollowUps } from '../api/followUpRefusal.ts';
 import { readFormOf, useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
 import { useLanguage, type Language } from '../i18n/LanguageContext.tsx';
 import { attributesOf, EMPTY_ATTRIBUTES, type SpotAttributeField } from './spotFormValues.ts';
@@ -31,7 +31,7 @@ export interface AddSpotsTarget {
   readonly lotId: string;
   readonly aisleId: string;
   readonly onAdded: (spots: DashboardAisleSpots, count: number) => void;
-  readonly staleData: Omit<RefusalFollowUps, 'refreshSession'>;
+  readonly staleData: StaleDataFollowUps;
 }
 
 export function useAddSpotsForm({ lotId, aisleId, onAdded, staleData }: AddSpotsTarget): FieldForm<AddSpotsField> {

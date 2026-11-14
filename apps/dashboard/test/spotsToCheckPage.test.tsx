@@ -195,7 +195,8 @@ describe('the spots to check page', () => {
 
     expect(screen.getAllByRole('rowheader')).toHaveLength(50);
     expect(screen.getByText('1–50 sur 64')).toBeDefined();
-    await userEvent.click(screen.getByRole('button', { name: 'Suivantes' }));
+    const pagesBelow = screen.getByRole('navigation', { name: 'Pages de la liste des places, sous le tableau' });
+    await userEvent.click(within(pagesBelow).getByRole('button', { name: 'Suivantes' }));
     expect(screen.getAllByRole('rowheader')).toHaveLength(14);
   });
 

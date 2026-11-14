@@ -1,4 +1,4 @@
-import type { DashboardSpotsToCheck } from '@palier/shared-types';
+import type { DashboardSpotsToCheck, DashboardSpotToCheck } from '@palier/shared-types';
 import { useCallback } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import { useResource } from '../api/useResource.ts';
@@ -10,8 +10,8 @@ import { StateMark } from '../components/StateMark.tsx';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { pluralOf } from '../i18n/plural.ts';
-import { SpotPager } from '../lotMap/SpotPager.tsx';
-import { useSpotPage } from '../lotMap/useSpotPage.ts';
+import { PageTurns, SpotPager } from '../lotMap/SpotPager.tsx';
+import { useSpotPage, type PageRequest } from '../lotMap/useSpotPage.ts';
 import { lotPath } from '../navigation/routes.ts';
 import { SPOT_CHECK_STATUS_ID } from '../spotsToCheck/spotCheckIds.ts';
 import { SpotsToCheckTable } from '../spotsToCheck/SpotsToCheckTable.tsx';
@@ -67,7 +67,7 @@ function SpotsToCheckView({ lotId, initial }: { readonly lotId: string; readonly
 
 function FlaggedSpots({ clearing }: { readonly clearing: SpotCheckClearing }) {
   const { text, language } = useLanguage();
-  const page = useSpotPage(clearing.spots, noop);
+  const page = useSpotPage(clearing.spots, { idOf: flaggedSpotIdOf, onTurn: noop, request: NO_PAGE_REQUEST });
   return (
     <>
       <p id={COUNT_ID} className="number-cell">
@@ -76,8 +76,16 @@ function FlaggedSpots({ clearing }: { readonly clearing: SpotCheckClearing }) {
       <p className="muted">{text.spotsToCheck.hint}</p>
       <SpotPager page={page} />
       <SpotsToCheckTable spots={page.spots} clearing={clearing} labelledBy={COUNT_ID} />
+      <PageTurns page={page} label={text.map.spots.page.labelBelow} />
     </>
   );
+}
+
+// Nothing on this page asks to show a given spot: the list only shrinks.
+const NO_PAGE_REQUEST: PageRequest = { key: 0, spotId: null };
+
+function flaggedSpotIdOf({ spotId }: DashboardSpotToCheck): string {
+  return spotId;
 }
 
 function noop(): void {}

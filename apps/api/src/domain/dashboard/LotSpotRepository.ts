@@ -14,6 +14,10 @@ export function spotsWritten(aisleId: string): LotSpotWrite {
   return { kind: 'written', aisleId };
 }
 
+export function spotNumberTaken(takenNumber: string): LotSpotWrite {
+  return { kind: 'numberTaken', takenNumber };
+}
+
 export function spotsRefused(reason: LotSpotRefusal): LotSpotWrite {
   return { kind: 'refused', reason };
 }
