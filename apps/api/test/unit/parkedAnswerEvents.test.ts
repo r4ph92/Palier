@@ -13,7 +13,7 @@ const SPOT_A3_ID = '00000000-0000-4000-8000-0000000003a3';
 const NO_CONFIRMED_SPOT = { number: null, aisle_code: null, level_code: null };
 const CONFIRMED_ON_A3 = { number: 'A-3', aisle_code: 'A', level_code: 'P1' };
 
-function answeringSession(state: EntrySessionState, assignedSpotState: string, confirmed = NO_CONFIRMED_SPOT) {
+function answeringSession(state: EntrySessionState, assignedSpotState: string, confirmed: typeof NO_CONFIRMED_SPOT | typeof CONFIRMED_ON_A3 = NO_CONFIRMED_SPOT) {
   return { state, assigned_spot_id: SPOT_A1_ID, assigned_spot_state: assignedSpotState, ...confirmed };
 }
 
