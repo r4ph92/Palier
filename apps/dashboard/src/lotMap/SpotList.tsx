@@ -12,7 +12,7 @@ import { editButtonId, SpotTable, type EditRow } from './SpotTable.tsx';
 import { useFocusAfterRender } from './useFocusAfterRender.ts';
 import type { SpotChanges } from './useSpotChanges.ts';
 import { useSpotDeletion } from './useSpotDeletion.ts';
-import { useSpotPage } from './useSpotPage.ts';
+import { useSpotPage, type PageRequest } from './useSpotPage.ts';
 
 interface SpotListProps {
   readonly lotId: string;
@@ -26,12 +26,8 @@ export function SpotList({ lotId, aisle, spots, changes }: SpotListProps) {
   const titleId = `spot-list-${aisle.id}`;
   const focusAfterRender = useFocusAfterRender();
   const editing = useSpotEditing(changes, { focusAfterRender, titleId });
-  const page = useSpotPage(spots, editing.close);
-  const onDeleted = (saved: DashboardAisleSpots, spot: DashboardSpot) => {
-    changes.deleted(saved, spot);
-    focusAfterRender(titleId);
-  };
-  const deletion = useSpotDeletion({ lotId, onDeleted, onRefused: changes.refused, staleData: changes.staleData });
+  const page = useSpotPage(spots, editing.close, pageRequestOf(changes));
+  const deletion = useListDeletion(lotId, changes, () => focusAfterRender(titleId));
   const editRow = editRowOf(lotId, editing, changes);
   return (
     <>
@@ -39,8 +35,21 @@ export function SpotList({ lotId, aisle, spots, changes }: SpotListProps) {
       <SpotNoticeLine key={changes.noticeKey} notice={changes.notice} />
       <SpotPager page={page} />
       {spots.length === 0 ? <EmptyAisle /> : <SpotTable spots={page.spots} labelledBy={titleId} deletion={deletion} onEdit={editing.open} editing={editRow} />}
+      <SpotPager page={page} below />
     </>
   );
+}
+
+function useListDeletion(lotId: string, changes: SpotChanges, focusTitle: () => void) {
+  const onDeleted = (saved: DashboardAisleSpots, spot: DashboardSpot) => {
+    changes.deleted(saved, spot);
+    focusTitle();
+  };
+  return useSpotDeletion({ lotId, onDeleted, onRefused: changes.refused, staleData: changes.staleData });
+}
+
+function pageRequestOf({ notice, noticeKey }: SpotChanges): PageRequest {
+  return { key: noticeKey, spotId: notice?.kind === 'added' ? notice.added.firstSpotId : null };
 }
 
 function editRowOf(lotId: string, editing: SpotEditing, { staleData }: SpotChanges): EditRow | null {

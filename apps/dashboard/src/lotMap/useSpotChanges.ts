@@ -15,6 +15,8 @@ interface SpotChangeSources {
 export interface AddedSpots {
   readonly count: number;
   readonly aisle: string;
+  // The first of them in the list, so the list can turn to the page that shows it.
+  readonly firstSpotId: string | null;
 }
 
 // What the line under the list title says about the last change: kept as data, so it follows a language switch.

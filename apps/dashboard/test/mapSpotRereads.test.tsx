@@ -5,7 +5,7 @@ import { installFakeApi, parkingDemo, sophie } from './fakeDashboardApi.ts';
 import { refused } from './fakeDashboardData.ts';
 import { parkingDemoMap } from './fakeMapData.ts';
 import { longAisleSpots, PARKING_DEMO_AISLE_A } from './fakeSpotData.ts';
-import { addSpots, PARKING_DEMO_MAP, parkingDemoAisleA, rowOf, spotNumbers, spotsRegion } from './mapSpotSteps.ts';
+import { addSpots, nextPageButton, PARKING_DEMO_MAP, parkingDemoAisleA, rowOf, spotNumbers, spotsRegion } from './mapSpotSteps.ts';
 import { renderDashboard } from './renderDashboard.tsx';
 
 const AISLE_A_SPOTS = `GET /lots/${parkingDemo.id}/aisles/${PARKING_DEMO_AISLE_A}/spots`;
@@ -117,11 +117,41 @@ describe('the spot table', () => {
 
     expect(spotNumbers()).toHaveLength(50);
     expect(screen.getByText('1–50 sur 120')).toBeDefined();
-    await userEvent.click(screen.getByRole('button', { name: 'Suivantes' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Suivantes' }));
+    await userEvent.click(nextPageButton());
+    await userEvent.click(nextPageButton());
 
     expect(screen.getByText('101–120 sur 120')).toBeDefined();
     expect(spotNumbers()[0]).toBe('B-101');
-    expect(screen.getByRole('button', { name: 'Suivantes' })).toHaveProperty('disabled', true);
+    expect(nextPageButton().getAttribute('aria-disabled')).toBe('true');
+  });
+});
+
+describe('the page turns of a long spot list', () => {
+  it('repeats under the table, with its own landmark name', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    api.spots.set(parkingDemo.id, longAisleSpots(120));
+    renderDashboard({ path: PARKING_DEMO_MAP });
+    await screen.findByRole('rowheader', { name: 'B-1' });
+
+    expect(screen.getByRole('navigation', { name: 'Pages de la liste des places' })).toBeDefined();
+    expect(screen.getByRole('navigation', { name: 'Pages de la liste des places, sous le tableau' })).toBeDefined();
+  });
+
+  it('does not bring back a page remembered before the list got shorter', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    api.spots.set(parkingDemo.id, longAisleSpots(101));
+    renderDashboard({ path: PARKING_DEMO_MAP });
+    await screen.findByRole('rowheader', { name: 'B-1' });
+    await userEvent.click(nextPageButton());
+    await userEvent.click(nextPageButton());
+    await userEvent.click(screen.getByRole('button', { name: 'Supprimer B-101' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmer la suppression de B-101' }));
+    await screen.findByText('Place B-101 supprimée.');
+    expect(screen.getByText('51–100 sur 100')).toBeDefined();
+
+    await addSpots('B-101 à B-110');
+
+    await screen.findByText('10 places ajoutées à l’allée A.');
+    expect(screen.getByText('101–110 sur 110')).toBeDefined();
   });
 });

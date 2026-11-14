@@ -15,16 +15,35 @@ export interface SpotPage {
   readonly next: () => void;
 }
 
-// The aisle's whole list comes in one read; the page shows 50 rows at a time, and stays on the last page when spots go.
-export function useSpotPage(spots: readonly DashboardSpot[], onTurn: () => void): SpotPage {
+// Asks the list to turn to the page showing one spot; each request has its own key, so the same spot can be asked for twice.
+export interface PageRequest {
+  readonly key: number;
+  readonly spotId: string | null;
+}
+
+// The aisle's whole list comes in one read; the page shows 50 rows at a time, and the remembered page never outlives the list.
+export function useSpotPage(spots: readonly DashboardSpot[], onTurn: () => void, request: PageRequest): SpotPage {
   const [wantedIndex, setWantedIndex] = useState(0);
+  const [answeredKey, setAnsweredKey] = useState(request.key);
   const lastIndex = Math.max(0, Math.ceil(spots.length / PAGE_SIZE) - 1);
-  const index = Math.min(wantedIndex, lastIndex);
+  const requestedIndex = answeredKey === request.key ? null : indexOfSpot(spots, request.spotId);
+  const index = Math.min(requestedIndex ?? wantedIndex, lastIndex);
+  if (answeredKey !== request.key) {
+    setAnsweredKey(request.key);
+  }
+  if (wantedIndex !== index) {
+    setWantedIndex(index);
+  }
   const turnTo = (nextIndex: number) => {
     setWantedIndex(nextIndex);
     onTurn();
   };
   return { ...pageAt(spots, index), hasPrevious: index > 0, hasNext: index < lastIndex, previous: () => turnTo(index - 1), next: () => turnTo(index + 1) };
+}
+
+function indexOfSpot(spots: readonly DashboardSpot[], spotId: string | null): number | null {
+  const position = spots.findIndex(({ id }) => id === spotId);
+  return position < 0 ? null : Math.floor(position / PAGE_SIZE);
 }
 
 function pageAt(spots: readonly DashboardSpot[], index: number): Pick<SpotPage, 'spots' | 'first' | 'last' | 'count'> {
