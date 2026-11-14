@@ -1,4 +1,4 @@
-# 035 — Bornes muettes et piles de balises
+# 036 — Bornes muettes et piles de balises
 
 **Contexte.** docs/05 fait du signal de vie des contrôleurs et du suivi des piles des exigences d'exploitation. Q47 dit qu'un contrôleur hors ligne refuse l'entrée ; côté Palier, rien ne savait qu'une borne s'était tue (#76).
 

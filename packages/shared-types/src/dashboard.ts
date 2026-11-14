@@ -88,7 +88,7 @@ export interface DashboardMapAisle {
   readonly beaconMinor: number;
   readonly isExitLane: boolean;
   readonly rectangle: AisleRectangle | null;
-  // The last reading of the aisle's beacon battery, and what it means now: UNKNOWN past 90 days (decision 035).
+  // The last reading of the aisle's beacon battery, and what it means now: UNKNOWN past 90 days (decision 036).
   readonly batteryPercent: number | null;
   readonly batteryReportedAt: string | null;
   readonly batteryStatus: BatteryStatus;

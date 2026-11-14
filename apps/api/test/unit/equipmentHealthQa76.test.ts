@@ -128,7 +128,7 @@ describe('QA #76: entries at a gate that stopped beating', () => {
     expect(response.json()).toMatchObject({ error: 'PREREQUISITES_MISSING' });
   });
 
-  it('admits at a gate whose last beat is ahead of the clock, as after a test clock moved back (decision 035)', async () => {
+  it('admits at a gate whose last beat is ahead of the clock, as after a test clock moved back (decision 036)', async () => {
     const { response } = await enterAsJulieWithoutCard({ ...entreeDemoGate, lastHeartbeatAt: secondsFromServerInstant(3600) });
 
     expect(response.json()).not.toMatchObject({ error: 'GATE_SILENT' });

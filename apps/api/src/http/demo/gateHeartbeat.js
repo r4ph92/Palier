@@ -5,7 +5,7 @@ import { DEVICE_KEY_SHAPE, knownGateIdentity } from './gateIdentity.js';
 /** @typedef {{ deviceKey: string, identity: GateIdentity | null, connection: { kind: string } }} HeartbeatState */
 /** @typedef {{ identity: GateIdentity | null, isKeyRefused: boolean }} HeartbeatOutcome */
 
-// Four beats inside the 2 minutes after which Palier calls a gate silent (decision 035), so one lost beat changes nothing.
+// Four beats inside the 2 minutes after which Palier calls a gate silent (decision 036), so one lost beat changes nothing.
 export const HEARTBEAT_MILLISECONDS = 30_000;
 
 const REFUSED_STATUSES = new Set([401, 403]);

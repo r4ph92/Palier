@@ -3,10 +3,10 @@ import { fieldErrorsOf, isWholeNumberWithin, type FieldErrors } from './fieldErr
 
 export const BATTERY_PERCENT_LIMITS = { minimum: 0, maximum: 100 } as const;
 
-// At or below this percent a battery is low (decision 035).
+// At or below this percent a battery is low (decision 036).
 export const LOW_BATTERY_PERCENT = 20;
 
-// A reading older than this says nothing about the battery today: the battery reads as unknown (decision 035).
+// A reading older than this says nothing about the battery today: the battery reads as unknown (decision 036).
 export const BATTERY_READING_LIFETIME_DAYS = 90;
 
 export type BatteryStatus = 'OK' | 'LOW' | 'UNKNOWN';
