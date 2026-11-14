@@ -26,8 +26,9 @@ describe('dashboard lot map routes under attack (QA #65)', () => {
     return server.inject({ method: 'POST', url: `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels`, cookies, headers: writeHeader, payload: { code } });
   }
 
-  function reorder(cookies: Cookies, levelIds: readonly string[]) {
-    return server.inject({ method: 'PUT', url: `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels/order`, cookies, headers: writeHeader, payload: { levelIds } });
+  function reorder(cookies: Cookies, levelIds: readonly string[], fromLevelIds?: readonly string[]) {
+    const payload = fromLevelIds === undefined ? { levelIds } : { levelIds, fromLevelIds };
+    return server.inject({ method: 'PUT', url: `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels/order`, cookies, headers: writeHeader, payload });
   }
 
   function addAisle(cookies: Cookies, levelId: string, payload: object) {
@@ -56,13 +57,28 @@ describe('dashboard lot map routes under attack (QA #65)', () => {
     const loaded = await garageRoyWith(cookies, ['P1', 'P2', 'P3']);
     const [p1, p2, p3] = [idOf(loaded, 'P1'), idOf(loaded, 'P2'), idOf(loaded, 'P3')];
 
-    const firstTab = await reorder(cookies, [p1, p3, p2]);
-    const secondTabStillShowingP1P2P3 = await reorder(cookies, [p2, p1, p3]);
+    const firstTab = await reorder(cookies, [p1, p3, p2], [p1, p2, p3]);
+    const secondTabStillShowingP1P2P3 = await reorder(cookies, [p2, p1, p3], [p1, p2, p3]);
 
     expect(codesOf(firstTab.json<DashboardLotMap>())).toEqual(['P1', 'P3', 'P2']);
     expect(secondTabStillShowingP1P2P3.statusCode).toBe(409);
     expect(secondTabStillShowingP1P2P3.json()).toMatchObject({ error: 'LEVEL_ORDER_INVALID' });
     expect(codesOf((await readMap(cookies)).json<DashboardLotMap>())).toEqual(['P1', 'P3', 'P2']);
+  });
+
+  // Fix round 1 checks staleness only when fromLevelIds is sent; two moves saved by another tab leave a one-step gap a stale order fits.
+  it('refuses a stale move sent without fromLevelIds instead of undoing the second move another tab saved', async () => {
+    const cookies = await signInPierre();
+    const loaded = await garageRoyWith(cookies, ['P1', 'P2', 'P3', 'P4']);
+    const [p1, p2, p3, p4] = ['P1', 'P2', 'P3', 'P4'].map((code) => idOf(loaded, code)) as [string, string, string, string];
+    const url = `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels/order`;
+    await server.inject({ method: 'PUT', url, cookies, headers: writeHeader, payload: { levelIds: [p2, p1, p3, p4], fromLevelIds: [p1, p2, p3, p4] } });
+    await server.inject({ method: 'PUT', url, cookies, headers: writeHeader, payload: { levelIds: [p2, p1, p4, p3], fromLevelIds: [p2, p1, p3, p4] } });
+
+    const staleTab = await reorder(cookies, [p2, p1, p3, p4]);
+
+    expect(staleTab.statusCode).not.toBe(200);
+    expect(codesOf((await readMap(cookies)).json<DashboardLotMap>())).toEqual(['P2', 'P1', 'P4', 'P3']);
   });
 
   it.each([
