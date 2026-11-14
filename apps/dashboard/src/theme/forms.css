@@ -68,6 +68,10 @@
   font-weight: 600;
 }
 
+.no-break {
+  white-space: nowrap;
+}
+
 .primary-button {
   min-height: var(--touch-target);
   margin-top: var(--space-small);
@@ -83,6 +87,8 @@
 
 .stable-label {
   display: inline-grid;
+  justify-items: start;
+  text-decoration: inherit;
 }
 
 .stable-label > span {
