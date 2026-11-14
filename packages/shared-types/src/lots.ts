@@ -32,6 +32,8 @@ export interface LotSummary {
   readonly id: string;
   readonly name: string;
   readonly freeSpots: number;
+  // Every spot of the lot, free or not: with freeSpots, the share of the lot still free.
+  readonly capacity: number;
   readonly freeSpotsByCategory: SpotCountByCategory;
   readonly location: GeoPosition | null;
 }
