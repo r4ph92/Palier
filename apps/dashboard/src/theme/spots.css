@@ -72,8 +72,33 @@
     padding-inline-end: var(--space-medium);
   }
 
-  .spot-table .row-actions {
-    flex-wrap: nowrap;
+  .spot-table {
+    width: 100%;
+  }
+
+  .row-actions .text-button {
+    white-space: nowrap;
+  }
+
+  /* « Gabarit large » stays on one line. */
+  .spot-table .spot-attributes {
+    min-width: 14ch;
+  }
+
+  /* The question takes a line of its own, with Confirmer and Annuler under it. */
+  /* « Occupée, inconnue » may wrap between its words so a long spot number still fits the section at 681 px. */
+  .spot-table .spot-state,
+  .spot-table .state-mark {
+    white-space: normal;
+  }
+
+  .delete-question {
+    margin-block: 0;
+  }
+
+  .delete-question > span {
+    flex-basis: 100%;
+    white-space: normal;
   }
 
   .spot-table .spot-distance {
