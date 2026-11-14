@@ -4,6 +4,7 @@ import { EXIT_LANE_CODE, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { MAX_LEVELS_PER_LOT } from '@palier/shared-types/levelDraft';
 import type { AislePlacement, LevelPlacement } from '../../domain/dashboard/LotMapRepository.ts';
 import type { RecordedBatteryReading } from '../../domain/equipment/batteryReadings.ts';
+import { beaconBatteryAssignment } from './beaconBatteryAssignment.ts';
 import type { OwnedLot } from './lockParkingLot.ts';
 import { AISLE_MINOR_UNIQUE } from './lotSchema.ts';
 
@@ -81,9 +82,9 @@ export function readOwnedLotIdStatement({ operatorId, lotId }: OwnedLot): SQL {
 }
 
 // No row when the aisle is not one of this operator's lot.
-export function recordAisleBatteryStatement(operatorId: string, { lotId, aisleId }: AislePlacement, { percent, reportedAt }: RecordedBatteryReading): SQL {
+export function recordAisleBatteryStatement(operatorId: string, { lotId, aisleId }: AislePlacement, reading: RecordedBatteryReading): SQL {
   return sql`
-    update aisle set beacon_battery_percent = ${percent}, beacon_battery_reported_at = ${reportedAt.toISOString()}::timestamptz
+    update aisle set ${beaconBatteryAssignment(reading)}
     from parking_lot
     where aisle.id = ${aisleId} and aisle.lot_id = ${lotId} and parking_lot.id = aisle.lot_id and parking_lot.operator_id = ${operatorId}
     returning aisle.id`;

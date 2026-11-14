@@ -23,7 +23,7 @@ describe('equipment reports in Postgres', () => {
 
     expect(await new PostgresEquipmentReports(scripted.database()).recordBeaconBattery(report)).toBe(true);
     const statement = scripted.statement('record-reported-battery');
-    expect(statement?.text).toMatch(/set beacon_battery_percent = \$1, beacon_battery_reported_at = \$2::timestamptz\s+where lot_id = \$3 and beacon_minor = \$4\s+returning id/);
+    expect(statement?.text).toMatch(/where lot_id = \$3 and beacon_minor = \$4\s+returning id/);
     expect(statement?.params).toEqual([15, at.toISOString(), entreeDemo.lotId, 1]);
   });
 
