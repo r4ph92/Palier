@@ -7,6 +7,7 @@ import type { SpotPage } from './useSpotPage.ts';
 interface PageTurnsProps {
   readonly page: SpotPage;
   readonly label: string;
+  readonly children?: ReactNode;
 }
 
 // Shown only for an aisle longer than one page: « 1–50 sur 120 », then the previous and next pages.
@@ -23,8 +24,8 @@ export function SpotPager({ page }: { readonly page: SpotPage }) {
   );
 }
 
-// The turns alone, for the pager under the table: another landmark name, and no second range.
-export function PageTurns({ page, label, children }: PageTurnsProps & { readonly children?: ReactNode }) {
+// The landmark with the previous and next turns; the pager above puts its range before them.
+export function PageTurns({ page, label, children }: PageTurnsProps) {
   const labels = useText().map.spots.page;
   if (!page.hasPrevious && !page.hasNext) {
     return null;
