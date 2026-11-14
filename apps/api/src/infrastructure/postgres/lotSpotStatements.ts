@@ -25,7 +25,7 @@ function ownedParkingAisle(operatorId: string, { lotId, aisleId }: AislePlace): 
 }
 
 // A spot not retired, of a lot of this operator.
-function ownedLiveSpot(operatorId: string, { lotId, spotId }: SpotPlace): SQL {
+export function ownedLiveSpot(operatorId: string, { lotId, spotId }: SpotPlace): SQL {
   return sql`spot.id = ${spotId} and spot.lot_id = ${lotId} and spot.retired_at is null and parking_lot.id = spot.lot_id and parking_lot.operator_id = ${operatorId}`;
 }
 

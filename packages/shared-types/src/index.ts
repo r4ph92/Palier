@@ -15,12 +15,14 @@ export type {
   DashboardOperator,
   DashboardSignInResponse,
   DashboardSpot,
+  DashboardSpotToCheck,
   DashboardTestSignInRequest,
   DashboardTestUserListResponse,
   DashboardUser,
   KycStatus,
   LevelOrderRequest,
   LevelSpotCounts,
+  SpotCheckReason,
   StripeOnboardingLink,
 } from './dashboard.ts';
 export type { AisleDraft, AisleDraftErrorCode, AisleDraftErrors, AisleDraftField, AisleRequest } from './aisleDraft.ts';

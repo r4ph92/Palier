@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, type AnyPgColumn, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { AISLE_MINOR_LIMITS, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { DEFAULT_HOLD_QUOTA, HOLD_QUOTA_LIMITS } from '@palier/shared-types/lotPricing';
 import { SPOT_STATES } from '../../domain/spots/spotStates.ts';
@@ -112,6 +112,16 @@ export const aisle = pgTable(
   ],
 );
 
+function needsCheckConstraints(table: { readonly lotId: AnyPgColumn; readonly needsCheck: AnyPgColumn; readonly needsCheckSince: AnyPgColumn; readonly needsCheckReason: AnyPgColumn; readonly retiredAt: AnyPgColumn }) {
+  return [
+    check('spot_needs_check_since_matches_flag', sql`${table.needsCheck} = (${table.needsCheckSince} is not null)`),
+    check('spot_needs_check_reason_known', sql`${table.needsCheckReason} in ('WRONG_AISLE', 'REPORTED_TAKEN')`),
+    index('spot_to_check_by_lot_index')
+      .on(table.lotId)
+      .where(sql`${table.needsCheck} and ${table.retiredAt} is null`),
+  ];
+}
+
 export const spot = pgTable(
   'spot',
   {
@@ -141,11 +151,7 @@ export const spot = pgTable(
       foreignColumns: [aisle.id, aisle.lotId],
     }),
     uniqueIndex(SPOT_NUMBER_UNIQUE).on(table.lotId, table.number).where(sql`${table.retiredAt} is null`),
-    check('spot_needs_check_since_matches_flag', sql`${table.needsCheck} = (${table.needsCheckSince} is not null)`),
-    check('spot_needs_check_reason_known', sql`${table.needsCheckReason} in ('WRONG_AISLE', 'REPORTED_TAKEN')`),
-    index('spot_to_check_by_lot_index')
-      .on(table.lotId)
-      .where(sql`${table.needsCheck} and ${table.retiredAt} is null`),
+    ...needsCheckConstraints(table),
     check('spot_retired_out_of_service', sql`${table.retiredAt} is null or ${table.state} = 'OUT_OF_SERVICE'`),
     index('spot_lot_id_canonical_number_index').on(table.lotId, canonicalNumberOf(table.number)),
     unique('spot_id_lot_id_unique').on(table.id, table.lotId),

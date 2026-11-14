@@ -1,7 +1,7 @@
 import type { DashboardAisleSpots, DashboardErrorCode } from '@palier/shared-types';
 import type { SpotAttributes } from '@palier/shared-types/spotDraft';
 
-export type LotSpotRefusal = Extract<DashboardErrorCode, 'LOT_NOT_FOUND' | 'LOT_BUSY' | 'AISLE_NOT_FOUND' | 'SPOT_NOT_FOUND' | 'SPOT_LIMIT_REACHED' | 'SPOT_IN_USE'>;
+export type LotSpotRefusal = Extract<DashboardErrorCode, 'LOT_NOT_FOUND' | 'LOT_BUSY' | 'AISLE_NOT_FOUND' | 'SPOT_NOT_FOUND' | 'SPOT_LIMIT_REACHED' | 'SPOT_IN_USE' | 'SPOT_STILL_ASSIGNED'>;
 
 // The aisle whose spots changed, read again once the write is committed.
 export interface SpotsWritten {

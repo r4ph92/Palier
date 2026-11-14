@@ -1,5 +1,6 @@
 import type { LevelOccupancyReader } from '../../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotMapRepository } from '../../domain/dashboard/LotMapRepository.ts';
+import type { SpotCheckRepository } from '../../domain/dashboard/SpotCheckRepository.ts';
 import type { LotSpotRepository } from '../../domain/dashboard/LotSpotRepository.ts';
 import type { LotSetupRepository } from '../../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../../domain/dashboard/OperatorRepository.ts';
@@ -20,6 +21,7 @@ export interface DashboardRouteDependencies {
   readonly occupancy: LevelOccupancyReader;
   readonly maps: LotMapRepository;
   readonly spots: LotSpotRepository;
+  readonly spotChecks: SpotCheckRepository;
   readonly testSignInEnabled: boolean;
   readonly secureCookies: boolean;
 }

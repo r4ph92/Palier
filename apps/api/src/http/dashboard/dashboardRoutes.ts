@@ -7,6 +7,7 @@ import { registerDashboardLotRoutes } from './dashboardLotRoutes.ts';
 import { registerDashboardLotSpotRoutes } from './dashboardLotSpotRoutes.ts';
 import { registerDashboardOccupancyRoutes } from './dashboardOccupancyRoutes.ts';
 import { registerDashboardOperatorRoutes } from './dashboardOperatorRoutes.ts';
+import { registerDashboardSpotCheckRoutes } from './dashboardSpotCheckRoutes.ts';
 import { registerDashboardStripeRoutes } from './dashboardStripeRoutes.ts';
 import { clearDashboardCookie, dashboardCookieToken } from './dashboardSessionCookie.ts';
 import { registerDashboardTestSignInRoutes } from './dashboardTestSignInRoutes.ts';
@@ -27,6 +28,7 @@ export async function registerDashboardRoutes(scope: FastifyInstance, dependenci
   registerDashboardOccupancyRoutes(scope, dependencies);
   registerDashboardLotMapRoutes(scope, dependencies);
   registerDashboardLotSpotRoutes(scope, dependencies);
+  registerDashboardSpotCheckRoutes(scope, dependencies);
   registerDashboardStripeRoutes(scope, dependencies);
   if (dependencies.testSignInEnabled) {
     registerDashboardTestSignInRoutes(scope, dependencies);
