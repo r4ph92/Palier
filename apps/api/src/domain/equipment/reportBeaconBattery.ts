@@ -1,12 +1,9 @@
 import { beaconBatteryErrors } from '@palier/shared-types/beaconBattery';
-import { AISLE_MINOR_LIMITS, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
-import { isWholeNumberWithin } from '@palier/shared-types/fieldErrors';
+import { AISLE_MINOR_LIMITS } from '@palier/shared-types/beacons';
 import type { AuthenticatedGate } from '../gates/AuthenticatedGate.ts';
 import { ensureOwnGate } from '../gates/ownGate.ts';
 import { EquipmentReportRefusedError } from './EquipmentReportRefusedError.ts';
 import type { GateReportSources } from './recordHeartbeat.ts';
-
-const BEACON_MINOR_LIMITS = { minimum: EXIT_LANE_MINOR, maximum: AISLE_MINOR_LIMITS.maximum };
 
 export interface BatteryReportCommand {
   readonly gate: AuthenticatedGate;
@@ -22,7 +19,8 @@ export async function reportBeaconBattery(command: BatteryReportCommand, { repor
   if (beaconBatteryErrors({ percent }).percent !== undefined) {
     throw new EquipmentReportRefusedError('BATTERY_PERCENT_INVALID');
   }
-  if (!isWholeNumberWithin(beaconMinor, BEACON_MINOR_LIMITS)) {
+  // The path pattern lets through only whole numbers from 0; above the highest minor no beacon can exist, so nothing is read.
+  if (beaconMinor > AISLE_MINOR_LIMITS.maximum) {
     throw new EquipmentReportRefusedError('BEACON_NOT_FOUND');
   }
   if (!(await reports.recordBeaconBattery({ lotId: gate.lotId, beaconMinor, percent, reportedAt: clock() }))) {
