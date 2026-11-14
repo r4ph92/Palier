@@ -21,7 +21,7 @@ export async function readParkedQuestion(database: Database, { aisleId, needs }:
   const rows = await database.execute<QuestionRow>(sql`
     select aisle.code, spot.number, spot.is_ev, spot.is_accessible, spot.is_oversize
     from aisle
-    left join spot on spot.aisle_id = aisle.id and spot.state = 'AVAILABLE'
+    left join spot on spot.aisle_id = aisle.id and spot.state = 'AVAILABLE' and spot.retired_at is null
     where aisle.id = ${aisleId}
     order by length(spot.number), spot.number`);
   const [first] = rows;

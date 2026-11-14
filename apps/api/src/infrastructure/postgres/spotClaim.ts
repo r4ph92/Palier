@@ -94,7 +94,7 @@ async function readFreeSpotsWhere(executor: Pick<Database, 'execute'>, lotId: st
     from spot s
     join aisle a on a.id = s.aisle_id
     join level l on l.id = a.level_id
-    where s.lot_id = ${lotId} and s.state = 'AVAILABLE'${condition}`);
+    where s.lot_id = ${lotId} and s.state = 'AVAILABLE' and s.retired_at is null${condition}`);
   return rows.map((row) => ({
     id: row.id,
     number: row.number,

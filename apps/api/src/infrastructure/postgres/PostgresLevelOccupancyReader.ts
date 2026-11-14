@@ -31,7 +31,7 @@ export class PostgresLevelOccupancyReader implements LevelOccupancyReader {
       from parking_lot
       left join level on level.lot_id = parking_lot.id
       left join aisle on aisle.level_id = level.id
-      left join spot on spot.aisle_id = aisle.id
+      left join spot on spot.aisle_id = aisle.id and spot.retired_at is null
       where parking_lot.id = ${lotId} and parking_lot.operator_id = ${operatorId}
       group by parking_lot.id, level.id, spot.state
       order by level.display_order, level.code`);
