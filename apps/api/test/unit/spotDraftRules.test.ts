@@ -38,6 +38,10 @@ describe('reading a range of spot numbers', () => {
     ['an unknown separator', 'A-1 jusqu’à A-20'],
     ['one number without a letter', '7'],
     ['one number with a prefix of dashes', '--7'],
+    ['a spaced prefix and a bare end', 'B 1 a 20'],
+    ['a spaced prefix and an English separator', 'B 1 to 20'],
+    ['a prefix ending in a digit and different ends', 'P1 B 3 to 9'],
+    ['a spaced prefix and au', 'A 1 au 3'],
   ])('reads nothing from %s', (_case, text) => {
     expect(parseSpotRange(text)).toBeNull();
   });

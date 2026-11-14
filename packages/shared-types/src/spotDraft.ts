@@ -15,6 +15,7 @@ const HAS_LETTER_OR_DIGIT = /[A-Za-z0-9]/;
 const HAS_LETTER = /[A-Za-z]/;
 // « à », « a », « au » and « to », in either language: an operator types whichever comes first.
 const RANGE_SEPARATOR = /\s+(?:à|au|a|to)\s+/giu;
+const SEPARATOR_AFTER_DIGIT = /\d\s+(?:à|au|a|to)\s+/iu;
 const NUMBER_AND_DIGITS = /^(.*?)(\d+)$/su;
 // One number alone has the shape of a range end, but at most one dash and only before the digits, so « A-1-A-20 » is not one spot.
 const SINGLE_NUMBER = /^([A-Za-z0-9 ]*?-?)(\d+)$/u;
@@ -91,11 +92,16 @@ function spotNumberOf({ prefix, first }: SpotRange, value: number): string {
   return `${prefix}${String(value).padStart(first.length, '0')}`;
 }
 
-// « A-1 à A-20 », « A-1 to A-20 » or one number « A-7 »; null when it reads as neither, so a mistyped separator is never one spot.
+// « A-1 à A-20 », « A-1 to A-20 » or one number « A-7 »; null when it reads as neither.
+// A separator word after digits is a range attempt: « B 1 a 20 » with no valid split is never one spot.
 // The prefixes must match exactly; the rule then checks the range itself.
 export function parseSpotRange(text: string): SpotRange | null {
   const normalized = text.normalize('NFC').trim();
-  return rangeAtAnySeparator(normalized) ?? singleSpotOf(normalized);
+  const range = rangeAtAnySeparator(normalized);
+  if (range !== null) {
+    return range;
+  }
+  return SEPARATOR_AFTER_DIGIT.test(normalized) ? null : singleSpotOf(normalized);
 }
 
 // A separator word can sit inside a prefix (« Zone a 1 à Zone a 3 »): only a split where both sides read as range ends counts.
