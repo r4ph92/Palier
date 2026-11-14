@@ -4,7 +4,7 @@ import type { PassageEntry, PassageLedger, RecordedPassage, RecordedReplay, Repl
 import type { Database, Transaction } from './database.ts';
 import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
-import { appendSessionEvent, sessionInstant } from './sessionEventStatements.ts';
+import { appendSessionEvent } from './sessionEventStatements.ts';
 
 interface VehicleCountRow extends Record<string, unknown> {
   readonly vehicle_count: number;
@@ -109,7 +109,7 @@ async function logLoopClosed(tx: Transaction, { gate }: PassageEntry, sessionId:
   await appendSessionEvent(tx, {
     sessionId,
     lotId: gate.lotId,
-    occurredAt: sessionInstant(sessionId, 'entry_confirmed_at'),
+    occurredAt: 'entry_confirmed_at',
     event: { kind: 'ENTRY_LOOP_CLOSED', payload: { gateId: gate.id } },
   });
 }

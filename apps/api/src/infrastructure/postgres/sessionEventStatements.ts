@@ -2,16 +2,22 @@ import { sql, type SQL } from 'drizzle-orm';
 import { EVENT_RETENTION_HOURS, type ParkingPresumedPayload, type SessionEvent } from '../../domain/sessionEvents/SessionEvent.ts';
 import type { Transaction } from './database.ts';
 
-// occurredAt: the instant the step itself stored, read in the step's transaction, so the log never disagrees with the session.
+type SessionInstantColumn = 'entry_scan_at' | 'entry_confirmed_at' | 'parked_at' | 'parked_answered_at' | 'cancelled_at';
+
+// A column of the event's own session, or an instant another row stored (the gate command's issued_at).
+export type EventInstant = SessionInstantColumn | SQL;
+
+// occurredAt: the instant the step itself stored, read in the step's transaction.
 export interface SessionEventWrite {
   readonly sessionId: string;
   readonly lotId: string;
-  readonly occurredAt: SQL;
+  readonly occurredAt: EventInstant;
   readonly event: SessionEvent;
 }
 
 // Always called with the step's own transaction: a step rolled back leaves no event.
-export async function appendSessionEvent(tx: Transaction, { sessionId, lotId, occurredAt, event }: SessionEventWrite): Promise<void> {
+export async function appendSessionEvent(tx: Transaction, write: SessionEventWrite): Promise<void> {
+  const { sessionId, lotId, event } = write;
   const row: SessionEventColumns = {
     sessionId: sql`${sessionId}::uuid`,
     lotId: sql`${lotId}::uuid`,
@@ -19,7 +25,15 @@ export async function appendSessionEvent(tx: Transaction, { sessionId, lotId, oc
     payload: sql`${JSON.stringify(event.payload)}::jsonb`,
     occurredAt: sql`step.occurred_at`,
   };
-  await tx.execute(insertSessionEvents(row, sql`from (select ${occurredAt} as occurred_at) step`));
+  await tx.execute(insertSessionEvents(row, sql`from (select ${instantOf(write)} as occurred_at) step`));
+}
+
+// A session column is always read for the session the event is written for, never another one.
+function instantOf({ sessionId, occurredAt }: SessionEventWrite): SQL {
+  if (typeof occurredAt !== 'string') {
+    return occurredAt;
+  }
+  return sql`(select ${sql.identifier(occurredAt)} from parking_session where id = ${sessionId})`;
 }
 
 // Each value of an event row, as an expression over the statement's source; purge_after is never given, it follows occurredAt.
@@ -46,12 +60,6 @@ function purgeAfter(occurredAt: SQL): SQL {
 // A presumption on the spot the statement joined as `spot`.
 export function presumedOnJoinedSpot(evidence: ParkingPresumedPayload['evidence']): SQL {
   return jsonbObjectOf<ParkingPresumedPayload>({ evidence: sql.raw(`'${evidence}'`), spotId: sql`spot.id`, spotNumber: sql`spot.number` });
-}
-
-type SessionInstantColumn = 'entry_scan_at' | 'entry_confirmed_at' | 'parked_at' | 'parked_answered_at' | 'cancelled_at';
-
-export function sessionInstant(sessionId: string, column: SessionInstantColumn): SQL {
-  return sql`(select ${sql.identifier(column)} from parking_session where id = ${sessionId})`;
 }
 
 // For a payload built inside a statement from the rows it writes; every key of the payload type must be given, and no other.

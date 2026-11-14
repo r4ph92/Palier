@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { SessionDraft } from '../../domain/entries/ParkingSessionRepository.ts';
 import type { Transaction } from './database.ts';
-import { appendSessionEvent, sessionInstant } from './sessionEventStatements.ts';
+import { appendSessionEvent } from './sessionEventStatements.ts';
 import type { AssignedSpotRow } from './spotClaim.ts';
 
 export interface Scan {
@@ -15,7 +15,7 @@ export async function logScan(tx: Transaction, { sessionId, draft, assigned }: S
   await appendSessionEvent(tx, {
     sessionId,
     lotId: draft.lotId,
-    occurredAt: sessionInstant(sessionId, 'entry_scan_at'),
+    occurredAt: 'entry_scan_at',
     event: {
       kind: 'ENTRY_SCANNED',
       payload: {
@@ -44,7 +44,7 @@ export async function logFailedAdmission(tx: Transaction, { sessionId, lotId }: 
   await appendSessionEvent(tx, {
     sessionId,
     lotId,
-    occurredAt: sessionInstant(sessionId, 'cancelled_at'),
+    occurredAt: 'cancelled_at',
     event: { kind: 'ENTRY_CANCELLED', payload: { reason: 'ADMISSION_FAILED' } },
   });
 }
@@ -56,7 +56,7 @@ export async function logEntryWithoutLoop(tx: Transaction, { sessionId, lotId }:
   await appendSessionEvent(tx, {
     sessionId,
     lotId,
-    occurredAt: sessionInstant(sessionId, 'cancelled_at'),
+    occurredAt: 'cancelled_at',
     event: { kind: 'ENTRY_CANCELLED', payload: { reason: 'NO_LOOP', opened: row?.opened === true } },
   });
 }

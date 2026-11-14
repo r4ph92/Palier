@@ -6,7 +6,7 @@ import { clampedParkedAt } from './clampedParkedAt.ts';
 import type { Database, Transaction } from './database.ts';
 import { inLotLock } from './lockParkingLot.ts';
 import { flagAssignedSpotToCheck } from './parkedAnswerStatements.ts';
-import { appendSessionEvent, sessionInstant } from './sessionEventStatements.ts';
+import { appendSessionEvent } from './sessionEventStatements.ts';
 
 // assignedSpotId guards the walk's write: a spot-taken report may move the session to another spot after this read.
 // The detected aisle's code and minor are null exactly when its id is.
@@ -92,7 +92,7 @@ async function logWrongAisle(tx: Transaction, { signal, facts, detectedAisle }: 
   await appendSessionEvent(tx, {
     sessionId: signal.sessionId,
     lotId: facts.lotId,
-    occurredAt: sessionInstant(signal.sessionId, 'parked_at'),
+    occurredAt: 'parked_at',
     event: { kind: 'AISLE_DETECTED', payload: detectedAisle },
   });
 }

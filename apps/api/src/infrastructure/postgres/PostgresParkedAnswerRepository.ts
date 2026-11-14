@@ -19,7 +19,7 @@ import {
   type AnsweredSpot,
   type AnsweringSession,
 } from './parkedAnswerStatements.ts';
-import { appendSessionEvent, sessionInstant } from './sessionEventStatements.ts';
+import { appendSessionEvent } from './sessionEventStatements.ts';
 
 // Lot, then session, then spot (decision 014); the spot is decided from its state read under the lock, then written (decisions 020, 021).
 export class PostgresParkedAnswerRepository implements ParkedAnswerRepository {
@@ -92,7 +92,7 @@ async function logParkingConfirmed(tx: Transaction, { sessionId, lotId, spot }: 
   await appendSessionEvent(tx, {
     sessionId,
     lotId,
-    occurredAt: sessionInstant(sessionId, 'parked_answered_at'),
+    occurredAt: 'parked_answered_at',
     event: { kind: 'PARKING_CONFIRMED', payload: { spotId: spot.id, spotNumber: spot.label.number } },
   });
 }

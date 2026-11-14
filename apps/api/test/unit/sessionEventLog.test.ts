@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { EVENT_RETENTION_HOURS, SESSION_EVENT_KINDS } from '../../src/domain/sessionEvents/SessionEvent.ts';
-import { appendSessionEvent, jsonbObjectOf, sessionInstant } from '../../src/infrastructure/postgres/sessionEventStatements.ts';
+import { appendSessionEvent, jsonbObjectOf } from '../../src/infrastructure/postgres/sessionEventStatements.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
 
 const migration = readFileSync(new URL('../../drizzle/0036_session_event_log.sql', import.meta.url), 'utf8');
@@ -58,7 +58,7 @@ describe('appending a session event', () => {
       appendSessionEvent(tx, {
         sessionId: SESSION_ID,
         lotId: LOT_ID,
-        occurredAt: sessionInstant(SESSION_ID, 'entry_confirmed_at'),
+        occurredAt: 'entry_confirmed_at',
         event: { kind: 'ENTRY_LOOP_CLOSED', payload: { gateId: GATE_ID } },
       }),
     );
