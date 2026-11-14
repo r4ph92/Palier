@@ -20,6 +20,7 @@ import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/Postg
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
 import { PostgresLevelOccupancyReader } from './infrastructure/postgres/PostgresLevelOccupancyReader.ts';
 import { PostgresLotMapRepository } from './infrastructure/postgres/PostgresLotMapRepository.ts';
+import { PostgresLotSpotRepository } from './infrastructure/postgres/PostgresLotSpotRepository.ts';
 import { PostgresLotSetupRepository } from './infrastructure/postgres/PostgresLotSetupRepository.ts';
 import { PostgresOperatorRepository } from './infrastructure/postgres/PostgresOperatorRepository.ts';
 import { PostgresParkedAnswerRepository } from './infrastructure/postgres/PostgresParkedAnswerRepository.ts';
@@ -85,6 +86,7 @@ const server = buildServer({
     lotSetupRepository: new PostgresLotSetupRepository(connection.database),
     levelOccupancy: new PostgresLevelOccupancyReader(connection.database),
     lotMaps: new PostgresLotMapRepository(connection.database),
+    lotSpots: new PostgresLotSpotRepository(connection.database),
     currentParkingSessions: new PostgresCurrentParkingSessionQuery(connection.database, exitBeaconWindow),
     parkingSessionBackdater: new PostgresParkingSessionBackdater(connection.database),
     parkedPresumptions: new PostgresParkedPresumptionRepository(connection.database),
