@@ -2,91 +2,38 @@ import type { DashboardLotOccupancy } from '@palier/shared-types';
 import { SPOT_STATES } from '@palier/shared-types/spotStates';
 import { useCallback, useId } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
-import type { DashboardApiError } from '../api/DashboardApiError.ts';
-import { usePolledResource } from '../api/usePolledResource.ts';
-import { AppLink } from '../components/AppLink.tsx';
+import { usePolledLotResource } from '../api/usePolledLotResource.ts';
 import { CountedText } from '../components/CountedText.tsx';
-import { PageHeader } from '../components/PageHeader.tsx';
-import { RetryableFailure } from '../components/RetryableFailure.tsx';
-import { SkeletonRows } from '../components/SkeletonRows.tsx';
-import { StaleNote } from '../components/StaleNote.tsx';
 import { StateMark } from '../components/StateMark.tsx';
 import { formatCount } from '../i18n/formatNumbers.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { pluralFormOf } from '../i18n/plural.ts';
-import { lotPath } from '../navigation/routes.ts';
-import { NotFoundPage } from './NotFoundPage.tsx';
+import { PolledLotSubpage } from './LotSubpage.tsx';
 import { SilentGatesBanner } from './SilentGatesBanner.tsx';
 
-const POLL_INTERVAL_MILLISECONDS = 30_000;
 const LOADING_ROWS = 3;
-const LOT_NOT_FOUND = 'LOT_NOT_FOUND';
-
-const isLotGone = (error: DashboardApiError): boolean => error.code === LOT_NOT_FOUND;
 
 type Levels = DashboardLotOccupancy['levels'];
 
 export function OccupancyPage({ lotId }: { readonly lotId: string }) {
-  const occupancy = usePolledResource(useCallback(() => dashboardClient.lotOccupancy(lotId), [lotId]), POLL_INTERVAL_MILLISECONDS, isLotGone);
-  if (occupancy.status === 'loading') {
-    return <OccupancyLoading />;
-  }
-  if (occupancy.status === 'failed') {
-    return isLotGone(occupancy.error) ? <NotFoundPage /> : <OccupancyUnavailable lotId={lotId} {...occupancy} />;
-  }
-  return <OccupancyView occupancy={occupancy.value} isStale={occupancy.isStale} updatedAt={occupancy.updatedAt} />;
-}
-
-function OccupancyLoading() {
   const text = useText();
+  const occupancy = usePolledLotResource(useCallback(() => dashboardClient.lotOccupancy(lotId), [lotId]));
+  // The occupancy page keeps its own title when it cannot load: it has no separate unavailable title.
+  const pageText = { ...text.occupancy, unavailableTitle: text.occupancy.title };
   return (
-    <>
-      <PageHeader eyebrow={text.lot.eyebrow} title={text.occupancy.title} />
-      <SkeletonRows count={LOADING_ROWS} label={text.app.loading} />
-    </>
+    <PolledLotSubpage page={{ lotId, text: pageText, loadingRows: LOADING_ROWS }} resource={occupancy}>
+      {(value) => <OccupancyView occupancy={value} />}
+    </PolledLotSubpage>
   );
 }
 
-interface OccupancyUnavailableProps {
-  readonly lotId: string;
-  readonly error: DashboardApiError;
-  readonly retry: () => void;
-  readonly isRetrying: boolean;
-}
-
-function OccupancyUnavailable({ lotId, error, retry, isRetrying }: OccupancyUnavailableProps) {
+function OccupancyView({ occupancy }: { readonly occupancy: DashboardLotOccupancy }) {
   const text = useText();
   return (
     <>
-      <PageHeader eyebrow={text.lot.eyebrow} title={text.occupancy.title} />
-      <div className="actions-row">
-        <RetryableFailure code={error.code} onRetry={retry} isRetrying={isRetrying} />
-        <AppLink href={lotPath(lotId)} className="text-link">
-          {text.occupancy.back}
-        </AppLink>
-      </div>
-    </>
-  );
-}
-
-interface OccupancyViewProps {
-  readonly occupancy: DashboardLotOccupancy;
-  readonly isStale: boolean;
-  readonly updatedAt: Date;
-}
-
-function OccupancyView({ occupancy, isStale, updatedAt }: OccupancyViewProps) {
-  const text = useText();
-  return (
-    <>
-      <PageHeader eyebrow={text.lot.eyebrow} title={`${text.occupancy.title} — ${occupancy.lotName}`} />
-      <StaleNote isStale={isStale} updatedAt={updatedAt} />
       <SilentGatesBanner lotId={occupancy.lotId} gateNames={occupancy.silentGateNames} />
       <CounterSummary occupancy={occupancy} />
       {occupancy.levels.length === 0 ? <p className="muted">{text.occupancy.noLevels}</p> : <LevelsTable levels={occupancy.levels} />}
-      <AppLink href={lotPath(occupancy.lotId)} className="text-link">
-        {text.occupancy.back}
-      </AppLink>
     </>
   );
 }
