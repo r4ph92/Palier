@@ -84,6 +84,7 @@ describe('the canonical form of a level or aisle code', () => {
   it.each([
     ['an accent typed decomposed', 'É3', 'É3'],
     ['a no-break space', 'P 1', 'P 1'],
+    ['full-width letters and digits', '\uff30\uff11', 'P1'],
     ['a narrow no-break space and a run of spaces', ' P   1 ', 'P 1'],
   ])('reads %s as the code it looks like', (_case, typed, canonical) => {
     expect(canonicalCodeOf(typed)).toBe(canonical);

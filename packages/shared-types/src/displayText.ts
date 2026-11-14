@@ -27,7 +27,8 @@ export function isValidDisplayText(text: string, { minimum, maximum }: TextLengt
   );
 }
 
-// Two codes that read the same are one code: accents composed (NFC), any run of spaces, no-break ones too, as one plain space.
+// Two codes that read the same are one code: compatibility forms folded and accents composed (NFKC, so "Ｐ1" is "P1"),
+// any run of spaces, no-break ones too, as one plain space.
 export function canonicalCodeOf(text: string): string {
-  return text.normalize('NFC').replace(/\s+/gu, ' ').trim();
+  return text.normalize('NFKC').replace(/\s+/gu, ' ').trim();
 }

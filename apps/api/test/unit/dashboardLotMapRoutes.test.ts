@@ -55,6 +55,7 @@ describe('dashboard lot map routes', () => {
       expect(added.json<DashboardLotMap>().levels.map(({ code }) => code)).toEqual(['P1']);
       expect(again.statusCode).toBe(409);
       expect(again.json()).toMatchObject({ error: 'LEVEL_CODE_TAKEN' });
+      expect((await routes.addLevel(cookies, '\uff30\uff11')).json()).toMatchObject({ statusCode: 409, error: 'LEVEL_CODE_TAKEN' });
     });
 
     it('refuses an empty code and a 21st level, even one with a taken code, as the SQL does', async () => {
