@@ -25,7 +25,11 @@ interface ClearStatus {
 
 export interface SpotCheckClearing extends ClearStatus {
   readonly spots: readonly DashboardSpotToCheck[];
+  // A refusal whose row the reloaded list no longer has, such as a spot retired meanwhile: the page says it in the status line instead.
+  readonly listRefusal: Refusal | null;
   readonly clear: (spot: DashboardSpotToCheck) => Promise<void>;
+  // Turning the page leaves a refused row behind, so its reason goes too.
+  readonly forgetRefusal: () => void;
 }
 
 type ClearOutcome = { readonly answer: DashboardSpotsToCheck } | { readonly refusal: Refusal };
@@ -47,6 +51,13 @@ function focusIdAfterClearing(spots: readonly DashboardSpotToCheck[], cleared: D
   return neighbour === undefined ? SPOT_CHECK_STATUS_ID : checkButtonId(neighbour.spotId);
 }
 
+function listRefusalOf(refusal: RowRefusal | null, spots: readonly DashboardSpotToCheck[]): Refusal | null {
+  if (refusal === null || spots.some(({ spotId }) => spotId === refusal.spotId)) {
+    return null;
+  }
+  return refusal;
+}
+
 // The list shows only what the API answered: a cleared spot leaves it, a refused one stays with the reason beside its row.
 export function useSpotCheckClearing(lotId: string, initial: DashboardSpotsToCheck): SpotCheckClearing {
   const request = useGuardedRequest();
@@ -66,7 +77,8 @@ export function useSpotCheckClearing(lotId: string, initial: DashboardSpotsToChe
       setSpots(outcome.answer.spots);
       setStatus({ ...IDLE, clearedNumber: spot.number });
     });
-  return { ...status, spots, clear };
+  const forgetRefusal = () => setStatus((current) => ({ ...current, refusal: null }));
+  return { ...status, spots, listRefusal: listRefusalOf(status.refusal, spots), clear, forgetRefusal };
 }
 
 function useRefusalFollowUps(lotId: string, show: (spots: readonly DashboardSpotToCheck[]) => void): RefusalFollowUps {

@@ -174,14 +174,35 @@ describe('the spots to check page', () => {
     await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Place B-2 vérifiée' })));
   });
 
-  it('reads the list again when a clear answers that the spot is gone, and says so', async () => {
+  it('reads the list again when a clear answers that the spot is gone, and says so above the list with focus on it', async () => {
     const clearRequest = `POST /lots/${parkingDemo.id}/spots/${PARKING_DEMO_B2_ID}/check-cleared`;
     const api = installFakeApi({ signedInAs: sophie, answers: { [clearRequest]: { status: 404, body: { error: 'SPOT_NOT_FOUND' } } } });
     renderDashboard({ path: PAGE });
-    await userEvent.click(await screen.findByRole('button', { name: 'Place B-2 vérifiée' }));
+    const button = await screen.findByRole('button', { name: 'Place B-2 vérifiée' });
+    api.spotsToCheck.set(parkingDemo.id, (api.spotsToCheck.get(parkingDemo.id) ?? []).filter(({ spotId }) => spotId !== PARKING_DEMO_B2_ID));
+    await userEvent.click(button);
 
-    expect((await within(rowOf('B-2')).findByRole('alert')).textContent).toBe('Cette place est introuvable. La liste des places a été rechargée.');
+    const refusal = await screen.findByRole('alert');
+    expect(refusal.textContent).toBe('Cette place est introuvable. La liste des places a été rechargée.');
+    expect(screen.queryByRole('rowheader', { name: 'B-2' })).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(refusal));
     expect(api.requests.filter((request) => request === `GET /lots/${parkingDemo.id}/spots-to-check`)).toHaveLength(2);
+  });
+
+  it('forgets a row refusal when the page turns', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    const [template] = seededFlags();
+    const many = Array.from({ length: 51 }, (_, index) => ({ ...template, spotId: `spot-${index}`, number: `C-${index + 1}`, clearable: index !== 0 }));
+    api.spotsToCheck.set(parkingDemo.id, many);
+    renderDashboard({ path: PAGE });
+    await userEvent.click(await screen.findByRole('button', { name: 'Place C-1 vérifiée' }));
+    await screen.findByRole('alert');
+
+    const pagesBelow = screen.getByRole('navigation', { name: 'Pages de la liste des places, sous le tableau' });
+    await userEvent.click(within(pagesBelow).getByRole('button', { name: 'Suivantes' }));
+    await userEvent.click(within(pagesBelow).getByRole('button', { name: 'Précédentes' }));
+
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('shows 50 spots at a time, with the pager, when many are flagged', async () => {

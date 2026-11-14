@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import { useResource } from '../api/useResource.ts';
 import { AppLink } from '../components/AppLink.tsx';
+import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { RetryableFailure, type RetryableFailureProps } from '../components/RetryableFailure.tsx';
 import { SkeletonRows } from '../components/SkeletonRows.tsx';
@@ -58,6 +59,7 @@ function SpotsToCheckView({ lotId, initial }: { readonly lotId: string; readonly
   return (
     <>
       <PageHeader eyebrow={lot.eyebrow} title={interpolate(text.titleInLot, { lot: initial.lotName })} />
+      {clearing.listRefusal === null ? null : <ErrorNotice code={clearing.listRefusal.code} values={clearing.listRefusal.values} takesFocus />}
       <ClearedStatus number={clearing.clearedNumber} />
       {clearing.spots.length === 0 ? <EmptyList /> : <FlaggedSpots clearing={clearing} />}
       <BackLink lotId={lotId} />
@@ -67,7 +69,7 @@ function SpotsToCheckView({ lotId, initial }: { readonly lotId: string; readonly
 
 function FlaggedSpots({ clearing }: { readonly clearing: SpotCheckClearing }) {
   const { text, language } = useLanguage();
-  const page = useSpotPage(clearing.spots, { idOf: flaggedSpotIdOf, onTurn: noop, request: NO_PAGE_REQUEST });
+  const page = useSpotPage(clearing.spots, { idOf: flaggedSpotIdOf, onTurn: clearing.forgetRefusal, request: NO_PAGE_REQUEST });
   return (
     <>
       <p id={COUNT_ID} className="number-cell">
@@ -87,8 +89,6 @@ const NO_PAGE_REQUEST: PageRequest = { key: 0, spotId: null };
 function flaggedSpotIdOf({ spotId }: DashboardSpotToCheck): string {
   return spotId;
 }
-
-function noop(): void {}
 
 // The line takes focus when the last flag is cleared, since the button that had it is gone.
 function ClearedStatus({ number }: { readonly number: string | null }) {
