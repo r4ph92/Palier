@@ -16,7 +16,7 @@ export const frMap = {
   levelAdded: 'Niveau %{code} ajouté.',
   aislesTitle: 'Allées',
   levelSelectLabel: 'Niveau affiché',
-  noAisles: 'Aucune allée sur ce niveau.',
+  noAisles: 'Aucune allée sur ce niveau. Ajoutez la première avec le formulaire ci-dessous.',
   aisleColumn: 'Allée',
   minorColumn: 'Minor de balise',
   rectangleColumn: 'Rectangle sur le plan',

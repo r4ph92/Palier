@@ -68,6 +68,17 @@ describe('the map of a lot', () => {
     expect(api.requests.some((request) => request.endsWith('/aisles'))).toBe(false);
   });
 
+  it('says in one line that a level has no aisles yet, and points to the form', async () => {
+    await openGarageRoyMap();
+    await addLevel('P1');
+    await addLevel('P2');
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Niveau affiché' }), 'P2');
+
+    expect(screen.getByText('Aucune allée sur ce niveau. Ajoutez la première avec le formulaire ci-dessous.')).toBeDefined();
+    expect(screen.queryByText('Rien n’est encore dessiné sur ce niveau.')).toBeNull();
+  });
+
   it('says beside the minor that another aisle uses it, and saves nothing', async () => {
     const api = await openGarageRoyMap();
     await addLevel('P1');

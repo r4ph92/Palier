@@ -14,13 +14,14 @@ interface PlanPreviewProps {
 
 type DrawnAisle = DashboardMapAisle & { readonly rectangle: AisleRectangle };
 
+// Nothing at all for a level without aisles, which the aisle list already says.
 // Framed by the bounding box of what is drawn, like the app's plan, so the drawing fills the width wherever the aisles sit on the grid.
 export function PlanPreview({ levelCode, aisles, draft }: PlanPreviewProps) {
   const text = useText();
   const descriptionId = useId();
   const drawn = aisles.filter((aisle): aisle is DrawnAisle => aisle.rectangle !== null);
   if (drawn.length === 0 && draft === null) {
-    return <p className="muted">{text.map.planEmpty}</p>;
+    return aisles.length === 0 ? null : <p className="muted">{text.map.planEmpty}</p>;
   }
   return (
     <figure className="plan-preview">

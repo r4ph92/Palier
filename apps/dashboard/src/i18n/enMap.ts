@@ -17,7 +17,7 @@ export const enMap: typeof frMap = {
   levelAdded: 'Level %{code} added.',
   aislesTitle: 'Aisles',
   levelSelectLabel: 'Level shown',
-  noAisles: 'No aisles on this level yet.',
+  noAisles: 'No aisles on this level yet. Add the first one with the form below.',
   aisleColumn: 'Aisle',
   minorColumn: 'Beacon minor',
   rectangleColumn: 'Rectangle on the plan',
