@@ -51,7 +51,7 @@ a(u'''<header class="mast">
 </header>''')
 
 a(u'''<section>
-  <div class="sec-head"><h2>API — architecture en couches</h2><span class="tag">4 couches · 21 composants</span></div>
+  <div class="sec-head"><h2>API — architecture en couches</h2><span class="tag">4 couches · 20 composants</span></div>
   <p class="lede">Le domaine ne connaît ni HTTP ni Stripe : il reçoit des objets et rend des décisions. C'est ce qui rend la logique d'allocation testable sans base de données ni réseau, et c'est la seule partie du système qu'un correcteur peut lire d'un bout à l'autre.</p>
   <figure><div class="fig"><div class="fig-scroll">%s</div>
   <figcaption>Le planificateur est la seule couche qui remonte : il appelle le domaine sans passer par HTTP.</figcaption></div></figure>''' % rd('out/cmp_api.svg'))

@@ -18,8 +18,8 @@ import { DashboardApiError } from './DashboardApiError.ts';
 const BASE_PATH = '/v1/dashboard';
 const NO_CONTENT = 204;
 const JSON_TYPE = 'application/json';
-// Shorter than the 30 s occupancy poll, so an answer that never comes counts as a failed poll before the next one starts.
-export const REQUEST_TIMEOUT_MILLISECONDS = 20_000;
+// Shorter than the 30 s occupancy poll, so a read that never answers counts as a failed poll before the next one starts.
+const READ_TIMEOUT_MILLISECONDS = 20_000;
 
 interface DashboardRequest {
   readonly method: 'GET' | 'POST' | 'PUT';
@@ -42,9 +42,10 @@ function requestInit({ method, body }: DashboardRequest): RequestInit {
   return { method, credentials: 'same-origin', headers, body: body === undefined ? null : JSON.stringify(body) };
 }
 
+// Only reads time out: a write aborted by the client may still commit on the server, and retrying it would duplicate it.
 export async function dashboardRequest<T>(path: string, request: DashboardRequest = READ): Promise<T> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MILLISECONDS);
+  const timer = request.method === 'GET' ? setTimeout(() => controller.abort(), READ_TIMEOUT_MILLISECONDS) : undefined;
   try {
     const response = await fetch(`${BASE_PATH}${path}`, { ...requestInit(request), signal: controller.signal });
     if (!response.ok) {
