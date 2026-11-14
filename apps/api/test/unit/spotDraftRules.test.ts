@@ -21,6 +21,7 @@ describe('reading a range of spot numbers', () => {
     ['A-01 à A-20', { prefix: 'A-', first: '01', last: '20' }],
     ['A 7', { prefix: 'A ', first: '7', last: '7' }],
     ['Zone a 1 à Zone a 3', { prefix: 'Zone a ', first: '1', last: '3' }],
+    ['Zone a 1', { prefix: 'Zone a ', first: '1', last: '1' }],
     ['P1 B 3 à P1 B 9', { prefix: 'P1 B ', first: '3', last: '9' }],
   ])('reads « %s » in either language', (text, range) => {
     expect(parseSpotRange(text)).toEqual(range);
@@ -40,8 +41,9 @@ describe('reading a range of spot numbers', () => {
     ['one number with a prefix of dashes', '--7'],
     ['a spaced prefix and a bare end', 'B 1 a 20'],
     ['a spaced prefix and an English separator', 'B 1 to 20'],
-    ['a prefix ending in a digit and different ends', 'P1 B 3 to 9'],
+    ['a level-and-aisle prefix and a bare end', 'P1 B 3 to 9'],
     ['a spaced prefix and au', 'A 1 au 3'],
+    ['a digit-ending prefix and a lone letter', 'B2 A 3'],
   ])('reads nothing from %s', (_case, text) => {
     expect(parseSpotRange(text)).toBeNull();
   });

@@ -15,7 +15,7 @@ const HAS_LETTER_OR_DIGIT = /[A-Za-z0-9]/;
 const HAS_LETTER = /[A-Za-z]/;
 // « à », « a », « au » and « to », in either language: an operator types whichever comes first.
 const RANGE_SEPARATOR = /\s+(?:à|au|a|to)\s+/giu;
-const SEPARATOR_AFTER_DIGIT = /\d\s+(?:à|au|a|to)\s+/iu;
+const SEPARATOR_AFTER_DIGIT = new RegExp(`\\d${RANGE_SEPARATOR.source}`, 'iu');
 const NUMBER_AND_DIGITS = /^(.*?)(\d+)$/su;
 // One number alone has the shape of a range end, but at most one dash and only before the digits, so « A-1-A-20 » is not one spot.
 const SINGLE_NUMBER = /^([A-Za-z0-9 ]*?-?)(\d+)$/u;
