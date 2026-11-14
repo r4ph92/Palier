@@ -54,6 +54,11 @@ export class ScriptedSql {
     return this.statements.find((statement) => statement.label === label);
   }
 
+  // Every statement with this label, in the order they ran.
+  statementsOf(label: StatementLabel): ExecutedStatement[] {
+    return this.statements.filter((statement) => statement.label === label);
+  }
+
   count(label: StatementLabel): number {
     return this.statements.filter((statement) => statement.label === label).length;
   }

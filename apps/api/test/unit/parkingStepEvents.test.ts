@@ -36,6 +36,13 @@ function oneLine(text: string | undefined): string {
   return (text ?? '').replace(/\s+/g, ' ').trim();
 }
 
+// The walk's own update feeds the event insert, so an update that changes no row logs nothing.
+const PRESUMPTION_LOGGING_ITS_ROWS = /^with presumed as \( update parking_session .* returning id, lot_id, assigned_spot_id, parked_at\) insert into event_log \(.*\) select .* from presumed join spot on spot\.id = presumed\.assigned_spot_id /;
+
+function presumptionTexts(scripted: ScriptedSql): string[] {
+  return scripted.statementsOf('presume-parked').map(({ text }) => oneLine(text));
+}
+
 function aisleDetectedParam(scripted: ScriptedSql): unknown {
   const json = scripted.statement('presume-parked')?.params.find((param) => typeof param === 'string' && param.startsWith('{'));
   return json === undefined ? undefined : JSON.parse(String(json));
@@ -114,7 +121,7 @@ describe('a walk with no known aisle (story #156)', () => {
     const statement = oneLine(scripted.statement('presume-parked')?.text);
     expect(statement).toMatch(/cross join lateral \(values \(2, 'PARKING_PRESUMED', jsonb_build_object\('evidence', 'ON_FOOT'/);
     expect(statement).not.toContain('AISLE_DETECTED');
-    expect(scripted.count('append-session-event')).toBe(0);
+    expect(statement).toMatch(PRESUMPTION_LOGGING_ITS_ROWS);
   });
 });
 
@@ -172,7 +179,7 @@ describe('Julie walks away in aisle B, then answers B-3 (story #156)', () => {
       .answer('lock-answered-spot', [{ id: SPOT_B3_ID, state: 'OCCUPIED', number: 'B-3', aisle_code: 'B', level_code: 'P1' }]);
 
     await expect(new PostgresParkedAnswerRepository(scripted.database()).answer({ sessionId: SESSION_ID, driverId: JULIE_ID, spotNumber: 'B-3' })).resolves.toEqual({ outcome: 'spot-taken' });
-    expect(scripted.count('append-session-event')).toBe(0);
+    expect(scripted.labels()).toEqual(['read-session-lot', 'limit-lock-wait', 'lock-lot', 'lock-answering-session', 'lock-answered-spot']);
   });
 });
 
@@ -189,7 +196,7 @@ describe('the same walk sent again (story #156)', () => {
 
     await expect(walkWith(scripted, walkIn(null))).resolves.toMatchObject({ outcome: 'already' });
     expect(scripted.labels()).toEqual(['presume-parked', 'read-unchanged-session']);
-    expect(scripted.count('append-session-event')).toBe(0);
+    expect(presumptionTexts(scripted)).toEqual([expect.stringMatching(PRESUMPTION_LOGGING_ITS_ROWS)]);
   });
 
   it('logs the walk once when a first attempt found the spot moved and the second wrote', async () => {
@@ -199,7 +206,7 @@ describe('the same walk sent again (story #156)', () => {
 
     await expect(walkWith(scripted, walkIn(1))).resolves.toMatchObject({ outcome: 'recorded' });
     expect(scripted.labels()).toEqual(['read-walk-facts', 'presume-parked', 'read-walk-facts', 'presume-parked']);
-    expect(scripted.count('append-session-event')).toBe(0);
+    expect(presumptionTexts(scripted)).toEqual([expect.stringMatching(PRESUMPTION_LOGGING_ITS_ROWS), expect.stringMatching(PRESUMPTION_LOGGING_ITS_ROWS)]);
   });
 
   it('logs the other aisle only in the attempt whose question was written', async () => {

@@ -33,7 +33,6 @@ describe('no signal for 30 minutes (story #156, decision 030)', () => {
     expect(statement).toMatch(/^with presumed as \( update parking_session set state = 'PARKED_PRESUMED', presumed_by = 'TIMEOUT'/);
     expect(statement.match(/insert into event_log/g)).toHaveLength(1);
     expect(statement).toMatch(/from presumed join spot on spot\.id = presumed\.assigned_spot_id returning session_id$/);
-    expect(scripted.count('append-session-event')).toBe(0);
   });
 
   it('counts the sessions from the rows the statements logged, in the lot transaction', async () => {
