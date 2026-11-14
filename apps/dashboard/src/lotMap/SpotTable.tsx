@@ -60,16 +60,21 @@ function SpotTableHead() {
   return (
     <thead role="rowgroup">
       <tr role="row">
-        {[text.numberColumn, text.attributesColumn, text.distanceColumn, text.stateColumn].map((label) => (
-          <th key={label} scope="col" role="columnheader">
-            {label}
-          </th>
-        ))}
-        <th scope="col" role="columnheader">
-          <span className="visually-hidden">{text.actionsColumn}</span>
-        </th>
+        <SpotColumnHead label={text.numberColumn} />
+        <SpotColumnHead label={text.attributesColumn} />
+        <SpotColumnHead label={text.distanceColumn} className="spot-distance" />
+        <SpotColumnHead label={text.stateColumn} />
+        <SpotColumnHead label={<span className="visually-hidden">{text.actionsColumn}</span>} />
       </tr>
     </thead>
+  );
+}
+
+function SpotColumnHead({ label, className }: { readonly label: ReactNode; readonly className?: string }) {
+  return (
+    <th scope="col" role="columnheader" className={className}>
+      {label}
+    </th>
   );
 }
 

@@ -49,6 +49,38 @@
   margin-top: var(--space-medium);
 }
 
+/* The dimmed edge button stays focusable; unlike disabled, it keeps keyboard focus when the last page is reached. */
+.spot-pager .text-button[aria-disabled='true'] {
+  color: var(--muted);
+  text-decoration: none;
+  cursor: default;
+}
+
+/* Save and cancel sit on one line: the filled button's top margin would push its words below the cancel link's. */
+.spot-edit-form .actions-row {
+  align-items: center;
+}
+
+.spot-edit-form .secondary-button {
+  margin-top: 0;
+}
+
+/* Wide screens: columns breathe, the actions share one line, and distances line up on their units. */
+@media (min-width: 681px) {
+  .data-table.spot-table th,
+  .data-table.spot-table td {
+    padding-inline-end: var(--space-medium);
+  }
+
+  .spot-table .row-actions {
+    flex-wrap: nowrap;
+  }
+
+  .spot-table .spot-distance {
+    text-align: right;
+  }
+}
+
 /* Narrow screens stack each row: number and state, then attributes · distance, then the actions. */
 @media (max-width: 680px) {
   .spot-table thead {
@@ -57,6 +89,10 @@
     height: 1px;
     overflow: hidden;
     clip-path: inset(50%);
+  }
+
+  .row-actions {
+    margin-block: 0;
   }
 
   .spot-table tbody tr {
