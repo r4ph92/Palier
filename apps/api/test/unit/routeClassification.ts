@@ -48,6 +48,8 @@ const GATE_DEVICE_ROUTES = [
   'POST /v1/gates/:id/passages/replay',
   'POST /v1/gates/:id/identify',
   'POST /v1/gates/:id/presence',
+  'POST /v1/gates/:id/heartbeat',
+  'POST /v1/gates/:id/beacons/:minor/battery',
 ];
 
 // The demo console is static files served only in demo mode; it reaches data through the gate routes with a device key.
@@ -86,7 +88,7 @@ export function methodOf(route: string): string {
 }
 
 export function urlOf(route: string): string {
-  return (route.split(' ')[1] ?? '').replace(':id', SAMPLE_UUID).replace(':sessionId', SAMPLE_UUID).replace(':levelId', SAMPLE_UUID);
+  return (route.split(' ')[1] ?? '').replace(':id', SAMPLE_UUID).replace(':sessionId', SAMPLE_UUID).replace(':levelId', SAMPLE_UUID).replace(':aisleId', SAMPLE_UUID).replace(':minor', '1');
 }
 
 // Only JSON bodies carry an error code: some routes answer with no body, and the console serves HTML, CSS, scripts and fonts.

@@ -1,4 +1,5 @@
 import type {
+  BeaconBatteryReading,
   GateIdentity,
   GateIdentifyRequest,
   GateIdentifyResponse,
@@ -27,6 +28,21 @@ export const gateIdentitySchema = {
 } as const;
 
 export const gateIdParametersSchema = idPathParametersSchema;
+
+// Path parameters are strings: the minor is digits without a leading zero, read as a number by the route and bounded by the rule.
+export const batteryReportParametersSchema = {
+  type: 'object',
+  required: ['id', 'minor'],
+  properties: { id: uuidSchema, minor: { type: 'string', pattern: '^(0|[1-9][0-9]{0,4})$' } },
+} as const;
+
+// A number, not an integer: 1.5 gets the rule's BATTERY_PERCENT_INVALID like 101 does.
+export const batteryReadingBodySchema = {
+  type: 'object',
+  required: ['percent'],
+  additionalProperties: false,
+  properties: { percent: { type: 'number' } },
+} as const;
 
 export const passageRequestSchema = {
   type: 'object',
@@ -103,6 +119,7 @@ export const presenceResponseSchema = {
 } as const;
 
 export type GateIdParameters = FromSchema<typeof gateIdParametersSchema>;
+export type BatteryReportParameters = FromSchema<typeof batteryReportParametersSchema>;
 
 export type IdentitySchemaMatchesGateIdentity = AssertTrue<MutuallyAssignable<FromSchema<typeof gateIdentitySchema>, GateIdentity>>;
 export type RequestSchemaMatchesPassageRequest = AssertTrue<
@@ -116,3 +133,4 @@ export type ResponseSchemaMatchesIdentifyResponse = AssertTrue<MutuallyAssignabl
 export type ResponseSchemaMatchesPresenceResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof presenceResponseSchema>, GatePresenceResponse>>;
 export type RequestSchemaMatchesReplayRequest = AssertTrue<MutuallyAssignable<FromSchema<typeof replayRequestSchema>, WithMutableArrays<PassageReplayRequest>>>;
 export type ResponseSchemaMatchesReplayResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof replayResponseSchema>, PassageReplayResponse>>;
+export type BatteryReadingSchemaMatches = AssertTrue<MutuallyAssignable<FromSchema<typeof batteryReadingBodySchema>, BeaconBatteryReading>>;

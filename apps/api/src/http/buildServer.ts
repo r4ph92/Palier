@@ -100,7 +100,10 @@ export function buildServer({ repositories, gates, cardGateway, entries, exits, 
   if (operatorStripe?.webhookReader != null) {
     registerStripeWebhookRoute(server, { reader: operatorStripe.webhookReader, accounts: operatorStripe.accounts });
   }
-  registerGateRoutes(server, gates, exits === undefined ? undefined : { exit: exits, clock: testToolsFor(settings, repositories, testClock)?.testClock.now ?? systemClock });
+  void server.register(async (gateScope) => {
+    const composedClock = composedClockOf(settings, repositories, testClock);
+    registerGateRoutes(gateScope, gates, { readerExit: exits === undefined ? undefined : { exit: exits, clock: composedClock }, healthClock: composedClock });
+  });
   if (settings.demoMode === true) {
     registerDemoConsoleRoutes(server);
   }
@@ -162,6 +165,11 @@ function registerParkingSessionRoutes(server: FastifyInstance, driverAccess: Dri
 }
 
 type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock' | 'operatorStripe'> & Pick<ServerDependencies, 'testClock'>;
+
+// The clock the app's routes share: the test clock exactly when test sign-in is on.
+function composedClockOf(settings: ServerSettings, repositories: ServerDependencies['repositories'], testClock: TestClock | undefined): Clock {
+  return testToolsFor(settings, repositories, testClock)?.testClock.now ?? systemClock;
+}
 
 // Test sign-in is the one switch for every test-only tool: without it sessions and holds run in real time and nothing moves them.
 function testToolsFor(

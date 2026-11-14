@@ -1,6 +1,7 @@
 import type { GateCommand } from '@palier/shared-types';
 import type { AuthenticatedGate } from '../../../src/domain/gates/AuthenticatedGate.ts';
 import { GATE_COMMAND_PAGE_SIZE, type GateCommandCursor, type GateCommandFeed } from '../../../src/domain/gates/GateCommandFeed.ts';
+import type { BeaconBatteryReport, EquipmentReports, ReportingGate } from '../../../src/domain/equipment/EquipmentReports.ts';
 import type { DeviceKeyRecord, GateDeviceKeyRepository } from '../../../src/domain/gates/GateDeviceKeyRepository.ts';
 import { hashDeviceKey } from '../../../src/domain/gates/hashDeviceKey.ts';
 import type { PassageEntry, PassageLedger, RecordedPassage, RecordedReplay, ReplayedPassage, ReplayEntry } from '../../../src/domain/gates/PassageLedger.ts';
@@ -99,4 +100,24 @@ export class FakeGateCommandFeed implements GateCommandFeed {
 function isAfter(command: GateCommand, cursor: GateCommandCursor): boolean {
   const issuedAt = new Date(command.issuedAt).getTime();
   return issuedAt > cursor.issuedAt.getTime() || (issuedAt === cursor.issuedAt.getTime() && command.id > cursor.id);
+}
+
+// Parking Démo's beacons as seeded: the exit lane (minor 0), aisles A (1) and B (2); the SQL scopes each write to the gate's lot.
+export class FakeEquipmentReports implements EquipmentReports {
+  readonly heartbeats = new Map<string, Date>();
+  readonly batteries: BeaconBatteryReport[] = [];
+  readonly beaconMinorsByLot = new Map<string, readonly number[]>([[entreeDemo.lotId, [0, 1, 2]]]);
+
+  recordHeartbeat(gate: ReportingGate, at: Date): Promise<void> {
+    this.heartbeats.set(gate.id, at);
+    return Promise.resolve();
+  }
+
+  recordBeaconBattery(report: BeaconBatteryReport): Promise<boolean> {
+    const isKnown = this.beaconMinorsByLot.get(report.lotId)?.includes(report.beaconMinor) ?? false;
+    if (isKnown) {
+      this.batteries.push(report);
+    }
+    return Promise.resolve(isKnown);
+  }
 }

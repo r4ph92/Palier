@@ -15,6 +15,7 @@ import { connectToDatabase } from './infrastructure/postgres/database.ts';
 import { PostgresCurrentParkingSessionQuery } from './infrastructure/postgres/PostgresCurrentParkingSessionQuery.ts';
 import { PostgresExitRepository } from './infrastructure/postgres/PostgresExitRepository.ts';
 import { PostgresDriverRepository } from './infrastructure/postgres/PostgresDriverRepository.ts';
+import { PostgresEquipmentReports } from './infrastructure/postgres/PostgresEquipmentReports.ts';
 import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateCommandFeed.ts';
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
@@ -98,6 +99,7 @@ const server = buildServer({
     clock: systemClock,
     commands: new PostgresGateCommandFeed(connection.database),
     openingWindow,
+    equipment: new PostgresEquipmentReports(connection.database),
   },
   testClock,
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),

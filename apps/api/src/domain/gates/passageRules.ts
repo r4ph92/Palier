@@ -11,10 +11,15 @@ export function vehicleCountChangeFor(kind: GateKind): VehicleCountChange {
   return VEHICLE_COUNT_CHANGE[kind];
 }
 
-export function ensureGateMayReport(gate: AuthenticatedGate, requestedGateId: string): void {
+// A key speaks only for its own gate, whatever id the path names.
+export function ensureOwnGate(gate: AuthenticatedGate, requestedGateId: string): void {
   if (gate.id !== requestedGateId) {
     throw new PassageRefusedError('GATE_FORBIDDEN');
   }
+}
+
+export function ensureGateMayReport(gate: AuthenticatedGate, requestedGateId: string): void {
+  ensureOwnGate(gate, requestedGateId);
   if (!gate.hasLoops) {
     throw new PassageRefusedError('GATE_WITHOUT_LOOPS');
   }

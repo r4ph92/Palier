@@ -4,6 +4,7 @@ import { buildServer } from '../../src/http/buildServer.ts';
 import {
   ENTREE_DEMO_KEY,
   entreeDemo,
+  FakeEquipmentReports,
   FakeGateCommandFeed,
   FakeGateDeviceKeyRepository,
   FakePassageLedger,
@@ -29,7 +30,7 @@ describe('POST /v1/gates/:id/passages/replay', () => {
 
   function startServer(vehicleCount: number): void {
     ledger = new FakePassageLedger(vehicleCount);
-    const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger, clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW };
+    const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger, clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW, equipment: new FakeEquipmentReports() };
     server = buildServer(serverDependencies({ gates }));
   }
 
@@ -181,7 +182,7 @@ describe('POST /v1/gates/:id/passages/replay', () => {
       const key = 'noLoopsKey000000000000000000000000000000000';
       ledger = new FakePassageLedger(5);
       const deviceKeys = new FakeGateDeviceKeyRepository().withGate(key, { ...sortieDemo, hasLoops: false });
-      server = buildServer(serverDependencies({ gates: { deviceKeys, ledger, clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW } }));
+      server = buildServer(serverDependencies({ gates: { deviceKeys, ledger, clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW, equipment: new FakeEquipmentReports() } }));
 
       const response = await replayExits([exitAt(FIRST_ID, NOW)], key);
 

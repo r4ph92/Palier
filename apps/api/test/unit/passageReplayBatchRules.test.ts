@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
-import { ENTREE_DEMO_KEY, entreeDemo, FakeGateCommandFeed, FakeGateDeviceKeyRepository, FakePassageLedger, SORTIE_DEMO_KEY, sortieDemo } from './fakes/gateFixtures.ts';
+import { ENTREE_DEMO_KEY, entreeDemo, FakeEquipmentReports, FakeGateCommandFeed, FakeGateDeviceKeyRepository, FakePassageLedger, SORTIE_DEMO_KEY, sortieDemo } from './fakes/gateFixtures.ts';
 import { NOW, serverDependencies, SIXTY_SECOND_WINDOW } from './fakes/serverDependencies.ts';
 
 const PASSAGE_ID = 'abcdef12-3456-4789-8abc-def123456789';
@@ -13,7 +13,7 @@ describe('POST /v1/gates/:id/passages/replay, batch rules', () => {
 
   function startServer(vehicleCount: number): void {
     ledger = new FakePassageLedger(vehicleCount);
-    const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger, clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW };
+    const gates = { deviceKeys: new FakeGateDeviceKeyRepository(), ledger, clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW, equipment: new FakeEquipmentReports() };
     server = buildServer(serverDependencies({ gates }));
   }
 

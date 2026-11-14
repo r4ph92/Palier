@@ -13,13 +13,20 @@ import { FakeParkedAnswers } from './fakeParkedAnswers.ts';
 import { FakeParkedPresumptions } from './fakeParkedPresumptions.ts';
 import { FakeReceipts } from './fakeReceipts.ts';
 import { FakeSpotTakenReports } from './fakeSpotTakenReports.ts';
-import { FakeGateCommandFeed, FakeGateDeviceKeyRepository, FakePassageLedger } from './gateFixtures.ts';
+import { FakeEquipmentReports, FakeGateCommandFeed, FakeGateDeviceKeyRepository, FakePassageLedger } from './gateFixtures.ts';
 
 export const NOW = new Date('2026-10-27T22:02:00Z');
 export const SIXTY_SECOND_WINDOW = { withinMilliseconds: 60_000 };
 
 export function fakeGateDependencies(): GateRouteDependencies {
-  return { deviceKeys: new FakeGateDeviceKeyRepository(), ledger: new FakePassageLedger(), clock: () => NOW, commands: new FakeGateCommandFeed(), openingWindow: SIXTY_SECOND_WINDOW };
+  return {
+    deviceKeys: new FakeGateDeviceKeyRepository(),
+    ledger: new FakePassageLedger(),
+    clock: () => NOW,
+    commands: new FakeGateCommandFeed(),
+    openingWindow: SIXTY_SECOND_WINDOW,
+    equipment: new FakeEquipmentReports(),
+  };
 }
 
 interface FakeRepositoryChoices {
