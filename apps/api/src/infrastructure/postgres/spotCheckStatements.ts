@@ -1,7 +1,7 @@
 import { sql, type SQL } from 'drizzle-orm';
 import type { SpotPlace } from '../../domain/dashboard/LotSpotRepository.ts';
-import { activeSessionOf } from './activeSessionStates.ts';
 import { ownedLiveSpot } from './lotSpotStatements.ts';
+import { sessionHoldsSpot } from './sessionHoldsSpot.ts';
 
 // One row per flagged live spot, oldest flag first, or one row of null spot columns for a lot with none; no row for a lot that is not the operator's.
 export function readSpotsToCheckStatement(operatorId: string, lotId: string): SQL {
@@ -19,7 +19,7 @@ export function readSpotsToCheckStatement(operatorId: string, lotId: string): SQ
 export function lockSpotToClearStatement(operatorId: string, place: SpotPlace): SQL {
   return sql`
     select spot.state, spot.needs_check,
-      exists (select 1 from parking_session holder where (holder.assigned_spot_id = spot.id or holder.confirmed_spot_id = spot.id) and ${activeSessionOf('holder')}) as held_by_session
+      ${sessionHoldsSpot('spot')} as held_by_session
     from spot cross join parking_lot
     where ${ownedLiveSpot(operatorId, place)}
     for update of spot`;

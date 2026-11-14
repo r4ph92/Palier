@@ -2,10 +2,10 @@ import { sql, type SQL } from 'drizzle-orm';
 import type { FreeSpot } from '../../domain/allocation/chooseSpot.ts';
 import { chooseSpotFor } from '../../domain/allocation/chooseSpotFor.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
-import { activeSessionOf } from './activeSessionStates.ts';
 import type { Database, Transaction } from './database.ts';
 import { liveSpot } from './liveSpot.ts';
 import type { SpotState } from './lotSchema.ts';
+import { sessionHoldsSpot } from './sessionHoldsSpot.ts';
 import type { SpotLabelRow } from './spotLabel.ts';
 
 export interface SpotClaimTarget {
@@ -81,10 +81,7 @@ export function readFreeSpotsNoSessionHolds(executor: Pick<Database, 'execute'>,
   return readFreeSpotsWhere(
     executor,
     lotId,
-    sql` and not exists (
-      select 1 from parking_session holder
-      where (holder.assigned_spot_id = s.id or holder.confirmed_spot_id = s.id) and ${activeSessionOf('holder')}
-    )`,
+    sql` and not ${sessionHoldsSpot('s')}`,
   );
 }
 

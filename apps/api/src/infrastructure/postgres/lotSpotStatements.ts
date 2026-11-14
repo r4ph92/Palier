@@ -1,18 +1,18 @@
 import { sql, type SQL } from 'drizzle-orm';
 import type { SpotAttributes } from '@palier/shared-types/spotDraft';
 import type { AislePlace, SpotBatch, SpotPlace } from '../../domain/dashboard/LotSpotRepository.ts';
-import { activeSessionOf } from './activeSessionStates.ts';
 import { ACTIVE_SPOT_HOLD } from './activeSpotHold.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
 import { liveSpotCountOf } from './heldSpotCount.ts';
 import { liveSpot } from './liveSpot.ts';
+import { sessionHoldsSpot } from './sessionHoldsSpot.ts';
 
 // Prefix first, then the number at its end read as a number: A-2 before A-10, and B-7a after the A spots.
 const NATURAL_SPOT_ORDER = sql.raw(`regexp_replace(spot.number, '[0-9]+$', ''), substring(spot.number from '[0-9]+$')::numeric nulls first, spot.number`);
 
 // Free or out of service, and no active session or hold points at it: nothing to wait for before it goes.
 const SPOT_NOT_IN_USE = sql`spot.state in ('AVAILABLE', 'OUT_OF_SERVICE')
-  and not exists (select 1 from parking_session holder where (holder.assigned_spot_id = spot.id or holder.confirmed_spot_id = spot.id) and ${activeSessionOf('holder')})
+  and not ${sessionHoldsSpot('spot')}
   and not exists (select 1 from spot_hold where spot_hold.spot_id = spot.id and ${ACTIVE_SPOT_HOLD})`;
 
 // No session, hold or report ever pointed at it, so the row can go without breaking a foreign key.
