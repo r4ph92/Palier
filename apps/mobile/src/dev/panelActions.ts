@@ -1,5 +1,5 @@
+import { PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
 import type { Connectivity } from '../positioning/Connectivity';
-import { DEVELOPMENT_BEACON_UUID } from '../positioning/developmentBeacon';
 import type { PositioningCore } from '../positioning/PositioningCore';
 import { describeConnectivity } from './describeSignal';
 import type { SimulatedPositioningModule } from './SimulatedPositioningModule';
@@ -31,7 +31,7 @@ function setConnectivity(simulator: SimulatedPositioningModule, core: Positionin
 
 export function commandActions(core: PositioningCore, now: () => number): readonly PanelAction[] {
   return [
-    { label: `startMonitoring major=${DEVELOPMENT_MAJOR}`, run: () => core.startMonitoring(DEVELOPMENT_BEACON_UUID, DEVELOPMENT_MAJOR) },
+    { label: `startMonitoring major=${DEVELOPMENT_MAJOR}`, run: () => core.startMonitoring(PLATFORM_BEACON_UUID, DEVELOPMENT_MAJOR) },
     { label: 'stopMonitoring', run: () => core.stopMonitoring() },
     { label: 'keepAlive (+10 min)', run: () => core.keepAlive(now() + KEEP_ALIVE_MILLISECONDS) },
     { label: 'flushOfflineQueue', run: () => core.flushOfflineQueue() },

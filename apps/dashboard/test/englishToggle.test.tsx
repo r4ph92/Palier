@@ -22,6 +22,8 @@ const pages: readonly PageCase[] = [
   { page: 'new lot', signedInAs: pierre, path: '/lots/new', englishHeading: 'Create a parking lot' },
   { page: 'occupancy', signedInAs: sophie, path: `/lots/${parkingDemo.id}/occupancy`, englishHeading: 'Occupancy — Parking Démo' },
   { page: 'lot without pricing', signedInAs: pierre, path: `/lots/${garageRoy.id}`, englishHeading: 'Garage Roy' },
+  { page: 'map', signedInAs: sophie, path: `/lots/${parkingDemo.id}/map`, englishHeading: 'Map and beacons — Parking Démo' },
+  { page: 'empty map', signedInAs: pierre, path: `/lots/${garageRoy.id}/map`, englishHeading: 'Map and beacons — Garage Roy' },
 ];
 
 describe('English toggle', () => {

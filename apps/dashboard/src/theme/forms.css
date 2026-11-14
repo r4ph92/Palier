@@ -93,7 +93,21 @@
   visibility: hidden;
 }
 
-.primary-button[aria-disabled='true'] {
+.secondary-button {
+  min-height: var(--touch-target);
+  margin-top: var(--space-small);
+  padding: 0 var(--space-large);
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-button[aria-disabled='true'],
+.secondary-button[aria-disabled='true'] {
   cursor: wait;
   opacity: 0.7;
 }

@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import { AISLE_MINOR_LIMITS, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { DEFAULT_HOLD_QUOTA, HOLD_QUOTA_LIMITS } from '@palier/shared-types/lotPricing';
 import { SPOT_STATES } from '../../domain/spots/spotStates.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
@@ -58,6 +59,12 @@ export const parkingLot = pgTable(
   ],
 );
 
+// Named once, so the dashboard's writes read a refused insert by the constraint that refused it.
+export const LEVEL_CODE_UNIQUE = 'level_lot_id_code_unique';
+export const AISLE_CODE_UNIQUE = 'aisle_level_id_code_unique';
+export const AISLE_MINOR_UNIQUE = 'aisle_lot_id_beacon_minor_unique';
+export const AISLE_MINOR_MATCHES_LANE = 'aisle_beacon_minor_matches_lane';
+
 export const level = pgTable(
   'level',
   {
@@ -69,7 +76,7 @@ export const level = pgTable(
     displayOrder: integer('display_order').notNull(),
   },
   (table) => [
-    unique('level_lot_id_code_unique').on(table.lotId, table.code),
+    unique(LEVEL_CODE_UNIQUE).on(table.lotId, table.code),
     unique('level_id_lot_id_unique').on(table.id, table.lotId),
   ],
 );
@@ -91,10 +98,15 @@ export const aisle = pgTable(
       columns: [table.levelId, table.lotId],
       foreignColumns: [level.id, level.lotId],
     }),
-    unique('aisle_level_id_code_unique').on(table.levelId, table.code),
+    unique(AISLE_CODE_UNIQUE).on(table.levelId, table.code),
     unique('aisle_id_lot_id_unique').on(table.id, table.lotId),
-    unique('aisle_lot_id_beacon_minor_unique').on(table.lotId, table.beaconMinor),
+    unique(AISLE_MINOR_UNIQUE).on(table.lotId, table.beaconMinor),
     index('aisle_level_id_lot_id_index').on(table.levelId, table.lotId),
+    // With the unique minor per lot, this leaves one exit lane per lot (Q40).
+    check(
+      AISLE_MINOR_MATCHES_LANE,
+      sql`(${table.isExitLane} and ${table.beaconMinor} = ${sql.raw(String(EXIT_LANE_MINOR))}) or (not ${table.isExitLane} and ${table.beaconMinor} between ${sql.raw(String(AISLE_MINOR_LIMITS.minimum))} and ${sql.raw(String(AISLE_MINOR_LIMITS.maximum))})`,
+    ),
   ],
 );
 

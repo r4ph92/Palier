@@ -6,8 +6,10 @@ import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
 import { FakeParkingSessionClient, julieAtB3 } from './fakeParkingSessionClient';
 import { positioningRig } from './positioningRig';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
+import { PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
 
-const START_MONITORING_LINE = /^\d{1,2} h \d{2} min \d{2} s\s+startMonitoring uuid=B9407F30 major=1$/;
+const MONITORED_UUID = PLATFORM_BEACON_UUID.slice(0, 8);
+const START_MONITORING_LINE = new RegExp(`^\\d{1,2} h \\d{2} min \\d{2} s\\s+startMonitoring uuid=${MONITORED_UUID} major=1$`);
 const STOP_MONITORING_LINE = /^\d{1,2} h \d{2} min \d{2} s\s+stopMonitoring$/;
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -95,6 +97,6 @@ describe('signing out', () => {
 
     await user.press(screen.getByRole('button', { name: 'Se déconnecter' }));
 
-    expect(commands()).toEqual(['startMonitoring uuid=B9407F30 major=1', 'stopMonitoring']);
+    expect(commands()).toEqual([`startMonitoring uuid=${MONITORED_UUID} major=1`, 'stopMonitoring']);
   });
 });

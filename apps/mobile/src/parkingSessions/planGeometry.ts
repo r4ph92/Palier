@@ -1,4 +1,5 @@
 import type { AisleRectangle, PlanAisle } from '@palier/shared-types';
+import { boundsOf } from '@palier/shared-types/aisleRectangle';
 
 type Percent = `${number}%`;
 
@@ -24,14 +25,6 @@ export function planGeometryOf(aisles: readonly PlanAisle[]): PlanGeometry | nul
   }
   const bounds = boundsOf(drawn.map(({ rectangle }) => rectangle));
   return { aspectRatio: bounds.width / bounds.height, frames: drawn.map((aisle) => frameOf(aisle, aisle.rectangle, bounds)) };
-}
-
-function boundsOf(rectangles: readonly AisleRectangle[]): AisleRectangle {
-  const x = Math.min(...rectangles.map((rectangle) => rectangle.x));
-  const y = Math.min(...rectangles.map((rectangle) => rectangle.y));
-  const right = Math.max(...rectangles.map((rectangle) => rectangle.x + rectangle.width));
-  const bottom = Math.max(...rectangles.map((rectangle) => rectangle.y + rectangle.height));
-  return { x, y, width: right - x, height: bottom - y };
 }
 
 function frameOf(aisle: PlanAisle, rectangle: AisleRectangle, bounds: AisleRectangle): AisleFrame {

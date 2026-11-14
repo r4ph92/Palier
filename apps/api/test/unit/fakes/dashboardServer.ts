@@ -6,6 +6,7 @@ import { buildServer, type ServerSettings } from '../../../src/http/buildServer.
 import { FakeDriverRepository, julie, marc } from '../fakeDriverRepository.ts';
 import { nouvelOperateur, pierre, sophie } from './dashboardFixtures.ts';
 import { fakeOperatorStripe } from './fakeOperatorStripe.ts';
+import { FakeLotMapRepository } from './fakeLotMapRepository.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
 import { fakeGateDependencies, fakeRepositories } from './serverDependencies.ts';
 
@@ -16,14 +17,15 @@ export function startDashboardServer(settings: ServerSettings = { testSignInEnab
   const driverRepository = new FakeDriverRepository([julie, marc, sophie, pierre, nouvelOperateur]);
   const operatorRepository = new FakeOperatorRepository();
   const stripe = fakeOperatorStripe(operatorRepository);
+  const lotMaps = new FakeLotMapRepository(operatorRepository.lots);
   const server: FastifyInstance = buildServer({
     gates: fakeGateDependencies(),
-    repositories: fakeRepositories({ driverRepository, operatorRepository }),
+    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps },
     operatorStripe: stripe.dependencies,
     testClock: composeClock(settings.testSignInEnabled === true).testClock,
     settings,
   });
-  return { server, driverRepository, lots: operatorRepository.lots, ...stripe };
+  return { server, driverRepository, lots: operatorRepository.lots, lotMaps, ...stripe };
 }
 
 // Signs in through the test route and returns the cookie the browser would send back.

@@ -1,6 +1,7 @@
 import type { DashboardErrorCode } from '@palier/shared-types';
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import { DashboardRefusedError } from '../../domain/dashboard/DashboardRefusedError.ts';
+import { LOT_LOCK_WAIT_SECONDS } from '../../domain/lots/lotLockWait.ts';
 import { handleServerError } from '../handleServerError.ts';
 import { DashboardHttpRefusal } from './DashboardHttpRefusal.ts';
 
@@ -27,6 +28,18 @@ const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
   PRICING_DAILY_CAP_BELOW_INCREMENT: 400,
   PRICING_HOLD_QUOTA_INVALID: 400,
   TOO_MANY_LOTS: 429,
+  LOT_BUSY: 503,
+  LEVEL_CODE_INVALID: 400,
+  LEVEL_CODE_TAKEN: 409,
+  LEVEL_LIMIT_REACHED: 409,
+  LEVEL_ORDER_INVALID: 409,
+  LEVEL_NOT_FOUND: 404,
+  AISLE_CODE_INVALID: 400,
+  AISLE_CODE_TAKEN: 409,
+  AISLE_CODE_RESERVED: 400,
+  AISLE_MINOR_INVALID: 400,
+  AISLE_MINOR_TAKEN: 409,
+  AISLE_RECTANGLE_INVALID: 400,
 };
 
 export function handleDashboardError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {
@@ -34,5 +47,8 @@ export function handleDashboardError(error: FastifyError, request: FastifyReques
     return handleServerError(error, request, reply);
   }
   const statusCode = STATUS_BY_REASON[error.reason];
+  if (error.reason === 'LOT_BUSY') {
+    reply.header('Retry-After', LOT_LOCK_WAIT_SECONDS);
+  }
   return reply.status(statusCode).send({ statusCode, error: error.reason, message: error.message });
 }

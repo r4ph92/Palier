@@ -3,6 +3,7 @@ import { render, screen, userEvent, within } from '@testing-library/react-native
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import { PositioningCore } from '../src/positioning/PositioningCore';
+import { PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
 
 const SAFE_AREA_METRICS = {
   frame: { x: 0, y: 0, width: 393, height: 852 },
@@ -76,7 +77,7 @@ describe('SimulatedSignalsPanel signals', () => {
 
 describe('SimulatedSignalsPanel commands', () => {
   it.each([
-    ['startMonitoring major=1', 'startMonitoring uuid=B9407F30 major=1'],
+    ['startMonitoring major=1', `startMonitoring uuid=${PLATFORM_BEACON_UUID.slice(0, 8)} major=1`],
     ['stopMonitoring', 'stopMonitoring'],
     ['keepAlive (+10 min)', 'keepAlive until=18 h 12 min 05 s'],
     ['flushOfflineQueue', 'flushOfflineQueue'],

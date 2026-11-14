@@ -3,9 +3,10 @@ import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import { applyLanguage } from '../src/i18n/i18n';
 import { PositioningCore } from '../src/positioning/PositioningCore';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
+import { PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
 
 const AISLE_TWO_LINE = /^\d{1,2} h \d{2} min \d{2} s\s+Allée détectée : minor 2$/;
-const START_MONITORING_LINE = /^\d{1,2} h \d{2} min \d{2} s\s+startMonitoring uuid=B9407F30 major=1$/;
+const START_MONITORING_LINE = new RegExp(`^\\d{1,2} h \\d{2} min \\d{2} s\\s+startMonitoring uuid=${PLATFORM_BEACON_UUID.slice(0, 8)} major=1$`);
 
 // Same wiring as App.tsx: the core owns the simulated module, the panel reads what reached the core.
 function wireDeveloperTools() {
@@ -46,7 +47,7 @@ describe('Simulated signals through the real developer tools', () => {
     const { user, positioningCore } = await renderSignedInApp('fr');
     await openPanel(user, 'Compte');
 
-    await act(() => positioningCore.startMonitoring('B9407F30-F5F8-466E-AFF9-25556B57FE6D', 1));
+    await act(() => positioningCore.startMonitoring(PLATFORM_BEACON_UUID, 1));
 
     expect(await within(await screen.findByTestId('Journal')).findByText(START_MONITORING_LINE)).toBeOnTheScreen();
   });

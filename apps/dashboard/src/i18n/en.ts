@@ -1,3 +1,4 @@
+import { enMap } from './enMap.ts';
 import type { Dictionary } from './fr.ts';
 
 export const en: Dictionary = {
@@ -69,6 +70,7 @@ export const en: Dictionary = {
     unavailableTitle: 'Parking lot unavailable',
     beaconMajorLabel: 'Beacon major',
     occupancyLink: 'Occupancy',
+    mapLink: 'Map and beacons',
   },
   occupancy: {
     title: 'Occupancy',
@@ -86,6 +88,7 @@ export const en: Dictionary = {
     stale: 'Figures not updated. Trying again shortly.',
     lastUpdate: 'Last updated: %{time}',
   },
+  map: enMap,
   spotStates: {
     AVAILABLE: 'Available',
     HELD: 'Held',
@@ -146,7 +149,22 @@ export const en: Dictionary = {
     PRICING_DAILY_CAP_BELOW_INCREMENT: 'The daily cap must be at least the price of one increment.',
     PRICING_HOLD_QUOTA_INVALID: 'Enter a whole number of guaranteed spots, from 0 to %{quotaMaximum}.',
     TOO_MANY_LOTS: 'Too many lots created in a short time. Try again in an hour.',
+    LOT_BUSY: 'The parking lot is busy with another operation. Try again in a few seconds.',
+    LEVEL_CODE_INVALID: 'The level code must be 1 to %{levelCodeMaximum} characters, with no invisible characters.',
+    LEVEL_CODE_TAKEN: 'This parking lot already has a level with this code.',
+    LEVEL_LIMIT_REACHED: 'A parking lot has at most %{levelMaximum} levels.',
+    LEVEL_ORDER_INVALID: 'The levels changed in the meantime. The map was reloaded; try again.',
+    LEVEL_NOT_FOUND: 'This level cannot be found. Reload the map.',
+    AISLE_CODE_INVALID: 'The aisle code must be 1 to %{aisleCodeMaximum} characters, with no invisible characters.',
+    AISLE_CODE_TAKEN: 'This level already has an aisle with this code.',
+    AISLE_CODE_RESERVED: 'This code is reserved for the exit lane. Choose another one.',
+    AISLE_MINOR_INVALID: 'Enter a whole number from %{minorMinimum} to %{minorMaximum}. Minor 0 is reserved for the exit lane.',
+    AISLE_MINOR_TAKEN: 'Another aisle of this parking lot already uses this minor.',
+    AISLE_RECTANGLE_INVALID: 'The rectangle needs x and y from 0 to %{gridMaximum}, and a width and a height from 1 to %{gridMaximum}.',
     FIELDS_INVALID: 'Fix the fields shown.',
+    GRID_POSITION_INVALID: 'A whole number from 0 to %{gridMaximum}.',
+    GRID_LENGTH_INVALID: 'A whole number from 1 to %{gridMaximum}.',
+    MAP_RELOAD_FAILED: 'The levels changed in the meantime, and the map could not be reloaded. Reload the page before trying again.',
     UNKNOWN: 'Something went wrong. Try again in a moment.',
   },
 };

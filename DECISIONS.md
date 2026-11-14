@@ -351,6 +351,10 @@ que Q41 garantit. `aisle.beacon_major` devient `aisle.beacon_minor`, et
 `startMonitoring(uuid, majors[])` à `startMonitoring(uuid, major)` et
 `onAisleEnter(major, ts)` devient `onAisleChanged(minor, ts)`.
 
+*Mise en œuvre (#65)* : l'UUID unique est `PLATFORM_BEACON_UUID` (`packages/shared-types`),
+partagé par l'app et l'API ; le premier niveau d'un parking reçoit la voie de sortie, et la
+base refuse tout autre minor 0 (`docs/decisions/034`).
+
 **Q41** — Une entrée de région réveille une app terminée pour une dizaine de
 secondes ; CoreMotion ne livre ses transitions qu'à une app qui tourne ; la
 manœuvre de stationnement dure une à trois minutes. La chaîne « balise → réveil

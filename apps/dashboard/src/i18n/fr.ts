@@ -1,3 +1,5 @@
+import { frMap } from './frMap.ts';
+
 export const fr = {
   app: {
     name: 'Tableau de bord Palier',
@@ -67,6 +69,7 @@ export const fr = {
     unavailableTitle: 'Stationnement indisponible',
     beaconMajorLabel: 'Major de balise',
     occupancyLink: 'Occupation',
+    mapLink: 'Plan et balises',
   },
   occupancy: {
     title: 'Occupation',
@@ -84,6 +87,7 @@ export const fr = {
     stale: 'Données non mises à jour. Nouvel essai dans un instant.',
     lastUpdate: 'Dernière mise à jour\u00a0: %{time}',
   },
+  map: frMap,
   spotStates: {
     AVAILABLE: 'Libre',
     HELD: 'Garantie',
@@ -144,7 +148,22 @@ export const fr = {
     PRICING_DAILY_CAP_BELOW_INCREMENT: 'Le plafond journalier doit valoir au moins le prix d’un incrément.',
     PRICING_HOLD_QUOTA_INVALID: 'Entrez un nombre entier de places garanties, de 0 à %{quotaMaximum}.',
     TOO_MANY_LOTS: 'Trop de stationnements créés en peu de temps. Réessayez dans une heure.',
+    LOT_BUSY: 'Le stationnement est occupé par une autre opération. Réessayez dans quelques secondes.',
+    LEVEL_CODE_INVALID: 'Le code du niveau doit compter de 1 à %{levelCodeMaximum} caractères, sans caractère invisible.',
+    LEVEL_CODE_TAKEN: 'Ce stationnement a déjà un niveau avec ce code.',
+    LEVEL_LIMIT_REACHED: 'Un stationnement compte au plus %{levelMaximum} niveaux.',
+    LEVEL_ORDER_INVALID: 'Les niveaux ont changé entre-temps. Le plan a été rechargé; recommencez.',
+    LEVEL_NOT_FOUND: 'Ce niveau est introuvable. Rechargez le plan.',
+    AISLE_CODE_INVALID: 'Le code de l’allée doit compter de 1 à %{aisleCodeMaximum} caractères, sans caractère invisible.',
+    AISLE_CODE_TAKEN: 'Ce niveau a déjà une allée avec ce code.',
+    AISLE_CODE_RESERVED: 'Ce code est réservé à la voie de sortie. Choisissez-en un autre.',
+    AISLE_MINOR_INVALID: 'Entrez un nombre entier de %{minorMinimum} à %{minorMaximum}. Le minor 0 est réservé à la voie de sortie.',
+    AISLE_MINOR_TAKEN: 'Une autre allée de ce stationnement utilise déjà ce minor.',
+    AISLE_RECTANGLE_INVALID: 'Le rectangle demande x et y de 0 à %{gridMaximum}, une largeur et une hauteur de 1 à %{gridMaximum}.',
     FIELDS_INVALID: 'Corrigez les champs indiqués.',
+    GRID_POSITION_INVALID: 'Un nombre entier de 0 à %{gridMaximum}.',
+    GRID_LENGTH_INVALID: 'Un nombre entier de 1 à %{gridMaximum}.',
+    MAP_RELOAD_FAILED: 'Les niveaux ont changé entre-temps, et le plan n’a pas pu être rechargé. Rechargez la page avant de recommencer.',
     UNKNOWN: 'Une erreur est survenue. Réessayez dans un instant.',
   },
 };

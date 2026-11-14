@@ -12,6 +12,7 @@ import { FakeParkingSessionClient, julieAtB3, julieAtParkingDemo, parkingDemoP1P
 import { positioningRig } from './positioningRig';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { asSeen, visibleText } from './visibleText';
+import { PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
 
 // The jest preset reports a font scale of 2; the markers sit inside the rectangles at the default size.
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
@@ -120,7 +121,8 @@ describe('the level plan on the Session screen (story #17)', () => {
   });
 });
 
-const START_MAJOR_1 = 'startMonitoring uuid=B9407F30 major=1';
+const MONITORED_UUID = PLATFORM_BEACON_UUID.slice(0, 8);
+const START_MAJOR_1 = `startMonitoring uuid=${MONITORED_UUID} major=1`;
 
 // A recording core, without the panel: the test sends the beacon signals itself and reads the commands.
 async function relaunchWith(session: CurrentParkingSession | null, language: SupportedLanguage = 'fr') {

@@ -48,6 +48,13 @@ export type StatementLabel =
   | 'read-lot-details'
   | 'read-lot-occupancy'
   | 'read-level-occupancy'
+  | 'lock-owned-lot'
+  | 'read-lot-map'
+  | 'insert-level'
+  | 'insert-exit-lane'
+  | 'read-level-ids'
+  | 'reorder-levels'
+  | 'insert-aisle'
   | 'replay-passages'
   | 'unknown';
 
@@ -72,6 +79,13 @@ const dialect = new PgDialect();
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
   ['insert-lot', /insert into parking_lot/],
+  ['lock-owned-lot', /from parking_lot where id = \$1 and operator_id = \$2 for no key update/],
+  ['read-lot-map', /aisle\.is_exit_lane, aisle\.map_polygon/],
+  ['insert-level', /insert into level/],
+  ['insert-exit-lane', /insert into aisle \(level_id, lot_id, code, beacon_minor, is_exit_lane\)/],
+  ['read-level-ids', /select level\.id from level/],
+  ['reorder-levels', /update level set display_order/],
+  ['insert-aisle', /insert into aisle \(level_id, lot_id, code, beacon_minor, map_polygon\)/],
   ['update-lot-pricing', /update parking_lot\s+set pricing_policy/],
   ['read-lot-details', /from parking_lot where id = \$1 and operator_id = \$2/],
   ['read-level-occupancy', /as confirmed_assigned_count/],

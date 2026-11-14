@@ -8,6 +8,7 @@ import { CreateLotPage } from './pages/CreateLotPage.tsx';
 import { CreateOperatorPage } from './pages/CreateOperatorPage.tsx';
 import { LoadingPage } from './pages/LoadingPage.tsx';
 import { LotPage } from './pages/LotPage.tsx';
+import { MapPage } from './pages/MapPage.tsx';
 import { NotFoundPage } from './pages/NotFoundPage.tsx';
 import { OccupancyPage } from './pages/OccupancyPage.tsx';
 import { OperatorHomePage } from './pages/OperatorHomePage.tsx';
@@ -82,5 +83,7 @@ function OperatorPage({ route, operator }: { readonly route: Exclude<Route, { pa
       return <LotPage key={route.lotId} lotId={route.lotId} />;
     case 'occupancy':
       return <OccupancyPage key={route.lotId} lotId={route.lotId} />;
+    case 'map':
+      return <MapPage key={route.lotId} lotId={route.lotId} />;
   }
 }

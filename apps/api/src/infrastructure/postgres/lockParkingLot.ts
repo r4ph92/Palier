@@ -47,6 +47,26 @@ export function inLotLock<T>(database: Database, lotId: string, work: (tx: Trans
   }, LOT_LOCK_TRANSACTION);
 }
 
+export interface OwnedLot {
+  readonly operatorId: string;
+  readonly lotId: string;
+}
+
+export const LOT_NOT_OWNED = { outcome: 'lot-not-owned' } as const;
+
+// Like inLotLock, for an operator's own write: another operator's lot is never locked, and the work does not run on it.
+export function inOwnedLotLock<T>(database: Database, { operatorId, lotId }: OwnedLot, work: (tx: Transaction) => Promise<T>): Promise<T | typeof LOT_NOT_OWNED> {
+  return database.transaction(async (tx) => {
+    await tx.execute(LIMIT_LOCK_WAIT);
+    const locked = await tx.execute(sql`select id from parking_lot where id = ${lotId} and operator_id = ${operatorId} for no key update`);
+    return locked.length === 0 ? LOT_NOT_OWNED : work(tx);
+  }, LOT_LOCK_TRANSACTION);
+}
+
+export function isLotNotOwned(result: unknown): result is typeof LOT_NOT_OWNED {
+  return result === LOT_NOT_OWNED;
+}
+
 export const LOT_BUSY = { outcome: 'lot-busy' } as const;
 
 export function isLotBusy(result: unknown): result is typeof LOT_BUSY {

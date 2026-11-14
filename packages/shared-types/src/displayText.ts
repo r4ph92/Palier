@@ -26,3 +26,9 @@ export function isValidDisplayText(text: string, { minimum, maximum }: TextLengt
     LETTER_OR_DIGIT.test(trimmedText)
   );
 }
+
+// Two codes that read the same are one code: compatibility forms folded and accents composed (NFKC, so "Ｐ1" is "P1"),
+// any run of spaces, no-break ones too, as one plain space.
+export function canonicalCodeOf(text: string): string {
+  return text.normalize('NFKC').replace(/\s+/gu, ' ').trim();
+}
