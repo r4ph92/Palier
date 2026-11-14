@@ -17,18 +17,26 @@ export function RecordBatteryForm({ aisleName, ...target }: RecordBatteryFormPro
   const form = useRecordBatteryForm(target);
   const limits = useMapLimitValues();
   const field = fieldBinder(form, `battery-${target.aisleId}`, limits);
-  const names = { aisle: aisleName };
   return (
     <form className="row-form" noValidate aria-busy={form.submitting} onSubmit={(event) => void form.submit(event)}>
       {form.summary === null ? null : <ErrorNotice key={form.attempt} code={form.summary} values={limits} takesFocus />}
-      <TextField {...field('percent')} label={interpolate(text.map.percentLabel, names)} inputMode="numeric" hidesLabel />
-      <SubmitButton
-        label={text.map.recordBattery.shown}
-        busyLabel={text.map.recordingBattery}
-        busy={form.submitting}
-        emphasis="secondary"
-        accessibleName={interpolate(text.map.recordBattery.name, names)}
-      />
+      <div className="row-form-controls">
+        <TextField {...field('percent')} label={interpolate(text.map.percentLabel, { aisle: aisleName })} inputMode="numeric" hidesLabel />
+        <RecordBatteryButton aisleName={aisleName} busy={form.submitting} />
+      </div>
     </form>
+  );
+}
+
+function RecordBatteryButton({ aisleName, busy }: { readonly aisleName: string; readonly busy: boolean }) {
+  const text = useText();
+  return (
+    <SubmitButton
+      label={text.map.recordBattery.shown}
+      busyLabel={text.map.recordingBattery}
+      busy={busy}
+      emphasis="secondary"
+      accessibleName={interpolate(text.map.recordBattery.name, { aisle: aisleName })}
+    />
   );
 }

@@ -63,6 +63,7 @@ describe('the beacon batteries on the map', () => {
 
     expect(await screen.findByText(/^Pile de la balise A enregistrée/)).toBeDefined();
     expect(batteryOf('A')).toBe('Pile faible · 15 %');
+    expect(beaconRow('A').querySelector('.figure')?.textContent?.replace(WHITESPACE, ' ')).toBe('15 %');
     expect(toneOf('A')).toBe('state-mark-danger');
     expect(api.requests.filter((request) => request === BATTERY_REQUEST)).toHaveLength(1);
     expect(api.requests.filter((request) => request === `GET /lots/${parkingDemo.id}/map`)).toHaveLength(1);

@@ -174,3 +174,7 @@
   border-block: 1px solid var(--danger);
   font-weight: 600;
 }
+
+.silent-gates-line .state-mark {
+  font-weight: inherit;
+}

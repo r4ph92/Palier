@@ -7,11 +7,16 @@
 
 .data-table th,
 .data-table td {
-  padding: var(--space-small) var(--space-small) var(--space-small) 0;
+  padding: var(--space-small) var(--space-medium) var(--space-small) 0;
   border-bottom: 1px solid var(--line);
   text-align: left;
   vertical-align: top;
-  overflow-wrap: anywhere;
+}
+
+/* The last column ends on the page edge: no space after it. */
+.data-table th:last-child,
+.data-table td:last-child {
+  padding-right: 0;
 }
 
 .data-table thead th {
@@ -23,8 +28,10 @@
   color: var(--muted);
 }
 
+/* Only a row's name may break inside a word, so a long unbroken name never widens the page; headers and cells break between words. */
 .data-table tbody th {
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .number-cell {
@@ -124,32 +131,51 @@
   user-select: all;
 }
 
-/* Five columns with a form in the last: on a narrow screen the table scrolls sideways instead of crushing the form; tabbing to a row's form scrolls it into view. */
+/* Five columns with a form in the last: on a narrow screen the table scrolls sideways as a whole; tabbing to a row's form scrolls it into view.
+   Positioned, so the visually hidden labels of the row forms scroll inside the box instead of widening the page. */
 .wide-table-scroll {
+  position: relative;
   overflow-x: auto;
 }
 
-/* A reading per beacon row: the field and its outlined button side by side, the errors above them. */
+/* No word breaks inside: headers and figures stay on one line; a row name wraps between its words and the reading form wraps its errors inside its cell. */
+.wide-table-scroll .data-table th,
+.wide-table-scroll .data-table td {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.wide-table-scroll .data-table tbody th,
+.wide-table-scroll .data-table .wrapping-cell {
+  white-space: normal;
+}
+
+/* A reading per beacon row: the errors above, then the field and its outlined button, always side by side. */
 .row-form {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  flex-direction: column;
   gap: var(--space-small);
-  min-width: 18ch;
 }
 
 .row-form > .error-notice {
-  flex-basis: 100%;
   margin: 0;
 }
 
+.row-form-controls {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-small);
+}
+
+/* Sized by its content, not the full row: the field widens only for its error, up to 24 characters. */
 .row-form .field {
-  flex: 1 1 8ch;
+  width: auto;
   max-width: 24ch;
 }
 
+/* Room for 100 or a typed "15 %", padding included. */
 .row-form .field-input {
-  max-width: 8ch;
+  width: 7ch;
 }
 
 .row-form .secondary-button {

@@ -2,6 +2,7 @@ import type { DashboardLotMap, DashboardMapAisle, DashboardMapLevel } from '@pal
 import { useState } from 'react';
 import { ColumnHeads } from '../components/ColumnHeads.tsx';
 import { Fact } from '../components/Fact.tsx';
+import { FiguresInText } from '../components/FiguresInText.tsx';
 import { StateMark } from '../components/StateMark.tsx';
 import { formatPercent } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
@@ -64,7 +65,7 @@ function BatteryTable({ map, onRecorded }: { readonly map: DashboardLotMap; read
   const columns = [text.map.levelColumn, text.map.aisleColumn, text.map.minorColumn, text.map.batteryColumn, text.map.readingColumn];
   return (
     <>
-      <p className="lead">{interpolate(text.map.batteryHelp, limits)}</p>
+      <p className="lead lead-after-content">{interpolate(text.map.batteryHelp, limits)}</p>
       <div className="wide-table-scroll">
         <table className="data-table">
           <ColumnHeads labels={columns} />
@@ -105,9 +106,9 @@ function BeaconRow({ row: { lotId, levelCode, aisle }, onRecorded }: { readonly 
       <th scope="row">{aisleName}</th>
       <td className="number-cell">{String(aisle.beaconMinor)}</td>
       <td>
-        <StateMark tone={mark.tone} label={mark.label} />
+        <StateMark tone={mark.tone} label={<FiguresInText text={mark.label} />} />
       </td>
-      <td>
+      <td className="wrapping-cell">
         <RecordBatteryForm lotId={lotId} aisleId={aisle.id} aisleName={aisleName} onRecorded={(map, percent) => onRecorded(map, { aisleName, percent })} />
       </td>
     </tr>

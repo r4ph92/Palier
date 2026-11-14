@@ -25,7 +25,7 @@ function EquipmentView({ equipment }: { readonly equipment: DashboardLotEquipmen
   return (
     <>
       <GatesSection equipment={equipment} />
-      <p className="lead">
+      <p className="lead lead-after-content">
         {text.equipment.batteriesNote}{' '}
         <AppLink href={mapPath(equipment.lotId)} className="text-link">
           {text.equipment.batteriesLink}
