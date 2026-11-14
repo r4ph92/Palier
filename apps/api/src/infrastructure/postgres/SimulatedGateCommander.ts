@@ -1,14 +1,11 @@
 import { sql } from 'drizzle-orm';
 import type { GateCommander, OpenCommand } from '../../domain/entries/GateCommander.ts';
-import type { Database, Transaction } from './database.ts';
+import type { Database } from './database.ts';
+import { storeOpenCommand } from './gateCommandStatements.ts';
 import { appendSessionEvent } from './sessionEventStatements.ts';
 
-interface IssuedCommandRow extends Record<string, unknown> {
-  readonly id: string;
-}
-
 // A simulated gate has no hardware: the command is stored and the demo console shows it. It serves entries only:
-// an exit stores its own command with its capture (PostgresExitRepository).
+// an exit stores its command with its capture (PostgresExitRepository), through the same storeOpenCommand.
 export class SimulatedGateCommander implements GateCommander {
   readonly #database: Database;
 
@@ -27,15 +24,4 @@ export class SimulatedGateCommander implements GateCommander {
       });
     });
   }
-}
-
-async function storeOpenCommand(tx: Transaction, { gateId, lotId, sessionId }: OpenCommand): Promise<string> {
-  const [issued] = await tx.execute<IssuedCommandRow>(sql`
-    insert into gate_command (gate_id, lot_id, kind, session_id)
-    values (${gateId}, ${lotId}, 'OPEN', ${sessionId})
-    returning id`);
-  if (issued === undefined) {
-    throw new Error('The gate command was not stored.');
-  }
-  return issued.id;
 }
