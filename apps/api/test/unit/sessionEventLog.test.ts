@@ -75,6 +75,16 @@ describe('appending a session event', () => {
     expect(EVENT_RETENTION_HOURS).toBe(90 * 24);
   });
 
+  it("reads the step's instant from the session the event is written for", async () => {
+    const scripted = new ScriptedSql();
+
+    await appendLoop(scripted);
+
+    const append = scripted.statement('append-session-event');
+    expect(append?.params.at(-1)).toBe(SESSION_ID);
+    expect(append?.params.filter((param) => param === SESSION_ID)).toHaveLength(2);
+  });
+
   it('binds the session, the lot, the kind and the payload as values, the payload as JSON', async () => {
     const scripted = new ScriptedSql();
 
