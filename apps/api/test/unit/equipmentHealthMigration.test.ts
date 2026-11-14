@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { gateFixtures } from '../../src/seed/fixtures/gates.ts';
 
-const migration = readFileSync(new URL('../../drizzle/0036_equipment_health.sql', import.meta.url), 'utf8');
+const migration = readFileSync(new URL('../../drizzle/0037_equipment_health.sql', import.meta.url), 'utf8');
 
-describe('migration 0036, gate heartbeats and beacon batteries', () => {
+describe('migration 0037, gate heartbeats and beacon batteries', () => {
   it('adds the last heartbeat as a nullable instant, so every existing gate starts never heard', () => {
     expect(migration).toContain('ALTER TABLE "gate" ADD COLUMN "last_heartbeat_at" timestamp with time zone;');
   });
