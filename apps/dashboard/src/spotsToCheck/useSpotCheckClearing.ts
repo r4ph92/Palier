@@ -45,7 +45,8 @@ async function attemptClear(lotId: string, spot: DashboardSpotToCheck, followUps
 }
 
 // Focus stays in the list the API answered: on the row now at the cleared one's place, or the last row, or the status line once the list is empty.
-function focusIdAfterClearing(remaining: readonly DashboardSpotToCheck[], clearedIndex: number): string {
+function focusIdAfterClearing(shown: readonly DashboardSpotToCheck[], remaining: readonly DashboardSpotToCheck[], cleared: DashboardSpotToCheck): string {
+  const clearedIndex = shown.findIndex(({ spotId }) => spotId === cleared.spotId);
   const neighbour = remaining[Math.min(clearedIndex, remaining.length - 1)];
   return neighbour === undefined ? SPOT_CHECK_STATUS_ID : checkButtonId(neighbour.spotId);
 }
@@ -60,10 +61,9 @@ function listRefusalOf(refusal: RowRefusal | null, spots: readonly DashboardSpot
 // The list shows only what the API answered: a cleared spot leaves it, a refused one stays with the reason beside its row.
 export function useSpotCheckClearing(lotId: string, initial: DashboardSpotsToCheck): SpotCheckClearing {
   const request = useGuardedRequest();
-  const focusAfterRender = useFocusAfterRender();
-  const [spots, setSpots] = useState(initial.spots);
+  const list = useFlaggedList(initial.spots);
   const [status, setStatus] = useState<ClearStatus>(IDLE);
-  const followUps = useRefusalFollowUps(lotId, setSpots);
+  const followUps = useRefusalFollowUps(lotId, list.show);
   const clear = (spot: DashboardSpotToCheck) =>
     request.run(async () => {
       setStatus({ ...IDLE, clearingId: spot.spotId });
@@ -72,13 +72,21 @@ export function useSpotCheckClearing(lotId: string, initial: DashboardSpotsToChe
         setStatus({ ...IDLE, refusal: { ...outcome.refusal, spotId: spot.spotId } });
         return;
       }
-      const clearedIndex = spots.findIndex(({ spotId }) => spotId === spot.spotId);
-      focusAfterRender(focusIdAfterClearing(outcome.answer.spots, clearedIndex));
-      setSpots(outcome.answer.spots);
+      list.showAfterClearing(outcome.answer.spots, spot);
       setStatus({ ...IDLE, clearedNumber: spot.number });
     });
   const forgetRefusal = () => setStatus((current) => ({ ...current, refusal: null }));
-  return { ...status, spots, listRefusal: listRefusalOf(status.refusal, spots), clear, forgetRefusal };
+  return { ...status, spots: list.spots, listRefusal: listRefusalOf(status.refusal, list.spots), clear, forgetRefusal };
+}
+
+function useFlaggedList(initial: readonly DashboardSpotToCheck[]) {
+  const focusAfterRender = useFocusAfterRender();
+  const [spots, setSpots] = useState(initial);
+  const showAfterClearing = (remaining: readonly DashboardSpotToCheck[], cleared: DashboardSpotToCheck) => {
+    focusAfterRender(focusIdAfterClearing(spots, remaining, cleared));
+    setSpots(remaining);
+  };
+  return { spots, show: setSpots, showAfterClearing };
 }
 
 function useRefusalFollowUps(lotId: string, show: (spots: readonly DashboardSpotToCheck[]) => void): RefusalFollowUps {
