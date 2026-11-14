@@ -8,6 +8,9 @@
   --free: #2e7d4f;
   --danger: #9c3a2a;
   --on-ink: #f8f9f6;
+  --low: #b45f06;
+  --accent: #f5c400;
+  --on-accent: #191c1a;
   --font-text: 'Archivo', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --space-extra-small: 4px;
@@ -29,6 +32,9 @@
     --free: #63b487;
     --danger: #d9705e;
     --on-ink: #121513;
+    --low: #e09a3e;
+    --accent: #f5c400;
+    --on-accent: #191c1a;
     color-scheme: dark;
   }
 }
