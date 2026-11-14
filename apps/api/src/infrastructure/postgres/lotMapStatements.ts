@@ -1,9 +1,8 @@
 import { sql, type SQL } from 'drizzle-orm';
 import type { AisleDraft } from '@palier/shared-types/aisleDraft';
-import { EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
+import { EXIT_LANE_CODE, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { MAX_LEVELS_PER_LOT } from '@palier/shared-types/levelDraft';
 import type { LevelPlacement } from '../../domain/dashboard/LotMapRepository.ts';
-import { EXIT_LANE_CODE } from '../../domain/lots/exitLane.ts';
 import type { OwnedLot } from './lockParkingLot.ts';
 import { AISLE_MINOR_UNIQUE } from './lotSchema.ts';
 

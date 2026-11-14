@@ -36,6 +36,19 @@ describe('the map of a lot', () => {
     expect(screen.getByRole('textbox', { name: 'Code de l’allée' })).toHaveProperty('value', '');
   });
 
+  it('draws a 10 000 × 40 aisle as a visible strip, with its code beside it', async () => {
+    await openGarageRoyMap();
+    await addLevel('P1');
+
+    await addAisle({ code: 'NORD', minor: '1', rectangle: ['0', '0', '10000', '40'] });
+
+    await screen.findByText('Allée NORD ajoutée au niveau P1.');
+    const plan = screen.getByRole('img', { name: 'Plan du niveau P1' });
+    const [, , frameWidth = 0, frameHeight = 0] = (plan.getAttribute('viewBox') ?? '').split(' ').map(Number);
+    expect(Number(plan.querySelector('rect')?.getAttribute('height')) / Math.min(frameWidth, frameHeight)).toBeGreaterThan(0.07);
+    expect(plan.querySelector('.plan-label-beside')?.textContent).toBe('NORD');
+  });
+
   it('draws the aisle being typed dashed, once its rectangle is on the grid', async () => {
     await openGarageRoyMap();
     await addLevel('P1');
@@ -91,16 +104,18 @@ describe('the map of a lot', () => {
     expect(savedMap(api)?.levels[0]?.aisles.map(({ code }) => code)).toEqual(['A', 'Sortie']);
   });
 
-  it('says beside the code that the exit lane holds Sortie on its level', async () => {
+  it.each(['P1', 'P2'])('refuses Sortie beside the code on %s, reserved for the exit lane, and sends nothing', async (code) => {
     const api = await openGarageRoyMap();
     await addLevel('P1');
+    await addLevel('P2');
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Niveau affiché' }), code);
 
     await addAisle({ code: 'Sortie', minor: '1' });
 
     const codeBox = screen.getByRole('textbox', { name: 'Code de l’allée' });
-    expect(await screen.findByText('Ce code est celui de la voie de sortie de ce niveau. Choisissez-en un autre.')).toBeDefined();
+    expect(document.getElementById(`${codeBox.id}-error`)?.textContent).toBe('Ce code est réservé à la voie de sortie. Choisissez-en un autre.');
     expect(codeBox.getAttribute('aria-invalid')).toBe('true');
-    expect(savedMap(api)?.levels[0]?.aisles.map(({ code }) => code)).toEqual(['Sortie']);
+    expect(api.requests.some((request) => request.endsWith('/aisles'))).toBe(false);
   });
 
   it('lists the platform UUID, the lot major and every minor under Balises', async () => {

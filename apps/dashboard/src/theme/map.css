@@ -107,6 +107,10 @@
   font-family: var(--font-mono);
 }
 
+.plan-aisle .plan-label-beside {
+  fill: var(--muted);
+}
+
 .plan-aisle-draft rect {
   fill: none;
   stroke: var(--ink);

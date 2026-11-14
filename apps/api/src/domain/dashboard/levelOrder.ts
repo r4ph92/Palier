@@ -3,10 +3,7 @@ import type { LevelOrderRequest } from '@palier/shared-types';
 // The page moves one level by one place, from the order it shows. An order sent from a page gone stale is refused whole,
 // so a move another tab saved in the meantime is never undone without anyone seeing it.
 export function isMoveOfCurrentOrder({ levelIds, fromLevelIds }: LevelOrderRequest, currentIds: readonly string[]): boolean {
-  if (fromLevelIds !== undefined && !isSameOrder(fromLevelIds, currentIds)) {
-    return false;
-  }
-  return isOneStepMove(levelIds, currentIds);
+  return isSameOrder(fromLevelIds, currentIds) && isOneStepMove(levelIds, currentIds);
 }
 
 function isSameOrder(left: readonly string[], right: readonly string[]): boolean {

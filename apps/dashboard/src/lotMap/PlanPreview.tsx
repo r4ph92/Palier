@@ -2,7 +2,7 @@ import type { AisleRectangle, DashboardMapAisle } from '@palier/shared-types';
 import { useId } from 'react';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useText } from '../i18n/LanguageContext.tsx';
-import { planFrameOf } from './planFrame.ts';
+import { planLayoutOf, type LabelPlacement, type PlacedAisle, type PlanAisleShape } from './planLayout.ts';
 import type { DraftAisle } from './useAddAisleForm.ts';
 
 interface PlanPreviewProps {
@@ -40,14 +40,16 @@ interface PlanDrawingProps {
   readonly draft: DraftAisle | null;
 }
 
+// The draft comes last, so it draws over the saved aisles it may overlap.
 function PlanDrawing({ label, descriptionId, drawn, draft }: PlanDrawingProps) {
-  const { x, y, width, height } = planFrameOf([...drawn.map(({ rectangle }) => rectangle), ...(draft === null ? [] : [draft.rectangle])]);
+  const shapes: PlanAisleShape[] = drawn.map(({ rectangle, code }) => ({ rectangle, label: code }));
+  const layout = planLayoutOf(draft === null ? shapes : [...shapes, draft]);
+  const { x, y, width, height } = layout.frame;
   return (
     <svg role="img" aria-label={label} aria-describedby={descriptionId} viewBox={`${x} ${y} ${width} ${height}`} preserveAspectRatio="xMinYMid meet">
-      {drawn.map((aisle) => (
-        <PlanRectangle key={aisle.id} rectangle={aisle.rectangle} label={aisle.code} />
+      {layout.aisles.map((aisle, index) => (
+        <PlanRectangle key={drawn[index]?.id ?? 'draft'} aisle={aisle} isDraft={index >= drawn.length} />
       ))}
-      {draft === null ? null : <PlanRectangle rectangle={draft.rectangle} label={draft.label} isDraft />}
     </svg>
   );
 }
@@ -59,20 +61,25 @@ function PlanDescription({ drawn, hasDraft }: { readonly drawn: readonly DrawnAi
 }
 
 interface PlanRectangleProps {
-  readonly rectangle: AisleRectangle;
-  readonly label: string;
-  readonly isDraft?: boolean;
+  readonly aisle: PlacedAisle;
+  readonly isDraft: boolean;
 }
 
-// Strokes keep their screen width whatever the scale of the grid; the code is sized to its rectangle.
-function PlanRectangle({ rectangle, label, isDraft = false }: PlanRectangleProps) {
-  const fontSize = Math.min(rectangle.width, rectangle.height) / 2;
+// Strokes keep their screen width whatever the scale of the grid; the code sits inside when it fits, beside in muted mono otherwise.
+function PlanRectangle({ aisle: { drawn, label, placement }, isDraft }: PlanRectangleProps) {
   return (
     <g className={isDraft ? 'plan-aisle plan-aisle-draft' : 'plan-aisle'}>
-      <rect x={rectangle.x} y={rectangle.y} width={rectangle.width} height={rectangle.height} vectorEffect="non-scaling-stroke" />
-      <text x={rectangle.x + rectangle.width / 2} y={rectangle.y + rectangle.height / 2} fontSize={fontSize} textAnchor="middle" dominantBaseline="central">
-        {label}
-      </text>
+      <rect x={drawn.x} y={drawn.y} width={drawn.width} height={drawn.height} vectorEffect="non-scaling-stroke" />
+      <PlanLabel placement={placement} label={label} />
     </g>
+  );
+}
+
+function PlanLabel({ placement, label }: { readonly placement: LabelPlacement; readonly label: string }) {
+  const { x, y, fontSize, anchor, baseline } = placement;
+  return (
+    <text className={placement.kind === 'beside' ? 'plan-label-beside' : undefined} x={x} y={y} fontSize={fontSize} textAnchor={anchor} dominantBaseline={baseline}>
+      {label}
+    </text>
   );
 }

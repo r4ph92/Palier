@@ -1,12 +1,10 @@
 import { AISLE_CODE_LENGTH, type AisleDraftErrorCode } from '@palier/shared-types/aisleDraft';
 import { AISLE_GRID_LIMIT } from '@palier/shared-types/aisleRectangle';
-import { AISLE_MINOR_LIMITS } from '@palier/shared-types/beacons';
+import { AISLE_MINOR_LIMITS, EXIT_LANE_CODE } from '@palier/shared-types/beacons';
 import { LEVEL_CODE_LENGTH, MAX_LEVELS_PER_LOT, type LevelDraftErrorCode } from '@palier/shared-types/levelDraft';
-import { EXIT_LANE_CODE } from '../lots/exitLane.ts';
 import type { LotMapRefusal } from './LotMapRepository.ts';
 
-// AISLE_CODE_RESERVED: the code of the level's exit lane, which the dashboard names by its role and never by its code.
-export type LotMapReason = LevelDraftErrorCode | AisleDraftErrorCode | LotMapRefusal | 'AISLE_CODE_RESERVED';
+export type LotMapReason = LevelDraftErrorCode | AisleDraftErrorCode | LotMapRefusal;
 
 export const LOT_MAP_MESSAGES: Readonly<Record<Exclude<LotMapReason, 'LOT_NOT_FOUND'>, string>> = {
   LEVEL_CODE_INVALID: `The level code must be ${LEVEL_CODE_LENGTH.minimum} to ${LEVEL_CODE_LENGTH.maximum} characters, with no invisible characters.`,
@@ -16,7 +14,7 @@ export const LOT_MAP_MESSAGES: Readonly<Record<Exclude<LotMapReason, 'LOT_NOT_FO
   LEVEL_NOT_FOUND: 'No such level.',
   AISLE_CODE_INVALID: `The aisle code must be ${AISLE_CODE_LENGTH.minimum} to ${AISLE_CODE_LENGTH.maximum} characters, with no invisible characters.`,
   AISLE_CODE_TAKEN: 'This level already has an aisle with this code.',
-  AISLE_CODE_RESERVED: `${EXIT_LANE_CODE} is the code of this level's exit lane; choose another code.`,
+  AISLE_CODE_RESERVED: `${EXIT_LANE_CODE} is reserved for the exit lane; choose another code.`,
   AISLE_MINOR_INVALID: `The beacon minor must be a whole number from ${AISLE_MINOR_LIMITS.minimum} to ${AISLE_MINOR_LIMITS.maximum}; 0 is the exit lane's.`,
   AISLE_MINOR_TAKEN: 'Another aisle of this lot already uses this beacon minor.',
   AISLE_RECTANGLE_INVALID: `The rectangle needs x and y from 0 to ${AISLE_GRID_LIMIT}, and a width and a height above 0 up to ${AISLE_GRID_LIMIT}.`,

@@ -13,10 +13,9 @@ export function lotMapRoutesOf(server: FastifyInstance) {
     readMap: (cookies: Cookies, lotId = GARAGE_ROY_ID) => server.inject({ method: 'GET', url: `/v1/dashboard/lots/${lotId}/map`, cookies }),
     addLevel: (cookies: Cookies, code: string) =>
       server.inject({ method: 'POST', url: `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels`, cookies, headers: writeHeader, payload: { code } }),
-    reorder: (cookies: Cookies, levelIds: readonly string[], fromLevelIds?: readonly string[]) => {
-      const payload = fromLevelIds === undefined ? { levelIds } : { levelIds, fromLevelIds };
-      return server.inject({ method: 'PUT', url: `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels/order`, cookies, headers: writeHeader, payload });
-    },
+    // Without the order the page showed, the request claims it moved from the order it sends: a well-formed body to test access with.
+    reorder: (cookies: Cookies, levelIds: readonly string[], fromLevelIds: readonly string[] = levelIds) =>
+      server.inject({ method: 'PUT', url: `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels/order`, cookies, headers: writeHeader, payload: { levelIds, fromLevelIds } }),
     addAisle: (cookies: Cookies, levelId: string, payload: object = aisleA) =>
       server.inject({ method: 'POST', url: `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels/${levelId}/aisles`, cookies, headers: writeHeader, payload }),
   };

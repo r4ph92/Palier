@@ -60,7 +60,7 @@ function withLevel(map: DashboardLotMap, code: string): DashboardLotMap | string
 
 function reordered(map: DashboardLotMap, { levelIds, fromLevelIds }: LevelOrderRequest): DashboardLotMap | string {
   const levels = levelIds.map((id) => map.levels.find((level) => level.id === id));
-  const isStale = fromLevelIds?.join() !== map.levels.map(({ id }) => id).join();
+  const isStale = fromLevelIds.join() !== map.levels.map(({ id }) => id).join();
   if (isStale || levels.length !== map.levels.length || levels.some((level) => level === undefined)) {
     return 'LEVEL_ORDER_INVALID';
   }
@@ -73,7 +73,7 @@ function withAisle(map: DashboardLotMap, levelId: string, aisle: AisleDraft): Da
     return 'LEVEL_NOT_FOUND';
   }
   if (level.aisles.some(({ code }) => code === aisle.code)) {
-    return level.aisles.some(({ code, isExitLane }) => isExitLane && code === aisle.code) ? 'AISLE_CODE_RESERVED' : 'AISLE_CODE_TAKEN';
+    return 'AISLE_CODE_TAKEN';
   }
   if (map.levels.some(({ aisles }) => aisles.some(({ beaconMinor }) => beaconMinor === aisle.beaconMinor))) {
     return 'AISLE_MINOR_TAKEN';

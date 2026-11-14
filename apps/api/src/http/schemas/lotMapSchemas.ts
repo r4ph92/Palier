@@ -33,7 +33,7 @@ const levelIdsSchema = { type: 'array', minItems: 1, maxItems: MAX_LEVELS_PER_LO
 
 export const levelOrderBodySchema = {
   type: 'object',
-  required: ['levelIds'],
+  required: ['levelIds', 'fromLevelIds'],
   additionalProperties: false,
   properties: { levelIds: levelIdsSchema, fromLevelIds: levelIdsSchema },
 } as const;

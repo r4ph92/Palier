@@ -4,7 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { pierre, sophie } from './fakes/dashboardFixtures.ts';
-import { dashboardCookieFor, startDashboardServer } from './fakes/dashboardServer.ts';
+import { dashboardCookieFor, startDashboardServer, writeHeader } from './fakes/dashboardServer.ts';
 import type { FakeLotMapRepository } from './fakes/fakeLotMapRepository.ts';
 import { aisleA, levelIdOf, lotMapRoutesOf, type Cookies, type LotMapRoutes } from './fakes/lotMapRoutes.ts';
 
@@ -40,7 +40,7 @@ describe('dashboard lot map routes', () => {
 
       expect(map.levels.map(({ code, displayOrder }) => [code, displayOrder])).toEqual([['P1', 1], ['P2', 2]]);
 
-      const swapped = await routes.reorder(cookies, [levelIdOf(map, 'P2'), levelIdOf(map, 'P1')]);
+      const swapped = await routes.reorder(cookies, [levelIdOf(map, 'P2'), levelIdOf(map, 'P1')], [levelIdOf(map, 'P1'), levelIdOf(map, 'P2')]);
 
       expect(swapped.statusCode).toBe(200);
       expect(swapped.json<DashboardLotMap>().levels.map(({ code, displayOrder }) => [code, displayOrder])).toEqual([['P2', 1], ['P1', 2]]);
@@ -55,6 +55,7 @@ describe('dashboard lot map routes', () => {
       expect(added.json<DashboardLotMap>().levels.map(({ code }) => code)).toEqual(['P1']);
       expect(again.statusCode).toBe(409);
       expect(again.json()).toMatchObject({ error: 'LEVEL_CODE_TAKEN' });
+      expect((await routes.addLevel(cookies, '\uff30\uff11')).json()).toMatchObject({ statusCode: 409, error: 'LEVEL_CODE_TAKEN' });
     });
 
     it('refuses an empty code and a 21st level, even one with a taken code, as the SQL does', async () => {
@@ -71,8 +72,9 @@ describe('dashboard lot map routes', () => {
     it('refuses an order that leaves out a level or names another lot’s, and keeps the order', async () => {
       const { cookies, map } = await garageRoyWithP1AndP2();
 
-      const missing = await routes.reorder(cookies, [levelIdOf(map, 'P2')]);
-      const foreign = await routes.reorder(cookies, [levelIdOf(map, 'P2'), parkingDemoP1()]);
+      const shown = map.levels.map(({ id }) => id);
+      const missing = await routes.reorder(cookies, [levelIdOf(map, 'P2')], shown);
+      const foreign = await routes.reorder(cookies, [levelIdOf(map, 'P2'), parkingDemoP1()], shown);
 
       for (const response of [missing, foreign]) {
         expect(response.statusCode).toBe(409);
@@ -95,6 +97,16 @@ describe('dashboard lot map routes', () => {
       expect(stale.statusCode).toBe(409);
       expect(stale.json()).toMatchObject({ error: 'LEVEL_ORDER_INVALID' });
       expect((await routes.readMap(cookies)).json<DashboardLotMap>().levels.map(({ code }) => code)).toEqual(['P2', 'P3', 'P1']);
+    });
+
+    it('answers 400 to an order sent without the order the page showed, and keeps the saved order', async () => {
+      const { cookies, map } = await garageRoyWithP1AndP2();
+      const payload = { levelIds: [levelIdOf(map, 'P2'), levelIdOf(map, 'P1')] };
+
+      const response = await server.inject({ method: 'PUT', url: `/v1/dashboard/lots/${GARAGE_ROY_ID}/levels/order`, cookies, headers: writeHeader, payload });
+
+      expect(response.statusCode).toBe(400);
+      expect((await routes.readMap(cookies)).json<DashboardLotMap>().levels.map(({ code }) => code)).toEqual(['P1', 'P2']);
     });
 
     it.each([
@@ -166,14 +178,13 @@ describe('dashboard lot map routes', () => {
       expect(response.json()).toMatchObject({ statusCode: 409, error: 'AISLE_CODE_TAKEN' });
     });
 
-    it('refuses the exit lane’s code on its level as reserved, and accepts it on another level', async () => {
+    it.each(['P1', 'P2'])('refuses the exit lane’s code on %s as reserved, typed with a no-break space too, and saves nothing', async (code) => {
       const { cookies, map } = await garageRoyWithP1AndP2();
 
-      const onExitLaneLevel = await routes.addAisle(cookies, levelIdOf(map, 'P1'), { ...aisleA, code: 'Sortie' });
-      const onOtherLevel = await routes.addAisle(cookies, levelIdOf(map, 'P2'), { ...aisleA, code: 'Sortie' });
+      const response = await routes.addAisle(cookies, levelIdOf(map, code), { ...aisleA, code: '\u00a0Sortie ' });
 
-      expect(onExitLaneLevel.json()).toEqual({ statusCode: 409, error: 'AISLE_CODE_RESERVED', message: "Sortie is the code of this level's exit lane; choose another code." });
-      expect(onOtherLevel.statusCode).toBe(200);
+      expect(response.json()).toEqual({ statusCode: 400, error: 'AISLE_CODE_RESERVED', message: 'Sortie is reserved for the exit lane; choose another code.' });
+      expect((await routes.readMap(cookies)).json()).toEqual(map);
     });
   });
 
