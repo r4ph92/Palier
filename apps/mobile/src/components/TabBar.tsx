@@ -38,6 +38,7 @@ function TabButton({ label, isSelected, onPress }: { readonly label: string; rea
   const colors = useColors();
   return (
     <Pressable accessibilityRole="tab" accessibilityState={{ selected: isSelected }} onPress={onPress} style={styles.tab}>
+      {isSelected ? <View testID="selected-tab-mark" style={[styles.mark, { backgroundColor: colors.accent }]} /> : null}
       <Text
         numberOfLines={1}
         adjustsFontSizeToFit
@@ -55,4 +56,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: MINIMUM_TOUCH_TARGET, paddingHorizontal: TAB_SIDE_PADDING },
   selected: { textDecorationLine: 'underline' },
+  // A yellow bar on the top rule, over the middle of the selected tab, like a lane marking.
+  mark: { position: 'absolute', top: 0, left: '20%', right: '20%', height: 4 },
 });

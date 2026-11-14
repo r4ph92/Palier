@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react-native';
+import { render, screen, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { TabBar } from '../src/components/TabBar';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
@@ -38,6 +38,20 @@ describe.each<[SupportedLanguage, readonly string[]]>([
     for (const tab of screen.getAllByRole('tab')) {
       expect(tab).toHaveStyle({ paddingHorizontal: 0 });
     }
+  });
+});
+
+describe('TabBar selected tab', () => {
+  it('marks only the selected tab with a signage yellow bar', async () => {
+    applyLanguage('fr');
+    await render(
+      <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
+        <TabBar selected="scan" onSelect={() => undefined} />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getAllByTestId('selected-tab-mark')).toHaveLength(1);
+    expect(within(screen.getByRole('tab', { name: 'Scanner', selected: true })).getByTestId('selected-tab-mark')).toHaveStyle({ backgroundColor: '#F5C400', height: 4 });
   });
 });
 
