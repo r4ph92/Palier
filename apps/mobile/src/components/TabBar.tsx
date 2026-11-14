@@ -56,6 +56,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: MINIMUM_TOUCH_TARGET, paddingHorizontal: TAB_SIDE_PADDING },
   selected: { textDecorationLine: 'underline' },
-  // A yellow bar on the top rule, over the middle of the selected tab, like a lane marking.
-  mark: { position: 'absolute', top: 0, left: '20%', right: '20%', height: 4 },
+  // A yellow bar over the 2 pt top rule, in the middle of the selected tab, like a lane marking.
+  mark: { position: 'absolute', top: -2, left: '20%', right: '20%', height: 4 },
 });

@@ -51,7 +51,7 @@ describe('TabBar selected tab', () => {
     );
 
     expect(screen.getAllByTestId('selected-tab-mark')).toHaveLength(1);
-    expect(within(screen.getByRole('tab', { name: 'Scanner', selected: true })).getByTestId('selected-tab-mark')).toHaveStyle({ backgroundColor: '#F5C400', height: 4 });
+    expect(within(screen.getByRole('tab', { name: 'Scanner', selected: true })).getByTestId('selected-tab-mark')).toHaveStyle({ backgroundColor: '#F5C400', height: 4, top: -2 });
   });
 });
 
