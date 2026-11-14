@@ -1,3 +1,4 @@
+import type { DashboardLotMap } from '@palier/shared-types';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -101,6 +102,17 @@ describe('the map of a lot', () => {
     expect(beacons.getByText('Major du stationnement').nextElementSibling?.textContent).toBe('1');
     const rows = beacons.getAllByRole('row').slice(1).map((row) => [...row.children].map((cell) => cell.textContent));
     expect(rows).toEqual([['P1', 'A', '1'], ['P1', 'B', '2'], ['P1', 'Voie de sortie', '0']]);
+  });
+
+  it('says in plain text, not in figures, that a lot has no major yet', async () => {
+    const api = installFakeApi({ signedInAs: pierre });
+    const garageRoyMap = api.maps.get(garageRoy.id);
+    api.maps.set(garageRoy.id, { ...(garageRoyMap as DashboardLotMap), beaconMajor: null });
+    renderDashboard({ path: GARAGE_ROY_MAP });
+
+    const noMajor = await screen.findByText('Aucun major attribué');
+
+    expect(noMajor.closest('dd')?.className).toBe('fact-value');
   });
 
   it('names the exit lane in English and never by its stored code, with the map entirely in English', async () => {

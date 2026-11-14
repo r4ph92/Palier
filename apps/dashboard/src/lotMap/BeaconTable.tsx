@@ -17,8 +17,8 @@ export function BeaconTable({ map }: { readonly map: DashboardLotMap }) {
         <Fact label={text.map.platformUuidLabel} numeric>
           <code className="beacon-uuid">{map.platformUuid}</code>
         </Fact>
-        <Fact label={text.map.majorLabel} numeric>
-          {map.beaconMajor === null ? text.map.noMajor : String(map.beaconMajor)}
+        <Fact label={text.map.majorLabel} numeric={map.beaconMajor !== null}>
+          {map.beaconMajor === null ? <span className="muted">{text.map.noMajor}</span> : String(map.beaconMajor)}
         </Fact>
       </dl>
       {map.levels.length === 0 ? <p className="muted">{text.map.noBeacons}</p> : <MinorTable map={map} />}
