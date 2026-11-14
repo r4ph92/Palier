@@ -1,73 +1,93 @@
 import type { DashboardAisleSpots, DashboardMapAisle, DashboardSpot } from '@palier/shared-types';
 import { useState } from 'react';
-import { ErrorNotice } from '../components/ErrorNotice.tsx';
+import { formatCount } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
-import { useText } from '../i18n/LanguageContext.tsx';
+import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
+import { pluralFormOf } from '../i18n/plural.ts';
 import { EditSpotForm } from './EditSpotForm.tsx';
-import { editButtonId, SpotTable } from './SpotTable.tsx';
+import { SpotNoticeLine } from './SpotNoticeLine.tsx';
+import { SpotPager } from './SpotPager.tsx';
+import { editButtonId, SpotTable, type EditRow } from './SpotTable.tsx';
 import { useFocusAfterRender } from './useFocusAfterRender.ts';
-import { useSpotDeletion, type SpotDeletion } from './useSpotDeletion.ts';
-import type { SpotStatus } from './useSpotStatus.ts';
+import type { SpotChanges } from './useSpotChanges.ts';
+import { useSpotDeletion } from './useSpotDeletion.ts';
+import { useSpotPage } from './useSpotPage.ts';
 
 interface SpotListProps {
   readonly lotId: string;
   readonly aisle: DashboardMapAisle;
   readonly spots: readonly DashboardSpot[];
-  readonly status: SpotStatus;
+  readonly changes: SpotChanges;
 }
 
-// The aisle's spots with one edit form at a time; focus goes back to the row's edit button when the form closes, to the title after a delete.
-export function SpotList({ lotId, aisle, spots, status }: SpotListProps) {
-  const text = useText();
+// One edit form at a time, right after its row; focus goes back to the row's edit button when it closes, to the title after a delete.
+export function SpotList({ lotId, aisle, spots, changes }: SpotListProps) {
   const titleId = `spot-list-${aisle.id}`;
   const focusAfterRender = useFocusAfterRender();
-  const editing = useSpotEditing(status, focusAfterRender);
-  const deletion = useSpotDeletion({ lotId, onRefused: status.refused, onDeleted: (saved, spot) => (status.deleted(saved, spot), focusAfterRender(titleId)) });
+  const editing = useSpotEditing(changes, { focusAfterRender, titleId });
+  const page = useSpotPage(spots, editing.close);
+  const onDeleted = (saved: DashboardAisleSpots, spot: DashboardSpot) => {
+    changes.deleted(saved, spot);
+    focusAfterRender(titleId);
+  };
+  const deletion = useSpotDeletion({ lotId, onDeleted, onRefused: changes.refused, staleData: changes.staleData });
+  const editRow = editRowOf(lotId, editing, changes);
   return (
     <>
-      <h3 id={titleId} tabIndex={-1} className="subsection-title">
-        {interpolate(text.map.spots.listTitle, { aisle: aisle.code })}
-      </h3>
-      <SpotRows spots={spots} deletion={deletion} onEdit={editing.open} />
-      {editing.spot === null ? null : (
-        <EditSpotForm key={editing.spot.id} lotId={lotId} spot={editing.spot} onSaved={editing.saved} onRefused={status.refused} onCancel={editing.close} />
-      )}
+      <SpotListTitle id={titleId} aisle={aisle.code} count={spots.length} />
+      <SpotNoticeLine key={changes.noticeKey} notice={changes.notice} />
+      <SpotPager page={page} />
+      {spots.length === 0 ? <EmptyAisle /> : <SpotTable spots={page.spots} labelledBy={titleId} deletion={deletion} onEdit={editing.open} editing={editRow} />}
     </>
   );
 }
 
-function useSpotEditing(status: SpotStatus, focusAfterRender: (elementId: string) => void) {
+function editRowOf(lotId: string, editing: SpotEditing, { staleData }: SpotChanges): EditRow | null {
+  const { spot } = editing;
+  if (spot === null) {
+    return null;
+  }
+  const form = <EditSpotForm key={spot.id} lotId={lotId} spot={spot} onSaved={editing.saved} onGone={editing.gone} staleData={staleData} onCancel={editing.cancel} />;
+  return { spotId: spot.id, form };
+}
+
+function SpotListTitle({ id, aisle, count }: { readonly id: string; readonly aisle: string; readonly count: number }) {
+  const { text, language } = useLanguage();
+  return (
+    <h3 id={id} tabIndex={-1} className="subsection-title">
+      {interpolate(pluralFormOf(text.map.spots.listTitle, count, language), { aisle, count: formatCount(count, language) })}
+    </h3>
+  );
+}
+
+function EmptyAisle() {
+  const text = useText();
+  return <p className="muted">{text.map.spots.empty}</p>;
+}
+
+interface EditingFocus {
+  readonly focusAfterRender: (elementId: string) => void;
+  readonly titleId: string;
+}
+
+type SpotEditing = ReturnType<typeof useSpotEditing>;
+
+function useSpotEditing(changes: SpotChanges, { focusAfterRender, titleId }: EditingFocus) {
   const [spot, setSpot] = useState<DashboardSpot | null>(null);
-  const close = () => {
+  const closeFocusing = (elementId: string) => {
     setSpot(null);
-    if (spot !== null) {
-      focusAfterRender(editButtonId(spot));
-    }
+    focusAfterRender(elementId);
   };
+  const cancel = () => closeFocusing(spot === null ? titleId : editButtonId(spot));
   const saved = (spots: DashboardAisleSpots) => {
     if (spot !== null) {
-      status.saved(spots, spot);
+      changes.saved(spots, spot);
     }
-    close();
+    cancel();
   };
-  return { spot, open: setSpot, close, saved };
-}
-
-interface SpotRowsProps {
-  readonly spots: readonly DashboardSpot[];
-  readonly deletion: SpotDeletion;
-  readonly onEdit: (spot: DashboardSpot) => void;
-}
-
-function SpotRows({ spots, deletion, onEdit }: SpotRowsProps) {
-  const text = useText();
-  if (spots.length === 0) {
-    return <p className="muted">{text.map.spots.empty}</p>;
-  }
-  return (
-    <>
-      {deletion.error === null ? null : <ErrorNotice code={deletion.error} takesFocus />}
-      <SpotTable spots={spots} deletion={deletion} onEdit={onEdit} />
-    </>
-  );
+  const gone = () => {
+    changes.refused({ code: 'SPOT_NOT_FOUND', values: {} });
+    setSpot(null);
+  };
+  return { spot, open: setSpot, cancel, close: () => setSpot(null), saved, gone };
 }

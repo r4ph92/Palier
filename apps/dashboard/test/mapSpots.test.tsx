@@ -10,7 +10,7 @@ describe('the spots of an aisle', () => {
 
     await addSpots('A-1 à A-20');
 
-    expect((await screen.findByText('20 places ajoutées à l’allée A.')).getAttribute('role')).toBe('status');
+    expect((await screen.findByText('20 places ajoutées à l’allée A.')).closest('[role="status"]')).not.toBeNull();
     expect(spotNumbers()).toEqual(Array.from({ length: 20 }, (_, index) => `A-${index + 1}`));
     expect(within(rowOf('A-7')).getByText('Aucun')).toBeDefined();
     expect(rowOf('A-7').textContent).toMatch(/30\sm/);

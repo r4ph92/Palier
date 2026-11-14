@@ -1,15 +1,15 @@
 import type { DashboardAisleSpots, DashboardSpot } from '@palier/shared-types';
 import { useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
-import { asDashboardApiError, endsSession, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import { followUpRefusal, type Refusal, type RefusalFollowUps } from '../api/followUpRefusal.ts';
 import { useGuardedRequest } from '../forms/useGuardedRequest.ts';
 import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
-import type { SpotRefusalFollowUp } from './spotRefusal.ts';
 
 export interface SpotDeletionTarget {
   readonly lotId: string;
   readonly onDeleted: (spots: DashboardAisleSpots, spot: DashboardSpot) => void;
-  readonly onRefused: SpotRefusalFollowUp;
+  readonly onRefused: (refusal: Refusal) => void;
+  readonly staleData: Omit<RefusalFollowUps, 'refreshSession'>;
 }
 
 export interface SpotDeletion {
@@ -20,16 +20,15 @@ export interface SpotDeletion {
   readonly cancel: () => void;
   readonly cancelledId: string | null;
   readonly deleting: boolean;
-  readonly error: DisplayedErrorCode | null;
   readonly confirm: () => Promise<void>;
 }
 
-// A refused delete leaves the spot in the list and says why; the list shows only what the API answered.
+// A refused delete leaves the spot in the list and says why, naming the spot; the list shows only what the API answered.
 export function useSpotDeletion(target: SpotDeletionTarget): SpotDeletion {
   const request = useGuardedRequest();
   const [confirming, setConfirming] = useState<DashboardSpot | null>(null);
   const [cancelledId, setCancelledId] = useState<string | null>(null);
-  const { error, remove } = useSpotRemoval(target, () => setConfirming(null));
+  const remove = useSpotRemoval(target);
   const ask = (spot: DashboardSpot) => {
     setCancelledId(null);
     setConfirming(spot);
@@ -38,26 +37,18 @@ export function useSpotDeletion(target: SpotDeletionTarget): SpotDeletion {
     setCancelledId(confirming?.id ?? null);
     setConfirming(null);
   };
-  const confirm = () => (confirming === null ? Promise.resolve() : request.run(() => remove(confirming)));
-  return { confirming, ask, cancel, cancelledId, deleting: request.busy, error, confirm };
+  const confirm = () => (confirming === null ? Promise.resolve() : request.run(() => remove(confirming).finally(() => setConfirming(null))));
+  return { confirming, ask, cancel, cancelledId, deleting: request.busy, confirm };
 }
 
-function useSpotRemoval({ lotId, onDeleted, onRefused }: SpotDeletionTarget, onSettled: () => void) {
+function useSpotRemoval({ lotId, onDeleted, onRefused, staleData }: SpotDeletionTarget) {
   const refreshSession = useSessionRefresh();
-  const [error, setError] = useState<DisplayedErrorCode | null>(null);
-  const remove = async (spot: DashboardSpot) => {
+  return async (spot: DashboardSpot) => {
     try {
       onDeleted(await dashboardClient.deleteSpot(lotId, spot.id), spot);
-      setError(null);
     } catch (failure) {
-      const refusal = asDashboardApiError(failure);
-      if (endsSession(refusal)) {
-        void refreshSession();
-      }
-      onRefused(refusal.code);
-      setError(refusal.code);
+      const { code, values } = await followUpRefusal(failure, { refreshSession, ...staleData });
+      onRefused({ code, values: { number: spot.number, ...values } });
     }
-    onSettled();
   };
-  return { error, remove };
 }

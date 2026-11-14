@@ -1,8 +1,7 @@
 import type { BoundField } from '../forms/fieldBinder.ts';
 import { TextField } from '../forms/TextField.tsx';
-import type { Dictionary } from '../i18n/fr.ts';
 import { useText } from '../i18n/LanguageContext.tsx';
-import { CHECKED, SPOT_FLAGS, type SpotAttributeField, type SpotFlag } from './spotFormValues.ts';
+import { CHECKED, flagLabelsOf, SPOT_FLAGS, type SpotAttributeField } from './spotFormValues.ts';
 
 interface SpotAttributeFieldsProps {
   readonly field: (name: SpotAttributeField) => BoundField;
@@ -46,8 +45,4 @@ function CheckboxField({ field, label }: { readonly field: BoundField; readonly 
       <label htmlFor={field.id}>{label}</label>
     </div>
   );
-}
-
-export function flagLabelsOf(spots: Dictionary['map']['spots']): Readonly<Record<SpotFlag, string>> {
-  return { isEv: spots.electric, isAccessible: spots.accessible, isOversize: spots.oversize };
 }

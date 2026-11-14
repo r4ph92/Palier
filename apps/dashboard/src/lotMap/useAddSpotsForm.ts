@@ -2,10 +2,10 @@ import type { DashboardAisleSpots } from '@palier/shared-types';
 import { addSpotsErrors, parseSpotRange, spotCountOf, type AddSpotsRequest, type SpotRange } from '@palier/shared-types/spotDraft';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import type { RefusalFollowUps } from '../api/followUpRefusal.ts';
 import { readFormOf, useFieldForm, type FieldForm, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
 import { useLanguage, type Language } from '../i18n/LanguageContext.tsx';
 import { attributesOf, EMPTY_ATTRIBUTES, type SpotAttributeField } from './spotFormValues.ts';
-import { afterRefusal, type SpotRefusalFollowUp } from './spotRefusal.ts';
 
 export type AddSpotsField = 'range' | SpotAttributeField;
 
@@ -31,12 +31,12 @@ export interface AddSpotsTarget {
   readonly lotId: string;
   readonly aisleId: string;
   readonly onAdded: (spots: DashboardAisleSpots, count: number) => void;
-  readonly onRefused: SpotRefusalFollowUp;
+  readonly staleData: Omit<RefusalFollowUps, 'refreshSession'>;
 }
 
-export function useAddSpotsForm({ lotId, aisleId, onAdded, onRefused }: AddSpotsTarget): FieldForm<AddSpotsField> {
+export function useAddSpotsForm({ lotId, aisleId, onAdded, staleData }: AddSpotsTarget): FieldForm<AddSpotsField> {
   const { language } = useLanguage();
-  const send = (request: AddSpotsRequest) =>
-    afterRefusal(async () => onAdded(await dashboardClient.addSpots(lotId, aisleId, request), spotCountOf(request.range)), onRefused);
-  return useFieldForm({ initialValues: EMPTY_SPOTS, read: (values) => readSpots(values, language), send, fieldOfCode: FIELD_OF_CODE, emptiesOnSuccess: true });
+  const send = async (request: AddSpotsRequest) => onAdded(await dashboardClient.addSpots(lotId, aisleId, request), spotCountOf(request.range));
+  const read = (values: FieldValues<AddSpotsField>) => readSpots(values, language);
+  return useFieldForm({ initialValues: EMPTY_SPOTS, read, send, fieldOfCode: FIELD_OF_CODE, staleData, emptiesOnSuccess: true });
 }
