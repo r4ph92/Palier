@@ -8,7 +8,6 @@ export interface ColorTokens {
   readonly danger: string;
   // Under a quarter of the lot free, on the occupancy gauge: a fill, never text.
   readonly low: string;
-  readonly onInk: string;
   // Signage yellow: primary button, spot panel, selected tab and header mark. A background, never text color.
   readonly accent: string;
   readonly onAccent: string;
@@ -23,7 +22,6 @@ export const lightColors: ColorTokens = {
   free: '#2E7D4F',
   danger: '#9C3A2A',
   low: '#B45F06',
-  onInk: '#F8F9F6',
   accent: '#F5C400',
   onAccent: '#191C1A',
 };
@@ -37,7 +35,6 @@ export const darkColors: ColorTokens = {
   free: '#63B487',
   danger: '#D9705E',
   low: '#E09A3E',
-  onInk: '#121513',
   accent: '#F5C400',
   onAccent: '#191C1A',
 };

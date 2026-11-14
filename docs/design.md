@@ -15,7 +15,7 @@ partir, où le chiffre des places libres est l'information principale.
 |---|---|---|---|
 | `canvas` | `#F8F9F6` | `#121513` | Fond d'écran |
 | `sunken` | `#E4E6E0` | `#242925` | Squelettes de chargement, fond de l'allée assignée sur le plan du niveau |
-| `ink` | `#191C1A` | `#E7EAE4` | Texte, bouton principal |
+| `ink` | `#191C1A` | `#E7EAE4` | Texte, filets de titre et d’onglets |
 | `muted` | `#4B534D` | `#AEB6AE` | Texte secondaire, surtitres, bordure de 1 pt des allées du plan |
 | `line` | `#D2D6CE` | `#2C322D` | Filets entre les lignes (décoratif) |
 | `free` | `#2E7D4F` | `#63B487` | Carré « places libres », et carré d’un état favorable de la session du conducteur (« Entrée confirmée », « Garé en A-1 ») ; jamais en texte sur fond clair : 4,3:1 |
@@ -38,4 +38,4 @@ Les contrastes des jetons sont vérifiés par `apps/mobile/test/themeContrast.te
 2. Titre d'écran souligné d'un filet `ink` de 2 pt ; les lignes de liste sont séparées par des filets fins `line`, sans cartes ni ombres.
 3. Tout chiffre (places, montants à venir) en IBM Plex Mono, chiffres tabulaires ; dans une ligne de parking, le nombre de places libres (30 pt, aligné à droite) est l'élément le plus grand, son libellé reste petit et `muted`.
 4. Un état se montre par un carré plein de 8 pt dans la couleur sémantique suivi du mot, jamais par une pastille colorée. Un état à surveiller, pas encore une panne (« Pile inconnue »), prend un carré vide de 8 pt cerclé de `danger` sur 2 pt ; le mot porte le sens (#76).
-5. Une seule action principale par vue : bouton plein `ink`, angles droits, libellé en Archivo 600.
+5. Une seule action principale par vue : bouton plein `accent`, bordure `onAccent` de 3 pt, angles droits, libellé `onAccent` en Archivo 600.
