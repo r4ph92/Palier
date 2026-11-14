@@ -8,7 +8,7 @@ import type { Clock } from '../time/Clock.ts';
 import { DashboardRefusedError } from './DashboardRefusedError.ts';
 import { LOT_MAP_WRITTEN, type LotMapRepository, type LotMapWrite } from './LotMapRepository.ts';
 import { lotMapViewOf } from './lotMapView.ts';
-import { operatorIdOfMember, type MemberLot, type MemberOperators } from './memberOperator.ts';
+import { operatorIdOfMember, ownedLotOrNotFound, type MemberLot, type MemberOperators } from './memberOperator.ts';
 
 export interface LotMapSources {
   readonly operators: MemberOperators;
@@ -67,13 +67,8 @@ async function changeLotMap(sources: LotMapSources, lot: MemberLot, write: Opera
   return readOwnedLotMap(sources, operatorId, lot.lotId);
 }
 
-// Another operator's lot and a lot that does not exist give the same answer, so ids reveal nothing.
 async function readOwnedLotMap({ maps, clock }: LotMapSources, operatorId: string, lotId: string): Promise<DashboardLotMap> {
-  const map = await maps.readLotMap(operatorId, lotId);
-  if (map === null) {
-    throw new DashboardRefusedError('LOT_NOT_FOUND');
-  }
-  return lotMapViewOf(map, clock());
+  return lotMapViewOf(ownedLotOrNotFound(await maps.readLotMap(operatorId, lotId)), clock());
 }
 
 function validatedLevelCode({ code }: LevelDraft): string {

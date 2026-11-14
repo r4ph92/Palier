@@ -16,3 +16,11 @@ export async function operatorIdOfMember(operators: MemberOperators, userId: str
   }
   return operator.id;
 }
+
+// Another operator's lot and a lot that does not exist give the same answer, so ids reveal nothing.
+export function ownedLotOrNotFound<Read>(read: Read | null): Read {
+  if (read === null) {
+    throw new DashboardRefusedError('LOT_NOT_FOUND');
+  }
+  return read;
+}
