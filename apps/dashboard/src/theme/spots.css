@@ -98,6 +98,7 @@
   .spot-table .spot-state,
   .spot-table .state-mark {
     white-space: normal;
+    align-items: baseline;
   }
 
   /* The question takes a line of its own, with Confirmer and Annuler under it. */
