@@ -2,8 +2,6 @@ import { sql, type SQL } from 'drizzle-orm';
 import { EVENT_RETENTION_HOURS, type ParkingPresumedPayload, type SessionEvent } from '../../domain/sessionEvents/SessionEvent.ts';
 import type { Transaction } from './database.ts';
 
-type Executor = Pick<Transaction, 'execute'>;
-
 // occurredAt: the instant the step itself stored, read in the step's transaction, so the log never disagrees with the session.
 export interface SessionEventWrite {
   readonly sessionId: string;
@@ -13,7 +11,7 @@ export interface SessionEventWrite {
 }
 
 // Always called with the step's own transaction: a step rolled back leaves no event.
-export async function appendSessionEvent(tx: Executor, { sessionId, lotId, occurredAt, event }: SessionEventWrite): Promise<void> {
+export async function appendSessionEvent(tx: Transaction, { sessionId, lotId, occurredAt, event }: SessionEventWrite): Promise<void> {
   const row: SessionEventColumns = {
     sessionId: sql`${sessionId}::uuid`,
     lotId: sql`${lotId}::uuid`,

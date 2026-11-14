@@ -54,12 +54,14 @@ describe('migration 0036, the visit event log (story #156)', () => {
 
 describe('appending a session event', () => {
   async function appendLoop(scripted: ScriptedSql): Promise<void> {
-    await appendSessionEvent(scripted.executor(), {
-      sessionId: SESSION_ID,
-      lotId: LOT_ID,
-      occurredAt: sessionInstant(SESSION_ID, 'entry_confirmed_at'),
-      event: { kind: 'ENTRY_LOOP_CLOSED', payload: { gateId: GATE_ID } },
-    });
+    await scripted.database().transaction((tx) =>
+      appendSessionEvent(tx, {
+        sessionId: SESSION_ID,
+        lotId: LOT_ID,
+        occurredAt: sessionInstant(SESSION_ID, 'entry_confirmed_at'),
+        event: { kind: 'ENTRY_LOOP_CLOSED', payload: { gateId: GATE_ID } },
+      }),
+    );
   }
 
   it('computes the purge date at write, 2160 hours after the very instant it stores', async () => {
