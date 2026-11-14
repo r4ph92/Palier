@@ -143,7 +143,7 @@ describe('dashboard spot routes', () => {
       const { cookies, aisleA: aisleId, spotIdOf } = await withAisleAFilled();
       setState(spotIdOf('A-3'), state);
 
-      const refused = await routes.retireSpot(cookies, spotIdOf('A-3'));
+      const refused = await routes.removeSpot(cookies, spotIdOf('A-3'));
 
       expect(refused.statusCode).toBe(409);
       expect(refused.json()).toMatchObject({ error: 'SPOT_IN_USE' });
@@ -155,13 +155,13 @@ describe('dashboard spot routes', () => {
       const spot = spots.spots.find(({ id }) => id === spotIdOf('A-3'));
       Object.assign(spot ?? {}, { isHeldBySession: true });
 
-      expect((await routes.retireSpot(cookies, spotIdOf('A-3'))).json()).toMatchObject({ error: 'SPOT_IN_USE' });
+      expect((await routes.removeSpot(cookies, spotIdOf('A-3'))).json()).toMatchObject({ error: 'SPOT_IN_USE' });
     });
 
     it('removes a free spot from the list and from the lot’s count', async () => {
       const { cookies, spotIdOf } = await withAisleAFilled();
 
-      const deleted = await routes.retireSpot(cookies, spotIdOf('A-3'));
+      const deleted = await routes.removeSpot(cookies, spotIdOf('A-3'));
 
       expect(deleted.statusCode).toBe(200);
       const body = deleted.json<DashboardAisleSpots>();
@@ -173,10 +173,10 @@ describe('dashboard spot routes', () => {
       const { cookies, aisleB, spotIdOf } = await withAisleAFilled();
       Object.assign(spots.spots.find(({ id }) => id === spotIdOf('A-3')) ?? {}, { hasHistory: true });
 
-      expect((await routes.retireSpot(cookies, spotIdOf('A-3'))).statusCode).toBe(200);
+      expect((await routes.removeSpot(cookies, spotIdOf('A-3'))).statusCode).toBe(200);
 
       expect(spots.spots.find(({ id }) => id === spotIdOf('A-3'))).toMatchObject({ retired: true, state: 'OUT_OF_SERVICE' });
-      expect((await routes.retireSpot(cookies, spotIdOf('A-3'))).json()).toMatchObject({ error: 'SPOT_NOT_FOUND' });
+      expect((await routes.removeSpot(cookies, spotIdOf('A-3'))).json()).toMatchObject({ error: 'SPOT_NOT_FOUND' });
       expect((await routes.changeSpot(cookies, spotIdOf('A-3'), standard)).statusCode).toBe(404);
       expect((await routes.addSpots(cookies, aisleB, spotsOf('A-', '3', '3'))).statusCode).toBe(201);
     });

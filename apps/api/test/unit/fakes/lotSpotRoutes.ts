@@ -20,7 +20,7 @@ export function lotSpotRoutesOf(server: FastifyInstance, lotId = GARAGE_ROY_ID) 
     addSpots: (cookies: Cookies, aisleId: string, payload: object) =>
       server.inject({ method: 'POST', url: `${lotPath}/aisles/${aisleId}/spots`, cookies, headers: writeHeader, payload }),
     changeSpot: (cookies: Cookies, spotId: string, payload: object) => server.inject({ method: 'PUT', url: `${lotPath}/spots/${spotId}`, cookies, headers: writeHeader, payload }),
-    retireSpot: (cookies: Cookies, spotId: string) => server.inject({ method: 'DELETE', url: `${lotPath}/spots/${spotId}`, cookies, headers: writeHeader }),
+    removeSpot: (cookies: Cookies, spotId: string) => server.inject({ method: 'DELETE', url: `${lotPath}/spots/${spotId}`, cookies, headers: writeHeader }),
   };
 }
 

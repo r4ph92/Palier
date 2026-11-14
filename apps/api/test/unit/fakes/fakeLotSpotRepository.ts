@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DashboardAisleSpots, DashboardSpot } from '@palier/shared-types';
 import { MAX_SPOTS_PER_LOT, type SpotAttributes } from '@palier/shared-types/spotDraft';
 import { canonicalSpotNumber } from '@palier/shared-types/spotNumber';
-import type { AislePlace, LotSpotRepository, LotSpotWrite, SpotBatch, SpotPlace } from '../../../src/domain/dashboard/LotSpotRepository.ts';
+import { spotsRefused, spotsWritten, type AislePlace, type LotSpotRepository, type LotSpotWrite, type SpotBatch, type SpotPlace } from '../../../src/domain/dashboard/LotSpotRepository.ts';
 import type { SpotState } from '../../../src/domain/spots/spotStates.ts';
 import { parkingDemoSpots } from '../../../src/seed/fixtures/parkingDemo.ts';
 import type { FakeLotMapRepository } from './fakeLotMapRepository.ts';
@@ -52,17 +52,17 @@ export class FakeLotSpotRepository implements LotSpotRepository {
   addSpots(operatorId: string, { lotId, aisleId }: AislePlace, { numbers, attributes }: SpotBatch): Promise<LotSpotWrite> {
     return this.#write(operatorId, lotId, () => {
       if (!this.#isParkingAisle(lotId, aisleId)) {
-        return 'AISLE_NOT_FOUND';
+        return spotsRefused('AISLE_NOT_FOUND');
       }
       if (this.#liveSpots(lotId).length + numbers.length > MAX_SPOTS_PER_LOT) {
-        return 'SPOT_LIMIT_REACHED';
+        return spotsRefused('SPOT_LIMIT_REACHED');
       }
       const taken = this.#firstTaken(lotId, numbers);
       if (taken !== undefined) {
-        return { takenNumber: taken };
+        return { kind: 'numberTaken', takenNumber: taken };
       }
       this.spots.push(...numbers.map((number) => newSpot({ lotId, aisleId }, number, attributes)));
-      return { aisleId };
+      return spotsWritten(aisleId);
     });
   }
 
@@ -70,28 +70,28 @@ export class FakeLotSpotRepository implements LotSpotRepository {
     return this.#write(operatorId, place.lotId, () => {
       const spot = this.#liveSpot(place);
       if (spot === undefined) {
-        return 'SPOT_NOT_FOUND';
+        return spotsRefused('SPOT_NOT_FOUND');
       }
       Object.assign(spot, attributes);
-      return { aisleId: spot.aisleId };
+      return spotsWritten(spot.aisleId);
     });
   }
 
-  retireSpot(operatorId: string, place: SpotPlace): Promise<LotSpotWrite> {
+  removeSpot(operatorId: string, place: SpotPlace): Promise<LotSpotWrite> {
     return this.#write(operatorId, place.lotId, () => {
       const spot = this.#liveSpot(place);
       if (spot === undefined) {
-        return 'SPOT_NOT_FOUND';
+        return spotsRefused('SPOT_NOT_FOUND');
       }
       if (!FREE_STATES.includes(spot.state) || spot.isHeldBySession) {
-        return 'SPOT_IN_USE';
+        return spotsRefused('SPOT_IN_USE');
       }
-      this.#retire(spot);
-      return { aisleId: spot.aisleId };
+      this.#remove(spot);
+      return spotsWritten(spot.aisleId);
     });
   }
 
-  #retire(spot: FakeSpot): void {
+  #remove(spot: FakeSpot): void {
     if (!spot.hasHistory) {
       this.spots.splice(this.spots.indexOf(spot), 1);
       return;
@@ -102,9 +102,9 @@ export class FakeLotSpotRepository implements LotSpotRepository {
 
   #write(operatorId: string, lotId: string, change: () => LotSpotWrite): Promise<LotSpotWrite> {
     if (this.#lots.indexOf(operatorId, lotId) < 0) {
-      return Promise.resolve('LOT_NOT_FOUND');
+      return Promise.resolve(spotsRefused('LOT_NOT_FOUND'));
     }
-    return Promise.resolve(this.busyLots.has(lotId) ? 'LOT_BUSY' : change());
+    return Promise.resolve(this.busyLots.has(lotId) ? spotsRefused('LOT_BUSY') : change());
   }
 
   #isParkingAisle(lotId: string, aisleId: string): boolean {

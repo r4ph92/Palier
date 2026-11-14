@@ -21,12 +21,10 @@ const SPOT_WITHOUT_HISTORY = sql`not exists (select 1 from parking_session past 
   and not exists (select 1 from spot_hold past where past.spot_id = spot.id and past.lot_id = spot.lot_id)
   and not exists (select 1 from parking_session_reported_spot past where past.spot_id = spot.id and past.lot_id = spot.lot_id)`;
 
-// An aisle drivers park in, of a lot of this operator: never the exit lane.
 function ownedParkingAisle(operatorId: string, { lotId, aisleId }: AislePlace): SQL {
   return sql`aisle.id = ${aisleId} and aisle.lot_id = ${lotId} and not aisle.is_exit_lane and parking_lot.id = aisle.lot_id and parking_lot.operator_id = ${operatorId}`;
 }
 
-// A spot not retired, of a lot of this operator.
 function ownedLiveSpot(operatorId: string, { lotId, spotId }: SpotPlace): SQL {
   return sql`spot.id = ${spotId} and spot.lot_id = ${lotId} and ${liveSpot()} and parking_lot.id = spot.lot_id and parking_lot.operator_id = ${operatorId}`;
 }
@@ -67,7 +65,6 @@ export function firstTakenNumberStatement(operatorId: string, lotId: string, num
     limit 1`;
 }
 
-// One insert for the whole range; no row unless the aisle is one drivers park in, in a lot of this operator.
 export function insertSpotsStatement(operatorId: string, aisle: AislePlace, { numbers, attributes }: SpotBatch): SQL {
   return sql`
     insert into spot (aisle_id, lot_id, number, is_ev, is_accessible, is_oversize, distance_to_exit)

@@ -65,7 +65,7 @@ export const AISLE_CODE_UNIQUE = 'aisle_level_id_code_unique';
 export const AISLE_MINOR_UNIQUE = 'aisle_lot_id_beacon_minor_unique';
 export const AISLE_MINOR_MATCHES_LANE = 'aisle_beacon_minor_matches_lane';
 // Partial: a retired spot keeps its number for its history, and the number is free again for a new spot.
-export const SPOT_NUMBER_UNIQUE = 'spot_lot_id_number_unique';
+const SPOT_NUMBER_UNIQUE = 'spot_lot_id_number_unique';
 
 export const level = pgTable(
   'level',

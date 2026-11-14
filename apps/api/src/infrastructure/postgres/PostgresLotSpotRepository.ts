@@ -1,6 +1,6 @@
 import type { DashboardAisleSpots } from '@palier/shared-types';
 import { MAX_SPOTS_PER_LOT, type SpotAttributes } from '@palier/shared-types/spotDraft';
-import type { AislePlace, LotSpotRepository, LotSpotWrite, SpotBatch, SpotPlace } from '../../domain/dashboard/LotSpotRepository.ts';
+import { spotsRefused, spotsWritten, type AislePlace, type LotSpotRepository, type LotSpotWrite, type SpotBatch, type SpotPlace } from '../../domain/dashboard/LotSpotRepository.ts';
 import type { Database, Transaction } from './database.ts';
 import { aisleSpotsOf, type AisleSpotRow } from './lotSpotRows.ts';
 import {
@@ -14,6 +14,7 @@ import {
   readParkingAisleStatement,
   retireSpotStatement,
 } from './lotSpotStatements.ts';
+import type { OwnedLot } from './lockParkingLot.ts';
 import { writeInOwnedLot } from './ownedLotWrite.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
@@ -40,18 +41,23 @@ export class PostgresLotSpotRepository implements LotSpotRepository {
   }
 
   addSpots(operatorId: string, aisle: AislePlace, batch: SpotBatch): Promise<LotSpotWrite> {
-    return writeInOwnedLot(this.#database, { operatorId, lotId: aisle.lotId }, (tx) => insertSpots(tx, { operatorId, aisle, batch }));
+    return this.#write({ operatorId, lotId: aisle.lotId }, (tx) => insertSpots(tx, { operatorId, aisle, batch }));
   }
 
   changeSpot(operatorId: string, spot: SpotPlace, attributes: SpotAttributes): Promise<LotSpotWrite> {
-    return writeInOwnedLot(this.#database, { operatorId, lotId: spot.lotId }, async (tx) => {
+    return this.#write({ operatorId, lotId: spot.lotId }, async (tx) => {
       const [changed] = await tx.execute<AisleIdRow>(changeSpotStatement(operatorId, spot, attributes));
-      return changed === undefined ? 'SPOT_NOT_FOUND' : { aisleId: changed.aisle_id };
+      return changed === undefined ? spotsRefused('SPOT_NOT_FOUND') : spotsWritten(changed.aisle_id);
     });
   }
 
-  retireSpot(operatorId: string, spot: SpotPlace): Promise<LotSpotWrite> {
-    return writeInOwnedLot(this.#database, { operatorId, lotId: spot.lotId }, (tx) => retireUnusedSpot(tx, operatorId, spot));
+  removeSpot(operatorId: string, spot: SpotPlace): Promise<LotSpotWrite> {
+    return this.#write({ operatorId, lotId: spot.lotId }, (tx) => removeUnusedSpot(tx, operatorId, spot));
+  }
+
+  async #write(lot: OwnedLot, write: (tx: Executor) => Promise<LotSpotWrite>): Promise<LotSpotWrite> {
+    const outcome = await writeInOwnedLot(this.#database, lot, write);
+    return typeof outcome === 'string' ? spotsRefused(outcome) : outcome;
   }
 }
 
@@ -59,28 +65,34 @@ export class PostgresLotSpotRepository implements LotSpotRepository {
 async function insertSpots(tx: Executor, { operatorId, aisle, batch }: SpotInsert): Promise<LotSpotWrite> {
   const parkingAisles = await tx.execute(readParkingAisleStatement(operatorId, aisle));
   if (parkingAisles.length === 0) {
-    return 'AISLE_NOT_FOUND';
+    return spotsRefused('AISLE_NOT_FOUND');
   }
   const [counted] = await tx.execute<{ readonly spot_count: number }>(countLiveSpotsStatement(operatorId, aisle.lotId));
   if ((counted?.spot_count ?? 0) + batch.numbers.length > MAX_SPOTS_PER_LOT) {
-    return 'SPOT_LIMIT_REACHED';
+    return spotsRefused('SPOT_LIMIT_REACHED');
   }
   const [taken] = await tx.execute<{ readonly number: string }>(firstTakenNumberStatement(operatorId, aisle.lotId, batch.numbers));
   if (taken !== undefined) {
-    return { takenNumber: taken.number };
+    return { kind: 'numberTaken', takenNumber: taken.number };
   }
   await tx.execute(insertSpotsStatement(operatorId, aisle, batch));
-  return { aisleId: aisle.aisleId };
+  return spotsWritten(aisle.aisleId);
 }
 
 // A spot nothing ever pointed at is deleted; one with history is retired, so its sessions, holds and reports keep their spot.
-// Neither matched: the spot is in use when it is still live, otherwise it does not exist for this operator.
-async function retireUnusedSpot(tx: Executor, operatorId: string, spot: SpotPlace): Promise<LotSpotWrite> {
+async function removeUnusedSpot(tx: Executor, operatorId: string, spot: SpotPlace): Promise<LotSpotWrite> {
   const [deleted] = await tx.execute<AisleIdRow>(deleteSpotWithoutHistoryStatement(operatorId, spot));
-  const [retired] = deleted === undefined ? await tx.execute<AisleIdRow>(retireSpotStatement(operatorId, spot)) : [deleted];
-  if (retired !== undefined) {
-    return { aisleId: retired.aisle_id };
+  if (deleted !== undefined) {
+    return spotsWritten(deleted.aisle_id);
   }
+  const [retired] = await tx.execute<AisleIdRow>(retireSpotStatement(operatorId, spot));
+  if (retired !== undefined) {
+    return spotsWritten(retired.aisle_id);
+  }
+  return spotsRefused(await spotInUseOrNotFound(tx, operatorId, spot));
+}
+
+async function spotInUseOrNotFound(tx: Executor, operatorId: string, spot: SpotPlace): Promise<'SPOT_IN_USE' | 'SPOT_NOT_FOUND'> {
   const live = await tx.execute(readLiveSpotStatement(operatorId, spot));
   return live.length === 0 ? 'SPOT_NOT_FOUND' : 'SPOT_IN_USE';
 }
