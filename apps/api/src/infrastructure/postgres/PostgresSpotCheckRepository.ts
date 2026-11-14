@@ -24,7 +24,7 @@ export class PostgresSpotCheckRepository implements SpotCheckRepository {
 
   async listSpotsToCheck(operatorId: string, lotId: string): Promise<DashboardSpotsToCheck | null> {
     const rows = await this.#database.execute<SpotToCheckRow>(readSpotsToCheckStatement(operatorId, lotId));
-    return rows.length === 0 ? null : spotsToCheckOf(rows);
+    return spotsToCheckOf(rows);
   }
 
   clearSpotCheck(operatorId: string, spot: SpotPlace): Promise<'CLEARED' | SpotCheckRefusal> {

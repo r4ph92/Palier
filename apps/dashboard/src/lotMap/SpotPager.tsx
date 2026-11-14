@@ -10,7 +10,7 @@ interface PageTurnsProps {
   readonly children?: ReactNode;
 }
 
-// Shown only for an aisle longer than one page: « 1–50 sur 120 », then the previous and next pages.
+// Shown only for a list longer than one page: « 1–50 sur 120 », then the previous and next pages.
 export function SpotPager({ page }: { readonly page: SpotPage }) {
   const { text, language } = useLanguage();
   const labels = text.map.spots.page;

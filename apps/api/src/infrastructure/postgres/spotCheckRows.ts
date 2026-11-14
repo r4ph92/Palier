@@ -17,9 +17,13 @@ type NoSpotColumns = { readonly [Column in keyof SpotToCheckColumns]: null };
 
 export type SpotToCheckRow = Record<string, unknown> & { readonly lot_name: string } & (SpotToCheckColumns | NoSpotColumns);
 
-// A lot with no flagged spot comes back as one row of null spot columns, which still names the lot.
-export function spotsToCheckOf(rows: readonly SpotToCheckRow[]): DashboardSpotsToCheck {
-  return { lotName: rows[0]?.lot_name ?? '', spots: rows.flatMap(spotToCheckOf) };
+// No row: the lot is not the operator's. A lot with no flagged spot comes back as one row of null spot columns, which still names the lot.
+export function spotsToCheckOf(rows: readonly SpotToCheckRow[]): DashboardSpotsToCheck | null {
+  const [first] = rows;
+  if (first === undefined) {
+    return null;
+  }
+  return { lotName: first.lot_name, spots: rows.flatMap(spotToCheckOf) };
 }
 
 function spotToCheckOf(row: SpotToCheckRow): DashboardSpotToCheck[] {
