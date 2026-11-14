@@ -63,7 +63,7 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
     await walkWith(sql);
 
     const flag = sql.statement('flag-assigned-spot');
-    expect(flag?.text).toMatch(/set state = 'OCCUPIED_UNKNOWN', needs_check = true, needs_check_since = now\(\), needs_check_reason = \$\d+, state_changed_at = now\(\)/);
+    expect(flag?.text).toMatch(/set state = 'OCCUPIED_UNKNOWN', needs_check = true, needs_check_since = coalesce\(needs_check_since, now\(\)\), needs_check_reason = coalesce\(needs_check_reason, \$\d+\), state_changed_at = now\(\)/);
     expect(flag?.text).toMatch(/where id = \$\d+ and state = 'OCCUPIED'/);
     expect(flag?.params).toEqual(['WRONG_AISLE', SPOT_A1_ID]);
   });
