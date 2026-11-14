@@ -4,6 +4,7 @@ import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database } from './database.ts';
+import { logEntryWithoutLoop } from './entryEvents.ts';
 import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
 import { entryOpenedAt, isWithinOpeningWindow } from './openingWindowSql.ts';
 
@@ -43,7 +44,11 @@ export class PostgresUnconfirmedEntryRepository implements UnconfirmedEntryRepos
   cancel(entry: ExpiredEntry): Promise<boolean> {
     return this.#database.transaction(async (tx) => {
       await lockParkingLot(tx, entry.lotId);
-      return cancelCreatedSession(tx, entry.sessionId, this.#clock());
+      const cancelled = await cancelCreatedSession(tx, entry.sessionId, this.#clock());
+      if (cancelled) {
+        await logEntryWithoutLoop(tx, entry);
+      }
+      return cancelled;
     }, LOT_LOCK_TRANSACTION);
   }
 

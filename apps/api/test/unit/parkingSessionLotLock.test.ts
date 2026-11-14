@@ -49,7 +49,7 @@ describe('opening an entry under the lot lock', () => {
 
     await openEntry(scripted);
 
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-lot-occupancy', 'read-free-spots', 'claim-spot', 'insert-session']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-lot-occupancy', 'read-free-spots', 'claim-spot', 'insert-session', 'append-session-event']);
   });
 
   it('runs every statement on the transaction, never on the shared connection', async () => {
@@ -99,7 +99,7 @@ describe('opening an entry for a driver who holds a spot', () => {
     const opening = await openEntry(scripted);
 
     expect(opening).toEqual({ kind: 'opened', session: { id: 'session-1', spot: { number: 'B-2', levelCode: 'P1', aisleCode: 'B' } } });
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'use-spot-hold', 'assign-held-spot', 'insert-session']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'use-spot-hold', 'assign-held-spot', 'insert-session', 'append-session-event']);
   });
 
   it('looks for the hold of this driver in the scanned lot only, still running at the API clock instant', async () => {
@@ -163,6 +163,7 @@ describe('opening an entry for a driver who holds a spot', () => {
 
     expect(scripted.labels()).toEqual([
       'limit-lock-wait', 'lock-lot', 'read-active-session', 'read-held-spot', 'read-free-spots', 'claim-spot', 'release-spot-hold', 'free-held-spot', 'insert-session',
+      'append-session-event',
     ]);
     expect(scripted.count('use-spot-hold')).toBe(0);
   });
