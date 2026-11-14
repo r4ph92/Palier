@@ -14,3 +14,7 @@ export function formatDegrees(degrees: number, language: Language): string {
 export function formatClockTime(moment: Date, language: Language): string {
   return new Intl.DateTimeFormat(language === 'fr' ? 'fr-CA' : 'en', { hour: 'numeric', minute: '2-digit' }).format(moment);
 }
+
+export function formatMetres(metres: number, language: Language): string {
+  return new Intl.NumberFormat(language, { style: 'unit', unit: 'meter' }).format(metres);
+}

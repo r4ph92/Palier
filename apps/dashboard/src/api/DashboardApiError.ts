@@ -13,12 +13,15 @@ export type DisplayedErrorCode = DashboardErrorCode | 'FIELDS_INVALID' | 'MAP_RE
 export class DashboardApiError extends Error {
   readonly status: number;
   readonly code: DisplayedErrorCode;
+  // Fill the code's sentence, like the taken number of SPOT_NUMBER_TAKEN.
+  readonly values: Readonly<Record<string, string>>;
 
-  constructor(status: number, code: string | undefined) {
+  constructor(status: number, code: string | undefined, values: Readonly<Record<string, string>> = {}) {
     super(`Dashboard API answered ${status} ${code ?? ''}`.trim());
     this.name = 'DashboardApiError';
     this.status = status;
     this.code = isDashboardErrorCode(code) ? code : 'UNKNOWN';
+    this.values = values;
   }
 }
 

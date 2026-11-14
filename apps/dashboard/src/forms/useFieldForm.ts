@@ -26,6 +26,8 @@ export interface FieldForm<Field extends string> {
   readonly setValue: (field: Field, value: string) => void;
   readonly errors: FieldErrorCodes<Field>;
   readonly summary: DisplayedErrorCode | null;
+  // Fill the refusal's sentence, beside its field or in the summary: the taken number of SPOT_NUMBER_TAKEN.
+  readonly refusalValues: Readonly<Record<string, string>>;
   // Changes with each refused submit, so the summary takes focus again even when its text stays the same.
   readonly attempt: number;
   readonly submitting: boolean;
@@ -35,15 +37,16 @@ export interface FieldForm<Field extends string> {
 interface Outcome<Field extends string> {
   readonly errors: FieldErrorCodes<Field>;
   readonly refusal: DisplayedErrorCode | null;
+  readonly values: Readonly<Record<string, string>>;
 }
 
-const ACCEPTED = { errors: {}, refusal: null } as const;
+const ACCEPTED = { errors: {}, refusal: null, values: {} } as const;
 
 export function useFieldForm<Field extends string, Value>(setup: FieldFormSetup<Field, Value>): FieldForm<Field> {
   const { values, setValue, outcome, setOutcome, reset } = useFieldValues(setup.initialValues);
   const afterSuccess = setup.emptiesOnSuccess === true ? reset : () => undefined;
   const { attempt, submitting, submit } = useSubmit(values, useSender(setup, { show: setOutcome, afterSuccess }));
-  return { values, setValue, errors: outcome.errors, summary: summaryOf(outcome), attempt, submitting, submit };
+  return { values, setValue, errors: outcome.errors, summary: summaryOf(outcome), refusalValues: outcome.values, attempt, submitting, submit };
 }
 
 // Editing a field clears its own error only, so the others stay beside their fields until fixed.
@@ -86,7 +89,7 @@ function useSender<Field extends string, Value>({ read, send, fieldOfCode }: Fie
   return async (values: FieldValues<Field>): Promise<boolean> => {
     const readForm = read(values);
     if (!readForm.ok) {
-      show({ errors: readForm.errors, refusal: null });
+      show({ errors: readForm.errors, refusal: null, values: {} });
       return false;
     }
     show(ACCEPTED);
@@ -111,7 +114,8 @@ function refusalOutcome<Field extends string>(
     void refreshSession();
   }
   const field = fieldOfCode[error.code];
-  return field === undefined ? { errors: {}, refusal: error.code } : { errors: { [field]: error.code } as FieldErrorCodes<Field>, refusal: null };
+  const { values } = error;
+  return field === undefined ? { errors: {}, refusal: error.code, values } : { errors: { [field]: error.code } as FieldErrorCodes<Field>, refusal: null, values };
 }
 
 function summaryOf<Field extends string>({ errors, refusal }: Outcome<Field>): DisplayedErrorCode | null {

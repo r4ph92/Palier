@@ -1,3 +1,4 @@
+import { enSpots } from './enSpots.ts';
 import type { frMap } from './frMap.ts';
 
 export const enMap: typeof frMap = {
@@ -49,4 +50,5 @@ export const enMap: typeof frMap = {
   noMajor: 'No major assigned',
   levelColumn: 'Level',
   noBeacons: 'No beacons to program: add a level first.',
+  spots: enSpots,
 };
