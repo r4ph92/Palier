@@ -1,4 +1,5 @@
-import type { DashboardSpotToCheck, SpotCheckReason } from '@palier/shared-types';
+import type { DashboardSpotsToCheck, DashboardSpotToCheck, SpotCheckReason } from '@palier/shared-types';
+import { clearDecisionOf } from '../../domain/dashboard/clearDecisionOf.ts';
 import type { SpotState } from '../../domain/spots/spotStates.ts';
 
 interface SpotToCheckColumns {
@@ -9,15 +10,16 @@ interface SpotToCheckColumns {
   readonly needs_check_since: Date | string;
   readonly needs_check_reason: SpotCheckReason | null;
   readonly state: SpotState;
+  readonly held_by_session: boolean;
 }
 
 type NoSpotColumns = { readonly [Column in keyof SpotToCheckColumns]: null };
 
-export type SpotToCheckRow = Record<string, unknown> & (SpotToCheckColumns | NoSpotColumns);
+export type SpotToCheckRow = Record<string, unknown> & { readonly lot_name: string } & (SpotToCheckColumns | NoSpotColumns);
 
-// A lot with no flagged spot comes back as one row of null spot columns.
-export function spotsToCheckOf(rows: readonly SpotToCheckRow[]): readonly DashboardSpotToCheck[] {
-  return rows.flatMap(spotToCheckOf);
+// A lot with no flagged spot comes back as one row of null spot columns, which still names the lot.
+export function spotsToCheckOf(rows: readonly SpotToCheckRow[]): DashboardSpotsToCheck {
+  return { lotName: rows[0]?.lot_name ?? '', spots: rows.flatMap(spotToCheckOf) };
 }
 
 function spotToCheckOf(row: SpotToCheckRow): DashboardSpotToCheck[] {
@@ -33,6 +35,7 @@ function spotToCheckOf(row: SpotToCheckRow): DashboardSpotToCheck[] {
       since: new Date(row.needs_check_since).toISOString(),
       reason: row.needs_check_reason,
       state: row.state,
+      clearable: clearDecisionOf({ state: row.state, needsCheck: true, heldBySession: row.held_by_session }) === 'CLEAR',
     },
   ];
 }

@@ -29,7 +29,7 @@ describe('the spots to check page', () => {
 
   it('says the reason was not recorded for a flag from before reasons were kept', async () => {
     const api = installFakeApi({ signedInAs: sophie });
-    api.spotsToCheck.set(parkingDemo.id, [{ spotId: PARKING_DEMO_A1_ID, number: 'A-1', levelCode: 'P1', aisleCode: 'A', since: '2026-11-13T14:05:00.000Z', reason: null, state: 'AVAILABLE' }]);
+    api.spotsToCheck.set(parkingDemo.id, [{ spotId: PARKING_DEMO_A1_ID, number: 'A-1', levelCode: 'P1', aisleCode: 'A', since: '2026-11-13T14:05:00.000Z', reason: null, state: 'AVAILABLE', clearable: true }]);
     renderDashboard({ path: PAGE });
 
     expect(await screen.findByText('raison non enregistrée')).toBeDefined();

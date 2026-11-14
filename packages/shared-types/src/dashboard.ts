@@ -136,6 +136,14 @@ export interface DashboardSpotToCheck {
   readonly since: string;
   readonly reason: SpotCheckReason | null;
   readonly state: SpotState;
+  // False while the spot is occupied-unknown, assigned or held, or an active session still points at it: a clear would be refused.
+  readonly clearable: boolean;
+}
+
+// The page's whole answer: the lot's name for the title, and its flagged spots.
+export interface DashboardSpotsToCheck {
+  readonly lotName: string;
+  readonly spots: readonly DashboardSpotToCheck[];
 }
 
 // Every level of the lot, each once, in the new order; fromLevelIds is the order the page showed when the operator moved a level.

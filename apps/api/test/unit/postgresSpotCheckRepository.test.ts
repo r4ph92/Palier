@@ -6,7 +6,7 @@ const SOPHIE_OPERATOR = 'operator-lavoie';
 const PARKING_DEMO = 'lot-demo';
 const SPOT_B2 = 'spot-b2';
 const spotB2 = { lotId: PARKING_DEMO, spotId: SPOT_B2 };
-const noSpot = { id: null, number: null, level_code: null, aisle_code: null, needs_check_since: null, needs_check_reason: null, state: null };
+const noSpot = { lot_name: 'Parking Démo', id: null, number: null, level_code: null, aisle_code: null, needs_check_since: null, needs_check_reason: null, state: null, held_by_session: null };
 
 function repositoryOn(scripted: ScriptedSql) {
   return new PostgresSpotCheckRepository(scripted.database());
@@ -19,27 +19,30 @@ function lockedLot(): ScriptedSql {
 describe('reading the spots to check from Postgres', () => {
   it('lists the flagged live spots of the operator’s lot with their time, reason and place, oldest flag first, in one statement', async () => {
     const scripted = new ScriptedSql().answer('read-spots-to-check', [
-      { id: 'a1', number: 'A-1', level_code: 'P1', aisle_code: 'A', needs_check_since: new Date('2026-11-13T14:05:00Z'), needs_check_reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN' },
-      { id: 'b2', number: 'B-2', level_code: 'P1', aisle_code: 'B', needs_check_since: '2026-11-13T15:20:00.000Z', needs_check_reason: null, state: 'AVAILABLE' },
+      { lot_name: 'Parking Démo', id: 'a1', number: 'A-1', level_code: 'P1', aisle_code: 'A', needs_check_since: new Date('2026-11-13T14:05:00Z'), needs_check_reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN', held_by_session: false },
+      { lot_name: 'Parking Démo', id: 'b2', number: 'B-2', level_code: 'P1', aisle_code: 'B', needs_check_since: '2026-11-13T15:20:00.000Z', needs_check_reason: null, state: 'AVAILABLE', held_by_session: true },
     ]);
 
     const spots = await repositoryOn(scripted).listSpotsToCheck(SOPHIE_OPERATOR, PARKING_DEMO);
 
-    expect(spots).toEqual([
-      { spotId: 'a1', number: 'A-1', levelCode: 'P1', aisleCode: 'A', since: '2026-11-13T14:05:00.000Z', reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN' },
-      { spotId: 'b2', number: 'B-2', levelCode: 'P1', aisleCode: 'B', since: '2026-11-13T15:20:00.000Z', reason: null, state: 'AVAILABLE' },
-    ]);
+    expect(spots).toEqual({
+      lotName: 'Parking Démo',
+      spots: [
+        { spotId: 'a1', number: 'A-1', levelCode: 'P1', aisleCode: 'A', since: '2026-11-13T14:05:00.000Z', reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN', clearable: false },
+        { spotId: 'b2', number: 'B-2', levelCode: 'P1', aisleCode: 'B', since: '2026-11-13T15:20:00.000Z', reason: null, state: 'AVAILABLE', clearable: false },
+      ],
+    });
     expect(scripted.labels()).toEqual(['read-spots-to-check']);
     const { text, params } = scripted.statement('read-spots-to-check') ?? { text: '', params: [] };
-    expect(text).toMatch(/left join spot on spot\.lot_id = parking_lot\.id and spot\.needs_check and spot\.retired_at is null/);
-    expect(text).toMatch(/where parking_lot\.id = \$1 and parking_lot\.operator_id = \$2\s+order by spot\.needs_check_since, spot\.number$/);
+    expect(text).toMatch(/left join spot on spot\.lot_id = parking_lot\.id and spot\.needs_check and spot\.retired_at is null and spot\.state <> 'OUT_OF_SERVICE'/);
+    expect(text).toMatch(/where parking_lot\.id = \$1 and parking_lot\.operator_id = \$2\s+order by spot\.needs_check_since, regexp_replace\(spot\.number/);
     expect(params).toEqual([PARKING_DEMO, SOPHIE_OPERATOR]);
   });
 
-  it('reads an owned lot with nothing flagged as an empty list, and another operator’s lot as null', async () => {
+  it('reads an owned lot with nothing flagged as its name and no spot, and another operator’s lot as null', async () => {
     const empty = new ScriptedSql().answer('read-spots-to-check', [noSpot]);
 
-    expect(await repositoryOn(empty).listSpotsToCheck(SOPHIE_OPERATOR, PARKING_DEMO)).toEqual([]);
+    expect(await repositoryOn(empty).listSpotsToCheck(SOPHIE_OPERATOR, PARKING_DEMO)).toEqual({ lotName: 'Parking Démo', spots: [] });
     expect(await repositoryOn(new ScriptedSql()).listSpotsToCheck('operator-roy', PARKING_DEMO)).toBeNull();
   });
 });
@@ -82,7 +85,7 @@ describe('clearing the check of a spot in Postgres', () => {
     expect(scripted.count('clear-spot-check')).toBe(0);
   });
 
-  it('answers SPOT_NOT_FOUND for a spot that is retired, another lot’s, or none', async () => {
+  it('answers SPOT_NOT_FOUND when the locked statement finds no live spot of the lot (retired, another lot’s, or none)', async () => {
     expect(await repositoryOn(lockedLot()).clearSpotCheck(SOPHIE_OPERATOR, spotB2)).toBe('SPOT_NOT_FOUND');
   });
 

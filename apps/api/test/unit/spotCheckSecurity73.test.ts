@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it } from 'vitest';
-import type { DashboardErrorBody, DashboardSpotToCheck } from '@palier/shared-types';
+import type { DashboardErrorBody, DashboardSpotsToCheck } from '@palier/shared-types';
 import type { FastifyInstance } from 'fastify';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { PARKING_TEST_PALIERS_ID } from '../../src/seed/fixtures/parkingTestPaliers.ts';
@@ -12,7 +12,7 @@ import type { FakeLotSpotRepository, FakeSpot } from './fakes/fakeLotSpotReposit
 // POST /v1/dashboard/lots/:id/spots/:spotId/check-cleared. These attacks must all stay refused.
 const SINCE = '2026-11-13T15:20:00.000Z';
 const UNKNOWN_SPOT = '00000000-0000-4000-8000-000000000999';
-const SPOT_TO_CHECK_KEYS = ['aisleCode', 'levelCode', 'number', 'reason', 'since', 'spotId', 'state'];
+const SPOT_TO_CHECK_KEYS = ['aisleCode', 'clearable', 'levelCode', 'number', 'reason', 'since', 'spotId', 'state'];
 
 describe('story #73 attack surface: spots to check and clearing them', () => {
   let server: FastifyInstance;
@@ -76,7 +76,7 @@ describe('story #73 attack surface: spots to check and clearing them', () => {
   it('exposes only the spot columns, never a driver or session field', async () => {
     flag('A-1', 'AVAILABLE');
 
-    const rows = (await list(sophieCookies)).json<DashboardSpotToCheck[]>();
+    const { spots: rows } = (await list(sophieCookies)).json<DashboardSpotsToCheck>();
 
     expect(rows.length).toBeGreaterThan(0);
     for (const row of rows) {

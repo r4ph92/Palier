@@ -1,4 +1,4 @@
-import type { DashboardSpotToCheck } from '@palier/shared-types';
+import type { DashboardSpotsToCheck, DashboardSpotToCheck } from '@palier/shared-types';
 import { clearDecisionOf } from '../../../src/domain/dashboard/clearDecisionOf.ts';
 import type { SpotPlace } from '../../../src/domain/dashboard/LotSpotRepository.ts';
 import type { SpotCheckRefusal, SpotCheckRepository } from '../../../src/domain/dashboard/SpotCheckRepository.ts';
@@ -19,12 +19,14 @@ export class FakeSpotCheckRepository implements SpotCheckRepository {
     this.#spots = spots;
   }
 
-  listSpotsToCheck(operatorId: string, lotId: string): Promise<readonly DashboardSpotToCheck[] | null> {
-    if (this.#lots.indexOf(operatorId, lotId) < 0) {
+  listSpotsToCheck(operatorId: string, lotId: string): Promise<DashboardSpotsToCheck | null> {
+    const lot = this.#lots.owned[this.#lots.indexOf(operatorId, lotId)];
+    if (lot === undefined) {
       return Promise.resolve(null);
     }
-    const flagged = this.#spots.spots.filter((spot) => spot.lotId === lotId && !spot.retired && spot.check !== null);
-    return Promise.resolve(flagged.map((spot) => this.#toCheckOf(spot)).sort((left, right) => left.since.localeCompare(right.since)));
+    const flagged = this.#spots.spots.filter((spot) => spot.lotId === lotId && !spot.retired && spot.check !== null && spot.state !== 'OUT_OF_SERVICE');
+    const spots = flagged.map((spot) => this.#toCheckOf(spot)).sort((left, right) => left.since.localeCompare(right.since));
+    return Promise.resolve({ lotName: lot.name, spots });
   }
 
   clearSpotCheck(operatorId: string, { lotId, spotId }: SpotPlace): Promise<'CLEARED' | SpotCheckRefusal> {
@@ -57,6 +59,7 @@ export class FakeSpotCheckRepository implements SpotCheckRepository {
       since: spot.check?.since ?? '',
       reason: spot.check?.reason ?? null,
       state: spot.state,
+      clearable: clearDecisionOf({ state: spot.state, needsCheck: true, heldBySession: spot.isHeldBySession }) === 'CLEAR',
     };
   }
 }

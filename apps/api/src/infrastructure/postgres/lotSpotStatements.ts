@@ -8,7 +8,7 @@ import { liveSpot } from './liveSpot.ts';
 import { sessionHoldsSpot } from './sessionHoldsSpot.ts';
 
 // Prefix first, then the number at its end read as a number: A-2 before A-10, and B-7a after the A spots.
-const NATURAL_SPOT_ORDER = sql.raw(`regexp_replace(spot.number, '[0-9]+$', ''), substring(spot.number from '[0-9]+$')::numeric nulls first, spot.number`);
+export const NATURAL_SPOT_ORDER = sql.raw(`regexp_replace(spot.number, '[0-9]+$', ''), substring(spot.number from '[0-9]+$')::numeric nulls first, spot.number`);
 
 // Free or out of service, and no active session or hold points at it: nothing to wait for before it goes.
 const SPOT_NOT_IN_USE = sql`spot.state in ('AVAILABLE', 'OUT_OF_SERVICE')

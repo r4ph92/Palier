@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { DashboardErrorBody, DashboardSpotToCheck } from '@palier/shared-types';
+import type { DashboardErrorBody, DashboardSpotsToCheck } from '@palier/shared-types';
 import type { FastifyInstance } from 'fastify';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { pierre, sophie } from './fakes/dashboardFixtures.ts';
@@ -48,30 +48,35 @@ describe('the spots flagged for a physical check, and clearing them', () => {
     const response = await list(sophieCookies);
 
     expect(response.statusCode).toBe(200);
-    expect(response.json<DashboardSpotToCheck[]>()).toEqual([
-      expect.objectContaining({ number: 'A-1', since: WRONG_AISLE_AT, reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN' }),
-      expect.objectContaining({ number: 'B-2', since: REPORTED_TAKEN_AT, reason: 'REPORTED_TAKEN', state: 'AVAILABLE' }),
+    expect(response.json<DashboardSpotsToCheck>().spots).toEqual([
+      expect.objectContaining({ number: 'A-1', since: WRONG_AISLE_AT, reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN', clearable: false }),
+      expect.objectContaining({ number: 'B-2', since: REPORTED_TAKEN_AT, reason: 'REPORTED_TAKEN', state: 'AVAILABLE', clearable: true }),
     ]);
   });
 
   it('names the level and the aisle of each flagged spot', async () => {
     flagA1AndB2();
 
-    const [first] = (await list(sophieCookies)).json<DashboardSpotToCheck[]>();
+    const [first] = (await list(sophieCookies)).json<DashboardSpotsToCheck>().spots;
 
     expect(first).toEqual(expect.objectContaining({ aisleCode: 'A', levelCode: expect.any(String) }));
   });
 
-  it('lists nothing for a lot with no flagged spot, and leaves out a retired one', async () => {
-    Object.assign(spotNamed('A-1'), { retired: true, state: 'OUT_OF_SERVICE', check: { since: WRONG_AISLE_AT, reason: 'WRONG_AISLE' } });
+  it('names the lot and lists no spot when none is flagged', async () => {
+    expect((await list(sophieCookies)).json()).toEqual({ lotName: 'Parking Démo', spots: [] });
+  });
 
-    expect((await list(sophieCookies)).json()).toEqual([]);
+  it('leaves out a retired spot and an out-of-service one, which a physical check changes nothing for', async () => {
+    Object.assign(spotNamed('A-1'), { retired: true, state: 'OUT_OF_SERVICE', check: { since: WRONG_AISLE_AT, reason: 'WRONG_AISLE' } });
+    Object.assign(spotNamed('B-2'), { state: 'OUT_OF_SERVICE', check: { since: REPORTED_TAKEN_AT, reason: 'REPORTED_TAKEN' } });
+
+    expect((await list(sophieCookies)).json<DashboardSpotsToCheck>().spots).toEqual([]);
   });
 
   it('keeps a flag raised before reasons were recorded, with no reason', async () => {
     Object.assign(spotNamed('A-1'), { check: { since: WRONG_AISLE_AT, reason: null } });
 
-    expect((await list(sophieCookies)).json<DashboardSpotToCheck[]>()[0]?.reason).toBeNull();
+    expect((await list(sophieCookies)).json<DashboardSpotsToCheck>().spots[0]?.reason).toBeNull();
   });
 
   it('clears the flag of a free flagged spot, answers the spots still flagged, and hands the spot out normally again', async () => {
@@ -80,17 +85,18 @@ describe('the spots flagged for a physical check, and clearing them', () => {
     const response = await clear(sophieCookies, spotNamed('B-2').id);
 
     expect(response.statusCode).toBe(200);
-    expect(response.json<DashboardSpotToCheck[]>().map(({ number }) => number)).toEqual(['A-1']);
+    expect(response.json<DashboardSpotsToCheck>().spots.map(({ number }) => number)).toEqual(['A-1']);
     expect(spotNamed('B-2').check).toBeNull();
   });
 
-  it('answers a second click on a cleared spot the same way, without an error', async () => {
+  it('answers a second click on a cleared spot with the same remaining list, without an error', async () => {
     flagA1AndB2();
-    await clear(sophieCookies, spotNamed('B-2').id);
+    const first = await clear(sophieCookies, spotNamed('B-2').id);
 
     const again = await clear(sophieCookies, spotNamed('B-2').id);
 
     expect(again.statusCode).toBe(200);
+    expect(again.json()).toEqual(first.json());
   });
 
   it.each([

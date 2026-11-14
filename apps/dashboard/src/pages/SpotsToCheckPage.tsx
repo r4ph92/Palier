@@ -1,4 +1,4 @@
-import type { DashboardSpotToCheck } from '@palier/shared-types';
+import type { DashboardSpotsToCheck } from '@palier/shared-types';
 import { useCallback } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import { useResource } from '../api/useResource.ts';
@@ -45,7 +45,7 @@ function SpotsToCheckUnavailable({ lotId, ...failure }: RetryableFailureProps & 
   );
 }
 
-function SpotsToCheckView({ lotId, initial }: { readonly lotId: string; readonly initial: readonly DashboardSpotToCheck[] }) {
+function SpotsToCheckView({ lotId, initial }: { readonly lotId: string; readonly initial: DashboardSpotsToCheck }) {
   const { spotsToCheck: text, lot } = useText();
   const clearing = useSpotCheckClearing(lotId, initial);
   return (

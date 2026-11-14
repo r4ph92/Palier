@@ -16,6 +16,7 @@ export type {
   DashboardSignInResponse,
   DashboardSpot,
   DashboardSpotToCheck,
+  DashboardSpotsToCheck,
   DashboardTestSignInRequest,
   DashboardTestUserListResponse,
   DashboardUser,

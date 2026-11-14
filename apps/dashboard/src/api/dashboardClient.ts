@@ -8,7 +8,7 @@ import type {
   DashboardLotOccupancy,
   DashboardMeResponse,
   DashboardOperator,
-  DashboardSpotToCheck,
+  DashboardSpotsToCheck,
   LevelDraft,
   LevelOrderRequest,
   LotDraft,
@@ -116,7 +116,7 @@ export const dashboardClient = {
   changeSpot: (lotId: string, spotId: string, attributes: SpotAttributes) =>
     dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'PUT', body: attributes }),
   deleteSpot: (lotId: string, spotId: string) => dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'DELETE' }),
-  spotsToCheck: (lotId: string) => dashboardRequest<readonly DashboardSpotToCheck[]>(`${lotPathOf(lotId)}/spots-to-check`),
+  spotsToCheck: (lotId: string) => dashboardRequest<DashboardSpotsToCheck>(`${lotPathOf(lotId)}/spots-to-check`),
   clearSpotCheck: (lotId: string, spotId: string) =>
-    dashboardRequest<readonly DashboardSpotToCheck[]>(`${spotPathOf(lotId, spotId)}/check-cleared`, { method: 'POST' }),
+    dashboardRequest<DashboardSpotsToCheck>(`${spotPathOf(lotId, spotId)}/check-cleared`, { method: 'POST' }),
 };

@@ -1,4 +1,4 @@
-import type { DashboardSpotToCheck } from '@palier/shared-types';
+import type { DashboardSpotsToCheck } from '@palier/shared-types';
 import type { SpotPlace } from '../../domain/dashboard/LotSpotRepository.ts';
 import type { SpotCheckRefusal, SpotCheckRepository } from '../../domain/dashboard/SpotCheckRepository.ts';
 import type { Database, Transaction } from './database.ts';
@@ -22,7 +22,7 @@ export class PostgresSpotCheckRepository implements SpotCheckRepository {
     this.#database = database;
   }
 
-  async listSpotsToCheck(operatorId: string, lotId: string): Promise<readonly DashboardSpotToCheck[] | null> {
+  async listSpotsToCheck(operatorId: string, lotId: string): Promise<DashboardSpotsToCheck | null> {
     const rows = await this.#database.execute<SpotToCheckRow>(readSpotsToCheckStatement(operatorId, lotId));
     return rows.length === 0 ? null : spotsToCheckOf(rows);
   }

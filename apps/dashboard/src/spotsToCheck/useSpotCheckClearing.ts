@@ -1,4 +1,4 @@
-import type { DashboardSpotToCheck } from '@palier/shared-types';
+import type { DashboardSpotsToCheck, DashboardSpotToCheck } from '@palier/shared-types';
 import { useState } from 'react';
 import { dashboardClient } from '../api/dashboardClient.ts';
 import { asDashboardApiError, endsSession, type DashboardApiError, type DisplayedErrorCode } from '../api/DashboardApiError.ts';
@@ -23,11 +23,11 @@ export interface SpotCheckClearing extends ClearStatus {
   readonly clear: (spot: DashboardSpotToCheck) => Promise<void>;
 }
 
-type ClearOutcome = { readonly spots: readonly DashboardSpotToCheck[] } | { readonly error: DashboardApiError };
+type ClearOutcome = { readonly answer: DashboardSpotsToCheck } | { readonly error: DashboardApiError };
 
 async function attemptClear(lotId: string, spot: DashboardSpotToCheck): Promise<ClearOutcome> {
   try {
-    return { spots: await dashboardClient.clearSpotCheck(lotId, spot.spotId) };
+    return { answer: await dashboardClient.clearSpotCheck(lotId, spot.spotId) };
   } catch (failure) {
     return { error: asDashboardApiError(failure) };
   }
@@ -40,10 +40,10 @@ function refreshWhenSessionEnded(error: DashboardApiError, refreshSession: () =>
 }
 
 // The list shows only what the API answered: a cleared spot leaves it, a refused one stays with the reason beside its row.
-export function useSpotCheckClearing(lotId: string, initial: readonly DashboardSpotToCheck[]): SpotCheckClearing {
+export function useSpotCheckClearing(lotId: string, initial: DashboardSpotsToCheck): SpotCheckClearing {
   const request = useGuardedRequest();
   const refreshSession = useSessionRefresh();
-  const [spots, setSpots] = useState(initial);
+  const [spots, setSpots] = useState(initial.spots);
   const [status, setStatus] = useState<ClearStatus>({ clearingId: null, refusal: null, clearedNumber: null });
   const clear = (spot: DashboardSpotToCheck) =>
     request.run(async () => {
@@ -54,7 +54,7 @@ export function useSpotCheckClearing(lotId: string, initial: readonly DashboardS
         refreshWhenSessionEnded(outcome.error, refreshSession);
         return;
       }
-      setSpots(outcome.spots);
+      setSpots(outcome.answer.spots);
       setStatus({ clearingId: null, refusal: null, clearedNumber: spot.number });
     });
   return { ...status, spots, clear };

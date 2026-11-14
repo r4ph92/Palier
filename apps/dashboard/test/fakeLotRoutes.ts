@@ -28,7 +28,7 @@ export function routeLots(state: FakeApiState, request: string, body: Record<str
     return routeMap({ maps: state.maps, ownedLotIds }, request, body);
   }
   if (isSpotCheckRequest(request)) {
-    return routeSpotChecks({ spotsToCheck: state.spotsToCheck, ownedLotIds }, request);
+    return routeSpotChecks({ spotsToCheck: state.spotsToCheck, lots }, request);
   }
   if (isSpotRequest(request)) {
     return routeSpots({ state, ownedLotIds }, request, body);
