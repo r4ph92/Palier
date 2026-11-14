@@ -18,10 +18,8 @@ type Levels = DashboardLotOccupancy['levels'];
 export function OccupancyPage({ lotId }: { readonly lotId: string }) {
   const text = useText();
   const occupancy = usePolledLotResource(useCallback(() => dashboardClient.lotOccupancy(lotId), [lotId]));
-  // The occupancy page keeps its own title when it cannot load: it has no separate unavailable title.
-  const pageText = { ...text.occupancy, unavailableTitle: text.occupancy.title };
   return (
-    <PolledLotSubpage page={{ lotId, text: pageText, loadingRows: LOADING_ROWS }} resource={occupancy}>
+    <PolledLotSubpage page={{ lotId, text: text.occupancy, loadingRows: LOADING_ROWS }} resource={occupancy}>
       {(value) => <OccupancyView occupancy={value} />}
     </PolledLotSubpage>
   );

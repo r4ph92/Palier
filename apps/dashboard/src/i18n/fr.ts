@@ -75,6 +75,7 @@ export const fr = {
   },
   occupancy: {
     title: 'Occupation',
+    unavailableTitle: 'Occupation indisponible',
     back: 'Retour au stationnement',
     levelsTitle: 'Places par niveau',
     tableCaption: 'Places par état et par niveau',

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { isLotGone } from '../api/usePolledLotResource.ts';
 import type { PolledResource } from '../api/usePolledResource.ts';
 import { AppLink } from '../components/AppLink.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
@@ -39,7 +40,7 @@ export function LotSubpageLoading({ page }: { readonly page: LotSubpage }) {
 // Another operator's lot and a vanished lot read as not found; any other failure offers a retry.
 export function LotSubpageFailure({ page, failure }: { readonly page: LotSubpage; readonly failure: RetryableFailureProps }) {
   const text = useText();
-  if (failure.code === 'LOT_NOT_FOUND') {
+  if (isLotGone(failure)) {
     return <NotFoundPage />;
   }
   return (

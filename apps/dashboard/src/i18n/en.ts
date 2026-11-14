@@ -76,6 +76,7 @@ export const en: Dictionary = {
   },
   occupancy: {
     title: 'Occupancy',
+    unavailableTitle: 'Occupancy unavailable',
     back: 'Back to the parking lot',
     levelsTitle: 'Spots by level',
     tableCaption: 'Spots by state and by level',
