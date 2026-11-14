@@ -38,7 +38,7 @@ describe('the spots to check page', () => {
 
   it('says the reason was not recorded for a flag from before reasons were kept', async () => {
     const api = installFakeApi({ signedInAs: sophie });
-    api.spotsToCheck.set(parkingDemo.id, [{ spotId: PARKING_DEMO_A1_ID, number: 'A-1', levelCode: 'P1', aisleCode: 'A', since: '2026-11-13T14:05:00.000Z', reason: null, state: 'AVAILABLE', clearable: true }]);
+    api.spotsToCheck.set(parkingDemo.id, [{ spotId: PARKING_DEMO_A1_ID, number: 'A-1', levelCode: 'P1', aisleCode: 'A', since: '2026-11-13T14:05:00.000Z', reason: null, state: 'AVAILABLE', clearable: true, heldBySession: false }]);
     renderDashboard({ path: PAGE });
 
     expect(await screen.findByText('raison non enregistrée')).toBeDefined();
@@ -137,7 +137,7 @@ describe('the spots to check page', () => {
   it('shows the state of each spot, a free spot an active session holds not reading as free', async () => {
     const api = installFakeApi({ signedInAs: sophie });
     const [occupied, free] = seededFlags();
-    api.spotsToCheck.set(parkingDemo.id, [{ ...occupied, state: 'AVAILABLE', clearable: false }, { ...free, state: 'AVAILABLE', clearable: true }]);
+    api.spotsToCheck.set(parkingDemo.id, [{ ...occupied, state: 'AVAILABLE', clearable: false, heldBySession: true }, { ...free, state: 'AVAILABLE', clearable: true }]);
     renderDashboard({ path: PAGE });
     await screen.findByRole('table');
 

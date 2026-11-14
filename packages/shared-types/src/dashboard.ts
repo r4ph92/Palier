@@ -138,6 +138,8 @@ export interface DashboardSpotToCheck {
   readonly state: SpotState;
   // False while the spot is occupied-unknown, assigned or held, or an active session still points at it: a clear would be refused.
   readonly clearable: boolean;
+  // An active session has it as its assigned or confirmed spot, whatever state the spot shows.
+  readonly heldBySession: boolean;
 }
 
 // The page's whole answer: the lot's name for the title, and its flagged spots.

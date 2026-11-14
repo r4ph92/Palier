@@ -6,7 +6,7 @@ import type { AssertTrue, MutuallyAssignable, WithMutableArrays } from './schema
 
 const spotToCheckSchema = {
   type: 'object',
-  required: ['spotId', 'number', 'levelCode', 'aisleCode', 'since', 'reason', 'state', 'clearable'],
+  required: ['spotId', 'number', 'levelCode', 'aisleCode', 'since', 'reason', 'state', 'clearable', 'heldBySession'],
   additionalProperties: false,
   properties: {
     spotId: { type: 'string' },
@@ -17,6 +17,7 @@ const spotToCheckSchema = {
     reason: { type: ['string', 'null'], enum: [...SPOT_CHECK_REASONS, null] },
     state: { type: 'string', enum: SPOT_STATES },
     clearable: { type: 'boolean' },
+    heldBySession: { type: 'boolean' },
   },
 } as const;
 

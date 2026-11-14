@@ -49,8 +49,8 @@ describe('the spots flagged for a physical check, and clearing them', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json<DashboardSpotsToCheck>().spots).toEqual([
-      expect.objectContaining({ number: 'A-1', since: WRONG_AISLE_AT, reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN', clearable: false }),
-      expect.objectContaining({ number: 'B-2', since: REPORTED_TAKEN_AT, reason: 'REPORTED_TAKEN', state: 'AVAILABLE', clearable: true }),
+      expect.objectContaining({ number: 'A-1', since: WRONG_AISLE_AT, reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN', clearable: false, heldBySession: false }),
+      expect.objectContaining({ number: 'B-2', since: REPORTED_TAKEN_AT, reason: 'REPORTED_TAKEN', state: 'AVAILABLE', clearable: true, heldBySession: false }),
     ]);
   });
 

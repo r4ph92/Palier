@@ -100,9 +100,9 @@ function SinceCell({ since }: { readonly since: string }) {
 // Only a free spot nothing holds reads as free: a free one an active session still points at is not.
 function SpotStateMark({ spot }: { readonly spot: DashboardSpotToCheck }) {
   const { spotStates, spotsToCheck } = useText();
-  const heldByASession = spot.state === 'AVAILABLE' && !spot.clearable;
+  const heldFreeSpot = spot.state === 'AVAILABLE' && spot.heldBySession;
   const tone: StateTone = spot.clearable ? 'free' : 'muted';
-  return <StateMark tone={tone} label={heldByASession ? spotsToCheck.heldBySession : spotStates[spot.state]} wraps />;
+  return <StateMark tone={tone} label={heldFreeSpot ? spotsToCheck.heldBySession : spotStates[spot.state]} wraps />;
 }
 
 function CheckedButton({ spot, clearing }: RowProps) {

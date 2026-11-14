@@ -60,6 +60,7 @@ export class FakeSpotCheckRepository implements SpotCheckRepository {
       reason: spot.check?.reason ?? null,
       state: spot.state,
       clearable: clearDecisionOf({ state: spot.state, needsCheck: true, heldBySession: spot.isHeldBySession }) === 'CLEAR',
+      heldBySession: spot.isHeldBySession,
     };
   }
 }

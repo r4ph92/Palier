@@ -28,8 +28,8 @@ describe('reading the spots to check from Postgres', () => {
     expect(spots).toEqual({
       lotName: 'Parking Démo',
       spots: [
-        { spotId: 'a1', number: 'A-1', levelCode: 'P1', aisleCode: 'A', since: '2026-11-13T14:05:00.000Z', reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN', clearable: false },
-        { spotId: 'b2', number: 'B-2', levelCode: 'P1', aisleCode: 'B', since: '2026-11-13T15:20:00.000Z', reason: null, state: 'AVAILABLE', clearable: false },
+        { spotId: 'a1', number: 'A-1', levelCode: 'P1', aisleCode: 'A', since: '2026-11-13T14:05:00.000Z', reason: 'WRONG_AISLE', state: 'OCCUPIED_UNKNOWN', clearable: false, heldBySession: false },
+        { spotId: 'b2', number: 'B-2', levelCode: 'P1', aisleCode: 'B', since: '2026-11-13T15:20:00.000Z', reason: null, state: 'AVAILABLE', clearable: false, heldBySession: true },
       ],
     });
     expect(scripted.labels()).toEqual(['read-spots-to-check']);

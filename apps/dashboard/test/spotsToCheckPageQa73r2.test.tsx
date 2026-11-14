@@ -22,6 +22,7 @@ function flagged(number: string, minute: number): DashboardSpotToCheck {
     reason: 'REPORTED_TAKEN',
     state: 'AVAILABLE',
     clearable: true,
+    heldBySession: false,
   };
 }
 

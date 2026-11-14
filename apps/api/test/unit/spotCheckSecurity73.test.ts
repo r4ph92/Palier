@@ -12,7 +12,7 @@ import type { FakeLotSpotRepository, FakeSpot } from './fakes/fakeLotSpotReposit
 // POST /v1/dashboard/lots/:id/spots/:spotId/check-cleared. These attacks must all stay refused.
 const SINCE = '2026-11-13T15:20:00.000Z';
 const UNKNOWN_SPOT = '00000000-0000-4000-8000-000000000999';
-const SPOT_TO_CHECK_KEYS = ['aisleCode', 'clearable', 'levelCode', 'number', 'reason', 'since', 'spotId', 'state'];
+const SPOT_TO_CHECK_KEYS = ['aisleCode', 'clearable', 'heldBySession', 'levelCode', 'number', 'reason', 'since', 'spotId', 'state'];
 
 describe('story #73 attack surface: spots to check and clearing them', () => {
   let server: FastifyInstance;

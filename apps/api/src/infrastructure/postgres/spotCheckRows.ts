@@ -36,6 +36,7 @@ function spotToCheckOf(row: SpotToCheckRow): DashboardSpotToCheck[] {
       reason: row.needs_check_reason,
       state: row.state,
       clearable: clearDecisionOf({ state: row.state, needsCheck: true, heldBySession: row.held_by_session }) === 'CLEAR',
+      heldBySession: row.held_by_session,
     },
   ];
 }
