@@ -35,7 +35,7 @@ export function AisleSpots({ lotId, aisle, onStale }: AisleSpotsProps) {
   return (
     <>
       <CapacityWarning spots={spots} />
-      <AddSpotsForm lotId={lotId} aisleId={aisle.id} onAdded={(saved, count) => changes.added(saved, { count, aisle: aisle.code, firstSpotId: firstAddedSpotId(spots, saved) })} staleData={changes.staleData} />
+      <AddSpotsForm lotId={lotId} aisleId={aisle.id} onAdded={(saved, count) => changes.added(saved, { count, aisle: aisle.code }, firstAddedSpotId(spots, saved))} staleData={changes.staleData} />
       <SpotList lotId={lotId} aisle={aisle} spots={spots.spots} changes={changes} />
     </>
   );

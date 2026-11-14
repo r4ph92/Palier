@@ -7,12 +7,12 @@ import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { pluralFormOf } from '../i18n/plural.ts';
 import { EditSpotForm } from './EditSpotForm.tsx';
 import { SpotNoticeLine } from './SpotNoticeLine.tsx';
-import { SpotPager } from './SpotPager.tsx';
+import { PageTurns, SpotPager } from './SpotPager.tsx';
 import { editButtonId, SpotTable, type EditRow } from './SpotTable.tsx';
 import { useFocusAfterRender } from './useFocusAfterRender.ts';
 import type { SpotChanges } from './useSpotChanges.ts';
 import { useSpotDeletion } from './useSpotDeletion.ts';
-import { useSpotPage, type PageRequest } from './useSpotPage.ts';
+import { useSpotPage } from './useSpotPage.ts';
 
 interface SpotListProps {
   readonly lotId: string;
@@ -23,10 +23,11 @@ interface SpotListProps {
 
 // One edit form at a time, right after its row; focus goes back to the row's edit button when it closes, to the title after a delete.
 export function SpotList({ lotId, aisle, spots, changes }: SpotListProps) {
+  const text = useText();
   const titleId = `spot-list-${aisle.id}`;
   const focusAfterRender = useFocusAfterRender();
   const editing = useSpotEditing(changes, { focusAfterRender, titleId });
-  const page = useSpotPage(spots, editing.close, pageRequestOf(changes));
+  const page = useSpotPage(spots, editing.close, changes.pageRequest);
   const deletion = useListDeletion(lotId, changes, () => focusAfterRender(titleId));
   const editRow = editRowOf(lotId, editing, changes);
   return (
@@ -35,7 +36,7 @@ export function SpotList({ lotId, aisle, spots, changes }: SpotListProps) {
       <SpotNoticeLine key={changes.noticeKey} notice={changes.notice} />
       <SpotPager page={page} />
       {spots.length === 0 ? <EmptyAisle /> : <SpotTable spots={page.spots} labelledBy={titleId} deletion={deletion} onEdit={editing.open} editing={editRow} />}
-      <SpotPager page={page} below />
+      <PageTurns page={page} label={text.map.spots.page.labelBelow} />
     </>
   );
 }
@@ -46,10 +47,6 @@ function useListDeletion(lotId: string, changes: SpotChanges, focusTitle: () => 
     focusTitle();
   };
   return useSpotDeletion({ lotId, onDeleted, onRefused: changes.refused, staleData: changes.staleData });
-}
-
-function pageRequestOf({ notice, noticeKey }: SpotChanges): PageRequest {
-  return { key: noticeKey, spotId: notice?.kind === 'added' ? notice.added.firstSpotId : null };
 }
 
 function editRowOf(lotId: string, editing: SpotEditing, { staleData }: SpotChanges): EditRow | null {
