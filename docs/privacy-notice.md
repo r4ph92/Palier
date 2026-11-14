@@ -41,6 +41,7 @@ Buttons: "I accept" and "Decline". Declining shows: "Palier cannot be used witho
 ## Hors du texte affiché
 
 - **Position de l'appareil (#5).** Avec la permission « pendant l'utilisation », l'app lit la position du téléphone pour trier les stationnements par distance. Le calcul se fait sur l'appareil ; la position n'est jamais envoyée à Palier ni conservée (`docs/decisions/015`). Le texte affiché et `PRIVACY_NOTICE_VERSION` ne changent pas : à confirmer par le responsable avant la mise en production. La raison montrée par iOS est `NSLocationWhenInUseUsageDescription` dans `apps/mobile/app.config.ts` ; Expo Go montre la sienne.
+- **Journal des événements de visite (#156).** Chaque étape d'une visite (scan, ouverture de la barrière, boucle, allée détectée, place présumée ou confirmée, annulation) est inscrite avec la plaque, les heures, l'allée détectée et la place, et purgée 90 jours après chaque événement ; jamais d'adresse courriel, de carte ni d'identifiant de paiement (`docs/decisions/035`). Cela reste dans l'avis actuel (stationnement, plaque, heures) : `PRIVACY_NOTICE_VERSION` ne change pas.
 
 ## Hors de cet avis
 

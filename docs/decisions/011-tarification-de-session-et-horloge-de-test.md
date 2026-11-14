@@ -14,3 +14,5 @@
 **Annulation (#39)** : l'horloge de test ne change rien à l'annulation des entrées sans passage, jugée sur `now()` de Postgres. Reculer une session `CREATED` déplace `entry_scan_at`, ce qui peut la faire annuler si elle n'a pas de commande `OPEN` (décision 013).
 
 **Conséquences.** L'app n'a aucun contrôle d'horloge et ne compte pas le temps elle-même : elle relit la session chaque minute. Le SQL de la lecture et du recul n'est vérifié que sur la base de la voie (décisions 002 et 005).
+
+**Amendée par 035 (#156).** Reculer une session décale aussi, dans la même instruction, l'instant et la date de purge de ses événements au journal de visite ; `gate_command.issued_at`, `parked_answered_at` et `cancelled_at` restent inchangés.
