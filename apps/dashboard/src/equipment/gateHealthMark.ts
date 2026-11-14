@@ -5,6 +5,8 @@ import { formatClockTime, formatDayAndMonth } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
 import type { Language } from '../i18n/LanguageContext.tsx';
 
+const NO_BREAK_SPACE = '\u00a0';
+
 interface HealthReading {
   readonly text: typeof frEquipment;
   readonly language: Language;
@@ -20,9 +22,14 @@ export function gateHealthMarkOf(gate: DashboardGateHealth, { text, language, no
     return { tone: 'muted', label: text.neverHeard };
   }
   const heardAt = new Date(gate.lastHeartbeatAt);
-  const time = formatClockTime(heardAt, language);
+  const time = unbreakable(formatClockTime(heardAt, language));
   const label = isSameDay(heardAt, now) ? interpolate(text.silentSince, { time }) : interpolate(text.silentSinceDay, { day: formatDayAndMonth(heardAt, language), time });
   return { tone: 'danger', label };
+}
+
+// "11:38 PM" reads as one piece: some browsers format it with a plain space, where the line could break.
+function unbreakable(time: string): string {
+  return time.replaceAll(' ', NO_BREAK_SPACE);
 }
 
 function isSameDay(first: Date, second: Date): boolean {

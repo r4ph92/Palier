@@ -18,6 +18,12 @@ function stateOf(gateName: string): string {
   return (within(row).getAllByRole('cell').at(-1)?.textContent ?? '').replace(WHITESPACE, ' ').trim();
 }
 
+// As shown, before any space is normalised: the time never holds a plain space the line could break at.
+function rawStateOf(gateName: string): string {
+  const row = screen.getByRole('rowheader', { name: gateName }).closest('tr') as HTMLElement;
+  return within(row).getAllByRole('cell').at(-1)?.textContent ?? '';
+}
+
 function toneOf(gateName: string): string | undefined {
   const row = screen.getByRole('rowheader', { name: gateName }).closest('tr') as HTMLElement;
   return [...(row.querySelector('.state-mark-square')?.classList ?? [])].find((name) => name !== 'state-mark-square');
@@ -100,6 +106,7 @@ describe('the equipment page', () => {
     await advanceOnePoll();
     await vi.waitFor(() => expect(stateOf('Entrée Démo')).toBe('Silent since 2:05 PM'));
     expect(stateOf('Sortie Démo')).toBe('Silent since Nov 12, 2:05 PM');
+    expect(rawStateOf('Entrée Démo')).not.toContain('2:05 PM');
   });
 
   it('gives Pierre not found on Parking Démo and nothing about its gates', async () => {
