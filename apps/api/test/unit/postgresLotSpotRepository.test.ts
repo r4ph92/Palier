@@ -43,10 +43,10 @@ describe('reading the spots of an aisle from Postgres', () => {
     });
     const { text, params } = scripted.statement('read-aisle-spots') ?? { text: '', params: [] };
     expect(text).toMatch(/left join spot on spot\.aisle_id = aisle\.id and spot\.retired_at is null/);
-    expect(text).toMatch(/live\.lot_id = parking_lot\.id and live\.retired_at is null/);
-    expect(text).toMatch(/aisle\.id = \$1 and aisle\.lot_id = \$2 and not aisle\.is_exit_lane and parking_lot\.id = aisle\.lot_id and parking_lot\.operator_id = \$3/);
+    expect(text).toMatch(/cross join \(select count\(\*\)::int from spot where spot\.lot_id = \$1 and spot\.retired_at is null\) as lot_spots\(spot_count\)/);
+    expect(text).toMatch(/aisle\.id = \$2 and aisle\.lot_id = \$3 and not aisle\.is_exit_lane and parking_lot\.id = aisle\.lot_id and parking_lot\.operator_id = \$4/);
     expect(text).toMatch(/order by regexp_replace\(spot\.number, '\[0-9\]\+\$', ''\), substring\(spot\.number from '\[0-9\]\+\$'\)::numeric nulls first, spot\.number$/);
-    expect(params).toEqual([AISLE_A, GARAGE_ROY_NORD, ROY_OPERATOR]);
+    expect(params).toEqual([GARAGE_ROY_NORD, AISLE_A, GARAGE_ROY_NORD, ROY_OPERATOR]);
   });
 
   it('reads an empty aisle as no spots, and another operator’s aisle or the exit lane as null', async () => {
@@ -96,7 +96,7 @@ describe('adding spots in Postgres', () => {
     const scripted = lockedLot().answer('read-parking-aisle', [{ id: AISLE_A }]).answer('count-live-spots', [{ spot_count: MAX_SPOTS_PER_LOT - 19 }]);
 
     expect(await repositoryOn(scripted).addSpots(ROY_OPERATOR, aisle, aisleARange)).toBe('SPOT_LIMIT_REACHED');
-    expect(scripted.statement('count-live-spots')?.text).toMatch(/left join spot on spot\.lot_id = parking_lot\.id and spot\.retired_at is null\s+where parking_lot\.id = \$1 and parking_lot\.operator_id = \$2/);
+    expect(scripted.statement('count-live-spots')?.text).toMatch(/select \(select count\(\*\)::int from spot where spot\.lot_id = \$1 and spot\.retired_at is null\) as spot_count from parking_lot where parking_lot\.id = \$2 and parking_lot\.operator_id = \$3/);
     expect(scripted.count('find-taken-number')).toBe(0);
   });
 

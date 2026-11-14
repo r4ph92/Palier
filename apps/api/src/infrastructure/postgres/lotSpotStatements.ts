@@ -4,6 +4,7 @@ import type { AislePlace, SpotBatch, SpotPlace } from '../../domain/dashboard/Lo
 import { activeSessionOf } from './activeSessionStates.ts';
 import { ACTIVE_SPOT_HOLD } from './activeSpotHold.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
+import { liveSpotCountOf } from './heldSpotCount.ts';
 import { liveSpot } from './liveSpot.ts';
 
 // Prefix first, then the number at its end read as a number: A-2 before A-10, and B-7a after the A spots.
@@ -37,11 +38,11 @@ function textArrayOf(values: readonly string[]): SQL {
 // One row per live spot in natural order, or one row of null spot columns for an empty aisle; no row for any other aisle.
 export function readAisleSpotsStatement(operatorId: string, aisle: AislePlace): SQL {
   return sql`
-    select aisle.id as aisle_id, parking_lot.capacity,
-      (select count(*)::int from spot live where live.lot_id = parking_lot.id and ${liveSpot('live')}) as spot_count,
+    select aisle.id as aisle_id, parking_lot.capacity, lot_spots.spot_count,
       spot.id, spot.number, spot.state, spot.is_ev, spot.is_accessible, spot.is_oversize, spot.distance_to_exit
     from aisle
     cross join parking_lot
+    cross join ${liveSpotCountOf(aisle.lotId)} as lot_spots(spot_count)
     left join spot on spot.aisle_id = aisle.id and ${liveSpot()}
     where ${ownedParkingAisle(operatorId, aisle)}
     order by ${NATURAL_SPOT_ORDER}`;
@@ -52,10 +53,7 @@ export function readParkingAisleStatement(operatorId: string, aisle: AislePlace)
 }
 
 export function countLiveSpotsStatement(operatorId: string, lotId: string): SQL {
-  return sql`
-    select count(spot.id)::int as spot_count from parking_lot
-    left join spot on spot.lot_id = parking_lot.id and ${liveSpot()}
-    where parking_lot.id = ${lotId} and parking_lot.operator_id = ${operatorId}`;
+  return sql`select ${liveSpotCountOf(lotId)} as spot_count from parking_lot where parking_lot.id = ${lotId} and parking_lot.operator_id = ${operatorId}`;
 }
 
 // The live spot of the lot that reads the same as the earliest new number (A-3 and « a 3 » are one number), if any.
