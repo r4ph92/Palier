@@ -2,6 +2,8 @@ import { enEquipment } from './enEquipment.ts';
 import { enGateErrors } from './enGateErrors.ts';
 import { enGates } from './enGates.ts';
 import { enMap } from './enMap.ts';
+import { enSpotsToCheck } from './enSpotsToCheck.ts';
+import { enSpotCheckMessages } from './spotCheckMessages.ts';
 import type { Dictionary } from './fr.ts';
 
 export const en: Dictionary = {
@@ -98,6 +100,7 @@ export const en: Dictionary = {
     stale: 'Figures not updated. Trying again shortly.',
     lastUpdate: 'Last updated: %{time}',
   },
+  spotsToCheck: enSpotsToCheck,
   map: enMap,
   equipment: enEquipment,
   gates: enGates,
@@ -181,11 +184,13 @@ export const en: Dictionary = {
     SPOT_LIMIT_REACHED: 'A parking lot has at most %{spotsPerLotMaximum} spots.',
     SPOT_NUMBER_TAKEN: 'This number already exists in this parking lot: %{number}.',
     SPOT_IN_USE: 'Spot in use — try again after the vehicle leaves: %{number}.',
+    ...enSpotCheckMessages,
     FIELDS_INVALID: 'Fix the fields shown.',
     GRID_POSITION_INVALID: 'A whole number from 0 to %{gridMaximum}.',
     GRID_LENGTH_INVALID: 'A whole number from 1 to %{gridMaximum}.',
     MAP_RELOAD_FAILED: 'The levels changed in the meantime, and the map could not be reloaded. Reload the page before trying again.',
     SPOT_RELOAD_FAILED: 'The page could not be reloaded after this refusal. Reload the page before trying again.',
+    SPOT_TO_CHECK_GONE: 'Spot %{number} could not be found. The spot list was reloaded.',
     SPOT_RANGE_UNREADABLE: 'These numbers cannot be read. Write a range like A-1 to A-20, or one number like A-7.',
     ...enGateErrors,
     UNKNOWN: 'Something went wrong. Try again in a moment.',

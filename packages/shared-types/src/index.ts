@@ -17,12 +17,15 @@ export type {
   DashboardOperator,
   DashboardSignInResponse,
   DashboardSpot,
+  DashboardSpotToCheck,
+  DashboardSpotsToCheck,
   DashboardTestSignInRequest,
   DashboardTestUserListResponse,
   DashboardUser,
   KycStatus,
   LevelOrderRequest,
   LevelSpotCounts,
+  SpotCheckReason,
   StripeOnboardingLink,
 } from './dashboard.ts';
 export type { BatteryStatus, BeaconBatteryErrorCode, BeaconBatteryErrors, BeaconBatteryField, BeaconBatteryReading } from './beaconBattery.ts';

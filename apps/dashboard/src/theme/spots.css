@@ -1,4 +1,4 @@
-/* The spot list of an aisle on the map page (#66). */
+/* The spot list of an aisle on the map page; its stacking is shared in stackedTable.css. */
 /* Text buttons are 44 px tall for touch; the negative margin puts their words on the same line as the other cells' text. */
 .row-actions {
   display: flex;
@@ -12,18 +12,10 @@
   margin: var(--space-medium) 0 0;
 }
 
-/* Words never break inside: a spot number, a state or a button label wraps whole or not at all. */
-.spot-table th,
-.spot-table td {
-  overflow-wrap: normal;
-  hyphens: none;
-}
-
 .spot-number,
 .spot-distance,
 .spot-state,
-.spot-actions,
-.spot-table thead th {
+.spot-actions {
   white-space: nowrap;
 }
 
@@ -65,26 +57,13 @@
   margin-top: 0;
 }
 
-/* Wide screens: columns breathe, the actions share one line, and distances line up on their units. */
+/* Wide screens: the actions share one line, and distances line up on their units. */
 @media (min-width: 681px) {
-  .data-table.spot-table th,
-  .data-table.spot-table td {
-    padding-inline-end: var(--space-medium);
-  }
-
-  .spot-table {
-    width: 100%;
-  }
-
   .row-actions .text-button {
     white-space: nowrap;
   }
 
-  /* Headers wrap between words; the actions keep Modifier and Supprimer on one line. */
-  .spot-table thead th {
-    white-space: normal;
-  }
-
+  /* The actions keep Modifier and Supprimer on one line. */
   .spot-table .row-actions:not(.delete-question) {
     flex-wrap: nowrap;
   }
@@ -128,38 +107,8 @@
 
 /* Narrow screens stack each row: number and state, then attributes · distance, then the actions. */
 @media (max-width: 680px) {
-  .spot-table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
   .row-actions {
     margin-block: 0;
-  }
-
-  .spot-table tbody tr {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 var(--space-small);
-    padding: var(--space-small) 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  /* The line break between number and state, and attributes · distance. */
-  .spot-table tbody tr::before {
-    content: '';
-    flex-basis: 100%;
-    order: 3;
-  }
-
-  .spot-table tbody th,
-  .spot-table tbody td {
-    padding: 0;
-    border-bottom: 0;
   }
 
   .spot-number {

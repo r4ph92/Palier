@@ -2,6 +2,8 @@ import { frEquipment } from './frEquipment.ts';
 import { frGateErrors } from './frGateErrors.ts';
 import { frGates } from './frGates.ts';
 import { frMap } from './frMap.ts';
+import { frSpotsToCheck } from './frSpotsToCheck.ts';
+import { frSpotCheckMessages } from './spotCheckMessages.ts';
 
 export const fr = {
   app: {
@@ -97,6 +99,7 @@ export const fr = {
     stale: 'Données non mises à jour. Nouvel essai dans un instant.',
     lastUpdate: 'Dernière mise à jour\u00a0: %{time}',
   },
+  spotsToCheck: frSpotsToCheck,
   map: frMap,
   equipment: frEquipment,
   gates: frGates,
@@ -180,11 +183,13 @@ export const fr = {
     SPOT_LIMIT_REACHED: 'Un stationnement compte au plus %{spotsPerLotMaximum} places.',
     SPOT_NUMBER_TAKEN: 'Ce numéro existe déjà dans ce parking\u00a0: %{number}.',
     SPOT_IN_USE: 'Place utilisée — réessayez après la sortie\u00a0: %{number}.',
+    ...frSpotCheckMessages,
     FIELDS_INVALID: 'Corrigez les champs indiqués.',
     GRID_POSITION_INVALID: 'Un nombre entier de 0 à %{gridMaximum}.',
     GRID_LENGTH_INVALID: 'Un nombre entier de 1 à %{gridMaximum}.',
     MAP_RELOAD_FAILED: 'Les niveaux ont changé entre-temps, et le plan n’a pas pu être rechargé. Rechargez la page avant de recommencer.',
     SPOT_RELOAD_FAILED: 'La page n’a pas pu être rechargée après ce refus. Rechargez la page avant de recommencer.',
+    SPOT_TO_CHECK_GONE: 'La place %{number} est introuvable. La liste des places a été rechargée.',
     SPOT_RANGE_UNREADABLE: 'Numéros illisibles. Écrivez une plage comme A-1 à A-20, ou un seul numéro comme A-7.',
     ...frGateErrors,
     UNKNOWN: 'Une erreur est survenue. Réessayez dans un instant.',

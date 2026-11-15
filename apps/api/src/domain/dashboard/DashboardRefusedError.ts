@@ -5,6 +5,7 @@ import type { PricingErrorCode } from '@palier/shared-types/lotPricing';
 import { LOT_GATE_MESSAGES, type LotGateReason } from './lotGateMessages.ts';
 import { LOT_MAP_MESSAGES, type LotMapReason } from './lotMapMessages.ts';
 import { LOT_SPOT_MESSAGES, type LotSpotReason } from './lotSpotMessages.ts';
+import { SPOT_CHECK_MESSAGES, type SpotCheckRefusalReason } from './spotCheckMessages.ts';
 import { LOT_SETUP_MESSAGES } from './lotSetupMessages.ts';
 
 export type DashboardRefusalReason =
@@ -13,6 +14,7 @@ export type DashboardRefusalReason =
   | PricingErrorCode
   | LotMapReason
   | LotSpotReason
+  | SpotCheckRefusalReason
   | LotGateReason;
 
 const MESSAGES: Readonly<Record<DashboardRefusalReason, string>> = {
@@ -25,6 +27,7 @@ const MESSAGES: Readonly<Record<DashboardRefusalReason, string>> = {
   ...LOT_SETUP_MESSAGES,
   ...LOT_MAP_MESSAGES,
   ...LOT_SPOT_MESSAGES,
+  ...SPOT_CHECK_MESSAGES,
   ...LOT_GATE_MESSAGES,
 };
 

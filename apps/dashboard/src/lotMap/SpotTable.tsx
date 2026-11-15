@@ -45,7 +45,7 @@ export function editButtonId(spot: DashboardSpot): string {
 // Explicit roles keep the table a table for screen readers when narrow screens stack each row.
 export function SpotTable({ spots, labelledBy, deletion, onEdit, editing }: SpotTableProps) {
   return (
-    <table className="data-table spot-table" role="table" aria-labelledby={labelledBy} aria-busy={deletion.deleting}>
+    <table className="data-table stacked-table spot-table" role="table" aria-labelledby={labelledBy} aria-busy={deletion.deleting}>
       <SpotTableHead />
       <tbody role="rowgroup">
         {spots.map((spot) => (

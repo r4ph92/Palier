@@ -11,6 +11,7 @@ import type {
   DashboardLotOccupancy,
   DashboardMeResponse,
   DashboardOperator,
+  DashboardSpotsToCheck,
   GateDeviceKey,
   GateQrLink,
   LevelDraft,
@@ -133,6 +134,9 @@ export const dashboardClient = {
   changeSpot: (lotId: string, spotId: string, attributes: SpotAttributes) =>
     dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'PUT', body: attributes }),
   deleteSpot: (lotId: string, spotId: string) => dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'DELETE' }),
+  spotsToCheck: (lotId: string) => dashboardRequest<DashboardSpotsToCheck>(`${lotPathOf(lotId)}/spots-to-check`),
+  clearSpotCheck: (lotId: string, spotId: string) =>
+    dashboardRequest<DashboardSpotsToCheck>(`${spotPathOf(lotId, spotId)}/check-cleared`, { method: 'POST' }),
   lotGates: (lotId: string) => dashboardRequest<DashboardLotGates>(`${lotPathOf(lotId)}/gates`),
   addGate: (lotId: string, draft: GateDraft) => dashboardRequest<CreatedGate>(`${lotPathOf(lotId)}/gates`, { method: 'POST', body: draft }),
   changeGate: (lotId: string, gateId: string, settings: GateSettings) =>

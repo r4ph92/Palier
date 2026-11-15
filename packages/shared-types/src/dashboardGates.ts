@@ -1,6 +1,18 @@
 import type { ExitIdentification, GateIntegrationKind } from './gateDraft.ts';
 import type { GateKind } from './gates.ts';
 
+export const GATE_ERROR_CODES = [
+  'GATE_NOT_FOUND',
+  'GATE_NAME_REQUIRED',
+  'GATE_NAME_INVALID',
+  'GATE_NAME_TAKEN',
+  'GATE_ENDPOINT_NOT_HTTPS',
+  'GATE_ENDPOINT_REQUIRED',
+  'GATE_EXIT_ID_ON_ENTRY',
+  'GATE_EXIT_LIMIT',
+  'GATE_LIMIT_REACHED',
+] as const;
+
 // A gate as the operator configures it; its device key and QR secret are never read back.
 export interface DashboardGate {
   readonly id: string;

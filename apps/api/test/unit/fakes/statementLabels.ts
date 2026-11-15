@@ -62,6 +62,11 @@ export type StatementLabel =
   | 'retire-spot'
   | 'read-live-spot'
   | 'replay-passages'
+  | 'lock-exit-spots'
+  | 'free-exit-spots'
+  | 'read-spots-to-check'
+  | 'clear-spot-check'
+  | 'lock-spot-to-clear'
   | 'record-heartbeat'
   | 'record-reported-battery'
   | 'read-lot-gates'
@@ -122,6 +127,11 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['update-lot-pricing', /update parking_lot\s+set pricing_policy/],
   ['read-lot-details', /from parking_lot where id = \$1 and operator_id = \$2/],
   ['read-level-occupancy', /as confirmed_assigned_count/],
+  ['lock-exit-spots', /as held_by_another_session/],
+  ['free-exit-spots', /needs_check = needs_check or/],
+  ['read-spots-to-check', /spot\.needs_check_since, spot\.needs_check_reason/],
+  ['lock-spot-to-clear', /as held_by_session/],
+  ['clear-spot-check', /set needs_check = false/],
   ['replay-passages', /insert into gate_passage[\s\S]*on conflict/],
   ['record-heartbeat', /update gate set last_heartbeat_at/],
   ['read-owned-lot-id', /select parking_lot\.id from parking_lot where parking_lot\.id = \$1 and parking_lot\.operator_id = \$2/],

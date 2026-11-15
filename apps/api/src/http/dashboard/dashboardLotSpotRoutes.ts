@@ -1,15 +1,11 @@
 import type { DashboardAisleSpots } from '@palier/shared-types';
 import type { AddSpotsRequest, SpotAttributes } from '@palier/shared-types/spotDraft';
 import type { FastifyInstance, FastifyReply, FastifyRequest, onRequestAsyncHookHandler } from 'fastify';
-import { addSpotsOfMember, changeSpotOfMember, readAisleSpotsOfMember, removeSpotOfMember, type LotSpotSources, type MemberAisle, type MemberSpot } from '../../domain/dashboard/lotSpots.ts';
+import { addSpotsOfMember, changeSpotOfMember, readAisleSpotsOfMember, removeSpotOfMember, type LotSpotSources, type MemberAisle } from '../../domain/dashboard/lotSpots.ts';
 import { addSpotsBodySchema, dashboardAisleSpotsSchema, lotAisleParametersSchema, lotSpotParametersSchema, spotAttributesBodySchema } from '../schemas/lotSpotSchemas.ts';
 import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
-import { memberLotOf, refuseMalformedRequest, type AisleParams, type LotParams } from './memberRequest.ts';
+import { memberLotOf, memberSpotOf, refuseMalformedRequest, SPOT_ROUTE, type AisleParams, type SpotParams } from './memberRequest.ts';
 import { requireDashboardUser } from './requireDashboardUser.ts';
-
-interface SpotParams extends LotParams {
-  readonly spotId: string;
-}
 
 interface SpotRoutesContext {
   readonly scope: FastifyInstance;
@@ -20,7 +16,6 @@ interface SpotRoutesContext {
 
 const CREATED = 201;
 const AISLE_SPOTS_ROUTE = '/v1/dashboard/lots/:id/aisles/:aisleId/spots';
-const SPOT_ROUTE = '/v1/dashboard/lots/:id/spots/:spotId';
 
 export function registerDashboardLotSpotRoutes(scope: FastifyInstance, { access, operators, spots }: DashboardRouteDependencies): void {
   const context: SpotRoutesContext = { scope, sources: { operators, spots }, onRequest: requireDashboardUser(access.sessions) };
@@ -66,8 +61,4 @@ function registerRemoveSpotRoute({ scope, sources, onRequest }: SpotRoutesContex
 
 function memberAisleOf(request: FastifyRequest<{ readonly Params: AisleParams }>): MemberAisle {
   return { ...memberLotOf(request), aisleId: request.params.aisleId };
-}
-
-function memberSpotOf(request: FastifyRequest<{ readonly Params: SpotParams }>): MemberSpot {
-  return { ...memberLotOf(request), spotId: request.params.spotId };
 }

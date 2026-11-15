@@ -1,0 +1,111 @@
+import type { DashboardSpotsToCheck, DashboardSpotToCheck } from '@palier/shared-types';
+import { useState } from 'react';
+import { dashboardClient } from '../api/dashboardClient.ts';
+import { type DisplayedErrorCode } from '../api/DashboardApiError.ts';
+import { followUpRefusal, type Refusal, type RefusalFollowUps } from '../api/followUpRefusal.ts';
+import { useGuardedRequest } from '../forms/useGuardedRequest.ts';
+import { useFocusAfterRender } from '../lotMap/useFocusAfterRender.ts';
+import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
+import { checkButtonId, SPOT_CHECK_STATUS_ID } from './spotCheckIds.ts';
+
+// After these refusals the flagged list on the page is out of date: it is read again before the operator retries.
+const LIST_OUT_OF_DATE: readonly DisplayedErrorCode[] = ['LOT_BUSY', 'SPOT_NOT_FOUND'];
+
+export interface RowRefusal extends Refusal {
+  readonly spotId: string;
+  readonly spotNumber: string;
+}
+
+interface ClearStatus {
+  // The spot being cleared; its row shows the busy state and no other row accepts a click meanwhile.
+  readonly clearingId: string | null;
+  // Its number, for the status line while the request runs.
+  readonly clearingNumber: string | null;
+  readonly refusal: RowRefusal | null;
+  // The spot cleared last, for the status line; any later click forgets it.
+  readonly clearedNumber: string | null;
+}
+
+export interface SpotCheckClearing extends ClearStatus {
+  readonly spots: readonly DashboardSpotToCheck[];
+  // A refusal whose row the reloaded list no longer has, such as a spot retired meanwhile: the page says it in the status line instead.
+  readonly listRefusal: Refusal | null;
+  readonly clear: (spot: DashboardSpotToCheck) => Promise<void>;
+  // Turning the page leaves a refused row behind, so its reason goes too.
+  readonly forgetRefusal: () => void;
+}
+
+type ClearOutcome = { readonly answer: DashboardSpotsToCheck } | { readonly refusal: Refusal };
+
+const IDLE: ClearStatus = { clearingId: null, clearingNumber: null, refusal: null, clearedNumber: null };
+
+async function attemptClear(lotId: string, spot: DashboardSpotToCheck, followUps: RefusalFollowUps): Promise<ClearOutcome> {
+  try {
+    return { answer: await dashboardClient.clearSpotCheck(lotId, spot.spotId) };
+  } catch (failure) {
+    return { refusal: await followUpRefusal(failure, followUps) };
+  }
+}
+
+// Focus stays in the list the API answered: on the row now at the cleared one's place, or the last row, or the status line once the list is empty.
+function focusIdAfterClearing(shown: readonly DashboardSpotToCheck[], remaining: readonly DashboardSpotToCheck[], cleared: DashboardSpotToCheck): string {
+  const clearedIndex = shown.findIndex(({ spotId }) => spotId === cleared.spotId);
+  const neighbour = remaining[Math.min(clearedIndex, remaining.length - 1)];
+  return neighbour === undefined ? SPOT_CHECK_STATUS_ID : checkButtonId(neighbour.spotId);
+}
+
+// The row is gone, so the sentence names the spot it was about.
+function listRefusalOf(refusal: RowRefusal | null, spots: readonly DashboardSpotToCheck[]): Refusal | null {
+  if (refusal === null || spots.some(({ spotId }) => spotId === refusal.spotId)) {
+    return null;
+  }
+  if (refusal.code !== 'SPOT_NOT_FOUND') {
+    return refusal;
+  }
+  return { code: 'SPOT_TO_CHECK_GONE', values: { ...refusal.values, number: refusal.spotNumber } };
+}
+
+// The list shows only what the API answered: a cleared spot leaves it, a refused one stays with the reason beside its row.
+export function useSpotCheckClearing(lotId: string, initial: DashboardSpotsToCheck): SpotCheckClearing {
+  const request = useGuardedRequest();
+  const list = useFlaggedList(initial.spots);
+  const [status, setStatus] = useState<ClearStatus>(IDLE);
+  const followUps = useRefusalFollowUps(lotId, list.show);
+  const clear = (spot: DashboardSpotToCheck) =>
+    request.run(async () => {
+      setStatus({ ...IDLE, clearingId: spot.spotId, clearingNumber: spot.number });
+      const outcome = await attemptClear(lotId, spot, followUps);
+      if ('refusal' in outcome) {
+        setStatus({ ...IDLE, refusal: { ...outcome.refusal, spotId: spot.spotId, spotNumber: spot.number } });
+        return;
+      }
+      list.showAfterClearing(outcome.answer.spots, spot);
+      setStatus({ ...IDLE, clearedNumber: spot.number });
+    });
+  const forgetRefusal = () => setStatus((current) => ({ ...current, refusal: null }));
+  return { ...status, spots: list.spots, listRefusal: listRefusalOf(status.refusal, list.spots), clear, forgetRefusal };
+}
+
+function useFlaggedList(initial: readonly DashboardSpotToCheck[]) {
+  const focusAfterRender = useFocusAfterRender();
+  const [spots, setSpots] = useState(initial);
+  const showAfterClearing = (remaining: readonly DashboardSpotToCheck[], cleared: DashboardSpotToCheck) => {
+    focusAfterRender(focusIdAfterClearing(spots, remaining, cleared));
+    setSpots(remaining);
+  };
+  return { spots, show: setSpots, showAfterClearing };
+}
+
+function useRefusalFollowUps(lotId: string, show: (spots: readonly DashboardSpotToCheck[]) => void): RefusalFollowUps {
+  const refreshSession = useSessionRefresh();
+  const reloadList = async (): Promise<boolean> => {
+    try {
+      show((await dashboardClient.spotsToCheck(lotId)).spots);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const refreshOn = (code: DisplayedErrorCode) => (LIST_OUT_OF_DATE.includes(code) ? reloadList() : null);
+  return { refreshSession, refreshOn, reloadFailedCode: 'SPOT_RELOAD_FAILED' };
+}

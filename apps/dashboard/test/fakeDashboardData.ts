@@ -1,4 +1,4 @@
-import type { DashboardLot, DashboardLotDetails, DashboardLotEquipment, DashboardLotMap, DashboardLotOccupancy, DashboardMeResponse, DashboardOperator, DashboardUser, LotPricingSettings } from '@palier/shared-types';
+import type { DashboardLot, DashboardLotDetails, DashboardLotEquipment, DashboardLotMap, DashboardLotOccupancy, DashboardMeResponse, DashboardOperator, DashboardSpotToCheck, DashboardUser, LotPricingSettings } from '@palier/shared-types';
 import type { FakeGate } from './fakeGateData.ts';
 import type { FakeSpot } from './fakeSpotData.ts';
 
@@ -69,6 +69,8 @@ export interface FakeApiState {
   readonly equipment: Map<string, DashboardLotEquipment>;
   // By lot id, every live spot of the lot; spot writes change this copy.
   readonly spots: Map<string, FakeSpot[]>;
+  // By lot id, the spots flagged for a check, oldest first; a clear changes this copy.
+  readonly spotsToCheck: Map<string, DashboardSpotToCheck[]>;
   // By lot id, with each gate's QR secret; gate writes change this copy.
   readonly gates: Map<string, FakeGate[]>;
 }

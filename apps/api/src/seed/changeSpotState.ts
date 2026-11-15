@@ -1,8 +1,8 @@
-import { and, count, eq, inArray, ne, or, type SQL } from 'drizzle-orm';
+import { and, count, eq, inArray, ne, or, sql, type SQL } from 'drizzle-orm';
 import type { Database, Transaction } from '../infrastructure/postgres/database.ts';
 import { ACTIVE_SESSION } from '../infrastructure/postgres/activeSessionStates.ts';
 import { isLiveSpot } from '../infrastructure/postgres/liveSpot.ts';
-import { parkingLot, parkingSession, spot } from '../infrastructure/postgres/schema.ts';
+import { parkingLot, parkingSession, spot, type SpotState } from '../infrastructure/postgres/schema.ts';
 import { activeSessionRefusal, decideActiveSessionRule } from './activeSessionRule.ts';
 import type { SpotStateChange } from './spotStateArguments.ts';
 
@@ -22,9 +22,14 @@ export async function changeSpotState(database: Database, change: SpotStateChang
     if (decision === 'refuse') {
       throw new Error(activeSessionRefusal(change));
     }
-    await tx.update(spot).set({ state: change.state, stateChangedAt: new Date() }).where(inArray(spot.id, lockedIds));
+    await tx.update(spot).set({ state: change.state, stateChangedAt: new Date(), ...flagOf(change.state) }).where(inArray(spot.id, lockedIds));
     return { activeSessionStillPoints: decision === 'change-and-warn' };
   });
+}
+
+// What the exit and the parked answer write when a spot turns occupied-unknown: it is flagged for a check, its first time kept, no reason recorded.
+function flagOf(state: SpotState): { readonly needsCheck?: true; readonly needsCheckSince?: SQL } {
+  return state === 'OCCUPIED_UNKNOWN' ? { needsCheck: true, needsCheckSince: sql`coalesce(${spot.needsCheckSince}, now())` } : {};
 }
 
 // A session holds the spot it was assigned and the one the driver said they parked in.

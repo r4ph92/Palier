@@ -7,7 +7,9 @@ import './theme/layout.css';
 import './theme/lists.css';
 import './theme/forms.css';
 import './theme/map.css';
+import './theme/stackedTable.css';
 import './theme/spots.css';
+import './theme/spotsToCheck.css';
 import './theme/gates.css';
 
 const root = document.getElementById('root');

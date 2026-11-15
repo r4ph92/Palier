@@ -11,6 +11,7 @@ import { FakeLotEquipmentReader } from './fakeLotEquipmentReader.ts';
 import { FakeLotGateRepository } from './fakeLotGateRepository.ts';
 import { FakeLotMapRepository } from './fakeLotMapRepository.ts';
 import { FakeLotSpotRepository } from './fakeLotSpotRepository.ts';
+import { FakeSpotCheckRepository } from './fakeSpotCheckRepository.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
 import { fakeGateDependencies, fakeRepositories } from './serverDependencies.ts';
 
@@ -27,16 +28,17 @@ export function startDashboardServer(settings: ServerSettings = { testSignInEnab
   const lotMaps = new FakeLotMapRepository(operatorRepository.lots);
   const lotEquipment = new FakeLotEquipmentReader(operatorRepository.lots);
   const lotSpots = new FakeLotSpotRepository(operatorRepository.lots, lotMaps);
+  const spotChecks = new FakeSpotCheckRepository(operatorRepository.lots, lotMaps, lotSpots);
   const lotGates = new FakeLotGateRepository(operatorRepository.lots);
   const { testClock } = composeClock(settings.testSignInEnabled === true);
   const server: FastifyInstance = buildServer({
     gates: gateDependenciesReading(lotGates),
-    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment, lotSpots, lotGates, gateSecrets: lotGates, ...overrides },
+    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment, lotSpots, spotChecks, lotGates, gateSecrets: lotGates, ...overrides },
     operatorStripe: stripe.dependencies,
     testClock,
     settings,
   });
-  return { server, driverRepository, lots: operatorRepository.lots, lotMaps, lotEquipment, lotSpots, lotGates, testClock, ...stripe };
+  return { server, driverRepository, lots: operatorRepository.lots, lotMaps, lotEquipment, lotSpots, spotChecks, lotGates, testClock, ...stripe };
 }
 
 // A key the dashboard issued or rotated authenticates the gate routes; the seeded test keys still do too.

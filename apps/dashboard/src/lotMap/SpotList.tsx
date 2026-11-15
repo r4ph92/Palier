@@ -27,7 +27,7 @@ export function SpotList({ lotId, aisle, spots, changes }: SpotListProps) {
   const titleId = `spot-list-${aisle.id}`;
   const focusAfterRender = useFocusAfterRender();
   const editing = useSpotEditing(changes, { focusAfterRender, titleId });
-  const page = useSpotPage(spots, editing.close, changes.pageRequest);
+  const page = useSpotPage(spots, { idOf: spotIdOf, onTurn: editing.close, request: changes.pageRequest });
   const deletion = useListDeletion(lotId, changes, () => focusAfterRender(titleId));
   const editRow = editRowOf(lotId, editing, changes);
   return (
@@ -39,6 +39,10 @@ export function SpotList({ lotId, aisle, spots, changes }: SpotListProps) {
       <PageTurns page={page} label={text.map.spots.page.labelBelow} />
     </>
   );
+}
+
+function spotIdOf({ id }: DashboardSpot): string {
+  return id;
 }
 
 function useListDeletion(lotId: string, changes: SpotChanges, focusTitle: () => void) {
