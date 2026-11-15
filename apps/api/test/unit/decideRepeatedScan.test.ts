@@ -40,7 +40,7 @@ describe('openingFor', () => {
   it('hands the replayed session back without opening a new one', async () => {
     const openNew = vi.fn();
 
-    expect(await openingFor({ kind: 'replay', session: { id: 'session-1', spot } }, openNew)).toEqual({
+    expect(await openingFor({ decision: { kind: 'replay', session: { id: 'session-1', spot } }, isLotOnline: true }, openNew)).toEqual({
       kind: 'replayed',
       session: { id: 'session-1', spot },
     });
@@ -50,12 +50,29 @@ describe('openingFor', () => {
   it('refuses ALREADY_INSIDE without opening a new session', async () => {
     const openNew = vi.fn();
 
-    await expect(openingFor({ kind: 'refuse' }, openNew)).rejects.toMatchObject({ reason: 'ALREADY_INSIDE' });
+    await expect(openingFor({ decision: { kind: 'refuse' }, isLotOnline: true }, openNew)).rejects.toMatchObject({ reason: 'ALREADY_INSIDE' });
     expect(openNew).not.toHaveBeenCalled();
   });
 
   it('opens a new session, or answers null when no spot is free', async () => {
-    expect(await openingFor({ kind: 'open' }, () => Promise.resolve({ id: 'session-2', spot }))).toEqual({ kind: 'opened', session: { id: 'session-2', spot } });
-    expect(await openingFor({ kind: 'open' }, () => Promise.resolve(null))).toBeNull();
+    expect(await openingFor({ decision: { kind: 'open' }, isLotOnline: true }, () => Promise.resolve({ id: 'session-2', spot }))).toEqual({ kind: 'opened', session: { id: 'session-2', spot } });
+    expect(await openingFor({ decision: { kind: 'open' }, isLotOnline: true }, () => Promise.resolve(null))).toBeNull();
+  });
+
+  it('still hands back the entry already opening on a lot put offline since it was admitted', async () => {
+    const openNew = vi.fn();
+
+    expect(await openingFor({ decision: { kind: 'replay', session: { id: 'session-1', spot } }, isLotOnline: false }, openNew)).toEqual({
+      kind: 'replayed',
+      session: { id: 'session-1', spot },
+    });
+    expect(openNew).not.toHaveBeenCalled();
+  });
+
+  it('refuses a new session on a lot put offline as LOT_NOT_IN_SERVICE, without opening one', async () => {
+    const openNew = vi.fn();
+
+    await expect(openingFor({ decision: { kind: 'open' }, isLotOnline: false }, openNew)).rejects.toMatchObject({ reason: 'LOT_NOT_IN_SERVICE' });
+    expect(openNew).not.toHaveBeenCalled();
   });
 });

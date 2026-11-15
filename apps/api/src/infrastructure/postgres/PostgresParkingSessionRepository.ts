@@ -1,7 +1,6 @@
 import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
 import { decideRepeatedScan, openingFor } from '../../domain/entries/decideRepeatedScan.ts';
-import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import type {
   HoldAttachment,
   OpenedSession,
@@ -61,7 +60,8 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 
   async #openUnderLotLock(tx: Transaction, draft: SessionDraft, lot: LockedParkingLot | undefined): Promise<SessionOpening | null> {
     const decision = decideRepeatedScan(await findActiveSessionFacts(tx, draft.driverId, this.#openingWindow), draft);
-    return openingFor(decision, () => openSessionInService(tx, draft, lot));
+    // An unknown lot never gets here: the eligibility check refused it before the lock.
+    return openingFor({ decision, isLotOnline: lot?.isOnline ?? true }, () => openSession(tx, draft));
   }
 
   async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment> {
@@ -108,14 +108,6 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
       }
     }, LOT_LOCK_TRANSACTION);
   }
-}
-
-// Read again under the lock: the operator may have put the lot offline since the eligibility check. A replay still gets its entry back.
-function openSessionInService(tx: Transaction, draft: SessionDraft, lot: LockedParkingLot | undefined): Promise<OpenedSession | null> {
-  if (lot !== undefined && !lot.isOnline) {
-    throw new EntryRefusedError('LOT_NOT_IN_SERVICE');
-  }
-  return openSession(tx, draft);
 }
 
 // The driver's own held spot comes first, so a lot that filled while she drove still has her spot (decision 016).
