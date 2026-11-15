@@ -6,6 +6,8 @@ import { useLanguage } from '../i18n/LanguageContext.tsx';
 import { pluralFormOf } from '../i18n/plural.ts';
 import type { SpotNotice } from './useSpotChanges.ts';
 
+const NOTICE_TEXTS = { saved: 'saved', deleted: 'deleted', outOfService: 'outOfServiceDone', backInService: 'backInServiceDone' } as const;
+
 // A change is announced politely beside the list; a refusal takes focus, so a keyboard user continues from it.
 export function SpotNoticeLine({ notice }: { readonly notice: SpotNotice | null }) {
   const sentence = useNoticeSentence(notice);
@@ -29,5 +31,5 @@ function useNoticeSentence(notice: SpotNotice | null): string | null {
     const { count, aisle } = notice.added;
     return interpolate(pluralFormOf(spots.added, count, language), { count: formatCount(count, language), aisle });
   }
-  return interpolate(notice.kind === 'saved' ? spots.saved : spots.deleted, { number: notice.number });
+  return interpolate(spots[NOTICE_TEXTS[notice.kind]], { number: notice.number });
 }

@@ -4,15 +4,21 @@ import type { AislePlace, SpotBatch, SpotPlace } from '../../domain/dashboard/Lo
 import { ACTIVE_SPOT_HOLD } from './activeSpotHold.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
 import { liveSpot, liveSpotCountOf } from './liveSpot.ts';
-import { sessionHoldsSpot } from './sessionHoldsSpot.ts';
+import { sessionHoldsOrReportedSpot, sessionHoldsSpot } from './sessionHoldsSpot.ts';
 
 // Prefix first, then the number at its end read as a number: A-2 before A-10, and B-7a after the A spots.
 export const NATURAL_SPOT_ORDER = sql.raw(`regexp_replace(spot.number, '[0-9]+$', ''), substring(spot.number from '[0-9]+$')::numeric nulls first, spot.number`);
 
-// Free or out of service, and no active session or hold points at it: nothing to wait for before it goes.
-const SPOT_NOT_IN_USE = sql`spot.state in ('AVAILABLE', 'OUT_OF_SERVICE')
-  and not ${sessionHoldsSpot('spot')}
-  and not exists (select 1 from spot_hold where spot_hold.spot_id = spot.id and ${ACTIVE_SPOT_HOLD})`;
+const NO_ACTIVE_SPOT_HOLD = sql`not exists (select 1 from spot_hold where spot_hold.spot_id = spot.id and ${ACTIVE_SPOT_HOLD})`;
+
+// No active session or hold points at it.
+const SPOT_NOT_HELD = sql`not ${sessionHoldsSpot('spot')} and ${NO_ACTIVE_SPOT_HOLD}`;
+
+// Also not a spot an open session reported taken: that session's exit frees it.
+const SPOT_NOT_HELD_OR_REPORTED = sql`not ${sessionHoldsOrReportedSpot()} and ${NO_ACTIVE_SPOT_HOLD}`;
+
+// Free or out of service, and nothing to wait for before it goes.
+const SPOT_NOT_IN_USE = sql`spot.state in ('AVAILABLE', 'OUT_OF_SERVICE') and ${SPOT_NOT_HELD}`;
 
 // No session, hold or report ever pointed at it, so the row can go without breaking a foreign key.
 const SPOT_WITHOUT_HISTORY = sql`not exists (select 1 from parking_session past where past.assigned_spot_id = spot.id and past.lot_id = spot.lot_id)
@@ -105,4 +111,26 @@ export function retireSpotStatement(operatorId: string, place: SpotPlace): SQL {
 
 export function readLiveSpotStatement(operatorId: string, place: SpotPlace): SQL {
   return sql`select spot.id from spot cross join parking_lot where ${ownedLiveSpot(operatorId, place)}`;
+}
+
+// Conditional on the free state, so an entry that claimed the spot first leaves zero rows.
+export function takeOutOfServiceStatement(operatorId: string, place: SpotPlace): SQL {
+  return sql`
+    update spot set state = 'OUT_OF_SERVICE', state_changed_at = now()
+    from parking_lot
+    where ${ownedLiveSpot(operatorId, place)} and spot.state = 'AVAILABLE' and ${SPOT_NOT_HELD_OR_REPORTED}
+    returning spot.aisle_id`;
+}
+
+// Live spots only: a retired spot is out of service too and stays gone.
+export function putBackInServiceStatement(operatorId: string, place: SpotPlace): SQL {
+  return sql`
+    update spot set state = 'AVAILABLE', state_changed_at = now()
+    from parking_lot
+    where ${ownedLiveSpot(operatorId, place)} and spot.state = 'OUT_OF_SERVICE' and ${SPOT_NOT_HELD_OR_REPORTED}
+    returning spot.aisle_id`;
+}
+
+export function readLiveSpotStateStatement(operatorId: string, place: SpotPlace): SQL {
+  return sql`select spot.state, spot.aisle_id from spot cross join parking_lot where ${ownedLiveSpot(operatorId, place)}`;
 }

@@ -103,6 +103,10 @@ function spotPathOf(lotId: string, spotId: string): string {
   return `${lotPathOf(lotId)}/spots/${encodeURIComponent(spotId)}`;
 }
 
+function putSpotService(lotId: string, spotId: string, outOfService: boolean): Promise<DashboardAisleSpots> {
+  return dashboardRequest<DashboardAisleSpots>(`${spotPathOf(lotId, spotId)}/service`, { method: 'PUT', body: { outOfService } });
+}
+
 function gatePathOf(lotId: string, gateId: string): string {
   return `${lotPathOf(lotId)}/gates/${encodeURIComponent(gateId)}`;
 }
@@ -133,6 +137,8 @@ export const dashboardClient = {
     dashboardRequest<DashboardAisleSpots>(spotsPathOf(lotId, aisleId), { method: 'POST', body: request }),
   changeSpot: (lotId: string, spotId: string, attributes: SpotAttributes) =>
     dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'PUT', body: attributes }),
+  takeSpotOutOfService: (lotId: string, spotId: string) => putSpotService(lotId, spotId, true),
+  putSpotBackInService: (lotId: string, spotId: string) => putSpotService(lotId, spotId, false),
   deleteSpot: (lotId: string, spotId: string) => dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'DELETE' }),
   spotsToCheck: (lotId: string) => dashboardRequest<DashboardSpotsToCheck>(`${lotPathOf(lotId)}/spots-to-check`),
   clearSpotCheck: (lotId: string, spotId: string) =>

@@ -61,6 +61,9 @@ export type StatementLabel =
   | 'delete-unused-spot'
   | 'retire-spot'
   | 'read-live-spot'
+  | 'take-spot-out-of-service'
+  | 'put-spot-back-in-service'
+  | 'read-live-spot-state'
   | 'replay-passages'
   | 'lock-exit-spots'
   | 'free-exit-spots'
@@ -124,6 +127,9 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['delete-unused-spot', /delete from spot using parking_lot/],
   ['retire-spot', /update spot set retired_at/],
   ['read-live-spot', /select spot\.id from spot cross join parking_lot/],
+  ['take-spot-out-of-service', /update spot set state = 'OUT_OF_SERVICE', state_changed_at/],
+  ['put-spot-back-in-service', /update spot set state = 'AVAILABLE', state_changed_at = now\(\)\s+from parking_lot/],
+  ['read-live-spot-state', /select spot\.state, spot\.aisle_id from spot/],
   ['update-lot-pricing', /update parking_lot\s+set pricing_policy/],
   ['read-lot-details', /from parking_lot where id = \$1 and operator_id = \$2/],
   ['read-level-occupancy', /as confirmed_assigned_count/],
