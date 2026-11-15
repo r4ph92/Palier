@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { garageRoy, installFakeApi, parkingDemo, pierre, sophie } from './fakeDashboardApi.ts';
 import { addGate, addGateForm, factOf, gateItemOf, keyPanel, openGatesOf } from './gatesPageSteps.ts';
 import { renderDashboard } from './renderDashboard.tsx';
@@ -107,6 +107,21 @@ describe('the device key of a gate', () => {
     expect(item.getByRole('button', { name: 'Régénérer la clé de Entrée principale' })).toBeDefined();
     expect(item.queryByRole('button', { name: /afficher|voir/i })).toBeNull();
     expect(api.requests.filter((request) => request.includes('device-key'))).toEqual([]);
+  });
+
+  it('marks a copied key with the free state mark', async () => {
+    await openGatesOf(pierre, garageRoy.id);
+    await addGate({ name: 'Entrée principale' });
+    const panel = await screen.findByRole('region', { name: 'Clé d’appareil — Entrée principale' });
+
+    const writeText = vi.fn(() => Promise.resolve());
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    await userEvent.click(within(panel).getByRole('button', { name: 'Copier la clé' }));
+
+    expect(writeText).toHaveBeenCalledWith(panel.querySelector('code')?.textContent);
+    const status = within(panel).getByRole('status');
+    expect(await within(status).findByText('Clé copiée.')).toBeDefined();
+    expect(status.querySelector('.state-mark-free')).not.toBeNull();
   });
 
   it('still shows the key when the API could not read the list after saving, and reads the list itself', async () => {

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { StateMark } from '../components/StateMark.tsx';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useText } from '../i18n/LanguageContext.tsx';
 import { useFocusWhen } from '../lotMap/useFocusWhen.ts';
@@ -42,7 +43,7 @@ function KeyActions({ deviceKey, onDismiss }: { readonly deviceKey: string; read
         </button>
       </div>
       <p role="status" className="key-copy-status">
-        {state === 'idle' ? null : state === 'copied' ? text.keyCopied : text.copyFailed}
+        {state === 'idle' ? null : <StateMark tone={state === 'copied' ? 'free' : 'danger'} label={state === 'copied' ? text.keyCopied : text.copyFailed} wraps />}
       </p>
     </>
   );
