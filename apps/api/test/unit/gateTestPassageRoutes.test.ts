@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { createTestClock } from '../../src/domain/time/TestClock.ts';
+import { hashDeviceKey } from '../../src/domain/gates/hashDeviceKey.ts';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { ENTREE_DEMO_KEY, entreeDemo, FakeEquipmentReports, FakeGateDeviceKeyRepository, FakePassageLedger, REVOKED_KEY, sortieDemo, UNKNOWN_KEY } from './fakes/gateFixtures.ts';
 import { fakeGateDependencies, serverDependencies } from './fakes/serverDependencies.ts';
@@ -84,6 +85,17 @@ describe('gate test passage route', () => {
     equipment.heartbeats.set(entreeDemo.id, secondsBefore(5));
 
     expect((await testPassage(entreeDemo.id, key)).statusCode).toBe(statusCode);
+    expect(equipment.verifiedAt.size).toBe(0);
+  });
+
+  it('refuses with 409 GATE_NOT_HEARD a key revoked after the request was authenticated, and verifies nothing', async () => {
+    startServer();
+    equipment.heartbeats.set(entreeDemo.id, secondsBefore(5));
+    equipment.revokedKeyHashes.add(hashDeviceKey(ENTREE_DEMO_KEY));
+
+    const response = await testPassage(entreeDemo.id);
+
+    expect([response.statusCode, response.json().error]).toEqual([409, 'GATE_NOT_HEARD']);
     expect(equipment.verifiedAt.size).toBe(0);
   });
 

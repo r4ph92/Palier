@@ -103,18 +103,18 @@ describe('the secrets of a gate in Postgres', () => {
 
     expect(await new PostgresGateSecretRepository(scripted.database()).replaceDeviceKey(ROY_OPERATOR, gatePlace, 'new-hash')).toEqual({ kind: 'written', gateId: GATE });
 
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'read-owned-gate-kind', 'revoke-device-keys', 'insert-device-key', 'clear-gate-verification']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'read-owned-gate-kind', 'revoke-device-keys', 'insert-device-key', 'forget-gate-controller']);
     expect(scripted.statements.map(({ text }) => text).join('\n')).not.toMatch(/qr_secret/);
     expect(scripted.statement('revoke-device-keys')?.text).toMatch(/gate_device_key\.gate_id = \$1 and gate_device_key\.revoked_at is null$/);
   });
 
-  it('clears the gate’s test passage with the new key, so the new controller must pass it again', async () => {
+  it('forgets the old controller with the new key: no heartbeat and no test passage until the new one sends them', async () => {
     const scripted = lockedLot().answer('read-owned-gate-kind', [{ kind: 'EXIT' }]);
 
     await new PostgresGateSecretRepository(scripted.database()).replaceDeviceKey(ROY_OPERATOR, gatePlace, 'new-hash');
 
-    const statement = scripted.statement('clear-gate-verification');
-    expect(statement?.text).toBe('update gate set verified_at = null where gate.id = $1 and gate.lot_id = $2');
+    const statement = scripted.statement('forget-gate-controller');
+    expect(statement?.text).toBe('update gate set verified_at = null, last_heartbeat_at = null where gate.id = $1 and gate.lot_id = $2');
     expect(statement?.params).toEqual([GATE, GARAGE_ROY_NORD]);
   });
 

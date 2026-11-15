@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import { recordHeartbeat, type GateReportSources } from '../../domain/equipment/recordHeartbeat.ts';
 import { recordTestPassage } from '../../domain/equipment/recordTestPassage.ts';
 import { reportBeaconBattery } from '../../domain/equipment/reportBeaconBattery.ts';
-import { authenticatedGateOf } from '../gates/gateDeviceAuthentication.ts';
+import { authenticatedGateOf, authenticatedKeyHashOf } from '../gates/gateDeviceAuthentication.ts';
 import { batteryReadingBodySchema } from '../schemas/beaconBatterySchemas.ts';
 import {
   batteryReportParametersSchema,
@@ -46,7 +46,8 @@ function registerBatteryReportRoute(scope: FastifyInstance, sources: GateReportS
 function registerTestPassageRoute(scope: FastifyInstance, sources: GateReportSources): void {
   const schema = { params: gateIdParametersSchema, response: { 200: testPassageResponseSchema } };
   scope.post<{ Params: GateIdParameters }>('/:id/test-passage', { schema }, async (request): Promise<GateTestPassageResponse> => {
-    const verifiedAt = await recordTestPassage({ gate: authenticatedGateOf(request), requestedGateId: request.params.id }, sources);
+    const command = { gate: authenticatedGateOf(request), requestedGateId: request.params.id, deviceKeyHash: authenticatedKeyHashOf(request) };
+    const verifiedAt = await recordTestPassage(command, sources);
     return { verifiedAt: verifiedAt.toISOString() };
   });
 }

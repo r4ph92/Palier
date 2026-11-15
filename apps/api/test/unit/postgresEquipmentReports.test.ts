@@ -5,6 +5,7 @@ import { entreeDemo } from './fakes/gateFixtures.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
 
 const at = new Date('2026-11-13T19:05:00Z');
+const KEY_HASH = 'entree-demo-key-hash';
 const report = { lotId: entreeDemo.lotId, beaconMinor: 1, percent: 15, reportedAt: at };
 
 describe('equipment reports in Postgres', () => {
@@ -37,19 +38,29 @@ describe('equipment reports in Postgres', () => {
     const heardSince = new Date('2026-11-13T19:03:00Z');
     const scripted = new ScriptedSql().answer('record-test-passage', [{ id: entreeDemo.id }]);
 
-    expect(await new PostgresEquipmentReports(scripted.database()).recordTestPassage(entreeDemo, { at, heardSince })).toBe(true);
+    expect(await new PostgresEquipmentReports(scripted.database()).recordTestPassage(entreeDemo, { at, heardSince, deviceKeyHash: KEY_HASH })).toBe(true);
 
     const statement = scripted.statement('record-test-passage');
-    expect(statement?.text).toMatch(/where id = \$2 and lot_id = \$3 and last_heartbeat_at >= \$4::timestamptz\s+returning id$/);
+    expect(statement?.text).toMatch(/where id = \$2 and lot_id = \$3 and last_heartbeat_at >= \$4::timestamptz\s+and exists/);
     expect(statement?.text).not.toMatch(/vehicle_count|parking_session|gate_passage/);
-    expect(statement?.params).toEqual([at.toISOString(), entreeDemo.id, entreeDemo.lotId, heardSince.toISOString()]);
+    expect(statement?.params).toEqual([at.toISOString(), entreeDemo.id, entreeDemo.lotId, heardSince.toISOString(), KEY_HASH]);
     expect(scripted.labels()).toEqual(['record-test-passage']);
+  });
+
+  it('stamps only while the key the controller used is still live, so a key revoked meanwhile cannot verify the gate', async () => {
+    const scripted = new ScriptedSql().answer('record-test-passage', [{ id: entreeDemo.id }]);
+
+    await new PostgresEquipmentReports(scripted.database()).recordTestPassage(entreeDemo, { at, heardSince: at, deviceKeyHash: KEY_HASH });
+
+    expect(scripted.statement('record-test-passage')?.text).toMatch(
+      /exists \(select 1 from gate_device_key where gate_device_key\.gate_id = gate\.id and gate_device_key\.key_hash = \$5 and gate_device_key\.revoked_at is null\)/,
+    );
   });
 
   it('answers false when the gate was not heard in the window', async () => {
     const scripted = new ScriptedSql().answer('record-test-passage', []);
 
-    expect(await new PostgresEquipmentReports(scripted.database()).recordTestPassage(entreeDemo, { at, heardSince: at })).toBe(false);
+    expect(await new PostgresEquipmentReports(scripted.database()).recordTestPassage(entreeDemo, { at, heardSince: at, deviceKeyHash: KEY_HASH })).toBe(false);
   });
 });
 

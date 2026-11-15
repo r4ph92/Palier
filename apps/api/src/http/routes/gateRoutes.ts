@@ -78,6 +78,7 @@ export function registerGateRoutes(server: FastifyInstance, dependencies: GateRo
   void server.register(
     async (scope) => {
       scope.decorateRequest('authenticatedGate', null);
+      scope.decorateRequest('authenticatedKeyHash', null);
       scope.addHook('onRequest', createGateDeviceAuthentication(dependencies.deviceKeys));
       scope.setErrorHandler(handleGateError);
       registerIdentityRoute(scope);

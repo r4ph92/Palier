@@ -11,9 +11,11 @@ export interface BeaconBatteryReport extends RecordedBatteryReading {
 }
 
 // heardSince: the oldest heartbeat that still counts the gate as heard at the moment of the test.
+// deviceKeyHash: the key the controller used, which must still be live when the gate is stamped.
 export interface TestPassage {
   readonly at: Date;
   readonly heardSince: Date;
+  readonly deviceKeyHash: string;
 }
 
 // What a gate controller tells about its own equipment; each write stays inside the gate's lot.
@@ -21,6 +23,6 @@ export interface EquipmentReports {
   recordHeartbeat(gate: ReportingGate, at: Date): Promise<void>;
   // False when the lot has no beacon with this minor: nothing is written.
   recordBeaconBattery(report: BeaconBatteryReport): Promise<boolean>;
-  // False when the gate was not heard since passage.heardSince: nothing is written.
+  // False when the gate was not heard since passage.heardSince, or its key was revoked meanwhile: nothing is written.
   recordTestPassage(gate: ReportingGate, passage: TestPassage): Promise<boolean>;
 }

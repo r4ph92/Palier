@@ -58,9 +58,9 @@ export function changeGateStatement({ lotId, gateId }: GatePlace, settings: Gate
     where gate.id = ${gateId} and gate.lot_id = ${lotId}`;
 }
 
-// A new device key means a controller that has not passed the test passage yet.
-export function clearGateVerificationStatement({ lotId, gateId }: GatePlace): SQL {
-  return sql`update gate set verified_at = null where gate.id = ${gateId} and gate.lot_id = ${lotId}`;
+// A new device key means a new controller: it has neither sent a heartbeat nor passed the test passage yet.
+export function forgetGateControllerStatement({ lotId, gateId }: GatePlace): SQL {
+  return sql`update gate set verified_at = null, last_heartbeat_at = null where gate.id = ${gateId} and gate.lot_id = ${lotId}`;
 }
 
 export function revokeDeviceKeysStatement(gateId: string): SQL {
