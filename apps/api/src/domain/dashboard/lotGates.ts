@@ -1,4 +1,5 @@
 import type { CreatedGate, DashboardLotGates } from '@palier/shared-types';
+import { canonicalNameOf } from '@palier/shared-types/displayText';
 import { firstFieldError } from '@palier/shared-types/fieldErrors';
 import { endpointOf, gateDraftErrors, gateSettingsErrors, type GateDraft, type GateDraftErrors, type GateSettings } from '@palier/shared-types/gateDraft';
 import { hashDeviceKey } from '../gates/hashDeviceKey.ts';
@@ -80,7 +81,7 @@ function refuseFirstError(errors: GateDraftErrors): void {
   }
 }
 
-// Built from its own keys only, the name trimmed and a blank endpoint read as none.
+// Built from its own keys only, the name stored canonical so a lookalike meets the unique name, and a blank endpoint read as none.
 function settingsOf({ name, integrationKind, endpoint, reportsLoops, exitIdentification }: GateSettings): GateSettings {
-  return { name: name.trim(), integrationKind, endpoint: endpoint === null ? null : endpointOf(endpoint), reportsLoops, exitIdentification };
+  return { name: canonicalNameOf(name), integrationKind, endpoint: endpoint === null ? null : endpointOf(endpoint), reportsLoops, exitIdentification };
 }

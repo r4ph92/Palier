@@ -9,6 +9,7 @@ import {
   type GateIntegrationKind,
   type GateSettings,
 } from '@palier/shared-types/gateDraft';
+import { canonicalNameOf } from '@palier/shared-types/displayText';
 import { GATE_KINDS } from '@palier/shared-types/gates';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { CHECKED } from '../forms/CheckboxField.tsx';
@@ -58,7 +59,7 @@ export function readGateSettings(values: FieldValues<GateFormField>): ReadForm<G
 function draftOf(values: FieldValues<GateFormField>): GateDraft {
   const kind = oneOf(GATE_KINDS, values.kind);
   return {
-    name: values.name.trim(),
+    name: canonicalNameOf(values.name),
     kind,
     integrationKind: oneOf<GateIntegrationKind>(GATE_INTEGRATION_KINDS, values.integrationKind),
     endpoint: endpointOf(values.endpoint),

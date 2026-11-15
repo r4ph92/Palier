@@ -42,6 +42,14 @@ describe('dashboard gate routes', () => {
       expect(gateNamed(listed, 'Entrée principale')).toEqual({ id: added.json<CreatedGate>().gateId, ...entreePrincipale });
     });
 
+    it('stores the name as it reads: accents composed and every run of spaces one plain space', async () => {
+      const cookies = await pierreOnGarageRoy();
+
+      await routes.addGate(cookies, { ...entreePrincipale, name: ` ${'Entrée'.normalize('NFD')}\u00a0 principale ` });
+
+      expect(gateNamed((await routes.readGates(cookies)).json<DashboardLotGates>(), 'Entrée principale')).toBeDefined();
+    });
+
     it('still answers the one-time key when the list cannot be read after the gate was saved', async () => {
       const cookies = await pierreOnGarageRoy();
       gates.readFailure = new Error('connection reset');
