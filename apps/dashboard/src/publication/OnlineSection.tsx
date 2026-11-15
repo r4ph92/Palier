@@ -1,4 +1,5 @@
 import type { LotPublication } from '@palier/shared-types';
+import type { MouseEvent } from 'react';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { LotStateMark } from '../components/LotStateMark.tsx';
 import { StableLabel } from '../components/StableLabel.tsx';
@@ -12,51 +13,80 @@ interface OnlineSectionProps extends Omit<OnlineChangeTarget, 'lotId'> {
   readonly missingNames: string;
 }
 
+interface OnlineButtonProps {
+  readonly isOnline: boolean;
+  readonly isReady: boolean;
+  readonly online: OnlineChange;
+}
+
 const NOTE_ID = 'online-note';
 
 export function OnlineSection({ publication, missingNames, onSaved, onStale }: OnlineSectionProps) {
   const text = useText();
   const online = useOnlineChange({ lotId: publication.lotId, onSaved, onStale });
+  const { isOnline } = publication;
   return (
     <section className="section" aria-labelledby="online-title">
       <h2 id="online-title" className="section-title">
         {text.publication.stateTitle}
       </h2>
-      <p>
-        <LotStateMark isOnline={publication.isOnline} />
-      </p>
-      {publication.isOnline ? <GoOffline online={online} /> : <GoOnline online={online} missingNames={missingNames} />}
+      <OnlineState isOnline={isOnline} />
+      <OnlineNote publication={publication} missingNames={missingNames} />
+      <OnlineButton isOnline={isOnline} isReady={publication.missing.length === 0} online={online} />
       {online.refusal === null ? null : <ErrorNotice key={online.refusal.attempt} code={online.refusal.code} takesFocus />}
     </section>
   );
 }
 
-// Disabled while something is missing; the note beside it names what, so the reason is never only the greyed button.
-function GoOnline({ online, missingNames }: { readonly online: OnlineChange; readonly missingNames: string }) {
-  const text = useText();
-  const isReady = missingNames === '';
+// The mark shows the state; the status line says it again in a sentence, so each change is announced.
+function OnlineState({ isOnline }: { readonly isOnline: boolean }) {
+  const words = useText().publication;
   return (
     <>
-      <p id={NOTE_ID} className={isReady ? undefined : 'muted'}>
-        {isReady ? text.publication.readyNote : interpolate(text.publication.missingNote, { names: missingNames })}
+      <p>
+        <LotStateMark isOnline={isOnline} />
       </p>
-      <button type="button" className="primary-button" disabled={!isReady} aria-disabled={online.busy} aria-describedby={NOTE_ID} onClick={() => void online.change(true)}>
-        <StableLabel shown={online.busy ? text.publication.goingOnline : text.publication.goOnline} reserved={[text.publication.goOnline, text.publication.goingOnline]} />
-      </button>
+      <p role="status" className="visually-hidden">
+        {isOnline ? words.onlineStatus : words.offlineStatus}
+      </p>
     </>
   );
 }
 
-function GoOffline({ online }: { readonly online: OnlineChange }) {
-  const text = useText();
+// While something is missing the note names what, so the reason is never only the greyed button.
+function OnlineNote({ publication, missingNames }: Pick<OnlineSectionProps, 'publication' | 'missingNames'>) {
+  const words = useText().publication;
+  if (publication.isOnline) {
+    return <p id={NOTE_ID} className="lead">{words.offlineNote}</p>;
+  }
+  if (publication.missing.length === 0) {
+    return <p id={NOTE_ID}>{words.readyNote}</p>;
+  }
+  return <p id={NOTE_ID} className="muted">{interpolate(words.missingNote, { names: missingNames })}</p>;
+}
+
+// One element for both directions: the operator's focus stays on it when the lot changes state.
+function OnlineButton({ isOnline, isReady, online }: OnlineButtonProps) {
+  const words = useText().publication;
+  const [idle, busy] = isOnline ? [words.goOffline, words.goingOffline] : [words.goOnline, words.goingOnline];
   return (
-    <>
-      <p id={NOTE_ID} className="lead">
-        {text.publication.offlineNote}
-      </p>
-      <button type="button" className="secondary-button" aria-disabled={online.busy} aria-describedby={NOTE_ID} onClick={() => void online.change(false)}>
-        <StableLabel shown={online.busy ? text.publication.goingOffline : text.publication.goOffline} reserved={[text.publication.goOffline, text.publication.goingOffline]} />
-      </button>
-    </>
+    <button
+      type="button"
+      className={isOnline ? 'secondary-button' : 'primary-button'}
+      disabled={!isOnline && !isReady}
+      aria-disabled={online.busy}
+      aria-describedby={NOTE_ID}
+      onClick={(event) => toggle(event, { isOnline, online })}
+    >
+      <StableLabel shown={online.busy ? busy : idle} reserved={[words.goOnline, words.goingOnline, words.goOffline, words.goingOffline]} />
+    </button>
   );
+}
+
+// The same button does the opposite once the lot has changed: a double-click's second click would undo the first.
+function toggle(event: MouseEvent<HTMLButtonElement>, { isOnline, online }: Omit<OnlineButtonProps, 'isReady'>): void {
+  if (event.detail > 1) {
+    return;
+  }
+  void online.change(!isOnline);
 }

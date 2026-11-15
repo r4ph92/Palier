@@ -39,7 +39,7 @@ describe('the on-site measures of the go-live page', () => {
 
     await attest('Réseau Wi-Fi', { measuredOn: '2026-11-14', note: ' ' });
 
-    expect(within(attestationForm('Réseau Wi-Fi')).getByText(/^La note doit compter de 1 à 300 caractères/)).toBeDefined();
+    expect(within(attestationForm('Réseau Wi-Fi')).getByText(/^Le constat doit compter de 1 à 300 caractères/)).toBeDefined();
     expect(api.requests).not.toContain(WIFI_REQUEST);
   });
 
@@ -61,7 +61,7 @@ describe('the on-site measures of the go-live page', () => {
       await vi.advanceTimersByTimeAsync(POLL_MILLISECONDS);
     });
 
-    expect(stateWordOf('Sortie vérifiée : Sortie Démo')).toBe('Manquant');
+    expect(stateWordOf('Sortie : Sortie Démo')).toBe('Manquant');
     expect((note as HTMLInputElement).value).toBe('P1, P2: -62 dBm et P3');
   });
 });
@@ -74,7 +74,7 @@ describe('the go-live page in English', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Go live — Parking Démo' })).toBeDefined();
     expect(screen.getByRole('button', { name: 'Put online' })).toBeDefined();
-    expect(checklistLineOf('Entry verified: Entrée Démo')).toMatch(/^Entry verified: Entrée Démo Met Test passage passed on Nov 14, 3:30 PM$/);
+    expect(checklistLineOf('Entry: Entrée Démo')).toMatch(/^Entry: Entrée Démo Met Test passage passed on Nov 14, 3:30 PM$/);
     expect(checklistLineOf('Wi-Fi measured on site')).toBe('Wi-Fi measured on site Met Measured on November 12, 2026: P1, P2: -62 dBm');
     expect(screen.getByRole('form', { name: 'Wi-Fi network' })).toBeDefined();
     expect(frenchLeftOnEnglishPage()).toEqual([]);

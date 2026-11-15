@@ -23,7 +23,7 @@ describe('the go-live page', () => {
     expect(checklistLineOf('Tarif enregistré')).toBe('Tarif enregistré Rempli Plafond journalier : 25,00 $');
     expect(checklistLineOf('Au moins une place en service')).toBe('Au moins une place en service Rempli 9 places en service');
     expect(checklistLineOf('Wi-Fi mesuré sur place')).toBe('Wi-Fi mesuré sur place Rempli Mesuré le 12 novembre 2026 : P1, P2: -62 dBm');
-    expect(checklistLineOf('Entrée vérifiée : Entrée Démo')).toBe('Entrée vérifiée : Entrée Démo Rempli Passage de test réussi le 14 nov., 15 h 30');
+    expect(checklistLineOf('Entrée : Entrée Démo')).toBe('Entrée : Entrée Démo Rempli Passage de test réussi le 14 nov., 15 h 30');
   });
 
   it('puts the lot online, then offers to take it offline', async () => {
@@ -71,8 +71,8 @@ describe('the go-live page', () => {
 
     await screen.findByRole('heading', { level: 1, name: 'Mise en ligne — Parking Démo' });
 
-    expect(checklistLineOf('Sortie vérifiée : Sortie Démo')).toBe('Sortie vérifiée : Sortie Démo Manquant Non vérifiée : lancez un passage de test depuis son contrôleur.');
-    expect(plainText(screen.getByText(/^Il manque/))).toBe('Il manque : Borne d’entrée et Sortie vérifiée : Sortie Démo.');
+    expect(checklistLineOf('Sortie : Sortie Démo')).toBe('Sortie : Sortie Démo Manquant Non vérifiée : lancez un passage de test depuis son contrôleur.');
+    expect(plainText(screen.getByText(/^Il manque/))).toBe('Il manque : Borne d’entrée et Sortie : Sortie Démo.');
   });
 
   it('reads the checklist again when the API refuses LOT_NOT_READY, and says why', async () => {
@@ -82,7 +82,7 @@ describe('the go-live page', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Mettre en ligne' }));
 
     expect(plainText(await screen.findByRole('alert'))).toBe('Il manque encore un prérequis : le stationnement reste hors ligne. La liste a été relue.');
-    expect(stateWordOf('Entrée vérifiée : Entrée Démo')).toBe('Manquant');
+    expect(stateWordOf('Entrée : Entrée Démo')).toBe('Manquant');
     expect((screen.getByRole('button', { name: 'Mettre en ligne' }) as HTMLButtonElement).disabled).toBe(true);
     expect(api.requests.filter((request) => request === `GET /lots/${parkingDemo.id}/publication`)).toHaveLength(2);
   });
