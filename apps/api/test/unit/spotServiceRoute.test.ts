@@ -53,7 +53,7 @@ describe('taking a spot out of service and back', () => {
   it.each<SpotState>(['HELD', 'ASSIGNED', 'OCCUPIED', 'OCCUPIED_UNKNOWN'])('refuses a spot %s as in use and changes nothing', async (state) => {
     const { spot, cookies, before } = await parkingDemoSpotA3();
     spot.state = state;
-    before.find(({ id }) => id === spot.id)!.state = state;
+    Object.assign(before.find(({ id }) => id === spot.id) ?? {}, { state });
 
     const refused = await routes.setService(cookies, spot.id, true);
 
@@ -65,7 +65,7 @@ describe('taking a spot out of service and back', () => {
   it('refuses a free spot an active session still points at', async () => {
     const { spot, cookies, before } = await parkingDemoSpotA3();
     spot.isHeldBySession = true;
-    before.find(({ id }) => id === spot.id)!.isHeldBySession = true;
+    Object.assign(before.find(({ id }) => id === spot.id) ?? {}, { isHeldBySession: true });
 
     expect((await routes.setService(cookies, spot.id, true)).statusCode).toBe(409);
     expect(spots.spots).toEqual(before);

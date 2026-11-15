@@ -28,9 +28,8 @@ export interface MemberSpots {
 
 // Keeps the API's rules: a member's own lot, a parking aisle, numbers taken in the lot, spots in use kept.
 export function routeSpots({ state, ownedLotIds }: MemberSpots, request: string, body: Record<string, unknown>): FakeResponse {
-  const service = SERVICE_REQUEST.exec(request);
-  if (service !== null) {
-    return setService({ state, lotId: service[1] ?? '', isOwned: ownedLotIds.has(service[1] ?? '') }, service[2] ?? '', body.outOfService === true);
+  if (SERVICE_REQUEST.test(request)) {
+    return routeService({ state, ownedLotIds }, request, body);
   }
   const [, method, lotId = '', id = ''] = AISLE_SPOTS_REQUEST.exec(request) ?? SPOT_REQUEST.exec(request) ?? [];
   const lot = { state, lotId, isOwned: ownedLotIds.has(lotId) };
@@ -75,6 +74,11 @@ function changeSpot(lot: MemberLot, spotId: string, attributes: SpotAttributes):
   }
   Object.assign(spot, attributes);
   return { status: 200, body: aisleSpotsOf(lot, spot.aisleId) };
+}
+
+function routeService({ state, ownedLotIds }: MemberSpots, request: string, body: Record<string, unknown>): FakeResponse {
+  const [, lotId = '', spotId = ''] = SERVICE_REQUEST.exec(request) ?? [];
+  return setService({ state, lotId, isOwned: ownedLotIds.has(lotId) }, spotId, body.outOfService === true);
 }
 
 function setService(lot: MemberLot, spotId: string, outOfService: boolean): FakeResponse {
