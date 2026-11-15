@@ -1,4 +1,4 @@
-# 038 — Bornes, clés d'appareil et QR imprimables
+# 039 — Bornes, clés d'appareil et QR imprimables
 
 **Contexte.** #67 : l'opérateur ajoute ses bornes depuis le tableau de bord, reçoit la clé d'appareil de chacune et imprime son QR, sans passer par le seed.
 

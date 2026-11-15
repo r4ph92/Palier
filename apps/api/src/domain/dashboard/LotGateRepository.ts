@@ -34,7 +34,7 @@ export interface NewGate {
 export interface LotGateRepository {
   // Null when the operator has no lot with this id.
   readLotGates(operatorId: string, lotId: string): Promise<DashboardLotGates | null>;
-  // Counted under the lock: at most MAX_GATES_PER_LOT gates, and one exit gate per lot for now (decision 038).
+  // Counted under the lock: at most MAX_GATES_PER_LOT gates, and one exit gate per lot for now (decision 039).
   addGate(operatorId: string, lotId: string, gate: NewGate): Promise<GateWrite>;
   // An entry gate's exit identification stays NONE: anything else is GATE_EXIT_ID_ON_ENTRY.
   changeGate(operatorId: string, gate: GatePlace, settings: GateSettings): Promise<GateWrite>;

@@ -1,7 +1,7 @@
 import archivoSemiBold from './sheetFonts/archivo-600-latin1.woff?inline';
 import plexMonoMedium from './sheetFonts/ibm-plex-mono-500-latin1.woff2?inline';
 
-// The file is opened from disk, offline: the two faces it prints travel inside it, Latin only (decision 038).
+// The file is opened from disk, offline: the two faces it prints travel inside it, Latin only (decision 039).
 const SHEET_FONTS = `
 @font-face { font-family: Archivo; font-weight: 600; src: url(${archivoSemiBold}) format('woff'); }
 @font-face { font-family: 'IBM Plex Mono'; font-weight: 500; src: url(${plexMonoMedium}) format('woff2'); }

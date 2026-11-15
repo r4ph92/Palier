@@ -70,7 +70,7 @@ async function insertGate(tx: Executor, lotId: string, gate: NewGate): Promise<G
   return gateWritten(inserted.id);
 }
 
-// The app's exit opens the lot's first exit gate by name, so a second one would never open (decision 038).
+// The app's exit opens the lot's first exit gate by name, so a second one would never open (decision 039).
 async function gateLimitRefusalOf(tx: Executor, lotId: string, { draft }: NewGate): Promise<GateWrite | null> {
   const [counted] = await tx.execute<GateCountRow>(countLotGatesStatement(lotId));
   if ((counted?.gate_count ?? 0) >= MAX_GATES_PER_LOT) {
