@@ -197,3 +197,24 @@
     display: block;
   }
 }
+
+/* The state word stays whole and the actions give up their trailing padding, so a toggle never reflows the row; down to 760 px the actions may wrap instead of overflowing the section. */
+@media (min-width: 681px) {
+  .spot-table .spot-state .state-mark {
+    white-space: nowrap;
+  }
+
+  .data-table.spot-table td.spot-actions {
+    padding-inline-end: 0;
+  }
+
+  .spot-table .row-actions {
+    column-gap: var(--space-small);
+  }
+}
+
+@media (min-width: 681px) and (max-width: 760px) {
+  .spot-table .row-actions:not(.delete-question) {
+    flex-wrap: wrap;
+  }
+}
