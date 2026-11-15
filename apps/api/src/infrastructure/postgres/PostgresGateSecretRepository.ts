@@ -2,7 +2,15 @@ import type { GateSecretRepository, QrSecretRead } from '../../domain/dashboard/
 import { gateRefused, gateWritten, type GatePlace, type GateWrite } from '../../domain/dashboard/LotGateRepository.ts';
 import { isUsableQrSecret } from '../../domain/entries/gateToken.ts';
 import type { Database, Transaction } from './database.ts';
-import { insertDeviceKeyStatement, readOwnedGateStatement, replaceQrSecretStatement, revokeDeviceKeysStatement, type OwnedGateRow } from './lotGateStatements.ts';
+import {
+  insertDeviceKeyStatement,
+  readOwnedGateKindStatement,
+  readOwnedGateQrSecretStatement,
+  replaceQrSecretStatement,
+  revokeDeviceKeysStatement,
+  type OwnedGateKindRow,
+  type OwnedGateQrSecretRow,
+} from './lotGateStatements.ts';
 import { writeInOwnedLot } from './ownedLotWrite.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
@@ -44,13 +52,13 @@ export class PostgresGateSecretRepository implements GateSecretRepository {
 }
 
 async function isGateOfLot(tx: Executor, gate: GatePlace): Promise<boolean> {
-  const owned = await tx.execute<OwnedGateRow>(readOwnedGateStatement(gate));
+  const owned = await tx.execute<OwnedGateKindRow>(readOwnedGateKindStatement(gate));
   return owned.length > 0;
 }
 
 // A gate from before #67 may have no secret: it gets the spare one, and nothing else changes.
 async function storedOrSpareSecret(tx: Executor, gate: GatePlace, spareSecret: string): Promise<QrSecretRead> {
-  const [owned] = await tx.execute<OwnedGateRow>(readOwnedGateStatement(gate));
+  const [owned] = await tx.execute<OwnedGateQrSecretRow>(readOwnedGateQrSecretStatement(gate));
   if (owned === undefined) {
     return { kind: 'refused', reason: 'GATE_NOT_FOUND' };
   }

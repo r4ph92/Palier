@@ -66,23 +66,33 @@ describe('the gates of a lot in Postgres', () => {
   });
 
   it('changes a gate of the locked lot only, and refuses an exit identification on an entry gate', async () => {
-    const exit = lockedLot().answer('read-owned-gate', [{ kind: 'EXIT', qr_secret: USABLE_SECRET }]);
-    const entry = lockedLot().answer('read-owned-gate', [{ kind: 'ENTRY', qr_secret: USABLE_SECRET }]);
+    const exit = lockedLot().answer('read-owned-gate-kind', [{ kind: 'EXIT' }]);
+    const entry = lockedLot().answer('read-owned-gate-kind', [{ kind: 'ENTRY' }]);
 
     expect(await new PostgresLotGateRepository(exit.database()).changeGate(ROY_OPERATOR, gatePlace, sortieNord)).toEqual({ kind: 'written', gateId: GATE });
     expect(exit.statement('change-gate')?.text).toMatch(/where gate\.id = \$\d+ and gate\.lot_id = \$\d+$/);
     expect(await new PostgresLotGateRepository(entry.database()).changeGate(ROY_OPERATOR, gatePlace, sortieNord)).toEqual({ kind: 'refused', reason: 'GATE_EXIT_ID_ON_ENTRY' });
     expect(entry.count('change-gate')).toBe(0);
   });
+
+  it('never reads the QR secret to change a gate', async () => {
+    const scripted = lockedLot().answer('read-owned-gate-kind', [{ kind: 'EXIT' }]);
+
+    await new PostgresLotGateRepository(scripted.database()).changeGate(ROY_OPERATOR, gatePlace, sortieNord);
+
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'read-owned-gate-kind', 'change-gate']);
+    expect(scripted.statements.map(({ text }) => text).join('\n')).not.toMatch(/qr_secret/);
+  });
 });
 
 describe('the secrets of a gate in Postgres', () => {
   it('revokes every live key of the gate and inserts the new hash, under the lot lock', async () => {
-    const scripted = lockedLot().answer('read-owned-gate', [{ kind: 'EXIT', qr_secret: USABLE_SECRET }]);
+    const scripted = lockedLot().answer('read-owned-gate-kind', [{ kind: 'EXIT' }]);
 
     expect(await new PostgresGateSecretRepository(scripted.database()).replaceDeviceKey(ROY_OPERATOR, gatePlace, 'new-hash')).toEqual({ kind: 'written', gateId: GATE });
 
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'read-owned-gate', 'revoke-device-keys', 'insert-device-key']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'read-owned-gate-kind', 'revoke-device-keys', 'insert-device-key']);
+    expect(scripted.statements.map(({ text }) => text).join('\n')).not.toMatch(/qr_secret/);
     expect(scripted.statement('revoke-device-keys')?.text).toMatch(/gate_device_key\.gate_id = \$1 and gate_device_key\.revoked_at is null$/);
   });
 
@@ -95,12 +105,12 @@ describe('the secrets of a gate in Postgres', () => {
   });
 
   it('reads a usable QR secret without writing, and stores the spare one only for a gate that has none', async () => {
-    const usable = lockedLot().answer('read-owned-gate', [{ kind: 'ENTRY', qr_secret: USABLE_SECRET }]);
-    const missing = lockedLot().answer('read-owned-gate', [{ kind: 'ENTRY', qr_secret: null }]).answer('replace-qr-secret', [{ id: GATE }]);
+    const usable = lockedLot().answer('read-owned-gate-qr-secret', [{ qr_secret: USABLE_SECRET }]);
+    const missing = lockedLot().answer('read-owned-gate-qr-secret', [{ qr_secret: null }]).answer('replace-qr-secret', [{ id: GATE }]);
 
     expect(await new PostgresGateSecretRepository(usable.database()).usableQrSecret(ROY_OPERATOR, gatePlace, 'spare')).toEqual({ kind: 'secret', qrSecret: USABLE_SECRET });
     expect(usable.count('replace-qr-secret')).toBe(0);
     expect(await new PostgresGateSecretRepository(missing.database()).usableQrSecret(ROY_OPERATOR, gatePlace, 'spare')).toEqual({ kind: 'secret', qrSecret: 'spare' });
-    expect(missing.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'read-owned-gate', 'replace-qr-secret']);
+    expect(missing.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'read-owned-gate-qr-secret', 'replace-qr-secret']);
   });
 });

@@ -35,8 +35,13 @@ export function insertDeviceKeyStatement(gateId: string, deviceKeyHash: string):
 }
 
 // The lot is already locked as the operator's: the gate only has to be in it.
-export function readOwnedGateStatement({ lotId, gateId }: GatePlace): SQL {
-  return sql`select gate.kind, gate.qr_secret from gate where gate.id = ${gateId} and gate.lot_id = ${lotId}`;
+export function readOwnedGateKindStatement({ lotId, gateId }: GatePlace): SQL {
+  return sql`select gate.kind from gate where gate.id = ${gateId} and gate.lot_id = ${lotId}`;
+}
+
+// Only the QR link reads the secret, to sign it.
+export function readOwnedGateQrSecretStatement({ lotId, gateId }: GatePlace): SQL {
+  return sql`select gate.qr_secret from gate where gate.id = ${gateId} and gate.lot_id = ${lotId}`;
 }
 
 export function changeGateStatement({ lotId, gateId }: GatePlace, settings: GateSettings): SQL {
@@ -54,7 +59,10 @@ export function replaceQrSecretStatement({ lotId, gateId }: GatePlace, qrSecret:
   return sql`update gate set qr_secret = ${qrSecret} where gate.id = ${gateId} and gate.lot_id = ${lotId} returning gate.id`;
 }
 
-export interface OwnedGateRow extends Record<string, unknown> {
+export interface OwnedGateKindRow extends Record<string, unknown> {
   readonly kind: GateKind;
+}
+
+export interface OwnedGateQrSecretRow extends Record<string, unknown> {
   readonly qr_secret: string | null;
 }

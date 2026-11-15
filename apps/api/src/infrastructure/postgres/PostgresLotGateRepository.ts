@@ -10,8 +10,8 @@ import {
   insertDeviceKeyStatement,
   insertGateStatement,
   readGateSettingsStatement,
-  readOwnedGateStatement,
-  type OwnedGateRow,
+  readOwnedGateKindStatement,
+  type OwnedGateKindRow,
 } from './lotGateStatements.ts';
 import { writeInOwnedLot } from './ownedLotWrite.ts';
 import { violatedUniqueConstraintOf } from './uniqueViolation.ts';
@@ -83,7 +83,7 @@ async function gateLimitRefusalOf(tx: Executor, lotId: string, { draft }: NewGat
 }
 
 async function changeOwnedGate(tx: Executor, gate: GatePlace, settings: GateSettings): Promise<GateWrite> {
-  const [owned] = await tx.execute<OwnedGateRow>(readOwnedGateStatement(gate));
+  const [owned] = await tx.execute<OwnedGateKindRow>(readOwnedGateKindStatement(gate));
   if (owned === undefined) {
     return gateRefused('GATE_NOT_FOUND');
   }
