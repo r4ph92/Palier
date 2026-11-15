@@ -185,6 +185,7 @@ export const fr = {
     GRID_LENGTH_INVALID: 'Un nombre entier de 1 à %{gridMaximum}.',
     MAP_RELOAD_FAILED: 'Les niveaux ont changé entre-temps, et le plan n’a pas pu être rechargé. Rechargez la page avant de recommencer.',
     SPOT_RELOAD_FAILED: 'La page n’a pas pu être rechargée après ce refus. Rechargez la page avant de recommencer.',
+    SPOT_TO_CHECK_GONE: 'La place %{number} est introuvable. La liste des places a été rechargée.',
     SPOT_RANGE_UNREADABLE: 'Numéros illisibles. Écrivez une plage comme A-1 à A-20, ou un seul numéro comme A-7.',
     UNKNOWN: 'Une erreur est survenue. Réessayez dans un instant.',
   },

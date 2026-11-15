@@ -13,6 +13,7 @@ const LIST_OUT_OF_DATE: readonly DisplayedErrorCode[] = ['LOT_BUSY', 'SPOT_NOT_F
 
 export interface RowRefusal extends Refusal {
   readonly spotId: string;
+  readonly spotNumber: string;
 }
 
 interface ClearStatus {
@@ -53,11 +54,15 @@ function focusIdAfterClearing(shown: readonly DashboardSpotToCheck[], remaining:
   return neighbour === undefined ? SPOT_CHECK_STATUS_ID : checkButtonId(neighbour.spotId);
 }
 
+// The row is gone, so the sentence names the spot it was about.
 function listRefusalOf(refusal: RowRefusal | null, spots: readonly DashboardSpotToCheck[]): Refusal | null {
   if (refusal === null || spots.some(({ spotId }) => spotId === refusal.spotId)) {
     return null;
   }
-  return refusal;
+  if (refusal.code !== 'SPOT_NOT_FOUND') {
+    return refusal;
+  }
+  return { code: 'SPOT_TO_CHECK_GONE', values: { ...refusal.values, number: refusal.spotNumber } };
 }
 
 // The list shows only what the API answered: a cleared spot leaves it, a refused one stays with the reason beside its row.
@@ -71,7 +76,7 @@ export function useSpotCheckClearing(lotId: string, initial: DashboardSpotsToChe
       setStatus({ ...IDLE, clearingId: spot.spotId, clearingNumber: spot.number });
       const outcome = await attemptClear(lotId, spot, followUps);
       if ('refusal' in outcome) {
-        setStatus({ ...IDLE, refusal: { ...outcome.refusal, spotId: spot.spotId } });
+        setStatus({ ...IDLE, refusal: { ...outcome.refusal, spotId: spot.spotId, spotNumber: spot.number } });
         return;
       }
       list.showAfterClearing(outcome.answer.spots, spot);

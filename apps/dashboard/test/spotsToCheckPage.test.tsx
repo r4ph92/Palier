@@ -176,7 +176,7 @@ describe('the spots to check page', () => {
     await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Place B-2 vérifiée' })));
   });
 
-  it('reads the list again when a clear answers that the spot is gone, and says so above the list with focus on it', async () => {
+  it('reads the list again when a clear answers that the spot is gone, and names it above the list with focus on it', async () => {
     const clearRequest = `POST /lots/${parkingDemo.id}/spots/${PARKING_DEMO_B2_ID}/check-cleared`;
     const api = installFakeApi({ signedInAs: sophie, answers: { [clearRequest]: { status: 404, body: { error: 'SPOT_NOT_FOUND' } } } });
     renderDashboard({ path: PAGE });
@@ -185,7 +185,7 @@ describe('the spots to check page', () => {
     await userEvent.click(button);
 
     const refusal = await screen.findByRole('alert');
-    expect(refusal.textContent).toBe('Cette place est introuvable. La liste des places a été rechargée.');
+    expect(refusal.textContent).toBe('La place B-2 est introuvable. La liste des places a été rechargée.');
     expect(screen.queryByRole('rowheader', { name: 'B-2' })).toBeNull();
     await waitFor(() => expect(document.activeElement).toBe(refusal));
     expect(api.requests.filter((request) => request === `GET /lots/${parkingDemo.id}/spots-to-check`)).toHaveLength(2);
