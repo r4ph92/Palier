@@ -27,6 +27,7 @@ import type { DashboardRouteDependencies } from './dashboard/DashboardRouteDepen
 import { registerDashboardRoutes } from './dashboard/dashboardRoutes.ts';
 import { registerDemoConsoleRoutes } from './demo/demoConsoleRoutes.ts';
 import { handleServerError } from './handleServerError.ts';
+import { serverLoggerOf, type ServerLogging } from './serverLogger.ts';
 import { requireMinimumAppVersion } from './requireMinimumAppVersion.ts';
 import { registerCurrentParkingSessionRoute } from './routes/currentParkingSessionRoute.ts';
 import { registerDriverRoutes } from './routes/driverRoutes.ts';
@@ -90,17 +91,16 @@ export interface ServerDependencies {
   readonly settings?: ServerSettings;
 }
 
-export interface ServerSettings {
+export interface ServerSettings extends ServerLogging {
   readonly testSignInEnabled?: boolean;
   readonly demoMode?: boolean;
-  readonly logsRequests?: boolean;
   readonly minimumAppVersion?: string | undefined;
   readonly secureCookies?: boolean;
 }
 
 export function buildServer({ repositories, gates, cardGateway, entries, exits, spotHolds, operatorStripe, testClock, settings = {} }: ServerDependencies): FastifyInstance {
   // Refuse a value of the wrong JSON type rather than converting it, so ["2026-10-28"] is not read as "2026-10-28".
-  const server = Fastify({ logger: settings.logsRequests ?? false, ajv: { customOptions: { coerceTypes: false } } });
+  const server = Fastify({ logger: serverLoggerOf(settings), ajv: { customOptions: { coerceTypes: false } } });
   server.setErrorHandler(handleServerError);
   server.decorateRequest('driver', null);
   void server.register(async (appScope) => registerAppRoutes(appScope, { repositories, cardGateway, entries, exits, spotHolds, testClock, settings }));

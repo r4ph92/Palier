@@ -3,7 +3,7 @@ import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-type
 import type { FastifyInstance } from 'fastify';
 import type { Driver } from '../../../src/domain/drivers/Driver.ts';
 import type { GateRouteDependencies } from '../../../src/http/routes/gateRoutes.ts';
-import { buildServer, type ServerSettings } from '../../../src/http/buildServer.ts';
+import { buildServer, type ServerDependencies, type ServerSettings } from '../../../src/http/buildServer.ts';
 import { FakeDriverRepository, julie, marc } from '../fakeDriverRepository.ts';
 import { nouvelOperateur, pierre, sophie } from './dashboardFixtures.ts';
 import { fakeOperatorStripe } from './fakeOperatorStripe.ts';
@@ -17,7 +17,10 @@ import { fakeGateDependencies, fakeRepositories } from './serverDependencies.ts'
 export const DASHBOARD_COOKIE = 'palier_dashboard';
 export const writeHeader = { [DASHBOARD_CSRF_HEADER]: DASHBOARD_CSRF_VALUE };
 
-export function startDashboardServer(settings: ServerSettings = { testSignInEnabled: true }) {
+type RepositoryOverrides = Partial<ServerDependencies['repositories']>;
+
+// overrides replaces a fake with a scripted Postgres repository, so a test sees what a real statement failure does.
+export function startDashboardServer(settings: ServerSettings = { testSignInEnabled: true }, overrides: RepositoryOverrides = {}) {
   const driverRepository = new FakeDriverRepository([julie, marc, sophie, pierre, nouvelOperateur]);
   const operatorRepository = new FakeOperatorRepository();
   const stripe = fakeOperatorStripe(operatorRepository);
@@ -28,7 +31,7 @@ export function startDashboardServer(settings: ServerSettings = { testSignInEnab
   const { testClock } = composeClock(settings.testSignInEnabled === true);
   const server: FastifyInstance = buildServer({
     gates: gateDependenciesReading(lotGates),
-    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment, lotSpots, lotGates, gateSecrets: lotGates },
+    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment, lotSpots, lotGates, gateSecrets: lotGates, ...overrides },
     operatorStripe: stripe.dependencies,
     testClock,
     settings,
