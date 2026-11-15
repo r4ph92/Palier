@@ -29,16 +29,25 @@ const STILL_PENDING_MESSAGES = {
 } as const;
 
 // Each capture goes out with the amount and the idempotency key of the exit tap, so Stripe takes it once however many runs retry it; the
-// surplus is looked up before it is charged, so it is taken once too. A payment that fails again waits for the next run; the others still go.
-export async function retryCaptures({ pending, payments, clock }: CaptureRetryJob, log: JobLog): Promise<void> {
-  for (const capture of await pending.listPending(BATCH_SIZE)) {
-    const { sessionId } = capture;
-    const taken = await takePayment(payments, clock, capture);
-    if (taken.outcome !== 'paid') {
-      log.warn({ sessionId }, STILL_PENDING_MESSAGES[taken.outcome]);
-      continue;
+// surplus is looked up before it is charged, so it is taken once too. A session that fails again waits for the next run; the others still go.
+export async function retryCaptures(job: CaptureRetryJob, log: JobLog): Promise<void> {
+  for (const capture of await job.pending.listPending(BATCH_SIZE)) {
+    try {
+      await retryCapture(job, capture, log);
+    } catch {
+      // The raw error can quote the session row, Stripe id included; the session id is enough to find it.
+      log.error({ sessionId: capture.sessionId }, 'pending capture not settled, retried at the next run');
     }
-    await pending.markPaid(sessionId, taken.payment);
-    log.info({ sessionId }, 'pending capture taken');
   }
+}
+
+async function retryCapture({ pending, payments, clock }: CaptureRetryJob, capture: PendingCapture, log: JobLog): Promise<void> {
+  const { sessionId } = capture;
+  const taken = await takePayment(payments, clock, capture);
+  if (taken.outcome !== 'paid') {
+    log.warn({ sessionId }, STILL_PENDING_MESSAGES[taken.outcome]);
+    return;
+  }
+  await pending.markPaid(sessionId, taken.payment);
+  log.info({ sessionId }, 'pending capture taken');
 }

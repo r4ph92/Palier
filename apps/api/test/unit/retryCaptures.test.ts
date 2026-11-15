@@ -110,6 +110,19 @@ describe('retryCaptures', () => {
     expect(captures.paid).toEqual([{ sessionId: 'session-marc', capturedCents: 300, surplusPaidCents: 0, unpaidCents: 0, capturedAt: RETRY_AT }]);
   });
 
+  it('goes on with the other sessions when recording one payment fails, and logs no Stripe id (QA #157)', async () => {
+    const { captures, log, run } = setup([julie, marc]);
+    const markPaid = captures.markPaid.bind(captures);
+    captures.markPaid = (sessionId, payment) =>
+      sessionId === 'session-julie' ? Promise.reject(new Error('Failing row contains (pi_julie)')) : markPaid(sessionId, payment);
+
+    await run();
+
+    expect(captures.paid).toMatchObject([{ sessionId: 'session-marc' }]);
+    expect(log.error).toHaveBeenCalledWith({ sessionId: 'session-julie' }, 'pending capture not settled, retried at the next run');
+    expect(JSON.stringify(log.error.mock.calls)).not.toContain('pi_');
+  });
+
   describe('the surplus of a stay over 24 hours', () => {
     it('charges the surplus after the capture and records both', async () => {
       const { captures, payments, run } = setup([sophie]);
