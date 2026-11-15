@@ -1,7 +1,7 @@
 import type { GateCommand } from '@palier/shared-types';
 import type { AuthenticatedGate } from '../../../src/domain/gates/AuthenticatedGate.ts';
 import { GATE_COMMAND_PAGE_SIZE, type GateCommandCursor, type GateCommandFeed } from '../../../src/domain/gates/GateCommandFeed.ts';
-import type { BeaconBatteryReport, EquipmentReports, ReportingGate } from '../../../src/domain/equipment/EquipmentReports.ts';
+import type { BeaconBatteryReport, EquipmentReports, ReportingGate, TestPassage } from '../../../src/domain/equipment/EquipmentReports.ts';
 import type { DeviceKeyRecord, GateDeviceKeyRepository } from '../../../src/domain/gates/GateDeviceKeyRepository.ts';
 import { hashDeviceKey } from '../../../src/domain/gates/hashDeviceKey.ts';
 import type { PassageEntry, PassageLedger, RecordedPassage, RecordedReplay, ReplayedPassage, ReplayEntry } from '../../../src/domain/gates/PassageLedger.ts';
@@ -106,6 +106,9 @@ function isAfter(command: GateCommand, cursor: GateCommandCursor): boolean {
 export class FakeEquipmentReports implements EquipmentReports {
   readonly heartbeats = new Map<string, Date>();
   readonly batteries: BeaconBatteryReport[] = [];
+  readonly verifiedAt = new Map<string, Date>();
+  // Keys revoked between the request's authentication and its write.
+  readonly revokedKeyHashes = new Set<string>();
   readonly beaconMinorsByLot = new Map<string, readonly number[]>([[entreeDemo.lotId, [0, 1, 2]]]);
 
   recordHeartbeat(gate: ReportingGate, at: Date): Promise<void> {
@@ -119,5 +122,14 @@ export class FakeEquipmentReports implements EquipmentReports {
       this.batteries.push(report);
     }
     return Promise.resolve(isKnown);
+  }
+
+  recordTestPassage(gate: ReportingGate, { at, heardSince, deviceKeyHash }: TestPassage): Promise<boolean> {
+    const lastHeartbeatAt = this.heartbeats.get(gate.id);
+    const isHeard = lastHeartbeatAt !== undefined && lastHeartbeatAt >= heardSince && !this.revokedKeyHashes.has(deviceKeyHash);
+    if (isHeard) {
+      this.verifiedAt.set(gate.id, at);
+    }
+    return Promise.resolve(isHeard);
   }
 }

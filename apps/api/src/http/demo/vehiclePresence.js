@@ -1,5 +1,5 @@
-import { OK, UNREACHABLE } from './gateApi.js';
-import { knownGateIdentity } from './gateIdentity.js';
+import { sendGateAction } from './gateAction.js';
+import { messageForStatusOf } from './gateRefusals.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('@palier/shared-types').GatePresenceResponse} GatePresenceResponse */
@@ -10,16 +10,7 @@ import { knownGateIdentity } from './gateIdentity.js';
  *   | { kind: 'refused', identity: GateIdentity | null, messageKey: TextKey }} PresenceOutcome
  */
 
-/** @type {Record<number, TextKey>} */
-const MESSAGE_BY_STATUS = { [UNREACHABLE]: 'unreachable', 401: 'keyRefused', 403: 'gateForbidden', 409: 'gateNotExit' };
-
-/**
- * @param {number} status
- * @returns {TextKey}
- */
-export function presenceMessageForStatus(status) {
-  return MESSAGE_BY_STATUS[status] ?? 'presenceFailed';
-}
+export const presenceMessageForStatus = messageForStatusOf({ 409: 'gateNotExit' }, 'presenceFailed');
 
 /** @type {Record<GatePresenceResponse['outcome'], TextKey>} */
 const PRESENCE_MESSAGES = { waiting: 'presenceWaiting', opened: 'presenceOpened', fallback: 'presenceFallback' };
@@ -31,15 +22,12 @@ const PRESENCE_MESSAGES = { waiting: 'presenceWaiting', opened: 'presenceOpened'
  * @returns {Promise<PresenceOutcome>}
  */
 export async function sendPresence(presence, api) {
-  const identityOrRefusal = await knownGateIdentity(presence, api);
-  if ('messageKey' in identityOrRefusal) {
-    return identityOrRefusal;
+  const send = (/** @type {string} */ gateId) => api.postPresence(presence.deviceKey, gateId);
+  const answer = await sendGateAction(presence, { api, send, messageForStatus: presenceMessageForStatus });
+  if (answer.kind === 'refused') {
+    return answer;
   }
-  const response = await api.postPresence(presence.deviceKey, identityOrRefusal.id);
-  if (response.status !== OK || response.body === null) {
-    return { kind: 'refused', identity: identityOrRefusal, messageKey: presenceMessageForStatus(response.status) };
-  }
-  return { kind: /** @type {GatePresenceResponse} */ (response.body).outcome, identity: identityOrRefusal };
+  return { kind: /** @type {GatePresenceResponse} */ (answer.body).outcome, identity: answer.identity };
 }
 
 /**

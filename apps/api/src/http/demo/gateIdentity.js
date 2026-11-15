@@ -1,4 +1,5 @@
-import { OK, UNREACHABLE } from './gateApi.js';
+import { OK } from './gateApi.js';
+import { messageForStatusOf } from './gateRefusals.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('./consoleText.js').TextKey} TextKey */
@@ -6,16 +7,7 @@ import { OK, UNREACHABLE } from './gateApi.js';
 
 export const DEVICE_KEY_SHAPE = /^[A-Za-z0-9_-]{43}$/;
 
-/** @type {Record<number, TextKey>} */
-const MESSAGE_BY_STATUS = { [UNREACHABLE]: 'unreachable', 401: 'keyRefused', 403: 'gateForbidden', 409: 'gateWithoutLoops' };
-
-/**
- * @param {number} status
- * @returns {TextKey}
- */
-export function messageForStatus(status) {
-  return MESSAGE_BY_STATUS[status] ?? 'passageFailed';
-}
+export const messageForStatus = messageForStatusOf({ 409: 'gateWithoutLoops' }, 'passageFailed');
 
 /**
  * The gate the key belongs to: the one already known, else the one Palier names. A key a header cannot carry is refused without a request.

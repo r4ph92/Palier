@@ -12,12 +12,14 @@ import {
   presenceButton,
   readerButton,
   render,
+  testPassageButton,
   focusAfterQueueAction,
 } from './consoleRender.js';
 import { pressLoop } from './loopPress.js';
 import { clearQueue, hasPendingPassages, isToggleAvailable, pressLoopWhileOffline, statusMessageOf, toggleOffline } from './offlineControls.js';
 import { restoredConnection, saveConnection } from './queueStorage.js';
 import { readingMessage, sendReading } from './readerRead.js';
+import { sendTestPassage, testPassageMessage } from './testPassage.js';
 import { presenceMessage, sendPresence } from './vehiclePresence.js';
 
 /** @typedef {import('./consoleText.js').Language} Language */
@@ -136,7 +138,16 @@ function onPresenceSent() {
   });
 }
 
+function onTestPassageSent() {
+  return whileSending(async () => {
+    const outcome = await sendTestPassage({ deviceKey: state.deviceKey, identity: state.identity }, api);
+    state.identity = outcome.identity;
+    state.message = testPassageMessage(outcome);
+  });
+}
+
 readerButton.addEventListener('click', () => void onReadingSent());
+testPassageButton.addEventListener('click', () => void onTestPassageSent());
 presenceButton.addEventListener('click', () => void onPresenceSent());
 offlineToggle.addEventListener('click', () => void onOfflineToggled());
 clearQueueButton.addEventListener('click', onQueueCleared);

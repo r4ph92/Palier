@@ -17,7 +17,7 @@ import { admissionRefusalOf } from './admissionRefusal.ts';
 import { logFailedAdmission, logScan } from './entryEvents.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
-import { inLotLock, LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
+import { inLotLock, LOT_LOCK_TRANSACTION, lockParkingLot, type LockedParkingLot } from './lockParkingLot.ts';
 import { readLotOccupancy } from './lotOccupancy.ts';
 import { parkingSession } from './schema.ts';
 import { ASSIGNED_TO_ENTRY, claimFirstFittingSpot, type AssignedSpotRow } from './spotClaim.ts';
@@ -52,15 +52,16 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 
   async openOrReplay(draft: SessionDraft): Promise<SessionOpening | null> {
     try {
-      return await inLotLock(this.#database, draft.lotId, (tx) => this.#openUnderLotLock(tx, draft));
+      return await inLotLock(this.#database, draft.lotId, (tx, lot) => this.#openUnderLotLock(tx, draft, lot));
     } catch (error) {
       throw admissionRefusalOf(error, draft.lotId);
     }
   }
 
-  async #openUnderLotLock(tx: Transaction, draft: SessionDraft): Promise<SessionOpening | null> {
+  async #openUnderLotLock(tx: Transaction, draft: SessionDraft, lot: LockedParkingLot | undefined): Promise<SessionOpening | null> {
     const decision = decideRepeatedScan(await findActiveSessionFacts(tx, draft.driverId, this.#openingWindow), draft);
-    return openingFor(decision, () => openSession(tx, draft));
+    // An unknown lot never gets here: the eligibility check refused it before the lock.
+    return openingFor({ decision, isLotOnline: lot?.isOnline ?? true }, () => openSession(tx, draft));
   }
 
   async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment> {

@@ -1,6 +1,7 @@
 import { formatPassageTime, messageText, pendingPassages, translate, vehiclesInside } from './consoleText.js';
 import { focusTargetAfterQueueAction, isLoopAvailable, isToggleAvailable, queueOf } from './offlineControls.js';
 import { isReaderEnabled } from './readerRead.js';
+import { isTestPassageEnabled } from './testPassage.js';
 import { isPresenceEnabled } from './vehiclePresence.js';
 
 /** @typedef {import('./consoleText.js').TextKey} TextKey */
@@ -41,6 +42,7 @@ export const clearQueueButton = /** @type {HTMLButtonElement} */ (elementById('c
 export const plateInput = /** @type {HTMLInputElement} */ (elementById('plate-read'));
 export const readerButton = /** @type {HTMLButtonElement} */ (elementById('reader-send'));
 export const presenceButton = /** @type {HTMLButtonElement} */ (elementById('presence-send'));
+export const testPassageButton = /** @type {HTMLButtonElement} */ (elementById('test-passage-send'));
 export const languageButtons = /** @type {HTMLButtonElement[]} */ ([...document.querySelectorAll('[data-language]')]);
 
 /** @param {ConsoleState} state */
@@ -54,6 +56,7 @@ export function render(state) {
   const controls = { ...state, isOffline: state.connection.kind !== 'online' };
   readerButton.disabled = !isReaderEnabled(controls);
   presenceButton.disabled = !isPresenceEnabled(controls);
+  testPassageButton.disabled = !isTestPassageEnabled(controls);
   renderMessage(state);
   renderCommands(state);
   renderPassages(state);

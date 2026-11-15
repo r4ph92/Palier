@@ -63,3 +63,8 @@ export interface GateIdentifyResponse {
 export interface GatePresenceResponse {
   readonly outcome: 'waiting' | 'opened' | 'fallback';
 }
+
+// The controller passed its self-test while heard: the gate counts as verified for putting its lot online.
+export interface GateTestPassageResponse {
+  readonly verifiedAt: string;
+}

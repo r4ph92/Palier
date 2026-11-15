@@ -43,4 +43,13 @@ describe('freeing the spots of an exit in Postgres', () => {
     expect(sql.statement('free-exit-spots')?.text).not.toMatch(/needs_check_reason/);
     expect(sql.labels().filter((label) => label !== 'append-session-event')).toEqual(['limit-lock-wait', 'lock-lot', 'close-paid-session', 'lock-exit-spots', 'free-exit-spots', 'insert-gate-command']);
   });
+
+  it('lets a paid driver out of a lot the operator put offline: the exit never reads is_online', async () => {
+    const sql = exitFreeing('OCCUPIED').answer('lock-lot', [{ id: LOT_ID, name: 'Parking Démo', is_online: false, capacity: 40, vehicle_count: 3, hold_quota: 4 }]);
+
+    await closeWith(sql);
+
+    expect(sql.count('insert-gate-command')).toBe(1);
+    expect(sql.statements.filter(({ label }) => label !== 'lock-lot').map(({ text }) => text).join('\n')).not.toMatch(/is_online/);
+  });
 });

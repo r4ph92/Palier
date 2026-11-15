@@ -14,6 +14,7 @@ import { MapPage } from './pages/MapPage.tsx';
 import { NotFoundPage } from './pages/NotFoundPage.tsx';
 import { OccupancyPage } from './pages/OccupancyPage.tsx';
 import { OperatorHomePage } from './pages/OperatorHomePage.tsx';
+import { PublicationPage } from './pages/PublicationPage.tsx';
 import { SignInPage } from './pages/SignInPage.tsx';
 import { SpotsToCheckPage } from './pages/SpotsToCheckPage.tsx';
 import { UnreachablePage } from './pages/UnreachablePage.tsx';
@@ -84,15 +85,26 @@ function OperatorPage({ route, operator }: { readonly route: Exclude<Route, { pa
       return <CreateLotPage />;
     case 'lot':
       return <LotPage key={route.lotId} lotId={route.lotId} />;
+    default:
+      return <LotSubpageOf key={route.lotId} route={route} />;
+  }
+}
+
+type LotSubpageRoute = Exclude<Route, { page: 'notFound' | 'home' | 'newLot' | 'lot' }>;
+
+function LotSubpageOf({ route }: { readonly route: LotSubpageRoute }) {
+  switch (route.page) {
     case 'occupancy':
-      return <OccupancyPage key={route.lotId} lotId={route.lotId} />;
+      return <OccupancyPage lotId={route.lotId} />;
     case 'map':
-      return <MapPage key={route.lotId} lotId={route.lotId} />;
+      return <MapPage lotId={route.lotId} />;
     case 'spotsToCheck':
-      return <SpotsToCheckPage key={route.lotId} lotId={route.lotId} />;
+      return <SpotsToCheckPage lotId={route.lotId} />;
     case 'equipment':
-      return <EquipmentPage key={route.lotId} lotId={route.lotId} />;
+      return <EquipmentPage lotId={route.lotId} />;
     case 'gates':
-      return <GatesPage key={route.lotId} lotId={route.lotId} />;
+      return <GatesPage lotId={route.lotId} />;
+    case 'publication':
+      return <PublicationPage lotId={route.lotId} />;
   }
 }

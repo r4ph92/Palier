@@ -3,6 +3,7 @@ import { isValidDisplayText } from './displayText.ts';
 import { GATE_ERROR_CODES } from './dashboardGates.ts';
 import type { GateHealth, GateKind } from './gates.ts';
 import type { LotPricingSettings } from './lotPricing.ts';
+import { PUBLICATION_ERROR_CODES } from './publication.ts';
 import type { AisleRectangle } from './parkingSessions.ts';
 import type { SpotState } from './spotStates.ts';
 
@@ -238,6 +239,7 @@ export const DASHBOARD_ERROR_CODES = [
   'SPOT_STILL_ASSIGNED',
   'SPOT_NOT_FREE',
   ...GATE_ERROR_CODES,
+  ...PUBLICATION_ERROR_CODES,
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];

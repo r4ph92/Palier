@@ -9,7 +9,7 @@ import { PageHeader } from '../components/PageHeader.tsx';
 import { RetryableFailure, type RetryableFailureProps } from '../components/RetryableFailure.tsx';
 import { formatCount, formatDegrees } from '../i18n/formatNumbers.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
-import { equipmentPath, gatesPath, HOME_PATH, mapPath, occupancyPath, spotsToCheckPath } from '../navigation/routes.ts';
+import { equipmentPath, gatesPath, HOME_PATH, mapPath, occupancyPath, publicationPath, spotsToCheckPath } from '../navigation/routes.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
 import { PricingSection } from './PricingSection.tsx';
 
@@ -63,13 +63,14 @@ function LotDetails({ lot, onPricingSaved }: LotDetailsProps) {
 }
 
 function LotLinks({ lotId }: { readonly lotId: string }) {
-  const { lot, spotsToCheck } = useText();
+  const { lot, spotsToCheck, publication } = useText();
   const links = [
     [occupancyPath(lotId), lot.occupancyLink],
     [spotsToCheckPath(lotId), spotsToCheck.title],
     [mapPath(lotId), lot.mapLink],
     [equipmentPath(lotId), lot.equipmentLink],
     [gatesPath(lotId), lot.gatesLink],
+    [publicationPath(lotId), publication.lotLink],
   ] as const;
   return (
     <p className="actions-row">

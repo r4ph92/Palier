@@ -75,6 +75,18 @@ describe('the gates of a lot in Postgres', () => {
     expect(entry.count('change-gate')).toBe(0);
   });
 
+  it('clears the test passage when the wiring, the endpoint or the loops change, and keeps it for a new name', async () => {
+    const scripted = lockedLot().answer('read-owned-gate-kind', [{ kind: 'EXIT' }]);
+
+    await new PostgresLotGateRepository(scripted.database()).changeGate(ROY_OPERATOR, gatePlace, sortieNord);
+
+    const { text, params } = scripted.statement('change-gate') ?? { text: '', params: [] };
+    const reset = /verified_at = case\s+when integration_kind is distinct from \$(\d+)::gate_integration_kind or endpoint is distinct from \$(\d+)\s+or has_loops is distinct from \$(\d+) then null\s+else verified_at\s+end/.exec(text);
+    const compared = (reset ?? []).slice(1).map((position) => params[Number(position) - 1]);
+    expect(compared).toEqual(['DRY_CONTACT', null, true]);
+    expect(text).not.toMatch(/name is distinct from/);
+  });
+
   it('never reads the QR secret to change a gate', async () => {
     const scripted = lockedLot().answer('read-owned-gate-kind', [{ kind: 'EXIT' }]);
 
@@ -91,9 +103,19 @@ describe('the secrets of a gate in Postgres', () => {
 
     expect(await new PostgresGateSecretRepository(scripted.database()).replaceDeviceKey(ROY_OPERATOR, gatePlace, 'new-hash')).toEqual({ kind: 'written', gateId: GATE });
 
-    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'read-owned-gate-kind', 'revoke-device-keys', 'insert-device-key']);
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'read-owned-gate-kind', 'revoke-device-keys', 'insert-device-key', 'forget-gate-controller']);
     expect(scripted.statements.map(({ text }) => text).join('\n')).not.toMatch(/qr_secret/);
     expect(scripted.statement('revoke-device-keys')?.text).toMatch(/gate_device_key\.gate_id = \$1 and gate_device_key\.revoked_at is null$/);
+  });
+
+  it('forgets the old controller with the new key: no heartbeat and no test passage until the new one sends them', async () => {
+    const scripted = lockedLot().answer('read-owned-gate-kind', [{ kind: 'EXIT' }]);
+
+    await new PostgresGateSecretRepository(scripted.database()).replaceDeviceKey(ROY_OPERATOR, gatePlace, 'new-hash');
+
+    const statement = scripted.statement('forget-gate-controller');
+    expect(statement?.text).toBe('update gate set verified_at = null, last_heartbeat_at = null where gate.id = $1 and gate.lot_id = $2');
+    expect(statement?.params).toEqual([GATE, GARAGE_ROY_NORD]);
   });
 
   it('refuses a gate the locked lot does not hold as GATE_NOT_FOUND, revoking nothing', async () => {

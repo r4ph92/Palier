@@ -3,6 +3,7 @@ import { gateRefused, gateWritten, type GatePlace, type GateWrite } from '../../
 import { isUsableQrSecret } from '../../domain/entries/gateToken.ts';
 import type { Database, Transaction } from './database.ts';
 import {
+  forgetGateControllerStatement,
   insertDeviceKeyStatement,
   readOwnedGateKindStatement,
   readOwnedGateQrSecretStatement,
@@ -29,6 +30,7 @@ export class PostgresGateSecretRepository implements GateSecretRepository {
       }
       await tx.execute(revokeDeviceKeysStatement(gate.gateId));
       await tx.execute(insertDeviceKeyStatement(gate.gateId, deviceKeyHash));
+      await tx.execute(forgetGateControllerStatement(gate));
       return gateWritten(gate.gateId);
     });
   }

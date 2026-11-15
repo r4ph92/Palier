@@ -7,6 +7,7 @@ import { LOT_MAP_MESSAGES, type LotMapReason } from './lotMapMessages.ts';
 import { LOT_SPOT_MESSAGES, type LotSpotReason } from './lotSpotMessages.ts';
 import { SPOT_CHECK_MESSAGES, type SpotCheckRefusalReason } from './spotCheckMessages.ts';
 import { LOT_SETUP_MESSAGES } from './lotSetupMessages.ts';
+import { PUBLICATION_MESSAGES, type PublicationReason } from '../publication/publicationMessages.ts';
 
 export type DashboardRefusalReason =
   | Extract<DashboardErrorCode, 'LEGAL_NAME_INVALID' | 'OPERATOR_EXISTS' | 'NO_OPERATOR' | 'LOT_NOT_FOUND' | 'OPERATOR_NOT_FOUND' | 'STRIPE_UNAVAILABLE'>
@@ -15,7 +16,8 @@ export type DashboardRefusalReason =
   | LotMapReason
   | LotSpotReason
   | SpotCheckRefusalReason
-  | LotGateReason;
+  | LotGateReason
+  | PublicationReason;
 
 const MESSAGES: Readonly<Record<DashboardRefusalReason, string>> = {
   LEGAL_NAME_INVALID: `The legal name must be ${LEGAL_NAME_LENGTH.minimum} to ${LEGAL_NAME_LENGTH.maximum} characters, with no invisible characters.`,
@@ -29,6 +31,7 @@ const MESSAGES: Readonly<Record<DashboardRefusalReason, string>> = {
   ...LOT_SPOT_MESSAGES,
   ...SPOT_CHECK_MESSAGES,
   ...LOT_GATE_MESSAGES,
+  ...PUBLICATION_MESSAGES,
 };
 
 export class DashboardRefusedError extends Error {

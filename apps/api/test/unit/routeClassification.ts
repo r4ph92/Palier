@@ -50,6 +50,7 @@ const GATE_DEVICE_ROUTES = [
   'POST /v1/gates/:id/presence',
   'POST /v1/gates/:id/heartbeat',
   'POST /v1/gates/:id/beacons/:minor/battery',
+  'POST /v1/gates/:id/test-passage',
 ];
 
 // The demo console is static files served only in demo mode; it reaches data through the gate routes with a device key.
@@ -90,6 +91,10 @@ export const DASHBOARD_PROTECTED = [
   'POST /v1/dashboard/lots/:id/gates/:gateId/device-key',
   'POST /v1/dashboard/lots/:id/gates/:gateId/qr-secret',
   'GET /v1/dashboard/lots/:id/gates/:gateId/qr-link',
+  'GET /v1/dashboard/lots/:id/publication',
+  'PUT /v1/dashboard/lots/:id/online',
+  'PUT /v1/dashboard/lots/:id/attestations/wifi',
+  'PUT /v1/dashboard/lots/:id/attestations/cellular',
 ];
 
 const DASHBOARD_OPEN = ['POST /v1/dashboard/sign-out', 'GET /v1/dashboard/test/users', 'POST /v1/dashboard/test/sign-in'];

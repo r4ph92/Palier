@@ -1,0 +1,31 @@
+/* A checklist line: what is checked and its state on one row, the detail under them. */
+.checklist-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--space-extra-small) var(--space-medium);
+  padding: var(--space-small) 0;
+}
+
+.checklist-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.checklist-detail {
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+}
+
+/* A button that cannot act yet: the note beside it says why (WCAG 1.4.3 exempts inactive controls; this stays readable anyway). */
+.primary-button:disabled {
+  border: 1px solid var(--line);
+  background: var(--sunken);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* An empty status keeps no margin, so the forms keep the section rhythm until it speaks. */
+.form [role='status']:empty {
+  margin: 0;
+}

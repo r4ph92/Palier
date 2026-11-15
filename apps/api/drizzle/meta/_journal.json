@@ -288,6 +288,13 @@
       "when": 1794761145499,
       "tag": "0040_spot_needs_check_reason",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1794766263980,
+      "tag": "0041_lot_publication",
+      "breakpoints": true
     }
   ]
 }

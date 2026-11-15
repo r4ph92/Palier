@@ -56,7 +56,9 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
 
   openOrReplay(draft: SessionDraft): Promise<SessionOpening | null> {
     this.#journal.push('open-session');
-    return openingFor(decideRepeatedScan(this.#activeSessionOf(draft.driverId), draft), () => this.#openNew(draft));
+    // The eligibility check already refused an offline lot; this fake has no lot to put offline in between.
+    const decision = decideRepeatedScan(this.#activeSessionOf(draft.driverId), draft);
+    return openingFor({ decision, isLotOnline: true }, () => this.#openNew(draft));
   }
 
   #openNew(draft: SessionDraft): Promise<OpenedSession | null> {

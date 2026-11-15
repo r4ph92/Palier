@@ -1,5 +1,7 @@
 import type {
   AddSpotsRequest,
+  Attestation,
+  AttestationKind,
   CreatedGate,
   AisleRequest,
   DashboardAisleSpots,
@@ -18,12 +20,14 @@ import type {
   LevelOrderRequest,
   LotDraft,
   LotPricingRequest,
+  LotPublication,
   SpotAttributes,
   StripeOnboardingLink,
 } from '@palier/shared-types';
 import type { BeaconBatteryReading } from '@palier/shared-types/beaconBattery';
 import type { GateDraft, GateSettings } from '@palier/shared-types/gateDraft';
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
+import { ATTESTATION_PATH_SEGMENTS } from '@palier/shared-types/publication';
 import { DashboardApiError } from './DashboardApiError.ts';
 
 const BASE_PATH = '/v1/dashboard';
@@ -111,6 +115,10 @@ function gatePathOf(lotId: string, gateId: string): string {
   return `${lotPathOf(lotId)}/gates/${encodeURIComponent(gateId)}`;
 }
 
+function attestationPathOf(lotId: string, kind: AttestationKind): string {
+  return `${lotPathOf(lotId)}/attestations/${ATTESTATION_PATH_SEGMENTS[kind]}`;
+}
+
 export const dashboardClient = {
   me: () => dashboardRequest<DashboardMeResponse>('/me'),
   signOut: () => dashboardRequest<undefined>('/sign-out', { method: 'POST' }),
@@ -150,4 +158,8 @@ export const dashboardClient = {
   replaceDeviceKey: (lotId: string, gateId: string) => dashboardRequest<GateDeviceKey>(`${gatePathOf(lotId, gateId)}/device-key`, { method: 'POST' }),
   replaceQrSecret: (lotId: string, gateId: string) => dashboardRequest<undefined>(`${gatePathOf(lotId, gateId)}/qr-secret`, { method: 'POST' }),
   gateQrLink: (lotId: string, gateId: string) => dashboardRequest<GateQrLink>(`${gatePathOf(lotId, gateId)}/qr-link`),
+  lotPublication: (lotId: string) => dashboardRequest<LotPublication>(`${lotPathOf(lotId)}/publication`),
+  setLotOnline: (lotId: string, online: boolean) => dashboardRequest<LotPublication>(`${lotPathOf(lotId)}/online`, { method: 'PUT', body: { online } }),
+  attest: (lotId: string, kind: AttestationKind, attestation: Attestation) =>
+    dashboardRequest<LotPublication>(attestationPathOf(lotId, kind), { method: 'PUT', body: attestation }),
 };
