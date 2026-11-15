@@ -91,3 +91,27 @@ describe('the publication of a lot in Postgres', () => {
     expect(await repositoryOn(scripted).changeOnline(ROY_OPERATOR, GARAGE_ROY_NORD_ID, { online: true, now: NOW })).toBe('LOT_BUSY');
   });
 });
+
+describe('an attestation in Postgres', () => {
+  it.each([
+    ['WIFI', /update parking_lot set wifi_verified_at = \(\$1::date\)::timestamp at time zone \$2, wifi_note = \$3\s+where id = \$4$/],
+    ['CELLULAR', /update parking_lot set cell_verified_at = \(\$1::date\)::timestamp at time zone \$2, cell_note = \$3\s+where id = \$4$/],
+  ] as const)('stores the %s day as its midnight in Montréal, with the note, under the owned lot’s lock', async (kind, statement) => {
+    const scripted = lockedLot();
+
+    const written = await repositoryOn(scripted).attest(ROY_OPERATOR, GARAGE_ROY_NORD_ID, { kind, measuredOn: '2026-11-14', note: 'Trois barres' });
+
+    expect(written).toBe('written');
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'attest-lot']);
+    const { text, params } = scripted.statement('attest-lot') ?? { text: '', params: [] };
+    expect(text.trim()).toMatch(statement);
+    expect(params).toEqual(['2026-11-14', 'America/Toronto', 'Trois barres', GARAGE_ROY_NORD_ID]);
+  });
+
+  it('never writes another operator’s lot', async () => {
+    const scripted = new ScriptedSql();
+
+    expect(await repositoryOn(scripted).attest(ROY_OPERATOR, GARAGE_ROY_NORD_ID, { kind: 'WIFI', measuredOn: '2026-11-14', note: 'Trois barres' })).toBe('LOT_NOT_FOUND');
+    expect(scripted.count('attest-lot')).toBe(0);
+  });
+});

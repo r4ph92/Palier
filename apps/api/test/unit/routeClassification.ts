@@ -92,6 +92,8 @@ export const DASHBOARD_PROTECTED = [
   'GET /v1/dashboard/lots/:id/gates/:gateId/qr-link',
   'GET /v1/dashboard/lots/:id/publication',
   'PUT /v1/dashboard/lots/:id/online',
+  'PUT /v1/dashboard/lots/:id/attestations/wifi',
+  'PUT /v1/dashboard/lots/:id/attestations/cellular',
 ];
 
 const DASHBOARD_OPEN = ['POST /v1/dashboard/sign-out', 'GET /v1/dashboard/test/users', 'POST /v1/dashboard/test/sign-in'];
