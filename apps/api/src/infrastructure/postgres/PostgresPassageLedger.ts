@@ -4,6 +4,7 @@ import type { PassageEntry, PassageLedger, RecordedPassage, RecordedReplay, Repl
 import type { Database, Transaction } from './database.ts';
 import { LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
+import { appendSessionEvent } from './sessionEventStatements.ts';
 
 interface VehicleCountRow extends Record<string, unknown> {
   readonly vehicle_count: number;
@@ -99,7 +100,18 @@ async function confirmOpening(tx: Transaction, entry: PassageEntry): Promise<str
     return null;
   }
   await occupySpot(tx, confirmed.assigned_spot_id);
+  await logLoopClosed(tx, entry, confirmed.id);
   return confirmed.id;
+}
+
+// At the instant the gate reported, as entry_confirmed_at keeps it, not at the database clock.
+async function logLoopClosed(tx: Transaction, { gate }: PassageEntry, sessionId: string): Promise<void> {
+  await appendSessionEvent(tx, {
+    sessionId,
+    lotId: gate.lotId,
+    occurredAt: 'entry_confirmed_at',
+    event: { kind: 'ENTRY_LOOP_CLOSED', payload: { gateId: gate.id } },
+  });
 }
 
 // The oldest opening wins; the parking_lot row lock taken by countVehicle serialises closures per lot, so it must run first.

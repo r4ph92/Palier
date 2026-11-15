@@ -14,6 +14,7 @@ import { hasRoomForAnotherVehicle } from '../../domain/occupancy/hasRoomForAnoth
 import type { Clock } from '../../domain/time/Clock.ts';
 import { findActiveSessionFacts } from './activeSessionFacts.ts';
 import { admissionRefusalOf } from './admissionRefusal.ts';
+import { logFailedAdmission, logScan } from './entryEvents.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
 import { inLotLock, LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
@@ -97,10 +98,13 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   async cancel(sessionId: string): Promise<void> {
     await this.#database.transaction(async (tx) => {
       const lotId = await lotOfSession(tx, sessionId);
-      if (lotId !== undefined) {
-        await lockParkingLot(tx, lotId);
+      if (lotId === undefined) {
+        return;
       }
-      await cancelCreatedSession(tx, sessionId, this.#clock());
+      await lockParkingLot(tx, lotId);
+      if (await cancelCreatedSession(tx, sessionId, this.#clock())) {
+        await logFailedAdmission(tx, { sessionId, lotId });
+      }
     }, LOT_LOCK_TRANSACTION);
   }
 }
@@ -147,6 +151,7 @@ async function insertSession(tx: Transaction, draft: SessionDraft, { assigned, c
   if (session === undefined) {
     throw new Error('The parking session was not created.');
   }
+  await logScan(tx, { sessionId: session.id, draft, assigned });
   return { id: session.id, spot: spotOf(assigned) };
 }
 

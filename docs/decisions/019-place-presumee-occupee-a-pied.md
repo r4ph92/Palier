@@ -12,3 +12,5 @@
 - **Refus sans relance** : 404, 409, réseau coupé ou 5xx ne changent rien et ne sont pas réessayés ; la file hors ligne (#26) renverra le signal. Un 409 n'est pas montré au conducteur.
 
 **Conséquences.** Un signal reçu avant la boucle est perdu jusqu'à #26 ; le garde-fou de 30 minutes (#24) couvrira la session restée `ENTRY_CONFIRMED`. Toute requête sur les états actifs inclut désormais une session garée, ce que voulait Q36 : un conducteur garé qui rescanne reçoit `ALREADY_INSIDE`.
+
+**Amendée par 037 (#156).** L'instruction unique du passage à pied écrit aussi ses événements au journal de visite, dans la même instruction et toujours sans verrou du parking.

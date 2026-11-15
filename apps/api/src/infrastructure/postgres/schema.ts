@@ -6,3 +6,4 @@ export * from './entrySchema.ts';
 export * from './operatorMemberSchema.ts';
 export * from './spotHoldSchema.ts';
 export * from './exitBeaconSchema.ts';
+export * from './eventLogSchema.ts';

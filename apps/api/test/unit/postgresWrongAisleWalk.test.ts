@@ -18,7 +18,8 @@ const walkInAisleB: WalkingSignal = { sessionId: SESSION_ID, driverId: JULIE_ID,
 const SPOT_A2_ID = '00000000-0000-4000-8000-0000000003a2';
 
 function factsRow(state: EntrySessionState, detectedAisleId: string | null = AISLE_B_ID, parkedAt: string | null = null) {
-  return { state, parked_at: parkedAt, lot_id: LOT_ID, assigned_spot_id: SPOT_A1_ID, assigned_aisle_id: AISLE_A_ID, detected_aisle_id: detectedAisleId };
+  const detected = detectedAisleId === null ? { detected_aisle_code: null, detected_aisle_minor: null } : { detected_aisle_code: detectedAisleId === AISLE_A_ID ? 'A' : 'B', detected_aisle_minor: detectedAisleId === AISLE_A_ID ? 1 : AISLE_B_MINOR };
+  return { state, parked_at: parkedAt, lot_id: LOT_ID, assigned_spot_id: SPOT_A1_ID, assigned_aisle_id: AISLE_A_ID, detected_aisle_id: detectedAisleId, ...detected };
 }
 
 function julieConfirmedAtA1(detectedAisleId: string | null = AISLE_B_ID) {
@@ -39,7 +40,7 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
 
     await expect(walkWith(sql)).resolves.toEqual({ outcome: 'recorded', state: 'PARKED_UNCONFIRMED', parkedAt: WALKED_AT });
 
-    expect(sql.labels()).toEqual(['read-walk-facts', 'limit-lock-wait', 'lock-lot', 'ask-where-parked', 'flag-assigned-spot']);
+    expect(sql.labels()).toEqual(['read-walk-facts', 'limit-lock-wait', 'lock-lot', 'ask-where-parked', 'flag-assigned-spot', 'append-session-event']);
     expect(sql.statements.slice(1).every((statement) => statement.onTransaction)).toBe(true);
     expect(sql.isolationLevels).toEqual(['read committed']);
     expect(sql.statement('lock-lot')?.params).toEqual([LOT_ID]);

@@ -43,13 +43,22 @@ export function classifyRefusedSignal(session: SessionAfterRefusal | null): Park
   return { outcome: 'already', state: session.state, parkedAt: session.parkedAt };
 }
 
+export interface DetectedAisle {
+  readonly id: string;
+  readonly code: string;
+  readonly beaconMinor: number;
+}
+
 export interface WalkAisles {
   readonly assignedAisleId: string;
   // The lot's drivable aisle with the signal's minor; null for no minor, an unknown one or an exit lane.
-  readonly detectedAisleId: string | null;
+  readonly detectedAisle: DetectedAisle | null;
 }
 
 // The aisle to ask about, or null when the walk presumes the assigned spot: no aisle known, or the spot's own aisle.
-export function wrongAisleOf({ assignedAisleId, detectedAisleId }: WalkAisles): string | null {
-  return detectedAisleId === assignedAisleId ? null : detectedAisleId;
+export function wrongAisleOf({ assignedAisleId, detectedAisle }: WalkAisles): DetectedAisle | null {
+  if (detectedAisle === null || detectedAisle.id === assignedAisleId) {
+    return null;
+  }
+  return detectedAisle;
 }

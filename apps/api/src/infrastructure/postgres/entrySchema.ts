@@ -29,7 +29,7 @@ interface SameLotTarget {
 }
 
 // The referenced row must belong to the session's own lot, which a plain foreign key on the id alone would not check.
-function sameLotForeignKey(name: string, columns: [AnyPgColumn, AnyPgColumn], target: SameLotTarget) {
+export function sameLotForeignKey(name: string, columns: [AnyPgColumn, AnyPgColumn], target: SameLotTarget) {
   return foreignKey({ name, columns, foreignColumns: [target.id, target.lotId] });
 }
 
