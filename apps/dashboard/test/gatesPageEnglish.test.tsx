@@ -49,7 +49,7 @@ describe('the gates page in English', () => {
     await userEvent.selectOptions(within(addGateForm()).getByLabelText('Direction'), 'EXIT');
     await userEvent.click(screen.getByRole('button', { name: 'Add a terminal' }));
 
-    expect((await screen.findAllByText('One exit terminal per parking lot for now.')).length).toBeGreaterThan(0);
+    expect(await screen.findByText('This parking lot already has its exit terminal. Choose Entry.')).toBeDefined();
     expect(frenchLeftOnEnglishPage()).toEqual([]);
   });
 

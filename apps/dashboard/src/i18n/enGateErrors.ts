@@ -8,7 +8,7 @@ export const enGateErrors: typeof frGateErrors = {
   GATE_ENDPOINT_NOT_HTTPS: 'Enter an https address, like https://control.example.com, with no user name or password.',
   GATE_ENDPOINT_REQUIRED: 'The access-control API needs the https address of its controller.',
   GATE_EXIT_ID_ON_ENTRY: 'Only an exit terminal identifies vehicles.',
-  GATE_EXIT_LIMIT: 'One exit terminal per parking lot for now.',
+  GATE_EXIT_LIMIT: 'This parking lot already has its exit terminal. Choose Entry.',
   GATE_LIMIT_REACHED: 'A parking lot has at most %{gatesPerLotMaximum} terminals.',
   GATE_RELOAD_FAILED: 'The list of terminals could not be reloaded after this refusal. Reload the page before trying again.',
 };

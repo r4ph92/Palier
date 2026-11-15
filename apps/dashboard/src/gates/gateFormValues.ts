@@ -34,6 +34,7 @@ export const GATE_FIELD_OF_CODE: Partial<Readonly<Record<DisplayedErrorCode, Gat
   GATE_ENDPOINT_NOT_HTTPS: 'endpoint',
   GATE_ENDPOINT_REQUIRED: 'endpoint',
   GATE_EXIT_ID_ON_ENTRY: 'exitIdentification',
+  GATE_EXIT_LIMIT: 'kind',
 };
 
 export function gateValuesOf(gate: DashboardGate): FieldValues<GateFormField> {

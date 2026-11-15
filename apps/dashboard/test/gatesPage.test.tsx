@@ -51,12 +51,18 @@ describe('the gates page', () => {
     expect(api.requests).not.toContain(`POST /lots/${garageRoy.id}/gates`);
   });
 
-  it('says a second exit gate is refused for now, in the API’s words', async () => {
+  it('refuses a second exit gate on the direction field, whose hint already says the limit', async () => {
     await openGatesOf(sophie, parkingDemo.id);
+    const direction = () => within(addGateForm()).getByLabelText('Sens');
+    expect(direction().getAttribute('aria-describedby')).toBe('new-gate-kind-hint');
+    expect(within(addGateForm()).getByText('Une seule borne de sortie par stationnement pour l’instant.')).toBeDefined();
 
     await addGate({ name: 'Sortie Sud', kind: 'EXIT' });
 
-    expect((await screen.findAllByText('Une seule borne de sortie par stationnement pour l’instant.', { selector: '[role="alert"] *, [role="alert"]' })).length).toBeGreaterThan(0);
+    expect(await within(addGateForm()).findByText('Ce stationnement a déjà sa borne de sortie. Choisissez Entrée.')).toBeDefined();
+    expect(direction().getAttribute('aria-invalid')).toBe('true');
+    expect(direction().getAttribute('aria-describedby')).toBe('new-gate-kind-hint new-gate-kind-error');
+    expect(within(addGateForm()).getByRole('alert').textContent).toBe('Corrigez les champs indiqués.');
     expect(gateItemOf('Sortie Sud')).toBeUndefined();
   });
 });

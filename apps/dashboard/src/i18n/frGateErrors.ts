@@ -7,7 +7,7 @@ export const frGateErrors = {
   GATE_ENDPOINT_NOT_HTTPS: 'Entrez une adresse https, comme https://controle.exemple.ca, sans nom d’utilisateur ni mot de passe.',
   GATE_ENDPOINT_REQUIRED: 'L’API de contrôle d’accès demande l’adresse https de son contrôleur.',
   GATE_EXIT_ID_ON_ENTRY: 'Seule une borne de sortie identifie les véhicules.',
-  GATE_EXIT_LIMIT: 'Une seule borne de sortie par stationnement pour l’instant.',
+  GATE_EXIT_LIMIT: 'Ce stationnement a déjà sa borne de sortie. Choisissez Entrée.',
   GATE_LIMIT_REACHED: 'Un stationnement compte au plus %{gatesPerLotMaximum} bornes.',
   GATE_RELOAD_FAILED: 'La liste des bornes n’a pas pu être rechargée après ce refus. Rechargez la page avant de recommencer.',
 };

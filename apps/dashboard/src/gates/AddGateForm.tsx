@@ -24,7 +24,6 @@ export function AddGateForm(target: AddGateTarget) {
       <form className="form" noValidate aria-busy={form.submitting} onSubmit={(event) => void form.submit(event)}>
         {form.summary === null ? null : <ErrorNotice key={form.attempt} code={form.summary} values={limits} takesFocus />}
         <GateFields field={field} isExit={isExitForm(form.values)} kindField={kindField} />
-        <p className="field-hint">{text.gates.exitLimitNote}</p>
         <SubmitButton label={text.gates.add} busyLabel={text.gates.adding} busy={form.submitting} />
       </form>
     </section>
@@ -34,5 +33,5 @@ export function AddGateForm(target: AddGateTarget) {
 function KindField({ field }: { readonly field: BoundField }) {
   const text = useText();
   const options = GATE_KINDS.map((kind) => ({ value: kind, label: text.equipment.kinds[kind] }));
-  return <SelectField field={field} label={text.gates.kindLabel} options={options} />;
+  return <SelectField field={field} label={text.gates.kindLabel} hint={text.gates.exitLimitNote} options={options} />;
 }
