@@ -1,7 +1,7 @@
 import type { LotPublication } from '@palier/shared-types';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { AttestationsSection } from '../publication/AttestationsSection.tsx';
-import { checklistLinesOf, missingNamesOf } from '../publication/checklistLines.ts';
+import { checklistLinesOf, missingNamesOf } from '../publication/checklistLines.tsx';
 import { ChecklistSection } from '../publication/ChecklistSection.tsx';
 import { OnlineSection } from '../publication/OnlineSection.tsx';
 import { useLotPublication } from '../publication/useLotPublication.ts';

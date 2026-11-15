@@ -1,6 +1,6 @@
 import { StateMark } from '../components/StateMark.tsx';
 import { useText } from '../i18n/LanguageContext.tsx';
-import type { ChecklistLine } from './checklistLines.ts';
+import type { ChecklistLine } from './checklistLines.tsx';
 
 export function ChecklistSection({ lines }: { readonly lines: readonly ChecklistLine[] }) {
   const text = useText();
