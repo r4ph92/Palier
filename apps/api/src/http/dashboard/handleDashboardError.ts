@@ -59,6 +59,10 @@ const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
   GATE_EXIT_ID_ON_ENTRY: 400,
   GATE_EXIT_LIMIT: 409,
   GATE_LIMIT_REACHED: 409,
+  LOT_NOT_READY: 409,
+  ATTESTATION_DAY_INVALID: 400,
+  ATTESTATION_DAY_IN_FUTURE: 400,
+  ATTESTATION_NOTE_INVALID: 400,
 };
 
 export function handleDashboardError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {

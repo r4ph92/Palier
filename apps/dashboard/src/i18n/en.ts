@@ -1,5 +1,6 @@
 import { enEquipment } from './enEquipment.ts';
 import { enGateErrors } from './enGateErrors.ts';
+import { enPublicationErrors } from './enPublicationErrors.ts';
 import { enGates } from './enGates.ts';
 import { enMap } from './enMap.ts';
 import { enSpotsToCheck } from './enSpotsToCheck.ts';
@@ -193,6 +194,7 @@ export const en: Dictionary = {
     SPOT_TO_CHECK_GONE: 'Spot %{number} could not be found. The spot list was reloaded.',
     SPOT_RANGE_UNREADABLE: 'These numbers cannot be read. Write a range like A-1 to A-20, or one number like A-7.',
     ...enGateErrors,
+    ...enPublicationErrors,
     UNKNOWN: 'Something went wrong. Try again in a moment.',
   },
 };

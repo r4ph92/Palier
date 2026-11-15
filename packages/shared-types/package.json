@@ -96,6 +96,10 @@
     "./spotDraft": {
       "types": "./src/spotDraft.ts",
       "default": "./src/spotDraft.ts"
+    },
+    "./publication": {
+      "types": "./src/publication.ts",
+      "default": "./src/publication.ts"
     }
   },
   "scripts": {
