@@ -9,7 +9,8 @@ const SPOT_A1_ID = 'spot-a1';
 function exitFreeing(spotState: 'OCCUPIED' | 'OCCUPIED_UNKNOWN'): ScriptedSql {
   return new ScriptedSql()
     .answer('close-session', [{ assigned_spot_id: SPOT_A1_ID, confirmed_spot_id: null }])
-    .answer('lock-exit-spots', [{ id: SPOT_A1_ID, state: spotState, held_by_another_session: false }]);
+    .answer('lock-exit-spots', [{ id: SPOT_A1_ID, state: spotState, held_by_another_session: false }])
+    .answer('insert-gate-command', [{ id: 'command-exit' }]);
 }
 
 async function closeWith(sql: ScriptedSql): Promise<void> {
@@ -39,6 +40,6 @@ describe('freeing the spots of an exit in Postgres', () => {
     await closeWith(sql);
 
     expect(sql.statement('free-exit-spots')?.text).not.toMatch(/needs_check_reason/);
-    expect(sql.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'close-session', 'lock-exit-spots', 'free-exit-spots', 'unknown']);
+    expect(sql.labels()).toEqual(['limit-lock-wait', 'lock-lot', 'close-session', 'lock-exit-spots', 'free-exit-spots', 'insert-gate-command']);
   });
 });
