@@ -1,5 +1,6 @@
 import type { DashboardLotDetails, LotDraft, LotPricingSettings } from '@palier/shared-types';
 import { type FakeApiState, type FakeResponse, refused, summaryOf } from './fakeDashboardData.ts';
+import { isGateRequest, routeGates } from './fakeGateRoutes.ts';
 import { isMapRequest, routeMap } from './fakeMapRoutes.ts';
 import { isSpotRequest, routeSpots } from './fakeSpotRoutes.ts';
 
@@ -29,6 +30,9 @@ export function routeLots(state: FakeApiState, request: string, body: Record<str
   }
   if (isSpotRequest(request)) {
     return routeSpots({ state, ownedLotIds }, request, body);
+  }
+  if (isGateRequest(request)) {
+    return routeGates({ state, lots }, request, body);
   }
   return routeLot({ occupancy: state.occupancy, equipment: state.equipment, lots }, request, body);
 }

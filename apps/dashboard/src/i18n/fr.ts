@@ -1,4 +1,6 @@
 import { frEquipment } from './frEquipment.ts';
+import { frGateErrors } from './frGateErrors.ts';
+import { frGates } from './frGates.ts';
 import { frMap } from './frMap.ts';
 
 export const fr = {
@@ -72,6 +74,7 @@ export const fr = {
     occupancyLink: 'Occupation',
     mapLink: 'Plan et balises',
     equipmentLink: 'Équipement',
+    gatesLink: 'Bornes et QR',
   },
   occupancy: {
     title: 'Occupation',
@@ -96,6 +99,7 @@ export const fr = {
   },
   map: frMap,
   equipment: frEquipment,
+  gates: frGates,
   spotStates: {
     AVAILABLE: 'Libre',
     HELD: 'Garantie',
@@ -182,6 +186,7 @@ export const fr = {
     MAP_RELOAD_FAILED: 'Les niveaux ont changé entre-temps, et le plan n’a pas pu être rechargé. Rechargez la page avant de recommencer.',
     SPOT_RELOAD_FAILED: 'La page n’a pas pu être rechargée après ce refus. Rechargez la page avant de recommencer.',
     SPOT_RANGE_UNREADABLE: 'Numéros illisibles. Écrivez une plage comme A-1 à A-20, ou un seul numéro comme A-7.',
+    ...frGateErrors,
     UNKNOWN: 'Une erreur est survenue. Réessayez dans un instant.',
   },
 };

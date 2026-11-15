@@ -1,5 +1,7 @@
+import type { GateSecretRepository } from '../../domain/dashboard/GateSecretRepository.ts';
 import type { LevelOccupancyReader } from '../../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotEquipmentReader } from '../../domain/dashboard/LotEquipmentReader.ts';
+import type { LotGateRepository } from '../../domain/dashboard/LotGateRepository.ts';
 import type { LotMapRepository } from '../../domain/dashboard/LotMapRepository.ts';
 import type { LotSpotRepository } from '../../domain/dashboard/LotSpotRepository.ts';
 import type { LotSetupRepository } from '../../domain/dashboard/LotSetupRepository.ts';
@@ -25,6 +27,8 @@ export interface DashboardRouteDependencies {
   // The test clock when it is active, so moving it makes a gate silent or a battery reading old.
   readonly clock: Clock;
   readonly spots: LotSpotRepository;
+  readonly gates: LotGateRepository;
+  readonly gateSecrets: GateSecretRepository;
   readonly testSignInEnabled: boolean;
   readonly secureCookies: boolean;
 }

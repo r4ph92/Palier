@@ -1,7 +1,8 @@
+import { CheckboxField } from '../forms/CheckboxField.tsx';
 import type { BoundField } from '../forms/fieldBinder.ts';
 import { TextField } from '../forms/TextField.tsx';
 import { useText } from '../i18n/LanguageContext.tsx';
-import { CHECKED, flagLabelsOf, SPOT_FLAGS, type SpotAttributeField } from './spotFormValues.ts';
+import { flagLabelsOf, SPOT_FLAGS, type SpotAttributeField } from './spotFormValues.ts';
 
 interface SpotAttributeFieldsProps {
   readonly field: (name: SpotAttributeField) => BoundField;
@@ -34,14 +35,5 @@ function FlagFields({ field, hint }: SpotAttributeFieldsProps) {
           <CheckboxField key={flag} field={field(flag)} label={labels[flag]} />
         ))}
     </fieldset>
-  );
-}
-
-function CheckboxField({ field, label }: { readonly field: BoundField; readonly label: string }) {
-  return (
-    <div className="check-field">
-      <input id={field.id} type="checkbox" checked={field.value === CHECKED} onChange={(event) => field.onChange(event.target.checked ? CHECKED : '')} />
-      <label htmlFor={field.id}>{label}</label>
-    </div>
   );
 }

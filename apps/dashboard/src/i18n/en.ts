@@ -1,4 +1,6 @@
 import { enEquipment } from './enEquipment.ts';
+import { enGateErrors } from './enGateErrors.ts';
+import { enGates } from './enGates.ts';
 import { enMap } from './enMap.ts';
 import type { Dictionary } from './fr.ts';
 
@@ -73,6 +75,7 @@ export const en: Dictionary = {
     occupancyLink: 'Occupancy',
     mapLink: 'Map and beacons',
     equipmentLink: 'Equipment',
+    gatesLink: 'Terminals and QR codes',
   },
   occupancy: {
     title: 'Occupancy',
@@ -97,6 +100,7 @@ export const en: Dictionary = {
   },
   map: enMap,
   equipment: enEquipment,
+  gates: enGates,
   spotStates: {
     AVAILABLE: 'Available',
     HELD: 'Held',
@@ -183,6 +187,7 @@ export const en: Dictionary = {
     MAP_RELOAD_FAILED: 'The levels changed in the meantime, and the map could not be reloaded. Reload the page before trying again.',
     SPOT_RELOAD_FAILED: 'The page could not be reloaded after this refusal. Reload the page before trying again.',
     SPOT_RANGE_UNREADABLE: 'These numbers cannot be read. Write a range like A-1 to A-20, or one number like A-7.',
+    ...enGateErrors,
     UNKNOWN: 'Something went wrong. Try again in a moment.',
   },
 };

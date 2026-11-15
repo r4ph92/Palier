@@ -39,6 +39,11 @@ export function readGateToken(qrContent: string): GateToken | null {
   return { gateId, signedPart, signature };
 }
 
+// A gate whose stored secret is missing or too short signs nothing: it needs a new one before its QR is printed.
+export function isUsableQrSecret(qrSecret: string | null): qrSecret is string {
+  return qrSecret !== null && secretKeyOf(qrSecret) !== null;
+}
+
 export function isSignedWith(token: GateToken, qrSecret: string | null): boolean {
   const key = qrSecret === null ? null : secretKeyOf(qrSecret);
   if (key === null) {

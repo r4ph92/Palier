@@ -35,6 +35,9 @@ Le contenu de chaque QR imprimé, à coller dans l'onglet « Scanner » de l'app
 (champ « Contenu du QR ») tant que la caméra n'existe pas (#45). Les secrets sont
 fixes dans `apps/api/src/seed/fixtures/gates.ts`, donc ces liens ne changent pas
 d'un seed à l'autre ; `npm run seed --workspace @palier/api` les affiche aussi.
+Ne régénérez ni la clé ni le secret du QR d'Entrée Démo et de Sortie Démo depuis
+la page « Bornes et QR » : ces liens et la console cesseraient de fonctionner
+jusqu'au prochain seed.
 
 | Borne | Contenu du QR | Réponse attendue |
 |---|---|---|
