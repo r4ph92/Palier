@@ -19,6 +19,8 @@ export const dashboardUserSchema = {
   properties: { id: { type: 'string' }, firstName: { type: 'string' }, lastName: { type: 'string' } },
 } as const;
 
+export const KYC_STATUSES = ['NOT_STARTED', 'PENDING', 'ACTION_REQUIRED', 'VERIFIED'] as const;
+
 export const dashboardOperatorSchema = {
   type: 'object',
   required: ['id', 'legalName', 'kycStatus'],
@@ -26,7 +28,7 @@ export const dashboardOperatorSchema = {
   properties: {
     id: { type: 'string' },
     legalName: { type: 'string' },
-    kycStatus: { type: 'string', enum: ['NOT_STARTED', 'PENDING', 'ACTION_REQUIRED', 'VERIFIED'] },
+    kycStatus: { type: 'string', enum: KYC_STATUSES },
   },
 } as const;
 

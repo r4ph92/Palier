@@ -9,6 +9,7 @@ import { FakeLevelOccupancyReader } from './fakeLevelOccupancyReader.ts';
 import { FakeLotEquipmentReader } from './fakeLotEquipmentReader.ts';
 import { FakeLotGateRepository } from './fakeLotGateRepository.ts';
 import { FakeLotMapRepository } from './fakeLotMapRepository.ts';
+import { FakeLotPublicationRepository } from './fakeLotPublicationRepository.ts';
 import { FakeLotSetupRepository } from './fakeLotSetupRepository.ts';
 import { FakeSpotCheckRepository } from './fakeSpotCheckRepository.ts';
 import { FakeLotSpotRepository } from './fakeLotSpotRepository.ts';
@@ -73,6 +74,7 @@ export function fakeRepositories({
     spotChecks: new FakeSpotCheckRepository(operatorRepository.lots, lotMaps, lotSpots),
     lotGates,
     gateSecrets: lotGates,
+    lotPublication: new FakeLotPublicationRepository(operatorRepository.lots),
     currentParkingSessions: parkingSessions,
     parkingSessionBackdater: parkingSessions,
     parkedPresumptions,

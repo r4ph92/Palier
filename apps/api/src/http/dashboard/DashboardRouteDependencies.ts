@@ -8,6 +8,7 @@ import type { LotSpotRepository } from '../../domain/dashboard/LotSpotRepository
 import type { LotSetupRepository } from '../../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../../domain/dashboard/OperatorRepository.ts';
 import type { OperatorStripeAccounts, OperatorStripeGateway } from '../../domain/dashboard/OperatorStripe.ts';
+import type { LotPublicationRepository } from '../../domain/publication/LotPublicationRepository.ts';
 import type { SessionAccess } from '../../domain/sessions/sessionTokens.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 
@@ -31,6 +32,7 @@ export interface DashboardRouteDependencies {
   readonly spotChecks: SpotCheckRepository;
   readonly gates: LotGateRepository;
   readonly gateSecrets: GateSecretRepository;
+  readonly publication: LotPublicationRepository;
   readonly testSignInEnabled: boolean;
   readonly secureCookies: boolean;
 }

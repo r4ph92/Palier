@@ -90,6 +90,8 @@ export const DASHBOARD_PROTECTED = [
   'POST /v1/dashboard/lots/:id/gates/:gateId/device-key',
   'POST /v1/dashboard/lots/:id/gates/:gateId/qr-secret',
   'GET /v1/dashboard/lots/:id/gates/:gateId/qr-link',
+  'GET /v1/dashboard/lots/:id/publication',
+  'PUT /v1/dashboard/lots/:id/online',
 ];
 
 const DASHBOARD_OPEN = ['POST /v1/dashboard/sign-out', 'GET /v1/dashboard/test/users', 'POST /v1/dashboard/test/sign-in'];

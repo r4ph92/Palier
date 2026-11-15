@@ -10,6 +10,7 @@ import { fakeOperatorStripe } from './fakeOperatorStripe.ts';
 import { FakeLotEquipmentReader } from './fakeLotEquipmentReader.ts';
 import { FakeLotGateRepository } from './fakeLotGateRepository.ts';
 import { FakeLotMapRepository } from './fakeLotMapRepository.ts';
+import { FakeLotPublicationRepository } from './fakeLotPublicationRepository.ts';
 import { FakeLotSpotRepository } from './fakeLotSpotRepository.ts';
 import { FakeSpotCheckRepository } from './fakeSpotCheckRepository.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
@@ -30,15 +31,16 @@ export function startDashboardServer(settings: ServerSettings = { testSignInEnab
   const lotSpots = new FakeLotSpotRepository(operatorRepository.lots, lotMaps);
   const spotChecks = new FakeSpotCheckRepository(operatorRepository.lots, lotMaps, lotSpots);
   const lotGates = new FakeLotGateRepository(operatorRepository.lots);
+  const lotPublication = new FakeLotPublicationRepository(operatorRepository.lots);
   const { testClock } = composeClock(settings.testSignInEnabled === true);
   const server: FastifyInstance = buildServer({
     gates: gateDependenciesReading(lotGates),
-    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment, lotSpots, spotChecks, lotGates, gateSecrets: lotGates, ...overrides },
+    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment, lotSpots, spotChecks, lotGates, gateSecrets: lotGates, lotPublication, ...overrides },
     operatorStripe: stripe.dependencies,
     testClock,
     settings,
   });
-  return { server, driverRepository, lots: operatorRepository.lots, lotMaps, lotEquipment, lotSpots, spotChecks, lotGates, testClock, ...stripe };
+  return { server, driverRepository, lots: operatorRepository.lots, lotMaps, lotEquipment, lotSpots, spotChecks, lotGates, lotPublication, testClock, ...stripe };
 }
 
 // A key the dashboard issued or rotated authenticates the gate routes; the seeded test keys still do too.

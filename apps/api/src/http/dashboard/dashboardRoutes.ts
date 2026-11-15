@@ -6,6 +6,7 @@ import { registerDashboardEquipmentRoutes } from './dashboardEquipmentRoutes.ts'
 import { registerDashboardGateSecretRoutes } from './dashboardGateSecretRoutes.ts';
 import { registerDashboardLotGateRoutes } from './dashboardLotGateRoutes.ts';
 import { registerDashboardLotMapRoutes } from './dashboardLotMapRoutes.ts';
+import { registerDashboardLotPublicationRoutes } from './dashboardLotPublicationRoutes.ts';
 import { registerDashboardLotRoutes } from './dashboardLotRoutes.ts';
 import { registerDashboardLotSpotRoutes } from './dashboardLotSpotRoutes.ts';
 import { registerDashboardOccupancyRoutes } from './dashboardOccupancyRoutes.ts';
@@ -27,6 +28,14 @@ export async function registerDashboardRoutes(scope: FastifyInstance, dependenci
   scope.addHook('onRequest', requireDashboardWriteHeader);
   registerSignOutRoute(scope, dependencies);
   registerDashboardOperatorRoutes(scope, dependencies);
+  registerDashboardStripeRoutes(scope, dependencies);
+  registerLotFeatureRoutes(scope, dependencies);
+  if (dependencies.testSignInEnabled) {
+    registerDashboardTestSignInRoutes(scope, dependencies);
+  }
+}
+
+function registerLotFeatureRoutes(scope: FastifyInstance, dependencies: DashboardRouteDependencies): void {
   registerDashboardLotRoutes(scope, dependencies);
   registerDashboardOccupancyRoutes(scope, dependencies);
   registerDashboardLotMapRoutes(scope, dependencies);
@@ -35,10 +44,7 @@ export async function registerDashboardRoutes(scope: FastifyInstance, dependenci
   registerDashboardSpotCheckRoutes(scope, dependencies);
   registerDashboardLotGateRoutes(scope, dependencies);
   registerDashboardGateSecretRoutes(scope, dependencies);
-  registerDashboardStripeRoutes(scope, dependencies);
-  if (dependencies.testSignInEnabled) {
-    registerDashboardTestSignInRoutes(scope, dependencies);
-  }
+  registerDashboardLotPublicationRoutes(scope, dependencies);
 }
 
 // Signing out always clears the cookie, even when the session had already ended.
