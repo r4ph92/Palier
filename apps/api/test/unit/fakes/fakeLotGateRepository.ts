@@ -37,6 +37,8 @@ export class FakeLotGateRepository implements LotGateRepository, GateSecretRepos
   readonly gates: FakeGate[] = seededGates();
   readonly deviceKeys: FakeDeviceKey[] = seededKeys();
   readonly busyLots = new Set<string>();
+  // Set, every list read fails, as a lost connection would.
+  readFailure: Error | null = null;
   readonly #lots: FakeLotStore;
 
   constructor(lots: FakeLotStore) {
@@ -44,6 +46,9 @@ export class FakeLotGateRepository implements LotGateRepository, GateSecretRepos
   }
 
   readLotGates(operatorId: string, lotId: string): Promise<DashboardLotGates | null> {
+    if (this.readFailure !== null) {
+      return Promise.reject(this.readFailure);
+    }
     const lot = this.#lots.owned[this.#lots.indexOf(operatorId, lotId)];
     if (lot === undefined) {
       return Promise.resolve(null);

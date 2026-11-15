@@ -63,7 +63,7 @@ export const createdGateSchema = {
   type: 'object',
   required: ['gateId', 'deviceKey', 'lotGates'],
   additionalProperties: false,
-  properties: { ...gateDeviceKeySchema.properties, lotGates: dashboardLotGatesSchema },
+  properties: { ...gateDeviceKeySchema.properties, lotGates: { anyOf: [dashboardLotGatesSchema, { type: 'null' }] } },
 } as const;
 
 export const gateQrLinkSchema = {

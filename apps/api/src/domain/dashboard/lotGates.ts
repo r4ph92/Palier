@@ -27,7 +27,7 @@ export async function addGateOfMember(sources: LotGateSources, lot: MemberLot, r
   const operatorId = await operatorIdOfMember(sources.operators, lot);
   const outcome = await sources.gates.addGate(operatorId, lot.lotId, { draft, qrSecret: newQrSecret(), deviceKeyHash: hashDeviceKey(deviceKey) });
   const gateId = writtenGateIdOf(outcome);
-  return { gateId, deviceKey, lotGates: await readOwnedLotGates(sources.gates, operatorId, lot.lotId) };
+  return { gateId, deviceKey, lotGates: await lotGatesAfterCommit(sources.gates, operatorId, lot.lotId) };
 }
 
 export async function changeGateOfMember(sources: LotGateSources, gate: MemberGate, request: GateSettings): Promise<DashboardLotGates> {
@@ -50,6 +50,15 @@ export function gatePlaceOf({ lotId, gateId }: MemberGate): GatePlace {
 
 async function readOwnedLotGates(gates: LotGateRepository, operatorId: string, lotId: string): Promise<DashboardLotGates> {
   return ownedLotOrNotFound(await gates.readLotGates(operatorId, lotId));
+}
+
+// The gate and its key hash are committed: failing the request now would lose the only copy of the key.
+async function lotGatesAfterCommit(gates: LotGateRepository, operatorId: string, lotId: string): Promise<DashboardLotGates | null> {
+  try {
+    return await gates.readLotGates(operatorId, lotId);
+  } catch {
+    return null;
+  }
 }
 
 function validatedDraft(request: GateDraft): GateDraft {

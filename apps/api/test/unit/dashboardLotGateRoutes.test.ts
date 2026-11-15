@@ -42,6 +42,18 @@ describe('dashboard gate routes', () => {
       expect(gateNamed(listed, 'Entrée principale')).toEqual({ id: added.json<CreatedGate>().gateId, ...entreePrincipale });
     });
 
+    it('still answers the one-time key when the list cannot be read after the gate was saved', async () => {
+      const cookies = await pierreOnGarageRoy();
+      gates.readFailure = new Error('connection reset');
+
+      const added = await routes.addGate(cookies, entreePrincipale);
+
+      expect(added.statusCode).toBe(201);
+      const { gateId, deviceKey, lotGates } = added.json<CreatedGate>();
+      expect(lotGates).toBeNull();
+      expect(gates.deviceKeys.find((key) => key.gateId === gateId)?.keyHash).toBe(hashDeviceKey(deviceKey));
+    });
+
     it.each([
       ['an http endpoint', { endpoint: 'http://controle.garageroy.ca' }, 'GATE_ENDPOINT_NOT_HTTPS'],
       ['the access-control API without an endpoint', { endpoint: null }, 'GATE_ENDPOINT_REQUIRED'],

@@ -26,7 +26,8 @@ export interface GateDeviceKey {
 }
 
 export interface CreatedGate extends GateDeviceKey {
-  readonly lotGates: DashboardLotGates;
+  // Null when the list could not be read after the commit: the key is still answered, and the page reads the list again.
+  readonly lotGates: DashboardLotGates | null;
 }
 
 // The link the gate's printed QR holds, signed with its secret; the secret itself stays in the API.

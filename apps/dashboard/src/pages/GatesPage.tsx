@@ -51,7 +51,7 @@ function useGatesView({ lotGates, onSaved, onStale }: Omit<GatesViewProps, 'page
   const notices = useGateNotices();
   const focusAfterRender = useFocusAfterRender();
   const onAdded = (created: CreatedGate, gateName: string) => {
-    onSaved(created.lotGates);
+    showListAfterAdd(created, { onSaved, onStale });
     setShownKey({ gateId: created.gateId, deviceKey: created.deviceKey, gateName });
   };
   const dismissKey = () => {
@@ -60,6 +60,15 @@ function useGatesView({ lotGates, onSaved, onStale }: Omit<GatesViewProps, 'page
   };
   const context = { lotId: lotGates.lotId, lotName: lotGates.lotName, onSaved, onKey: setShownKey, onNotice: notices.show, staleData: gateStaleData(onStale), notice: notices };
   return { shownKey, dismissKey, onAdded, context };
+}
+
+// The API answers the key even when it could not read the list again: the page reads it itself.
+function showListAfterAdd({ lotGates }: CreatedGate, { onSaved, onStale }: Pick<GatesViewProps, 'onSaved' | 'onStale'>): void {
+  if (lotGates === null) {
+    void onStale();
+    return;
+  }
+  onSaved(lotGates);
 }
 
 // Each notice gets its own key, so the same refusal twice takes focus twice.

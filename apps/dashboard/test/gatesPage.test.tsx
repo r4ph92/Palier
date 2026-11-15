@@ -109,6 +109,18 @@ describe('the device key of a gate', () => {
     expect(api.requests.filter((request) => request.includes('device-key'))).toEqual([]);
   });
 
+  it('still shows the key when the API could not read the list after saving, and reads the list itself', async () => {
+    const api = await openGatesOf(pierre, garageRoy.id);
+    const gatesRequest = `GET /lots/${garageRoy.id}/gates`;
+    api.answers.set(`POST /lots/${garageRoy.id}/gates`, { status: 201, body: { gateId: 'gate-new', deviceKey: 'device-key-new', lotGates: null } });
+
+    await addGate({ name: 'Entrée principale' });
+
+    const panel = await screen.findByRole('region', { name: 'Clé d’appareil — Entrée principale' });
+    expect(panel.querySelector('code')?.textContent).toBe('device-key-new');
+    expect(api.requests.filter((request) => request === gatesRequest)).toHaveLength(2);
+  });
+
   it('regenerates a key only once confirmed, and shows the new one with the same warning', async () => {
     const api = await openGatesOf(pierre, garageRoy.id);
     const item = () => within(gateItemOf('Entrée Roy'));
