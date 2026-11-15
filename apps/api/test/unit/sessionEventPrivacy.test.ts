@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { PostgresParkedAnswerRepository } from '../../src/infrastructure/postgres/PostgresParkedAnswerRepository.ts';
 import { PostgresParkedPresumptionRepository } from '../../src/infrastructure/postgres/PostgresParkedPresumptionRepository.ts';
+import { PostgresExitRepository } from '../../src/infrastructure/postgres/PostgresExitRepository.ts';
 import { PostgresParkingSessionRepository } from '../../src/infrastructure/postgres/PostgresParkingSessionRepository.ts';
 import { PostgresPassageLedger } from '../../src/infrastructure/postgres/PostgresPassageLedger.ts';
+import { PostgresPendingCaptureRepository } from '../../src/infrastructure/postgres/PostgresPendingCaptureRepository.ts';
 import { PostgresSilentSessionRepository } from '../../src/infrastructure/postgres/PostgresSilentSessionRepository.ts';
 import { PostgresUnconfirmedEntryRepository } from '../../src/infrastructure/postgres/PostgresUnconfirmedEntryRepository.ts';
 import { SimulatedGateCommander } from '../../src/infrastructure/postgres/SimulatedGateCommander.ts';
 import { appendedSessionEvents, builtPayloads } from './fakes/appendedSessionEvents.ts';
-import { entreeDemo } from './fakes/gateFixtures.ts';
+import { entreeDemo, sortieDemo } from './fakes/gateFixtures.ts';
 import { PARKING_DEMO_OCCUPANCY_ROW, ScriptedSql } from './fakes/scriptedSql.ts';
 
 const SESSION_ID = '00000000-0000-4000-8000-000000000951';
@@ -18,6 +20,8 @@ const WINDOW = { withinMilliseconds: 60_000 };
 const spotRow = { id: 'spot-a1', number: 'A-1', aisle_code: 'A', level_code: 'P1' };
 const walkFacts = { state: 'ENTRY_CONFIRMED', parked_at: null, lot_id: LOT_ID, assigned_spot_id: 'spot-a1', assigned_aisle_id: 'aisle-a' };
 const PARKED_AT = { parked_at: NOW.toISOString() };
+const closedSessionRow = { assigned_spot_id: 'spot-a1', confirmed_spot_id: null };
+const leaving = { sessionId: SESSION_ID, lotId: LOT_ID, exitGateId: sortieDemo.id, identification: 'PLATE' } as const;
 
 type LoggedPayloads = [kind: string, keys: string[]][];
 
@@ -78,6 +82,26 @@ const steps: [string, () => Promise<ScriptedSql>][] = [
     await new PostgresParkingSessionRepository(scripted.database(), WINDOW, () => NOW).cancel(SESSION_ID);
     return scripted;
   }],
+  ['the paid exit', async () => {
+    const scripted = new ScriptedSql().answer('close-paid-session', [closedSessionRow]).answer('insert-gate-command', [{ id: 'command' }]);
+    await new PostgresExitRepository(scripted.database()).close({ ...leaving, exit: { exitedAt: NOW, capturedCents: 2500, surplusPaidCents: 0, unpaidCents: 1800 }, capturedAt: NOW });
+    return scripted;
+  }],
+  ['the exit with its capture pending', async () => {
+    const scripted = new ScriptedSql().answer('close-pending-session', [closedSessionRow]).answer('insert-gate-command', [{ id: 'command' }]);
+    await new PostgresExitRepository(scripted.database()).closeWithPendingCapture({ ...leaving, exitedAt: NOW, pendingCaptureCents: 2500, pendingSurplusCents: 1800 });
+    return scripted;
+  }],
+  ['the capture retry', async () => {
+    const scripted = new ScriptedSql().answer('mark-capture-paid', [{ lot_id: LOT_ID }]);
+    await new PostgresPendingCaptureRepository(scripted.database()).markPaid(SESSION_ID, { capturedCents: 2500, surplusPaidCents: 1800, unpaidCents: 0, capturedAt: NOW });
+    return scripted;
+  }],
+  ['the exit loop', async () => {
+    const scripted = new ScriptedSql().answer('count-vehicle', [{ vehicle_count: 0 }]).answer('attach-exit-passage', [{ id: SESSION_ID }]);
+    await new PostgresPassageLedger(scripted.database()).recordPassage({ gate: sortieDemo, closedAt: NOW, vehicleCountChange: -1, confirmableOpenings: null, attachableOpenings: WINDOW });
+    return scripted;
+  }],
 ];
 
 async function everyLoggedPayload(): Promise<LoggedPayloads> {
@@ -94,10 +118,14 @@ describe('what the visit log keeps (story #156)', () => {
 
     expect([...byKind.keys()].sort()).toEqual([
       'AISLE_DETECTED aisleCode,aisleId,beaconMinor,isAssignedAisle',
+      'CAPTURED capturedCents,surplusPaidCents,unpaidCents',
+      'CAPTURE_PENDING pendingCaptureCents,pendingSurplusCents',
       'ENTRY_CANCELLED reason',
       'ENTRY_CANCELLED reason,wasBarrierOpened',
       'ENTRY_LOOP_CLOSED gateId',
       'ENTRY_SCANNED aisleCode,gateId,levelCode,plate,spotId,spotNumber',
+      'EXIT_IDENTIFIED gateId,method',
+      'EXIT_LOOP_CLOSED gateId',
       'GATE_OPENED commandId,direction,gateId',
       'PARKING_CONFIRMED spotId,spotNumber',
       'PARKING_PRESUMED evidence,spotId,spotNumber',
@@ -108,5 +136,14 @@ describe('what the visit log keeps (story #156)', () => {
     const keys = (await everyLoggedPayload()).flatMap(([, payloadKeys]) => payloadKeys);
 
     expect(keys.filter((key) => /email|stripe|payment|card|user|last4/i.test(key))).toEqual([]);
+  });
+
+  it('never writes a Stripe id, an email or card digits into a payload, whatever the key (story #157)', async () => {
+    const values: string[] = [];
+    for (const [, run] of steps) {
+      values.push(...appendedSessionEvents(await run()).map(({ payload }) => JSON.stringify(payload)));
+    }
+
+    expect(values.filter((value) => /pi_|acct_|cus_|@|4242/.test(value))).toEqual([]);
   });
 });
