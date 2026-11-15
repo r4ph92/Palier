@@ -30,6 +30,7 @@
 }
 
 .spot-notice {
+  min-height: 1lh;
   margin: var(--space-small) 0 0;
 }
 
