@@ -1,5 +1,6 @@
 import { EXIT_LANE_CODE, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import type { aisle, level, parkingLot, spot } from '../../infrastructure/postgres/schema.ts';
+import { SEEDED_CELLULAR_NOTE, SEEDED_WIFI_NOTE } from './attestations.ts';
 import { LAVOIE_OPERATOR_ID } from './operators.ts';
 import { SEEDED_PRICING_POLICY } from './pricing.ts';
 
@@ -29,7 +30,9 @@ export const parkingTestPaliersLot: typeof parkingLot.$inferInsert = {
   vehicleCount: 1,
   isOnline: true,
   wifiVerifiedAt: VERIFIED_AT,
+  wifiNote: SEEDED_WIFI_NOTE,
   cellVerifiedAt: VERIFIED_AT,
+  cellNote: SEEDED_CELLULAR_NOTE,
 };
 
 export const parkingTestPaliersLevels: (typeof level.$inferInsert)[] = [

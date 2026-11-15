@@ -48,8 +48,11 @@ export const parkingLot = pgTable(
     capacity: integer('capacity').notNull(),
     vehicleCount: integer('vehicle_count').notNull().default(0),
     isOnline: boolean('is_online').notNull().default(false),
+    // The day the operator measured, stored as its midnight in ATTESTATION_TIME_ZONE, with the operator's note (decision 041).
     wifiVerifiedAt: timestamp('wifi_verified_at', { withTimezone: true }),
+    wifiNote: text('wifi_note'),
     cellVerifiedAt: timestamp('cell_verified_at', { withTimezone: true }),
+    cellNote: text('cell_note'),
   },
   (table) => [
     index('parking_lot_operator_id_index').on(table.operatorId),
@@ -58,6 +61,8 @@ export const parkingLot = pgTable(
     check('parking_lot_pricing_complete', sql`(${table.pricingPolicy} is null) = (${table.dailyCapCents} is null)`),
     check('parking_lot_daily_cap_positive', sql`${table.dailyCapCents} > 0`),
     check('parking_lot_online_has_pricing', sql`(not ${table.isOnline}) or ${table.pricingPolicy} is not null`),
+    check('parking_lot_wifi_attestation_complete', sql`(${table.wifiVerifiedAt} is null) = (${table.wifiNote} is null)`),
+    check('parking_lot_cell_attestation_complete', sql`(${table.cellVerifiedAt} is null) = (${table.cellNote} is null)`),
     check('parking_lot_hold_quota_range', sql`${table.holdQuota} between ${sql.raw(String(HOLD_QUOTA_LIMITS.minimum))} and ${sql.raw(String(HOLD_QUOTA_LIMITS.maximum))}`),
   ],
 );
