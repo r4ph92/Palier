@@ -1,5 +1,5 @@
 {
-  "id": "33f44959-6207-4e27-9131-a44c6a6dd886",
+  "id": "21a9b252-88f2-4799-a976-221bea9a95bb",
   "prevId": "c1e217f4-48ab-486c-87e6-34286bcd908a",
   "version": "7",
   "dialect": "postgresql",
@@ -878,19 +878,6 @@
           "notNull": true,
           "default": false
         },
-        "needs_check_since": {
-          "name": "needs_check_since",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "needs_check_reason": {
-          "name": "needs_check_reason",
-          "type": "spot_check_reason",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
         "sensor_state": {
           "name": "sensor_state",
           "type": "sensor_state",
@@ -930,22 +917,6 @@
           ],
           "isUnique": true,
           "where": "\"spot\".\"retired_at\" is null",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "spot_to_check_by_lot_index": {
-          "name": "spot_to_check_by_lot_index",
-          "columns": [
-            {
-              "expression": "lot_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "\"spot\".\"needs_check\" and \"spot\".\"retired_at\" is null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1061,14 +1032,6 @@
       },
       "policies": {},
       "checkConstraints": {
-        "spot_needs_check_since_matches_flag": {
-          "name": "spot_needs_check_since_matches_flag",
-          "value": "\"spot\".\"needs_check\" = (\"spot\".\"needs_check_since\" is not null)"
-        },
-        "spot_needs_check_reason_only_when_flagged": {
-          "name": "spot_needs_check_reason_only_when_flagged",
-          "value": "\"spot\".\"needs_check\" or \"spot\".\"needs_check_reason\" is null"
-        },
         "spot_retired_out_of_service": {
           "name": "spot_retired_out_of_service",
           "value": "\"spot\".\"retired_at\" is null or \"spot\".\"state\" = 'OUT_OF_SERVICE'"
@@ -2567,7 +2530,7 @@
       "checkConstraints": {
         "event_log_kind_known": {
           "name": "event_log_kind_known",
-          "value": "\"event_log\".\"kind\" in ('ENTRY_SCANNED', 'GATE_OPENED', 'ENTRY_LOOP_CLOSED', 'AISLE_DETECTED', 'PARKING_PRESUMED', 'PARKING_CONFIRMED', 'ENTRY_CANCELLED')"
+          "value": "\"event_log\".\"kind\" in ('ENTRY_SCANNED', 'GATE_OPENED', 'ENTRY_LOOP_CLOSED', 'AISLE_DETECTED', 'PARKING_PRESUMED', 'PARKING_CONFIRMED', 'ENTRY_CANCELLED', 'EXIT_IDENTIFIED', 'CAPTURED', 'CAPTURE_PENDING', 'EXIT_LOOP_CLOSED')"
         },
         "event_log_purge_after_occurrence": {
           "name": "event_log_purge_after_occurrence",
@@ -2617,15 +2580,6 @@
       "values": [
         "FREE",
         "OCCUPIED"
-      ]
-    },
-    "public.spot_check_reason": {
-      "name": "spot_check_reason",
-      "schema": "public",
-      "values": [
-        "WRONG_AISLE",
-        "WRONG_SPOT",
-        "REPORTED_TAKEN"
       ]
     },
     "public.spot_state": {
