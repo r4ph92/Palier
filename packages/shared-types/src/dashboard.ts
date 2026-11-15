@@ -1,5 +1,6 @@
 import type { BatteryStatus } from './beaconBattery.ts';
 import { isValidDisplayText } from './displayText.ts';
+import { GATE_ERROR_CODES } from './dashboardGates.ts';
 import type { GateHealth, GateKind } from './gates.ts';
 import type { LotPricingSettings } from './lotPricing.ts';
 import type { AisleRectangle } from './parkingSessions.ts';
@@ -236,15 +237,7 @@ export const DASHBOARD_ERROR_CODES = [
   'SPOT_IN_USE',
   'SPOT_STILL_ASSIGNED',
   'SPOT_NOT_FREE',
-  'GATE_NOT_FOUND',
-  'GATE_NAME_REQUIRED',
-  'GATE_NAME_INVALID',
-  'GATE_NAME_TAKEN',
-  'GATE_ENDPOINT_NOT_HTTPS',
-  'GATE_ENDPOINT_REQUIRED',
-  'GATE_EXIT_ID_ON_ENTRY',
-  'GATE_EXIT_LIMIT',
-  'GATE_LIMIT_REACHED',
+  ...GATE_ERROR_CODES,
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];

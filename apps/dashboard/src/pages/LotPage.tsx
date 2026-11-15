@@ -63,24 +63,21 @@ function LotDetails({ lot, onPricingSaved }: LotDetailsProps) {
 }
 
 function LotLinks({ lotId }: { readonly lotId: string }) {
-  const text = useText();
+  const { lot, spotsToCheck } = useText();
+  const links = [
+    [occupancyPath(lotId), lot.occupancyLink],
+    [spotsToCheckPath(lotId), spotsToCheck.title],
+    [mapPath(lotId), lot.mapLink],
+    [equipmentPath(lotId), lot.equipmentLink],
+    [gatesPath(lotId), lot.gatesLink],
+  ] as const;
   return (
     <p className="actions-row">
-      <AppLink href={occupancyPath(lotId)} className="text-link">
-        {text.lot.occupancyLink}
-      </AppLink>
-      <AppLink href={spotsToCheckPath(lotId)} className="text-link">
-        {text.spotsToCheck.title}
-      </AppLink>
-      <AppLink href={mapPath(lotId)} className="text-link">
-        {text.lot.mapLink}
-      </AppLink>
-      <AppLink href={equipmentPath(lotId)} className="text-link">
-        {text.lot.equipmentLink}
-      </AppLink>
-      <AppLink href={gatesPath(lotId)} className="text-link">
-        {text.lot.gatesLink}
-      </AppLink>
+      {links.map(([href, label]) => (
+        <AppLink key={href} href={href} className="text-link">
+          {label}
+        </AppLink>
+      ))}
     </p>
   );
 }

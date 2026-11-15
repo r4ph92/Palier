@@ -26,6 +26,20 @@ export function routeLots(state: FakeApiState, request: string, body: Record<str
     return createLot(lots, body as unknown as LotDraft);
   }
   const ownedLotIds = new Set(lots.map(({ id }) => id));
+  const featureAnswer = routeFeature({ state, lots, ownedLotIds }, request, body);
+  if (featureAnswer !== undefined) {
+    return featureAnswer;
+  }
+  return routeLot({ occupancy: state.occupancy, equipment: state.equipment, lots }, request, body);
+}
+
+interface FeatureContext {
+  readonly state: FakeApiState;
+  readonly lots: DashboardLotDetails[];
+  readonly ownedLotIds: ReadonlySet<string>;
+}
+
+function routeFeature({ state, lots, ownedLotIds }: FeatureContext, request: string, body: Record<string, unknown>): FakeResponse | undefined {
   if (isMapRequest(request)) {
     return routeMap({ maps: state.maps, ownedLotIds }, request, body);
   }
@@ -35,10 +49,7 @@ export function routeLots(state: FakeApiState, request: string, body: Record<str
   if (isSpotRequest(request)) {
     return routeSpots({ state, ownedLotIds }, request, body);
   }
-  if (isGateRequest(request)) {
-    return routeGates({ state, lots }, request, body);
-  }
-  return routeLot({ occupancy: state.occupancy, equipment: state.equipment, lots }, request, body);
+  return isGateRequest(request) ? routeGates({ state, lots }, request, body) : undefined;
 }
 
 interface MemberLots {
