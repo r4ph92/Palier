@@ -24,7 +24,7 @@ describe('the service statements', () => {
     expect(sql).toMatch(/operator_id = \$\d+/);
     expect(sql).toMatch(/holder\.assigned_spot_id = spot\.id or holder\.confirmed_spot_id = spot\.id/);
     expect(sql).toMatch(/not exists \(select 1 from spot_hold/);
-    expect(sql).toMatch(/not exists \(select 1 from parking_session_reported_spot reported join parking_session reporter/);
+    expect(sql).toMatch(/or exists \(select 1 from parking_session_reported_spot reported join parking_session reporter/);
   });
 
   it('put back only a live out-of-service spot, so a retired spot stays gone', () => {
@@ -38,7 +38,7 @@ describe('the service statements', () => {
     const { sql } = dialect.sqlToQuery(putBackInServiceStatement(OPERATOR, spot));
     expect(sql).toMatch(/holder\.assigned_spot_id = spot\.id or holder\.confirmed_spot_id = spot\.id/);
     expect(sql).toMatch(/not exists \(select 1 from spot_hold/);
-    expect(sql).toMatch(/not exists \(select 1 from parking_session_reported_spot reported join parking_session reporter/);
+    expect(sql).toMatch(/or exists \(select 1 from parking_session_reported_spot reported join parking_session reporter/);
   });
 });
 
