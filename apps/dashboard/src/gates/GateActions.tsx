@@ -26,13 +26,14 @@ export function GateActions({ gate, secrets, onEdit }: GateActionsProps) {
 
 function GateButtons({ gate, secrets, onEdit }: GateActionsProps) {
   const { gates: text } = useText();
+  const printRef = useFocusWhen<HTMLButtonElement>(secrets.refocus === 'print');
   const values = { gate: gate.name };
   return (
     <p className="row-actions gate-actions" aria-busy={secrets.busy}>
       <button type="button" id={editGateButtonId(gate)} className="text-button" aria-label={interpolate(text.edit.name, values)} onClick={onEdit}>
         {text.edit.shown}
       </button>
-      <button type="button" className="text-button" aria-label={interpolate(text.printQr.name, values)} aria-disabled={secrets.busy} onClick={() => void secrets.print()}>
+      <button type="button" ref={printRef} className="text-button" aria-label={interpolate(text.printQr.name, values)} aria-disabled={secrets.busy} onClick={() => void secrets.print()}>
         <StableLabel shown={secrets.busy ? text.preparingQr : text.printQr.shown} reserved={[text.printQr.shown, text.preparingQr]} />
       </button>
       <ReplaceButton gate={gate} secrets={secrets} kind="deviceKey" />
@@ -44,7 +45,7 @@ function GateButtons({ gate, secrets, onEdit }: GateActionsProps) {
 // Focus comes back here when its question is cancelled.
 function ReplaceButton({ gate, secrets, kind }: ReplaceConfirmationProps) {
   const { gates: text } = useText();
-  const buttonRef = useFocusWhen<HTMLButtonElement>(secrets.cancelled === kind);
+  const buttonRef = useFocusWhen<HTMLButtonElement>(secrets.refocus === kind);
   const action = kind === 'deviceKey' ? text.replaceKey : text.replaceQr;
   return (
     <button type="button" ref={buttonRef} className="text-button" aria-label={interpolate(action.name, { gate: gate.name })} onClick={() => secrets.ask(kind)}>

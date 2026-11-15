@@ -40,6 +40,11 @@
   margin: var(--space-small) 0 0;
 }
 
+/* The live region stays on the page between notices without spacing the row. */
+.gate-notice:empty {
+  margin: 0;
+}
+
 .gate-edit-form {
   margin: var(--space-medium) 0;
 }

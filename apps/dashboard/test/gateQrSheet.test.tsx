@@ -99,6 +99,27 @@ describe('the printable QR of a gate', () => {
 });
 
 describe('regenerating the QR secret', () => {
+  it('says the new secret in the gate’s own row and hands focus to its print button', async () => {
+    await openGatesOf(pierre, garageRoy.id);
+    const item = () => within(gateItemOf('Entrée Roy'));
+
+    await userEvent.click(item().getByRole('button', { name: 'Régénérer le secret du QR de Entrée Roy' }));
+    await userEvent.click(item().getByRole('button', { name: 'Régénérer le secret du QR de Entrée Roy' }));
+
+    await waitFor(() => expect(item().getByRole('status').textContent).toBe('Nouveau secret enregistré. Imprimez le nouveau QR de Entrée Roy.'));
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Imprimer le QR de Entrée Roy');
+  });
+
+  it('says a downloaded sheet in that gate’s row only', async () => {
+    await openGatesOf(pierre, garageRoy.id);
+    await addGate({ name: 'Entrée Est' });
+
+    await printQrOf('Entrée Roy');
+
+    expect(within(gateItemOf('Entrée Roy')).getByRole('status').textContent).toBe('QR de Entrée Roy téléchargé. Ouvrez le fichier et imprimez-le.');
+    expect(within(gateItemOf('Entrée Est')).getByRole('status').textContent).toBe('');
+  });
+
   it('asks first, then prints a new QR signed with the new secret, the old one no longer matching', async () => {
     const api = await openGatesOf(pierre, garageRoy.id);
     const printed = (await printQrOf('Entrée Roy')).scanned;

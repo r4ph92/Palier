@@ -35,12 +35,12 @@ interface GatesViewProps {
 // The one-time key stays above the list, even after the list is read again, until the operator dismisses it or leaves.
 function GatesView({ page, lotGates, onSaved, onStale }: GatesViewProps) {
   const text = useText();
-  const { shownKey, dismissKey, onAdded, context } = useGatesView({ lotGates, onSaved, onStale });
+  const { shownKey, dismissKey, onAdded, context, notices } = useGatesView({ lotGates, onSaved, onStale });
   return (
     <LotSubpageFrame page={page} lotName={lotGates.lotName}>
       <p className="lead">{text.gates.intro}</p>
       {shownKey === null ? null : <DeviceKeyPanel key={shownKey.deviceKey} shownKey={shownKey} onDismiss={dismissKey} />}
-      <GateList lotGates={lotGates} notice={context.notice} context={context} />
+      <GateList lotGates={lotGates} notice={notices.shown} context={context} />
       <AddGateForm lotId={lotGates.lotId} onAdded={onAdded} />
     </LotSubpageFrame>
   );
@@ -58,8 +58,8 @@ function useGatesView({ lotGates, onSaved, onStale }: Omit<GatesViewProps, 'page
     setShownKey(null);
     focusAfterRender(GATE_LIST_TITLE_ID);
   };
-  const context = { lotId: lotGates.lotId, lotName: lotGates.lotName, onSaved, onKey: setShownKey, onNotice: notices.show, staleData: gateStaleData(onStale), notice: notices };
-  return { shownKey, dismissKey, onAdded, context };
+  const context = { lotId: lotGates.lotId, lotName: lotGates.lotName, onSaved, onKey: setShownKey, onNotice: notices.show, staleData: gateStaleData(onStale) };
+  return { shownKey, dismissKey, onAdded, context, notices };
 }
 
 // The API answers the key even when it could not read the list again: the page reads it itself.
@@ -72,8 +72,8 @@ function showListAfterAdd({ lotGates }: CreatedGate, { onSaved, onStale }: Pick<
 }
 
 // Each notice gets its own key, so the same refusal twice takes focus twice.
-function useGateNotices(): ShownNotice & { readonly show: (notice: GateNotice) => void } {
+function useGateNotices(): { readonly shown: ShownNotice; readonly show: (notice: GateNotice) => void } {
   const [shown, setShown] = useState<ShownNotice>({ notice: null, key: 0 });
   const show = (notice: GateNotice) => setShown((previous) => ({ notice, key: previous.key + 1 }));
-  return { ...shown, show };
+  return { shown, show };
 }

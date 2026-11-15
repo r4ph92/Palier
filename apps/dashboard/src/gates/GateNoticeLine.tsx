@@ -2,20 +2,30 @@ import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { StateMark } from '../components/StateMark.tsx';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useText } from '../i18n/LanguageContext.tsx';
-import type { GateNotice } from './gateNotice.ts';
+import type { GateChange, GateNotice } from './gateNotice.ts';
 import { useGateLimitValues } from './useGateLimitValues.ts';
 
-// A change is announced politely under the list's title; a refusal takes focus, so a keyboard user continues from it.
-export function GateNoticeLine({ notice }: { readonly notice: GateNotice | null }) {
-  const { gates: text } = useText();
+// A refusal takes focus under the list's title, so a keyboard user continues from it.
+export function GateRefusalLine({ notice }: { readonly notice: GateNotice | null }) {
   const limits = useGateLimitValues();
-  const sentence = notice === null || notice.kind === 'refused' ? null : interpolate(text[notice.kind], { gate: notice.gateName });
+  if (notice?.kind !== 'refused') {
+    return null;
+  }
+  return <ErrorNotice code={notice.refusal.code} values={{ ...limits, ...notice.refusal.values }} takesFocus />;
+}
+
+interface GateChangeLineProps {
+  readonly change: GateChange | null;
+  // Changes with each notice, so the same sentence twice is announced twice.
+  readonly changeKey: number;
+}
+
+// Always on the page, so a screen reader announces the sentence the moment it appears under the row's actions.
+export function GateChangeLine({ change, changeKey }: GateChangeLineProps) {
+  const { gates: text } = useText();
   return (
-    <>
-      {notice?.kind === 'refused' ? <ErrorNotice code={notice.refusal.code} values={{ ...limits, ...notice.refusal.values }} takesFocus /> : null}
-      <p role="status" className="gate-notice">
-        {sentence === null ? null : <StateMark tone="free" label={sentence} wraps />}
-      </p>
-    </>
+    <p role="status" className="gate-notice">
+      {change === null ? null : <StateMark key={changeKey} tone="free" label={interpolate(text[change.kind], { gate: change.gateName })} wraps />}
+    </p>
   );
 }

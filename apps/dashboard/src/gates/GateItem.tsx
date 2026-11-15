@@ -6,7 +6,8 @@ import { useFocusAfterRender } from '../lotMap/useFocusAfterRender.ts';
 import { EditGateForm } from './EditGateForm.tsx';
 import { editGateButtonId, GateActions } from './GateActions.tsx';
 import { GateFacts } from './GateFacts.tsx';
-import { refusedNotice, type GateNotice } from './gateNotice.ts';
+import { changeOfGate, refusedNotice, type GateNotice, type ShownNotice } from './gateNotice.ts';
+import { GateChangeLine } from './GateNoticeLine.tsx';
 import { useGateSecrets, type ShownKey } from './useGateSecrets.ts';
 
 export interface GateItemContext {
@@ -21,10 +22,12 @@ export interface GateItemContext {
 interface GateItemProps {
   readonly gate: DashboardGate;
   readonly context: GateItemContext;
+  readonly notice: ShownNotice;
 }
 
-// A gate's settings, then either its actions or its edit form; focus goes back to the edit button when the form closes.
-export function GateItem({ gate, context }: GateItemProps) {
+// A gate's settings, then either its actions or its edit form, then what was just done to it; focus goes back to the edit
+// button when the form closes.
+export function GateItem({ gate, context, notice }: GateItemProps) {
   const secrets = useGateSecrets({ ...context, gate });
   const editing = useGateEditing(gate, context);
   return (
@@ -36,6 +39,7 @@ export function GateItem({ gate, context }: GateItemProps) {
       ) : (
         <GateActions gate={gate} secrets={secrets} onEdit={editing.open} />
       )}
+      <GateChangeLine change={changeOfGate(notice, gate.id)} changeKey={notice.key} />
     </li>
   );
 }
@@ -58,7 +62,7 @@ function useGateEditing(gate: DashboardGate, { onSaved, onNotice }: GateItemCont
   };
   const saved = (lotGates: DashboardLotGates) => {
     onSaved(lotGates);
-    onNotice({ kind: 'saved', gateName: gate.name });
+    onNotice({ kind: 'saved', gateId: gate.id, gateName: gate.name });
     cancel();
   };
   const gone = (refusal: Refusal) => {
