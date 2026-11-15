@@ -26,12 +26,16 @@ function asked(spotState: SpotState | null = 'AVAILABLE', sessionState: EntrySes
 }
 
 function askedAmong(spotRows: readonly ReturnType<typeof spotRow>[], sessionState: EntrySessionState = 'PARKED_UNCONFIRMED') {
+  return spotsReadFor(spotRows, sessionState)
+    .answer('occupy-answered-spot', [{ id: SPOT_B3_ID }])
+    .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
+}
+
+function spotsReadFor(spotRows: readonly ReturnType<typeof spotRow>[], sessionState: EntrySessionState = 'PARKED_UNCONFIRMED') {
   return new ScriptedSql()
     .answer('read-session-lot', [{ lot_id: LOT_ID }])
     .answer('lock-answering-session', [{ state: sessionState, ...NO_CONFIRMED_SPOT }])
-    .answer('lock-answered-spot', spotRows)
-    .answer('occupy-answered-spot', [{ id: SPOT_B3_ID }])
-    .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
+    .answer('lock-answered-spot', spotRows);
 }
 
 function answerWith(sql: ScriptedSql, answer: SpotAnswer = julieAnswersB3) {
@@ -160,20 +164,13 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
   });
 
   it('fails, rolling the answer back, when the session write finds nothing to confirm', async () => {
-    const withoutConfirm = new ScriptedSql()
-      .answer('read-session-lot', [{ lot_id: LOT_ID }])
-      .answer('lock-answering-session', [{ state: 'PARKED_UNCONFIRMED', ...NO_CONFIRMED_SPOT }])
-      .answer('lock-answered-spot', [spotRow('AVAILABLE')])
-      .answer('occupy-answered-spot', [{ id: SPOT_B3_ID }]);
+    const withoutConfirm = spotsReadFor([spotRow('AVAILABLE')]).answer('occupy-answered-spot', [{ id: SPOT_B3_ID }]);
 
     await expect(answerWith(withoutConfirm)).rejects.toThrow(`Session ${SESSION_ID} was no longer waiting for its answer.`);
   });
 
   it('fails when the spot read as free could not be occupied', async () => {
-    const sql = new ScriptedSql()
-      .answer('read-session-lot', [{ lot_id: LOT_ID }])
-      .answer('lock-answering-session', [{ state: 'PARKED_UNCONFIRMED', ...NO_CONFIRMED_SPOT }])
-      .answer('lock-answered-spot', [spotRow('AVAILABLE')]);
+    const sql = spotsReadFor([spotRow('AVAILABLE')]);
 
     await expect(answerWith(sql)).rejects.toThrow(`Answered spot ${SPOT_B3_ID} could not be occupied.`);
     expect(sql.count('confirm-parked-spot')).toBe(0);
