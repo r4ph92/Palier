@@ -13,3 +13,5 @@
 **Écart connu.** Les sessions déjà `CLOSED_CAPTURE_PENDING` au déploiement reçoivent un `CAPTURED` seul (et parfois `EXIT_LOOP_CLOSED`), sans identification ni ouverture : #72 doit accepter une chronologie partielle. L'horloge de l'API (capture) et celle de la base (`issued_at`) peuvent différer de leur décalage ; `sequence` fait foi (037).
 
 **Amende 037** : la commande d'ouverture de la sortie porte maintenant son événement.
+
+**Amende 024** : `EXIT_LOOP_CLOSED` reste daté par `exit_passage_at`, désormais jamais antérieur à l'ouverture qu'il ferme (`greatest(closedAt, issued_at)`) ; un événement ne naît donc plus avant l'entrée ni passé sa purge.
