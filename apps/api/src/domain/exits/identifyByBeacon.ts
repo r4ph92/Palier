@@ -2,6 +2,7 @@ import type { AuthenticatedGate } from '../gates/AuthenticatedGate.ts';
 import { ensureOwnGate } from '../gates/ownGate.ts';
 import { PassageRefusedError } from '../gates/PassageRefusedError.ts';
 import { openingWindowOf } from '../gates/OpeningWindow.ts';
+import type { Clock } from '../time/Clock.ts';
 import { payAndClose, type ExitDependencies, type ExitOutcome } from './exitParking.ts';
 
 // Both signals must be this fresh, whichever comes first (Q34, step 2).
@@ -12,7 +13,7 @@ export interface BeaconExitRequest {
   readonly lotId: string;
   // The lot's exit gate, the one that opens (one per lot, OQ12).
   readonly exitGateId: string | null;
-  readonly now: Date;
+  readonly clock: Clock;
 }
 
 // waiting: one signal is still missing; fallback: two drivers reported, so nothing opens and both use the tap; opened: the barrier was
@@ -23,7 +24,7 @@ export type BeaconExitOutcome =
 
 // Called when an app reports the exit beacon and when the console sees a vehicle: the exit happens on the second of the two, exactly as the
 // tap does it (decision 029). The vehicle presence is spent by the exit, and by the ambiguity of two candidates, so one vehicle opens once.
-export async function settleBeaconExit(dependencies: ExitDependencies, { lotId, exitGateId, now }: BeaconExitRequest): Promise<BeaconExitOutcome> {
+export async function settleBeaconExit(dependencies: ExitDependencies, { lotId, exitGateId, clock }: BeaconExitRequest): Promise<BeaconExitOutcome> {
   if (exitGateId === null) {
     return { outcome: 'gate-unavailable' };
   }
@@ -35,7 +36,7 @@ export async function settleBeaconExit(dependencies: ExitDependencies, { lotId, 
   if (candidates.length > 1) {
     return { outcome: 'fallback' };
   }
-  return outcomeOf(await payAndClose(dependencies, session, { now, identification: 'BEACON', exitGateId }));
+  return outcomeOf(await payAndClose(dependencies, session, { clock, identification: 'BEACON', exitGateId }));
 }
 
 function outcomeOf(left: ExitOutcome): BeaconExitOutcome {
@@ -58,7 +59,7 @@ export interface BeaconReport {
   readonly driverId: string;
   // The beacon major the app heard: it must be the major of the session's own lot.
   readonly major: number;
-  readonly now: Date;
+  readonly clock: Clock;
 }
 
 export type BeaconReportRefusal = 'not-found' | 'entry-not-confirmed' | 'closed' | 'wrong-lot';
@@ -80,7 +81,7 @@ export async function reportExitBeacon(dependencies: ExitDependencies, report: B
   if (!(await dependencies.exits.recordBeaconReport(session.id, report.major))) {
     return { outcome: 'wrong-lot' };
   }
-  return settleBeaconExit(dependencies, { lotId: session.lotId, exitGateId: session.exitGateId, now: report.now });
+  return settleBeaconExit(dependencies, { lotId: session.lotId, exitGateId: session.exitGateId, clock: report.clock });
 }
 
 export interface VehiclePresence {
@@ -88,15 +89,15 @@ export interface VehiclePresence {
   readonly gate: AuthenticatedGate;
   // The gate the request names in its path.
   readonly requestedGateId: string;
-  readonly now: Date;
+  readonly clock: Clock;
 }
 
 // The console saw a vehicle on the exit gate's arming loop; it opens the barrier when exactly one app reported the beacon.
-export async function recordVehicleAtExit(dependencies: ExitDependencies, { gate, requestedGateId, now }: VehiclePresence): Promise<BeaconExitOutcome> {
+export async function recordVehicleAtExit(dependencies: ExitDependencies, { gate, requestedGateId, clock }: VehiclePresence): Promise<BeaconExitOutcome> {
   ensureOwnGate(gate, requestedGateId);
   if (gate.kind !== 'EXIT') {
     throw new PassageRefusedError('GATE_NOT_EXIT');
   }
   await dependencies.exits.recordVehiclePresence(gate.id);
-  return settleBeaconExit(dependencies, { lotId: gate.lotId, exitGateId: gate.id, now });
+  return settleBeaconExit(dependencies, { lotId: gate.lotId, exitGateId: gate.id, clock });
 }

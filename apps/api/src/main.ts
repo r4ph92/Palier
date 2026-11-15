@@ -20,8 +20,10 @@ import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateC
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
 import { PostgresLevelOccupancyReader } from './infrastructure/postgres/PostgresLevelOccupancyReader.ts';
+import { PostgresGateSecretRepository } from './infrastructure/postgres/PostgresGateSecretRepository.ts';
 import { PostgresLotEquipmentReader } from './infrastructure/postgres/PostgresLotEquipmentReader.ts';
 import { PostgresLotMapRepository } from './infrastructure/postgres/PostgresLotMapRepository.ts';
+import { PostgresLotGateRepository } from './infrastructure/postgres/PostgresLotGateRepository.ts';
 import { PostgresLotSpotRepository } from './infrastructure/postgres/PostgresLotSpotRepository.ts';
 import { PostgresSpotCheckRepository } from './infrastructure/postgres/PostgresSpotCheckRepository.ts';
 import { PostgresLotSetupRepository } from './infrastructure/postgres/PostgresLotSetupRepository.ts';
@@ -92,6 +94,8 @@ const server = buildServer({
     lotEquipment: new PostgresLotEquipmentReader(connection.database),
     lotSpots: new PostgresLotSpotRepository(connection.database),
     spotChecks: new PostgresSpotCheckRepository(connection.database),
+    lotGates: new PostgresLotGateRepository(connection.database),
+    gateSecrets: new PostgresGateSecretRepository(connection.database),
     currentParkingSessions: new PostgresCurrentParkingSessionQuery(connection.database, exitBeaconWindow),
     parkingSessionBackdater: new PostgresParkingSessionBackdater(connection.database),
     parkedPresumptions: new PostgresParkedPresumptionRepository(connection.database),
@@ -172,7 +176,7 @@ const stopCaptureRetry =
   captureRetryPayments === null
     ? async () => {}
     : startRetryCaptures(
-        () => retryCaptures({ pending: new PostgresPendingCaptureRepository(connection.database), payments: captureRetryPayments }, server.log),
+        () => retryCaptures({ pending: new PostgresPendingCaptureRepository(connection.database), payments: captureRetryPayments, clock }, server.log),
         server.log,
       );
 server.addHook('onClose', async () => {

@@ -1,15 +1,19 @@
 import type {
   AddSpotsRequest,
+  CreatedGate,
   AisleRequest,
   DashboardAisleSpots,
   DashboardLotDetails,
   DashboardLotEquipment,
+  DashboardLotGates,
   DashboardLotListResponse,
   DashboardLotMap,
   DashboardLotOccupancy,
   DashboardMeResponse,
   DashboardOperator,
   DashboardSpotsToCheck,
+  GateDeviceKey,
+  GateQrLink,
   LevelDraft,
   LevelOrderRequest,
   LotDraft,
@@ -18,6 +22,7 @@ import type {
   StripeOnboardingLink,
 } from '@palier/shared-types';
 import type { BeaconBatteryReading } from '@palier/shared-types/beaconBattery';
+import type { GateDraft, GateSettings } from '@palier/shared-types/gateDraft';
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
 import { DashboardApiError } from './DashboardApiError.ts';
 
@@ -98,6 +103,10 @@ function spotPathOf(lotId: string, spotId: string): string {
   return `${lotPathOf(lotId)}/spots/${encodeURIComponent(spotId)}`;
 }
 
+function gatePathOf(lotId: string, gateId: string): string {
+  return `${lotPathOf(lotId)}/gates/${encodeURIComponent(gateId)}`;
+}
+
 export const dashboardClient = {
   me: () => dashboardRequest<DashboardMeResponse>('/me'),
   signOut: () => dashboardRequest<undefined>('/sign-out', { method: 'POST' }),
@@ -128,4 +137,11 @@ export const dashboardClient = {
   spotsToCheck: (lotId: string) => dashboardRequest<DashboardSpotsToCheck>(`${lotPathOf(lotId)}/spots-to-check`),
   clearSpotCheck: (lotId: string, spotId: string) =>
     dashboardRequest<DashboardSpotsToCheck>(`${spotPathOf(lotId, spotId)}/check-cleared`, { method: 'POST' }),
+  lotGates: (lotId: string) => dashboardRequest<DashboardLotGates>(`${lotPathOf(lotId)}/gates`),
+  addGate: (lotId: string, draft: GateDraft) => dashboardRequest<CreatedGate>(`${lotPathOf(lotId)}/gates`, { method: 'POST', body: draft }),
+  changeGate: (lotId: string, gateId: string, settings: GateSettings) =>
+    dashboardRequest<DashboardLotGates>(gatePathOf(lotId, gateId), { method: 'PUT', body: settings }),
+  replaceDeviceKey: (lotId: string, gateId: string) => dashboardRequest<GateDeviceKey>(`${gatePathOf(lotId, gateId)}/device-key`, { method: 'POST' }),
+  replaceQrSecret: (lotId: string, gateId: string) => dashboardRequest<undefined>(`${gatePathOf(lotId, gateId)}/qr-secret`, { method: 'POST' }),
+  gateQrLink: (lotId: string, gateId: string) => dashboardRequest<GateQrLink>(`${gatePathOf(lotId, gateId)}/qr-link`),
 };

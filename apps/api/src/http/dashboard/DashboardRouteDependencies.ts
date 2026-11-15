@@ -1,5 +1,7 @@
+import type { GateSecretRepository } from '../../domain/dashboard/GateSecretRepository.ts';
 import type { LevelOccupancyReader } from '../../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotEquipmentReader } from '../../domain/dashboard/LotEquipmentReader.ts';
+import type { LotGateRepository } from '../../domain/dashboard/LotGateRepository.ts';
 import type { LotMapRepository } from '../../domain/dashboard/LotMapRepository.ts';
 import type { SpotCheckRepository } from '../../domain/dashboard/SpotCheckRepository.ts';
 import type { LotSpotRepository } from '../../domain/dashboard/LotSpotRepository.ts';
@@ -27,6 +29,8 @@ export interface DashboardRouteDependencies {
   readonly clock: Clock;
   readonly spots: LotSpotRepository;
   readonly spotChecks: SpotCheckRepository;
+  readonly gates: LotGateRepository;
+  readonly gateSecrets: GateSecretRepository;
   readonly testSignInEnabled: boolean;
   readonly secureCookies: boolean;
 }

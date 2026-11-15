@@ -6,6 +6,12 @@ import { appendSessionEvent, jsonbObjectOf } from '../../src/infrastructure/post
 import { ScriptedSql } from './fakes/scriptedSql.ts';
 
 const migration = readFileSync(new URL('../../drizzle/0038_session_event_log.sql', import.meta.url), 'utf8');
+const exitKindsMigration = readFileSync(new URL('../../drizzle/0039_exit_payment_event_kinds.sql', import.meta.url), 'utf8');
+const ENTRY_AND_PARKING_KINDS = ['ENTRY_SCANNED', 'GATE_OPENED', 'ENTRY_LOOP_CLOSED', 'AISLE_DETECTED', 'PARKING_PRESUMED', 'PARKING_CONFIRMED', 'ENTRY_CANCELLED'];
+
+function kindCheckOf(kinds: readonly string[]): string {
+  return `CONSTRAINT "event_log_kind_known" CHECK ("event_log"."kind" in (${kinds.map((kind) => `'${kind}'`).join(', ')}))`;
+}
 const SESSION_ID = '00000000-0000-4000-8000-000000000951';
 const LOT_ID = '00000000-0000-4000-8000-000000000201';
 const GATE_ID = '00000000-0000-4000-8000-000000000701';
@@ -29,10 +35,7 @@ describe('migration 0038, the visit event log (story #156)', () => {
   });
 
   it('accepts the seven entry and parking kinds only, by a named check', () => {
-    const kinds = SESSION_EVENT_KINDS.map((kind) => `'${kind}'`).join(', ');
-
-    expect(migration).toContain(`CONSTRAINT "event_log_kind_known" CHECK ("event_log"."kind" in (${kinds}))`);
-    expect(SESSION_EVENT_KINDS).toHaveLength(7);
+    expect(migration).toContain(kindCheckOf(ENTRY_AND_PARKING_KINDS));
   });
 
   it('refuses a purge date that is not after the event, and leaves the retention to the data', () => {
@@ -49,6 +52,17 @@ describe('migration 0038, the visit event log (story #156)', () => {
   it('indexes the timeline by session in write order, and the purge by date', () => {
     expect(migration).toContain('CREATE INDEX "event_log_session_id_sequence_index" ON "event_log" USING btree ("session_id","sequence")');
     expect(migration).toContain('CREATE INDEX "event_log_purge_after_index" ON "event_log" USING btree ("purge_after")');
+  });
+});
+
+describe('migration 0039, the exit and payment kinds (story #157)', () => {
+  it('widens the named check to exactly the kinds the domain writes', () => {
+    expect(exitKindsMigration).toContain('ALTER TABLE "event_log" DROP CONSTRAINT "event_log_kind_known"');
+    expect(exitKindsMigration).toContain(`ALTER TABLE "event_log" ADD ${kindCheckOf(SESSION_EVENT_KINDS)}`);
+  });
+
+  it('keeps the entry and parking kinds and adds the four exit ones after them', () => {
+    expect(SESSION_EVENT_KINDS).toEqual([...ENTRY_AND_PARKING_KINDS, 'EXIT_IDENTIFIED', 'CAPTURED', 'CAPTURE_PENDING', 'EXIT_LOOP_CLOSED']);
   });
 });
 

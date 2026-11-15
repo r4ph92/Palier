@@ -77,15 +77,37 @@ export type StatementLabel =
   | 'confirm-opening'
   | 'occupy-confirmed-spot'
   | 'attach-exit-passage'
+  | 'close-paid-session'
+  | 'close-pending-session'
+  | 'read-paid-exit'
+  | 'mark-capture-paid'
   | 'insert-gate-command'
   | 'log-entry-without-loop'
   | 'backdate-entry'
   | 'append-session-event'
+  | 'read-gate-settings'
+  | 'count-lot-gates'
+  | 'insert-gate'
+  | 'insert-device-key'
+  | 'read-owned-gate-kind'
+  | 'read-owned-gate-qr-secret'
+  | 'change-gate'
+  | 'revoke-device-keys'
+  | 'replace-qr-secret'
   | 'unknown';
 
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
+  ['read-gate-settings', /gate\.integration_kind, gate\.endpoint/],
+  ['count-lot-gates', /as exit_gate_count from gate/],
+  ['insert-gate', /insert into gate \(lot_id/],
+  ['insert-device-key', /insert into gate_device_key/],
+  ['read-owned-gate-kind', /select gate\.kind from gate where gate\.id/],
+  ['read-owned-gate-qr-secret', /select gate\.qr_secret from gate/],
+  ['change-gate', /update gate set name =/],
+  ['revoke-device-keys', /update gate_device_key set revoked_at/],
+  ['replace-qr-secret', /update gate set qr_secret/],
   ['insert-lot', /insert into parking_lot/],
   ['lock-owned-lot', /from parking_lot where id = \$1 and operator_id = \$2 for no key update/],
   ['read-lot-map', /aisle\.is_exit_lane, aisle\.map_polygon/],
@@ -121,6 +143,10 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['count-vehicle', /insert into gate_passage/],
   ['confirm-opening', /set state = 'ENTRY_CONFIRMED'/],
   ['attach-exit-passage', /set exit_passage_at/],
+  ['close-paid-session', /set state = 'CLOSED_PAID', exit_at/],
+  ['close-pending-session', /set state = 'CLOSED_CAPTURE_PENDING'/],
+  ['read-paid-exit', /select state, exit_at, captured_cents/],
+  ['mark-capture-paid', /set state = 'CLOSED_PAID', captured_cents/],
   ['occupy-confirmed-spot', /update spot set state = 'OCCUPIED', state_changed_at = now\(\)/],
   ['insert-gate-command', /insert into gate_command/],
   ['backdate-entry', /set entry_confirmed_at = /],

@@ -1,0 +1,95 @@
+/* The gates page (#67): each gate a row of facts between fine rules, no cards. */
+.gate-item {
+  padding: var(--space-medium) 0 var(--space-small);
+}
+
+.gate-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* The last fact's rule would double the row's own. */
+.gate-facts .fact:last-child {
+  border-bottom: 0;
+}
+
+.gate-endpoint,
+.device-key {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.gate-actions,
+.gate-question {
+  margin-top: var(--space-small);
+}
+
+.gate-notice {
+  margin: var(--space-small) 0 0;
+}
+
+/* The live region stays on the page between notices without spacing the row. */
+.gate-notice:empty {
+  margin: 0;
+}
+
+.gate-edit-form {
+  margin: var(--space-medium) 0;
+}
+
+/* Ruled above and below like the title, so the one-time key reads as the page's first thing to act on. */
+.key-panel {
+  margin-top: var(--space-large);
+  padding: var(--space-medium) 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+
+.key-panel .section-title {
+  margin-top: 0;
+}
+
+.key-panel .section-title:focus {
+  outline: none;
+}
+
+.key-warning {
+  margin: var(--space-small) 0;
+  font-weight: 600;
+}
+
+.device-key {
+  display: block;
+  padding: var(--space-small);
+  background: var(--sunken);
+  font-size: 16px;
+  user-select: all;
+}
+
+.key-panel .actions-row {
+  align-items: center;
+}
+
+.key-panel .secondary-button {
+  margin-top: 0;
+}
+
+.key-copy-status {
+  margin: var(--space-small) 0 0;
+}
+
+/* The hint goes on its own line, under the box and its label; a box without one never wraps its label. */
+.check-field-with-hint {
+  flex-wrap: wrap;
+}
+
+.check-field-with-hint label {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.check-field-hint {
+  flex-basis: 100%;
+}

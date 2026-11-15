@@ -281,6 +281,13 @@
       "when": 1794710755166,
       "tag": "0039_exit_payment_event_kinds",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794761145499,
+      "tag": "0040_spot_needs_check_reason",
+      "breakpoints": true
     }
   ]
 }

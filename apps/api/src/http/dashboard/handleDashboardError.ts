@@ -50,6 +50,15 @@ const STATUS_BY_REASON: Record<DashboardErrorCode, number> = {
   SPOT_IN_USE: 409,
   SPOT_STILL_ASSIGNED: 409,
   SPOT_NOT_FREE: 409,
+  GATE_NOT_FOUND: 404,
+  GATE_NAME_REQUIRED: 400,
+  GATE_NAME_INVALID: 400,
+  GATE_NAME_TAKEN: 409,
+  GATE_ENDPOINT_NOT_HTTPS: 400,
+  GATE_ENDPOINT_REQUIRED: 400,
+  GATE_EXIT_ID_ON_ENTRY: 400,
+  GATE_EXIT_LIMIT: 409,
+  GATE_LIMIT_REACHED: 409,
 };
 
 export function handleDashboardError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {

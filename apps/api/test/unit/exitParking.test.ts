@@ -11,7 +11,7 @@ function setup() {
   const exits = new FakeExits();
   const payments = new FakePaymentAuthorizer();
   exits.add(JULIE_ID, julieInside(enteredAt));
-  const exit = (driverId = JULIE_ID, now = at2117, sessionId = EXIT_SESSION_ID) => exitParking({ exits, payments }, { sessionId, driverId, now });
+  const exit = (driverId = JULIE_ID, now = at2117, sessionId = EXIT_SESSION_ID) => exitParking({ exits, payments }, { sessionId, driverId, clock: () => now });
   return { exits, payments, exit };
 }
 
@@ -34,8 +34,31 @@ describe('exitParking', () => {
     await exit();
 
     expect(exits.closings).toEqual([
-      { sessionId: EXIT_SESSION_ID, lotId: 'lot-demo', exitGateId: EXIT_GATE_ID, identification: 'APP', exit: { exitedAt: at2117, capturedCents: 975, surplusPaidCents: 0, unpaidCents: 0 } },
+      {
+        sessionId: EXIT_SESSION_ID,
+        lotId: 'lot-demo',
+        exitGateId: EXIT_GATE_ID,
+        identification: 'APP',
+        exit: { exitedAt: at2117, capturedCents: 975, surplusPaidCents: 0, unpaidCents: 0 },
+        capturedAt: at2117,
+      },
     ]);
+  });
+
+  it('prices at the tap and dates the payment when Stripe confirms the capture, reading the clock once each (story #157)', async () => {
+    const { exits, payments } = setup();
+    const confirmedAt = new Date(at2117.getTime() + 2_000);
+    const instants = [at2117, confirmedAt];
+    const capturesSeenAtEachRead: number[] = [];
+    const clock = () => {
+      capturesSeenAtEachRead.push(payments.captured.length);
+      return instants.shift() ?? new Date(0);
+    };
+
+    await exitParking({ exits, payments }, { sessionId: EXIT_SESSION_ID, driverId: JULIE_ID, clock });
+
+    expect(capturesSeenAtEachRead).toEqual([0, 1]);
+    expect(exits.closings).toMatchObject([{ exit: { exitedAt: at2117, capturedCents: 975 }, capturedAt: confirmedAt }]);
   });
 
   it('never takes more than the card hold, and reports a total under the daily cap as capped', async () => {
@@ -132,7 +155,7 @@ describe('exitParking', () => {
   it('answers payments unavailable when the server has no Stripe key', async () => {
     const { exits } = setup();
 
-    expect(await exitParking({ exits, payments: null }, { sessionId: EXIT_SESSION_ID, driverId: JULIE_ID, now: at2117 })).toEqual({
+    expect(await exitParking({ exits, payments: null }, { sessionId: EXIT_SESSION_ID, driverId: JULIE_ID, clock: () => at2117 })).toEqual({
       outcome: 'payments-unavailable',
     });
   });

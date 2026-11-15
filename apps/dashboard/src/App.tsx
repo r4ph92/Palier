@@ -7,6 +7,7 @@ import type { Route } from './navigation/routes.ts';
 import { CreateLotPage } from './pages/CreateLotPage.tsx';
 import { CreateOperatorPage } from './pages/CreateOperatorPage.tsx';
 import { EquipmentPage } from './pages/EquipmentPage.tsx';
+import { GatesPage } from './pages/GatesPage.tsx';
 import { LoadingPage } from './pages/LoadingPage.tsx';
 import { LotPage } from './pages/LotPage.tsx';
 import { MapPage } from './pages/MapPage.tsx';
@@ -91,5 +92,7 @@ function OperatorPage({ route, operator }: { readonly route: Exclude<Route, { pa
       return <SpotsToCheckPage key={route.lotId} lotId={route.lotId} />;
     case 'equipment':
       return <EquipmentPage key={route.lotId} lotId={route.lotId} />;
+    case 'gates':
+      return <GatesPage key={route.lotId} lotId={route.lotId} />;
   }
 }

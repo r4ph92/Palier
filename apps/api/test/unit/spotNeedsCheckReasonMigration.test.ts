@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const migration = readFileSync(new URL('../../drizzle/0039_spot_needs_check_reason.sql', import.meta.url), 'utf8');
+const migration = readFileSync(new URL('../../drizzle/0040_spot_needs_check_reason.sql', import.meta.url), 'utf8');
 
 describe('migration 0039, the time and reason of a spot check flag', () => {
   it('keeps the reasons to the three the code writes', () => {

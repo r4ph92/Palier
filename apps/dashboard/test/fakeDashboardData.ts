@@ -1,4 +1,5 @@
 import type { DashboardLot, DashboardLotDetails, DashboardLotEquipment, DashboardLotMap, DashboardLotOccupancy, DashboardMeResponse, DashboardOperator, DashboardSpotToCheck, DashboardUser, LotPricingSettings } from '@palier/shared-types';
+import type { FakeGate } from './fakeGateData.ts';
 import type { FakeSpot } from './fakeSpotData.ts';
 
 export const sophie: DashboardUser = { id: '00000000-0000-4000-8000-000000000601', firstName: 'Sophie', lastName: 'Lavoie' };
@@ -70,6 +71,8 @@ export interface FakeApiState {
   readonly spots: Map<string, FakeSpot[]>;
   // By lot id, the spots flagged for a check, oldest first; a clear changes this copy.
   readonly spotsToCheck: Map<string, DashboardSpotToCheck[]>;
+  // By lot id, with each gate's QR secret; gate writes change this copy.
+  readonly gates: Map<string, FakeGate[]>;
 }
 
 const operatorsByUser = new Map<string, DashboardOperator>([[sophie.id, lavoie], [pierre.id, roy]]);

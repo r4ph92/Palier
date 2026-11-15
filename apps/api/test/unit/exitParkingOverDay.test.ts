@@ -9,7 +9,7 @@ function setup() {
   const exits = new FakeExits();
   const payments = new FakePaymentAuthorizer();
   exits.add(JULIE_ID, julieInside(enteredAt));
-  const exit = (now: Date) => exitParking({ exits, payments }, { sessionId: EXIT_SESSION_ID, driverId: JULIE_ID, now });
+  const exit = (now: Date) => exitParking({ exits, payments }, { sessionId: EXIT_SESSION_ID, driverId: JULIE_ID, clock: () => now });
   return { exits, payments, exit };
 }
 

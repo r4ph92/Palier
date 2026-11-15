@@ -15,7 +15,7 @@ const SERVICE_UNAVAILABLE = 503;
 
 export interface ExitRouteDependencies {
   readonly exit: ExitDependencies;
-  // Read once per tap, so the price and the exit time are one instant.
+  // Read when the tap prices the stay, which is also the exit time, and again when Stripe confirms the capture.
   readonly clock: Clock;
 }
 
@@ -50,7 +50,7 @@ async function leave(exit: ExitRouteDependencies | undefined, request: FastifyRe
   if (exit === undefined) {
     return reply.status(SERVICE_UNAVAILABLE).send(PAYMENTS_UNAVAILABLE_BODY);
   }
-  const left = await exitParking(exit.exit, { sessionId: request.params.sessionId, driverId: signedInDriver(request).id, now: exit.clock() });
+  const left = await exitParking(exit.exit, { sessionId: request.params.sessionId, driverId: signedInDriver(request).id, clock: exit.clock });
   if (left.outcome === 'left' || left.outcome === 'already') {
     return { receipt: left.receipt };
   }

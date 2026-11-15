@@ -17,7 +17,7 @@ function setup(gate: AuthenticatedGate = sortieDemo) {
   const julie = julieInside(enteredAt);
   exits.add('driver-julie', { ...julie, lotId: gate.lotId }, julieKeys);
   const identify = (identifier: string, overrides: Partial<IdentifyRequest> = {}) =>
-    identifyAtExit({ exits, payments }, { gate, requestedGateId: gate.id, identifier, now: at2117, ...overrides });
+    identifyAtExit({ exits, payments }, { gate, requestedGateId: gate.id, identifier, clock: () => at2117, ...overrides });
   return { exits, payments, identify };
 }
 
@@ -56,7 +56,7 @@ describe('identifyAtExit', () => {
     expect(exits.closings[0]?.exitGateId).toBe(sortieDemo.id);
   });
 
-  it('captures nothing and opens nothing for a plate with no open session', async () => {
+  it('captures nothing, opens nothing and closes no session to log for a plate with no open session', async () => {
     const { exits, payments, identify } = setup();
 
     const result = await identify('ZZZ 999');
@@ -64,6 +64,7 @@ describe('identifyAtExit', () => {
     expect(result).toEqual({ outcome: 'fallback' });
     expect(payments.captured).toEqual([]);
     expect(exits.closings).toEqual([]);
+    expect(exits.pendingClosings).toEqual([]);
   });
 
   it('captures nothing and opens nothing when the same plate is on two open sessions', async () => {
@@ -148,7 +149,7 @@ describe('identifyAtExit', () => {
     const exits = new FakeExits();
     exits.add('driver-julie', { ...julieInside(enteredAt), lotId: sortieDemo.lotId }, julieKeys);
 
-    const result = await identifyAtExit({ exits, payments: null }, { gate: sortieDemo, requestedGateId: sortieDemo.id, identifier: 'ABC123', now: at2117 });
+    const result = await identifyAtExit({ exits, payments: null }, { gate: sortieDemo, requestedGateId: sortieDemo.id, identifier: 'ABC123', clock: () => at2117 });
 
     expect(result).toEqual({ outcome: 'payments-unavailable' });
     expect(exits.closings).toEqual([]);

@@ -1,4 +1,5 @@
 import type { SQL } from 'drizzle-orm';
+import { DrizzleQueryError } from 'drizzle-orm/errors';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import type { Database, Transaction } from '../../../src/infrastructure/postgres/database.ts';
 import { labelOf, type StatementLabel } from './statementLabels.ts';
@@ -39,7 +40,7 @@ export class ScriptedSql {
     return this;
   }
 
-  // Every statement with this label fails, like Postgres refusing it.
+  // Every statement with this label fails, like Postgres refusing it: a non-Error failure is wrapped as Drizzle wraps the driver's error.
   fail(label: StatementLabel, error: unknown): this {
     this.#failures.set(label, error);
     return this;
@@ -106,7 +107,7 @@ export class ScriptedSql {
     this.statements.push(statement);
     const failure = this.#failures.get(statement.label);
     if (failure !== undefined) {
-      return Promise.reject(failure instanceof Error ? failure : new Error('Failed query', { cause: failure }));
+      return Promise.reject(failure instanceof Error ? failure : new DrizzleQueryError(statement.text, [...statement.params], failure as Error));
     }
     return Promise.resolve(this.#answers.get(statement.label)?.shift() ?? []);
   }
