@@ -1,5 +1,6 @@
 import { frEquipment } from './frEquipment.ts';
 import { frGateErrors } from './frGateErrors.ts';
+import { frGates } from './frGates.ts';
 import { frMap } from './frMap.ts';
 
 export const fr = {
@@ -73,6 +74,7 @@ export const fr = {
     occupancyLink: 'Occupation',
     mapLink: 'Plan et balises',
     equipmentLink: 'Équipement',
+    gatesLink: 'Bornes et QR',
   },
   occupancy: {
     title: 'Occupation',
@@ -97,6 +99,7 @@ export const fr = {
   },
   map: frMap,
   equipment: frEquipment,
+  gates: frGates,
   spotStates: {
     AVAILABLE: 'Libre',
     HELD: 'Garantie',

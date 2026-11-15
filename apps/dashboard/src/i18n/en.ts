@@ -1,5 +1,6 @@
 import { enEquipment } from './enEquipment.ts';
 import { enGateErrors } from './enGateErrors.ts';
+import { enGates } from './enGates.ts';
 import { enMap } from './enMap.ts';
 import type { Dictionary } from './fr.ts';
 
@@ -74,6 +75,7 @@ export const en: Dictionary = {
     occupancyLink: 'Occupancy',
     mapLink: 'Map and beacons',
     equipmentLink: 'Equipment',
+    gatesLink: 'Terminals and QR codes',
   },
   occupancy: {
     title: 'Occupancy',
@@ -98,6 +100,7 @@ export const en: Dictionary = {
   },
   map: enMap,
   equipment: enEquipment,
+  gates: enGates,
   spotStates: {
     AVAILABLE: 'Available',
     HELD: 'Held',
