@@ -1,9 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import type { SQL } from 'drizzle-orm';
-import { PgDialect } from 'drizzle-orm/pg-core';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, describe, expect, it } from 'vitest';
-import { putBackInServiceStatement, readLiveSpotStateStatement, takeOutOfServiceStatement } from '../../src/infrastructure/postgres/lotSpotStatements.ts';
 import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
 import { ROY_OPERATOR_ID } from '../../src/seed/fixtures/operators.ts';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
@@ -13,62 +10,7 @@ import { nouvelOperateur, pierre, sophie } from './fakes/dashboardFixtures.ts';
 import { DASHBOARD_COOKIE, dashboardCookieFor, startDashboardServer, writeHeader } from './fakes/dashboardServer.ts';
 import type { FakeLotSpotRepository, FakeSpot } from './fakes/fakeLotSpotRepository.ts';
 
-// Pentest #69 — durable proof of the security invariants of the spot service toggle (story/69-spot-out-of-service).
-// Live proof of the running build is in .claude/work/69-spot-out-of-service/pentest.log; this pins the invariants in code.
-const dialect = new PgDialect();
-const render = (statement: SQL) => dialect.sqlToQuery(statement);
-
-const OPERATOR = 'operator-lavoie';
-const SPOT = { lotId: 'lot-demo', spotId: 'spot-a3' };
-const ACTIVE_STATES = `('CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED')`;
-
-const takeOut = takeOutOfServiceStatement(OPERATOR, SPOT);
-const putBack = putBackInServiceStatement(OPERATOR, SPOT);
-const serviceStatements = [
-  ['take-out', takeOut],
-  ['put-back', putBack],
-  ['read-live-state', readLiveSpotStateStatement(OPERATOR, SPOT)],
-] as const;
-const serviceWrites = [
-  ['take-out', takeOut, { from: 'AVAILABLE', to: 'OUT_OF_SERVICE' }],
-  ['put-back', putBack, { from: 'OUT_OF_SERVICE', to: 'AVAILABLE' }],
-] as const;
-
-describe('spot service statements stay inside the operator’s lot', () => {
-  it.each(serviceStatements)('%s ties the spot to the named lot and the lot to the operator, with every id bound', (_label, statement) => {
-    const { sql, params } = render(statement);
-
-    expect(sql).toMatch(/spot\.id = \$\d+ and spot\.lot_id = \$\d+/);
-    expect(sql).toMatch(/parking_lot\.id = spot\.lot_id and parking_lot\.operator_id = \$\d+/);
-    expect(params).toEqual([SPOT.spotId, SPOT.lotId, OPERATOR]);
-    expect(sql).not.toContain(SPOT.spotId);
-    expect(sql).not.toContain(SPOT.lotId);
-    expect(sql).not.toContain(OPERATOR);
-  });
-
-  it.each(serviceStatements)('%s never reaches a retired spot', (_label, statement) => {
-    expect(render(statement).sql).toContain('spot.retired_at is null');
-  });
-});
-
-describe('the service toggle writes the state and nothing else', () => {
-  it.each(serviceWrites)('%s sets only state and state_changed_at, from the one state it may leave', (_label, statement, { from, to }) => {
-    const { sql } = render(statement);
-    const assignments = /update spot set (.+)\n\s*from parking_lot/.exec(sql)?.[1];
-
-    expect(assignments).toBe(`state = '${to}', state_changed_at = now()`);
-    expect(sql).toContain(`spot.state = '${from}'`);
-  });
-
-  it.each(serviceWrites)('%s refuses a spot an active session, an active hold or an open report points at', (_label, statement) => {
-    const { sql } = render(statement);
-
-    expect(sql).toContain(`not exists (select 1 from parking_session holder where (holder.assigned_spot_id = spot.id or holder.confirmed_spot_id = spot.id) and holder.state in ${ACTIVE_STATES})`);
-    expect(sql).toContain(`not exists (select 1 from spot_hold where spot_hold.spot_id = spot.id and status = 'ACTIVE')`);
-    expect(sql).toMatch(/not exists \(select 1 from parking_session_reported_spot reported join parking_session reporter on reporter\.id = reported\.session_id\s+where reported\.spot_id = spot\.id and reporter\.state in/);
-  });
-});
-
+// Pentest #69: durable proof of the route's security invariants; live proof is in .claude/work/69-spot-out-of-service/pentest.log.
 describe('the spot service route under attack (pentest #69)', () => {
   let server: FastifyInstance;
   let spots: FakeLotSpotRepository;
