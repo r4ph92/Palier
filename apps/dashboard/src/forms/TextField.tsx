@@ -42,12 +42,12 @@ interface FieldNotesProps {
   readonly messageValues: Readonly<Record<string, string>>;
 }
 
-// The hint and the error under a field, each tied to its input by describedByOf.
 export function describedByOf({ id, hint, error }: Omit<FieldNotesProps, 'messageValues'>): string | undefined {
   const parts = [hint === undefined ? null : `${id}-hint`, error === undefined ? null : `${id}-error`].filter((part) => part !== null);
   return parts.length === 0 ? undefined : parts.join(' ');
 }
 
+// The hint and the error under a field, each tied to its input by describedByOf.
 export function FieldNotes({ id, hint, error, messageValues }: FieldNotesProps) {
   return (
     <>
