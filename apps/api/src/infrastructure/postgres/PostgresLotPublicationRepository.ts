@@ -5,6 +5,8 @@ import type { OwnedLot } from './lockParkingLot.ts';
 import { publicationFactsOf, type PublicationFactsRow } from './lotPublicationRows.ts';
 import { attestStatement, readPublicationFactsStatement, setLotOnlineStatement } from './lotPublicationStatements.ts';
 import { writeInOwnedLot } from './ownedLotWrite.ts';
+import { freeHeldSpots } from './spotExpiry.ts';
+import { markLotSpotHoldsReleased } from './spotRelease.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
 
@@ -23,9 +25,9 @@ export class PostgresLotPublicationRepository implements LotPublicationRepositor
     return writeInOwnedLot(this.#database, { operatorId, lotId }, (tx) => attestUnderLock(tx, lotId, attestation));
   }
 
-  changeOnline(operatorId: string, lotId: string, { online }: OnlineChange): Promise<PublicationWrite> {
+  changeOnline(operatorId: string, lotId: string, { online, now }: OnlineChange): Promise<PublicationWrite> {
     const lot = { operatorId, lotId };
-    return writeInOwnedLot(this.#database, lot, (tx) => (online ? publishUnderLock(tx, lot) : unpublishUnderLock(tx, lot)));
+    return writeInOwnedLot(this.#database, lot, (tx) => (online ? publishUnderLock(tx, lot) : unpublishUnderLock(tx, lotId, now)));
   }
 }
 
@@ -55,7 +57,9 @@ async function publishUnderLock(tx: Executor, lot: OwnedLot): Promise<Publicatio
   return 'written';
 }
 
-async function unpublishUnderLock(tx: Executor, lot: OwnedLot): Promise<PublicationWrite> {
-  await tx.execute(setLotOnlineStatement(lot.lotId, false));
+// A driver holding a spot here could no longer enter: the holds end with the lot, and their spots are free again. Sessions inside stay.
+async function unpublishUnderLock(tx: Executor, lotId: string, now: Date): Promise<PublicationWrite> {
+  await tx.execute(setLotOnlineStatement(lotId, false));
+  await freeHeldSpots(tx, await markLotSpotHoldsReleased(tx, lotId), now);
   return 'written';
 }
