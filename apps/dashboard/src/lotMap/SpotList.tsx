@@ -6,6 +6,7 @@ import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { pluralFormOf } from '../i18n/plural.ts';
 import { EditSpotForm } from './EditSpotForm.tsx';
+import { rowRefusalOf } from './rowRefusal.ts';
 import { SpotNoticeLine } from './SpotNoticeLine.tsx';
 import { PageTurns, SpotPager } from './SpotPager.tsx';
 import { editButtonId, SpotTable, type EditRow } from './SpotTable.tsx';
@@ -32,12 +33,13 @@ export function SpotList({ lotId, aisle, spots, changes }: SpotListProps) {
   const deletion = useListDeletion(lotId, changes, () => focusAfterRender(titleId));
   const service = useSpotService({ lotId, onChanged: changes.serviceChanged, onRefused: changes.refused, staleData: changes.staleData });
   const editRow = editRowOf(lotId, editing, changes);
+  const rowRefusal = rowRefusalOf(changes.notice, changes.noticeKey, page.spots);
   return (
     <>
       <SpotListTitle id={titleId} aisle={aisle.code} count={spots.length} />
-      <SpotNoticeLine key={changes.noticeKey} notice={changes.notice} />
+      <SpotNoticeLine key={changes.noticeKey} notice={rowRefusal === null ? changes.notice : null} />
       <SpotPager page={page} />
-      {spots.length === 0 ? <EmptyAisle /> : <SpotTable spots={page.spots} labelledBy={titleId} deletion={deletion} service={service} onEdit={editing.open} editing={editRow} />}
+      {spots.length === 0 ? <EmptyAisle /> : <SpotTable spots={page.spots} labelledBy={titleId} deletion={deletion} service={service} onEdit={editing.open} editing={editRow} rowRefusal={rowRefusal} />}
       <PageTurns page={page} label={text.map.spots.page.labelBelow} />
     </>
   );

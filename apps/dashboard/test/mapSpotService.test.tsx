@@ -42,10 +42,10 @@ describe('taking a spot out of service and back', () => {
     await userEvent.click(screen.getByRole('button', { name: 'English' }));
 
     expect(await screen.findByRole('button', { name: 'Take out of service A-1' })).toBeDefined();
-    expect(screen.getAllByText('Take out of service', { selector: 'button' })).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: /^Take out of service A-/u })).toHaveLength(3);
     await userEvent.click(screen.getByRole('button', { name: 'Take out of service A-1' }));
     expect(await screen.findByText('Spot A-1 taken out of service.')).toBeDefined();
-    expect(screen.getByRole('button', { name: 'Put back in service A-1' }).textContent).toBe('Put back in service');
+    expect(within(screen.getByRole('button', { name: 'Put back in service A-1' })).getAllByText('Put back in service')[0]?.getAttribute('aria-hidden')).toBeNull();
     expect(frenchLeftOnEnglishPage()).toEqual([]);
   });
 });

@@ -1,4 +1,4 @@
-import type { DashboardAisleSpots, DashboardSpot } from '@palier/shared-types';
+import type { DashboardAisleSpots, DashboardSpot, SpotState } from '@palier/shared-types';
 import { addSpotsErrors, spotAttributesErrors, spotNumbersOf, type AddSpotsRequest, type SpotAttributes, type SpotDraftErrors } from '@palier/shared-types/spotDraft';
 import { canonicalSpotNumber } from '@palier/shared-types/spotNumber';
 import { type FakeApiState, type FakeResponse, refused } from './fakeDashboardData.ts';
@@ -78,15 +78,23 @@ function changeSpot(lot: MemberLot, spotId: string, attributes: SpotAttributes):
 
 function routeService({ state, ownedLotIds }: MemberSpots, request: string, body: Record<string, unknown>): FakeResponse {
   const [, lotId = '', spotId = ''] = SERVICE_REQUEST.exec(request) ?? [];
-  return setService({ state, lotId, isOwned: ownedLotIds.has(lotId) }, spotId, body.outOfService === true);
+  const lot = { state, lotId, isOwned: ownedLotIds.has(lotId) };
+  return body.outOfService === true ? takeOutOfService(lot, spotId) : putBackInService(lot, spotId);
 }
 
-function setService(lot: MemberLot, spotId: string, outOfService: boolean): FakeResponse {
+function takeOutOfService(lot: MemberLot, spotId: string): FakeResponse {
+  return changeService(lot, spotId, { from: 'AVAILABLE', to: 'OUT_OF_SERVICE' });
+}
+
+function putBackInService(lot: MemberLot, spotId: string): FakeResponse {
+  return changeService(lot, spotId, { from: 'OUT_OF_SERVICE', to: 'AVAILABLE' });
+}
+
+function changeService(lot: MemberLot, spotId: string, { from, to }: { readonly from: SpotState; readonly to: SpotState }): FakeResponse {
   const spot = liveSpotOf(lot, spotId);
   if (typeof spot === 'string') {
     return refused(404, spot);
   }
-  const [from, to] = outOfService ? (['AVAILABLE', 'OUT_OF_SERVICE'] as const) : (['OUT_OF_SERVICE', 'AVAILABLE'] as const);
   if (spot.state !== from && spot.state !== to) {
     return refused(409, 'SPOT_IN_USE');
   }

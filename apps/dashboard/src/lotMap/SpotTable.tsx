@@ -1,5 +1,6 @@
 import type { DashboardSpot, SpotState } from '@palier/shared-types';
 import { Fragment, type ReactNode } from 'react';
+import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { StableLabel } from '../components/StableLabel.tsx';
 import { StateMark, type StateTone } from '../components/StateMark.tsx';
 import { formatMetres } from '../i18n/formatNumbers.ts';
@@ -7,10 +8,11 @@ import { interpolate } from '../i18n/interpolate.ts';
 import { interpolateKeepingValuesWhole } from '../i18n/interpolateKeepingValuesWhole.tsx';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { closesOnEscape } from './closesOnEscape.ts';
+import type { RowRefusal } from './rowRefusal.ts';
 import { flagLabelsOf, SPOT_FLAGS } from './spotFormValues.ts';
 import { useFocusWhen } from './useFocusWhen.ts';
 import type { SpotDeletion } from './useSpotDeletion.ts';
-import type { SpotService } from './useSpotService.ts';
+import { serviceActionOf, type SpotService } from './useSpotService.ts';
 
 const COLUMN_COUNT = 5;
 
@@ -30,6 +32,7 @@ interface SpotTableProps {
   readonly service: SpotService;
   readonly onEdit: (spot: DashboardSpot) => void;
   readonly editing: EditRow | null;
+  readonly rowRefusal: RowRefusal | null;
 }
 
 // The edit form, shown in a row right after the spot it edits.
@@ -38,20 +41,20 @@ export interface EditRow {
   readonly form: ReactNode;
 }
 
-type RowProps = Pick<SpotTableProps, 'deletion' | 'service' | 'onEdit'> & { readonly spot: DashboardSpot };
+type RowProps = Pick<SpotTableProps, 'deletion' | 'service' | 'onEdit'> & { readonly spot: DashboardSpot; readonly refusal: RowRefusal | null };
 
 export function editButtonId(spot: DashboardSpot): string {
   return `spot-${spot.id}-edit`;
 }
 
 // Explicit roles keep the table a table for screen readers when narrow screens stack each row.
-export function SpotTable({ spots, labelledBy, deletion, service, onEdit, editing }: SpotTableProps) {
+export function SpotTable({ spots, labelledBy, deletion, service, onEdit, editing, rowRefusal }: SpotTableProps) {
   return (
-    <table className="data-table spot-table" role="table" aria-labelledby={labelledBy} aria-busy={deletion.deleting}>
+    <table className="data-table spot-table" role="table" aria-labelledby={labelledBy} aria-busy={deletion.deleting || service.busy}>
       <SpotTableHead />
       <tbody role="rowgroup">
         {spots.map((spot) => (
-          <SpotRows key={spot.id} spot={spot} deletion={deletion} service={service} onEdit={onEdit} editForm={editing?.spotId === spot.id ? editing.form : null} />
+          <SpotRows key={spot.id} spot={spot} deletion={deletion} service={service} onEdit={onEdit} refusal={rowRefusal?.spotId === spot.id ? rowRefusal : null} editForm={editing?.spotId === spot.id ? editing.form : null} />
         ))}
       </tbody>
     </table>
@@ -96,7 +99,7 @@ function SpotRows({ editForm, ...row }: RowProps & { readonly editForm: ReactNod
   );
 }
 
-function SpotRow({ spot, deletion, service, onEdit }: RowProps) {
+function SpotRow({ spot, deletion, service, onEdit, refusal }: RowProps) {
   const { text, language } = useLanguage();
   return (
     <tr role="row">
@@ -110,11 +113,25 @@ function SpotRow({ spot, deletion, service, onEdit }: RowProps) {
       <td role="cell" className="spot-state">
         <StateMark tone={STATE_TONES[spot.state]} label={text.spotStates[spot.state]} />
       </td>
-      <td role="cell" className="spot-actions">
-        {deletion.confirming?.id === spot.id ? <DeleteConfirmation spot={spot} deletion={deletion} /> : <RowActions spot={spot} deletion={deletion} service={service} onEdit={onEdit} />}
-      </td>
+      <ActionsCell spot={spot} deletion={deletion} service={service} onEdit={onEdit} refusal={refusal} />
     </tr>
   );
+}
+
+function ActionsCell({ refusal, ...row }: RowProps) {
+  return (
+    <td role="cell" className="spot-actions">
+      {row.deletion.confirming?.id === row.spot.id ? <DeleteConfirmation spot={row.spot} deletion={row.deletion} /> : <RowActions {...row} />}
+      <RowRefusalNotice refusal={refusal} />
+    </td>
+  );
+}
+
+function RowRefusalNotice({ refusal }: { readonly refusal: RowRefusal | null }) {
+  if (refusal === null) {
+    return null;
+  }
+  return <ErrorNotice key={refusal.noticeKey} code={refusal.refusal.code} values={refusal.refusal.values} takesFocus />;
 }
 
 function AttributesCell({ spot }: { readonly spot: DashboardSpot }) {
@@ -137,7 +154,7 @@ function AttributesCell({ spot }: { readonly spot: DashboardSpot }) {
   );
 }
 
-function RowActions({ spot, deletion, service, onEdit }: RowProps) {
+function RowActions({ spot, deletion, service, onEdit }: Omit<RowProps, 'refusal'>) {
   const { spots: text } = useText().map;
   const values = { number: spot.number };
   const deleteRef = useFocusWhen<HTMLButtonElement>(deletion.cancelledId === spot.id);
@@ -154,13 +171,13 @@ function RowActions({ spot, deletion, service, onEdit }: RowProps) {
   );
 }
 
-// One button for both ways, so focus stays on it when the spot changes; no confirmation, since the change is undone with one click.
 function ServiceButton({ spot, service }: { readonly spot: DashboardSpot; readonly service: SpotService }) {
   const { spots: text } = useText().map;
-  const label = spot.state === 'OUT_OF_SERVICE' ? text.putBackInService : text.takeOutOfService;
+  const label = text[serviceActionOf(spot)];
+  const shown = service.busySpotId === spot.id ? label.busy : label.shown;
   return (
     <button type="button" className="text-button" aria-label={interpolate(label.name, { number: spot.number })} aria-disabled={service.busy} onClick={() => void service.toggle(spot)}>
-      {label.shown}
+      <StableLabel shown={shown} reserved={[text.takeOutOfService.shown, text.putBackInService.shown, label.busy]} />
     </button>
   );
 }
