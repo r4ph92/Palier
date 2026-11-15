@@ -5,8 +5,7 @@ import type { OwnedLot } from './lockParkingLot.ts';
 import { publicationFactsOf, type PublicationFactsRow } from './lotPublicationRows.ts';
 import { attestStatement, readPublicationFactsStatement, setLotOnlineStatement } from './lotPublicationStatements.ts';
 import { writeInOwnedLot } from './ownedLotWrite.ts';
-import { freeHeldSpots } from './spotExpiry.ts';
-import { markLotSpotHoldsReleased } from './spotRelease.ts';
+import { endLotSpotHolds, freeHeldSpots } from './spotExpiry.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
 
@@ -60,6 +59,6 @@ async function publishUnderLock(tx: Executor, lot: OwnedLot): Promise<Publicatio
 // A driver holding a spot here could no longer enter: the holds end with the lot, and their spots are free again. Sessions inside stay.
 async function unpublishUnderLock(tx: Executor, lotId: string, now: Date): Promise<PublicationWrite> {
   await tx.execute(setLotOnlineStatement(lotId, false));
-  await freeHeldSpots(tx, await markLotSpotHoldsReleased(tx, lotId), now);
+  await freeHeldSpots(tx, await endLotSpotHolds(tx, { lotId, status: 'RELEASED' }), now);
   return 'written';
 }
