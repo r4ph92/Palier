@@ -2,6 +2,7 @@ import type { GateKind } from '@palier/shared-types';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { qrModulesOf } from './qrCode.ts';
 import { QR_SHEET_TEXT } from './qrSheetText.ts';
+import { SHEET_STYLE } from './qrSheetStyle.ts';
 
 export interface QrSheetContent {
   readonly lotName: string;
@@ -9,17 +10,6 @@ export interface QrSheetContent {
   readonly kind: GateKind;
   readonly link: string;
 }
-
-// At least 40 mm across for a phone held at arm's length; black on white paper, whatever the dashboard's theme.
-const SHEET_STYLE = `
-@page { margin: 15mm; }
-body { margin: 0; padding: 24px; font-family: Archivo, system-ui, sans-serif; color: #000; background: #fff; text-align: center; }
-.eyebrow { font-family: 'IBM Plex Mono', ui-monospace, monospace; letter-spacing: 0.12em; text-transform: uppercase; }
-h1 { margin: 8px 0; font-size: 32px; }
-.qr { display: block; width: 80mm; height: 80mm; margin: 16px auto; }
-.scan { margin: 4px 0; font-size: 20px; font-weight: 600; }
-.link { margin-top: 24px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 9px; overflow-wrap: anywhere; }
-`;
 
 // React escapes every name an operator typed, so a gate named <script> prints as text.
 export function qrSheetHtmlOf(content: QrSheetContent): string {
@@ -45,7 +35,7 @@ function SheetBody({ lotName, gateName, kind, link }: QrSheetContent) {
     <body>
       <p className="eyebrow">{lotName}</p>
       <h1>{gateName}</h1>
-      <p>
+      <p className="direction">
         {direction.fr} · <span lang="en">{direction.en}</span>
       </p>
       <QrSvg link={link} />

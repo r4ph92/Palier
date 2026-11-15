@@ -74,6 +74,17 @@ describe('the printable QR of a gate', () => {
     expect(sheet.querySelector('style')?.textContent).toMatch(/\.qr \{[^}]*width: 80mm/);
   });
 
+  it('carries its two faces inside the file, so it prints in Archivo and IBM Plex Mono offline', async () => {
+    await openGatesOf(pierre, garageRoy.id);
+
+    const { document: sheet } = await printQrOf('Entrée Roy');
+
+    const style = sheet.querySelector('style')?.textContent ?? '';
+    expect(style).toMatch(/font-family: Archivo; font-weight: 600; src: url\(data:font\/woff;base64,[A-Za-z0-9+/=]{1000,}\)/);
+    expect(style).toMatch(/font-family: 'IBM Plex Mono'; font-weight: 500; src: url\(data:font\/woff2;base64,[A-Za-z0-9+/=]{1000,}\)/);
+    expect(style).not.toMatch(/url\((?!data:)/);
+  });
+
   it('prints a gate named like a script as text, running nothing', async () => {
     await openGatesOf(pierre, garageRoy.id);
     await addGate({ name: '<script>alert(1)</script>' });

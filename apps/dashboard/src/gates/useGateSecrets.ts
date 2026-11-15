@@ -4,7 +4,6 @@ import { dashboardClient } from '../api/dashboardClient.ts';
 import { followUpRefusal, type StaleDataFollowUps } from '../api/followUpRefusal.ts';
 import { useGuardedRequest } from '../forms/useGuardedRequest.ts';
 import { useSessionRefresh } from '../session/SessionRefreshContext.tsx';
-import { downloadQrSheet } from './downloadQrSheet.ts';
 import { refusedNotice, type GateNotice } from './gateNotice.ts';
 
 export type SecretKind = 'deviceKey' | 'qrSecret';
@@ -63,6 +62,8 @@ function useSecretActions({ lotId, lotName, gate, onKey, onNotice, staleData }: 
   };
   const print = async () => {
     const { link } = await dashboardClient.gateQrLink(lotId, gate.id);
+    // Loaded at the first print: the sheet carries its own fonts, which the page never needs.
+    const { downloadQrSheet } = await import('./downloadQrSheet.ts');
     downloadQrSheet({ lotName, gateName: gate.name, kind: gate.kind, link });
     onNotice({ kind: 'qrDownloaded', gateName: gate.name });
   };
