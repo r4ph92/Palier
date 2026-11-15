@@ -3,6 +3,7 @@ import { type FakeApiState, type FakeResponse, refused, summaryOf } from './fake
 import { isGateRequest, routeGates } from './fakeGateRoutes.ts';
 import { isMapRequest, routeMap } from './fakeMapRoutes.ts';
 import { isPublicationRequest, routePublication } from './fakePublicationRoutes.ts';
+import { isSessionRequest, routeSessions } from './fakeSessionRoutes.ts';
 import { isSpotCheckRequest, routeSpotChecks } from './fakeSpotCheckRoutes.ts';
 import { isSpotRequest, routeSpots } from './fakeSpotRoutes.ts';
 
@@ -46,6 +47,9 @@ function routeFeature({ state, lots, ownedLotIds }: FeatureContext, request: str
   }
   if (isSpotCheckRequest(request)) {
     return routeSpotChecks({ spotsToCheck: state.spotsToCheck, lots }, request);
+  }
+  if (isSessionRequest(request)) {
+    return routeSessions({ sessions: state.sessions, ownedLotIds }, request);
   }
   if (isSpotRequest(request)) {
     return routeSpots({ state, ownedLotIds }, request, body);

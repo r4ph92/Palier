@@ -8,8 +8,9 @@ import { LotStateMark } from '../components/LotStateMark.tsx';
 import { PageHeader } from '../components/PageHeader.tsx';
 import { RetryableFailure, type RetryableFailureProps } from '../components/RetryableFailure.tsx';
 import { formatCount, formatDegrees } from '../i18n/formatNumbers.ts';
+import type { Dictionary } from '../i18n/fr.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
-import { equipmentPath, gatesPath, HOME_PATH, mapPath, occupancyPath, publicationPath, spotsToCheckPath } from '../navigation/routes.ts';
+import { equipmentPath, gatesPath, HOME_PATH, mapPath, occupancyPath, publicationPath, sessionsPath, spotsToCheckPath } from '../navigation/routes.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
 import { PricingSection } from './PricingSection.tsx';
 
@@ -62,16 +63,20 @@ function LotDetails({ lot, onPricingSaved }: LotDetailsProps) {
   );
 }
 
+function linksOf(lotId: string, text: Dictionary): readonly (readonly [string, string])[] {
+  return [
+    [occupancyPath(lotId), text.lot.occupancyLink],
+    [sessionsPath(lotId), text.sessions.link],
+    [spotsToCheckPath(lotId), text.spotsToCheck.title],
+    [mapPath(lotId), text.lot.mapLink],
+    [equipmentPath(lotId), text.lot.equipmentLink],
+    [gatesPath(lotId), text.lot.gatesLink],
+    [publicationPath(lotId), text.publication.lotLink],
+  ];
+}
+
 function LotLinks({ lotId }: { readonly lotId: string }) {
-  const { lot, spotsToCheck, publication } = useText();
-  const links = [
-    [occupancyPath(lotId), lot.occupancyLink],
-    [spotsToCheckPath(lotId), spotsToCheck.title],
-    [mapPath(lotId), lot.mapLink],
-    [equipmentPath(lotId), lot.equipmentLink],
-    [gatesPath(lotId), lot.gatesLink],
-    [publicationPath(lotId), publication.lotLink],
-  ] as const;
+  const links = linksOf(lotId, useText());
   return (
     <p className="actions-row">
       {links.map(([href, label]) => (

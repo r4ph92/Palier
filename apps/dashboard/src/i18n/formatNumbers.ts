@@ -44,3 +44,8 @@ export function formatRecentDateTime(moment: Date, language: Language, now: Date
 export function formatCalendarDay(day: string, language: Language): string {
   return new Intl.DateTimeFormat(dateLocaleOf(language), { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${day}T12:00:00Z`));
 }
+
+// The seconds tell two steps of one visit apart, which a gate writes a few seconds from each other.
+export function formatClockTimeWithSeconds(moment: Date, language: Language): string {
+  return new Intl.DateTimeFormat(dateLocaleOf(language), { hour: 'numeric', minute: '2-digit', second: '2-digit' }).format(moment);
+}

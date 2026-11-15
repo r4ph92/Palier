@@ -7,5 +7,5 @@ export const isLotGone = (error: { readonly code: string }): boolean => error.co
 
 // The figures of one lot, read again while the page is open; a lot that vanished ends the polling.
 export function usePolledLotResource<T>(load: () => Promise<T>): PolledResource<T> {
-  return usePolledResource(load, POLL_INTERVAL_MILLISECONDS, isLotGone);
+  return usePolledResource(load, POLL_INTERVAL_MILLISECONDS, { onError: isLotGone });
 }

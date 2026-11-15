@@ -1,0 +1,107 @@
+/* The sessions of a lot and one session's timeline. Narrow screens: plate and state, then entry · spot · amount (the empty item at order 3 is the line break). */
+.status-filter {
+  display: inline-flex;
+  margin: var(--space-medium) 0;
+  border: 1px solid var(--ink);
+}
+
+.status-filter-button {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-medium);
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.status-filter-button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.session-table-box {
+  overflow-x: auto;
+}
+
+.session-plate,
+.session-entry,
+.session-spot,
+.session-amount {
+  white-space: nowrap;
+}
+
+.older-sessions {
+  margin: var(--space-medium) 0;
+}
+
+.older-sessions .text-button[aria-disabled='true'] {
+  cursor: wait;
+}
+
+.timeline {
+  list-style: none;
+  margin: var(--space-small) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.timeline-step {
+  display: flex;
+  gap: var(--space-medium);
+  padding: var(--space-small) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.timeline-time {
+  flex: 0 0 16ch;
+  min-width: 16ch;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.timeline-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Narrow screens: the time rides above its step. */
+@media (max-width: 480px) {
+  .timeline-step {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .timeline-time {
+    flex-basis: auto;
+  }
+}
+
+@media (max-width: 680px) {
+  .session-plate {
+    flex: 1 0 auto;
+    order: 1;
+  }
+
+  .session-state {
+    order: 2;
+  }
+
+  .session-entry {
+    order: 4;
+  }
+
+  .session-spot {
+    order: 5;
+  }
+
+  .session-amount {
+    order: 6;
+  }
+
+  .session-entry::after,
+  .session-spot::after {
+    content: ' ·';
+  }
+}

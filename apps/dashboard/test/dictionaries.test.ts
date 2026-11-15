@@ -11,7 +11,8 @@ function keyPaths(dictionary: object, prefix = ''): string[] {
 }
 
 // The story names this spot attribute « Accessible » in French and "Accessible" in English (#66).
-const SPELLED_ALIKE: ReadonlySet<string> = new Set(['Accessible']);
+// The sessions of #72 are « sessions » in both languages.
+const SPELLED_ALIKE: ReadonlySet<string> = new Set(['Accessible', 'Sessions', 'Sessions — %{lot}', 'Session %{plate}']);
 
 describe('dashboard dictionaries', () => {
   it('has the same keys in French and English', () => {
