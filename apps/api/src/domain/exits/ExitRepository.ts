@@ -35,6 +35,8 @@ export interface ExitClosing {
   readonly exitGateId: string;
   readonly identification: ExitIdentification;
   readonly exit: PaidExit;
+  // When Stripe confirmed the capture: the event log dates the payment with it, the session keeps only exitedAt.
+  readonly capturedAt: Date;
 }
 
 // The exit of a session whose payment Stripe could not settle: the amounts are fixed now, and the retry takes exactly them.
@@ -65,10 +67,12 @@ export interface ExitRepository {
   // Sessions of this lot that have not left and whose plate or vehicle transponder matches the key (spaces and hyphens already
   // removed, upper-case). At most two come back: two are already too many to open on.
   findLeavableByIdentifier(lotId: string, kind: ReadIdentifierKind, key: string): Promise<readonly ExitableSession[]>;
-  // One transaction under the lot lock: closes the session as CLOSED_PAID with the app as identification, frees the spots it held
-  // and records the gate's open command. A session another request closed first answers that request's exit instead.
+  // One transaction under the lot lock: closes the session as CLOSED_PAID with its identification, logs the identification and the
+  // payment, frees the spots it held and records the gate's open command with its event. A session another request closed first
+  // answers that request's exit instead, and nothing is logged.
   close(closing: ExitClosing): Promise<ClosedExit>;
-  // The same transaction, for a capture to retry: the session becomes CLOSED_CAPTURE_PENDING, with no captured amount yet.
+  // The same transaction, for a capture to retry: the session becomes CLOSED_CAPTURE_PENDING, with no captured amount yet, and the
+  // log gets the pending amounts in place of the payment.
   closeWithPendingCapture(closing: PendingExitClosing): Promise<ClosedPendingExit>;
   // The session's app saw the exit beacon of its own lot (the lot's beacon major, decision 029). False, and nothing recorded, when
   // the major is another lot's or the session has already left. A repeated report only refreshes the time.

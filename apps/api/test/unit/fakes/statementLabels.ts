@@ -71,6 +71,10 @@ export type StatementLabel =
   | 'confirm-opening'
   | 'occupy-confirmed-spot'
   | 'attach-exit-passage'
+  | 'close-paid-session'
+  | 'close-pending-session'
+  | 'read-paid-exit'
+  | 'mark-capture-paid'
   | 'insert-gate-command'
   | 'log-entry-without-loop'
   | 'backdate-entry'
@@ -127,6 +131,10 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['count-vehicle', /insert into gate_passage/],
   ['confirm-opening', /set state = 'ENTRY_CONFIRMED'/],
   ['attach-exit-passage', /set exit_passage_at/],
+  ['close-paid-session', /set state = 'CLOSED_PAID', exit_at/],
+  ['close-pending-session', /set state = 'CLOSED_CAPTURE_PENDING'/],
+  ['read-paid-exit', /select state, exit_at, captured_cents/],
+  ['mark-capture-paid', /set state = 'CLOSED_PAID', captured_cents/],
   ['occupy-confirmed-spot', /update spot set state = 'OCCUPIED', state_changed_at = now\(\)/],
   ['insert-gate-command', /insert into gate_command/],
   ['backdate-entry', /set entry_confirmed_at = /],

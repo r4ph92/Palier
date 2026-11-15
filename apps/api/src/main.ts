@@ -174,7 +174,7 @@ const stopCaptureRetry =
   captureRetryPayments === null
     ? async () => {}
     : startRetryCaptures(
-        () => retryCaptures({ pending: new PostgresPendingCaptureRepository(connection.database), payments: captureRetryPayments }, server.log),
+        () => retryCaptures({ pending: new PostgresPendingCaptureRepository(connection.database), payments: captureRetryPayments, clock }, server.log),
         server.log,
       );
 server.addHook('onClose', async () => {

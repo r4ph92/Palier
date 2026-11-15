@@ -14,7 +14,7 @@ export const eventLog = pgTable(
     sequence: bigint('sequence', { mode: 'number' }).notNull().generatedAlwaysAsIdentity(),
     sessionId: uuid('session_id').notNull(),
     lotId: uuid('lot_id').notNull(),
-    // Text with a named check rather than an enum, so the exit kinds (#157) only widen the check.
+    // Text with a named check rather than an enum, so a new kind only widens the check (0039 added the exit kinds).
     kind: text('kind').notNull(),
     payload: jsonb('payload').notNull(),
     occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),

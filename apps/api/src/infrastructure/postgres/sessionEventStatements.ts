@@ -2,9 +2,10 @@ import { sql, type SQL } from 'drizzle-orm';
 import { EVENT_RETENTION_HOURS, type ParkingPresumedPayload, type SessionEvent } from '../../domain/sessionEvents/SessionEvent.ts';
 import type { Transaction } from './database.ts';
 
-type SessionInstantColumn = 'entry_scan_at' | 'entry_confirmed_at' | 'parked_at' | 'parked_answered_at' | 'cancelled_at';
+type SessionInstantColumn = 'entry_scan_at' | 'entry_confirmed_at' | 'parked_at' | 'parked_answered_at' | 'cancelled_at' | 'exit_at' | 'exit_passage_at';
 
-// A column of the event's own session, or an instant another row stored (the gate command's issued_at).
+// A column of the event's own session, an instant another row stored (the gate command's issued_at), or a bound instant no row keeps
+// (when Stripe confirmed a capture, decision 038).
 export type EventInstant = SessionInstantColumn | SQL;
 
 // occurredAt: the instant the step itself stored, read in the step's transaction, so the event matches its step's column. Two exceptions

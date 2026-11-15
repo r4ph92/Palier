@@ -1,11 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
-import { retryCaptures, type PendingCapture, type PendingCaptureRepository, type SettledPayment } from '../../src/domain/exits/retryCaptures.ts';
+import { retryCaptures, type PendingCapture, type PendingCaptureRepository } from '../../src/domain/exits/retryCaptures.ts';
+import type { SettledPayment } from '../../src/domain/exits/takePayment.ts';
+import type { Clock } from '../../src/domain/time/Clock.ts';
 import { FakePaymentAuthorizer } from './fakes/entryFakes.ts';
 
 const julie: PendingCapture = { sessionId: 'session-julie', paymentIntentId: 'pi_julie', amountCents: 975, surplusCents: 0 };
 const marc: PendingCapture = { sessionId: 'session-marc', paymentIntentId: 'pi_marc', amountCents: 300, surplusCents: 0 };
 // Left after 30 hours while Stripe was down: the 25 $ cap from the hold, 18 $ beyond it.
 const sophie: PendingCapture = { sessionId: 'session-sophie', paymentIntentId: 'pi_sophie', amountCents: 2500, surplusCents: 1800 };
+const RETRY_AT = new Date('2026-11-14T19:00:00Z');
 
 class FakePendingCaptures implements PendingCaptureRepository {
   readonly paid: ({ sessionId: string } & SettledPayment)[] = [];
@@ -26,11 +29,11 @@ class FakePendingCaptures implements PendingCaptureRepository {
   }
 }
 
-function setup(pending: PendingCapture[]) {
+function setup(pending: PendingCapture[], clock: Clock = () => RETRY_AT) {
   const captures = new FakePendingCaptures(pending);
   const payments = new FakePaymentAuthorizer();
   const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-  const run = () => retryCaptures({ pending: captures, payments }, log);
+  const run = () => retryCaptures({ pending: captures, payments, clock }, log);
   return { captures, payments, log, run };
 }
 
@@ -41,7 +44,7 @@ describe('retryCaptures', () => {
     await run();
 
     expect(payments.captured).toEqual([{ sessionId: 'session-julie', paymentIntentId: 'pi_julie', amountCents: 975 }]);
-    expect(captures.paid).toEqual([{ sessionId: 'session-julie', capturedCents: 975, surplusPaidCents: 0, unpaidCents: 0 }]);
+    expect(captures.paid).toEqual([{ sessionId: 'session-julie', capturedCents: 975, surplusPaidCents: 0, unpaidCents: 0, capturedAt: RETRY_AT }]);
   });
 
   it('keeps the session pending and tries again at the next run while Stripe is unreachable', async () => {
@@ -56,7 +59,7 @@ describe('retryCaptures', () => {
 
     payments.captureOutcome = 'captured';
     await run();
-    expect(captures.paid).toEqual([{ sessionId: 'session-julie', capturedCents: 975, surplusPaidCents: 0, unpaidCents: 0 }]);
+    expect(captures.paid).toEqual([{ sessionId: 'session-julie', capturedCents: 975, surplusPaidCents: 0, unpaidCents: 0, capturedAt: RETRY_AT }]);
   });
 
   it('captures once over several runs: a paid session is no longer listed', async () => {
@@ -75,7 +78,26 @@ describe('retryCaptures', () => {
 
     await run();
 
-    expect(captures.paid).toEqual([{ sessionId: 'session-julie', capturedCents: 900, surplusPaidCents: 0, unpaidCents: 0 }]);
+    expect(captures.paid).toEqual([{ sessionId: 'session-julie', capturedCents: 900, surplusPaidCents: 0, unpaidCents: 0, capturedAt: RETRY_AT }]);
+  });
+
+  it('dates each payment when Stripe confirms its own capture, not once per run (story #157)', async () => {
+    const julieConfirmedAt = new Date(RETRY_AT.getTime() + 1_000);
+    const marcConfirmedAt = new Date(RETRY_AT.getTime() + 2_000);
+    const instants = [julieConfirmedAt, marcConfirmedAt];
+    const capturesSeenAtEachRead: number[] = [];
+    const { captures, payments, run } = setup([julie, marc], () => {
+      capturesSeenAtEachRead.push(payments.captured.length);
+      return instants.shift() ?? new Date(0);
+    });
+
+    await run();
+
+    expect(capturesSeenAtEachRead).toEqual([1, 2]);
+    expect(captures.paid).toMatchObject([
+      { sessionId: 'session-julie', capturedAt: julieConfirmedAt },
+      { sessionId: 'session-marc', capturedAt: marcConfirmedAt },
+    ]);
   });
 
   it('goes on with the other sessions when one capture fails', async () => {
@@ -85,7 +107,20 @@ describe('retryCaptures', () => {
 
     await run();
 
-    expect(captures.paid).toEqual([{ sessionId: 'session-marc', capturedCents: 300, surplusPaidCents: 0, unpaidCents: 0 }]);
+    expect(captures.paid).toEqual([{ sessionId: 'session-marc', capturedCents: 300, surplusPaidCents: 0, unpaidCents: 0, capturedAt: RETRY_AT }]);
+  });
+
+  it('goes on with the other sessions when recording one payment fails, and logs no Stripe id (QA #157)', async () => {
+    const { captures, log, run } = setup([julie, marc]);
+    const markPaid = captures.markPaid.bind(captures);
+    captures.markPaid = (sessionId, payment) =>
+      sessionId === 'session-julie' ? Promise.reject(new Error('Failing row contains (pi_julie)')) : markPaid(sessionId, payment);
+
+    await run();
+
+    expect(captures.paid).toMatchObject([{ sessionId: 'session-marc' }]);
+    expect(log.error).toHaveBeenCalledWith({ sessionId: 'session-julie' }, 'pending capture not settled, retried at the next run');
+    expect(JSON.stringify(log.error.mock.calls)).not.toContain('pi_');
   });
 
   describe('the surplus of a stay over 24 hours', () => {
@@ -95,7 +130,7 @@ describe('retryCaptures', () => {
       await run();
 
       expect(payments.surcharged).toEqual([{ sessionId: 'session-sophie', paymentIntentId: 'pi_sophie', amountCents: 1800 }]);
-      expect(captures.paid).toEqual([{ sessionId: 'session-sophie', capturedCents: 2500, surplusPaidCents: 1800, unpaidCents: 0 }]);
+      expect(captures.paid).toEqual([{ sessionId: 'session-sophie', capturedCents: 2500, surplusPaidCents: 1800, unpaidCents: 0, capturedAt: RETRY_AT }]);
     });
 
     it('records an unpaid balance when the card refuses the surplus', async () => {
@@ -104,7 +139,7 @@ describe('retryCaptures', () => {
 
       await run();
 
-      expect(captures.paid).toEqual([{ sessionId: 'session-sophie', capturedCents: 2500, surplusPaidCents: 0, unpaidCents: 1800 }]);
+      expect(captures.paid).toEqual([{ sessionId: 'session-sophie', capturedCents: 2500, surplusPaidCents: 0, unpaidCents: 1800, capturedAt: RETRY_AT }]);
     });
 
     it('keeps the session pending while Stripe cannot say whether the surplus was charged, then settles it', async () => {
@@ -118,7 +153,7 @@ describe('retryCaptures', () => {
 
       payments.surplusOutcome = 'charged';
       await run();
-      expect(captures.paid).toEqual([{ sessionId: 'session-sophie', capturedCents: 2500, surplusPaidCents: 1800, unpaidCents: 0 }]);
+      expect(captures.paid).toEqual([{ sessionId: 'session-sophie', capturedCents: 2500, surplusPaidCents: 1800, unpaidCents: 0, capturedAt: RETRY_AT }]);
     });
 
     it('does not ask for the surplus while the capture still fails', async () => {
