@@ -13,6 +13,7 @@ interface SelectFieldProps {
   readonly hint?: string | undefined;
 }
 
+// Prose options, in the body face and as wide as a text input; the level and aisle code pickers keep .field-select.
 export function SelectField({ field, label, options, hint }: SelectFieldProps) {
   const { id, value, onChange, error, messageValues } = field;
   return (
@@ -20,7 +21,7 @@ export function SelectField({ field, label, options, hint }: SelectFieldProps) {
       <label htmlFor={id} className="field-label">
         {label}
       </label>
-      <select id={id} className="field-input field-select field-select-wide" value={value} onChange={(event) => onChange(event.target.value)} aria-describedby={describedByOf({ id, hint, error })} aria-invalid={error !== undefined}>
+      <select id={id} className="field-input" value={value} onChange={(event) => onChange(event.target.value)} aria-describedby={describedByOf({ id, hint, error })} aria-invalid={error !== undefined}>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
