@@ -19,6 +19,7 @@ async function closeWith(sql: ScriptedSql): Promise<void> {
     lotId: LOT_ID,
     exitGateId: 'gate-exit',
     identification: 'APP',
+    capturedAt: EXITED_AT,
     exit: { exitedAt: EXITED_AT, capturedCents: 500, surplusPaidCents: 0, unpaidCents: 0 },
   });
 }
