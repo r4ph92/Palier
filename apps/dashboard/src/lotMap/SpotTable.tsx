@@ -10,6 +10,7 @@ import { closesOnEscape } from './closesOnEscape.ts';
 import { flagLabelsOf, SPOT_FLAGS } from './spotFormValues.ts';
 import { useFocusWhen } from './useFocusWhen.ts';
 import type { SpotDeletion } from './useSpotDeletion.ts';
+import type { SpotService } from './useSpotService.ts';
 
 const COLUMN_COUNT = 5;
 
@@ -26,6 +27,7 @@ interface SpotTableProps {
   readonly spots: readonly DashboardSpot[];
   readonly labelledBy: string;
   readonly deletion: SpotDeletion;
+  readonly service: SpotService;
   readonly onEdit: (spot: DashboardSpot) => void;
   readonly editing: EditRow | null;
 }
@@ -36,20 +38,20 @@ export interface EditRow {
   readonly form: ReactNode;
 }
 
-type RowProps = Pick<SpotTableProps, 'deletion' | 'onEdit'> & { readonly spot: DashboardSpot };
+type RowProps = Pick<SpotTableProps, 'deletion' | 'service' | 'onEdit'> & { readonly spot: DashboardSpot };
 
 export function editButtonId(spot: DashboardSpot): string {
   return `spot-${spot.id}-edit`;
 }
 
 // Explicit roles keep the table a table for screen readers when narrow screens stack each row.
-export function SpotTable({ spots, labelledBy, deletion, onEdit, editing }: SpotTableProps) {
+export function SpotTable({ spots, labelledBy, deletion, service, onEdit, editing }: SpotTableProps) {
   return (
     <table className="data-table spot-table" role="table" aria-labelledby={labelledBy} aria-busy={deletion.deleting}>
       <SpotTableHead />
       <tbody role="rowgroup">
         {spots.map((spot) => (
-          <SpotRows key={spot.id} spot={spot} deletion={deletion} onEdit={onEdit} editForm={editing?.spotId === spot.id ? editing.form : null} />
+          <SpotRows key={spot.id} spot={spot} deletion={deletion} service={service} onEdit={onEdit} editForm={editing?.spotId === spot.id ? editing.form : null} />
         ))}
       </tbody>
     </table>
@@ -94,7 +96,7 @@ function SpotRows({ editForm, ...row }: RowProps & { readonly editForm: ReactNod
   );
 }
 
-function SpotRow({ spot, deletion, onEdit }: RowProps) {
+function SpotRow({ spot, deletion, service, onEdit }: RowProps) {
   const { text, language } = useLanguage();
   return (
     <tr role="row">
@@ -109,7 +111,7 @@ function SpotRow({ spot, deletion, onEdit }: RowProps) {
         <StateMark tone={STATE_TONES[spot.state]} label={text.spotStates[spot.state]} />
       </td>
       <td role="cell" className="spot-actions">
-        {deletion.confirming?.id === spot.id ? <DeleteConfirmation spot={spot} deletion={deletion} /> : <RowActions spot={spot} deletion={deletion} onEdit={onEdit} />}
+        {deletion.confirming?.id === spot.id ? <DeleteConfirmation spot={spot} deletion={deletion} /> : <RowActions spot={spot} deletion={deletion} service={service} onEdit={onEdit} />}
       </td>
     </tr>
   );
@@ -135,7 +137,7 @@ function AttributesCell({ spot }: { readonly spot: DashboardSpot }) {
   );
 }
 
-function RowActions({ spot, deletion, onEdit }: RowProps) {
+function RowActions({ spot, deletion, service, onEdit }: RowProps) {
   const { spots: text } = useText().map;
   const values = { number: spot.number };
   const deleteRef = useFocusWhen<HTMLButtonElement>(deletion.cancelledId === spot.id);
@@ -144,10 +146,22 @@ function RowActions({ spot, deletion, onEdit }: RowProps) {
       <button type="button" id={editButtonId(spot)} className="text-button" aria-label={interpolate(text.edit.name, values)} onClick={() => onEdit(spot)}>
         {text.edit.shown}
       </button>
+      <ServiceButton spot={spot} service={service} />
       <button type="button" ref={deleteRef} className="text-button" aria-label={interpolate(text.delete.name, values)} onClick={() => deletion.ask(spot)}>
         {text.delete.shown}
       </button>
     </span>
+  );
+}
+
+// One button for both ways, so focus stays on it when the spot changes; no confirmation, since the change is undone with one click.
+function ServiceButton({ spot, service }: { readonly spot: DashboardSpot; readonly service: SpotService }) {
+  const { spots: text } = useText().map;
+  const label = spot.state === 'OUT_OF_SERVICE' ? text.putBackInService : text.takeOutOfService;
+  return (
+    <button type="button" className="text-button" aria-label={interpolate(label.name, { number: spot.number })} aria-disabled={service.busy} onClick={() => void service.toggle(spot)}>
+      {label.shown}
+    </button>
   );
 }
 

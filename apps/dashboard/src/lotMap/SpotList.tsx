@@ -12,6 +12,7 @@ import { editButtonId, SpotTable, type EditRow } from './SpotTable.tsx';
 import { useFocusAfterRender } from './useFocusAfterRender.ts';
 import type { SpotChanges } from './useSpotChanges.ts';
 import { useSpotDeletion } from './useSpotDeletion.ts';
+import { useSpotService } from './useSpotService.ts';
 import { useSpotPage } from './useSpotPage.ts';
 
 interface SpotListProps {
@@ -29,13 +30,14 @@ export function SpotList({ lotId, aisle, spots, changes }: SpotListProps) {
   const editing = useSpotEditing(changes, { focusAfterRender, titleId });
   const page = useSpotPage(spots, editing.close, changes.pageRequest);
   const deletion = useListDeletion(lotId, changes, () => focusAfterRender(titleId));
+  const service = useSpotService({ lotId, onChanged: changes.serviceChanged, onRefused: changes.refused, staleData: changes.staleData });
   const editRow = editRowOf(lotId, editing, changes);
   return (
     <>
       <SpotListTitle id={titleId} aisle={aisle.code} count={spots.length} />
       <SpotNoticeLine key={changes.noticeKey} notice={changes.notice} />
       <SpotPager page={page} />
-      {spots.length === 0 ? <EmptyAisle /> : <SpotTable spots={page.spots} labelledBy={titleId} deletion={deletion} onEdit={editing.open} editing={editRow} />}
+      {spots.length === 0 ? <EmptyAisle /> : <SpotTable spots={page.spots} labelledBy={titleId} deletion={deletion} service={service} onEdit={editing.open} editing={editRow} />}
       <PageTurns page={page} label={text.map.spots.page.labelBelow} />
     </>
   );

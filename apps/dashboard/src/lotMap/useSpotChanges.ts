@@ -21,7 +21,7 @@ export interface AddedSpots {
 // What the line under the list title says about the last change: kept as data, so it follows a language switch.
 export type SpotNotice =
   | { readonly kind: 'added'; readonly added: AddedSpots }
-  | { readonly kind: 'saved' | 'deleted'; readonly number: string }
+  | { readonly kind: 'saved' | 'deleted' | 'outOfService' | 'backInService'; readonly number: string }
   | { readonly kind: 'refused'; readonly refusal: Refusal };
 
 export interface SpotChanges {
@@ -33,6 +33,7 @@ export interface SpotChanges {
   readonly added: (spots: DashboardAisleSpots, added: AddedSpots, firstSpotId: string | null) => void;
   readonly saved: (spots: DashboardAisleSpots, spot: DashboardSpot) => void;
   readonly deleted: (spots: DashboardAisleSpots, spot: DashboardSpot) => void;
+  readonly serviceChanged: (spots: DashboardAisleSpots, spot: DashboardSpot, outOfService: boolean) => void;
   readonly refused: (refusal: Refusal) => void;
   readonly staleData: StaleDataFollowUps;
 }
@@ -59,6 +60,7 @@ export function useSpotChanges({ show, refresh, onStale }: SpotChangeSources): S
     added: (spots, added, firstSpotId) => showWith(spots, { kind: 'added', added }, firstSpotId),
     saved: (spots, { number }) => showWith(spots, { kind: 'saved', number }),
     deleted: (spots, { number }) => showWith(spots, { kind: 'deleted', number }),
+    serviceChanged: (spots, { number }, outOfService) => showWith(spots, { kind: outOfService ? 'outOfService' : 'backInService', number }),
     refused: (refusal) => setNotice({ kind: 'refused', refusal }),
     staleData: { refreshOn: (code) => refreshOn(code, { refresh, onStale }), reloadFailedCode: 'SPOT_RELOAD_FAILED' },
   };

@@ -6,12 +6,13 @@ import type { FakeSpot } from './fakeSpotData.ts';
 
 const AISLE_SPOTS_REQUEST = /^(GET|POST) \/lots\/([^/]+)\/aisles\/([^/]+)\/spots$/;
 const SPOT_REQUEST = /^(PUT|DELETE) \/lots\/([^/]+)\/spots\/([^/]+)$/;
+const SERVICE_REQUEST = /^PUT \/lots\/([^/]+)\/spots\/([^/]+)\/service$/;
 const FREE_STATES: readonly string[] = ['AVAILABLE', 'OUT_OF_SERVICE'];
 
 let nextId = 0;
 
 export function isSpotRequest(request: string): boolean {
-  return AISLE_SPOTS_REQUEST.test(request) || SPOT_REQUEST.test(request);
+  return AISLE_SPOTS_REQUEST.test(request) || SPOT_REQUEST.test(request) || SERVICE_REQUEST.test(request);
 }
 
 interface MemberLot {
@@ -27,6 +28,10 @@ export interface MemberSpots {
 
 // Keeps the API's rules: a member's own lot, a parking aisle, numbers taken in the lot, spots in use kept.
 export function routeSpots({ state, ownedLotIds }: MemberSpots, request: string, body: Record<string, unknown>): FakeResponse {
+  const service = SERVICE_REQUEST.exec(request);
+  if (service !== null) {
+    return setService({ state, lotId: service[1] ?? '', isOwned: ownedLotIds.has(service[1] ?? '') }, service[2] ?? '', body.outOfService === true);
+  }
   const [, method, lotId = '', id = ''] = AISLE_SPOTS_REQUEST.exec(request) ?? SPOT_REQUEST.exec(request) ?? [];
   const lot = { state, lotId, isOwned: ownedLotIds.has(lotId) };
   if (method === 'GET' || method === 'POST') {
@@ -69,6 +74,19 @@ function changeSpot(lot: MemberLot, spotId: string, attributes: SpotAttributes):
     return refused(400, invalid);
   }
   Object.assign(spot, attributes);
+  return { status: 200, body: aisleSpotsOf(lot, spot.aisleId) };
+}
+
+function setService(lot: MemberLot, spotId: string, outOfService: boolean): FakeResponse {
+  const spot = liveSpotOf(lot, spotId);
+  if (typeof spot === 'string') {
+    return refused(404, spot);
+  }
+  const [from, to] = outOfService ? (['AVAILABLE', 'OUT_OF_SERVICE'] as const) : (['OUT_OF_SERVICE', 'AVAILABLE'] as const);
+  if (spot.state !== from && spot.state !== to) {
+    return refused(409, 'SPOT_IN_USE');
+  }
+  Object.assign(spot, { state: to });
   return { status: 200, body: aisleSpotsOf(lot, spot.aisleId) };
 }
 

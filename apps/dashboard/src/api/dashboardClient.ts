@@ -123,5 +123,7 @@ export const dashboardClient = {
     dashboardRequest<DashboardAisleSpots>(spotsPathOf(lotId, aisleId), { method: 'POST', body: request }),
   changeSpot: (lotId: string, spotId: string, attributes: SpotAttributes) =>
     dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'PUT', body: attributes }),
+  setSpotService: (lotId: string, spotId: string, outOfService: boolean) =>
+    dashboardRequest<DashboardAisleSpots>(`${spotPathOf(lotId, spotId)}/service`, { method: 'PUT', body: { outOfService } }),
   deleteSpot: (lotId: string, spotId: string) => dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'DELETE' }),
 };
