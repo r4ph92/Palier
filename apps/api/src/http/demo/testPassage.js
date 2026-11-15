@@ -1,5 +1,5 @@
-import { OK, UNREACHABLE } from './gateApi.js';
-import { knownGateIdentity } from './gateIdentity.js';
+import { sendGateAction } from './gateAction.js';
+import { messageForStatusOf } from './gateRefusals.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('@palier/shared-types').GateTestPassageResponse} GateTestPassageResponse */
@@ -10,34 +10,22 @@ import { knownGateIdentity } from './gateIdentity.js';
  *   | { kind: 'refused', identity: GateIdentity | null, messageKey: TextKey }} TestPassageOutcome
  */
 
-/** @type {Record<number, TextKey>} */
-const MESSAGE_BY_STATUS = { [UNREACHABLE]: 'unreachable', 401: 'keyRefused', 403: 'gateForbidden', 409: 'gateNotHeard' };
+export const testPassageMessageForStatus = messageForStatusOf({ 409: 'gateNotHeard' }, 'testPassageFailed');
 
 /**
- * @param {number} status
- * @returns {TextKey}
- */
-export function testPassageMessageForStatus(status) {
-  return MESSAGE_BY_STATUS[status] ?? 'testPassageFailed';
-}
-
-/**
- * The controller's self-test: Palier marks the gate verified when it was heard in the last two minutes. No vehicle is counted.
+ * The controller's self-test: Palier marks the gate verified when its last heartbeat is recent enough. No vehicle is counted.
  * @param {{ deviceKey: string, identity: GateIdentity | null }} request
  * @param {TestPassageApi} api
  * @returns {Promise<TestPassageOutcome>}
  */
 export async function sendTestPassage(request, api) {
-  const identityOrRefusal = await knownGateIdentity(request, api);
-  if ('messageKey' in identityOrRefusal) {
-    return identityOrRefusal;
+  const send = (/** @type {string} */ gateId) => api.postTestPassage(request.deviceKey, gateId);
+  const answer = await sendGateAction(request, { api, send, messageForStatus: testPassageMessageForStatus });
+  if (answer.kind === 'refused') {
+    return answer;
   }
-  const response = await api.postTestPassage(request.deviceKey, identityOrRefusal.id);
-  if (response.status !== OK || response.body === null) {
-    return { kind: 'refused', identity: identityOrRefusal, messageKey: testPassageMessageForStatus(response.status) };
-  }
-  const { verifiedAt } = /** @type {GateTestPassageResponse} */ (response.body);
-  return { kind: 'verified', identity: identityOrRefusal, verifiedAt: new Date(verifiedAt) };
+  const { verifiedAt } = /** @type {GateTestPassageResponse} */ (answer.body);
+  return { kind: 'verified', identity: answer.identity, verifiedAt: new Date(verifiedAt) };
 }
 
 /**

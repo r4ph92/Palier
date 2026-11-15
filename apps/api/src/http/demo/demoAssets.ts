@@ -32,6 +32,8 @@ export const DEMO_ASSETS: Readonly<Record<string, DemoAsset>> = {
   'loopPress.js': { contentType: JAVASCRIPT, location: besideThisFile('loopPress.js') },
   'vehiclePresence.js': { contentType: JAVASCRIPT, location: besideThisFile('vehiclePresence.js') },
   'gateIdentity.js': { contentType: JAVASCRIPT, location: besideThisFile('gateIdentity.js') },
+  'gateAction.js': { contentType: JAVASCRIPT, location: besideThisFile('gateAction.js') },
+  'gateRefusals.js': { contentType: JAVASCRIPT, location: besideThisFile('gateRefusals.js') },
   'gateHeartbeat.js': { contentType: JAVASCRIPT, location: besideThisFile('gateHeartbeat.js') },
   'offlineControls.js': { contentType: JAVASCRIPT, location: besideThisFile('offlineControls.js') },
   'offlineMode.js': { contentType: JAVASCRIPT, location: besideThisFile('offlineMode.js') },
