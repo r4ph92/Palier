@@ -1,9 +1,17 @@
 import { sql, type SQL } from 'drizzle-orm';
-import type { BeaconBatteryReport, ReportingGate } from '../../domain/equipment/EquipmentReports.ts';
+import type { BeaconBatteryReport, ReportingGate, TestPassage } from '../../domain/equipment/EquipmentReports.ts';
 import { beaconBatteryAssignment } from './beaconBatteryAssignment.ts';
 
 export function recordHeartbeatStatement(gate: ReportingGate, at: Date): SQL {
   return sql`update gate set last_heartbeat_at = ${at.toISOString()}::timestamptz where id = ${gate.id} and lot_id = ${gate.lotId}`;
+}
+
+// No row when the gate was not heard since heardSince: the check and the stamp are one statement, so no heartbeat can slip between them.
+export function recordTestPassageStatement(gate: ReportingGate, { at, heardSince }: TestPassage): SQL {
+  return sql`
+    update gate set verified_at = ${at.toISOString()}::timestamptz
+    where id = ${gate.id} and lot_id = ${gate.lotId} and last_heartbeat_at >= ${heardSince.toISOString()}::timestamptz
+    returning id`;
 }
 
 // No row when the lot has no beacon with this minor.

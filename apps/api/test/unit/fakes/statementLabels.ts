@@ -73,6 +73,7 @@ export type StatementLabel =
   | 'clear-spot-check'
   | 'lock-spot-to-clear'
   | 'record-heartbeat'
+  | 'record-test-passage'
   | 'record-reported-battery'
   | 'read-lot-gates'
   | 'read-owned-lot-id'
@@ -126,6 +127,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['clear-spot-check', /set needs_check = false/],
   ['replay-passages', /insert into gate_passage[\s\S]*on conflict/],
   ['record-heartbeat', /update gate set last_heartbeat_at/],
+  ['record-test-passage', /update gate set verified_at = \$1::timestamptz/],
   ['read-owned-lot-id', /select parking_lot\.id from parking_lot where parking_lot\.id = \$1 and parking_lot\.operator_id = \$2/],
   ['record-aisle-battery', /update aisle set beacon_battery_percent[\s\S]*from parking_lot/],
   ['read-lot-gates', /gate\.last_heartbeat_at\s+from parking_lot/],

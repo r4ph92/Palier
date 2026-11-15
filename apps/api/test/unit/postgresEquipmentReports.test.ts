@@ -32,6 +32,25 @@ describe('equipment reports in Postgres', () => {
 
     expect(await new PostgresEquipmentReports(scripted.database()).recordBeaconBattery(report)).toBe(false);
   });
+
+  it('stamps the test passage only on the gate heard since the window opened, in one statement', async () => {
+    const heardSince = new Date('2026-11-13T19:03:00Z');
+    const scripted = new ScriptedSql().answer('record-test-passage', [{ id: entreeDemo.id }]);
+
+    expect(await new PostgresEquipmentReports(scripted.database()).recordTestPassage(entreeDemo, { at, heardSince })).toBe(true);
+
+    const statement = scripted.statement('record-test-passage');
+    expect(statement?.text).toMatch(/where id = \$2 and lot_id = \$3 and last_heartbeat_at >= \$4::timestamptz\s+returning id$/);
+    expect(statement?.text).not.toMatch(/vehicle_count|parking_session|gate_passage/);
+    expect(statement?.params).toEqual([at.toISOString(), entreeDemo.id, entreeDemo.lotId, heardSince.toISOString()]);
+    expect(scripted.labels()).toEqual(['record-test-passage']);
+  });
+
+  it('answers false when the gate was not heard in the window', async () => {
+    const scripted = new ScriptedSql().answer('record-test-passage', []);
+
+    expect(await new PostgresEquipmentReports(scripted.database()).recordTestPassage(entreeDemo, { at, heardSince: at })).toBe(false);
+  });
 });
 
 describe('reading the gates of a lot from Postgres', () => {

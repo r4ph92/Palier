@@ -61,6 +61,7 @@ export type {
   GatePassageRequest,
   GatePassageResponse,
   GatePresenceResponse,
+  GateTestPassageResponse,
   PassageReplayItem,
   PassageReplayRequest,
   PassageReplayResponse,

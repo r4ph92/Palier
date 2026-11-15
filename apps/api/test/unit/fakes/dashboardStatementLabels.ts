@@ -11,7 +11,8 @@ export type DashboardStatementLabel =
   | 'read-owned-gate-qr-secret'
   | 'change-gate'
   | 'revoke-device-keys'
-  | 'replace-qr-secret';
+  | 'replace-qr-secret'
+  | 'clear-gate-verification';
 
 export const DASHBOARD_STATEMENT_PATTERNS: readonly (readonly [DashboardStatementLabel, RegExp])[] = [
   ['read-publication-facts', /as in_service_spot_count/],
@@ -26,4 +27,5 @@ export const DASHBOARD_STATEMENT_PATTERNS: readonly (readonly [DashboardStatemen
   ['change-gate', /update gate set name =/],
   ['revoke-device-keys', /update gate_device_key set revoked_at/],
   ['replace-qr-secret', /update gate set qr_secret/],
+  ['clear-gate-verification', /update gate set verified_at = null/],
 ];

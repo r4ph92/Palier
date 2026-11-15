@@ -50,6 +50,7 @@ const GATE_DEVICE_ROUTES = [
   'POST /v1/gates/:id/presence',
   'POST /v1/gates/:id/heartbeat',
   'POST /v1/gates/:id/beacons/:minor/battery',
+  'POST /v1/gates/:id/test-passage',
 ];
 
 // The demo console is static files served only in demo mode; it reaches data through the gate routes with a device key.

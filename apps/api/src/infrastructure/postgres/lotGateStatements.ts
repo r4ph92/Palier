@@ -44,11 +44,23 @@ export function readOwnedGateQrSecretStatement({ lotId, gateId }: GatePlace): SQ
   return sql`select gate.qr_secret from gate where gate.id = ${gateId} and gate.lot_id = ${lotId}`;
 }
 
+// A new wiring, endpoint or loop setting may break what the test passage proved, so the gate must pass it again; a new name does not.
 export function changeGateStatement({ lotId, gateId }: GatePlace, settings: GateSettings): SQL {
+  const integrationKind = sql`${settings.integrationKind}::gate_integration_kind`;
   return sql`
-    update gate set name = ${settings.name}, integration_kind = ${settings.integrationKind}::gate_integration_kind, endpoint = ${settings.endpoint},
-      has_loops = ${settings.reportsLoops}, exit_id_kind = ${EXIT_ID_KIND_OF[settings.exitIdentification]}::exit_id_kind
+    update gate set name = ${settings.name}, integration_kind = ${integrationKind}, endpoint = ${settings.endpoint},
+      has_loops = ${settings.reportsLoops}, exit_id_kind = ${EXIT_ID_KIND_OF[settings.exitIdentification]}::exit_id_kind,
+      verified_at = case
+        when integration_kind is distinct from ${integrationKind} or endpoint is distinct from ${settings.endpoint}
+          or has_loops is distinct from ${settings.reportsLoops} then null
+        else verified_at
+      end
     where gate.id = ${gateId} and gate.lot_id = ${lotId}`;
+}
+
+// A new device key means a controller that has not passed the test passage yet.
+export function clearGateVerificationStatement({ lotId, gateId }: GatePlace): SQL {
+  return sql`update gate set verified_at = null where gate.id = ${gateId} and gate.lot_id = ${lotId}`;
 }
 
 export function revokeDeviceKeysStatement(gateId: string): SQL {

@@ -19,6 +19,7 @@ const STATUS_BY_REASON: Record<GateForbiddenError['reason'] | PassageRefusalReas
   CLOSED_AT_TOO_OLD: 400,
   BEACON_NOT_FOUND: 404,
   BATTERY_PERCENT_INVALID: 400,
+  GATE_NOT_HEARD: 409,
 };
 
 export function handleGateError(error: FastifyError, request: FastifyRequest, reply: FastifyReply): FastifyReply {
