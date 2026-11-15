@@ -4,6 +4,7 @@ import type { SpotCheckRefusalReason } from './spotCheckMessages.ts';
 export interface SpotToClear {
   readonly state: SpotState;
   readonly needsCheck: boolean;
+  // An active session has it assigned or confirmed, or reported it taken (its exit frees it).
   readonly heldBySession: boolean;
 }
 

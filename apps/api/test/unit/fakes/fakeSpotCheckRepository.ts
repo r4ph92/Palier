@@ -40,7 +40,7 @@ export class FakeSpotCheckRepository implements SpotCheckRepository {
     if (spot === undefined) {
       return Promise.resolve('SPOT_NOT_FOUND');
     }
-    const decision = clearDecisionOf({ state: spot.state, needsCheck: spot.check !== null, heldBySession: spot.isHeldBySession });
+    const decision = clearDecisionOf({ state: spot.state, needsCheck: spot.check !== null, heldBySession: heldBySessionOf(spot) });
     if (decision !== 'CLEAR' && decision !== 'ALREADY_CLEAR') {
       return Promise.resolve(decision);
     }
@@ -59,8 +59,12 @@ export class FakeSpotCheckRepository implements SpotCheckRepository {
       since: spot.check?.since ?? '',
       reason: spot.check?.reason ?? null,
       state: spot.state,
-      clearable: clearDecisionOf({ state: spot.state, needsCheck: true, heldBySession: spot.isHeldBySession }) === 'CLEAR',
-      heldBySession: spot.isHeldBySession,
+      clearable: clearDecisionOf({ state: spot.state, needsCheck: true, heldBySession: heldBySessionOf(spot) }) === 'CLEAR',
+      heldBySession: heldBySessionOf(spot),
     };
   }
+}
+
+function heldBySessionOf(spot: FakeSpot): boolean {
+  return spot.isHeldBySession || spot.isReportedByOpenSession;
 }

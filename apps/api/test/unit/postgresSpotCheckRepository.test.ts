@@ -60,6 +60,7 @@ describe('clearing the check of a spot in Postgres', () => {
     const lock = scripted.statement('lock-spot-to-clear');
     expect(lock?.text).toMatch(/spot\.id = \$\d+ and spot\.lot_id = \$\d+ and spot\.retired_at is null and parking_lot\.id = spot\.lot_id and parking_lot\.operator_id = \$\d+\s+for update of spot$/);
     expect(lock?.text).toMatch(/holder\.assigned_spot_id = spot\.id or holder\.confirmed_spot_id = spot\.id\) and holder\.state in \(/);
+    expect(lock?.text).toMatch(/reported\.spot_id = spot\.id and reported\.lot_id = spot\.lot_id and reporter\.state in \(/);
     const update = scripted.statement('clear-spot-check');
     expect(update?.text).toMatch(/set needs_check = false, needs_check_since = null, needs_check_reason = null/);
     expect(update?.text).toMatch(/operator_id = \$3/);
@@ -80,7 +81,7 @@ describe('clearing the check of a spot in Postgres', () => {
 
   it.each([
     ['out of service', { ...free, state: 'OUT_OF_SERVICE' }],
-    ['occupied-unknown with no session', { ...free, state: 'OCCUPIED_UNKNOWN' }],
+    ['occupied-unknown that no open session holds or reported taken (set by the seed)', { ...free, state: 'OCCUPIED_UNKNOWN' }],
   ])('refuses a spot that is %s as SPOT_NOT_FREE and writes nothing', async (_label, row) => {
     const scripted = lockedLot().answer('lock-spot-to-clear', [row]);
 

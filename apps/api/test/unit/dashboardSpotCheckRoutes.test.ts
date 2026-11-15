@@ -54,6 +54,15 @@ describe('the spots flagged for a physical check, and clearing them', () => {
     ]);
   });
 
+  it('shows a spot a driver still parked reported taken as held by a session, not clearable', async () => {
+    flagA1AndB2();
+    spotNamed('A-1').isReportedByOpenSession = true;
+
+    const [first] = (await list(sophieCookies)).json<DashboardSpotsToCheck>().spots;
+
+    expect(first).toEqual(expect.objectContaining({ number: 'A-1', clearable: false, heldBySession: true }));
+  });
+
   it('names the level and the aisle of each flagged spot', async () => {
     flagA1AndB2();
 
@@ -104,6 +113,7 @@ describe('the spots flagged for a physical check, and clearing them', () => {
     ['assigned', { state: 'ASSIGNED' }],
     ['held', { state: 'HELD' }],
     ['free but held by an active session', { state: 'AVAILABLE', isHeldBySession: true }],
+    ['still occupied-unknown and reported taken by a driver still parked', { state: 'OCCUPIED_UNKNOWN', isReportedByOpenSession: true }],
   ] as const)('refuses a flagged spot that is %s with SPOT_STILL_ASSIGNED, and changes nothing', async (_label, held) => {
     flagA1AndB2();
     Object.assign(spotNamed('A-1'), held);
@@ -118,7 +128,7 @@ describe('the spots flagged for a physical check, and clearing them', () => {
 
   it.each([
     ['out of service', { state: 'OUT_OF_SERVICE' }],
-    ['occupied-unknown with no session', { state: 'OCCUPIED_UNKNOWN' }],
+    ['occupied-unknown that no open session holds or reported taken', { state: 'OCCUPIED_UNKNOWN' }],
   ] as const)('refuses a flagged spot that is %s with SPOT_NOT_FREE, and changes nothing', async (_label, notFree) => {
     flagA1AndB2();
     Object.assign(spotNamed('A-1'), notFree);

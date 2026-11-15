@@ -6,3 +6,8 @@ export function sessionHoldsSpot(spotAlias: 'spot' | 's'): SQL {
   const spotId = sql.raw(`${spotAlias}.id`);
   return sql`exists (select 1 from parking_session holder where (holder.assigned_spot_id = ${spotId} or holder.confirmed_spot_id = ${spotId}) and ${activeSessionOf('holder')})`;
 }
+
+// Also a spot an active session reported taken: that session's exit frees it (spotsFreedOnExit), so its check waits for that exit.
+export function sessionHoldsOrReportedSpot(): SQL {
+  return sql`(${sessionHoldsSpot('spot')} or exists (select 1 from parking_session_reported_spot reported join parking_session reporter on reporter.id = reported.session_id where reported.spot_id = spot.id and reported.lot_id = spot.lot_id and ${activeSessionOf('reporter')}))`;
+}

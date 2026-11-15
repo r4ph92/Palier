@@ -17,6 +17,8 @@ export interface FakeSpot extends DashboardSpot {
   hasHistory: boolean;
   // An active session or hold points at it, whatever its state says.
   isHeldBySession: boolean;
+  // An active session reported it taken: that exit frees it, so its check waits (spot checks only).
+  isReportedByOpenSession: boolean;
   // Flagged for a physical check since this time, for this reason (null: not recorded); null when not flagged.
   check: { readonly since: string; readonly reason: SpotCheckReason | null } | null;
 }
@@ -27,7 +29,7 @@ const TRAILING_DIGITS = /\d+$/;
 function seededSpots(): FakeSpot[] {
   return parkingDemoSpots.map(({ aisleId, lotId, number, distanceToExit, isEv = false, isAccessible = false, isOversize = false }) => ({
     ...{ id: randomUUID(), aisleId, lotId, number, distanceToExit, isEv, isAccessible, isOversize },
-    ...{ state: 'AVAILABLE', retired: false, hasHistory: false, isHeldBySession: false, check: null },
+    ...{ state: 'AVAILABLE', retired: false, hasHistory: false, isHeldBySession: false, isReportedByOpenSession: false, check: null },
   }));
 }
 
@@ -129,7 +131,7 @@ export class FakeLotSpotRepository implements LotSpotRepository {
 }
 
 function newSpot({ lotId, aisleId }: AislePlace, number: string, attributes: SpotAttributes): FakeSpot {
-  return { id: randomUUID(), lotId, aisleId, number, ...attributes, state: 'AVAILABLE', retired: false, hasHistory: false, isHeldBySession: false, check: null };
+  return { id: randomUUID(), lotId, aisleId, number, ...attributes, state: 'AVAILABLE', retired: false, hasHistory: false, isHeldBySession: false, isReportedByOpenSession: false, check: null };
 }
 
 function dashboardSpotOf({ id, number, state, isEv, isAccessible, isOversize, distanceToExit }: FakeSpot): DashboardSpot {
