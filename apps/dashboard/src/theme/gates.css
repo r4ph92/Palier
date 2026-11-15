@@ -68,6 +68,14 @@
   user-select: all;
 }
 
+.key-panel .actions-row {
+  align-items: center;
+}
+
+.key-panel .secondary-button {
+  margin-top: 0;
+}
+
 .key-copy-status {
   margin: var(--space-small) 0 0;
 }
