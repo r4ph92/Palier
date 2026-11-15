@@ -5,10 +5,6 @@
   white-space: nowrap;
 }
 
-.check-action {
-  min-width: 14ch;
-}
-
 /* A long spot number may still make the table wider than the section: it then scrolls in its own box, never the page. */
 .check-table-box {
   overflow-x: auto;
@@ -54,6 +50,5 @@
   .check-action {
     flex-basis: 100%;
     order: 7;
-    min-width: 0;
   }
 }
