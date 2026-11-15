@@ -75,11 +75,27 @@ export type StatementLabel =
   | 'log-entry-without-loop'
   | 'backdate-entry'
   | 'append-session-event'
+  | 'read-gate-settings'
+  | 'count-lot-gates'
+  | 'insert-gate'
+  | 'insert-device-key'
+  | 'read-owned-gate'
+  | 'change-gate'
+  | 'revoke-device-keys'
+  | 'replace-qr-secret'
   | 'unknown';
 
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
+  ['read-gate-settings', /gate\.integration_kind, gate\.endpoint/],
+  ['count-lot-gates', /as exit_gate_count from gate/],
+  ['insert-gate', /insert into gate \(lot_id/],
+  ['insert-device-key', /insert into gate_device_key/],
+  ['read-owned-gate', /select gate\.kind, gate\.qr_secret from gate/],
+  ['change-gate', /update gate set name =/],
+  ['revoke-device-keys', /update gate_device_key set revoked_at/],
+  ['replace-qr-secret', /update gate set qr_secret/],
   ['insert-lot', /insert into parking_lot/],
   ['lock-owned-lot', /from parking_lot where id = \$1 and operator_id = \$2 for no key update/],
   ['read-lot-map', /aisle\.is_exit_lane, aisle\.map_polygon/],

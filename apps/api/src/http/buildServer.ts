@@ -1,7 +1,9 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { AccountWebhookReader, OperatorStripeAccounts, OperatorStripeGateway } from '../domain/dashboard/OperatorStripe.ts';
+import type { GateSecretRepository } from '../domain/dashboard/GateSecretRepository.ts';
 import type { LevelOccupancyReader } from '../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotEquipmentReader } from '../domain/dashboard/LotEquipmentReader.ts';
+import type { LotGateRepository } from '../domain/dashboard/LotGateRepository.ts';
 import type { LotMapRepository } from '../domain/dashboard/LotMapRepository.ts';
 import type { LotSpotRepository } from '../domain/dashboard/LotSpotRepository.ts';
 import type { LotSetupRepository } from '../domain/dashboard/LotSetupRepository.ts';
@@ -64,6 +66,8 @@ export interface ServerDependencies {
     readonly lotMaps: LotMapRepository;
     readonly lotEquipment: LotEquipmentReader;
     readonly lotSpots: LotSpotRepository;
+    readonly lotGates: LotGateRepository;
+    readonly gateSecrets: GateSecretRepository;
     readonly currentParkingSessions: CurrentParkingSessionQuery;
     readonly parkingSessionBackdater: ParkingSessionBackdater;
     readonly parkedPresumptions: ParkedPresumptionRepository;
@@ -125,6 +129,8 @@ function dashboardDependencies({ repositories, settings = {}, operatorStripe, te
     equipment: repositories.lotEquipment,
     clock: composedClockOf(settings, repositories, testClock),
     spots: repositories.lotSpots,
+    gates: repositories.lotGates,
+    gateSecrets: repositories.gateSecrets,
     stripe: operatorStripe?.gateway == null ? null : { accounts: operatorStripe.accounts, gateway: operatorStripe.gateway },
     testSignInEnabled: settings.testSignInEnabled === true,
     secureCookies: settings.secureCookies ?? true,

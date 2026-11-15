@@ -2,11 +2,13 @@ import { composeClock } from '../../../src/composeClock.ts';
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
 import type { FastifyInstance } from 'fastify';
 import type { Driver } from '../../../src/domain/drivers/Driver.ts';
+import type { GateRouteDependencies } from '../../../src/http/routes/gateRoutes.ts';
 import { buildServer, type ServerSettings } from '../../../src/http/buildServer.ts';
 import { FakeDriverRepository, julie, marc } from '../fakeDriverRepository.ts';
 import { nouvelOperateur, pierre, sophie } from './dashboardFixtures.ts';
 import { fakeOperatorStripe } from './fakeOperatorStripe.ts';
 import { FakeLotEquipmentReader } from './fakeLotEquipmentReader.ts';
+import { FakeLotGateRepository } from './fakeLotGateRepository.ts';
 import { FakeLotMapRepository } from './fakeLotMapRepository.ts';
 import { FakeLotSpotRepository } from './fakeLotSpotRepository.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
@@ -22,15 +24,23 @@ export function startDashboardServer(settings: ServerSettings = { testSignInEnab
   const lotMaps = new FakeLotMapRepository(operatorRepository.lots);
   const lotEquipment = new FakeLotEquipmentReader(operatorRepository.lots);
   const lotSpots = new FakeLotSpotRepository(operatorRepository.lots, lotMaps);
+  const lotGates = new FakeLotGateRepository(operatorRepository.lots);
   const { testClock } = composeClock(settings.testSignInEnabled === true);
   const server: FastifyInstance = buildServer({
-    gates: fakeGateDependencies(),
-    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment, lotSpots },
+    gates: gateDependenciesReading(lotGates),
+    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment, lotSpots, lotGates, gateSecrets: lotGates },
     operatorStripe: stripe.dependencies,
     testClock,
     settings,
   });
-  return { server, driverRepository, lots: operatorRepository.lots, lotMaps, lotEquipment, lotSpots, testClock, ...stripe };
+  return { server, driverRepository, lots: operatorRepository.lots, lotMaps, lotEquipment, lotSpots, lotGates, testClock, ...stripe };
+}
+
+// A key the dashboard issued or rotated authenticates the gate routes; the seeded test keys still do too.
+function gateDependenciesReading(lotGates: FakeLotGateRepository): GateRouteDependencies {
+  const gates = fakeGateDependencies();
+  const findByKeyHash = async (keyHash: string) => (await lotGates.findByKeyHash(keyHash)) ?? gates.deviceKeys.findByKeyHash(keyHash);
+  return { ...gates, deviceKeys: { findByKeyHash } };
 }
 
 // Signs in through the test route and returns the cookie the browser would send back.
