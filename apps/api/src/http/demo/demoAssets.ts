@@ -37,6 +37,7 @@ export const DEMO_ASSETS: Readonly<Record<string, DemoAsset>> = {
   'offlineMode.js': { contentType: JAVASCRIPT, location: besideThisFile('offlineMode.js') },
   'queueStorage.js': { contentType: JAVASCRIPT, location: besideThisFile('queueStorage.js') },
   'readerRead.js': { contentType: JAVASCRIPT, location: besideThisFile('readerRead.js') },
+  'testPassage.js': { contentType: JAVASCRIPT, location: besideThisFile('testPassage.js') },
   'Archivo_400Regular.ttf': {
     contentType: FONT,
     location: fromPackage('@expo-google-fonts/archivo/400Regular/Archivo_400Regular.ttf'),

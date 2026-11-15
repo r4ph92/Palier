@@ -9,6 +9,7 @@
  * @property {(deviceKey: string, gateId: string, identifier: string) => Promise<ApiResponse>} postIdentify
  * @property {(deviceKey: string, gateId: string) => Promise<ApiResponse>} postPresence
  * @property {(deviceKey: string, gateId: string) => Promise<ApiResponse>} postHeartbeat
+ * @property {(deviceKey: string, gateId: string) => Promise<ApiResponse>} postTestPassage
  * @property {(deviceKey: string, after: CommandCursor | null) => Promise<ApiResponse>} fetchCommands
  */
 
@@ -34,6 +35,8 @@ export function createGateApi(fetchFunction) {
       request(fetchFunction, gatePath(gateId, 'presence'), { method: 'POST', headers: authorization(deviceKey) }),
     postHeartbeat: (deviceKey, gateId) =>
       request(fetchFunction, gatePath(gateId, 'heartbeat'), { method: 'POST', headers: authorization(deviceKey) }),
+    postTestPassage: (deviceKey, gateId) =>
+      request(fetchFunction, gatePath(gateId, 'test-passage'), { method: 'POST', headers: authorization(deviceKey) }),
     fetchCommands: (deviceKey, after) => request(fetchFunction, commandsUrl(after), { headers: authorization(deviceKey) }),
   };
 }

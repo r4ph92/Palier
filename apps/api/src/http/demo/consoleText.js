@@ -62,7 +62,8 @@ export function passagesReplayed(count, vehicleCount, language) {
 
 /**
  * @typedef {{ key: TextKey, isError: boolean, tone?: 'degraded' | 'muted' }
- *   | { replayed: { count: number, vehicleCount: number }, isError: false }} ConsoleMessage
+ *   | { replayed: { count: number, vehicleCount: number }, isError: false }
+ *   | { verifiedAt: Date, isError: false }} ConsoleMessage
  */
 
 /**
@@ -73,6 +74,9 @@ export function passagesReplayed(count, vehicleCount, language) {
 export function messageText(language, message) {
   if ('replayed' in message) {
     return passagesReplayed(message.replayed.count, message.replayed.vehicleCount, language);
+  }
+  if ('verifiedAt' in message) {
+    return translate(language, 'gateVerified', { time: formatPassageTime(message.verifiedAt, language) });
   }
   return translate(language, message.key);
 }
