@@ -1,6 +1,6 @@
 import { enEquipment } from './enEquipment.ts';
 import { enGateErrors } from './enGateErrors.ts';
-import { enPublicationErrors } from './enPublicationErrors.ts';
+import { enPublication, enPublicationErrors } from './enPublication.ts';
 import { enGates } from './enGates.ts';
 import { enMap } from './enMap.ts';
 import { enSpotsToCheck } from './enSpotsToCheck.ts';
@@ -105,6 +105,7 @@ export const en: Dictionary = {
   map: enMap,
   equipment: enEquipment,
   gates: enGates,
+  publication: enPublication,
   spotStates: {
     AVAILABLE: 'Available',
     HELD: 'Held',

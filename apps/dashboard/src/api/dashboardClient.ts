@@ -1,5 +1,6 @@
 import type {
   AddSpotsRequest,
+  Attestation,
   CreatedGate,
   AisleRequest,
   DashboardAisleSpots,
@@ -18,6 +19,7 @@ import type {
   LevelOrderRequest,
   LotDraft,
   LotPricingRequest,
+  LotPublication,
   SpotAttributes,
   StripeOnboardingLink,
 } from '@palier/shared-types';
@@ -111,6 +113,10 @@ function gatePathOf(lotId: string, gateId: string): string {
   return `${lotPathOf(lotId)}/gates/${encodeURIComponent(gateId)}`;
 }
 
+function attestationPathOf(lotId: string, kind: 'wifi' | 'cellular'): string {
+  return `${lotPathOf(lotId)}/attestations/${kind}`;
+}
+
 export const dashboardClient = {
   me: () => dashboardRequest<DashboardMeResponse>('/me'),
   signOut: () => dashboardRequest<undefined>('/sign-out', { method: 'POST' }),
@@ -150,4 +156,9 @@ export const dashboardClient = {
   replaceDeviceKey: (lotId: string, gateId: string) => dashboardRequest<GateDeviceKey>(`${gatePathOf(lotId, gateId)}/device-key`, { method: 'POST' }),
   replaceQrSecret: (lotId: string, gateId: string) => dashboardRequest<undefined>(`${gatePathOf(lotId, gateId)}/qr-secret`, { method: 'POST' }),
   gateQrLink: (lotId: string, gateId: string) => dashboardRequest<GateQrLink>(`${gatePathOf(lotId, gateId)}/qr-link`),
+  lotPublication: (lotId: string) => dashboardRequest<LotPublication>(`${lotPathOf(lotId)}/publication`),
+  setLotOnline: (lotId: string, online: boolean) => dashboardRequest<LotPublication>(`${lotPathOf(lotId)}/online`, { method: 'PUT', body: { online } }),
+  attestWifi: (lotId: string, attestation: Attestation) => dashboardRequest<LotPublication>(attestationPathOf(lotId, 'wifi'), { method: 'PUT', body: attestation }),
+  attestCellular: (lotId: string, attestation: Attestation) =>
+    dashboardRequest<LotPublication>(attestationPathOf(lotId, 'cellular'), { method: 'PUT', body: attestation }),
 };

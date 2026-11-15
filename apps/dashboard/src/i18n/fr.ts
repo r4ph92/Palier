@@ -1,6 +1,6 @@
 import { frEquipment } from './frEquipment.ts';
 import { frGateErrors } from './frGateErrors.ts';
-import { frPublicationErrors } from './frPublicationErrors.ts';
+import { frPublication, frPublicationErrors } from './frPublication.ts';
 import { frGates } from './frGates.ts';
 import { frMap } from './frMap.ts';
 import { frSpotsToCheck } from './frSpotsToCheck.ts';
@@ -104,6 +104,7 @@ export const fr = {
   map: frMap,
   equipment: frEquipment,
   gates: frGates,
+  publication: frPublication,
   spotStates: {
     AVAILABLE: 'Libre',
     HELD: 'Garantie',

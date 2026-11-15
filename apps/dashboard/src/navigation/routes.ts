@@ -7,6 +7,7 @@ export type Route =
   | { readonly page: 'equipment'; readonly lotId: string }
   | { readonly page: 'spotsToCheck'; readonly lotId: string }
   | { readonly page: 'gates'; readonly lotId: string }
+  | { readonly page: 'publication'; readonly lotId: string }
   | { readonly page: 'notFound' };
 
 export const NEW_LOT_PATH = '/lots/new';
@@ -17,6 +18,7 @@ const MAP_PATH = /^\/lots\/([^/]+)\/map\/?$/;
 const SPOTS_TO_CHECK_PATH = /^\/lots\/([^/]+)\/spots-to-check\/?$/;
 const EQUIPMENT_PATH = /^\/lots\/([^/]+)\/equipment\/?$/;
 const GATES_PATH = /^\/lots\/([^/]+)\/gates\/?$/;
+const PUBLICATION_PATH = /^\/lots\/([^/]+)\/publication\/?$/;
 
 export function routeOf(pathname: string): Route {
   if (pathname === '/' || pathname === '') {
@@ -40,6 +42,7 @@ const LOT_SUBPAGES = [
   ['spotsToCheck', SPOTS_TO_CHECK_PATH],
   ['equipment', EQUIPMENT_PATH],
   ['gates', GATES_PATH],
+  ['publication', PUBLICATION_PATH],
 ] as const;
 
 function lotSubpageOf(pathname: string): Route | null {
@@ -86,6 +89,10 @@ export function equipmentPath(lotId: string): string {
 
 export function gatesPath(lotId: string): string {
   return `${lotPath(lotId)}/gates`;
+}
+
+export function publicationPath(lotId: string): string {
+  return `${lotPath(lotId)}/publication`;
 }
 
 export const HOME_PATH = '/';

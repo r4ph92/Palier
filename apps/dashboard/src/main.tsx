@@ -11,6 +11,7 @@ import './theme/stackedTable.css';
 import './theme/spots.css';
 import './theme/spotsToCheck.css';
 import './theme/gates.css';
+import './theme/publication.css';
 
 const root = document.getElementById('root');
 if (root === null) {

@@ -39,3 +39,8 @@ export function formatRecentDateTime(moment: Date, language: Language, now: Date
   const wanted: Intl.DateTimeFormatOptions = moment.getFullYear() === now.getFullYear() ? options : { ...options, year: 'numeric' };
   return new Intl.DateTimeFormat(dateLocaleOf(language), wanted).format(moment);
 }
+
+// A YYYY-MM-DD day, as the operator entered it: read at noon UTC so no time zone moves it to the day before.
+export function formatCalendarDay(day: string, language: Language): string {
+  return new Intl.DateTimeFormat(dateLocaleOf(language), { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${day}T12:00:00Z`));
+}

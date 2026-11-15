@@ -2,6 +2,7 @@ import type { DashboardLotDetails, LotDraft, LotPricingSettings } from '@palier/
 import { type FakeApiState, type FakeResponse, refused, summaryOf } from './fakeDashboardData.ts';
 import { isGateRequest, routeGates } from './fakeGateRoutes.ts';
 import { isMapRequest, routeMap } from './fakeMapRoutes.ts';
+import { isPublicationRequest, routePublication } from './fakePublicationRoutes.ts';
 import { isSpotCheckRequest, routeSpotChecks } from './fakeSpotCheckRoutes.ts';
 import { isSpotRequest, routeSpots } from './fakeSpotRoutes.ts';
 
@@ -48,6 +49,9 @@ function routeFeature({ state, lots, ownedLotIds }: FeatureContext, request: str
   }
   if (isSpotRequest(request)) {
     return routeSpots({ state, ownedLotIds }, request, body);
+  }
+  if (isPublicationRequest(request)) {
+    return routePublication({ state, ownedLotIds }, request, body);
   }
   return isGateRequest(request) ? routeGates({ state, lots }, request, body) : undefined;
 }

@@ -11,18 +11,21 @@ export interface TextFieldProps {
   readonly error: DisplayedErrorCode | undefined;
   readonly messageValues: Readonly<Record<string, string>>;
   readonly inputMode?: 'decimal' | 'numeric' | 'text' | 'url';
+  // A date field gives the browser's calendar, and its value is always YYYY-MM-DD whatever the language.
+  readonly type?: 'text' | 'date';
   readonly autoComplete?: string;
   // In a table row the column header shows what to type; the label still names the field for a screen reader.
   readonly hidesLabel?: boolean;
 }
 
-export function TextField({ id, label, hint, value, onChange, error, messageValues, inputMode = 'text', autoComplete = 'off', hidesLabel = false }: TextFieldProps) {
+export function TextField({ id, label, hint, value, onChange, error, messageValues, inputMode = 'text', type = 'text', autoComplete = 'off', hidesLabel = false }: TextFieldProps) {
   return (
     <div className="field">
       <label htmlFor={id} className={hidesLabel ? 'visually-hidden' : 'field-label'}>{label}</label>
       <input
         id={id}
         className="field-input"
+        type={type}
         inputMode={inputMode}
         autoComplete={autoComplete}
         value={value}
