@@ -41,6 +41,9 @@ export type GateDraftErrors = FieldErrors<GateDraftField, GateDraftErrorCode>;
 // Spaces and invisible characters never belong in an address; a URL parser would quietly drop some of them.
 const UNSAFE_IN_ENDPOINT = /[\s\p{Cc}\p{Cf}]/u;
 
+// The URL parser reads "https:host" and "https:/host" as https://host/: the address must name its host after the two slashes.
+const HTTPS_AUTHORITY = /^https:\/\//iu;
+
 // The one rule for a new gate, applied by the dashboard before sending and by the API before writing.
 export function gateDraftErrors(draft: GateDraft): GateDraftErrors {
   return fieldErrorsOf<GateDraftField, GateDraftErrorCode>([...settingsChecksOf(draft), ['exitIdentification', exitIdentificationErrorOf(draft.kind, draft.exitIdentification)]]);
@@ -78,17 +81,20 @@ function endpointErrorOf(integrationKind: GateIntegrationKind, endpoint: string 
   return isHttpsEndpoint(endpoint) ? null : 'GATE_ENDPOINT_NOT_HTTPS';
 }
 
-// An https address with a host and no user name or password in it.
-export function isHttpsEndpoint(endpoint: string): boolean {
-  if (endpoint.length > GATE_ENDPOINT_MAX_LENGTH || UNSAFE_IN_ENDPOINT.test(endpoint) || !URL.canParse(endpoint)) {
+function isHttpsEndpoint(endpoint: string): boolean {
+  if (endpoint.length > GATE_ENDPOINT_MAX_LENGTH || UNSAFE_IN_ENDPOINT.test(endpoint) || !HTTPS_AUTHORITY.test(endpoint) || !URL.canParse(endpoint)) {
     return false;
   }
   const url = new URL(endpoint);
   return url.protocol === 'https:' && url.hostname !== '' && url.username === '' && url.password === '';
 }
 
-// What the form or the API stores for a typed address: trimmed, and empty as none.
+// What the form or the API stores for a typed address: empty as none, an https address as the URL parser writes it
+// (host in lower case, a path at least "/"), anything else as typed so the rule refuses it.
 export function endpointOf(typed: string): string | null {
   const endpoint = typed.trim();
-  return endpoint === '' ? null : endpoint;
+  if (endpoint === '') {
+    return null;
+  }
+  return isHttpsEndpoint(endpoint) ? new URL(endpoint).href : endpoint;
 }

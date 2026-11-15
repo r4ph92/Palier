@@ -47,8 +47,13 @@ describe('the rule for a new gate', () => {
     expect(gateSettingsErrors({ ...entreePrincipale, exitIdentification: 'TRANSPONDER', endpoint: 'http://a.ca' })).toEqual({ endpoint: 'GATE_ENDPOINT_NOT_HTTPS' });
   });
 
-  it('reads a blank address as none and trims a typed one', () => {
+  it('reads a blank address as none, and stores a typed one as the URL parser writes it', () => {
     expect(endpointOf('   ')).toBeNull();
-    expect(endpointOf(' https://a.ca ')).toBe('https://a.ca');
+    expect(endpointOf(' https://a.ca ')).toBe('https://a.ca/');
+    expect(endpointOf('HTTPS://Controle.GarageRoy.ca/Portes')).toBe('https://controle.garageroy.ca/Portes');
+  });
+
+  it.each(['https:controle.garageroy.ca', 'https:/controle.garageroy.ca'])('refuses %s, an address without its two slashes before the host', (endpoint) => {
+    expect(gateDraftErrors({ ...entreePrincipale, endpoint: endpointOf(endpoint) })).toEqual({ endpoint: 'GATE_ENDPOINT_NOT_HTTPS' });
   });
 });
