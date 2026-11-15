@@ -131,7 +131,7 @@ function CheckOutcome({ spot, clearing }: RowProps) {
   const { spotsToCheck: text } = useText();
   if (clearing.clearingId === spot.spotId) {
     return (
-      <span className="muted" aria-hidden="true">
+      <span className="muted check-busy-word" aria-hidden="true">
         {text.checking.shown}
       </span>
     );

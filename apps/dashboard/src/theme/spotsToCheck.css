@@ -19,6 +19,18 @@
   cursor: wait;
 }
 
+/* Wide screens: the word would widen the action column and reflow the table, so the dimmed button says "busy" instead. */
+@media (min-width: 681px) {
+  .check-busy-word {
+    display: none;
+  }
+
+  .check-row[aria-busy='true'] .text-button {
+    color: var(--muted);
+    text-decoration: none;
+  }
+}
+
 /* Narrow screens: number and state, then place · time, then the reason, then the button. */
 @media (max-width: 680px) {
   .check-number {
