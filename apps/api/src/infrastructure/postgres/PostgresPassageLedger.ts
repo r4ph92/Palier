@@ -133,11 +133,30 @@ async function confirmOldestOpening(tx: Transaction, entry: PassageEntry, window
   return rows[0];
 }
 
-// The oldest exit opening whose session is still unattached wins; like confirmOpening it runs after countVehicle took the lot lock.
 async function attachExitPassage(tx: Transaction, entry: PassageEntry): Promise<string | null> {
   if (entry.attachableOpenings === null) {
     return null;
   }
+  const exitedSessionId = await attachOldestExitOpening(tx, entry, entry.attachableOpenings);
+  if (exitedSessionId === null) {
+    return null;
+  }
+  await logExitLoopClosed(tx, entry, exitedSessionId);
+  return exitedSessionId;
+}
+
+// At the instant the gate reported, as exit_passage_at keeps it.
+async function logExitLoopClosed(tx: Transaction, { gate }: PassageEntry, sessionId: string): Promise<void> {
+  await appendSessionEvent(tx, {
+    sessionId,
+    lotId: gate.lotId,
+    occurredAt: 'exit_passage_at',
+    event: { kind: 'EXIT_LOOP_CLOSED', payload: { gateId: gate.id } },
+  });
+}
+
+// The oldest exit opening whose session is still unattached wins; like confirmOpening it runs after countVehicle took the lot lock.
+async function attachOldestExitOpening(tx: Transaction, entry: PassageEntry, window: OpeningWindow): Promise<string | null> {
   const rows = await tx.execute<{ readonly id: string }>(sql`
     update parking_session
     set exit_passage_at = ${entry.closedAt.toISOString()}
@@ -146,7 +165,7 @@ async function attachExitPassage(tx: Transaction, entry: PassageEntry): Promise<
       from gate_command c
       join parking_session s on s.id = c.session_id
       where c.gate_id = ${entry.gate.id} and c.kind = 'OPEN' and s.state in ('CLOSED_PAID', 'CLOSED_CAPTURE_PENDING') and s.exit_passage_at is null
-        and ${isWithinOpeningWindow(sql`c.issued_at`, entry.attachableOpenings)}
+        and ${isWithinOpeningWindow(sql`c.issued_at`, window)}
       order by c.issued_at, c.id
       limit 1
       for update of s

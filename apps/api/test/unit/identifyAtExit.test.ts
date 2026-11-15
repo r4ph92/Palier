@@ -56,7 +56,7 @@ describe('identifyAtExit', () => {
     expect(exits.closings[0]?.exitGateId).toBe(sortieDemo.id);
   });
 
-  it('captures nothing and opens nothing for a plate with no open session', async () => {
+  it('captures nothing, opens nothing and closes no session to log for a plate with no open session', async () => {
     const { exits, payments, identify } = setup();
 
     const result = await identify('ZZZ 999');
@@ -64,6 +64,7 @@ describe('identifyAtExit', () => {
     expect(result).toEqual({ outcome: 'fallback' });
     expect(payments.captured).toEqual([]);
     expect(exits.closings).toEqual([]);
+    expect(exits.pendingClosings).toEqual([]);
   });
 
   it('captures nothing and opens nothing when the same plate is on two open sessions', async () => {
