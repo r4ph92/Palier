@@ -1,7 +1,6 @@
 import type { DashboardGate, DashboardLotGates } from '@palier/shared-types';
 import { useState } from 'react';
 import type { Refusal, StaleDataFollowUps } from '../api/followUpRefusal.ts';
-import { useText } from '../i18n/LanguageContext.tsx';
 import { useFocusAfterRender } from '../lotMap/useFocusAfterRender.ts';
 import { EditGateForm } from './EditGateForm.tsx';
 import { editGateButtonId, GateActions } from './GateActions.tsx';
@@ -45,12 +44,7 @@ export function GateItem({ gate, context, notice }: GateItemProps) {
 }
 
 function GateName({ gate }: { readonly gate: DashboardGate }) {
-  const text = useText();
-  return (
-    <h3 className="gate-name">
-      {gate.name} <span className="gate-kind">{text.equipment.kinds[gate.kind]}</span>
-    </h3>
-  );
+  return <h3 className="gate-name">{gate.name}</h3>;
 }
 
 function useGateEditing(gate: DashboardGate, { onSaved, onNotice }: GateItemContext) {

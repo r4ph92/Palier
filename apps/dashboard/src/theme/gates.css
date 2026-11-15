@@ -10,16 +10,6 @@
   overflow-wrap: anywhere;
 }
 
-.gate-kind {
-  margin-left: var(--space-small);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 400;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 /* The last fact's rule would double the row's own. */
 .gate-facts .fact:last-child {
   border-bottom: 0;
