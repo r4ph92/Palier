@@ -46,6 +46,8 @@ export interface LotSpotRepository {
   changeSpot(operatorId: string, spot: SpotPlace, attributes: SpotAttributes): Promise<LotSpotWrite>;
   // A spot in use is refused; a spot without history is deleted, one with history is retired out of service.
   removeSpot(operatorId: string, spot: SpotPlace): Promise<LotSpotWrite>;
-  // Only a free spot goes out of service and only a live out-of-service spot comes back; already in the wanted state is a success.
-  setSpotService(operatorId: string, spot: SpotPlace, outOfService: boolean): Promise<LotSpotWrite>;
+  // Only a free spot goes out of service; already out of service is a success.
+  takeSpotOutOfService(operatorId: string, spot: SpotPlace): Promise<LotSpotWrite>;
+  // Only a live, unused out-of-service spot comes back; already available is a success.
+  putSpotBackInService(operatorId: string, spot: SpotPlace): Promise<LotSpotWrite>;
 }

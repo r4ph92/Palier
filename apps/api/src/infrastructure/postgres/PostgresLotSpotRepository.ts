@@ -17,6 +17,8 @@ import {
   retireSpotStatement,
   takeOutOfServiceStatement,
 } from './lotSpotStatements.ts';
+import type { SQL } from 'drizzle-orm';
+import type { SpotState } from '../../domain/spots/spotStates.ts';
 import type { OwnedLot } from './lockParkingLot.ts';
 import { writeInOwnedLot } from './ownedLotWrite.ts';
 
@@ -27,7 +29,7 @@ interface AisleIdRow extends Record<string, unknown> {
 }
 
 interface SpotStateRow extends AisleIdRow {
-  readonly state: string;
+  readonly state: SpotState;
 }
 
 interface SpotInsert {
@@ -62,8 +64,12 @@ export class PostgresLotSpotRepository implements LotSpotRepository {
     return this.#write({ operatorId, lotId: spot.lotId }, (tx) => removeUnusedSpot(tx, operatorId, spot));
   }
 
-  setSpotService(operatorId: string, spot: SpotPlace, outOfService: boolean): Promise<LotSpotWrite> {
-    return this.#write({ operatorId, lotId: spot.lotId }, (tx) => changeService(tx, { operatorId, spot, outOfService }));
+  takeSpotOutOfService(operatorId: string, spot: SpotPlace): Promise<LotSpotWrite> {
+    return this.#write({ operatorId, lotId: spot.lotId }, (tx) => changeService(tx, { operatorId, spot, statement: takeOutOfServiceStatement(operatorId, spot), wanted: 'OUT_OF_SERVICE' }));
+  }
+
+  putSpotBackInService(operatorId: string, spot: SpotPlace): Promise<LotSpotWrite> {
+    return this.#write({ operatorId, lotId: spot.lotId }, (tx) => changeService(tx, { operatorId, spot, statement: putBackInServiceStatement(operatorId, spot), wanted: 'AVAILABLE' }));
   }
 
   async #write(lot: OwnedLot, write: (tx: Executor) => Promise<LotSpotWrite>): Promise<LotSpotWrite> {
@@ -111,24 +117,22 @@ async function spotInUseOrNotFound(tx: Executor, operatorId: string, spot: SpotP
 interface ServiceChange {
   readonly operatorId: string;
   readonly spot: SpotPlace;
-  readonly outOfService: boolean;
+  readonly statement: SQL;
+  readonly wanted: SpotState;
 }
 
-async function changeService(tx: Executor, { operatorId, spot, outOfService }: ServiceChange): Promise<LotSpotWrite> {
-  const statement = outOfService ? takeOutOfServiceStatement(operatorId, spot) : putBackInServiceStatement(operatorId, spot);
+async function changeService(tx: Executor, { operatorId, spot, statement, wanted }: ServiceChange): Promise<LotSpotWrite> {
   const [changed] = await tx.execute<AisleIdRow>(statement);
   if (changed !== undefined) {
     return spotsWritten(changed.aisle_id);
   }
-  return alreadyInServiceState(await tx.execute<SpotStateRow>(readLiveSpotStateStatement(operatorId, spot)), outOfService);
+  return outcomeOfUnchangedSpot(await tx.execute<SpotStateRow>(readLiveSpotStateStatement(operatorId, spot)), wanted);
 }
 
-// Nothing changed: the spot is gone, already in the wanted state, or in use.
-function alreadyInServiceState(rows: readonly SpotStateRow[], outOfService: boolean): LotSpotWrite {
+function outcomeOfUnchangedSpot(rows: readonly SpotStateRow[], wantedState: SpotState): LotSpotWrite {
   const [live] = rows;
   if (live === undefined) {
     return spotsRefused('SPOT_NOT_FOUND');
   }
-  const alreadyDone = outOfService ? live.state === 'OUT_OF_SERVICE' : live.state === 'AVAILABLE';
-  return alreadyDone ? spotsWritten(live.aisle_id) : spotsRefused('SPOT_IN_USE');
+  return live.state === wantedState ? spotsWritten(live.aisle_id) : spotsRefused('SPOT_IN_USE');
 }

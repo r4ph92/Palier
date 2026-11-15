@@ -42,12 +42,27 @@ describe('taking a spot out of service and back', () => {
     expect(answer.json<DashboardAisleSpots>().spots.find(({ id }) => id === spot.id)?.state).toBe('AVAILABLE');
   });
 
-  it('answers success when the spot is already in the wanted state', async () => {
+  it('answers success when the spot is already back in service', async () => {
     const { spot, cookies } = await parkingDemoSpotA3();
 
     expect((await routes.setService(cookies, spot.id, false)).statusCode).toBe(200);
-    await routes.setService(cookies, spot.id, true);
+    expect(spot.state).toBe('AVAILABLE');
+  });
+
+  it('answers success when the spot is already out of service', async () => {
+    const { spot, cookies } = await parkingDemoSpotA3();
+    spot.state = 'OUT_OF_SERVICE';
+
     expect((await routes.setService(cookies, spot.id, true)).statusCode).toBe(200);
+    expect(spot.state).toBe('OUT_OF_SERVICE');
+  });
+
+  it('answers success when the same request is sent twice', async () => {
+    const { spot, cookies } = await parkingDemoSpotA3();
+    await routes.setService(cookies, spot.id, true);
+
+    expect((await routes.setService(cookies, spot.id, true)).statusCode).toBe(200);
+    expect(spot.state).toBe('OUT_OF_SERVICE');
   });
 
   it.each<SpotState>(['HELD', 'ASSIGNED', 'OCCUPIED', 'OCCUPIED_UNKNOWN'])('refuses a spot %s as in use and changes nothing', async (state) => {
@@ -68,6 +83,19 @@ describe('taking a spot out of service and back', () => {
     Object.assign(before.find(({ id }) => id === spot.id) ?? {}, { isHeldBySession: true });
 
     expect((await routes.setService(cookies, spot.id, true)).statusCode).toBe(409);
+    expect(spots.spots).toEqual(before);
+  });
+
+  it('refuses putting back an out-of-service spot a session still points at', async () => {
+    const { spot, cookies, before } = await parkingDemoSpotA3();
+    spot.state = 'OUT_OF_SERVICE';
+    spot.isHeldBySession = true;
+    Object.assign(before.find(({ id }) => id === spot.id) ?? {}, { state: 'OUT_OF_SERVICE', isHeldBySession: true });
+
+    const refused = await routes.setService(cookies, spot.id, false);
+
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json()).toMatchObject({ error: 'SPOT_IN_USE' });
     expect(spots.spots).toEqual(before);
   });
 
@@ -97,7 +125,7 @@ describe('taking a spot out of service and back', () => {
 
     const answer = await server.inject({ method: 'PUT', url: `/v1/dashboard/lots/${PARKING_DEMO_ID}/spots/${spot.id}/service`, cookies, headers: writeHeader, payload: { outOfService: 'yes', state: 'ASSIGNED' } });
 
-    expect(answer.statusCode).toBeGreaterThanOrEqual(400);
+    expect(answer.statusCode).toBe(400);
     expect(spot.state).toBe('AVAILABLE');
   });
 });

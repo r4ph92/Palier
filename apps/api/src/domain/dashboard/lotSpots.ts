@@ -39,8 +39,12 @@ export function removeSpotOfMember(sources: LotSpotSources, spot: MemberSpot): P
   return changeSpots(sources, spot, (operatorId) => sources.spots.removeSpot(operatorId, { lotId: spot.lotId, spotId: spot.spotId }));
 }
 
-export function setSpotServiceOfMember(sources: LotSpotSources, spot: MemberSpot, outOfService: boolean): Promise<DashboardAisleSpots> {
-  return changeSpots(sources, spot, (operatorId) => sources.spots.setSpotService(operatorId, { lotId: spot.lotId, spotId: spot.spotId }, outOfService));
+export function takeSpotOutOfServiceOfMember(sources: LotSpotSources, spot: MemberSpot): Promise<DashboardAisleSpots> {
+  return changeSpots(sources, spot, (operatorId) => sources.spots.takeSpotOutOfService(operatorId, { lotId: spot.lotId, spotId: spot.spotId }));
+}
+
+export function putSpotBackInServiceOfMember(sources: LotSpotSources, spot: MemberSpot): Promise<DashboardAisleSpots> {
+  return changeSpots(sources, spot, (operatorId) => sources.spots.putSpotBackInService(operatorId, { lotId: spot.lotId, spotId: spot.spotId }));
 }
 
 // Answers the aisle's spots after the change, so the page shows what was saved and the lot's new spot count.

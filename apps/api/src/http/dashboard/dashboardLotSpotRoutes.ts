@@ -1,7 +1,7 @@
 import type { DashboardAisleSpots } from '@palier/shared-types';
 import type { AddSpotsRequest, SpotAttributes } from '@palier/shared-types/spotDraft';
 import type { FastifyInstance, FastifyReply, FastifyRequest, onRequestAsyncHookHandler } from 'fastify';
-import { addSpotsOfMember, changeSpotOfMember, readAisleSpotsOfMember, removeSpotOfMember, setSpotServiceOfMember, type LotSpotSources, type MemberAisle, type MemberSpot } from '../../domain/dashboard/lotSpots.ts';
+import { addSpotsOfMember, changeSpotOfMember, readAisleSpotsOfMember, putSpotBackInServiceOfMember, removeSpotOfMember, takeSpotOutOfServiceOfMember, type LotSpotSources, type MemberAisle, type MemberSpot } from '../../domain/dashboard/lotSpots.ts';
 import { addSpotsBodySchema, dashboardAisleSpotsSchema, lotAisleParametersSchema, lotSpotParametersSchema, spotAttributesBodySchema, spotServiceBodySchema } from '../schemas/lotSpotSchemas.ts';
 import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
 import { memberLotOf, refuseMalformedRequest, type AisleParams, type LotParams } from './memberRequest.ts';
@@ -70,7 +70,8 @@ function registerSpotServiceRoute({ scope, sources, onRequest }: SpotRoutesConte
   const schema = { params: lotSpotParametersSchema, body: spotServiceBodySchema, response: { 200: dashboardAisleSpotsSchema } };
   scope.put<{ readonly Params: SpotParams; readonly Body: { readonly outOfService: boolean } }>(SPOT_SERVICE_ROUTE, { onRequest, attachValidation: true, schema }, (request): Promise<DashboardAisleSpots> => {
     refuseMalformedRequest(request);
-    return setSpotServiceOfMember(sources, memberSpotOf(request), request.body.outOfService);
+    const spot = memberSpotOf(request);
+    return request.body.outOfService ? takeSpotOutOfServiceOfMember(sources, spot) : putSpotBackInServiceOfMember(sources, spot);
   });
 }
 

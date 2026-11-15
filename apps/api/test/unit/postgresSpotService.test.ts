@@ -33,37 +33,56 @@ describe('the service statements', () => {
     expect(sql).toContain('spot.retired_at is null');
     expect(sql).toMatch(/operator_id = \$\d+/);
   });
+
+  it('put back only a spot no session, hold or open report points at', () => {
+    const { sql } = dialect.sqlToQuery(putBackInServiceStatement(OPERATOR, spot));
+    expect(sql).toMatch(/holder\.assigned_spot_id = spot\.id or holder\.confirmed_spot_id = spot\.id/);
+    expect(sql).toMatch(/not exists \(select 1 from spot_hold/);
+    expect(sql).toMatch(/not exists \(select 1 from parking_session_reported_spot reported join parking_session reporter/);
+  });
 });
 
 describe('setting a spot in or out of service in Postgres', () => {
   it('writes the aisle of the changed spot', async () => {
     const scripted = lockedLot().answer('take-spot-out-of-service', [{ aisle_id: 'aisle-a' }]);
 
-    expect(await repositoryOn(scripted).setSpotService(OPERATOR, spot, true)).toEqual({ kind: 'written', aisleId: 'aisle-a' });
+    expect(await repositoryOn(scripted).takeSpotOutOfService(OPERATOR, spot)).toEqual({ kind: 'written', aisleId: 'aisle-a' });
     expect(scripted.count('read-live-spot-state')).toBe(0);
   });
 
   it('puts back with the put-back statement', async () => {
     const scripted = lockedLot().answer('put-spot-back-in-service', [{ aisle_id: 'aisle-a' }]);
 
-    expect(await repositoryOn(scripted).setSpotService(OPERATOR, spot, false)).toEqual({ kind: 'written', aisleId: 'aisle-a' });
+    expect(await repositoryOn(scripted).putSpotBackInService(OPERATOR, spot)).toEqual({ kind: 'written', aisleId: 'aisle-a' });
   });
 
   it.each(['ASSIGNED', 'HELD', 'OCCUPIED', 'OCCUPIED_UNKNOWN', 'AVAILABLE'])('refuses taking out a spot found %s (free ones: a session points at it) as in use', async (state) => {
     const scripted = lockedLot().answer('read-live-spot-state', [{ state, aisle_id: 'aisle-a' }]);
 
-    const outcome = await repositoryOn(scripted).setSpotService(OPERATOR, spot, true);
+    const outcome = await repositoryOn(scripted).takeSpotOutOfService(OPERATOR, spot);
 
     expect(outcome).toEqual({ kind: 'refused', reason: 'SPOT_IN_USE' });
+  });
+
+  it('succeeds when the spot is already back in service', async () => {
+    const scripted = lockedLot().answer('read-live-spot-state', [{ state: 'AVAILABLE', aisle_id: 'aisle-a' }]);
+
+    expect(await repositoryOn(scripted).putSpotBackInService(OPERATOR, spot)).toEqual({ kind: 'written', aisleId: 'aisle-a' });
+  });
+
+  it.each(['ASSIGNED', 'HELD', 'OCCUPIED', 'OCCUPIED_UNKNOWN'])('refuses putting back a spot found %s as in use', async (state) => {
+    const scripted = lockedLot().answer('read-live-spot-state', [{ state, aisle_id: 'aisle-a' }]);
+
+    expect(await repositoryOn(scripted).putSpotBackInService(OPERATOR, spot)).toEqual({ kind: 'refused', reason: 'SPOT_IN_USE' });
   });
 
   it('succeeds when the spot is already out of service', async () => {
     const scripted = lockedLot().answer('read-live-spot-state', [{ state: 'OUT_OF_SERVICE', aisle_id: 'aisle-a' }]);
 
-    expect(await repositoryOn(scripted).setSpotService(OPERATOR, spot, true)).toEqual({ kind: 'written', aisleId: 'aisle-a' });
+    expect(await repositoryOn(scripted).takeSpotOutOfService(OPERATOR, spot)).toEqual({ kind: 'written', aisleId: 'aisle-a' });
   });
 
   it('answers SPOT_NOT_FOUND when no live spot is left', async () => {
-    expect(await repositoryOn(lockedLot()).setSpotService(OPERATOR, spot, false)).toEqual({ kind: 'refused', reason: 'SPOT_NOT_FOUND' });
+    expect(await repositoryOn(lockedLot()).putSpotBackInService(OPERATOR, spot)).toEqual({ kind: 'refused', reason: 'SPOT_NOT_FOUND' });
   });
 });
