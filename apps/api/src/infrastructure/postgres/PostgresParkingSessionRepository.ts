@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
 import { decideRepeatedScan, openingFor } from '../../domain/entries/decideRepeatedScan.ts';
+import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import type {
   HoldAttachment,
   OpenedSession,
@@ -17,7 +18,7 @@ import { admissionRefusalOf } from './admissionRefusal.ts';
 import { logFailedAdmission, logScan } from './entryEvents.ts';
 import { cancelCreatedSession } from './cancelCreatedSession.ts';
 import type { Database, Transaction } from './database.ts';
-import { inLotLock, LOT_LOCK_TRANSACTION, lockParkingLot } from './lockParkingLot.ts';
+import { inLotLock, LOT_LOCK_TRANSACTION, lockParkingLot, type LockedParkingLot } from './lockParkingLot.ts';
 import { readLotOccupancy } from './lotOccupancy.ts';
 import { parkingSession } from './schema.ts';
 import { ASSIGNED_TO_ENTRY, claimFirstFittingSpot, type AssignedSpotRow } from './spotClaim.ts';
@@ -52,15 +53,15 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
 
   async openOrReplay(draft: SessionDraft): Promise<SessionOpening | null> {
     try {
-      return await inLotLock(this.#database, draft.lotId, (tx) => this.#openUnderLotLock(tx, draft));
+      return await inLotLock(this.#database, draft.lotId, (tx, lot) => this.#openUnderLotLock(tx, draft, lot));
     } catch (error) {
       throw admissionRefusalOf(error, draft.lotId);
     }
   }
 
-  async #openUnderLotLock(tx: Transaction, draft: SessionDraft): Promise<SessionOpening | null> {
+  async #openUnderLotLock(tx: Transaction, draft: SessionDraft, lot: LockedParkingLot | undefined): Promise<SessionOpening | null> {
     const decision = decideRepeatedScan(await findActiveSessionFacts(tx, draft.driverId, this.#openingWindow), draft);
-    return openingFor(decision, () => openSession(tx, draft));
+    return openingFor(decision, () => openSessionInService(tx, draft, lot));
   }
 
   async attachPaymentIntent(sessionId: string, paymentIntentId: string): Promise<HoldAttachment> {
@@ -107,6 +108,14 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
       }
     }, LOT_LOCK_TRANSACTION);
   }
+}
+
+// Read again under the lock: the operator may have put the lot offline since the eligibility check. A replay still gets its entry back.
+function openSessionInService(tx: Transaction, draft: SessionDraft, lot: LockedParkingLot | undefined): Promise<OpenedSession | null> {
+  if (lot !== undefined && !lot.isOnline) {
+    throw new EntryRefusedError('LOT_NOT_IN_SERVICE');
+  }
+  return openSession(tx, draft);
 }
 
 // The driver's own held spot comes first, so a lot that filled while she drove still has her spot (decision 016).
