@@ -12,7 +12,11 @@ export type DashboardStatementLabel =
   | 'change-gate'
   | 'revoke-device-keys'
   | 'replace-qr-secret'
-  | 'forget-gate-controller';
+  | 'forget-gate-controller'
+  | 'read-session-lot-name'
+  | 'list-sessions'
+  | 'read-session'
+  | 'read-session-events';
 
 export const DASHBOARD_STATEMENT_PATTERNS: readonly (readonly [DashboardStatementLabel, RegExp])[] = [
   ['read-publication-facts', /as in_service_spot_count/],
@@ -28,4 +32,8 @@ export const DASHBOARD_STATEMENT_PATTERNS: readonly (readonly [DashboardStatemen
   ['revoke-device-keys', /update gate_device_key set revoked_at/],
   ['replace-qr-secret', /update gate set qr_secret/],
   ['forget-gate-controller', /update gate set verified_at = null/],
+  ['read-session-lot-name', /select parking_lot\.name as lot_name from parking_lot/],
+  ['list-sessions', /order by ps\.entry_scan_at desc/],
+  ['read-session', /as was_answered/],
+  ['read-session-events', /from event_log\s+join parking_lot/],
 ];

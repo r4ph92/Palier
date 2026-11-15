@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   type AnyPgColumn,
+  type ExtraConfigColumn,
   foreignKey,
   index,
   integer,
@@ -88,6 +89,15 @@ function stateChecks(table: StateColumns) {
   ];
 }
 
+// The dashboard's sessions list: one lot, newest entry first, paged by (entry_scan_at, id) (decision 042).
+function sessionListIndex(table: { readonly lotId: AnyPgColumn; readonly entryScanAt: ExtraConfigColumn; readonly id: ExtraConfigColumn }) {
+  return index('parking_session_lot_entry_scan_index').on(table.lotId, table.entryScanAt.desc().nullsFirst(), table.id.desc().nullsFirst());
+}
+
+function lotReadIndexes(table: SpotColumns & { readonly entryScanAt: ExtraConfigColumn; readonly id: ExtraConfigColumn }) {
+  return [...spotHistoryIndexes(table), sessionListIndex(table)];
+}
+
 export const parkingSession = pgTable(
   'parking_session',
   {
@@ -157,10 +167,8 @@ export const parkingSession = pgTable(
     uniqueIndex('parking_session_one_active_per_user_index').on(table.userId).where(ACTIVE_SESSION),
     uniqueIndex('parking_session_one_active_per_spot_index').on(table.assignedSpotId).where(ACTIVE_SESSION),
     uniqueIndex('parking_session_one_active_per_confirmed_spot_index').on(table.confirmedSpotId).where(ACTIVE_SESSION),
-    // The dashboard's sessions list: one lot, newest entry first, paged by (entry_scan_at, id) (decision 042).
-    index('parking_session_lot_entry_scan_index').on(table.lotId, table.entryScanAt.desc().nullsFirst(), table.id.desc().nullsFirst()),
     index('parking_session_hold_release_pending_index').on(table.holdReleaseAttemptedAt.asc().nullsFirst(), table.id).where(sql`${table.holdReleasePending}`),
-    ...spotHistoryIndexes(table),
+    ...lotReadIndexes(table),
     index('parking_session_awaiting_signal_by_lot_index').on(table.lotId).where(sql`${table.state} in ('ENTRY_CONFIRMED', 'PARKED_UNCONFIRMED')`),
   ],
 );

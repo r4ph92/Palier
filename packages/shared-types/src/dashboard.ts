@@ -181,7 +181,6 @@ export interface LevelOrderRequest {
 }
 
 export type DashboardLotListResponse = readonly DashboardLot[];
-
 export type DashboardTestUserListResponse = readonly DashboardUser[];
 
 export interface DashboardTestSignInRequest {
@@ -237,8 +236,7 @@ export const DASHBOARD_ERROR_CODES = [
   'SPOT_NUMBER_TAKEN',
   'SPOT_IN_USE',
   'SPOT_STILL_ASSIGNED',
-  'SPOT_NOT_FREE',
-  'SESSION_NOT_FOUND',
+  'SPOT_NOT_FREE', 'SESSION_NOT_FOUND',
   ...GATE_ERROR_CODES,
   ...PUBLICATION_ERROR_CODES,
 ] as const;
