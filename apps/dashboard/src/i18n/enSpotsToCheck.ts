@@ -16,6 +16,7 @@ export const enSpotsToCheck: typeof frSpotsToCheck = {
   place: '%{level} · aisle\u00a0%{aisle}',
   reasons: { WRONG_AISLE: 'different aisle', WRONG_SPOT: 'another spot in the aisle', REPORTED_TAKEN: 'spot reported taken', NOT_RECORDED: 'reason not recorded' },
   checked: { shown: 'Checked', name: 'Spot %{number} checked' },
+  checking: { shown: 'Checking…', status: 'Checking spot %{number}…' },
   cleared: 'Spot %{number} checked.',
   empty: 'No spot to check.',
   emptyHint: 'A spot appears here when a driver parked somewhere other than planned, or reported it taken.',

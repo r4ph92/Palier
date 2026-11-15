@@ -15,6 +15,7 @@ export const frSpotsToCheck = {
   place: '%{level} · allée\u00a0%{aisle}',
   reasons: { WRONG_AISLE: 'allée différente', WRONG_SPOT: 'autre place de l’allée', REPORTED_TAKEN: 'place signalée prise', NOT_RECORDED: 'raison non enregistrée' },
   checked: { shown: 'Vérifiée', name: 'Place %{number} vérifiée' },
+  checking: { shown: 'Vérification…', status: 'Vérification de la place %{number}…' },
   cleared: 'Place %{number} vérifiée.',
   empty: 'Aucune place à vérifier.',
   emptyHint: 'Une place apparaît ici quand un conducteur s’est garé ailleurs que prévu ou l’a signalée prise.',

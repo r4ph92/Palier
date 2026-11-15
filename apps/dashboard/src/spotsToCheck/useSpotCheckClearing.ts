@@ -18,6 +18,8 @@ export interface RowRefusal extends Refusal {
 interface ClearStatus {
   // The spot being cleared; its row shows the busy state and no other row accepts a click meanwhile.
   readonly clearingId: string | null;
+  // Its number, for the status line while the request runs.
+  readonly clearingNumber: string | null;
   readonly refusal: RowRefusal | null;
   // The spot cleared last, for the status line; any later click forgets it.
   readonly clearedNumber: string | null;
@@ -34,7 +36,7 @@ export interface SpotCheckClearing extends ClearStatus {
 
 type ClearOutcome = { readonly answer: DashboardSpotsToCheck } | { readonly refusal: Refusal };
 
-const IDLE: ClearStatus = { clearingId: null, refusal: null, clearedNumber: null };
+const IDLE: ClearStatus = { clearingId: null, clearingNumber: null, refusal: null, clearedNumber: null };
 
 async function attemptClear(lotId: string, spot: DashboardSpotToCheck, followUps: RefusalFollowUps): Promise<ClearOutcome> {
   try {
@@ -66,7 +68,7 @@ export function useSpotCheckClearing(lotId: string, initial: DashboardSpotsToChe
   const followUps = useRefusalFollowUps(lotId, list.show);
   const clear = (spot: DashboardSpotToCheck) =>
     request.run(async () => {
-      setStatus({ ...IDLE, clearingId: spot.spotId });
+      setStatus({ ...IDLE, clearingId: spot.spotId, clearingNumber: spot.number });
       const outcome = await attemptClear(lotId, spot, followUps);
       if ('refusal' in outcome) {
         setStatus({ ...IDLE, refusal: { ...outcome.refusal, spotId: spot.spotId } });

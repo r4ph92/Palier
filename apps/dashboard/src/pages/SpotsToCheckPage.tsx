@@ -60,7 +60,7 @@ function SpotsToCheckView({ lotId, initial }: { readonly lotId: string; readonly
     <>
       <PageHeader eyebrow={lot.eyebrow} title={interpolate(text.titleInLot, { lot: initial.lotName })} />
       {clearing.listRefusal === null ? null : <ErrorNotice code={clearing.listRefusal.code} values={clearing.listRefusal.values} takesFocus />}
-      <ClearedStatus number={clearing.clearedNumber} />
+      <ClearStatusLine status={clearing} />
       {clearing.spots.length === 0 ? <EmptyList /> : <FlaggedSpots clearing={clearing} />}
       <BackLink lotId={lotId} />
     </>
@@ -91,13 +91,22 @@ function flaggedSpotIdOf({ spotId }: DashboardSpotToCheck): string {
 }
 
 // The line takes focus when the last flag is cleared, since the button that had it is gone.
-function ClearedStatus({ number }: { readonly number: string | null }) {
-  const { spotsToCheck: text } = useText();
+type ClearStatusProps = { readonly status: Pick<SpotCheckClearing, 'clearingNumber' | 'clearedNumber'> };
+
+function ClearStatusLine({ status }: ClearStatusProps) {
   return (
     <p role="status" id={SPOT_CHECK_STATUS_ID} tabIndex={-1} className="check-status">
-      {number === null ? null : <StateMark tone="free" label={interpolate(text.cleared, { number })} />}
+      <ClearStatusText status={status} />
     </p>
   );
+}
+
+function ClearStatusText({ status: { clearingNumber, clearedNumber } }: ClearStatusProps) {
+  const { spotsToCheck: text } = useText();
+  if (clearingNumber !== null) {
+    return <span className="muted">{interpolate(text.checking.status, { number: clearingNumber })}</span>;
+  }
+  return clearedNumber === null ? null : <StateMark tone="free" label={interpolate(text.cleared, { number: clearedNumber })} />;
 }
 
 function EmptyList() {

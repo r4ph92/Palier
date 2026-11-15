@@ -5,7 +5,7 @@ import { formatRecentDateTime } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { checkButtonId, checkErrorId } from './spotCheckIds.ts';
-import type { SpotCheckClearing } from './useSpotCheckClearing.ts';
+import type { RowRefusal, SpotCheckClearing } from './useSpotCheckClearing.ts';
 
 interface SpotsToCheckTableProps {
   readonly spots: readonly DashboardSpotToCheck[];
@@ -107,7 +107,7 @@ function SpotStateMark({ spot }: { readonly spot: DashboardSpotToCheck }) {
 
 function CheckedButton({ spot, clearing }: RowProps) {
   const { spotsToCheck: text } = useText();
-  const refused = clearing.refusal?.spotId === spot.spotId ? clearing.refusal : null;
+  const refused = rowRefusalOf(spot, clearing);
   return (
     <span className="row-actions">
       <button
@@ -121,7 +121,25 @@ function CheckedButton({ spot, clearing }: RowProps) {
       >
         {text.checked.shown}
       </button>
-      {refused === null ? null : <ErrorNotice code={refused.code} id={checkErrorId(spot.spotId)} values={refused.values} takesFocus />}
+      <CheckOutcome spot={spot} clearing={clearing} />
     </span>
   );
+}
+
+// Beside the button: the busy word while its request runs, then the refusal if one came. The status line says the busy state to screen readers.
+function CheckOutcome({ spot, clearing }: RowProps) {
+  const { spotsToCheck: text } = useText();
+  if (clearing.clearingId === spot.spotId) {
+    return (
+      <span className="muted" aria-hidden="true">
+        {text.checking.shown}
+      </span>
+    );
+  }
+  const refused = rowRefusalOf(spot, clearing);
+  return refused === null ? null : <ErrorNotice code={refused.code} id={checkErrorId(spot.spotId)} values={refused.values} takesFocus />;
+}
+
+function rowRefusalOf(spot: DashboardSpotToCheck, clearing: SpotCheckClearing): RowRefusal | null {
+  return clearing.refusal?.spotId === spot.spotId ? clearing.refusal : null;
 }

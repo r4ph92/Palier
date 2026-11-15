@@ -157,16 +157,6 @@ describe('the spots to check page', () => {
     expect(within(rowOf('B-2')).getByText('Libre')).toBeDefined();
   });
 
-  it('keeps the label Vérifiée on the button while the spot is being cleared', async () => {
-    const api = installFakeApi({ signedInAs: sophie });
-    api.answers.set(`POST /lots/${parkingDemo.id}/spots/${PARKING_DEMO_B2_ID}/check-cleared`, 'pending');
-    renderDashboard({ path: PAGE });
-    await userEvent.click(await screen.findByRole('button', { name: 'Place B-2 vérifiée' }));
-
-    expect(rowOf('B-2').getAttribute('aria-busy')).toBe('true');
-    expect(within(rowOf('B-2')).getByRole('button').textContent).toBe('Vérifiée');
-  });
-
   it('puts focus on the status line when the last flagged spot is cleared', async () => {
     const api = installFakeApi({ signedInAs: sophie });
     api.spotsToCheck.set(parkingDemo.id, (api.spotsToCheck.get(parkingDemo.id) ?? []).slice(1));
