@@ -1,11 +1,10 @@
-import type { DashboardSpot } from '@palier/shared-types';
 import { useState } from 'react';
 
 const PAGE_SIZE = 50;
 
-export interface SpotPage {
-  readonly spots: readonly DashboardSpot[];
-  // Positions shown, counted from 1, and the aisle's whole count.
+export interface SpotPage<Item = unknown> {
+  readonly spots: readonly Item[];
+  // Positions shown, counted from 1, and the list's whole count.
   readonly first: number;
   readonly last: number;
   readonly count: number;
@@ -21,12 +20,18 @@ export interface PageRequest {
   readonly spotId: string | null;
 }
 
-// The aisle's whole list comes in one read; the page shows 50 rows at a time, and the remembered page never outlives the list.
-export function useSpotPage(spots: readonly DashboardSpot[], onTurn: () => void, request: PageRequest): SpotPage {
+export interface PageTurning<Item> {
+  readonly idOf: (item: Item) => string;
+  readonly onTurn: () => void;
+  readonly request: PageRequest;
+}
+
+// The whole list comes in one read; the page shows 50 rows at a time, and the remembered page never outlives the list.
+export function useSpotPage<Item>(spots: readonly Item[], { idOf, onTurn, request }: PageTurning<Item>): SpotPage<Item> {
   const [wantedIndex, setWantedIndex] = useState(0);
   const [answeredKey, setAnsweredKey] = useState(request.key);
   const lastIndex = Math.max(0, Math.ceil(spots.length / PAGE_SIZE) - 1);
-  const requestedIndex = answeredKey === request.key ? null : indexOfSpot(spots, request.spotId);
+  const requestedIndex = answeredKey === request.key ? null : pageIndexOf(spots, request.spotId, idOf);
   const index = Math.min(requestedIndex ?? wantedIndex, lastIndex);
   if (answeredKey !== request.key) {
     setAnsweredKey(request.key);
@@ -41,12 +46,12 @@ export function useSpotPage(spots: readonly DashboardSpot[], onTurn: () => void,
   return { ...pageAt(spots, index), hasPrevious: index > 0, hasNext: index < lastIndex, previous: () => turnTo(index - 1), next: () => turnTo(index + 1) };
 }
 
-function indexOfSpot(spots: readonly DashboardSpot[], spotId: string | null): number | null {
-  const position = spots.findIndex(({ id }) => id === spotId);
+function pageIndexOf<Item>(spots: readonly Item[], spotId: string | null, idOf: (item: Item) => string): number | null {
+  const position = spots.findIndex((spot) => idOf(spot) === spotId);
   return position < 0 ? null : Math.floor(position / PAGE_SIZE);
 }
 
-function pageAt(spots: readonly DashboardSpot[], index: number): Pick<SpotPage, 'spots' | 'first' | 'last' | 'count'> {
+function pageAt<Item>(spots: readonly Item[], index: number): Pick<SpotPage<Item>, 'spots' | 'first' | 'last' | 'count'> {
   const start = index * PAGE_SIZE;
   const shown = spots.slice(start, start + PAGE_SIZE);
   return { spots: shown, first: start + 1, last: start + shown.length, count: spots.length };

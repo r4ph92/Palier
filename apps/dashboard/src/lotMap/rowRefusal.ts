@@ -1,8 +1,9 @@
 import type { DashboardSpot } from '@palier/shared-types';
+import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import type { Refusal } from '../api/followUpRefusal.ts';
 import type { SpotNotice } from './useSpotChanges.ts';
 
-const ROW_REFUSALS: readonly string[] = ['SPOT_IN_USE', 'LOT_BUSY'];
+const ROW_REFUSALS: readonly DisplayedErrorCode[] = ['SPOT_IN_USE', 'LOT_BUSY'];
 
 // A refusal about one spot that is still on the page's rows.
 export interface RowRefusal {

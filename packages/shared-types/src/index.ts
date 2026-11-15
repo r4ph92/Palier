@@ -17,17 +17,22 @@ export type {
   DashboardOperator,
   DashboardSignInResponse,
   DashboardSpot,
+  DashboardSpotToCheck,
+  DashboardSpotsToCheck,
   DashboardTestSignInRequest,
   DashboardTestUserListResponse,
   DashboardUser,
   KycStatus,
   LevelOrderRequest,
   LevelSpotCounts,
+  SpotCheckReason,
   StripeOnboardingLink,
 } from './dashboard.ts';
 export type { BatteryStatus, BeaconBatteryErrorCode, BeaconBatteryErrors, BeaconBatteryField, BeaconBatteryReading } from './beaconBattery.ts';
 export type { AisleDraft, AisleDraftErrorCode, AisleDraftErrors, AisleDraftField, AisleRequest } from './aisleDraft.ts';
 export type { AddSpotsRequest, SpotAttributes, SpotDraftErrorCode, SpotDraftErrors, SpotDraftField, SpotRange } from './spotDraft.ts';
+export type { CreatedGate, DashboardGate, DashboardLotGates, GateDeviceKey, GateQrLink } from './dashboardGates.ts';
+export type { ExitIdentification, GateDraft, GateDraftErrorCode, GateDraftErrors, GateDraftField, GateIntegrationKind, GateSettings } from './gateDraft.ts';
 export type { LevelDraft, LevelDraftErrorCode, LevelDraftErrors, LevelDraftField } from './levelDraft.ts';
 export type { LotDraft, LotDraftErrorCode, LotDraftErrors, LotDraftField } from './lotDraft.ts';
 export type { LotPricingRequest, LotPricingSettings, TariffPolicy, PricingErrorCode, PricingErrors, PricingField } from './lotPricing.ts';

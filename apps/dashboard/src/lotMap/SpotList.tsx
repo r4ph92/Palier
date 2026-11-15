@@ -9,7 +9,8 @@ import { EditSpotForm } from './EditSpotForm.tsx';
 import { rowRefusalOf } from './rowRefusal.ts';
 import { SpotNoticeLine } from './SpotNoticeLine.tsx';
 import { PageTurns, SpotPager } from './SpotPager.tsx';
-import { editButtonId, SpotTable, type EditRow } from './SpotTable.tsx';
+import { editButtonId } from './SpotRowActions.tsx';
+import { SpotTable, type EditRow } from './SpotTable.tsx';
 import { useFocusAfterRender } from './useFocusAfterRender.ts';
 import type { SpotChanges } from './useSpotChanges.ts';
 import { useSpotDeletion } from './useSpotDeletion.ts';
@@ -29,7 +30,7 @@ export function SpotList({ lotId, aisle, spots, changes }: SpotListProps) {
   const titleId = `spot-list-${aisle.id}`;
   const focusAfterRender = useFocusAfterRender();
   const editing = useSpotEditing(changes, { focusAfterRender, titleId });
-  const page = useSpotPage(spots, editing.close, changes.pageRequest);
+  const page = useSpotPage(spots, { idOf: spotIdOf, onTurn: editing.close, request: changes.pageRequest });
   const deletion = useListDeletion(lotId, changes, () => focusAfterRender(titleId));
   const service = useSpotService({ lotId, onChanged: changes.serviceChanged, onRefused: changes.refused, staleData: changes.staleData });
   const editRow = editRowOf(lotId, editing, changes);
@@ -43,6 +44,10 @@ export function SpotList({ lotId, aisle, spots, changes }: SpotListProps) {
       <PageTurns page={page} label={text.map.spots.page.labelBelow} />
     </>
   );
+}
+
+function spotIdOf({ id }: DashboardSpot): string {
+  return id;
 }
 
 function useListDeletion(lotId: string, changes: SpotChanges, focusTitle: () => void) {

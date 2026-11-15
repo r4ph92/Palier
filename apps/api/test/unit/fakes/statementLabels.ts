@@ -65,6 +65,11 @@ export type StatementLabel =
   | 'put-spot-back-in-service'
   | 'read-live-spot-state'
   | 'replay-passages'
+  | 'lock-exit-spots'
+  | 'free-exit-spots'
+  | 'read-spots-to-check'
+  | 'clear-spot-check'
+  | 'lock-spot-to-clear'
   | 'record-heartbeat'
   | 'record-reported-battery'
   | 'read-lot-gates'
@@ -82,11 +87,29 @@ export type StatementLabel =
   | 'log-entry-without-loop'
   | 'backdate-entry'
   | 'append-session-event'
+  | 'read-gate-settings'
+  | 'count-lot-gates'
+  | 'insert-gate'
+  | 'insert-device-key'
+  | 'read-owned-gate-kind'
+  | 'read-owned-gate-qr-secret'
+  | 'change-gate'
+  | 'revoke-device-keys'
+  | 'replace-qr-secret'
   | 'unknown';
 
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
+  ['read-gate-settings', /gate\.integration_kind, gate\.endpoint/],
+  ['count-lot-gates', /as exit_gate_count from gate/],
+  ['insert-gate', /insert into gate \(lot_id/],
+  ['insert-device-key', /insert into gate_device_key/],
+  ['read-owned-gate-kind', /select gate\.kind from gate where gate\.id/],
+  ['read-owned-gate-qr-secret', /select gate\.qr_secret from gate/],
+  ['change-gate', /update gate set name =/],
+  ['revoke-device-keys', /update gate_device_key set revoked_at/],
+  ['replace-qr-secret', /update gate set qr_secret/],
   ['insert-lot', /insert into parking_lot/],
   ['lock-owned-lot', /from parking_lot where id = \$1 and operator_id = \$2 for no key update/],
   ['read-lot-map', /aisle\.is_exit_lane, aisle\.map_polygon/],
@@ -110,6 +133,11 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['update-lot-pricing', /update parking_lot\s+set pricing_policy/],
   ['read-lot-details', /from parking_lot where id = \$1 and operator_id = \$2/],
   ['read-level-occupancy', /as confirmed_assigned_count/],
+  ['lock-exit-spots', /as held_by_another_session/],
+  ['free-exit-spots', /needs_check = needs_check or/],
+  ['read-spots-to-check', /spot\.needs_check_since, spot\.needs_check_reason/],
+  ['lock-spot-to-clear', /as held_by_session/],
+  ['clear-spot-check', /set needs_check = false/],
   ['replay-passages', /insert into gate_passage[\s\S]*on conflict/],
   ['record-heartbeat', /update gate set last_heartbeat_at/],
   ['read-owned-lot-id', /select parking_lot\.id from parking_lot where parking_lot\.id = \$1 and parking_lot\.operator_id = \$2/],

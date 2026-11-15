@@ -32,3 +32,9 @@ export function isValidDisplayText(text: string, { minimum, maximum }: TextLengt
 export function canonicalCodeOf(text: string): string {
   return text.normalize('NFKC').replace(/\s+/gu, ' ').trim();
 }
+
+// Two names that read the same are one name: accents composed (NFC, which keeps "ﬁ" and "²" as typed), any run of spaces,
+// no-break ones too, as one plain space.
+export function canonicalNameOf(text: string): string {
+  return text.normalize('NFC').replace(/\s+/gu, ' ').trim();
+}

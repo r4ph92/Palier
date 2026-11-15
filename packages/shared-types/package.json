@@ -89,6 +89,10 @@
       "types": "./src/gates.ts",
       "default": "./src/gates.ts"
     },
+    "./gateDraft": {
+      "types": "./src/gateDraft.ts",
+      "default": "./src/gateDraft.ts"
+    },
     "./spotDraft": {
       "types": "./src/spotDraft.ts",
       "default": "./src/spotDraft.ts"

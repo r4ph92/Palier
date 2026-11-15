@@ -9,7 +9,7 @@ import { PageHeader } from '../components/PageHeader.tsx';
 import { RetryableFailure, type RetryableFailureProps } from '../components/RetryableFailure.tsx';
 import { formatCount, formatDegrees } from '../i18n/formatNumbers.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
-import { equipmentPath, HOME_PATH, mapPath, occupancyPath } from '../navigation/routes.ts';
+import { equipmentPath, gatesPath, HOME_PATH, mapPath, occupancyPath, spotsToCheckPath } from '../navigation/routes.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
 import { PricingSection } from './PricingSection.tsx';
 
@@ -63,18 +63,21 @@ function LotDetails({ lot, onPricingSaved }: LotDetailsProps) {
 }
 
 function LotLinks({ lotId }: { readonly lotId: string }) {
-  const text = useText();
+  const { lot, spotsToCheck } = useText();
+  const links = [
+    [occupancyPath(lotId), lot.occupancyLink],
+    [spotsToCheckPath(lotId), spotsToCheck.title],
+    [mapPath(lotId), lot.mapLink],
+    [equipmentPath(lotId), lot.equipmentLink],
+    [gatesPath(lotId), lot.gatesLink],
+  ] as const;
   return (
     <p className="actions-row">
-      <AppLink href={occupancyPath(lotId)} className="text-link">
-        {text.lot.occupancyLink}
-      </AppLink>
-      <AppLink href={mapPath(lotId)} className="text-link">
-        {text.lot.mapLink}
-      </AppLink>
-      <AppLink href={equipmentPath(lotId)} className="text-link">
-        {text.lot.equipmentLink}
-      </AppLink>
+      {links.map(([href, label]) => (
+        <AppLink key={href} href={href} className="text-link">
+          {label}
+        </AppLink>
+      ))}
     </p>
   );
 }

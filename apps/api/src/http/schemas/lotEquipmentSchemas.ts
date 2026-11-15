@@ -1,4 +1,5 @@
 import type { DashboardLotEquipment } from '@palier/shared-types';
+import { GATE_KINDS } from '@palier/shared-types/gates';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable, WithMutableArrays } from './schemaMatchesType.ts';
 
@@ -9,7 +10,7 @@ const gateHealthSchema = {
   properties: {
     id: { type: 'string' },
     name: { type: 'string' },
-    kind: { type: 'string', enum: ['ENTRY', 'EXIT'] },
+    kind: { type: 'string', enum: GATE_KINDS },
     health: { type: 'string', enum: ['ONLINE', 'SILENT', 'NEVER_HEARD'] },
     lastHeartbeatAt: { type: ['string', 'null'] },
   },

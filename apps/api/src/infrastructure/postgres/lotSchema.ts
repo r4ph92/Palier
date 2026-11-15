@@ -1,8 +1,9 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, smallint, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, type AnyPgColumn, foreignKey, index, integer, jsonb, numeric, pgEnum, pgSequence, pgTable, smallint, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { BATTERY_PERCENT_LIMITS } from '@palier/shared-types/beaconBattery';
 import { AISLE_MINOR_LIMITS, EXIT_LANE_MINOR } from '@palier/shared-types/beacons';
 import { DEFAULT_HOLD_QUOTA, HOLD_QUOTA_LIMITS } from '@palier/shared-types/lotPricing';
+import { SPOT_CHECK_REASONS } from '@palier/shared-types/dashboard';
 import { SPOT_STATES } from '../../domain/spots/spotStates.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
 
@@ -10,6 +11,7 @@ export const kycStatus = pgEnum('kyc_status', ['NOT_STARTED', 'PENDING', 'ACTION
 export const assignmentStrategy = pgEnum('assignment_strategy', ['AISLE_BY_AISLE']);
 export const occupancySource = pgEnum('occupancy_source', ['DECLARATIVE', 'SENSORS']);
 export const spotState = pgEnum('spot_state', SPOT_STATES);
+export const spotCheckReason = pgEnum('spot_check_reason', SPOT_CHECK_REASONS);
 export const sensorState = pgEnum('sensor_state', ['FREE', 'OCCUPIED']);
 
 export const operator = pgTable('operator', {
@@ -120,6 +122,16 @@ export const aisle = pgTable(
   ],
 );
 
+function needsCheckConstraints(table: { readonly lotId: AnyPgColumn; readonly needsCheck: AnyPgColumn; readonly needsCheckSince: AnyPgColumn; readonly needsCheckReason: AnyPgColumn; readonly retiredAt: AnyPgColumn }) {
+  return [
+    check('spot_needs_check_since_matches_flag', sql`${table.needsCheck} = (${table.needsCheckSince} is not null)`),
+    check('spot_needs_check_reason_only_when_flagged', sql`${table.needsCheck} or ${table.needsCheckReason} is null`),
+    index('spot_to_check_by_lot_index')
+      .on(table.lotId)
+      .where(sql`${table.needsCheck} and ${table.retiredAt} is null`),
+  ];
+}
+
 export const spot = pgTable(
   'spot',
   {
@@ -134,6 +146,9 @@ export const spot = pgTable(
     isOversize: boolean('is_oversize').notNull().default(false),
     distanceToExit: integer('distance_to_exit').notNull(),
     needsCheck: boolean('needs_check').notNull().default(false),
+    // When and why the spot was flagged; null together with needs_check false. A flag from before reasons were recorded, or set by the seed:spot-state script, has no reason.
+    needsCheckSince: timestamp('needs_check_since', { withTimezone: true }),
+    needsCheckReason: spotCheckReason('needs_check_reason'),
     sensorState: sensorState('sensor_state'),
     sensorAt: timestamp('sensor_at', { withTimezone: true }),
     // Set when an operator deletes a spot that sessions, holds or reports still point at (decision 035).
@@ -146,6 +161,7 @@ export const spot = pgTable(
       foreignColumns: [aisle.id, aisle.lotId],
     }),
     uniqueIndex(SPOT_NUMBER_UNIQUE).on(table.lotId, table.number).where(sql`${table.retiredAt} is null`),
+    ...needsCheckConstraints(table),
     check('spot_retired_out_of_service', sql`${table.retiredAt} is null or ${table.state} = 'OUT_OF_SERVICE'`),
     index('spot_lot_id_canonical_number_index').on(table.lotId, canonicalNumberOf(table.number)),
     unique('spot_id_lot_id_unique').on(table.id, table.lotId),
