@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
-import type { PendingCapture, PendingCaptureRepository, SettledPayment } from '../../domain/exits/retryCaptures.ts';
+import type { PendingCapture, PendingCaptureRepository } from '../../domain/exits/retryCaptures.ts';
+import type { SettledPayment } from '../../domain/exits/takePayment.ts';
 import type { Database } from './database.ts';
 
 interface PendingRow extends Record<string, unknown> {
