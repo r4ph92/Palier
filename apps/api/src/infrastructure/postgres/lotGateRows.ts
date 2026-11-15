@@ -1,10 +1,6 @@
 import type { DashboardGate, DashboardLotGates, GateKind } from '@palier/shared-types';
-import type { ExitIdentification, GateIntegrationKind } from '@palier/shared-types/gateDraft';
-import type { ExitIdKind } from '../../domain/gates/AuthenticatedGate.ts';
-
-// The dashboard says plate and transponder; the column keeps the reader's technology (ANPR camera, RFID reader).
-export const EXIT_ID_KIND_OF: Readonly<Record<ExitIdentification, ExitIdKind>> = { NONE: 'NONE', PLATE: 'ANPR', TRANSPONDER: 'RFID' };
-export const EXIT_IDENTIFICATION_OF: Readonly<Record<ExitIdKind, ExitIdentification>> = { NONE: 'NONE', ANPR: 'PLATE', RFID: 'TRANSPONDER' };
+import type { GateIntegrationKind } from '@palier/shared-types/gateDraft';
+import { EXIT_IDENTIFICATION_OF, type ExitIdKind } from '../../domain/gates/AuthenticatedGate.ts';
 
 export interface GateSettingsRow extends Record<string, unknown> {
   readonly lot_name: string;
@@ -25,10 +21,6 @@ type GateRow = GateSettingsRow & {
   readonly has_loops: boolean;
   readonly exit_id_kind: ExitIdKind;
 };
-
-export function exitIdKindOf(exitIdentification: ExitIdentification): ExitIdKind {
-  return EXIT_ID_KIND_OF[exitIdentification];
-}
 
 // Null when no row came back: the lot is not the operator's.
 export function lotGatesOf(lotId: string, rows: readonly GateSettingsRow[]): DashboardLotGates | null {

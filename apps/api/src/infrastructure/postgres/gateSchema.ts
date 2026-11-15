@@ -1,7 +1,8 @@
 import { boolean, foreignKey, index, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { GATE_KINDS } from '@palier/shared-types/gates';
 import { parkingLot } from './lotSchema.ts';
 
-export const gateKind = pgEnum('gate_kind', ['ENTRY', 'EXIT']);
+export const gateKind = pgEnum('gate_kind', GATE_KINDS);
 export const gateIntegrationKind = pgEnum('gate_integration_kind', ['DRY_CONTACT', 'ACCESS_CONTROL_API', 'SIMULATED']);
 export const exitIdKind = pgEnum('exit_id_kind', ['ANPR', 'RFID', 'NONE']);
 

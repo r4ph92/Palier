@@ -1,4 +1,5 @@
-export type GateKind = 'ENTRY' | 'EXIT';
+export const GATE_KINDS = ['ENTRY', 'EXIT'] as const;
+export type GateKind = (typeof GATE_KINDS)[number];
 
 // Four missed beats of the console's 30 s heartbeat (decision 036).
 export const SILENT_GATE_AFTER_MINUTES = 2;

@@ -1,10 +1,11 @@
+import { GATE_KINDS } from '@palier/shared-types/gates';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { fieldBinder, type BoundField } from '../forms/fieldBinder.ts';
 import { SelectField } from '../forms/SelectField.tsx';
 import { SubmitButton } from '../forms/SubmitButton.tsx';
 import { useText } from '../i18n/LanguageContext.tsx';
 import { GateFields } from './GateFields.tsx';
-import { GATE_KINDS, isExitForm } from './gateFormValues.ts';
+import { isExitForm } from './gateFormValues.ts';
 import { useAddGateForm, type AddGateTarget } from './useAddGateForm.ts';
 import { useGateLimitValues } from './useGateLimitValues.ts';
 

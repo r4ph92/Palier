@@ -1,5 +1,6 @@
 import type { CreatedGate, DashboardLotGates, GateDeviceKey, GateQrLink } from '@palier/shared-types';
 import { EXIT_IDENTIFICATIONS, GATE_INTEGRATION_KINDS, type GateDraft, type GateSettings } from '@palier/shared-types/gateDraft';
+import { GATE_KINDS } from '@palier/shared-types/gates';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable, WithMutableArrays } from './schemaMatchesType.ts';
 import { uuidSchema } from './uuidSchema.ts';
@@ -10,7 +11,6 @@ export const lotGateParametersSchema = {
   properties: { id: uuidSchema, gateId: uuidSchema },
 } as const;
 
-const GATE_KINDS = ['ENTRY', 'EXIT'] as const;
 const boundedText = { type: 'string', maxLength: 4096 } as const;
 
 const gateSettingsProperties = {

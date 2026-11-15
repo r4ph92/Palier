@@ -4,9 +4,9 @@ import { exitIdentificationErrorOf, MAX_GATES_PER_LOT, type GateSettings } from 
 import type { GateSecretRepository, QrSecretRead } from '../../../src/domain/dashboard/GateSecretRepository.ts';
 import { gateRefused, gateWritten, type GatePlace, type GateWrite, type LotGateRepository, type NewGate } from '../../../src/domain/dashboard/LotGateRepository.ts';
 import { isUsableQrSecret } from '../../../src/domain/entries/gateToken.ts';
+import { EXIT_ID_KIND_OF, EXIT_IDENTIFICATION_OF } from '../../../src/domain/gates/AuthenticatedGate.ts';
 import type { DeviceKeyRecord, GateDeviceKeyRepository } from '../../../src/domain/gates/GateDeviceKeyRepository.ts';
 import { gateDeviceKeyFixtures, gateFixtures } from '../../../src/seed/fixtures/gates.ts';
-import { EXIT_ID_KIND_OF, EXIT_IDENTIFICATION_OF } from '../../../src/infrastructure/postgres/lotGateRows.ts';
 import type { FakeLotStore } from './fakeLotSetupRepository.ts';
 
 export interface FakeGate extends DashboardGate {

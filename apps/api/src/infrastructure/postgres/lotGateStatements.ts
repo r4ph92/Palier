@@ -2,7 +2,7 @@ import { sql, type SQL } from 'drizzle-orm';
 import type { GateKind } from '@palier/shared-types';
 import type { GateSettings } from '@palier/shared-types/gateDraft';
 import type { GatePlace, NewGate } from '../../domain/dashboard/LotGateRepository.ts';
-import { exitIdKindOf } from './lotGateRows.ts';
+import { EXIT_ID_KIND_OF } from '../../domain/gates/AuthenticatedGate.ts';
 
 export const GATE_NAME_UNIQUE = 'gate_lot_id_name_unique';
 
@@ -26,7 +26,7 @@ export function insertGateStatement(lotId: string, { draft, qrSecret }: Omit<New
   return sql`
     insert into gate (lot_id, name, kind, integration_kind, endpoint, has_loops, exit_id_kind, qr_secret)
     values (${lotId}, ${draft.name}, ${draft.kind}::gate_kind, ${draft.integrationKind}::gate_integration_kind, ${draft.endpoint},
-      ${draft.reportsLoops}, ${exitIdKindOf(draft.exitIdentification)}::exit_id_kind, ${qrSecret})
+      ${draft.reportsLoops}, ${EXIT_ID_KIND_OF[draft.exitIdentification]}::exit_id_kind, ${qrSecret})
     returning id`;
 }
 
@@ -47,7 +47,7 @@ export function readOwnedGateQrSecretStatement({ lotId, gateId }: GatePlace): SQ
 export function changeGateStatement({ lotId, gateId }: GatePlace, settings: GateSettings): SQL {
   return sql`
     update gate set name = ${settings.name}, integration_kind = ${settings.integrationKind}::gate_integration_kind, endpoint = ${settings.endpoint},
-      has_loops = ${settings.reportsLoops}, exit_id_kind = ${exitIdKindOf(settings.exitIdentification)}::exit_id_kind
+      has_loops = ${settings.reportsLoops}, exit_id_kind = ${EXIT_ID_KIND_OF[settings.exitIdentification]}::exit_id_kind
     where gate.id = ${gateId} and gate.lot_id = ${lotId}`;
 }
 

@@ -1,4 +1,4 @@
-import type { AuthenticatedGate } from '../gates/AuthenticatedGate.ts';
+import { EXIT_IDENTIFICATION_OF, type AuthenticatedGate } from '../gates/AuthenticatedGate.ts';
 import { ensureOwnGate } from '../gates/ownGate.ts';
 import { PassageRefusedError } from '../gates/PassageRefusedError.ts';
 import { readPlate, readTransponder } from '../vehicles/plate.ts';
@@ -19,8 +19,6 @@ export interface IdentifyRequest {
 export type IdentifyOutcome =
   | { readonly outcome: 'opened'; readonly identification: 'plate' | 'transponder' }
   | { readonly outcome: 'fallback' | 'gate-unavailable' | 'payments-unavailable' | 'lot-busy' };
-
-const KIND_BY_READER = { ANPR: 'PLATE', RFID: 'TRANSPONDER' } as const;
 
 interface ReadKey {
   readonly kind: ReadIdentifierKind;
@@ -63,7 +61,7 @@ function readerKeyOf({ gate, requestedGateId, identifier }: IdentifyRequest): Re
   if (gate.kind !== 'EXIT' || gate.exitIdKind === 'NONE') {
     throw new PassageRefusedError('GATE_WITHOUT_READER');
   }
-  const kind = KIND_BY_READER[gate.exitIdKind];
+  const kind = EXIT_IDENTIFICATION_OF[gate.exitIdKind];
   const key = kind === 'PLATE' ? readPlate(identifier)?.plateKey : readTransponder(identifier)?.transponderKey;
   if (key === undefined) {
     throw new PassageRefusedError('IDENTIFIER_INVALID');

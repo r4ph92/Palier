@@ -1,4 +1,4 @@
-import type { DashboardGate, GateKind } from '@palier/shared-types';
+import type { DashboardGate } from '@palier/shared-types';
 import {
   endpointOf,
   EXIT_IDENTIFICATIONS,
@@ -9,13 +9,12 @@ import {
   type GateIntegrationKind,
   type GateSettings,
 } from '@palier/shared-types/gateDraft';
+import { GATE_KINDS } from '@palier/shared-types/gates';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { CHECKED } from '../forms/CheckboxField.tsx';
 import { readFormOf, type FieldValues, type ReadForm } from '../forms/useFieldForm.ts';
 
 export type GateFormField = 'name' | 'kind' | 'integrationKind' | 'endpoint' | 'reportsLoops' | 'exitIdentification';
-
-export const GATE_KINDS: readonly GateKind[] = ['ENTRY', 'EXIT'];
 
 // A new gate starts as an entry on a dry contact that reports its loops: what most garages install.
 export const NEW_GATE_VALUES: FieldValues<GateFormField> = {

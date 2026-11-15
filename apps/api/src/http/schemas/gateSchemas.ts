@@ -8,11 +8,12 @@ import type {
   PassageReplayRequest,
   PassageReplayResponse,
 } from '@palier/shared-types';
+import { GATE_KINDS } from '@palier/shared-types/gates';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable, WithMutableArrays } from './schemaMatchesType.ts';
 import { idPathParametersSchema, uuidSchema } from './uuidSchema.ts';
 
-const gateKindSchema = { type: 'string', enum: ['ENTRY', 'EXIT'] } as const;
+const gateKindSchema = { type: 'string', enum: GATE_KINDS } as const;
 
 export const gateIdentitySchema = {
   type: 'object',
