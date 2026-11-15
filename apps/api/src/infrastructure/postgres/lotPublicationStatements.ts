@@ -1,6 +1,7 @@
 import { sql, type SQL } from 'drizzle-orm';
 import { ATTESTATION_TIME_ZONE } from '@palier/shared-types/publication';
-import type { AttestationKind, LotAttestation } from '../../domain/publication/LotPublicationRepository.ts';
+import type { AttestationKind } from '@palier/shared-types';
+import type { LotAttestation } from '../../domain/publication/LotPublicationRepository.ts';
 import { liveSpot } from './liveSpot.ts';
 
 // One statement for the whole checklist; a day attested is read back as the operator entered it, on Montréal's calendar.
@@ -18,7 +19,7 @@ export function readPublicationFactsStatement(operatorId: string, lotId: string)
     where parking_lot.id = ${lotId} and parking_lot.operator_id = ${operatorId}`;
 }
 
-// Run under the owned lot's lock, after the checklist was judged on the same transaction.
+// The caller holds the owned lot's lock.
 export function setLotOnlineStatement(lotId: string, online: boolean): SQL {
   return sql`update parking_lot set is_online = ${online} where id = ${lotId}`;
 }

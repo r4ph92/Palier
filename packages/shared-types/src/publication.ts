@@ -10,6 +10,11 @@ export const ATTESTATION_TIME_ZONE = 'America/Toronto';
 
 export const PUBLICATION_ERROR_CODES = ['LOT_NOT_READY', 'ATTESTATION_DAY_INVALID', 'ATTESTATION_DAY_IN_FUTURE', 'ATTESTATION_NOTE_INVALID'] as const;
 
+export const ATTESTATION_KINDS = ['WIFI', 'CELLULAR'] as const;
+export type AttestationKind = (typeof ATTESTATION_KINDS)[number];
+// The last segment of each kind's dashboard route.
+export const ATTESTATION_PATH_SEGMENTS = { WIFI: 'wifi', CELLULAR: 'cellular' } as const satisfies Readonly<Record<AttestationKind, string>>;
+
 export type AttestationErrorCode = Exclude<(typeof PUBLICATION_ERROR_CODES)[number], 'LOT_NOT_READY'>;
 
 // What the operator measured on site: the day, as YYYY-MM-DD, and a note on how and where.

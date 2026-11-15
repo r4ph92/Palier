@@ -48,7 +48,6 @@ export const frPublication = {
   saved: 'Mesure enregistrée.',
 };
 
-// Its refusals, spread into the dictionary's errors.
 export const frPublicationErrors = {
   LOT_NOT_READY: 'Il manque encore un prérequis : le stationnement reste hors ligne. La liste a été relue.',
   ATTESTATION_DAY_INVALID: 'Entrez une date réelle, à partir du %{earliestDay}.',

@@ -1,7 +1,5 @@
-import type { Attestation, DashboardErrorCode } from '@palier/shared-types';
+import type { Attestation, AttestationKind, DashboardErrorCode } from '@palier/shared-types';
 import type { PublicationFacts } from './lotPrerequisites.ts';
-
-export type AttestationKind = 'WIFI' | 'CELLULAR';
 
 export interface LotAttestation extends Attestation {
   readonly kind: AttestationKind;

@@ -1,6 +1,7 @@
 import type {
   AddSpotsRequest,
   Attestation,
+  AttestationKind,
   CreatedGate,
   AisleRequest,
   DashboardAisleSpots,
@@ -26,6 +27,7 @@ import type {
 import type { BeaconBatteryReading } from '@palier/shared-types/beaconBattery';
 import type { GateDraft, GateSettings } from '@palier/shared-types/gateDraft';
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
+import { ATTESTATION_PATH_SEGMENTS } from '@palier/shared-types/publication';
 import { DashboardApiError } from './DashboardApiError.ts';
 
 const BASE_PATH = '/v1/dashboard';
@@ -113,8 +115,8 @@ function gatePathOf(lotId: string, gateId: string): string {
   return `${lotPathOf(lotId)}/gates/${encodeURIComponent(gateId)}`;
 }
 
-function attestationPathOf(lotId: string, kind: 'wifi' | 'cellular'): string {
-  return `${lotPathOf(lotId)}/attestations/${kind}`;
+function attestationPathOf(lotId: string, kind: AttestationKind): string {
+  return `${lotPathOf(lotId)}/attestations/${ATTESTATION_PATH_SEGMENTS[kind]}`;
 }
 
 export const dashboardClient = {
@@ -158,7 +160,6 @@ export const dashboardClient = {
   gateQrLink: (lotId: string, gateId: string) => dashboardRequest<GateQrLink>(`${gatePathOf(lotId, gateId)}/qr-link`),
   lotPublication: (lotId: string) => dashboardRequest<LotPublication>(`${lotPathOf(lotId)}/publication`),
   setLotOnline: (lotId: string, online: boolean) => dashboardRequest<LotPublication>(`${lotPathOf(lotId)}/online`, { method: 'PUT', body: { online } }),
-  attestWifi: (lotId: string, attestation: Attestation) => dashboardRequest<LotPublication>(attestationPathOf(lotId, 'wifi'), { method: 'PUT', body: attestation }),
-  attestCellular: (lotId: string, attestation: Attestation) =>
-    dashboardRequest<LotPublication>(attestationPathOf(lotId, 'cellular'), { method: 'PUT', body: attestation }),
+  attest: (lotId: string, kind: AttestationKind, attestation: Attestation) =>
+    dashboardRequest<LotPublication>(attestationPathOf(lotId, kind), { method: 'PUT', body: attestation }),
 };

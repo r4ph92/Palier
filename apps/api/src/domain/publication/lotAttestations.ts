@@ -1,11 +1,10 @@
-import type { Attestation, LotPublication } from '@palier/shared-types';
+import type { Attestation, AttestationKind, LotPublication } from '@palier/shared-types';
 import { canonicalNameOf } from '@palier/shared-types/displayText';
 import { firstFieldError } from '@palier/shared-types/fieldErrors';
 import { ATTESTATION_TIME_ZONE, attestationErrors, calendarDayIn } from '@palier/shared-types/publication';
 import { DashboardRefusedError } from '../dashboard/DashboardRefusedError.ts';
 import { operatorIdOfMember, type MemberLot } from '../dashboard/memberOperator.ts';
 import { readOwnedPublication, refuseUnwritten, type LotPublicationSources } from './lotPublication.ts';
-import type { AttestationKind } from './LotPublicationRepository.ts';
 
 export interface MemberAttestation extends MemberLot {
   readonly kind: AttestationKind;

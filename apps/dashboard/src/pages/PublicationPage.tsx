@@ -25,7 +25,6 @@ interface PublicationViewProps {
   readonly onStale: () => Promise<boolean>;
 }
 
-// The state and its one action first, then why it is or is not ready, then the measures only the operator can enter.
 function PublicationView({ publication, onSaved, onStale }: PublicationViewProps) {
   const { text, language } = useLanguage();
   const lines = checklistLinesOf(publication, { text, language, now: new Date() });

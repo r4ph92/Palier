@@ -40,7 +40,7 @@ async function attestUnderLock(tx: Executor, lotId: string, attestation: LotAtte
   return 'written';
 }
 
-// The checklist is judged under the lock, so nothing it read can change before the lot goes online.
+// Judged on the transaction that holds the lot lock: a gate, spot or pricing change waits for it; Stripe's state is read as last committed.
 async function publishUnderLock(tx: Executor, lot: OwnedLot): Promise<PublicationWrite> {
   const facts = await readFacts(tx, lot);
   if (facts === null) {
