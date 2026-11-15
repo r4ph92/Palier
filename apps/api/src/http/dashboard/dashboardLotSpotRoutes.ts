@@ -1,8 +1,8 @@
 import type { DashboardAisleSpots } from '@palier/shared-types';
 import type { AddSpotsRequest, SpotAttributes } from '@palier/shared-types/spotDraft';
 import type { FastifyInstance, FastifyReply, FastifyRequest, onRequestAsyncHookHandler } from 'fastify';
-import { addSpotsOfMember, changeSpotOfMember, readAisleSpotsOfMember, removeSpotOfMember, type LotSpotSources, type MemberAisle, type MemberSpot } from '../../domain/dashboard/lotSpots.ts';
-import { addSpotsBodySchema, dashboardAisleSpotsSchema, lotAisleParametersSchema, lotSpotParametersSchema, spotAttributesBodySchema } from '../schemas/lotSpotSchemas.ts';
+import { addSpotsOfMember, changeSpotOfMember, readAisleSpotsOfMember, removeSpotOfMember, setSpotServiceOfMember, type LotSpotSources, type MemberAisle, type MemberSpot } from '../../domain/dashboard/lotSpots.ts';
+import { addSpotsBodySchema, dashboardAisleSpotsSchema, lotAisleParametersSchema, lotSpotParametersSchema, spotAttributesBodySchema, spotServiceBodySchema } from '../schemas/lotSpotSchemas.ts';
 import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
 import { memberLotOf, refuseMalformedRequest, type AisleParams, type LotParams } from './memberRequest.ts';
 import { requireDashboardUser } from './requireDashboardUser.ts';
@@ -21,6 +21,7 @@ interface SpotRoutesContext {
 const CREATED = 201;
 const AISLE_SPOTS_ROUTE = '/v1/dashboard/lots/:id/aisles/:aisleId/spots';
 const SPOT_ROUTE = '/v1/dashboard/lots/:id/spots/:spotId';
+const SPOT_SERVICE_ROUTE = `${SPOT_ROUTE}/service`;
 
 export function registerDashboardLotSpotRoutes(scope: FastifyInstance, { access, operators, spots }: DashboardRouteDependencies): void {
   const context: SpotRoutesContext = { scope, sources: { operators, spots }, onRequest: requireDashboardUser(access.sessions) };
@@ -28,6 +29,7 @@ export function registerDashboardLotSpotRoutes(scope: FastifyInstance, { access,
   registerAddSpotsRoute(context);
   registerChangeSpotRoute(context);
   registerRemoveSpotRoute(context);
+  registerSpotServiceRoute(context);
 }
 
 // A malformed aisle or spot id answers the lot's 404 too: the answer never tells which id was wrong.
@@ -61,6 +63,14 @@ function registerRemoveSpotRoute({ scope, sources, onRequest }: SpotRoutesContex
   scope.delete<{ readonly Params: SpotParams }>(SPOT_ROUTE, { onRequest, attachValidation: true, schema }, (request): Promise<DashboardAisleSpots> => {
     refuseMalformedRequest(request);
     return removeSpotOfMember(sources, memberSpotOf(request));
+  });
+}
+
+function registerSpotServiceRoute({ scope, sources, onRequest }: SpotRoutesContext): void {
+  const schema = { params: lotSpotParametersSchema, body: spotServiceBodySchema, response: { 200: dashboardAisleSpotsSchema } };
+  scope.put<{ readonly Params: SpotParams; readonly Body: { readonly outOfService: boolean } }>(SPOT_SERVICE_ROUTE, { onRequest, attachValidation: true, schema }, (request): Promise<DashboardAisleSpots> => {
+    refuseMalformedRequest(request);
+    return setSpotServiceOfMember(sources, memberSpotOf(request), request.body.outOfService);
   });
 }
 

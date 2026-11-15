@@ -39,6 +39,10 @@ export function removeSpotOfMember(sources: LotSpotSources, spot: MemberSpot): P
   return changeSpots(sources, spot, (operatorId) => sources.spots.removeSpot(operatorId, { lotId: spot.lotId, spotId: spot.spotId }));
 }
 
+export function setSpotServiceOfMember(sources: LotSpotSources, spot: MemberSpot, outOfService: boolean): Promise<DashboardAisleSpots> {
+  return changeSpots(sources, spot, (operatorId) => sources.spots.setSpotService(operatorId, { lotId: spot.lotId, spotId: spot.spotId }, outOfService));
+}
+
 // Answers the aisle's spots after the change, so the page shows what was saved and the lot's new spot count.
 async function changeSpots(sources: LotSpotSources, member: MemberLot, write: OperatorWrite): Promise<DashboardAisleSpots> {
   const operatorId = await operatorIdOfMember(sources.operators, member);

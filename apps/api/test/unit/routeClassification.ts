@@ -81,6 +81,7 @@ export const DASHBOARD_PROTECTED = [
   'POST /v1/dashboard/lots/:id/aisles/:aisleId/spots',
   'PUT /v1/dashboard/lots/:id/spots/:spotId',
   'DELETE /v1/dashboard/lots/:id/spots/:spotId',
+  'PUT /v1/dashboard/lots/:id/spots/:spotId/service',
 ];
 
 const DASHBOARD_OPEN = ['POST /v1/dashboard/sign-out', 'GET /v1/dashboard/test/users', 'POST /v1/dashboard/test/sign-in'];

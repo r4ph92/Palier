@@ -91,6 +91,22 @@ export class FakeLotSpotRepository implements LotSpotRepository {
     });
   }
 
+  setSpotService(operatorId: string, place: SpotPlace, outOfService: boolean): Promise<LotSpotWrite> {
+    return this.#write(operatorId, place.lotId, () => {
+      const spot = this.#liveSpot(place);
+      if (spot === undefined) {
+        return spotsRefused('SPOT_NOT_FOUND');
+      }
+      const wanted: SpotState = outOfService ? 'OUT_OF_SERVICE' : 'AVAILABLE';
+      const from: SpotState = outOfService ? 'AVAILABLE' : 'OUT_OF_SERVICE';
+      if (spot.state !== wanted && (spot.state !== from || spot.isHeldBySession)) {
+        return spotsRefused('SPOT_IN_USE');
+      }
+      spot.state = wanted;
+      return spotsWritten(spot.aisleId);
+    });
+  }
+
   #remove(spot: FakeSpot): void {
     if (!spot.hasHistory) {
       this.spots.splice(this.spots.indexOf(spot), 1);

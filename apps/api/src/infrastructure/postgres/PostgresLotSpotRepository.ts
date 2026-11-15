@@ -9,10 +9,13 @@ import {
   deleteSpotWithoutHistoryStatement,
   firstTakenNumberStatement,
   insertSpotsStatement,
+  putBackInServiceStatement,
   readAisleSpotsStatement,
+  readLiveSpotStateStatement,
   readLiveSpotStatement,
   readParkingAisleStatement,
   retireSpotStatement,
+  takeOutOfServiceStatement,
 } from './lotSpotStatements.ts';
 import type { OwnedLot } from './lockParkingLot.ts';
 import { writeInOwnedLot } from './ownedLotWrite.ts';
@@ -21,6 +24,10 @@ type Executor = Pick<Transaction, 'execute'>;
 
 interface AisleIdRow extends Record<string, unknown> {
   readonly aisle_id: string;
+}
+
+interface SpotStateRow extends AisleIdRow {
+  readonly state: string;
 }
 
 interface SpotInsert {
@@ -53,6 +60,10 @@ export class PostgresLotSpotRepository implements LotSpotRepository {
 
   removeSpot(operatorId: string, spot: SpotPlace): Promise<LotSpotWrite> {
     return this.#write({ operatorId, lotId: spot.lotId }, (tx) => removeUnusedSpot(tx, operatorId, spot));
+  }
+
+  setSpotService(operatorId: string, spot: SpotPlace, outOfService: boolean): Promise<LotSpotWrite> {
+    return this.#write({ operatorId, lotId: spot.lotId }, (tx) => changeService(tx, { operatorId, spot, outOfService }));
   }
 
   async #write(lot: OwnedLot, write: (tx: Executor) => Promise<LotSpotWrite>): Promise<LotSpotWrite> {
@@ -95,4 +106,29 @@ async function removeUnusedSpot(tx: Executor, operatorId: string, spot: SpotPlac
 async function spotInUseOrNotFound(tx: Executor, operatorId: string, spot: SpotPlace): Promise<'SPOT_IN_USE' | 'SPOT_NOT_FOUND'> {
   const live = await tx.execute(readLiveSpotStatement(operatorId, spot));
   return live.length === 0 ? 'SPOT_NOT_FOUND' : 'SPOT_IN_USE';
+}
+
+interface ServiceChange {
+  readonly operatorId: string;
+  readonly spot: SpotPlace;
+  readonly outOfService: boolean;
+}
+
+async function changeService(tx: Executor, { operatorId, spot, outOfService }: ServiceChange): Promise<LotSpotWrite> {
+  const statement = outOfService ? takeOutOfServiceStatement(operatorId, spot) : putBackInServiceStatement(operatorId, spot);
+  const [changed] = await tx.execute<AisleIdRow>(statement);
+  if (changed !== undefined) {
+    return spotsWritten(changed.aisle_id);
+  }
+  return alreadyInServiceState(await tx.execute<SpotStateRow>(readLiveSpotStateStatement(operatorId, spot)), outOfService);
+}
+
+// Nothing changed: the spot is gone, already in the wanted state, or in use.
+function alreadyInServiceState(rows: readonly SpotStateRow[], outOfService: boolean): LotSpotWrite {
+  const [live] = rows;
+  if (live === undefined) {
+    return spotsRefused('SPOT_NOT_FOUND');
+  }
+  const alreadyDone = outOfService ? live.state === 'OUT_OF_SERVICE' : live.state === 'AVAILABLE';
+  return alreadyDone ? spotsWritten(live.aisle_id) : spotsRefused('SPOT_IN_USE');
 }

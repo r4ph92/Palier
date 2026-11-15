@@ -105,3 +105,29 @@ export function retireSpotStatement(operatorId: string, place: SpotPlace): SQL {
 export function readLiveSpotStatement(operatorId: string, place: SpotPlace): SQL {
   return sql`select spot.id from spot cross join parking_lot where ${ownedLiveSpot(operatorId, place)}`;
 }
+
+// A spot an open session reported taken is still in use, whatever its state says.
+const SPOT_NOT_REPORTED_BY_OPEN_SESSION = sql`not exists (select 1 from parking_session_reported_spot reported join parking_session reporter on reporter.id = reported.session_id
+  where reported.spot_id = spot.id and ${activeSessionOf('reporter')})`;
+
+// Conditional on the free state, so an entry that claimed the spot first leaves zero rows.
+export function takeOutOfServiceStatement(operatorId: string, place: SpotPlace): SQL {
+  return sql`
+    update spot set state = 'OUT_OF_SERVICE', state_changed_at = now()
+    from parking_lot
+    where ${ownedLiveSpot(operatorId, place)} and spot.state = 'AVAILABLE' and ${SPOT_NOT_IN_USE} and ${SPOT_NOT_REPORTED_BY_OPEN_SESSION}
+    returning spot.aisle_id`;
+}
+
+// Live spots only: a retired spot is out of service too and stays gone.
+export function putBackInServiceStatement(operatorId: string, place: SpotPlace): SQL {
+  return sql`
+    update spot set state = 'AVAILABLE', state_changed_at = now()
+    from parking_lot
+    where ${ownedLiveSpot(operatorId, place)} and spot.state = 'OUT_OF_SERVICE'
+    returning spot.aisle_id`;
+}
+
+export function readLiveSpotStateStatement(operatorId: string, place: SpotPlace): SQL {
+  return sql`select spot.state, spot.aisle_id from spot cross join parking_lot where ${ownedLiveSpot(operatorId, place)}`;
+}
