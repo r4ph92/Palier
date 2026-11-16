@@ -1,6 +1,20 @@
+import type { TariffPolicy } from './lotPricing.ts';
+
 export interface EntryRequest {
   // What the entry terminal's QR holds: its link, or the bare token at the end of that link.
   readonly qrContent: string;
+}
+
+// Read before the barrier: what the driver accepts by tapping « Entrer » (#151).
+export interface EntryQuoteRequest {
+  readonly qrContent: string;
+}
+
+export interface EntryQuoteResponse {
+  readonly lotName: string;
+  readonly tariff: TariffPolicy;
+  // What the card will hold until exit: the daily cap (Q19).
+  readonly holdCents: number;
 }
 
 export interface AssignedSpot {

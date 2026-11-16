@@ -18,7 +18,7 @@ import { julie } from './fakeDriverRepository.ts';
 const julieAtEntreeDemo: EligibleEntry = {
   driverId: julie.id,
   now: new Date('2026-11-05T12:00:00Z'),
-  gate: { id: entreeDemo.id, lotId: entreeDemo.lotId },
+  gate: { id: entreeDemo.id, lotId: entreeDemo.lotId, lotName: 'Parking Démo' },
   vehicle: { id: 'vehicle-julie', plate: 'ABC 123', needs: { isElectric: false, hasAccessiblePermit: false, isOversize: false } },
   payment: { customerId: 'cus_julie', paymentMethodId: 'pm_julie', amountCents: 2500, destinationAccountId: LAVOIE_ACCOUNT },
   pricing: { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 },

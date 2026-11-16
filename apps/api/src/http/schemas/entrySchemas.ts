@@ -1,4 +1,4 @@
-import type { EntryRequest, EntryResponse, EntryStatusResponse, GateCommand } from '@palier/shared-types';
+import type { EntryQuoteRequest, EntryQuoteResponse, EntryRequest, EntryResponse, EntryStatusResponse, GateCommand } from '@palier/shared-types';
 import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable } from './schemaMatchesType.ts';
@@ -12,6 +12,22 @@ export const entryRequestSchema = {
   required: ['qrContent'],
   additionalProperties: false,
   properties: { qrContent: { type: 'string', maxLength: QR_CONTENT_MAX_LENGTH } },
+} as const;
+
+export const entryQuoteRequestSchema = entryRequestSchema;
+
+const tariffSchema = {
+  type: 'object',
+  required: ['incrementCents', 'incrementMinutes', 'dailyCapCents'],
+  additionalProperties: false,
+  properties: { incrementCents: { type: 'integer' }, incrementMinutes: { type: 'integer' }, dailyCapCents: { type: 'integer' } },
+} as const;
+
+export const entryQuoteResponseSchema = {
+  type: 'object',
+  required: ['lotName', 'tariff', 'holdCents'],
+  additionalProperties: false,
+  properties: { lotName: { type: 'string' }, tariff: tariffSchema, holdCents: { type: 'integer' } },
 } as const;
 
 export const assignedSpotSchema = {
@@ -70,6 +86,8 @@ export const gateCommandsQuerySchema = {
 export type GateCommandsQuery = FromSchema<typeof gateCommandsQuerySchema>;
 
 export type RequestSchemaMatchesEntryRequest = AssertTrue<MutuallyAssignable<FromSchema<typeof entryRequestSchema>, EntryRequest>>;
+export type RequestSchemaMatchesEntryQuoteRequest = AssertTrue<MutuallyAssignable<FromSchema<typeof entryQuoteRequestSchema>, EntryQuoteRequest>>;
+export type ResponseSchemaMatchesEntryQuoteResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof entryQuoteResponseSchema>, EntryQuoteResponse>>;
 export type ResponseSchemaMatchesEntryResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof entryResponseSchema>, EntryResponse>>;
 export type CommandSchemaMatchesGateCommand = AssertTrue<MutuallyAssignable<FromSchema<typeof gateCommandSchema>, GateCommand>>;
 export type ResponseSchemaMatchesEntryStatus = AssertTrue<

@@ -12,6 +12,7 @@ export const STRICT_POLICY: EntryPolicy = { allowPlatformChargesWithoutOperatorA
 export const PARKING_DEMO_POLICY = { incrementCents: 75, incrementMinutes: 15, holdQuota: 3 };
 const parkingDemoLot = {
   id: entreeDemo.lotId,
+  name: 'Parking Démo',
   isOnline: true,
   dailyCapCents: 2500,
   pricingPolicy: PARKING_DEMO_POLICY,
@@ -39,6 +40,7 @@ export const entreeRoyGate: EntryGate = {
   lastHeartbeatAt: null,
   lot: {
     id: '00000000-0000-4000-8000-000000000202',
+    name: 'Garage Roy',
     isOnline: false,
     dailyCapCents: 2500,
     pricingPolicy: PARKING_DEMO_POLICY,

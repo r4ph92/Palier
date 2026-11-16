@@ -43,6 +43,8 @@ export type {
   AssignedSpot,
   EntryRefusalBody,
   EntryRefusalCode,
+  EntryQuoteRequest,
+  EntryQuoteResponse,
   EntryRequest,
   EntryResponse,
   EntrySessionState,
