@@ -1,8 +1,8 @@
 import type { Translations } from './fr';
 import { accountEn, receiptsEn } from './accountEn';
 import { sessionPartsEn } from './sessionPartsEn';
+import { scanEn } from './scanEn';
 import { spotHoldEn } from './spotHoldEn';
-import { LOT_NOT_IN_SERVICE, NOT_RESPONDING, TOO_MANY_ATTEMPTS } from './sharedEn';
 
 export const en: Translations = {
   app: {
@@ -103,45 +103,7 @@ export const en: Translations = {
     keepOneVehicle: 'Keep at least one vehicle.',
     actionFailed: 'Could not update your vehicles. Check your connection, then try again.',
   },
-  scan: {
-    eyebrow: 'Entry',
-    title: 'Scan',
-    qrLabel: 'QR content',
-    qrHint: 'Paste the content of the entry terminal’s QR.',
-    submit: 'Scan',
-    submitting: 'Checking…',
-    tariff: '%{price} per %{minutes}\u00A0min, daily cap %{cap}',
-    hold: '%{amount} will be held on your card until you exit',
-    spotLead: 'Your spot: ',
-    spotPlace: '\u00A0· Level\u00A0%{level}\u00A0· Aisle\u00A0%{aisle}',
-    barrierOpen: 'Barrier open',
-    entryConfirmed: 'Entry confirmed',
-    entryCancelled: 'Entry cancelled: no passage detected. Nothing charged.',
-    done: 'Done',
-    addPlate: 'Add a plate',
-    addCard: 'Add a card',
-    retry: 'Try again',
-    unreachable: 'Can’t reach Palier',
-    unreachableHint: 'Check your connection, then try again.',
-    notResponding: NOT_RESPONDING,
-    cardDeclined: 'Your card declined the %{amount} authorization. Update your payment method.',
-    paymentMethod: 'Payment method',
-    refusals: {
-      QR_NOT_RECOGNIZED: 'QR not recognized',
-      NOT_AN_ENTRY_GATE: 'This QR is not an entry terminal',
-      LOT_NOT_IN_SERVICE,
-      GATE_UNAVAILABLE: 'This terminal is not available',
-      GATE_SILENT: 'Terminal out of service — entry not possible',
-      PREREQUISITES_MISSING: 'Add a plate and a card before entering',
-      OPERATOR_NOT_PAYABLE: 'This lot cannot take payments right now',
-      LOT_FULL: 'Full — the barrier stays closed',
-      NO_SUITABLE_SPOT: 'No suitable spot for your vehicle — the barrier stays closed',
-      ALREADY_INSIDE: 'You already have an entry in progress',
-      CARD_DECLINED: 'Card declined',
-      PAYMENTS_UNAVAILABLE: 'Payment temporarily unavailable — the barrier stays closed',
-      TOO_MANY_ENTRIES: TOO_MANY_ATTEMPTS,
-    },
-  },
+  scan: scanEn,
   session: {
     eyebrow: 'Current session',
     none: 'No session in progress',
