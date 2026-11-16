@@ -14,6 +14,10 @@ export interface StaleSessionRepository {
   flagLotStaleSessions(lotId: string, check: StaleCheck): Promise<number>;
 }
 
+interface LotStaleCheck extends StaleCheck {
+  readonly lotId: string;
+}
+
 export interface StaleSessionJob {
   readonly staleSessions: StaleSessionRepository;
   readonly clock: Clock;
@@ -24,11 +28,11 @@ export async function flagStaleSessions({ staleSessions, clock }: StaleSessionJo
   const now = clock();
   const check: StaleCheck = { cutoff: staleCutoff(now), now };
   for (const lotId of await staleSessions.findLotsWithStaleSessions(check.cutoff)) {
-    await flagLot(staleSessions, lotId, check, log);
+    await flagLot(staleSessions, { lotId, ...check }, log);
   }
 }
 
-async function flagLot(staleSessions: StaleSessionRepository, lotId: string, check: StaleCheck, log: JobLog): Promise<void> {
+async function flagLot(staleSessions: StaleSessionRepository, { lotId, ...check }: LotStaleCheck, log: JobLog): Promise<void> {
   try {
     const flagged = await staleSessions.flagLotStaleSessions(lotId, check);
     if (flagged > 0) {

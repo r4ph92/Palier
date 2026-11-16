@@ -93,8 +93,13 @@ function sessionListIndex(table: { readonly lotId: AnyPgColumn; readonly entrySc
   return index('parking_session_lot_entry_scan_index').on(table.lotId, table.entryScanAt.desc().nullsFirst(), table.id.desc().nullsFirst());
 }
 
-function lotReadIndexes(table: SpotColumns & { readonly entryScanAt: ExtraConfigColumn; readonly id: ExtraConfigColumn }) {
-  return [...spotHistoryIndexes(table), sessionListIndex(table)];
+// The operator's review list: only the flagged sessions that are still open, so the index stays small.
+function staleFlaggedIndex(table: { readonly lotId: AnyPgColumn; readonly staleFlaggedAt: ExtraConfigColumn }) {
+  return index('parking_session_stale_flagged_by_lot_index').on(table.lotId, table.staleFlaggedAt).where(sql`${table.staleFlaggedAt} is not null and ${ACTIVE_SESSION}`);
+}
+
+function lotReadIndexes(table: SpotColumns & { readonly entryScanAt: ExtraConfigColumn; readonly id: ExtraConfigColumn; readonly staleFlaggedAt: ExtraConfigColumn }) {
+  return [...spotHistoryIndexes(table), sessionListIndex(table), staleFlaggedIndex(table)];
 }
 
 export const parkingSession = pgTable(
@@ -173,7 +178,6 @@ export const parkingSession = pgTable(
     uniqueIndex('parking_session_one_active_per_confirmed_spot_index').on(table.confirmedSpotId).where(ACTIVE_SESSION),
     index('parking_session_hold_release_pending_index').on(table.holdReleaseAttemptedAt.asc().nullsFirst(), table.id).where(sql`${table.holdReleasePending}`),
     ...lotReadIndexes(table),
-    index('parking_session_stale_flagged_by_lot_index').on(table.lotId, table.staleFlaggedAt).where(sql`${table.staleFlaggedAt} is not null and ${ACTIVE_SESSION}`),
     index('parking_session_awaiting_signal_by_lot_index').on(table.lotId).where(sql`${table.state} in ('ENTRY_CONFIRMED', 'PARKED_UNCONFIRMED')`),
   ],
 );

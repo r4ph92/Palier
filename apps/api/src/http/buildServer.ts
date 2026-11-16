@@ -126,6 +126,18 @@ export function buildServer({ repositories, gates, cardGateway, entries, exits, 
   return server;
 }
 
+function lotFeatureRepositories(repositories: ServerDependencies['repositories']) {
+  return {
+    spots: repositories.lotSpots,
+    spotChecks: repositories.spotChecks,
+    sessionTimelines: repositories.sessionTimelines,
+    staleSessionReviews: repositories.staleSessionReviews,
+    gates: repositories.lotGates,
+    gateSecrets: repositories.gateSecrets,
+    publication: repositories.lotPublication,
+  };
+}
+
 // The dashboard has its own scope, outside the app's: the minimum app version does not apply to a browser.
 function dashboardDependencies({ repositories, settings = {}, operatorStripe, testClock }: Omit<ServerDependencies, 'gates'>): DashboardRouteDependencies {
   return {
@@ -136,13 +148,7 @@ function dashboardDependencies({ repositories, settings = {}, operatorStripe, te
     maps: repositories.lotMaps,
     equipment: repositories.lotEquipment,
     clock: composedClockOf(settings, repositories, testClock),
-    spots: repositories.lotSpots,
-    spotChecks: repositories.spotChecks,
-    sessionTimelines: repositories.sessionTimelines,
-    staleSessionReviews: repositories.staleSessionReviews,
-    gates: repositories.lotGates,
-    gateSecrets: repositories.gateSecrets,
-    publication: repositories.lotPublication,
+    ...lotFeatureRepositories(repositories),
     stripe: operatorStripe?.gateway == null ? null : { accounts: operatorStripe.accounts, gateway: operatorStripe.gateway },
     testSignInEnabled: settings.testSignInEnabled === true,
     secureCookies: settings.secureCookies ?? true,

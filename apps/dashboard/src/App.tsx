@@ -109,6 +109,13 @@ function LotSubpageOf({ route }: { readonly route: LotSubpageRoute }) {
       return <GatesPage lotId={route.lotId} />;
     case 'publication':
       return <PublicationPage lotId={route.lotId} />;
+    default:
+      return <SessionSubpageOf route={route} />;
+  }
+}
+
+function SessionSubpageOf({ route }: { readonly route: Extract<Route, { page: 'sessions' | 'staleSessions' | 'session' }> }) {
+  switch (route.page) {
     case 'sessions':
       return <SessionsPage lotId={route.lotId} />;
     case 'staleSessions':
