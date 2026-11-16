@@ -23,6 +23,7 @@ describe('readServerEnvironment', () => {
       entryCancellation: { confirmationWindowSeconds: 60, cancellationPeriodSeconds: 30 },
       holdExpiryPeriodSeconds: 30,
       silentSessionCheckPeriodSeconds: 300,
+      staleSessionCheckPeriodSeconds: 3600,
     });
   });
 
@@ -122,6 +123,25 @@ describe('silent session check period', () => {
 
   it.each(['abc', '0', '-5', '1.5'])('refuses a period of "%s"', (rawSeconds) => {
     expect(() => periodOf({ SILENT_SESSION_CHECK_PERIOD_SECONDS: rawSeconds })).toThrow(/SILENT_SESSION_CHECK_PERIOD_SECONDS must be a positive whole number/);
+  });
+});
+
+describe('stale session check period', () => {
+  function periodOf(variables: NodeJS.ProcessEnv): number {
+    return readServerEnvironment({ DATABASE_URL: databaseUrl, ...variables }).staleSessionCheckPeriodSeconds;
+  }
+
+  it('checks every hour unless told otherwise', () => {
+    expect(periodOf({})).toBe(3600);
+    expect(periodOf({ STALE_SESSION_CHECK_SECONDS: '' })).toBe(3600);
+  });
+
+  it('reads the period in seconds', () => {
+    expect(periodOf({ STALE_SESSION_CHECK_SECONDS: '10' })).toBe(10);
+  });
+
+  it.each(['abc', '0', '-5', '1.5'])('refuses a period of "%s"', (rawSeconds) => {
+    expect(() => periodOf({ STALE_SESSION_CHECK_SECONDS: rawSeconds })).toThrow(/STALE_SESSION_CHECK_SECONDS must be a positive whole number/);
   });
 });
 

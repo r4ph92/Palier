@@ -21,6 +21,8 @@ export type StatementLabel =
   | 'has-usable-spot-hold'
   | 'assign-held-spot'
   | 'free-held-spot'
+  | 'find-stale-session-lots'
+  | 'flag-stale-sessions'
   | 'find-silent-session-lots'
   | 'presume-silent-entries'
   | 'presume-silent-questions'
@@ -143,6 +145,8 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['occupy-confirmed-spot', /update spot set state = 'OCCUPIED', state_changed_at = now\(\)/],
   ['insert-gate-command', /insert into gate_command/],
   ['backdate-entry', /set entry_confirmed_at = /],
+  ['find-stale-session-lots', /select distinct lot_id from parking_session where .* stale_flagged_at is null/s],
+  ['flag-stale-sessions', /set stale_flagged_at =/],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],
   ['presume-silent-questions', /where lot_id = \$\d and state = 'PARKED_UNCONFIRMED' and parked_at/],

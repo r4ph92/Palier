@@ -21,6 +21,24 @@ describe('periodic task', () => {
     await stop();
   });
 
+  it('runs once at once when asked to, then at each period', async () => {
+    const flag = vi.fn(() => Promise.resolve());
+    const stop = new SingleRun().startPeriodicTask(flag, { logger: { error: vi.fn() }, failureMessage: 'Task failed', periodMilliseconds: PERIOD, runAtStart: true });
+
+    expect(flag).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(PERIOD);
+    expect(flag).toHaveBeenCalledTimes(2);
+    await stop();
+  });
+
+  it('waits for the first period when not asked to run at once', async () => {
+    const expire = vi.fn(() => Promise.resolve());
+    const stop = periodic(expire);
+
+    expect(expire).not.toHaveBeenCalled();
+    await stop();
+  });
+
   it('skips a period while the previous run still works', async () => {
     let finish: () => void = () => undefined;
     const expire = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
