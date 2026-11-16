@@ -23,7 +23,7 @@ export async function listOnlineLots(repository: LotAvailabilityRepository, log:
   return lots.slice(0, ONLINE_LOTS_LIMIT).map(lotSummary);
 }
 
-function lotSummary({ id, name, location, availability }: OnlineLot): LotSummary {
+function lotSummary({ id, name, location, availability, tariff }: OnlineLot): LotSummary {
   return {
     id,
     name,
@@ -31,5 +31,6 @@ function lotSummary({ id, name, location, availability }: OnlineLot): LotSummary
     capacity: availability.capacity,
     freeSpotsByCategory: freeSpotsByCategory(availability),
     location,
+    tariff,
   };
 }

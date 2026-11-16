@@ -1,4 +1,4 @@
-import type { GeoPosition } from '@palier/shared-types';
+import type { GeoPosition, TariffPolicy } from '@palier/shared-types';
 import type { LotAvailability } from '../occupancy/LotAvailability.ts';
 
 export interface OnlineLot {
@@ -6,4 +6,5 @@ export interface OnlineLot {
   readonly name: string;
   readonly location: GeoPosition | null;
   readonly availability: LotAvailability;
+  readonly tariff: TariffPolicy | null;
 }

@@ -212,6 +212,8 @@ describe('QA #5 onlineLotFromRow with hostile rows', () => {
     vehicleCount: 0,
     heldSpotCount: 0,
     assignedSpotCount: 0,
+    pricingPolicy: { incrementCents: 75, incrementMinutes: 15 },
+    dailyCapCents: 2500,
   };
 
   it.each([

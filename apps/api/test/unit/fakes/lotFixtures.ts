@@ -1,8 +1,11 @@
-import type { SpotCountByCategory } from '@palier/shared-types';
+import type { SpotCountByCategory, TariffPolicy } from '@palier/shared-types';
 import type { LotAvailabilityRepository } from '../../../src/domain/lots/LotAvailabilityRepository.ts';
 import type { OnlineLot } from '../../../src/domain/lots/OnlineLot.ts';
 import type { LotAvailability } from '../../../src/domain/occupancy/LotAvailability.ts';
 import { PARKING_DEMO_ID, parkingDemoLot } from '../../../src/seed/fixtures/parkingDemo.ts';
+
+// 0,75 $ par 15 min, plafond 25,00 $ par jour, as seeded.
+export const PARKING_DEMO_TARIFF: TariffPolicy = { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 };
 
 export const PARKING_DEMO_CATEGORIES: SpotCountByCategory = { standard: 7, electric: 1, accessible: 1, oversize: 1 };
 // Displayed once 8 vehicles are inside while every spot is free: 2 by the counter.
@@ -19,6 +22,7 @@ export function parkingDemoOnline(availability = parkingDemoAvailability()): Onl
     name: 'Parking Démo',
     location: { latitude: Number(parkingDemoLot.latitude), longitude: Number(parkingDemoLot.longitude) },
     availability,
+    tariff: PARKING_DEMO_TARIFF,
   };
 }
 

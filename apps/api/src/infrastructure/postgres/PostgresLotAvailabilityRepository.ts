@@ -31,6 +31,8 @@ export class PostgresLotAvailabilityRepository implements LotAvailabilityReposit
         vehicleCount: parkingLot.vehicleCount,
         heldSpotCount: HELD_SPOT_COUNT,
         assignedSpotCount: ASSIGNED_SPOT_COUNT,
+        pricingPolicy: parkingLot.pricingPolicy,
+        dailyCapCents: parkingLot.dailyCapCents,
       })
       .from(parkingLot)
       .where(eq(parkingLot.isOnline, true))

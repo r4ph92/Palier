@@ -12,6 +12,7 @@ const garageRoy: LotSummary = {
   capacity: 120,
   freeSpotsByCategory: { standard: 34, electric: 6, accessible: 2, oversize: 0 },
   location: null,
+  tariff: null,
 };
 
 describe('LotGauge', () => {

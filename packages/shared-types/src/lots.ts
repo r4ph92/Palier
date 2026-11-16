@@ -1,3 +1,5 @@
+import type { TariffPolicy } from './lotPricing.ts';
+
 export const SPOT_CATEGORIES = ['standard', 'electric', 'accessible', 'oversize'] as const;
 
 export type SpotCategory = (typeof SPOT_CATEGORIES)[number];
@@ -36,6 +38,8 @@ export interface LotSummary {
   readonly capacity: number;
   readonly freeSpotsByCategory: SpotCountByCategory;
   readonly location: GeoPosition | null;
+  // Shown before the driver scans (#151); null only for a lot whose stored price cannot be read, which admits no one.
+  readonly tariff: TariffPolicy | null;
 }
 
 export type LotListResponse = readonly LotSummary[];

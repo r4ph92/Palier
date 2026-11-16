@@ -13,6 +13,8 @@ const parkingDemoRow: OnlineLotRow = {
   vehicleCount: 0,
   heldSpotCount: 0,
   assignedSpotCount: 0,
+  pricingPolicy: { incrementCents: 75, incrementMinutes: 15 },
+  dailyCapCents: 2500,
 };
 
 const fourThreeTwoOne: readonly AvailableSpotGroup[] = [
@@ -54,5 +56,17 @@ describe('onlineLotFromRow', () => {
     ['a longitude past the antimeridian', parkingDemoRow.latitude, '-180.5'],
   ])('gives a lot with %s no location', (_case, latitude, longitude) => {
     expect(onlineLotFromRow({ ...parkingDemoRow, latitude, longitude }, []).location).toBeNull();
+  });
+
+  it('reads the stored price as the lot tariff', () => {
+    expect(onlineLotFromRow(parkingDemoRow, []).tariff).toEqual({ incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 });
+  });
+
+  it.each([
+    ['a policy that is not an object', 'cheap', 2500],
+    ['a negative increment price', { incrementCents: -75, incrementMinutes: 15 }, 2500],
+    ['no daily cap', { incrementCents: 75, incrementMinutes: 15 }, null],
+  ])('lists a lot with %s without a tariff', (_case, pricingPolicy, dailyCapCents) => {
+    expect(onlineLotFromRow({ ...parkingDemoRow, pricingPolicy, dailyCapCents }, []).tariff).toBeNull();
   });
 });

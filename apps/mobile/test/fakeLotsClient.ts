@@ -25,6 +25,9 @@ export class FakeLotsClient implements LotsClient {
   }
 }
 
+// 0,75 $ par 15 min, plafond 25,00 $ par jour, as seeded.
+export const PARKING_DEMO_TARIFF = { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 } as const;
+
 export const PARKING_DEMO_ID = '00000000-0000-4000-8000-000000000201';
 
 // Parking Démo as seeded (7 standard, 1 electric, 1 accessible, 1 oversize), each category capped at freeSpots.
@@ -37,6 +40,7 @@ export function parkingDemo(freeSpots: number): LotSummary {
     capacity: 10,
     freeSpotsByCategory: { standard: capped(7), electric: capped(1), accessible: capped(1), oversize: capped(1) },
     location: PARKING_DEMO_LOCATION,
+    tariff: PARKING_DEMO_TARIFF,
   };
 }
 
@@ -47,6 +51,7 @@ export const parkingTestPaliers: LotSummary = {
   capacity: 6,
   freeSpotsByCategory: { standard: 5, electric: 0, accessible: 0, oversize: 0 },
   location: PARKING_TEST_PALIERS_LOCATION,
+  tariff: PARKING_DEMO_TARIFF,
 };
 
 export const PARKING_DEMO_CATEGORY_LINE_FR = 'Standard 7 · Électrique 1 · Accessible 1 · Grand gabarit 1';
