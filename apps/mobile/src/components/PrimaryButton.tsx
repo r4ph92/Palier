@@ -29,7 +29,7 @@ export function PrimaryButton({ label, onPress, busy = false, busyLabel = label,
       accessibilityState={{ busy, disabled: isInactive }}
       disabled={isInactive}
       onPress={onPress}
-      style={({ pressed }) => [styles.button, { backgroundColor: colors.ink, opacity: buttonOpacity(pressed, disabled) }]}
+      style={({ pressed }) => [styles.button, { backgroundColor: colors.accent, borderColor: colors.onAccent, opacity: buttonOpacity(pressed, disabled) }]}
     >
       <ButtonLabel shown={shownLabel} longest={busyLabel.length > label.length ? busyLabel : label} />
     </Pressable>
@@ -48,7 +48,7 @@ function ButtonLabel({ shown, longest }: { readonly shown: string; readonly long
       >
         {longest}
       </Text>
-      <Text maxFontSizeMultiplier={BUTTON_LABEL_MAX_FONT_SCALE} style={[typography.button, styles.shownLabel, { color: colors.onInk }]}>
+      <Text maxFontSizeMultiplier={BUTTON_LABEL_MAX_FONT_SCALE} style={[typography.button, styles.shownLabel, { color: colors.onAccent }]}>
         {shown}
       </Text>
     </View>
@@ -67,6 +67,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     justifyContent: 'center',
     minHeight: MINIMUM_TOUCH_TARGET,
+    // The ink border sets the yellow apart from a light screen, where yellow alone has too little contrast.
+    borderWidth: 3,
     marginTop: spacing.small,
     paddingHorizontal: spacing.large,
   },

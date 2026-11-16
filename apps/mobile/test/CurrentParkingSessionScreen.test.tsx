@@ -25,7 +25,8 @@ describe('CurrentParkingSessionScreen', () => {
     await showSession();
 
     expect(screen.getByText('Parking Démo')).toBeOnTheScreen();
-    expect(screen.getByText('A-1 · Palier P1 · Allée A', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('A-1', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('Palier P1 · Allée A', visibleText)).toBeOnTheScreen();
     expect(screen.getByText('Entrée 18 h 02', visibleText)).toBeOnTheScreen();
     expect(screen.getByText('3 h 15', visibleText)).toBeOnTheScreen();
     expect(screen.getByText('Montant à ce jour : 9,75 $', visibleText)).toBeOnTheScreen();
@@ -59,6 +60,32 @@ describe('CurrentParkingSessionScreen', () => {
     await showSession();
 
     expect(screen.getByLabelText('A-1 · Palier P1 · Allée A. Entrée confirmée', visibleText)).toBeOnTheScreen();
+  });
+
+  it('shows the spot as a signage panel: yellow, ink border, level badge and the number in large mono', async () => {
+    await showSession();
+
+    expect(screen.getByTestId('spot-panel')).toHaveStyle({ backgroundColor: '#F5C400', borderColor: '#191C1A', borderWidth: 3 });
+    expect(screen.getByText('Votre place')).toBeOnTheScreen();
+    expect(screen.getByTestId('spot-panel-level')).toHaveTextContent('P1');
+    expect(screen.getByText('A-1', visibleText)).toHaveStyle({ fontFamily: 'IBMPlexMono_600SemiBold', fontSize: 72, color: '#191C1A' });
+    expect(screen.getByText('A-1', visibleText)).toHaveProp('maxFontSizeMultiplier', 1.3);
+  });
+
+  it('keeps a long spot number on one line, shrinking it to fit', async () => {
+    await showSession(julieAtParkingDemo({ spot: { number: 'P2-A-104', levelCode: 'P2', aisleCode: 'A' } }));
+
+    const number = screen.getByText('P2-A-104', visibleText);
+    expect(number).toHaveProp('numberOfLines', 1);
+    expect(number).toHaveProp('adjustsFontSizeToFit', true);
+    expect(number).toHaveProp('minimumFontScale', 0.5);
+  });
+
+  it('labels the panel in English', async () => {
+    await showSession(julieAtParkingDemo(), 'en');
+
+    expect(screen.getByText('Your spot')).toBeOnTheScreen();
+    expect(screen.getByText('Level P1 · Aisle A', visibleText)).toBeOnTheScreen();
   });
 
   it('tells when Palier was last heard from', async () => {

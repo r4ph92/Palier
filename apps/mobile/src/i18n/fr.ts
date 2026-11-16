@@ -22,6 +22,10 @@ export const fr = {
       one: 'place libre',
       other: 'places libres',
     },
+    freeSpotsOutOf: {
+      one: '%{count} place libre sur %{capacity}',
+      other: '%{count} places libres sur %{capacity}',
+    },
     full: 'Complet',
     fullAccessibilityLabel: 'Complet, 0 place libre',
     loading: 'Chargement des stationnements',

@@ -20,4 +20,11 @@ describe('PrimaryButton', () => {
 
     expect(screen.getByText('Confirmer B-3', { includeHiddenElements: true })).toHaveStyle({ opacity: 0 });
   });
+
+  it('is signage yellow with ink text and an ink border', async () => {
+    await render(<PrimaryButton label="Ouvrir la barrière de sortie" onPress={() => undefined} />);
+
+    expect(screen.getByRole('button', { name: 'Ouvrir la barrière de sortie' })).toHaveStyle({ backgroundColor: '#F5C400', borderColor: '#191C1A', borderWidth: 3 });
+    expect(screen.getByText('Ouvrir la barrière de sortie')).toHaveStyle({ color: '#191C1A' });
+  });
 });

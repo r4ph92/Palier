@@ -22,6 +22,10 @@ export const en: Translations = {
       one: 'free spot',
       other: 'free spots',
     },
+    freeSpotsOutOf: {
+      one: '%{count} free spot out of %{capacity}',
+      other: '%{count} free spots out of %{capacity}',
+    },
     full: 'Full',
     fullAccessibilityLabel: 'Full, 0 free spots',
     loading: 'Loading parking lots',

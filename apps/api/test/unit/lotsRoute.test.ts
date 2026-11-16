@@ -23,26 +23,26 @@ describe('GET /v1/lots', () => {
     return server.inject({ method: 'GET', url: '/v1/lots', headers });
   }
 
-  it('lists each online lot with its free spots, free spots by category and location', async () => {
+  it('lists each online lot with its free spots, capacity, free spots by category and location', async () => {
     const response = await listLotsAsJulie(repositoryReturning([parkingDemo]));
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual([
-      { id: parkingDemo.id, name: 'Parking Démo', freeSpots: 10, freeSpotsByCategory: PARKING_DEMO_CATEGORIES, location: parkingDemo.location },
+      { id: parkingDemo.id, name: 'Parking Démo', freeSpots: 10, capacity: 10, freeSpotsByCategory: PARKING_DEMO_CATEGORIES, location: parkingDemo.location },
     ]);
   });
 
-  it('exposes only the id, name, counts and location', async () => {
+  it('exposes only the id, name, counts, capacity and location', async () => {
     const response = await listLotsAsJulie(repositoryReturning([parkingDemo]));
 
-    expect(Object.keys(response.json<object[]>()[0] ?? {}).sort()).toEqual(['freeSpots', 'freeSpotsByCategory', 'id', 'location', 'name']);
+    expect(Object.keys(response.json<object[]>()[0] ?? {}).sort()).toEqual(['capacity', 'freeSpots', 'freeSpotsByCategory', 'id', 'location', 'name']);
   });
 
   it('shows 2 free spots and no category above 2 when 8 vehicles are inside while every spot is free', async () => {
     const response = await listLotsAsJulie(repositoryReturning([parkingDemoOnline(parkingDemoAvailability({ vehicleCount: 8 }))]));
 
     expect(response.json()).toEqual([
-      expect.objectContaining({ freeSpots: 2, freeSpotsByCategory: PARKING_DEMO_CATEGORIES_WITH_8_INSIDE }),
+      expect.objectContaining({ freeSpots: 2, capacity: 10, freeSpotsByCategory: PARKING_DEMO_CATEGORIES_WITH_8_INSIDE }),
     ]);
   });
 

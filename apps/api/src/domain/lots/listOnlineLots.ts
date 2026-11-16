@@ -28,6 +28,7 @@ function lotSummary({ id, name, location, availability }: OnlineLot): LotSummary
     id,
     name,
     freeSpots: freeSpotCount(availability),
+    capacity: availability.capacity,
     freeSpotsByCategory: freeSpotsByCategory(availability),
     location,
   };

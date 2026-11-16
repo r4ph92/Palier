@@ -28,12 +28,13 @@ export const lotListResponseSchema = {
   type: 'array',
   items: {
     type: 'object',
-    required: ['id', 'name', 'freeSpots', 'freeSpotsByCategory', 'location'],
+    required: ['id', 'name', 'freeSpots', 'capacity', 'freeSpotsByCategory', 'location'],
     additionalProperties: false,
     properties: {
       id: { type: 'string' },
       name: { type: 'string' },
       freeSpots: { type: 'integer' },
+      capacity: { type: 'integer', minimum: 0 },
       freeSpotsByCategory: spotCountByCategorySchema,
       location: locationSchema,
     },

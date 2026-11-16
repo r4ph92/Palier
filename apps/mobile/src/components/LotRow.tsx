@@ -10,6 +10,7 @@ import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 import { FreeSpotCount } from './FreeSpotCount';
 import { LotCategories } from './LotCategories';
+import { LotGauge } from './LotGauge';
 
 interface LotRowProps {
   readonly nearbyLot: NearbyLot;
@@ -30,6 +31,7 @@ export function LotRow({ nearbyLot, action = null }: LotRowProps) {
     <View style={[styles.row, { borderBottomColor: colors.line }]}>
       <View accessible accessibilityLabel={lotAccessibilityLabel(nearbyLot)} testID={`lot-row-${lot.id}`} style={styles.details}>
         <LotSummaryLine nearbyLot={nearbyLot} />
+        <LotGauge freeSpots={lot.freeSpots} capacity={lot.capacity} />
         {lot.freeSpots > 0 ? <LotCategories counts={lot.freeSpotsByCategory} /> : null}
       </View>
       {action}

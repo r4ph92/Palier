@@ -68,7 +68,7 @@ describe('HomeScreen with location allowed', () => {
   it('reads the whole row to VoiceOver', async () => {
     await renderHomeScreen(new FakeLotsClient([parkingDemo(2)]));
 
-    expect(await screen.findByLabelText('Parking Démo, 350 mètres, 2 places libres, Standard 2, Électrique 1, Accessible 1, Grand gabarit 1')).toBeOnTheScreen();
+    expect(await screen.findByLabelText('Parking Démo, 350 mètres, 2 places libres sur 10, Standard 2, Électrique 1, Accessible 1, Grand gabarit 1')).toBeOnTheScreen();
   });
 
   it('reads a full lot to VoiceOver as Complet', async () => {
@@ -138,7 +138,7 @@ describe('HomeScreen nearby lots in English', () => {
 
     expect(await screen.findByText('Standard 7 · EV 1 · Accessible 1 · Oversize 1', visibleText)).toBeOnTheScreen();
     expect(screen.getByText('350 m', visibleText)).toBeOnTheScreen();
-    expect(screen.getByLabelText('Parking Démo, 350 metres, 10 free spots, Standard 7, EV 1, Accessible 1, Oversize 1')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Parking Démo, 350 metres, 10 free spots out of 10, Standard 7, EV 1, Accessible 1, Oversize 1')).toBeOnTheScreen();
   });
 
   it('writes a distance over a kilometre with a decimal point', async () => {

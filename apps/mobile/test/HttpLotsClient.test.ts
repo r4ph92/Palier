@@ -48,6 +48,12 @@ describe('HttpLotsClient', () => {
     await expect(clientAnswering(wrongShape).listLots()).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 
+  it('accepts a lot with no spot at all', async () => {
+    const empty = { ...parkingDemo, freeSpots: 0, capacity: 0 };
+
+    await expect(clientAnswering(jsonResponse([empty])).listLots()).resolves.toEqual([empty]);
+  });
+
   it('accepts a lot without a location', async () => {
     const withoutLocation = { ...parkingDemo, location: null };
 
@@ -57,7 +63,10 @@ describe('HttpLotsClient', () => {
   it.each([
     ['a missing category count', { ...parkingDemo, freeSpotsByCategory: { standard: 7, electric: 1, accessible: 1 } }],
     ['a category count that is not an integer', { ...parkingDemo, freeSpotsByCategory: { ...parkingDemo.freeSpotsByCategory, oversize: '1' } }],
-    ['a missing location', { id: parkingDemo.id, name: parkingDemo.name, freeSpots: 10, freeSpotsByCategory: parkingDemo.freeSpotsByCategory }],
+    ['a missing location', { id: parkingDemo.id, name: parkingDemo.name, freeSpots: 10, capacity: 10, freeSpotsByCategory: parkingDemo.freeSpotsByCategory }],
+    ['a missing capacity', { id: parkingDemo.id, name: parkingDemo.name, freeSpots: 10, freeSpotsByCategory: parkingDemo.freeSpotsByCategory, location: parkingDemo.location }],
+    ['a negative capacity', { ...parkingDemo, capacity: -1 }],
+    ['a capacity that is not an integer', { ...parkingDemo, capacity: 9.5 }],
     ['a location without longitude', { ...parkingDemo, location: { latitude: 45.5 } }],
     ['a latitude that is not a number', { ...parkingDemo, location: { latitude: '45.5', longitude: -73.5 } }],
     ['a latitude past the pole', { ...parkingDemo, location: { latitude: 120, longitude: -73.5 } }],

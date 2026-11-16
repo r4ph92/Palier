@@ -28,6 +28,7 @@ export function ScreenHeader({ eyebrow, title, action }: ScreenHeaderProps) {
       >
         {title}
       </Text>
+      <View testID="header-mark" style={[styles.mark, { backgroundColor: colors.accent }]} />
     </View>
   );
 }
@@ -60,4 +61,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.medium,
     borderBottomWidth: 2,
   },
+  // A short yellow bar opens the ink rule under the title, standing 4 pt above it.
+  mark: { position: 'absolute', left: 0, bottom: -2, width: 56, height: 6 },
 });

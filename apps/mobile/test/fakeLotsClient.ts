@@ -34,6 +34,7 @@ export function parkingDemo(freeSpots: number): LotSummary {
     id: PARKING_DEMO_ID,
     name: 'Parking Démo',
     freeSpots,
+    capacity: 10,
     freeSpotsByCategory: { standard: capped(7), electric: capped(1), accessible: capped(1), oversize: capped(1) },
     location: PARKING_DEMO_LOCATION,
   };
@@ -43,6 +44,7 @@ export const parkingTestPaliers: LotSummary = {
   id: '00000000-0000-4000-8000-000000000203',
   name: 'Parking Test Paliers',
   freeSpots: 5,
+  capacity: 6,
   freeSpotsByCategory: { standard: 5, electric: 0, accessible: 0, oversize: 0 },
   location: PARKING_TEST_PALIERS_LOCATION,
 };

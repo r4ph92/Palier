@@ -1,4 +1,4 @@
-import { act, screen, userEvent } from '@testing-library/react-native';
+import { act, screen, userEvent, within } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { PalierUnreachableError } from '../src/api/LotsClient';
 import { SESSION_REFRESH_MILLISECONDS } from '../src/parkingSessions/useCurrentParkingSession';
@@ -21,7 +21,8 @@ describe('the current session after a relaunch', () => {
     await relaunchAsJulie(new FakeParkingSessionClient(julieAtParkingDemo()));
 
     expect(await screen.findByText('Montant à ce jour : 9,75 $', visibleText)).toBeOnTheScreen();
-    expect(screen.getByText('A-1 · Palier P1 · Allée A', visibleText)).toBeOnTheScreen();
+    expect(within(screen.getByTestId('spot-panel')).getByText('A-1', visibleText)).toBeOnTheScreen();
+    expect(screen.getByText('Palier P1 · Allée A', visibleText)).toBeOnTheScreen();
     expect(screen.getByRole('tab', { name: 'Session', selected: true })).toBeOnTheScreen();
     expect(screen.getAllByRole('tab')).toHaveLength(3);
   });

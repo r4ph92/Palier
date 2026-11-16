@@ -10,6 +10,8 @@ export const typography = StyleSheet.create({
   // No line height: the line holding the larger spot number grows on its own, the next lines stay tight.
   spotLine: { fontFamily: fontFamilies.textSemiBold, fontSize: 22 },
   spotNumber: { fontFamily: fontFamilies.monoSemiBold, fontSize: 36, fontVariant: ['tabular-nums'] },
+  // The spot on the session's signage panel: the largest thing on the screen, like a number painted on the floor.
+  spotPanelNumber: { fontFamily: fontFamilies.monoSemiBold, fontSize: 72, lineHeight: 80, letterSpacing: -1.5, fontVariant: ['tabular-nums'] },
   // A figure inside a sentence of body text: same size, mono with tabular digits.
   figure: { fontFamily: fontFamilies.mono, fontSize: 16, lineHeight: 22, fontVariant: ['tabular-nums'] },
   figureStrong: { fontFamily: fontFamilies.monoSemiBold, fontSize: 17, fontVariant: ['tabular-nums'] },

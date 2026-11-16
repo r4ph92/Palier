@@ -15,22 +15,28 @@ partir, où le chiffre des places libres est l'information principale.
 |---|---|---|---|
 | `canvas` | `#F8F9F6` | `#121513` | Fond d'écran |
 | `sunken` | `#E4E6E0` | `#242925` | Squelettes de chargement, fond de l'allée assignée sur le plan du niveau |
-| `ink` | `#191C1A` | `#E7EAE4` | Texte, bouton principal |
+| `ink` | `#191C1A` | `#E7EAE4` | Texte, filets de titre et d’onglets |
 | `muted` | `#4B534D` | `#AEB6AE` | Texte secondaire, surtitres, bordure de 1 pt des allées du plan |
 | `line` | `#D2D6CE` | `#2C322D` | Filets entre les lignes (décoratif) |
 | `free` | `#2E7D4F` | `#63B487` | Carré « places libres », et carré d’un état favorable de la session du conducteur (« Entrée confirmée », « Garé en A-1 ») ; jamais en texte sur fond clair : 4,3:1 |
 | `danger` | `#9C3A2A` | `#D9705E` | Carré « complet » |
+| `low` | `#B45F06` | `#E09A3E` | Remplissage de la jauge d’occupation sous 25 % libre ; jamais en texte |
+| `accent` | `#F5C400` | `#F5C400` | Jaune de signalisation : bouton principal, panneau de place, onglet choisi, marque du titre ; un fond ou un trait, jamais une couleur de texte |
+| `onAccent` | `#191C1A` | `#191C1A` | Texte et bordure sur `accent` (10,5:1) |
 
 Polices : **Archivo** (texte, titres en 600) et **IBM Plex Mono** (surtitres et
 chiffres, `tabular-nums`), embarquées par `@expo-google-fonts`. Espacement sur
 une grille de 4 (4, 8, 16, 24, 40). Cibles tactiles d'au moins 44 pt.
 Contrastes vérifiés : `ink` 16:1 et `muted` 7,5:1 sur `canvas` en clair ;
-8:1 et plus en sombre.
+8:1 et plus en sombre. Le jaune `accent` ne contraste pas avec `canvas` en
+clair : il est toujours cerné d’une bordure `ink` ou posé sur un filet `ink`.
+Les contrastes des jetons sont vérifiés par `apps/mobile/test/themeContrast.test.ts`.
 
 ## Gestes signatures
 
 1. Surtitre en mono, majuscules, interlettrage large, couleur `muted`, au-dessus du titre de chaque écran.
-2. Titre d'écran souligné d'un filet `ink` de 2 pt ; les lignes de liste sont séparées par des filets fins `line`, sans cartes ni ombres.
-3. Tout chiffre (places, montants à venir) en IBM Plex Mono, chiffres tabulaires ; dans une ligne de parking, le nombre de places libres (30 pt, aligné à droite) est l'élément le plus grand, son libellé reste petit et `muted`.
+2. Titre d'écran souligné d'un filet `ink` de 2 pt, ouvert à gauche par une barre `accent` de 56 × 6 pt ; l'onglet choisi porte une barre `accent` de 4 pt sur le filet du haut de la barre d'onglets ; les lignes de liste sont séparées par des filets fins `line`, sans cartes ni ombres.
+3. Tout chiffre (places, montants à venir) en IBM Plex Mono, chiffres tabulaires ; dans une ligne de parking, le nombre de places libres (30 pt, aligné à droite) est l'élément le plus grand, son libellé reste petit et `muted`. Sous le nom, une jauge de 8 pt (piste `sunken`) montre la part du parking encore libre, remplie en `free` à partir de 25 % libre et en `low` en dessous, de toute la largeur, avec « libres / capacité » dessous en mono `muted`, aligné à droite ; la longueur et le chiffre portent le sens, la couleur ne fait que le redire.
 4. Un état se montre par un carré plein de 8 pt dans la couleur sémantique suivi du mot, jamais par une pastille colorée. Un état à surveiller, pas encore une panne (« Pile inconnue »), prend un carré vide de 8 pt cerclé de `danger` sur 2 pt ; le mot porte le sens (#76).
-5. Une seule action principale par vue : bouton plein `ink`, angles droits, libellé en Archivo 600.
+5. Une seule action principale par vue : bouton plein `accent`, bordure `onAccent` de 3 pt, angles droits, libellé `onAccent` en Archivo 600.
+6. Sur l'écran de session, la place est un panneau de signalisation : fond `accent`, bordure `onAccent` de 3 pt, surtitre « Votre place » et pastille carrée du palier, numéro en IBM Plex Mono 72 pt (agrandi au plus 1,3 fois), puis « Palier P1 · Allée A » ; l'état suit sous le panneau avec son carré de 8 pt. C'est la seule surface pleine de l'app, pour qu'elle ressorte.
