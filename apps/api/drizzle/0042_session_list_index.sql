@@ -1,0 +1,1 @@
+CREATE INDEX "parking_session_lot_entry_scan_index" ON "parking_session" USING btree ("lot_id","entry_scan_at" DESC NULLS FIRST,"id" DESC NULLS FIRST);

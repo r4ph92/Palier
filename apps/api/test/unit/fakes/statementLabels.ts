@@ -1,3 +1,5 @@
+import { DASHBOARD_STATEMENT_PATTERNS, type DashboardStatementLabel } from './dashboardStatementLabels.ts';
+
 // Names each statement the repositories run by the text it matches, so a test scripts and inspects statements by label.
 export type StatementLabel =
   | 'limit-lock-wait'
@@ -10,6 +12,7 @@ export type StatementLabel =
   | 'read-spot-hold-lot'
   | 'read-spot-hold-facts'
   | 'insert-spot-hold'
+  | 'release-lot-spot-holds'
   | 'release-spot-hold'
   | 'find-expired-hold-lots'
   | 'expire-spot-holds'
@@ -61,8 +64,17 @@ export type StatementLabel =
   | 'delete-unused-spot'
   | 'retire-spot'
   | 'read-live-spot'
+  | 'take-spot-out-of-service'
+  | 'put-spot-back-in-service'
+  | 'read-live-spot-state'
   | 'replay-passages'
+  | 'lock-exit-spots'
+  | 'free-exit-spots'
+  | 'read-spots-to-check'
+  | 'clear-spot-check'
+  | 'lock-spot-to-clear'
   | 'record-heartbeat'
+  | 'record-test-passage'
   | 'record-reported-battery'
   | 'read-lot-gates'
   | 'read-owned-lot-id'
@@ -71,15 +83,21 @@ export type StatementLabel =
   | 'confirm-opening'
   | 'occupy-confirmed-spot'
   | 'attach-exit-passage'
+  | 'close-paid-session'
+  | 'close-pending-session'
+  | 'read-paid-exit'
+  | 'mark-capture-paid'
   | 'insert-gate-command'
   | 'log-entry-without-loop'
   | 'backdate-entry'
   | 'append-session-event'
+  | DashboardStatementLabel
   | 'unknown';
 
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
+  ...DASHBOARD_STATEMENT_PATTERNS,
   ['insert-lot', /insert into parking_lot/],
   ['lock-owned-lot', /from parking_lot where id = \$1 and operator_id = \$2 for no key update/],
   ['read-lot-map', /aisle\.is_exit_lane, aisle\.map_polygon/],
@@ -97,11 +115,20 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['delete-unused-spot', /delete from spot using parking_lot/],
   ['retire-spot', /update spot set retired_at/],
   ['read-live-spot', /select spot\.id from spot cross join parking_lot/],
+  ['take-spot-out-of-service', /update spot set state = 'OUT_OF_SERVICE', state_changed_at/],
+  ['put-spot-back-in-service', /update spot set state = 'AVAILABLE', state_changed_at = now\(\)\s+from parking_lot/],
+  ['read-live-spot-state', /select spot\.state, spot\.aisle_id from spot/],
   ['update-lot-pricing', /update parking_lot\s+set pricing_policy/],
   ['read-lot-details', /from parking_lot where id = \$1 and operator_id = \$2/],
   ['read-level-occupancy', /as confirmed_assigned_count/],
+  ['lock-exit-spots', /as held_by_another_session/],
+  ['free-exit-spots', /needs_check = needs_check or/],
+  ['read-spots-to-check', /spot\.needs_check_since, spot\.needs_check_reason/],
+  ['lock-spot-to-clear', /as held_by_session/],
+  ['clear-spot-check', /set needs_check = false/],
   ['replay-passages', /insert into gate_passage[\s\S]*on conflict/],
   ['record-heartbeat', /update gate set last_heartbeat_at/],
+  ['record-test-passage', /update gate set verified_at = \$1::timestamptz/],
   ['read-owned-lot-id', /select parking_lot\.id from parking_lot where parking_lot\.id = \$1 and parking_lot\.operator_id = \$2/],
   ['record-aisle-battery', /update aisle set beacon_battery_percent[\s\S]*from parking_lot/],
   ['read-lot-gates', /gate\.last_heartbeat_at\s+from parking_lot/],
@@ -109,6 +136,10 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['count-vehicle', /insert into gate_passage/],
   ['confirm-opening', /set state = 'ENTRY_CONFIRMED'/],
   ['attach-exit-passage', /set exit_passage_at/],
+  ['close-paid-session', /set state = 'CLOSED_PAID', exit_at/],
+  ['close-pending-session', /set state = 'CLOSED_CAPTURE_PENDING'/],
+  ['read-paid-exit', /select state, exit_at, captured_cents/],
+  ['mark-capture-paid', /set state = 'CLOSED_PAID', captured_cents/],
   ['occupy-confirmed-spot', /update spot set state = 'OCCUPIED', state_changed_at = now\(\)/],
   ['insert-gate-command', /insert into gate_command/],
   ['backdate-entry', /set entry_confirmed_at = /],
@@ -144,6 +175,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-spot-hold-lot', /join operator on/],
   ['read-spot-hold-facts', /as active_holds_in_lot/],
   ['insert-spot-hold', /insert into spot_hold/],
+  ['release-lot-spot-holds', /update spot_hold set status = 'RELEASED'\s+where lot_id/],
   ['release-spot-hold', /update spot_hold set status = 'RELEASED'/],
   ['find-expired-hold-lots', /select distinct lot_id from spot_hold/],
   ['expire-spot-holds', /update spot_hold set status = 'EXPIRED'/],

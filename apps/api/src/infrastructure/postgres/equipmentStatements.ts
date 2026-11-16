@@ -1,9 +1,19 @@
 import { sql, type SQL } from 'drizzle-orm';
-import type { BeaconBatteryReport, ReportingGate } from '../../domain/equipment/EquipmentReports.ts';
+import type { BeaconBatteryReport, ReportingGate, TestPassage } from '../../domain/equipment/EquipmentReports.ts';
 import { beaconBatteryAssignment } from './beaconBatteryAssignment.ts';
 
 export function recordHeartbeatStatement(gate: ReportingGate, at: Date): SQL {
   return sql`update gate set last_heartbeat_at = ${at.toISOString()}::timestamptz where id = ${gate.id} and lot_id = ${gate.lotId}`;
+}
+
+// No row when the gate was not heard since heardSince or its key was revoked: checks and stamp are one statement.
+// A key rotation clears last_heartbeat_at on the same row, so a test passage that waited on its row lock is refused.
+export function recordTestPassageStatement(gate: ReportingGate, { at, heardSince, deviceKeyHash }: TestPassage): SQL {
+  return sql`
+    update gate set verified_at = ${at.toISOString()}::timestamptz
+    where id = ${gate.id} and lot_id = ${gate.lotId} and last_heartbeat_at >= ${heardSince.toISOString()}::timestamptz
+      and exists (select 1 from gate_device_key where gate_device_key.gate_id = gate.id and gate_device_key.key_hash = ${deviceKeyHash} and gate_device_key.revoked_at is null)
+    returning id`;
 }
 
 // No row when the lot has no beacon with this minor.

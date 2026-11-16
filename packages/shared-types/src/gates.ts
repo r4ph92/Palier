@@ -1,4 +1,5 @@
-export type GateKind = 'ENTRY' | 'EXIT';
+export const GATE_KINDS = ['ENTRY', 'EXIT'] as const;
+export type GateKind = (typeof GATE_KINDS)[number];
 
 // Four missed beats of the console's 30 s heartbeat (decision 036).
 export const SILENT_GATE_AFTER_MINUTES = 2;
@@ -61,4 +62,9 @@ export interface GateIdentifyResponse {
 // fallback: two apps reported, so nothing opened and both drivers use the tap.
 export interface GatePresenceResponse {
   readonly outcome: 'waiting' | 'opened' | 'fallback';
+}
+
+// The controller passed its self-test while heard: the gate counts as verified for putting its lot online.
+export interface GateTestPassageResponse {
+  readonly verifiedAt: string;
 }

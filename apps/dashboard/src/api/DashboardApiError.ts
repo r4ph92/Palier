@@ -7,7 +7,8 @@ function isDashboardErrorCode(code: string | undefined): code is DashboardErrorC
 
 // Never from the API: FIELDS_INVALID heads a form whose fields show their own errors; MAP_RELOAD_FAILED follows a stale move
 // the page could not read again; GRID_POSITION_INVALID and GRID_LENGTH_INVALID sit beside one side of an aisle's rectangle;
-// SPOT_RANGE_UNREADABLE sits beside numbers that read as no range; SPOT_RELOAD_FAILED follows a spot refusal the page could not read again.
+// SPOT_RANGE_UNREADABLE sits beside numbers that read as no range; SPOT_RELOAD_FAILED and GATE_RELOAD_FAILED follow a refusal the page could not read again;
+// SPOT_TO_CHECK_GONE names the spot to check whose row a SPOT_NOT_FOUND reload took away.
 export type DisplayedErrorCode =
   | DashboardErrorCode
   | 'FIELDS_INVALID'
@@ -16,6 +17,8 @@ export type DisplayedErrorCode =
   | 'GRID_LENGTH_INVALID'
   | 'SPOT_RANGE_UNREADABLE'
   | 'SPOT_RELOAD_FAILED'
+  | 'SPOT_TO_CHECK_GONE'
+  | 'GATE_RELOAD_FAILED'
   | 'UNKNOWN';
 
 // The page shows a dictionary sentence for the code, never the API's English message.

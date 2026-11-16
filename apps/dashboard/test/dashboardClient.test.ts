@@ -35,6 +35,20 @@ describe('dashboard client', () => {
     expect(fetchMock).toHaveBeenCalledWith('/v1/dashboard/lots', { method: 'GET', credentials: 'same-origin', headers: { accept: 'application/json' }, signal: expect.any(AbortSignal) });
   });
 
+  it('reads a page of sessions with the filter and the cursor in the query, and one session by its encoded id', async () => {
+    const fetchMock = stubFetch(200, {});
+
+    await dashboardClient.sessions('lot/1', { status: 'ALL', before: 'last-id' });
+    await dashboardClient.sessions('lot/1', { status: 'OPEN', before: null });
+    await dashboardClient.session('lot/1', 'a b');
+
+    expect(fetchMock.mock.calls.map((call) => (call as unknown[])[0])).toEqual([
+      '/v1/dashboard/lots/lot%2F1/sessions?status=ALL&before=last-id',
+      '/v1/dashboard/lots/lot%2F1/sessions?status=OPEN',
+      '/v1/dashboard/lots/lot%2F1/sessions/a%20b',
+    ]);
+  });
+
   it('saves pricing with a PUT that carries the dashboard header and the JSON body', async () => {
     const fetchMock = stubFetch(200, {});
     const pricing = { incrementCents: 100, incrementMinutes: 20, dailyCapCents: 1800, holdQuota: 4 };

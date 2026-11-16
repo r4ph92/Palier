@@ -1,15 +1,13 @@
 import type { DashboardSpot, SpotState } from '@palier/shared-types';
 import { Fragment, type ReactNode } from 'react';
-import { StableLabel } from '../components/StableLabel.tsx';
 import { StateMark, type StateTone } from '../components/StateMark.tsx';
 import { formatMetres } from '../i18n/formatNumbers.ts';
-import { interpolate } from '../i18n/interpolate.ts';
-import { interpolateKeepingValuesWhole } from '../i18n/interpolateKeepingValuesWhole.tsx';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
-import { closesOnEscape } from './closesOnEscape.ts';
+import type { RowRefusal } from './rowRefusal.ts';
+import { ActionsCell, type SpotRowProps } from './SpotRowActions.tsx';
 import { flagLabelsOf, SPOT_FLAGS } from './spotFormValues.ts';
-import { useFocusWhen } from './useFocusWhen.ts';
 import type { SpotDeletion } from './useSpotDeletion.ts';
+import type { SpotService } from './useSpotService.ts';
 
 const COLUMN_COUNT = 5;
 
@@ -26,8 +24,10 @@ interface SpotTableProps {
   readonly spots: readonly DashboardSpot[];
   readonly labelledBy: string;
   readonly deletion: SpotDeletion;
+  readonly service: SpotService;
   readonly onEdit: (spot: DashboardSpot) => void;
   readonly editing: EditRow | null;
+  readonly rowRefusal: RowRefusal | null;
 }
 
 // The edit form, shown in a row right after the spot it edits.
@@ -36,20 +36,14 @@ export interface EditRow {
   readonly form: ReactNode;
 }
 
-type RowProps = Pick<SpotTableProps, 'deletion' | 'onEdit'> & { readonly spot: DashboardSpot };
-
-export function editButtonId(spot: DashboardSpot): string {
-  return `spot-${spot.id}-edit`;
-}
-
 // Explicit roles keep the table a table for screen readers when narrow screens stack each row.
-export function SpotTable({ spots, labelledBy, deletion, onEdit, editing }: SpotTableProps) {
+export function SpotTable({ spots, labelledBy, deletion, service, onEdit, editing, rowRefusal }: SpotTableProps) {
   return (
-    <table className="data-table spot-table" role="table" aria-labelledby={labelledBy} aria-busy={deletion.deleting}>
+    <table className="data-table stacked-table spot-table" role="table" aria-labelledby={labelledBy} aria-busy={deletion.deleting || service.busy}>
       <SpotTableHead />
       <tbody role="rowgroup">
         {spots.map((spot) => (
-          <SpotRows key={spot.id} spot={spot} deletion={deletion} onEdit={onEdit} editForm={editing?.spotId === spot.id ? editing.form : null} />
+          <SpotRows key={spot.id} spot={spot} deletion={deletion} service={service} onEdit={onEdit} refusal={rowRefusal?.spotId === spot.id ? rowRefusal : null} editForm={editing?.spotId === spot.id ? editing.form : null} />
         ))}
       </tbody>
     </table>
@@ -79,7 +73,7 @@ function SpotColumnHead({ label, className }: { readonly label: ReactNode; reado
   );
 }
 
-function SpotRows({ editForm, ...row }: RowProps & { readonly editForm: ReactNode }) {
+function SpotRows({ editForm, ...row }: SpotRowProps & { readonly editForm: ReactNode }) {
   return (
     <>
       <SpotRow {...row} />
@@ -94,7 +88,7 @@ function SpotRows({ editForm, ...row }: RowProps & { readonly editForm: ReactNod
   );
 }
 
-function SpotRow({ spot, deletion, onEdit }: RowProps) {
+function SpotRow({ spot, deletion, service, onEdit, refusal }: SpotRowProps) {
   const { text, language } = useLanguage();
   return (
     <tr role="row">
@@ -106,11 +100,9 @@ function SpotRow({ spot, deletion, onEdit }: RowProps) {
         {formatMetres(spot.distanceToExit, language)}
       </td>
       <td role="cell" className="spot-state">
-        <StateMark tone={STATE_TONES[spot.state]} label={text.spotStates[spot.state]} />
+        <StateMark tone={STATE_TONES[spot.state]} label={text.spotStates[spot.state]} wraps={spot.state === 'OCCUPIED_UNKNOWN'} />
       </td>
-      <td role="cell" className="spot-actions">
-        {deletion.confirming?.id === spot.id ? <DeleteConfirmation spot={spot} deletion={deletion} /> : <RowActions spot={spot} deletion={deletion} onEdit={onEdit} />}
-      </td>
+      <ActionsCell spot={spot} deletion={deletion} service={service} onEdit={onEdit} refusal={refusal} />
     </tr>
   );
 }
@@ -132,39 +124,5 @@ function AttributesCell({ spot }: { readonly spot: DashboardSpot }) {
         ))
       )}
     </td>
-  );
-}
-
-function RowActions({ spot, deletion, onEdit }: RowProps) {
-  const { spots: text } = useText().map;
-  const values = { number: spot.number };
-  const deleteRef = useFocusWhen<HTMLButtonElement>(deletion.cancelledId === spot.id);
-  return (
-    <span className="row-actions">
-      <button type="button" id={editButtonId(spot)} className="text-button" aria-label={interpolate(text.edit.name, values)} onClick={() => onEdit(spot)}>
-        {text.edit.shown}
-      </button>
-      <button type="button" ref={deleteRef} className="text-button" aria-label={interpolate(text.delete.name, values)} onClick={() => deletion.ask(spot)}>
-        {text.delete.shown}
-      </button>
-    </span>
-  );
-}
-
-// The confirm button takes focus as the row asks; Escape cancels like the cancel button.
-function DeleteConfirmation({ spot, deletion }: { readonly spot: DashboardSpot; readonly deletion: SpotDeletion }) {
-  const { spots: text } = useText().map;
-  const confirmRef = useFocusWhen<HTMLButtonElement>(true);
-  const label = interpolate(text.confirmDeleteButton.name, { number: spot.number });
-  return (
-    <span className="row-actions delete-question" onKeyDown={(event) => closesOnEscape(event, deletion.cancel)}>
-      <span>{interpolateKeepingValuesWhole(text.confirmDelete, { number: spot.number })}</span>
-      <button type="button" ref={confirmRef} className="text-button" aria-label={label} aria-disabled={deletion.deleting} onClick={() => void deletion.confirm()}>
-        <StableLabel shown={deletion.deleting ? text.deleting : text.confirmDeleteButton.shown} reserved={[text.deleting, text.confirmDeleteButton.shown]} />
-      </button>
-      <button type="button" className="text-button" onClick={deletion.cancel}>
-        {text.cancel}
-      </button>
-    </span>
   );
 }

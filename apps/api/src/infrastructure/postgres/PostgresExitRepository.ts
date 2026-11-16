@@ -7,6 +7,7 @@ import type { SpotState } from '../../domain/spots/spotStates.ts';
 import { EXITABLE_COLUMNS, exitableSessionOf, LEAVABLE_STATES, paidExitOf, type ExitableRow } from './exitableSessionSql.ts';
 import { activeSessionOf } from './activeSessionStates.ts';
 import type { Database, Transaction } from './database.ts';
+import { logPaidExit, logPendingExit } from './exitEventStatements.ts';
 import { storeOpenCommand } from './gateCommandStatements.ts';
 import { inLotLock, orLotBusy } from './lockParkingLot.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
@@ -60,14 +61,16 @@ export class PostgresExitRepository implements ExitRepository {
   }
 
   // Lot, then session, then spots: the order every other writer takes. The gate command is part of the transaction, so a paid
-  // session always has its open command and a command never exists for a session left open.
-  async close({ sessionId, lotId, exitGateId, identification, exit }: ExitClosing): Promise<ClosedExit> {
+  // session always has its open command and a command never exists for a session left open. The events follow the real order:
+  // identification, the capture Stripe confirmed before this transaction, then the opening (decision 038).
+  async close({ sessionId, lotId, exitGateId, identification, exit, capturedAt }: ExitClosing): Promise<ClosedExit> {
     return orLotBusy(
       inLotLock(this.#database, lotId, async (tx) => {
         const session = await closeSession(tx, sessionId, { identification, ...exit });
         if (session === null) {
           return { outcome: 'already', exit: await readPaidExit(tx, sessionId) } as const;
         }
+        await logPaidExit(tx, { sessionId, lotId, exitGateId, identification }, { ...exit, capturedAt });
         await openGate(tx, { sessionId, lotId, exitGateId, session, now: exit.exitedAt });
         return { outcome: 'closed', exit } as const;
       }),
@@ -82,6 +85,7 @@ export class PostgresExitRepository implements ExitRepository {
         if (session === null) {
           return { outcome: 'already' };
         }
+        await logPendingExit(tx, { sessionId, lotId, exitGateId, identification }, pending);
         await openGate(tx, { sessionId, lotId, exitGateId, session, now: pending.exitedAt });
         return { outcome: 'closed' };
       }),
@@ -136,7 +140,7 @@ interface GateOpening {
 
 async function openGate(tx: Transaction, { sessionId, lotId, exitGateId, session, now }: GateOpening): Promise<void> {
   await freeSpots(tx, { sessionId, session, now });
-  await storeOpenCommand(tx, { gateId: exitGateId, lotId, sessionId });
+  await storeOpenCommand(tx, { gateId: exitGateId, lotId, sessionId }, 'EXIT');
 }
 
 // Null when the session is not leavable any more: another request closed it first.
@@ -185,7 +189,9 @@ async function freeSpots(tx: Transaction, { sessionId, session, now }: SpotsToFr
     return;
   }
   await tx.execute(sql`
-    update spot set needs_check = needs_check or state = 'OCCUPIED_UNKNOWN', state = 'AVAILABLE', state_changed_at = ${now.toISOString()}::timestamptz
+    update spot set needs_check = needs_check or state = 'OCCUPIED_UNKNOWN',
+      needs_check_since = coalesce(needs_check_since, case when state = 'OCCUPIED_UNKNOWN' then ${now.toISOString()}::timestamptz end),
+      state = 'AVAILABLE', state_changed_at = ${now.toISOString()}::timestamptz
     where id in (${sql.join(freed.map((id) => sql`${id}`), sql`, `)})`);
 }
 

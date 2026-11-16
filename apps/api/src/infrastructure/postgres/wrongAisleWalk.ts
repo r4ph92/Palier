@@ -74,7 +74,7 @@ export function askWhereParked(database: Database, walk: WrongAisleWalk): Promis
     if (unconfirmed === undefined) {
       return null;
     }
-    await flagAssignedSpotToCheck(tx, unconfirmed.assigned_spot_id);
+    await flagAssignedSpotToCheck(tx, unconfirmed.assigned_spot_id, 'WRONG_AISLE');
     await logWrongAisle(tx, walk);
     return new Date(unconfirmed.parked_at);
   });

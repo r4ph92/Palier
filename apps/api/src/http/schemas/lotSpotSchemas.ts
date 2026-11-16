@@ -28,6 +28,13 @@ export const spotAttributesBodySchema = {
   properties: { isEv: { type: 'boolean' }, isAccessible: { type: 'boolean' }, isOversize: { type: 'boolean' }, distanceToExit: { type: 'number' } },
 } as const;
 
+export const spotServiceBodySchema = {
+  type: 'object',
+  required: ['outOfService'],
+  additionalProperties: false,
+  properties: { outOfService: { type: 'boolean' } },
+} as const;
+
 export const addSpotsBodySchema = {
   type: 'object',
   required: ['range', 'attributes'],

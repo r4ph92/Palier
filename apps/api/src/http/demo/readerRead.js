@@ -1,5 +1,5 @@
-import { OK, UNREACHABLE } from './gateApi.js';
-import { knownGateIdentity } from './gateIdentity.js';
+import { sendGateAction } from './gateAction.js';
+import { messageForStatusOf } from './gateRefusals.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {import('@palier/shared-types').GateIdentifyResponse} GateIdentifyResponse */
@@ -10,22 +10,7 @@ import { knownGateIdentity } from './gateIdentity.js';
  *   | { kind: 'refused', identity: GateIdentity | null, messageKey: TextKey }} ReadOutcome
  */
 
-/** @type {Record<number, TextKey>} */
-const MESSAGE_BY_STATUS = {
-  [UNREACHABLE]: 'unreachable',
-  400: 'identifierInvalid',
-  401: 'keyRefused',
-  403: 'gateForbidden',
-  409: 'gateWithoutReader',
-};
-
-/**
- * @param {number} status
- * @returns {TextKey}
- */
-export function readerMessageForStatus(status) {
-  return MESSAGE_BY_STATUS[status] ?? 'readerFailed';
-}
+export const readerMessageForStatus = messageForStatusOf({ 400: 'identifierInvalid', 409: 'gateWithoutReader' }, 'readerFailed');
 
 /**
  * The plate or transponder the exit reader read, sent to the gate the key belongs to.
@@ -34,16 +19,13 @@ export function readerMessageForStatus(status) {
  * @returns {Promise<ReadOutcome>}
  */
 export async function sendReading(reading, api) {
-  const identityOrRefusal = await knownGateIdentity(reading, api);
-  if ('messageKey' in identityOrRefusal) {
-    return identityOrRefusal;
+  const send = (/** @type {string} */ gateId) => api.postIdentify(reading.deviceKey, gateId, reading.identifier);
+  const answer = await sendGateAction(reading, { api, send, messageForStatus: readerMessageForStatus });
+  if (answer.kind === 'refused') {
+    return answer;
   }
-  const response = await api.postIdentify(reading.deviceKey, identityOrRefusal.id, reading.identifier);
-  if (response.status !== OK || response.body === null) {
-    return { kind: 'refused', identity: identityOrRefusal, messageKey: readerMessageForStatus(response.status) };
-  }
-  const { outcome } = /** @type {GateIdentifyResponse} */ (response.body);
-  return { kind: outcome === 'opened' ? 'opened' : 'fallback', identity: identityOrRefusal };
+  const { outcome } = /** @type {GateIdentifyResponse} */ (answer.body);
+  return { kind: outcome === 'opened' ? 'opened' : 'fallback', identity: answer.identity };
 }
 
 /**

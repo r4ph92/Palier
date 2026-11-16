@@ -45,7 +45,7 @@ async function report(exit: ExitRouteDependencies | undefined, request: FastifyR
     sessionId: request.params.sessionId,
     driverId: signedInDriver(request).id,
     major: request.body.major,
-    now: exit.clock(),
+    clock: exit.clock,
   });
   return isRefusal(reported) ? sendRefusal(reported.outcome, request, reply) : accepted(reported, request, reply);
 }

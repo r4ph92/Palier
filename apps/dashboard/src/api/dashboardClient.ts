@@ -1,23 +1,36 @@
 import type {
   AddSpotsRequest,
+  Attestation,
+  AttestationKind,
+  CreatedGate,
   AisleRequest,
   DashboardAisleSpots,
   DashboardLotDetails,
   DashboardLotEquipment,
+  DashboardLotGates,
   DashboardLotListResponse,
   DashboardLotMap,
   DashboardLotOccupancy,
   DashboardMeResponse,
   DashboardOperator,
+  DashboardSessionDetail,
+  DashboardSessionList,
+  DashboardSpotsToCheck,
+  GateDeviceKey,
+  GateQrLink,
   LevelDraft,
   LevelOrderRequest,
   LotDraft,
   LotPricingRequest,
+  LotPublication,
   SpotAttributes,
   StripeOnboardingLink,
 } from '@palier/shared-types';
 import type { BeaconBatteryReading } from '@palier/shared-types/beaconBattery';
+import type { GateDraft, GateSettings } from '@palier/shared-types/gateDraft';
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
+import type { SessionListStatus } from '@palier/shared-types/sessionTimeline';
+import { ATTESTATION_PATH_SEGMENTS } from '@palier/shared-types/publication';
 import { DashboardApiError } from './DashboardApiError.ts';
 
 const BASE_PATH = '/v1/dashboard';
@@ -97,6 +110,31 @@ function spotPathOf(lotId: string, spotId: string): string {
   return `${lotPathOf(lotId)}/spots/${encodeURIComponent(spotId)}`;
 }
 
+function putSpotService(lotId: string, spotId: string, outOfService: boolean): Promise<DashboardAisleSpots> {
+  return dashboardRequest<DashboardAisleSpots>(`${spotPathOf(lotId, spotId)}/service`, { method: 'PUT', body: { outOfService } });
+}
+
+function gatePathOf(lotId: string, gateId: string): string {
+  return `${lotPathOf(lotId)}/gates/${encodeURIComponent(gateId)}`;
+}
+
+function attestationPathOf(lotId: string, kind: AttestationKind): string {
+  return `${lotPathOf(lotId)}/attestations/${ATTESTATION_PATH_SEGMENTS[kind]}`;
+}
+
+export interface SessionListRequest {
+  readonly status: SessionListStatus;
+  readonly before: string | null;
+}
+
+function sessionsQueryOf({ status, before }: SessionListRequest): string {
+  const query = new URLSearchParams({ status });
+  if (before !== null) {
+    query.set('before', before);
+  }
+  return query.toString();
+}
+
 export const dashboardClient = {
   me: () => dashboardRequest<DashboardMeResponse>('/me'),
   signOut: () => dashboardRequest<undefined>('/sign-out', { method: 'POST' }),
@@ -117,11 +155,29 @@ export const dashboardClient = {
     dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/levels/${encodeURIComponent(levelId)}/aisles`, { method: 'POST', body: aisle }),
   recordBeaconBattery: (lotId: string, aisleId: string, reading: BeaconBatteryReading) =>
     dashboardRequest<DashboardLotMap>(`${aislePathOf(lotId, aisleId)}/beacon-battery`, { method: 'PUT', body: reading }),
+  sessions: (lotId: string, request: SessionListRequest) => dashboardRequest<DashboardSessionList>(`${lotPathOf(lotId)}/sessions?${sessionsQueryOf(request)}`),
+  session: (lotId: string, sessionId: string) => dashboardRequest<DashboardSessionDetail>(`${lotPathOf(lotId)}/sessions/${encodeURIComponent(sessionId)}`),
   lotEquipment: (lotId: string) => dashboardRequest<DashboardLotEquipment>(`${lotPathOf(lotId)}/equipment`),
   aisleSpots: (lotId: string, aisleId: string) => dashboardRequest<DashboardAisleSpots>(spotsPathOf(lotId, aisleId)),
   addSpots: (lotId: string, aisleId: string, request: AddSpotsRequest) =>
     dashboardRequest<DashboardAisleSpots>(spotsPathOf(lotId, aisleId), { method: 'POST', body: request }),
   changeSpot: (lotId: string, spotId: string, attributes: SpotAttributes) =>
     dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'PUT', body: attributes }),
+  takeSpotOutOfService: (lotId: string, spotId: string) => putSpotService(lotId, spotId, true),
+  putSpotBackInService: (lotId: string, spotId: string) => putSpotService(lotId, spotId, false),
   deleteSpot: (lotId: string, spotId: string) => dashboardRequest<DashboardAisleSpots>(spotPathOf(lotId, spotId), { method: 'DELETE' }),
+  spotsToCheck: (lotId: string) => dashboardRequest<DashboardSpotsToCheck>(`${lotPathOf(lotId)}/spots-to-check`),
+  clearSpotCheck: (lotId: string, spotId: string) =>
+    dashboardRequest<DashboardSpotsToCheck>(`${spotPathOf(lotId, spotId)}/check-cleared`, { method: 'POST' }),
+  lotGates: (lotId: string) => dashboardRequest<DashboardLotGates>(`${lotPathOf(lotId)}/gates`),
+  addGate: (lotId: string, draft: GateDraft) => dashboardRequest<CreatedGate>(`${lotPathOf(lotId)}/gates`, { method: 'POST', body: draft }),
+  changeGate: (lotId: string, gateId: string, settings: GateSettings) =>
+    dashboardRequest<DashboardLotGates>(gatePathOf(lotId, gateId), { method: 'PUT', body: settings }),
+  replaceDeviceKey: (lotId: string, gateId: string) => dashboardRequest<GateDeviceKey>(`${gatePathOf(lotId, gateId)}/device-key`, { method: 'POST' }),
+  replaceQrSecret: (lotId: string, gateId: string) => dashboardRequest<undefined>(`${gatePathOf(lotId, gateId)}/qr-secret`, { method: 'POST' }),
+  gateQrLink: (lotId: string, gateId: string) => dashboardRequest<GateQrLink>(`${gatePathOf(lotId, gateId)}/qr-link`),
+  lotPublication: (lotId: string) => dashboardRequest<LotPublication>(`${lotPathOf(lotId)}/publication`),
+  setLotOnline: (lotId: string, online: boolean) => dashboardRequest<LotPublication>(`${lotPathOf(lotId)}/online`, { method: 'PUT', body: { online } }),
+  attest: (lotId: string, kind: AttestationKind, attestation: Attestation) =>
+    dashboardRequest<LotPublication>(attestationPathOf(lotId, kind), { method: 'PUT', body: attestation }),
 };

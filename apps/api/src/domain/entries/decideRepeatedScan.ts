@@ -36,13 +36,23 @@ function isSameOpeningEntry(active: ActiveSessionFacts, scan: ScannedEntryGate):
   return active.lotId === scan.lotId && active.entryGateId === scan.entryGateId && active.state === 'CREATED' && active.isWithinOpeningWindow;
 }
 
+// The scan's decision and the lot as read under its lock: the operator may have put it offline since the eligibility check.
+export interface LockedScan {
+  readonly decision: RepeatedScanDecision;
+  readonly isLotOnline: boolean;
+}
+
 // What the decision leads to; openNew assigns a spot and creates the session, null when no spot is free.
-export async function openingFor(decision: RepeatedScanDecision, openNew: () => Promise<OpenedSession | null>): Promise<SessionOpening | null> {
+// A replay still answers on an offline lot, since that entry was admitted while it was online.
+export async function openingFor({ decision, isLotOnline }: LockedScan, openNew: () => Promise<OpenedSession | null>): Promise<SessionOpening | null> {
   if (decision.kind === 'refuse') {
     throw new EntryRefusedError('ALREADY_INSIDE');
   }
   if (decision.kind === 'replay') {
     return { kind: 'replayed', session: decision.session };
+  }
+  if (!isLotOnline) {
+    throw new EntryRefusedError('LOT_NOT_IN_SERVICE');
   }
   const session = await openNew();
   return session === null ? null : { kind: 'opened', session };

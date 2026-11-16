@@ -10,3 +10,5 @@
 - `exit_at` (le geste, #47) et `exit_passage_at` (la boucle) restent distincts ; le reçu garde `exit_at`.
 
 **Conséquences.** Un seul passage par ouverture ; un second passage sans nouvelle ouverture ne change que le compteur. L'écart entre compteur et sessions reste visible par #71.
+
+**Amendé par #157** : `exit_passage_at` vaut `greatest(closedAt, issued_at de l'ouverture appariée)`, pour qu'une horloge de barrière remise à zéro ne date pas la sortie avant son ouverture ; `gate_passage.closed_at` garde l'heure brute et le passage n'est jamais refusé (031, compteur).

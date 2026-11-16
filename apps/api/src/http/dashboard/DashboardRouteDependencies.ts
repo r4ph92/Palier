@@ -1,10 +1,15 @@
+import type { GateSecretRepository } from '../../domain/dashboard/GateSecretRepository.ts';
 import type { LevelOccupancyReader } from '../../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotEquipmentReader } from '../../domain/dashboard/LotEquipmentReader.ts';
+import type { LotGateRepository } from '../../domain/dashboard/LotGateRepository.ts';
 import type { LotMapRepository } from '../../domain/dashboard/LotMapRepository.ts';
+import type { SessionTimelineRepository } from '../../domain/dashboard/SessionTimelineRepository.ts';
+import type { SpotCheckRepository } from '../../domain/dashboard/SpotCheckRepository.ts';
 import type { LotSpotRepository } from '../../domain/dashboard/LotSpotRepository.ts';
 import type { LotSetupRepository } from '../../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../../domain/dashboard/OperatorRepository.ts';
 import type { OperatorStripeAccounts, OperatorStripeGateway } from '../../domain/dashboard/OperatorStripe.ts';
+import type { LotPublicationRepository } from '../../domain/publication/LotPublicationRepository.ts';
 import type { SessionAccess } from '../../domain/sessions/sessionTokens.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
 
@@ -25,6 +30,11 @@ export interface DashboardRouteDependencies {
   // The test clock when it is active, so moving it makes a gate silent or a battery reading old.
   readonly clock: Clock;
   readonly spots: LotSpotRepository;
+  readonly spotChecks: SpotCheckRepository;
+  readonly sessionTimelines: SessionTimelineRepository;
+  readonly gates: LotGateRepository;
+  readonly gateSecrets: GateSecretRepository;
+  readonly publication: LotPublicationRepository;
   readonly testSignInEnabled: boolean;
   readonly secureCookies: boolean;
 }

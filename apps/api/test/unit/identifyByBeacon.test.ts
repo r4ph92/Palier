@@ -16,9 +16,9 @@ function setup() {
   exits.add('driver-marc', { ...julieInside(enteredAt), id: 'session-marc', paymentIntentId: 'pi_marc', lotId: sortieDemo.lotId, exitGateId: sortieDemo.id });
   const dependencies = { exits, payments };
   const julieReports = (overrides: { driverId?: string; major?: number } = {}) =>
-    reportExitBeacon(dependencies, { sessionId: julieInside(enteredAt).id, driverId: 'driver-julie', major: 1, now: at2117, ...overrides });
-  const marcReports = () => reportExitBeacon(dependencies, { sessionId: 'session-marc', driverId: 'driver-marc', major: 1, now: at2117 });
-  const vehicleArrives = () => recordVehicleAtExit(dependencies, { gate: sortieDemo, requestedGateId: sortieDemo.id, now: at2117 });
+    reportExitBeacon(dependencies, { sessionId: julieInside(enteredAt).id, driverId: 'driver-julie', major: 1, clock: () => at2117, ...overrides });
+  const marcReports = () => reportExitBeacon(dependencies, { sessionId: 'session-marc', driverId: 'driver-marc', major: 1, clock: () => at2117 });
+  const vehicleArrives = () => recordVehicleAtExit(dependencies, { gate: sortieDemo, requestedGateId: sortieDemo.id, clock: () => at2117 });
   return { exits, payments, julieReports, marcReports, vehicleArrives };
 }
 
@@ -134,8 +134,8 @@ describe('exit by beacon', () => {
     exits.add('driver-nina', { ...julieInside(enteredAt), id: 'session-nina', state: 'CREATED' });
     exits.add('driver-omar', { ...julieInside(enteredAt), id: 'session-omar', state: 'CANCELLED' });
 
-    expect(await reportExitBeacon({ exits, payments: null }, { sessionId: 'session-nina', driverId: 'driver-nina', major: 1, now: at2117 })).toEqual({ outcome: 'entry-not-confirmed' });
-    expect(await reportExitBeacon({ exits, payments: null }, { sessionId: 'session-omar', driverId: 'driver-omar', major: 1, now: at2117 })).toEqual({ outcome: 'closed' });
+    expect(await reportExitBeacon({ exits, payments: null }, { sessionId: 'session-nina', driverId: 'driver-nina', major: 1, clock: () => at2117 })).toEqual({ outcome: 'entry-not-confirmed' });
+    expect(await reportExitBeacon({ exits, payments: null }, { sessionId: 'session-omar', driverId: 'driver-omar', major: 1, clock: () => at2117 })).toEqual({ outcome: 'closed' });
   });
 
   it('does not report a session that already left', async () => {
@@ -149,9 +149,9 @@ describe('exit by beacon', () => {
   it('takes nothing and opens nothing when payments are not configured', async () => {
     const { exits } = setup();
     const withoutPayments = { exits, payments: null };
-    await reportExitBeacon(withoutPayments, { sessionId: julieInside(enteredAt).id, driverId: 'driver-julie', major: 1, now: at2117 });
+    await reportExitBeacon(withoutPayments, { sessionId: julieInside(enteredAt).id, driverId: 'driver-julie', major: 1, clock: () => at2117 });
 
-    const arrived = await recordVehicleAtExit(withoutPayments, { gate: sortieDemo, requestedGateId: sortieDemo.id, now: at2117 });
+    const arrived = await recordVehicleAtExit(withoutPayments, { gate: sortieDemo, requestedGateId: sortieDemo.id, clock: () => at2117 });
 
     expect(arrived).toEqual({ outcome: 'payments-unavailable' });
     expect(exits.closings).toEqual([]);
@@ -161,7 +161,7 @@ describe('exit by beacon', () => {
     const { exits, payments } = setup();
     const dependencies = { exits, payments };
 
-    await expect(recordVehicleAtExit(dependencies, { gate: entreeDemo, requestedGateId: entreeDemo.id, now: at2117 })).rejects.toThrow(PassageRefusedError);
-    await expect(recordVehicleAtExit(dependencies, { gate: sortieDemo, requestedGateId: entreeDemo.id, now: at2117 })).rejects.toMatchObject({ reason: 'GATE_FORBIDDEN' });
+    await expect(recordVehicleAtExit(dependencies, { gate: entreeDemo, requestedGateId: entreeDemo.id, clock: () => at2117 })).rejects.toThrow(PassageRefusedError);
+    await expect(recordVehicleAtExit(dependencies, { gate: sortieDemo, requestedGateId: entreeDemo.id, clock: () => at2117 })).rejects.toMatchObject({ reason: 'GATE_FORBIDDEN' });
   });
 });

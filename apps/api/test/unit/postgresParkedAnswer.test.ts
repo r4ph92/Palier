@@ -11,13 +11,14 @@ const SESSION_ID = '00000000-0000-4000-8000-000000000951';
 const LOT_ID = '00000000-0000-4000-8000-000000000101';
 const SPOT_B3_ID = '00000000-0000-4000-8000-0000000003b3';
 const SPOT_A1_ID = '00000000-0000-4000-8000-0000000003a1';
+const AISLE_A_ID = '00000000-0000-4000-8000-0000000002a1';
 const B3 = { number: 'B-3', levelCode: 'P1', aisleCode: 'B' };
-const NO_CONFIRMED_SPOT = { assigned_spot_id: SPOT_A1_ID, assigned_spot_state: 'OCCUPIED', number: null, aisle_code: null, level_code: null };
+const NO_CONFIRMED_SPOT = { assigned_spot_id: SPOT_A1_ID, assigned_aisle_id: AISLE_A_ID, assigned_spot_state: 'OCCUPIED', number: null, aisle_code: null, level_code: null };
 
 const julieAnswersB3: SpotAnswer = { sessionId: SESSION_ID, driverId: JULIE_ID, spotNumber: 'B-3' };
 
 function spotRow(state: SpotState, number = 'B-3') {
-  return { id: SPOT_B3_ID, state, number, aisle_code: number.charAt(0), level_code: 'P1' };
+  return { id: SPOT_B3_ID, aisle_id: AISLE_A_ID, state, number, aisle_code: number.charAt(0), level_code: 'P1' };
 }
 
 function asked(spotState: SpotState | null = 'AVAILABLE', sessionState: EntrySessionState = 'PARKED_UNCONFIRMED') {
@@ -25,12 +26,16 @@ function asked(spotState: SpotState | null = 'AVAILABLE', sessionState: EntrySes
 }
 
 function askedAmong(spotRows: readonly ReturnType<typeof spotRow>[], sessionState: EntrySessionState = 'PARKED_UNCONFIRMED') {
+  return spotsReadFor(spotRows, sessionState)
+    .answer('occupy-answered-spot', [{ id: SPOT_B3_ID }])
+    .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
+}
+
+function spotsReadFor(spotRows: readonly ReturnType<typeof spotRow>[], sessionState: EntrySessionState = 'PARKED_UNCONFIRMED') {
   return new ScriptedSql()
     .answer('read-session-lot', [{ lot_id: LOT_ID }])
     .answer('lock-answering-session', [{ state: sessionState, ...NO_CONFIRMED_SPOT }])
-    .answer('lock-answered-spot', spotRows)
-    .answer('occupy-answered-spot', [{ id: SPOT_B3_ID }])
-    .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
+    .answer('lock-answered-spot', spotRows);
 }
 
 function answerWith(sql: ScriptedSql, answer: SpotAnswer = julieAnswersB3) {
@@ -86,7 +91,7 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
     await answerWith(sql);
 
     const occupy = sql.statement('occupy-answered-spot');
-    expect(occupy?.text).toMatch(/set state = 'OCCUPIED', needs_check = false, state_changed_at = now\(\)\s+where id = \$\d+ and state in \('AVAILABLE', 'OCCUPIED_UNKNOWN'\)/);
+    expect(occupy?.text).toMatch(/set state = 'OCCUPIED', needs_check = false, needs_check_since = null, needs_check_reason = null, state_changed_at = now\(\)\s+where id = \$\d+ and state in \('AVAILABLE', 'OCCUPIED_UNKNOWN'\)/);
     const confirm = sql.statement('confirm-parked-spot');
     expect(confirm?.text).toMatch(/set state = 'PARKED_CONFIRMED', confirmed_spot_id = \$\d+, parked_answered_at = now\(\)/);
     expect(confirm?.text).toMatch(/where id = \$\d+ and state in \('PARKED_UNCONFIRMED', 'PARKED_PRESUMED'\)/);
@@ -159,20 +164,13 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
   });
 
   it('fails, rolling the answer back, when the session write finds nothing to confirm', async () => {
-    const withoutConfirm = new ScriptedSql()
-      .answer('read-session-lot', [{ lot_id: LOT_ID }])
-      .answer('lock-answering-session', [{ state: 'PARKED_UNCONFIRMED', ...NO_CONFIRMED_SPOT }])
-      .answer('lock-answered-spot', [spotRow('AVAILABLE')])
-      .answer('occupy-answered-spot', [{ id: SPOT_B3_ID }]);
+    const withoutConfirm = spotsReadFor([spotRow('AVAILABLE')]).answer('occupy-answered-spot', [{ id: SPOT_B3_ID }]);
 
     await expect(answerWith(withoutConfirm)).rejects.toThrow(`Session ${SESSION_ID} was no longer waiting for its answer.`);
   });
 
   it('fails when the spot read as free could not be occupied', async () => {
-    const sql = new ScriptedSql()
-      .answer('read-session-lot', [{ lot_id: LOT_ID }])
-      .answer('lock-answering-session', [{ state: 'PARKED_UNCONFIRMED', ...NO_CONFIRMED_SPOT }])
-      .answer('lock-answered-spot', [spotRow('AVAILABLE')]);
+    const sql = spotsReadFor([spotRow('AVAILABLE')]);
 
     await expect(answerWith(sql)).rejects.toThrow(`Answered spot ${SPOT_B3_ID} could not be occupied.`);
     expect(sql.count('confirm-parked-spot')).toBe(0);
@@ -188,7 +186,7 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
     return new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
       .answer('lock-answering-session', [{ state: 'PARKED_PRESUMED', ...NO_CONFIRMED_SPOT, assigned_spot_state: assignedSpotState }])
-      .answer('lock-answered-spot', [{ ...spot, aisle_code: 'A', level_code: 'P1' }])
+      .answer('lock-answered-spot', [{ ...spot, aisle_id: AISLE_A_ID, aisle_code: 'A', level_code: 'P1' }])
       .answer('occupy-answered-spot', [{ id: spot.id }])
       .answer('flag-assigned-spot', [{ id: SPOT_A1_ID }])
       .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
@@ -201,11 +199,11 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
 
     expect(sql.labels()).toEqual(['read-session-lot', 'limit-lock-wait', 'lock-lot', 'lock-answering-session', 'lock-answered-spot', ...CORRECTION_WRITES, 'append-session-event']);
     expect(sql.statements.slice(1).every((statement) => statement.onTransaction)).toBe(true);
-    expect(sql.statement('lock-answering-session')?.text).toMatch(/select ps\.state, ps\.assigned_spot_id, assigned\.state as assigned_spot_state/);
+    expect(sql.statement('lock-answering-session')?.text).toMatch(/select ps\.state, ps\.assigned_spot_id, assigned\.aisle_id as assigned_aisle_id, assigned\.state as assigned_spot_state/);
     expect(sql.statement('lock-answering-session')?.text).toMatch(/for update of ps, assigned$/);
     expect(sql.statement('occupy-answered-spot')?.params).toEqual([SPOT_A3_ID]);
     expect(sql.statement('flag-assigned-spot')?.text).toMatch(/set state = 'OCCUPIED_UNKNOWN', needs_check = true[\s\S]*where id = \$\d+ and state = 'OCCUPIED'/);
-    expect(sql.statement('flag-assigned-spot')?.params).toEqual([SPOT_A1_ID]);
+    expect(sql.statement('flag-assigned-spot')?.params).toEqual(['WRONG_SPOT', SPOT_A1_ID]);
     expect(sql.statement('confirm-parked-spot')?.params).toEqual([SPOT_A3_ID, SESSION_ID]);
   });
 

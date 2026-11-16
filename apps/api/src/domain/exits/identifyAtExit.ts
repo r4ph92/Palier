@@ -1,6 +1,7 @@
-import type { AuthenticatedGate } from '../gates/AuthenticatedGate.ts';
+import { EXIT_IDENTIFICATION_OF, type AuthenticatedGate } from '../gates/AuthenticatedGate.ts';
 import { ensureOwnGate } from '../gates/ownGate.ts';
 import { PassageRefusedError } from '../gates/PassageRefusedError.ts';
+import type { Clock } from '../time/Clock.ts';
 import { readPlate, readTransponder } from '../vehicles/plate.ts';
 import { payAndClose, type ExitDependencies, type ExitOutcome } from './exitParking.ts';
 import type { ExitIdentification, ReadIdentifierKind } from './ExitRepository.ts';
@@ -11,7 +12,7 @@ export interface IdentifyRequest {
   // The gate the request names in its path.
   readonly requestedGateId: string;
   readonly identifier: string;
-  readonly now: Date;
+  readonly clock: Clock;
 }
 
 // opened: the barrier was ordered open (the capture may still be pending, decision 026); fallback: no single session was found, so
@@ -19,8 +20,6 @@ export interface IdentifyRequest {
 export type IdentifyOutcome =
   | { readonly outcome: 'opened'; readonly identification: 'plate' | 'transponder' }
   | { readonly outcome: 'fallback' | 'gate-unavailable' | 'payments-unavailable' | 'lot-busy' };
-
-const KIND_BY_READER = { ANPR: 'PLATE', RFID: 'TRANSPONDER' } as const;
 
 interface ReadKey {
   readonly kind: ReadIdentifierKind;
@@ -30,7 +29,7 @@ interface ReadKey {
 // The exit reader read a plate or a transponder: leave exactly as the "Ouvrir" tap does, if one open session has it (decision 028).
 // Anything uncertain (no session, two sessions) opens nothing and takes nothing.
 export async function identifyAtExit(dependencies: ExitDependencies, request: IdentifyRequest): Promise<IdentifyOutcome> {
-  const { gate, now } = request;
+  const { gate, clock } = request;
   const read = readerKeyOf(request);
   const sessions = await dependencies.exits.findLeavableByIdentifier(gate.lotId, read.kind, read.key);
   const [session] = sessions;
@@ -38,7 +37,7 @@ export async function identifyAtExit(dependencies: ExitDependencies, request: Id
     return { outcome: 'fallback' };
   }
   const identification: ExitIdentification = read.kind;
-  return outcomeOf(await payAndClose(dependencies, session, { now, identification, exitGateId: gate.id }), read.kind);
+  return outcomeOf(await payAndClose(dependencies, session, { clock, identification, exitGateId: gate.id }), read.kind);
 }
 
 // A capture that stays pending still opened the barrier (decision 026).
@@ -63,7 +62,7 @@ function readerKeyOf({ gate, requestedGateId, identifier }: IdentifyRequest): Re
   if (gate.kind !== 'EXIT' || gate.exitIdKind === 'NONE') {
     throw new PassageRefusedError('GATE_WITHOUT_READER');
   }
-  const kind = KIND_BY_READER[gate.exitIdKind];
+  const kind = EXIT_IDENTIFICATION_OF[gate.exitIdKind];
   const key = kind === 'PLATE' ? readPlate(identifier)?.plateKey : readTransponder(identifier)?.transponderKey;
   if (key === undefined) {
     throw new PassageRefusedError('IDENTIFIER_INVALID');

@@ -1,5 +1,6 @@
 import type { DashboardSpot } from '@palier/shared-types';
 import type { SpotAttributes } from '@palier/shared-types/spotDraft';
+import { CHECKED } from '../forms/CheckboxField.tsx';
 import type { FieldValues } from '../forms/useFieldForm.ts';
 import type { Dictionary } from '../i18n/fr.ts';
 import type { Language } from '../i18n/LanguageContext.tsx';
@@ -10,9 +11,6 @@ export const SPOT_FLAGS = ['isEv', 'isAccessible', 'isOversize'] as const;
 export type SpotFlag = (typeof SPOT_FLAGS)[number];
 
 export type SpotAttributeField = SpotFlag | 'distanceToExit';
-
-// A form keeps every value as text: a ticked box is CHECKED, an unticked one is empty.
-export const CHECKED = 'checked';
 
 export const EMPTY_ATTRIBUTES: FieldValues<SpotAttributeField> = { isEv: '', isAccessible: '', isOversize: '', distanceToExit: '' };
 

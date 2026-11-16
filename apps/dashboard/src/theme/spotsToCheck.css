@@ -1,0 +1,66 @@
+/* The spots to check of a lot; its stacking is shared in stackedTable.css. The spot, its time and the button keep whole, the other cells wrap between words. */
+.check-number,
+.check-since,
+.check-action .text-button {
+  white-space: nowrap;
+}
+
+/* A long spot number may still make the table wider than the section: it then scrolls in its own box, never the page. */
+.check-table-box {
+  overflow-x: auto;
+}
+
+.check-status {
+  min-height: 1lh;
+  margin: var(--space-small) 0 0;
+}
+
+.check-row[aria-busy='true'] .text-button {
+  cursor: wait;
+}
+
+/* Wide screens: the word would widen the action column and reflow the table, so the dimmed button says "busy" instead. */
+@media (min-width: 681px) {
+  .check-busy-word {
+    display: none;
+  }
+
+  .check-row[aria-busy='true'] .text-button {
+    color: var(--muted);
+    text-decoration: none;
+  }
+}
+
+/* Narrow screens: number and state, then place · time, then the reason, then the button. */
+@media (max-width: 680px) {
+  .check-number {
+    flex: 1 0 auto;
+    order: 1;
+  }
+
+  .check-state {
+    order: 2;
+  }
+
+  .check-place {
+    order: 4;
+  }
+
+  .check-since {
+    order: 5;
+  }
+
+  .check-since::before {
+    content: '· ';
+  }
+
+  .check-reason {
+    flex-basis: 100%;
+    order: 6;
+  }
+
+  .check-action {
+    flex-basis: 100%;
+    order: 7;
+  }
+}

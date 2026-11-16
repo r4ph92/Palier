@@ -89,9 +89,21 @@
       "types": "./src/gates.ts",
       "default": "./src/gates.ts"
     },
+    "./gateDraft": {
+      "types": "./src/gateDraft.ts",
+      "default": "./src/gateDraft.ts"
+    },
     "./spotDraft": {
       "types": "./src/spotDraft.ts",
       "default": "./src/spotDraft.ts"
+    },
+    "./publication": {
+      "types": "./src/publication.ts",
+      "default": "./src/publication.ts"
+    },
+    "./sessionTimeline": {
+      "types": "./src/sessionTimeline.ts",
+      "default": "./src/sessionTimeline.ts"
     }
   },
   "scripts": {

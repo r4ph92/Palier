@@ -35,6 +35,9 @@ Le contenu de chaque QR imprimé, à coller dans l'onglet « Scanner » de l'app
 (champ « Contenu du QR ») tant que la caméra n'existe pas (#45). Les secrets sont
 fixes dans `apps/api/src/seed/fixtures/gates.ts`, donc ces liens ne changent pas
 d'un seed à l'autre ; `npm run seed --workspace @palier/api` les affiche aussi.
+Ne régénérez ni la clé ni le secret du QR d'Entrée Démo et de Sortie Démo depuis
+la page « Bornes et QR » : ces liens et la console cesseraient de fonctionner
+jusqu'au prochain seed.
 
 | Borne | Contenu du QR | Réponse attendue |
 |---|---|---|
@@ -108,6 +111,12 @@ secondes l'un de l'autre, dans l'ordre qu'on veut.
    battu, il faut donc garder la console ouverte pour les entrées suivantes. Un onglet
    caché ralentit les minuteries à environ une fois par minute, ce qui reste sous les
    2 minutes. Sur 401 ou 403, les signaux s'arrêtent jusqu'à la prochaine saisie de la clé.
+6. « Passage de test » (`POST /v1/gates/:id/test-passage`) marque la borne vérifiée
+   pour la mise en ligne du parking (décision 041), sans compter de véhicule ni
+   ouvrir de session. Palier l'accepte seulement si la borne a battu dans les 2
+   dernières minutes ; sinon « Palier n'a reçu aucun signal de cette barrière depuis
+   2 minutes. » Un changement de câblage, d'adresse ou de boucles de la borne, ou une
+   nouvelle clé d'appareil, efface la vérification : refaire le passage de test.
 
 Messages : « Clé d'appareil refusée » (clé inconnue, mal formée ou révoquée),
 « Accès refusé pour cette barrière » (403), « Cette barrière n'a pas de
@@ -206,6 +215,7 @@ lot : voir la décision 031.
 ## API utilisée
 
 - `POST /v1/gates/:id/heartbeat` (sans corps) : 204. `POST /v1/gates/:id/beacons/:minor/battery`, corps `{ "percent": 15 }` : 204 ; 404 `BEACON_NOT_FOUND` pour un minor absent du parking de la barrière, 400 `BATTERY_PERCENT_INVALID` hors de 0 à 100. Voir `docs/decisions/036`.
+- `POST /v1/gates/:id/test-passage` (sans corps) : `{ verifiedAt }` ; 409 `GATE_NOT_HEARD` sans signal de vie depuis plus de 2 minutes. Ne touche ni au compteur ni aux sessions. Voir `docs/decisions/041`.
 - `POST /v1/gates/:id/presence` (clé d'une barrière de sortie, sans corps) : `{ outcome: 'waiting' | 'opened' | 'fallback' }` ; 409 `GATE_NOT_EXIT` pour une barrière d'entrée. Voir `docs/decisions/029`.
 
 - `GET /v1/gates/me` : `{ id, name, kind, lotName }` de la barrière de la clé.

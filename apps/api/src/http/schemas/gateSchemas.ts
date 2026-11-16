@@ -5,14 +5,16 @@ import type {
   GatePassageRequest,
   GatePassageResponse,
   GatePresenceResponse,
+  GateTestPassageResponse,
   PassageReplayRequest,
   PassageReplayResponse,
 } from '@palier/shared-types';
+import { GATE_KINDS } from '@palier/shared-types/gates';
 import type { FromSchema } from 'json-schema-to-ts';
 import type { AssertTrue, MutuallyAssignable, WithMutableArrays } from './schemaMatchesType.ts';
 import { idPathParametersSchema, uuidSchema } from './uuidSchema.ts';
 
-const gateKindSchema = { type: 'string', enum: ['ENTRY', 'EXIT'] } as const;
+const gateKindSchema = { type: 'string', enum: GATE_KINDS } as const;
 
 export const gateIdentitySchema = {
   type: 'object',
@@ -109,6 +111,13 @@ export const presenceResponseSchema = {
   properties: { outcome: { type: 'string', enum: ['waiting', 'opened', 'fallback'] } },
 } as const;
 
+export const testPassageResponseSchema = {
+  type: 'object',
+  required: ['verifiedAt'],
+  additionalProperties: false,
+  properties: { verifiedAt: { type: 'string', format: 'date-time' } },
+} as const;
+
 export type GateIdParameters = FromSchema<typeof gateIdParametersSchema>;
 export type BatteryReportParameters = FromSchema<typeof batteryReportParametersSchema>;
 
@@ -124,3 +133,4 @@ export type ResponseSchemaMatchesIdentifyResponse = AssertTrue<MutuallyAssignabl
 export type ResponseSchemaMatchesPresenceResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof presenceResponseSchema>, GatePresenceResponse>>;
 export type RequestSchemaMatchesReplayRequest = AssertTrue<MutuallyAssignable<FromSchema<typeof replayRequestSchema>, WithMutableArrays<PassageReplayRequest>>>;
 export type ResponseSchemaMatchesReplayResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof replayResponseSchema>, PassageReplayResponse>>;
+export type ResponseSchemaMatchesTestPassageResponse = AssertTrue<MutuallyAssignable<FromSchema<typeof testPassageResponseSchema>, GateTestPassageResponse>>;

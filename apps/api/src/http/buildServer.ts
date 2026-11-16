@@ -1,11 +1,16 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { AccountWebhookReader, OperatorStripeAccounts, OperatorStripeGateway } from '../domain/dashboard/OperatorStripe.ts';
+import type { GateSecretRepository } from '../domain/dashboard/GateSecretRepository.ts';
 import type { LevelOccupancyReader } from '../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotEquipmentReader } from '../domain/dashboard/LotEquipmentReader.ts';
+import type { LotGateRepository } from '../domain/dashboard/LotGateRepository.ts';
 import type { LotMapRepository } from '../domain/dashboard/LotMapRepository.ts';
 import type { LotSpotRepository } from '../domain/dashboard/LotSpotRepository.ts';
+import type { SessionTimelineRepository } from '../domain/dashboard/SessionTimelineRepository.ts';
+import type { SpotCheckRepository } from '../domain/dashboard/SpotCheckRepository.ts';
 import type { LotSetupRepository } from '../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../domain/dashboard/OperatorRepository.ts';
+import type { LotPublicationRepository } from '../domain/publication/LotPublicationRepository.ts';
 import type { DriverRepository } from '../domain/drivers/DriverRepository.ts';
 import type { DriverAccess } from '../domain/drivers/driverSessions.ts';
 import type { CardGateway } from '../domain/payments/CardGateway.ts';
@@ -25,6 +30,7 @@ import type { DashboardRouteDependencies } from './dashboard/DashboardRouteDepen
 import { registerDashboardRoutes } from './dashboard/dashboardRoutes.ts';
 import { registerDemoConsoleRoutes } from './demo/demoConsoleRoutes.ts';
 import { handleServerError } from './handleServerError.ts';
+import { serverLoggerOf, type ServerLogging } from './serverLogger.ts';
 import { requireMinimumAppVersion } from './requireMinimumAppVersion.ts';
 import { registerCurrentParkingSessionRoute } from './routes/currentParkingSessionRoute.ts';
 import { registerDriverRoutes } from './routes/driverRoutes.ts';
@@ -64,6 +70,11 @@ export interface ServerDependencies {
     readonly lotMaps: LotMapRepository;
     readonly lotEquipment: LotEquipmentReader;
     readonly lotSpots: LotSpotRepository;
+    readonly spotChecks: SpotCheckRepository;
+    readonly sessionTimelines: SessionTimelineRepository;
+    readonly lotGates: LotGateRepository;
+    readonly gateSecrets: GateSecretRepository;
+    readonly lotPublication: LotPublicationRepository;
     readonly currentParkingSessions: CurrentParkingSessionQuery;
     readonly parkingSessionBackdater: ParkingSessionBackdater;
     readonly parkedPresumptions: ParkedPresumptionRepository;
@@ -86,17 +97,16 @@ export interface ServerDependencies {
   readonly settings?: ServerSettings;
 }
 
-export interface ServerSettings {
+export interface ServerSettings extends ServerLogging {
   readonly testSignInEnabled?: boolean;
   readonly demoMode?: boolean;
-  readonly logsRequests?: boolean;
   readonly minimumAppVersion?: string | undefined;
   readonly secureCookies?: boolean;
 }
 
 export function buildServer({ repositories, gates, cardGateway, entries, exits, spotHolds, operatorStripe, testClock, settings = {} }: ServerDependencies): FastifyInstance {
   // Refuse a value of the wrong JSON type rather than converting it, so ["2026-10-28"] is not read as "2026-10-28".
-  const server = Fastify({ logger: settings.logsRequests ?? false, ajv: { customOptions: { coerceTypes: false } } });
+  const server = Fastify({ logger: serverLoggerOf(settings), ajv: { customOptions: { coerceTypes: false } } });
   server.setErrorHandler(handleServerError);
   server.decorateRequest('driver', null);
   void server.register(async (appScope) => registerAppRoutes(appScope, { repositories, cardGateway, entries, exits, spotHolds, testClock, settings }));
@@ -125,6 +135,11 @@ function dashboardDependencies({ repositories, settings = {}, operatorStripe, te
     equipment: repositories.lotEquipment,
     clock: composedClockOf(settings, repositories, testClock),
     spots: repositories.lotSpots,
+    spotChecks: repositories.spotChecks,
+    sessionTimelines: repositories.sessionTimelines,
+    gates: repositories.lotGates,
+    gateSecrets: repositories.gateSecrets,
+    publication: repositories.lotPublication,
     stripe: operatorStripe?.gateway == null ? null : { accounts: operatorStripe.accounts, gateway: operatorStripe.gateway },
     testSignInEnabled: settings.testSignInEnabled === true,
     secureCookies: settings.secureCookies ?? true,

@@ -1,8 +1,11 @@
 import type { BatteryStatus } from './beaconBattery.ts';
 import { isValidDisplayText } from './displayText.ts';
+import { GATE_ERROR_CODES } from './dashboardGates.ts';
 import type { GateHealth, GateKind } from './gates.ts';
-import type { LotPricingSettings } from './lotPricing.ts';
+import { PRICING_ERROR_CODES, type LotPricingSettings } from './lotPricing.ts';
+import { PUBLICATION_ERROR_CODES } from './publication.ts';
 import type { AisleRectangle } from './parkingSessions.ts';
+import { SESSION_ERROR_CODES } from './sessionTimeline.ts';
 import type { SpotState } from './spotStates.ts';
 
 // Every mutating /v1/dashboard request carries this header; a cross-site form cannot set it.
@@ -146,6 +149,32 @@ export interface DashboardAisleSpots {
   readonly capacity: number;
 }
 
+export const SPOT_CHECK_REASONS = ['WRONG_AISLE', 'WRONG_SPOT', 'REPORTED_TAKEN'] as const;
+
+// Why a spot was flagged for a physical check: its driver parked in another aisle, in another spot of the same aisle, or reported it taken.
+export type SpotCheckReason = (typeof SPOT_CHECK_REASONS)[number];
+
+// A flagged spot of a lot, oldest flag first. The reason is null for a flag raised before reasons were recorded, or by the seed:spot-state script.
+export interface DashboardSpotToCheck {
+  readonly spotId: string;
+  readonly number: string;
+  readonly levelCode: string;
+  readonly aisleCode: string;
+  readonly since: string;
+  readonly reason: SpotCheckReason | null;
+  readonly state: SpotState;
+  // False while the spot is occupied-unknown, assigned or held, or an active session still points at it: a clear would be refused.
+  readonly clearable: boolean;
+  // An active session has it as its assigned or confirmed spot, whatever state the spot shows.
+  readonly heldBySession: boolean;
+}
+
+// The page's whole answer: the lot's name for the title, and its flagged spots.
+export interface DashboardSpotsToCheck {
+  readonly lotName: string;
+  readonly spots: readonly DashboardSpotToCheck[];
+}
+
 // Every level of the lot, each once, in the new order; fromLevelIds is the order the page showed when the operator moved a level.
 export interface LevelOrderRequest {
   readonly levelIds: readonly string[];
@@ -181,12 +210,7 @@ export const DASHBOARD_ERROR_CODES = [
   'LOT_LATITUDE_INVALID',
   'LOT_LONGITUDE_INVALID',
   'LOT_CAPACITY_INVALID',
-  'PRICING_INCREMENT_CENTS_INVALID',
-  'PRICING_INCREMENT_MINUTES_INVALID',
-  'PRICING_DAILY_CAP_REQUIRED',
-  'PRICING_DAILY_CAP_INVALID',
-  'PRICING_DAILY_CAP_BELOW_INCREMENT',
-  'PRICING_HOLD_QUOTA_INVALID',
+  ...PRICING_ERROR_CODES,
   'TOO_MANY_LOTS',
   'LOT_BUSY',
   'LEVEL_CODE_INVALID',
@@ -208,6 +232,11 @@ export const DASHBOARD_ERROR_CODES = [
   'SPOT_LIMIT_REACHED',
   'SPOT_NUMBER_TAKEN',
   'SPOT_IN_USE',
+  'SPOT_STILL_ASSIGNED',
+  'SPOT_NOT_FREE',
+  ...SESSION_ERROR_CODES,
+  ...GATE_ERROR_CODES,
+  ...PUBLICATION_ERROR_CODES,
 ] as const;
 
 export type DashboardErrorCode = (typeof DASHBOARD_ERROR_CODES)[number];

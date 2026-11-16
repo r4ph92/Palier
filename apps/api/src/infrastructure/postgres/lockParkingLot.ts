@@ -38,12 +38,12 @@ function lockedParkingLotOf(row: LockedParkingLotRow): LockedParkingLot {
   return { id: row.id, name: row.name, isOnline: row.is_online, capacity: row.capacity, vehicleCount: row.vehicle_count, holdQuota: row.hold_quota };
 }
 
-// Runs the work under the lot lock, waiting for it at most LIMIT_LOCK_WAIT.
-export function inLotLock<T>(database: Database, lotId: string, work: (tx: Transaction) => Promise<T>): Promise<T> {
+// Runs the work under the lot lock, waiting for it at most LIMIT_LOCK_WAIT; the work gets the lot as read under the lock.
+export function inLotLock<T>(database: Database, lotId: string, work: (tx: Transaction, lot: LockedParkingLot | undefined) => Promise<T>): Promise<T> {
   return database.transaction(async (tx) => {
     await tx.execute(LIMIT_LOCK_WAIT);
-    await lockParkingLot(tx, lotId);
-    return work(tx);
+    const lot = await lockParkingLot(tx, lotId);
+    return work(tx, lot);
   }, LOT_LOCK_TRANSACTION);
 }
 

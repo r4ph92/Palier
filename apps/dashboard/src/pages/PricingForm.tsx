@@ -1,10 +1,9 @@
-import { useState, type FormEvent } from 'react';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { StateMark } from '../components/StateMark.tsx';
 import { fieldBinder } from '../forms/fieldBinder.ts';
 import { SubmitButton } from '../forms/SubmitButton.tsx';
 import { TextField } from '../forms/TextField.tsx';
-import type { FieldForm } from '../forms/useFieldForm.ts';
+import { clearingOnEachChange, useSavedNotice } from '../forms/useSavedNotice.ts';
 import { useText } from '../i18n/LanguageContext.tsx';
 import { useLimitValues } from '../lotSetup/useLimitValues.ts';
 import { usePricingForm, type PricingFormTarget } from '../lotSetup/usePricingForm.ts';
@@ -25,26 +24,4 @@ export function PricingForm({ lotId, pricing, onSaved }: PricingFormTarget) {
       <p role="status">{saved.hasSaved && form.summary === null ? <StateMark tone="free" label={text.pricing.saved} wraps /> : null}</p>
     </form>
   );
-}
-
-// The status empties on each edit and each submit, so a screen reader announces the confirmation every time it comes back.
-function useSavedNotice(onSaved: () => void) {
-  const [hasSaved, setHasSaved] = useState(false);
-  const markSaved = () => {
-    setHasSaved(true);
-    onSaved();
-  };
-  return { hasSaved, markSaved, clear: () => setHasSaved(false) };
-}
-
-function clearingOnEachChange<Field extends string>(form: FieldForm<Field>, clear: () => void): FieldForm<Field> {
-  const setValue = (field: Field, value: string) => {
-    clear();
-    form.setValue(field, value);
-  };
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    clear();
-    return form.submit(event);
-  };
-  return { ...form, setValue, submit };
 }

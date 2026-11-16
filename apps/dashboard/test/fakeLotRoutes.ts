@@ -1,6 +1,10 @@
 import type { DashboardLotDetails, LotDraft, LotPricingSettings } from '@palier/shared-types';
 import { type FakeApiState, type FakeResponse, refused, summaryOf } from './fakeDashboardData.ts';
+import { isGateRequest, routeGates } from './fakeGateRoutes.ts';
 import { isMapRequest, routeMap } from './fakeMapRoutes.ts';
+import { isPublicationRequest, routePublication } from './fakePublicationRoutes.ts';
+import { isSessionRequest, routeSessions } from './fakeSessionRoutes.ts';
+import { isSpotCheckRequest, routeSpotChecks } from './fakeSpotCheckRoutes.ts';
 import { isSpotRequest, routeSpots } from './fakeSpotRoutes.ts';
 
 export const CREATED_LOT_ID = '00000000-0000-4000-8000-000000000299';
@@ -24,13 +28,36 @@ export function routeLots(state: FakeApiState, request: string, body: Record<str
     return createLot(lots, body as unknown as LotDraft);
   }
   const ownedLotIds = new Set(lots.map(({ id }) => id));
+  const featureAnswer = routeFeature({ state, lots, ownedLotIds }, request, body);
+  if (featureAnswer !== undefined) {
+    return featureAnswer;
+  }
+  return routeLot({ occupancy: state.occupancy, equipment: state.equipment, lots }, request, body);
+}
+
+interface FeatureContext {
+  readonly state: FakeApiState;
+  readonly lots: DashboardLotDetails[];
+  readonly ownedLotIds: ReadonlySet<string>;
+}
+
+function routeFeature({ state, lots, ownedLotIds }: FeatureContext, request: string, body: Record<string, unknown>): FakeResponse | undefined {
   if (isMapRequest(request)) {
     return routeMap({ maps: state.maps, ownedLotIds }, request, body);
+  }
+  if (isSpotCheckRequest(request)) {
+    return routeSpotChecks({ spotsToCheck: state.spotsToCheck, lots }, request);
+  }
+  if (isSessionRequest(request)) {
+    return routeSessions({ sessions: state.sessions, ownedLotIds }, request);
   }
   if (isSpotRequest(request)) {
     return routeSpots({ state, ownedLotIds }, request, body);
   }
-  return routeLot({ occupancy: state.occupancy, equipment: state.equipment, lots }, request, body);
+  if (isPublicationRequest(request)) {
+    return routePublication({ state, ownedLotIds }, request, body);
+  }
+  return isGateRequest(request) ? routeGates({ state, lots }, request, body) : undefined;
 }
 
 interface MemberLots {

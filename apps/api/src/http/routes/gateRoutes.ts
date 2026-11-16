@@ -78,6 +78,7 @@ export function registerGateRoutes(server: FastifyInstance, dependencies: GateRo
   void server.register(
     async (scope) => {
       scope.decorateRequest('authenticatedGate', null);
+      scope.decorateRequest('authenticatedKeyHash', null);
       scope.addHook('onRequest', createGateDeviceAuthentication(dependencies.deviceKeys));
       scope.setErrorHandler(handleGateError);
       registerIdentityRoute(scope);
@@ -130,7 +131,7 @@ function registerIdentifyRoute(scope: FastifyInstance, readerExit: ReaderExitDep
     }
     const { id: requestedGateId } = request.params;
     const gate = authenticatedGateOf(request);
-    const identified = await identifyAtExit(readerExit.exit, { gate, requestedGateId, identifier: request.body.identifier, now: readerExit.clock() });
+    const identified = await identifyAtExit(readerExit.exit, { gate, requestedGateId, identifier: request.body.identifier, clock: readerExit.clock });
     return identifyReply(identified, request, reply);
   });
 }
@@ -143,7 +144,7 @@ function registerPresenceRoute(scope: FastifyInstance, readerExit: ReaderExitDep
       return reply.status(SERVICE_UNAVAILABLE).send({ statusCode: SERVICE_UNAVAILABLE, error: 'PAYMENTS_UNAVAILABLE', message: 'The payment could not be taken; try again.' });
     }
     const gate = authenticatedGateOf(request);
-    const settled = await recordVehicleAtExit(readerExit.exit, { gate, requestedGateId: request.params.id, now: readerExit.clock() });
+    const settled = await recordVehicleAtExit(readerExit.exit, { gate, requestedGateId: request.params.id, clock: readerExit.clock });
     if (settled.outcome === 'waiting' || settled.outcome === 'opened' || settled.outcome === 'fallback') {
       return { outcome: settled.outcome };
     }

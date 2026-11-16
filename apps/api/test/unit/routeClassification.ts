@@ -50,6 +50,7 @@ const GATE_DEVICE_ROUTES = [
   'POST /v1/gates/:id/presence',
   'POST /v1/gates/:id/heartbeat',
   'POST /v1/gates/:id/beacons/:minor/battery',
+  'POST /v1/gates/:id/test-passage',
 ];
 
 // The demo console is static files served only in demo mode; it reaches data through the gate routes with a device key.
@@ -81,6 +82,21 @@ export const DASHBOARD_PROTECTED = [
   'POST /v1/dashboard/lots/:id/aisles/:aisleId/spots',
   'PUT /v1/dashboard/lots/:id/spots/:spotId',
   'DELETE /v1/dashboard/lots/:id/spots/:spotId',
+  'PUT /v1/dashboard/lots/:id/spots/:spotId/service',
+  'GET /v1/dashboard/lots/:id/spots-to-check',
+  'POST /v1/dashboard/lots/:id/spots/:spotId/check-cleared',
+  'GET /v1/dashboard/lots/:id/sessions',
+  'GET /v1/dashboard/lots/:id/sessions/:sessionId',
+  'GET /v1/dashboard/lots/:id/gates',
+  'POST /v1/dashboard/lots/:id/gates',
+  'PUT /v1/dashboard/lots/:id/gates/:gateId',
+  'POST /v1/dashboard/lots/:id/gates/:gateId/device-key',
+  'POST /v1/dashboard/lots/:id/gates/:gateId/qr-secret',
+  'GET /v1/dashboard/lots/:id/gates/:gateId/qr-link',
+  'GET /v1/dashboard/lots/:id/publication',
+  'PUT /v1/dashboard/lots/:id/online',
+  'PUT /v1/dashboard/lots/:id/attestations/wifi',
+  'PUT /v1/dashboard/lots/:id/attestations/cellular',
 ];
 
 const DASHBOARD_OPEN = ['POST /v1/dashboard/sign-out', 'GET /v1/dashboard/test/users', 'POST /v1/dashboard/test/sign-in'];
@@ -94,7 +110,7 @@ export function methodOf(route: string): string {
 }
 
 export function urlOf(route: string): string {
-  return (route.split(' ')[1] ?? '').replace(/:(id|sessionId|levelId|aisleId|spotId)\b/g, SAMPLE_UUID).replace(':minor', '1');
+  return (route.split(' ')[1] ?? '').replace(/:(id|sessionId|levelId|aisleId|spotId|gateId)\b/g, SAMPLE_UUID).replace(':minor', '1');
 }
 
 // Only JSON bodies carry an error code: some routes answer with no body, and the console serves HTML, CSS, scripts and fonts.

@@ -2,10 +2,11 @@ import type { DashboardAisleSpots, DashboardSpot } from '@palier/shared-types';
 import { useState } from 'react';
 import type { DisplayedErrorCode } from '../api/DashboardApiError.ts';
 import { type Refusal, type StaleDataFollowUps } from '../api/followUpRefusal.ts';
+import type { ServiceAction } from './useSpotService.ts';
 import type { PageRequest } from './useSpotPage.ts';
 
 // After these refusals the spot list on the page is out of date: it is read again before the operator retries.
-const LIST_OUT_OF_DATE: readonly DisplayedErrorCode[] = ['LOT_BUSY', 'SPOT_NOT_FOUND'];
+const LIST_OUT_OF_DATE: readonly DisplayedErrorCode[] = ['LOT_BUSY', 'SPOT_NOT_FOUND', 'SPOT_IN_USE'];
 
 interface SpotChangeSources {
   readonly show: (spots: DashboardAisleSpots) => void;
@@ -21,8 +22,8 @@ export interface AddedSpots {
 // What the line under the list title says about the last change: kept as data, so it follows a language switch.
 export type SpotNotice =
   | { readonly kind: 'added'; readonly added: AddedSpots }
-  | { readonly kind: 'saved' | 'deleted'; readonly number: string }
-  | { readonly kind: 'refused'; readonly refusal: Refusal };
+  | { readonly kind: 'saved' | 'deleted' | 'outOfService' | 'backInService'; readonly number: string }
+  | { readonly kind: 'refused'; readonly refusal: Refusal; readonly spotId: string | null };
 
 export interface SpotChanges {
   readonly notice: SpotNotice | null;
@@ -33,7 +34,9 @@ export interface SpotChanges {
   readonly added: (spots: DashboardAisleSpots, added: AddedSpots, firstSpotId: string | null) => void;
   readonly saved: (spots: DashboardAisleSpots, spot: DashboardSpot) => void;
   readonly deleted: (spots: DashboardAisleSpots, spot: DashboardSpot) => void;
-  readonly refused: (refusal: Refusal) => void;
+  readonly serviceChanged: (spots: DashboardAisleSpots, spot: DashboardSpot, action: ServiceAction) => void;
+  // With the spot's id, the refusal is shown in that spot's row when the row is on the page.
+  readonly refused: (refusal: Refusal, spotId?: string) => void;
   readonly staleData: StaleDataFollowUps;
 }
 
@@ -59,7 +62,8 @@ export function useSpotChanges({ show, refresh, onStale }: SpotChangeSources): S
     added: (spots, added, firstSpotId) => showWith(spots, { kind: 'added', added }, firstSpotId),
     saved: (spots, { number }) => showWith(spots, { kind: 'saved', number }),
     deleted: (spots, { number }) => showWith(spots, { kind: 'deleted', number }),
-    refused: (refusal) => setNotice({ kind: 'refused', refusal }),
+    serviceChanged: (spots, { number }, action) => showWith(spots, { kind: action === 'takeOutOfService' ? 'outOfService' : 'backInService', number }),
+    refused: (refusal, spotId) => setNotice({ kind: 'refused', refusal, spotId: spotId ?? null }),
     staleData: { refreshOn: (code) => refreshOn(code, { refresh, onStale }), reloadFailedCode: 'SPOT_RELOAD_FAILED' },
   };
 }
