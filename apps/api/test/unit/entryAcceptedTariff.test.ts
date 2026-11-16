@@ -109,6 +109,21 @@ describe('POST /v1/entries with the accepted tariff', () => {
     expect(entries.payments.authorized.map(({ amountCents }) => amountCents)).toEqual([2500]);
   });
 
+  it('answers a replayed scan after a price change with the first session, holding once at the tariff it entered at', async () => {
+    const { enter, entries, gates } = await startWithJulieReady();
+    const first = await enter({ tariff: ACCEPTED_DEMO_TARIFF });
+    gates.tariff = SOPHIE_NEW_TARIFF;
+
+    const refused = await enter({ tariff: ACCEPTED_DEMO_TARIFF });
+    const replayed = await enter({ tariff: SOPHIE_NEW_TARIFF });
+
+    expect(refused.statusCode).toBe(409);
+    expect(replayed.statusCode).toBe(201);
+    expect(replayed.json()).toEqual(first.json());
+    expect(entries.payments.authorized.map(({ amountCents }) => amountCents)).toEqual([2500]);
+    expect(entries.sessions.drafts.map(({ pricing }) => pricing)).toEqual([ACCEPTED_DEMO_TARIFF]);
+  });
+
   it('does not count a changed tariff against the entry limit', async () => {
     const { enter, gates } = await startWithJulieReady();
     gates.tariff = SOPHIE_NEW_TARIFF;
