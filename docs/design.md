@@ -22,7 +22,7 @@ partir, où le chiffre des places libres est l'information principale.
 | `danger` | `#9C3A2A` | `#D9705E` | Carré « complet » |
 | `low` | `#B45F06` | `#E09A3E` | Remplissage de la jauge d’occupation sous 25 % libre ; jamais en texte |
 | `accent` | `#F5C400` | `#F5C400` | Jaune de signalisation : bouton principal, panneau de place, onglet choisi, marque du titre ; un fond ou un trait, jamais une couleur de texte |
-| `onAccent` | `#191C1A` | `#191C1A` | Texte et bordure sur `accent` (11:1) |
+| `onAccent` | `#191C1A` | `#191C1A` | Texte et bordure sur `accent` (10,5:1) |
 
 Polices : **Archivo** (texte, titres en 600) et **IBM Plex Mono** (surtitres et
 chiffres, `tabular-nums`), embarquées par `@expo-google-fonts`. Espacement sur
