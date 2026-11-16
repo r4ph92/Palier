@@ -86,9 +86,13 @@ describe('the sessions page', () => {
     await screen.findByRole('table');
 
     expect(platesShown()).toHaveLength(50);
+    expect(document.activeElement).toBe(document.body);
+    expect(screen.getByRole('status').textContent).toBe('');
     await userEvent.click(screen.getByRole('button', { name: 'Plus anciennes' }));
 
     expect(await screen.findByRole('link', { name: 'PLQ 051' })).toBeDefined();
+    expect(document.activeElement).toBe(screen.getByRole('link', { name: 'PLQ 050' }));
+    expect(screen.getByRole('status').textContent).toBe('2 sessions de plus');
     expect(platesShown()).toHaveLength(52);
     expect(screen.queryByRole('button', { name: 'Plus anciennes' })).toBeNull();
     expect(api.requests.at(-1)).toMatch(/sessions\?status=OPEN&before=00000000-0000-4000-8000-000000000949$/);

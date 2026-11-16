@@ -10,16 +10,22 @@ interface FirstPage {
   readonly list: DashboardSessionList;
 }
 
+interface LoadedOlderPage {
+  readonly firstSessionId: string;
+  readonly count: number;
+}
+
 interface OlderPages {
-  readonly status: SessionListStatus;
   readonly rows: readonly DashboardSessionRow[];
   readonly nextCursor: string | null;
+  readonly lastLoad: LoadedOlderPage | null;
 }
 
 export interface OlderSessions {
   readonly hasMore: boolean;
   readonly isLoading: boolean;
   readonly failure: DisplayedErrorCode | null;
+  readonly lastLoad: LoadedOlderPage | null;
   readonly load: () => void;
 }
 
@@ -55,6 +61,7 @@ interface OlderRequest {
 }
 
 const IDLE: OlderRequest = { isLoading: false, failure: null };
+const LOADING: OlderRequest = { isLoading: true, failure: null };
 
 async function readOlderPage(lotId: string, request: SessionListRequest): Promise<DashboardSessionList | DisplayedErrorCode> {
   try {
@@ -65,30 +72,34 @@ async function readOlderPage(lotId: string, request: SessionListRequest): Promis
 }
 
 interface OlderState {
+  readonly status: SessionListStatus;
   readonly pages: OlderPages | null;
   readonly request: OlderRequest;
 }
 
-function stateAfter(outcome: DashboardSessionList | DisplayedErrorCode, status: SessionListStatus, pages: OlderPages | null): OlderState {
+function stateAfter(outcome: DashboardSessionList | DisplayedErrorCode, previous: OlderState): OlderState {
   if (typeof outcome === 'string') {
-    return { pages, request: { isLoading: false, failure: outcome } };
+    return { ...previous, request: { isLoading: false, failure: outcome } };
   }
-  return { pages: { status, rows: [...(pages?.rows ?? []), ...outcome.sessions], nextCursor: outcome.nextCursor }, request: IDLE };
+  const first = outcome.sessions[0];
+  const lastLoad = first === undefined ? (previous.pages?.lastLoad ?? null) : { firstSessionId: first.id, count: outcome.sessions.length };
+  const rows = [...(previous.pages?.rows ?? []), ...outcome.sessions];
+  return { status: previous.status, pages: { rows, nextCursor: outcome.nextCursor, lastLoad }, request: IDLE };
 }
 
 function useOlderPages(lotId: string, status: SessionListStatus, firstCursor: string | null): UsedOlderPages {
-  const [state, setState] = useState<OlderState>({ pages: null, request: IDLE });
-  const { pages, request } = state;
-  if (pages !== null && pages.status !== status) {
-    setState({ pages: null, request });
+  const [state, setState] = useState<OlderState>({ status, pages: null, request: IDLE });
+  if (state.status !== status) {
+    setState({ status, pages: null, request: IDLE });
   }
+  const { pages, request } = state;
   const cursor = pages === null ? firstCursor : pages.nextCursor;
   const load = () => {
     if (cursor === null || request.isLoading) {
       return;
     }
-    setState({ pages, request: { isLoading: true, failure: null } });
-    void readOlderPage(lotId, { status, before: cursor }).then((outcome) => setState(stateAfter(outcome, status, pages)));
+    setState({ ...state, request: LOADING });
+    void readOlderPage(lotId, { status, before: cursor }).then((outcome) => setState((previous) => (previous.status === status ? stateAfter(outcome, previous) : previous)));
   };
-  return { rows: pages?.rows ?? [], older: { hasMore: cursor !== null, ...request, load } };
+  return { rows: pages?.rows ?? [], older: { hasMore: cursor !== null, ...request, lastLoad: pages?.lastLoad ?? null, load } };
 }

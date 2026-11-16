@@ -19,7 +19,7 @@ export const enSessions = {
     CLOSED_PAID: 'Left, paid',
     CLOSED_CAPTURE_PENDING: 'Left, payment pending',
   },
-  older: { shown: 'Older sessions', busy: 'Loading…' },
+  older: { shown: 'Older sessions', busy: 'Loading…', loaded: { one: '%{count} more session', other: '%{count} more sessions' } },
   emptyOpen: 'No open session.',
   emptyAll: 'No session yet.',
   emptyHint: 'A session shows up here as soon as a driver scans the QR code of an entry terminal.',

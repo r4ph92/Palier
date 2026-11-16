@@ -2,7 +2,8 @@ import type { SessionListStatus } from '@palier/shared-types/sessionTimeline';
 import { useState } from 'react';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { SkeletonRows } from '../components/SkeletonRows.tsx';
-import { useText } from '../i18n/LanguageContext.tsx';
+import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
+import { pluralOf } from '../i18n/plural.ts';
 import { SessionsTable } from '../sessions/SessionsTable.tsx';
 import { StatusFilter } from '../sessions/StatusFilter.tsx';
 import { useSessionList, type OlderSessions, type SessionListState } from '../sessions/useSessionList.ts';
@@ -39,16 +40,13 @@ interface SessionsBodyProps {
 
 function SessionsBody({ lotId, status, list }: SessionsBodyProps) {
   const text = useText();
-  if (list.isSwitching) {
-    return <SkeletonRows count={LOADING_ROWS} label={text.app.loading} />;
-  }
   if (list.sessions.length === 0) {
-    return <EmptyList status={status} />;
+    return list.isSwitching ? <SkeletonRows count={LOADING_ROWS} label={text.app.loading} /> : <EmptyList status={status} />;
   }
   return (
     <>
-      <SessionsTable lotId={lotId} sessions={list.sessions} />
-      <OlderButton older={list.older} />
+      <SessionsTable lotId={lotId} sessions={list.sessions} isBusy={list.isSwitching} focusedSessionId={list.older.lastLoad?.firstSessionId ?? null} />
+      {list.isSwitching ? null : <OlderButton older={list.older} />}
     </>
   );
 }
@@ -64,9 +62,13 @@ function EmptyList({ status }: { readonly status: SessionListStatus }) {
 }
 
 function OlderButton({ older }: { readonly older: OlderSessions }) {
-  const { sessions } = useText();
+  const { language, text } = useLanguage();
+  const { sessions } = text;
   return (
     <div className="older-sessions">
+      <p role="status" className="visually-hidden">
+        {older.lastLoad === null ? '' : pluralOf(sessions.older.loaded, older.lastLoad.count, language)}
+      </p>
       {older.failure === null ? null : <ErrorNotice code={older.failure} />}
       {older.hasMore ? (
         <button type="button" className="text-button" aria-disabled={older.isLoading} onClick={older.load}>
