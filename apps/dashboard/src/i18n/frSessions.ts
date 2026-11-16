@@ -66,5 +66,4 @@ export const frSessions = {
   },
 };
 
-// Beside the other refusals, in the dictionary's errors.
 export const frSessionErrors = { SESSION_NOT_FOUND: 'Cette session est introuvable.' };

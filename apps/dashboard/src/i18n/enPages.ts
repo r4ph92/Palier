@@ -16,5 +16,4 @@ export const enPageTexts = {
   publication: enPublication,
 };
 
-// The refusals those pages show, beside the dictionary's own.
 export const enPageErrors = { ...enSessionErrors, ...enGateErrors, ...enPublicationErrors };

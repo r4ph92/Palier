@@ -8,7 +8,6 @@ export const isSessionGone = (error: { readonly code: string }): boolean => erro
 
 const isEnded = ({ summary }: DashboardSessionDetail): boolean => !(ACTIVE_ENTRY_SESSION_STATES as readonly string[]).includes(summary.state);
 
-// A session inside is read again for its next steps; one that ended, or that vanished, is read no more.
 export function usePolledSession(load: () => Promise<DashboardSessionDetail>): PolledResource<DashboardSessionDetail> {
   return usePolledResource(load, POLL_INTERVAL_MILLISECONDS, { onError: isSessionGone, onValue: isEnded });
 }

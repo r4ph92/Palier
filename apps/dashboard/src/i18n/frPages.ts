@@ -16,5 +16,4 @@ export const frPageTexts = {
   publication: frPublication,
 };
 
-// The refusals those pages show, beside the dictionary's own.
 export const frPageErrors = { ...frSessionErrors, ...frGateErrors, ...frPublicationErrors };

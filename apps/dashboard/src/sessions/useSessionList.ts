@@ -28,7 +28,6 @@ export type SessionListState =
   | { readonly kind: 'failed'; readonly error: DashboardApiError; readonly retry: () => void; readonly isRetrying: boolean }
   | { readonly kind: 'ready'; readonly lotName: string; readonly sessions: readonly DashboardSessionRow[]; readonly isSwitching: boolean; readonly older: OlderSessions };
 
-// The first page follows the filter; the older pages are appended to it on request, and a change of filter drops them.
 // Changing the filter keeps the previous page on screen (isSwitching) until the new one arrives, so the filter buttons never unmount under the user's focus.
 export function useSessionList(lotId: string, status: SessionListStatus): SessionListState {
   const load = useCallback(() => dashboardClient.sessions(lotId, { status, before: null }).then((list): FirstPage => ({ status, list })), [lotId, status]);
@@ -57,7 +56,6 @@ interface OlderRequest {
 
 const IDLE: OlderRequest = { isLoading: false, failure: null };
 
-// A page, or the code of the refusal that kept it from coming.
 async function readOlderPage(lotId: string, request: SessionListRequest): Promise<DashboardSessionList | DisplayedErrorCode> {
   try {
     return await dashboardClient.sessions(lotId, request);
@@ -71,7 +69,6 @@ interface OlderState {
   readonly request: OlderRequest;
 }
 
-// A refusal keeps the pages already read and says why the next one did not come.
 function stateAfter(outcome: DashboardSessionList | DisplayedErrorCode, status: SessionListStatus, pages: OlderPages | null): OlderState {
   if (typeof outcome === 'string') {
     return { pages, request: { isLoading: false, failure: outcome } };

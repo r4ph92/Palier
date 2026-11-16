@@ -89,7 +89,6 @@ function stateChecks(table: StateColumns) {
   ];
 }
 
-// The dashboard's sessions list: one lot, newest entry first, paged by (entry_scan_at, id) (decision 042).
 function sessionListIndex(table: { readonly lotId: AnyPgColumn; readonly entryScanAt: ExtraConfigColumn; readonly id: ExtraConfigColumn }) {
   return index('parking_session_lot_entry_scan_index').on(table.lotId, table.entryScanAt.desc().nullsFirst(), table.id.desc().nullsFirst());
 }

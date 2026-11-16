@@ -66,5 +66,4 @@ export const enSessions = {
   },
 };
 
-// Beside the other refusals, in the dictionary's errors.
 export const enSessionErrors = { SESSION_NOT_FOUND: 'This session cannot be found.' };

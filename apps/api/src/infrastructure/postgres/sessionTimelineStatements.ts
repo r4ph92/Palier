@@ -11,7 +11,6 @@ const SESSION_COLUMNS = sql`ps.id, ps.plate, ps.state, ps.entry_scan_at, ps.exit
   ps.presumed_by, ps.parked_answered_at is not null as was_answered, ps.exit_identification,
   ps.captured_cents, ps.surplus_paid_cents, ps.pending_capture_cents, ps.pending_surplus_cents, ps.unpaid_cents`;
 
-// The sessions of one lot of this operator; the spots join by id, the lot's composite keys keep them in the same lot.
 function sessionsOfOwnedLot(operatorId: string, lotId: string): SQL {
   return sql`from parking_session ps
     join parking_lot on parking_lot.id = ps.lot_id and parking_lot.operator_id = ${operatorId}
@@ -24,7 +23,6 @@ export function readOwnedLotNameStatement(operatorId: string, lotId: string): SQ
   return sql`select parking_lot.name as lot_name from parking_lot where parking_lot.id = ${lotId} and parking_lot.operator_id = ${operatorId}`;
 }
 
-// Open sessions are the ones a driver can still be inside for (the active states of the one-active-session indexes).
 function statusFilterOf({ status }: SessionPage): SQL {
   return status === 'OPEN' ? activeSessionOf('ps') : sql`true`;
 }

@@ -25,7 +25,6 @@ function amountLabel(template: string, cents: number, language: Language): React
   return <FilledTemplate template={template} values={{ amount: <span className="figure">{formatMoney(cents, language)}</span> }} />;
 }
 
-// A fact the payload lacked gives the step's plain name rather than a blank.
 const LABELS: Readonly<Record<TimelineKind, LabelOf>> = {
   ENTRY_SCANNED: ({ steps }) => steps.ENTRY_SCANNED,
   GATE_OPENED: ({ steps }, { direction }) => steps.GATE_OPENED[direction ?? 'unknown'],
