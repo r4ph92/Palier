@@ -1,5 +1,7 @@
 import type { EntrySessionState } from './entries.ts';
 
+export const SESSION_ERROR_CODES = ['SESSION_NOT_FOUND'] as const;
+
 export const SESSION_LIST_STATUSES = ['OPEN', 'ALL'] as const;
 export type SessionListStatus = (typeof SESSION_LIST_STATUSES)[number];
 
