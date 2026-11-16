@@ -21,7 +21,7 @@ describe('replayed scans and the entry limit', () => {
     const configured = configureServer();
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
-    const enter = () => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr , tariff: ACCEPTED_DEMO_TARIFF } });
+    const enter = () => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr, tariff: ACCEPTED_DEMO_TARIFF } });
     return { ...configured, enter };
   }
 

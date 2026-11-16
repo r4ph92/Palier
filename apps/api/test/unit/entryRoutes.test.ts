@@ -25,7 +25,7 @@ describe('POST /v1/entries', () => {
     const configured = configureServer({ ...(entryClock === undefined ? {} : { entryClock }) });
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
-    const enter = (qrContent: unknown) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent , tariff: ACCEPTED_DEMO_TARIFF } });
+    const enter = (qrContent: unknown) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent, tariff: ACCEPTED_DEMO_TARIFF } });
     return { ...configured, headers, enter };
   }
 
@@ -76,7 +76,7 @@ describe('POST /v1/entries', () => {
     await acceptNoticeAs(driverRepository, marc);
     const headers = await authorizationFor(driverRepository, marc);
 
-    const response = await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr , tariff: ACCEPTED_DEMO_TARIFF } });
+    const response = await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr, tariff: ACCEPTED_DEMO_TARIFF } });
 
     expect(response.statusCode).toBe(409);
     expect(response.json()).toMatchObject({ error: 'PREREQUISITES_MISSING' });
@@ -173,7 +173,7 @@ describe('GET /v1/entries/:sessionId', () => {
     const configured = configureServer();
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
-    await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr , tariff: ACCEPTED_DEMO_TARIFF } });
+    await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr, tariff: ACCEPTED_DEMO_TARIFF } });
     const status = (sessionId: string, as = headers) => server.inject({ method: 'GET', url: `/v1/entries/${sessionId}`, headers: as });
     return { ...configured, headers, status };
   }

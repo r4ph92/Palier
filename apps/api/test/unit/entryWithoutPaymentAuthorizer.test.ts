@@ -23,7 +23,7 @@ describe('POST /v1/entries without payments', () => {
     const repositories = fakeRepositories({ driverRepository: drivers, vehicleRepository: vehicles });
     server = buildServer({ ...base, repositories, ...withEntries(drivers, vehicles) });
     const headers = await readyDriver(drivers, vehicles);
-    return (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent , tariff: ACCEPTED_DEMO_TARIFF } });
+    return (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent, tariff: ACCEPTED_DEMO_TARIFF } });
   }
 
   it('answers 503 PAYMENTS_UNAVAILABLE when the server was built without entries', async () => {

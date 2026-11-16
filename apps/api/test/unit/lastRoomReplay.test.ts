@@ -41,7 +41,7 @@ describe('a re-scan by the driver who took the last room', () => {
     const repositories = fakeRepositories({ driverRepository: drivers, vehicleRepository: vehicles });
     server = buildServer({ ...serverDependencies(), repositories, entries: entries.dependencies });
     const headers = await readyDriver(drivers, vehicles);
-    const enter = (qrContent = entreeDemoQr) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent , tariff: ACCEPTED_DEMO_TARIFF } });
+    const enter = (qrContent = entreeDemoQr) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent, tariff: ACCEPTED_DEMO_TARIFF } });
     return { entries, enter };
   }
 

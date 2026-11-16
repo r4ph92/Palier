@@ -3,7 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { EntryAdmission } from '../../domain/entries/EntryAdmission.ts';
 import type { ParkingSessionRepository } from '../../domain/entries/ParkingSessionRepository.ts';
-import type { EntryEligibility } from '../../domain/entries/EntryEligibility.ts';
+import type { EligibleEntry, EntryEligibility } from '../../domain/entries/EntryEligibility.ts';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
 import { requireAcceptedTariff } from '../../domain/entries/acceptedTariff.ts';
 import { handleEntryError } from '../entries/handleEntryError.ts';
@@ -14,7 +14,6 @@ import { ENTRY_LIMIT, ENTRY_WINDOW_MILLISECONDS } from '../../domain/entries/ent
 import type { Clock } from '../../domain/time/Clock.ts';
 import { registerEntryStatusRoute } from './entryStatusRoute.ts';
 import { entryQuoteRequestSchema, entryQuoteResponseSchema, entryRequestSchema, entryResponseSchema } from '../schemas/entrySchemas.ts';
-import type { EligibleEntry } from '../../domain/entries/EntryEligibility.ts';
 
 const CREATED = 201;
 

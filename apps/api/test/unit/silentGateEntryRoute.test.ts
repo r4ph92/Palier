@@ -22,7 +22,7 @@ describe('POST /v1/entries at a gate whose controller stopped beating', () => {
     const configured = configureServer({ entryClock: () => NOW, entryGates: new FakeEntryGateRepository([gate]) });
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
-    const enter = (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent , tariff: ACCEPTED_DEMO_TARIFF } });
+    const enter = (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent, tariff: ACCEPTED_DEMO_TARIFF } });
     return { ...configured, enter };
   }
 

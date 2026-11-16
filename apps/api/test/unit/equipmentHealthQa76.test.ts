@@ -110,7 +110,7 @@ describe('QA #76: entries at a gate that stopped beating', () => {
     server = configured.server;
     await acceptNoticeAs(configured.driverRepository, julie);
     const headers = await authorizationFor(configured.driverRepository, julie);
-    const response = await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr , tariff: ACCEPTED_DEMO_TARIFF } });
+    const response = await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr, tariff: ACCEPTED_DEMO_TARIFF } });
     return { response, entries: configured.entries };
   }
 

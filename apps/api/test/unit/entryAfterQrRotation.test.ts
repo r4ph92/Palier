@@ -24,7 +24,7 @@ describe('scanning a gate QR after its secret was regenerated', () => {
     const configured = configureServer({ entryGates: rotatedGates });
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
-    return (link: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: link , tariff: ACCEPTED_DEMO_TARIFF } });
+    return (link: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: link, tariff: ACCEPTED_DEMO_TARIFF } });
   }
 
   it('refuses the old printed QR as QR_NOT_RECOGNIZED and admits Julie with the new one', async () => {

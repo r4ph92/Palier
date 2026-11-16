@@ -19,7 +19,7 @@ describe('POST /v1/entries/quote', () => {
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
     const quote = (qrContent: unknown) => server.inject({ method: 'POST', url: '/v1/entries/quote', headers, payload: { qrContent } });
-    const enter = () => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr , tariff: ACCEPTED_DEMO_TARIFF } });
+    const enter = () => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr, tariff: ACCEPTED_DEMO_TARIFF } });
     return { ...configured, quote, enter };
   }
 
@@ -63,7 +63,7 @@ describe('POST /v1/entries/quote', () => {
     await acceptNoticeAs(driverRepository, marc);
     const headers = await authorizationFor(driverRepository, marc);
 
-    const response = await server.inject({ method: 'POST', url: '/v1/entries/quote', headers, payload: { qrContent: entreeDemoQr , tariff: ACCEPTED_DEMO_TARIFF } });
+    const response = await server.inject({ method: 'POST', url: '/v1/entries/quote', headers, payload: { qrContent: entreeDemoQr } });
 
     expect(response.statusCode).toBe(409);
     expect(response.json()).toMatchObject({ error: 'PREREQUISITES_MISSING' });
@@ -72,7 +72,7 @@ describe('POST /v1/entries/quote', () => {
   it('refuses a signed-out caller', async () => {
     server = configureServer().server;
 
-    const response = await server.inject({ method: 'POST', url: '/v1/entries/quote', payload: { qrContent: entreeDemoQr , tariff: ACCEPTED_DEMO_TARIFF } });
+    const response = await server.inject({ method: 'POST', url: '/v1/entries/quote', payload: { qrContent: entreeDemoQr } });
 
     expect(response.statusCode).toBe(401);
   });
