@@ -4,6 +4,7 @@ import { isGateRequest, routeGates } from './fakeGateRoutes.ts';
 import { isMapRequest, routeMap } from './fakeMapRoutes.ts';
 import { isPublicationRequest, routePublication } from './fakePublicationRoutes.ts';
 import { isSessionRequest, routeSessions } from './fakeSessionRoutes.ts';
+import { isStaleSessionRequest, routeStaleSessions } from './fakeStaleSessionRoutes.ts';
 import { isSpotCheckRequest, routeSpotChecks } from './fakeSpotCheckRoutes.ts';
 import { isSpotRequest, routeSpots } from './fakeSpotRoutes.ts';
 
@@ -47,6 +48,9 @@ function routeFeature({ state, lots, ownedLotIds }: FeatureContext, request: str
   }
   if (isSpotCheckRequest(request)) {
     return routeSpotChecks({ spotsToCheck: state.spotsToCheck, lots }, request);
+  }
+  if (isStaleSessionRequest(request)) {
+    return routeStaleSessions({ staleSessions: state.staleSessions, lots }, request);
   }
   if (isSessionRequest(request)) {
     return routeSessions({ sessions: state.sessions, ownedLotIds }, request);

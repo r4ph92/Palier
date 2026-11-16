@@ -18,6 +18,7 @@ import { PublicationPage } from './pages/PublicationPage.tsx';
 import { SessionPage } from './pages/SessionPage.tsx';
 import { SessionsPage } from './pages/SessionsPage.tsx';
 import { SignInPage } from './pages/SignInPage.tsx';
+import { StaleSessionsPage } from './pages/StaleSessionsPage.tsx';
 import { SpotsToCheckPage } from './pages/SpotsToCheckPage.tsx';
 import { UnreachablePage } from './pages/UnreachablePage.tsx';
 import { SessionRefreshContext } from './session/SessionRefreshContext.tsx';
@@ -110,6 +111,8 @@ function LotSubpageOf({ route }: { readonly route: LotSubpageRoute }) {
       return <PublicationPage lotId={route.lotId} />;
     case 'sessions':
       return <SessionsPage lotId={route.lotId} />;
+    case 'staleSessions':
+      return <StaleSessionsPage lotId={route.lotId} />;
     case 'session':
       return <SessionPage lotId={route.lotId} sessionId={route.sessionId} />;
   }
