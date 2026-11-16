@@ -34,6 +34,6 @@ export function checkLotTerms(lot: LotTermsInput, policy: EntryPolicy): LotTerms
 }
 
 // A lot priced before the largest cap went down (#151) holds no card above it: out of service until its operator saves a price again.
-function isAboveTheLargestPrice({ incrementCents, dailyCapCents }: PricingPolicy): boolean {
+export function isAboveTheLargestPrice({ incrementCents, dailyCapCents }: PricingPolicy): boolean {
   return incrementCents > INCREMENT_CENTS_LIMITS.maximum || dailyCapCents > DAILY_CAP_CENTS_LIMITS.maximum;
 }

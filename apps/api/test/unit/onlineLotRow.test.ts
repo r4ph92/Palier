@@ -66,6 +66,8 @@ describe('onlineLotFromRow', () => {
     ['a policy that is not an object', 'cheap', 2500],
     ['a negative increment price', { incrementCents: -75, incrementMinutes: 15 }, 2500],
     ['no daily cap', { incrementCents: 75, incrementMinutes: 15 }, null],
+    ['a daily cap above 10 000,00 $, which admits no one', { incrementCents: 75, incrementMinutes: 15 }, 1_000_001],
+    ['an increment price above 10 000,00 $', { incrementCents: 1_000_001, incrementMinutes: 15 }, 1_000_001],
   ])('lists a lot with %s without a tariff', (_case, pricingPolicy, dailyCapCents) => {
     expect(onlineLotFromRow({ ...parkingDemoRow, pricingPolicy, dailyCapCents }, []).tariff).toBeNull();
   });
