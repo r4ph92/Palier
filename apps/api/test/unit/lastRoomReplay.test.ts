@@ -5,7 +5,7 @@ import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { FakeDriverRepository } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
-import { ENTREE_DEMO_SECRET, entreeDemoGate, fakeEntries, type FakeEntries } from './fakes/entryFakes.ts';
+import { ENTREE_DEMO_SECRET, entreeDemoGate, fakeEntries, type FakeEntries, ACCEPTED_DEMO_TARIFF } from './fakes/entryFakes.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 import { fakeRepositories, serverDependencies } from './fakes/serverDependencies.ts';
 
@@ -41,7 +41,7 @@ describe('a re-scan by the driver who took the last room', () => {
     const repositories = fakeRepositories({ driverRepository: drivers, vehicleRepository: vehicles });
     server = buildServer({ ...serverDependencies(), repositories, entries: entries.dependencies });
     const headers = await readyDriver(drivers, vehicles);
-    const enter = (qrContent = entreeDemoQr) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent } });
+    const enter = (qrContent = entreeDemoQr) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent , tariff: ACCEPTED_DEMO_TARIFF } });
     return { entries, enter };
   }
 

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { gateQrLink, signGateToken } from '../../src/domain/entries/gateToken.ts';
 import { configureServer } from './configureServer.ts';
-import { ENTREE_DEMO_SECRET, entreeDemoGate } from './fakes/entryFakes.ts';
+import { ENTREE_DEMO_SECRET, entreeDemoGate, ACCEPTED_DEMO_TARIFF } from './fakes/entryFakes.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 
 const token = signGateToken(entreeDemoGate.id, ENTREE_DEMO_SECRET);
@@ -17,7 +17,7 @@ describe('POST /v1/entries with hostile QR content', () => {
     const configured = configureServer();
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
-    const enter = (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent } });
+    const enter = (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent , tariff: ACCEPTED_DEMO_TARIFF } });
     return { ...configured, enter };
   }
 

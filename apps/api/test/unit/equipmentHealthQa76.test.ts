@@ -10,7 +10,7 @@ import { configureServer } from './configureServer.ts';
 import { acceptNoticeAs, authorizationFor, julie } from './fakeDriverRepository.ts';
 import { nouvelOperateur, sophie } from './fakes/dashboardFixtures.ts';
 import { dashboardCookieFor, startDashboardServer, writeHeader } from './fakes/dashboardServer.ts';
-import { ENTREE_DEMO_SECRET, entreeDemoGate, FakeEntryGateRepository } from './fakes/entryFakes.ts';
+import { ENTREE_DEMO_SECRET, entreeDemoGate, FakeEntryGateRepository, ACCEPTED_DEMO_TARIFF } from './fakes/entryFakes.ts';
 import { ENTREE_DEMO_KEY, entreeDemo, FakeEquipmentReports } from './fakes/gateFixtures.ts';
 import { fakeGateDependencies, serverDependencies } from './fakes/serverDependencies.ts';
 
@@ -110,7 +110,7 @@ describe('QA #76: entries at a gate that stopped beating', () => {
     server = configured.server;
     await acceptNoticeAs(configured.driverRepository, julie);
     const headers = await authorizationFor(configured.driverRepository, julie);
-    const response = await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr } });
+    const response = await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr , tariff: ACCEPTED_DEMO_TARIFF } });
     return { response, entries: configured.entries };
   }
 

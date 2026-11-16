@@ -5,6 +5,7 @@ import type { EntryAdmission } from '../../domain/entries/EntryAdmission.ts';
 import type { ParkingSessionRepository } from '../../domain/entries/ParkingSessionRepository.ts';
 import type { EntryEligibility } from '../../domain/entries/EntryEligibility.ts';
 import { EntryRefusedError } from '../../domain/entries/EntryRefusedError.ts';
+import { requireAcceptedTariff } from '../../domain/entries/acceptedTariff.ts';
 import { handleEntryError } from '../entries/handleEntryError.ts';
 import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
@@ -88,6 +89,7 @@ async function enter(request: FastifyRequest<EnterRoute>, reply: FastifyReply, {
   }
   const driver = signedInDriver(request);
   const eligible = await entries.eligibility.check({ driverId: driver.id, qrContent: request.body.qrContent, now: entries.clock() });
+  requireAcceptedTariff(request.body.tariff, eligible.pricing);
   if (!limiter.allow(driver.id)) {
     throw new EntryRefusedError('TOO_MANY_ENTRIES');
   }

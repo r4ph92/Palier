@@ -4,7 +4,7 @@ import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { buildServer, type ServerDependencies } from '../../src/http/buildServer.ts';
 import { FakeDriverRepository } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
-import { ENTREE_DEMO_SECRET, entreeDemoGate, fakeEntries } from './fakes/entryFakes.ts';
+import { ENTREE_DEMO_SECRET, entreeDemoGate, fakeEntries, ACCEPTED_DEMO_TARIFF } from './fakes/entryFakes.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 import { fakeRepositories, serverDependencies } from './fakes/serverDependencies.ts';
 
@@ -23,7 +23,7 @@ describe('POST /v1/entries without payments', () => {
     const repositories = fakeRepositories({ driverRepository: drivers, vehicleRepository: vehicles });
     server = buildServer({ ...base, repositories, ...withEntries(drivers, vehicles) });
     const headers = await readyDriver(drivers, vehicles);
-    return (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent } });
+    return (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent , tariff: ACCEPTED_DEMO_TARIFF } });
   }
 
   it('answers 503 PAYMENTS_UNAVAILABLE when the server was built without entries', async () => {

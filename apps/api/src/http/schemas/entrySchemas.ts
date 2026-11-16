@@ -7,20 +7,26 @@ import { uuidSchema } from './uuidSchema.ts';
 // A printed QR link is under 120 characters; the cap only keeps oversized bodies away from the token parser.
 const QR_CONTENT_MAX_LENGTH = 512;
 
-export const entryRequestSchema = {
+export const entryQuoteRequestSchema = {
   type: 'object',
   required: ['qrContent'],
   additionalProperties: false,
   properties: { qrContent: { type: 'string', maxLength: QR_CONTENT_MAX_LENGTH } },
 } as const;
 
-export const entryQuoteRequestSchema = entryRequestSchema;
-
 const tariffSchema = {
   type: 'object',
   required: ['incrementCents', 'incrementMinutes', 'dailyCapCents'],
   additionalProperties: false,
   properties: { incrementCents: { type: 'integer' }, incrementMinutes: { type: 'integer' }, dailyCapCents: { type: 'integer' } },
+} as const;
+
+// The tariff stays optional to the schema so a request without it gets TARIFF_CHANGED and the current tariff, not a QR error.
+export const entryRequestSchema = {
+  type: 'object',
+  required: ['qrContent'],
+  additionalProperties: false,
+  properties: { qrContent: { type: 'string', maxLength: QR_CONTENT_MAX_LENGTH }, tariff: tariffSchema },
 } as const;
 
 export const entryQuoteResponseSchema = {

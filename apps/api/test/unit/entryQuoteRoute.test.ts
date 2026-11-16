@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { configureServer } from './configureServer.ts';
 import { acceptNoticeAs, authorizationFor, marc } from './fakeDriverRepository.ts';
-import { ENTREE_DEMO_SECRET, ENTREE_ROY_SECRET, entreeDemoGate, entreeRoyGate, SORTIE_DEMO_SECRET, sortieDemoGate } from './fakes/entryFakes.ts';
+import { ENTREE_DEMO_SECRET, ENTREE_ROY_SECRET, entreeDemoGate, entreeRoyGate, SORTIE_DEMO_SECRET, sortieDemoGate, ACCEPTED_DEMO_TARIFF } from './fakes/entryFakes.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 
 const entreeDemoQr = gateQrLink(entreeDemoGate.id, ENTREE_DEMO_SECRET);
@@ -19,7 +19,7 @@ describe('POST /v1/entries/quote', () => {
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
     const quote = (qrContent: unknown) => server.inject({ method: 'POST', url: '/v1/entries/quote', headers, payload: { qrContent } });
-    const enter = () => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr } });
+    const enter = () => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr , tariff: ACCEPTED_DEMO_TARIFF } });
     return { ...configured, quote, enter };
   }
 
@@ -63,7 +63,7 @@ describe('POST /v1/entries/quote', () => {
     await acceptNoticeAs(driverRepository, marc);
     const headers = await authorizationFor(driverRepository, marc);
 
-    const response = await server.inject({ method: 'POST', url: '/v1/entries/quote', headers, payload: { qrContent: entreeDemoQr } });
+    const response = await server.inject({ method: 'POST', url: '/v1/entries/quote', headers, payload: { qrContent: entreeDemoQr , tariff: ACCEPTED_DEMO_TARIFF } });
 
     expect(response.statusCode).toBe(409);
     expect(response.json()).toMatchObject({ error: 'PREREQUISITES_MISSING' });
@@ -72,7 +72,7 @@ describe('POST /v1/entries/quote', () => {
   it('refuses a signed-out caller', async () => {
     server = configureServer().server;
 
-    const response = await server.inject({ method: 'POST', url: '/v1/entries/quote', payload: { qrContent: entreeDemoQr } });
+    const response = await server.inject({ method: 'POST', url: '/v1/entries/quote', payload: { qrContent: entreeDemoQr , tariff: ACCEPTED_DEMO_TARIFF } });
 
     expect(response.statusCode).toBe(401);
   });

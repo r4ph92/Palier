@@ -46,7 +46,7 @@ async function revokeWithoutMasking(tokens: LoadDriverTokens): Promise<void> {
 
 async function fireAndCheck({ database, options, appVersion }: EntryLoadSetup, plan: EntryLoadPlan, tokens: readonly string[]): Promise<EntryLoadReport> {
   const since = await databaseNow(database);
-  const outcomes = await fireEntries({ apiUrl: options.apiUrl, qrContent: plan.target.qrContent, appVersion }, tokens);
+  const outcomes = await fireEntries({ apiUrl: options.apiUrl, qrContent: plan.target.qrContent, tariff: plan.target.tariff, appVersion }, tokens);
   const sessionCheck = await checkRunSessions(database, { lotId: plan.target.lotId, driverIds: plan.driverIds, since });
   return reportEntryLoad({ expectedAdmissions: plan.expectedAdmissions, outcomes, sessionCheck, maxLatencyMilliseconds: options.maxLatencyMilliseconds });
 }

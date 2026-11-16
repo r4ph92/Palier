@@ -10,6 +10,8 @@ export const LAVOIE_ACCOUNT = 'acct_1Lavoie';
 // Outside demo mode: a lot whose operator has no Stripe account takes no entry and no hold.
 export const STRICT_POLICY: EntryPolicy = { allowPlatformChargesWithoutOperatorAccount: false };
 export const PARKING_DEMO_POLICY = { incrementCents: 75, incrementMinutes: 15, holdQuota: 3 };
+// What Julie sees and accepts before entering Parking Démo (#151): 0,75 $ par 15 min, plafond 25,00 $.
+export const ACCEPTED_DEMO_TARIFF = { incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 };
 const parkingDemoLot = {
   id: entreeDemo.lotId,
   name: 'Parking Démo',
