@@ -4,6 +4,7 @@ import {
   CANCELLATION_REASONS,
   GATE_DIRECTIONS,
   PARKING_EVIDENCES,
+  PRESUMED_PARKING_EVIDENCES,
   SESSION_EXIT_METHODS,
   SESSION_LIST_STATUSES,
   TIMELINE_KINDS,
@@ -21,6 +22,7 @@ export const sessionParametersSchema = {
 export const sessionListQuerySchema = {
   type: 'object',
   properties: { status: { type: 'string', enum: SESSION_LIST_STATUSES }, before: uuidSchema },
+  additionalProperties: false,
 } as const;
 
 const instant = { type: 'string' } as const;
@@ -76,7 +78,7 @@ const timelineDetailsSchema = {
     spotNumber: { type: 'string' },
     aisleCode: { type: 'string' },
     isAssignedAisle: { type: 'boolean' },
-    evidence: { type: 'string', enum: ['ON_FOOT', 'TIMEOUT'] },
+    evidence: { type: 'string', enum: PRESUMED_PARKING_EVIDENCES },
     method: { type: 'string', enum: SESSION_EXIT_METHODS },
     reason: { type: 'string', enum: CANCELLATION_REASONS },
     amountCents: { type: 'integer' },

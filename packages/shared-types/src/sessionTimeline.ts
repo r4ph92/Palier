@@ -11,6 +11,7 @@ export const SESSION_EXIT_METHODS = ['APP', 'PLATE', 'TRANSPONDER', 'BEACON'] as
 export type SessionExitMethod = (typeof SESSION_EXIT_METHODS)[number];
 
 export const PARKING_EVIDENCES = ['ON_FOOT', 'TIMEOUT', 'ANSWERED'] as const;
+export const PRESUMED_PARKING_EVIDENCES = ['ON_FOOT', 'TIMEOUT'] as const;
 export type ParkingEvidence = (typeof PARKING_EVIDENCES)[number];
 
 // Every kind of the event log, plus the one a newer API may write before this dashboard knows it.
