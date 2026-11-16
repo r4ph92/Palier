@@ -46,6 +46,7 @@ describe.each([1, 1.35, 2.3, 3.1])('HomeScreen at text scale %d', (fontScale) =>
     for (const line of ['Standard 7', 'Électrique 1', 'Accessible 1', 'Grand gabarit 1']) {
       expect(screen.getByText(line.replaceAll(' ', nbsp), visibleText)).toBeOnTheScreen();
     }
-    expect(screen.queryByText(/·/, visibleText)).not.toBeOnTheScreen();
+    // The tariff line keeps its own « · »; only the categories split.
+    expect(screen.queryByText(/Standard.*·/, visibleText)).not.toBeOnTheScreen();
   });
 });

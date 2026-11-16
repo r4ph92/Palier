@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { formatDistance } from '../i18n/formatDistance';
 import { currentLanguage } from '../i18n/i18n';
+import { tariffLine } from '../i18n/tariffText';
 import type { NearbyLot } from '../lots/nearbyLots';
 import { lotAccessibilityLabel } from '../lots/lotText';
 import { useColors } from '../theme/useColors';
@@ -31,6 +32,7 @@ export function LotRow({ nearbyLot, action = null }: LotRowProps) {
     <View style={[styles.row, { borderBottomColor: colors.line }]}>
       <View accessible accessibilityLabel={lotAccessibilityLabel(nearbyLot)} testID={`lot-row-${lot.id}`} style={styles.details}>
         <LotSummaryLine nearbyLot={nearbyLot} />
+        {lot.tariff === null ? null : <Text style={[typography.body, { color: colors.ink }]}>{tariffLine(lot.tariff)}</Text>}
         <LotGauge freeSpots={lot.freeSpots} capacity={lot.capacity} />
         {lot.freeSpots > 0 ? <LotCategories counts={lot.freeSpotsByCategory} /> : null}
       </View>
