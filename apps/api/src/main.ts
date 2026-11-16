@@ -28,6 +28,7 @@ import { PostgresLotGateRepository } from './infrastructure/postgres/PostgresLot
 import { PostgresLotPublicationRepository } from './infrastructure/postgres/PostgresLotPublicationRepository.ts';
 import { PostgresLotSpotRepository } from './infrastructure/postgres/PostgresLotSpotRepository.ts';
 import { PostgresSessionTimelineRepository } from './infrastructure/postgres/PostgresSessionTimelineRepository.ts';
+import { PostgresStaleSessionReviewRepository } from './infrastructure/postgres/PostgresStaleSessionReviewRepository.ts';
 import { PostgresSpotCheckRepository } from './infrastructure/postgres/PostgresSpotCheckRepository.ts';
 import { PostgresLotSetupRepository } from './infrastructure/postgres/PostgresLotSetupRepository.ts';
 import { PostgresOperatorRepository } from './infrastructure/postgres/PostgresOperatorRepository.ts';
@@ -103,6 +104,7 @@ const server = buildServer({
     lotSpots: new PostgresLotSpotRepository(connection.database),
     spotChecks: new PostgresSpotCheckRepository(connection.database),
     sessionTimelines: new PostgresSessionTimelineRepository(connection.database),
+    staleSessionReviews: new PostgresStaleSessionReviewRepository(connection.database),
     lotGates: new PostgresLotGateRepository(connection.database),
     gateSecrets: new PostgresGateSecretRepository(connection.database),
     lotPublication: new PostgresLotPublicationRepository(connection.database),
