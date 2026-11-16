@@ -1,7 +1,7 @@
 import { fieldErrorsOf, isWholeNumberWithin, type FieldErrors } from './fieldErrors.ts';
 
-// 100 000,00 $: far above any parking day, and far below what int4 columns and Stripe amounts hold.
-export const PRICING_MAX_CENTS = 10_000_000;
+// 10 000,00 $: above any parking day, and low enough that no card is ever held for an absurd amount (#151).
+export const PRICING_MAX_CENTS = 1_000_000;
 // Stripe refuses any CAD charge or capture under 0,50 $, so no price may bill less than that.
 export const STRIPE_MINIMUM_CENTS = 50;
 export const INCREMENT_CENTS_LIMITS = { minimum: STRIPE_MINIMUM_CENTS, maximum: PRICING_MAX_CENTS } as const;

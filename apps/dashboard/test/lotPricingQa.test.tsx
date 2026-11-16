@@ -55,7 +55,7 @@ describe('the pricing form under hostile entry (QA #64)', () => {
     await savePricing({ incrementCents: '-1,00', incrementMinutes: '4', dailyCapCents: '0,49', holdQuota: '51' });
 
     expect(document.querySelectorAll('[aria-invalid="true"]')).toHaveLength(4);
-    expect(document.getElementById('pricing-dailyCapCents-error')?.textContent?.replace(/\s/g, ' ')).toBe('Entrez un plafond de 0,50 $ à 100 000,00 $.');
+    expect(document.getElementById('pricing-dailyCapCents-error')?.textContent?.replace(/\s/g, ' ')).toBe('Entrez un plafond de 0,50 $ à 10 000,00 $.');
     expect(api.requests.some((request) => request.startsWith('PUT'))).toBe(false);
   });
 

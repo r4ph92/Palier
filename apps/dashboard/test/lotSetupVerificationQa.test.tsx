@@ -58,14 +58,14 @@ describe('the pricing form, verification round after the merge of main (QA #64)'
     expect(savedPricingOfGarageRoy(api)).toEqual({ incrementCents: 50, incrementMinutes: 5, dailyCapCents: 50, holdQuota: 0 });
   });
 
-  it('saves the upper bounds typed in the form: 100 000,00 $ per 60 minutes and 50 guarantees', async () => {
+  it('saves the upper bounds typed in the form: 10 000,00 $ per 60 minutes and 50 guarantees', async () => {
     const api = await openGarageRoy();
 
-    await typePricing(FRENCH_LABELS, { incrementCents: '100 000,00', incrementMinutes: '60', dailyCapCents: '100 000,00 $', holdQuota: '50' });
+    await typePricing(FRENCH_LABELS, { incrementCents: '10 000,00', incrementMinutes: '60', dailyCapCents: '10 000,00 $', holdQuota: '50' });
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer la tarification' }));
 
     expect(await screen.findByText(/^Tarification enregistrée\./)).toBeDefined();
-    expect(savedPricingOfGarageRoy(api)).toEqual({ incrementCents: 10_000_000, incrementMinutes: 60, dailyCapCents: 10_000_000, holdQuota: 50 });
+    expect(savedPricingOfGarageRoy(api)).toEqual({ incrementCents: 1_000_000, incrementMinutes: 60, dailyCapCents: 1_000_000, holdQuota: 50 });
   });
 
   it('translates every shown field error once the dashboard switches to English, and keeps what was typed', async () => {
@@ -76,7 +76,7 @@ describe('the pricing form, verification round after the merge of main (QA #64)'
 
     await userEvent.click(screen.getByRole('button', { name: 'English' }));
 
-    expect(errorOf('incrementCents')).toBe('Enter an amount from $0.50 to $100,000.00.');
+    expect(errorOf('incrementCents')).toBe('Enter an amount from $0.50 to $10,000.00.');
     expect(errorOf('incrementMinutes')).toBe('Enter a whole number of minutes, from 5 to 60.');
     expect(errorOf('dailyCapCents')).toBe('Daily cap is required');
     expect(errorOf('holdQuota')).toBe('Enter a whole number of guaranteed spots, from 0 to 50.');
@@ -84,16 +84,16 @@ describe('the pricing form, verification round after the merge of main (QA #64)'
     expect(api.requests.some((request) => request.startsWith('PUT'))).toBe(false);
   });
 
-  // Fails today: the English error prints "$100,000.00" as the largest cap, and the field refuses that same text.
-  it('saves a cap typed "$100,000.00" in English, exactly as the cap error prints the largest amount', async () => {
+  // Fails today: the English error prints "$10,000.00" as the largest cap, and the field refuses that same text.
+  it('saves a cap typed "$10,000.00" in English, exactly as the cap error prints the largest amount', async () => {
     const api = await openGarageRoy();
     await userEvent.click(screen.getByRole('button', { name: 'English' }));
 
-    await typePricing(ENGLISH_LABELS, { incrementCents: '1.00', incrementMinutes: '20', dailyCapCents: '$100,000.00', holdQuota: '4' });
+    await typePricing(ENGLISH_LABELS, { incrementCents: '1.00', incrementMinutes: '20', dailyCapCents: '$10,000.00', holdQuota: '4' });
     await userEvent.click(screen.getByRole('button', { name: 'Save the pricing' }));
 
     expect(errorOf('dailyCapCents')).toBeUndefined();
-    expect(savedPricingOfGarageRoy(api)).toEqual({ incrementCents: 100, incrementMinutes: 20, dailyCapCents: 10_000_000, holdQuota: 4 });
+    expect(savedPricingOfGarageRoy(api)).toEqual({ incrementCents: 100, incrementMinutes: 20, dailyCapCents: 1_000_000, holdQuota: 4 });
   });
 
   // Fails today: an English operator writes eighteen hundred dollars "$1,800.00", which the field refuses.

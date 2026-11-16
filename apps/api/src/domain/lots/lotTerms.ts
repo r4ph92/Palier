@@ -1,3 +1,4 @@
+import { DAILY_CAP_CENTS_LIMITS, INCREMENT_CENTS_LIMITS } from '@palier/shared-types/lotPricing';
 import type { EntryPolicy } from '../payments/EntryPolicy.ts';
 import { isOperatorPayable } from '../payments/isOperatorPayable.ts';
 import { PricingPolicyInvalidError, readLotPricing, type PricedLot, type PricingPolicy } from '../pricing/PricingPolicy.ts';
@@ -26,5 +27,13 @@ export function checkLotTerms(lot: LotTermsInput, policy: EntryPolicy): LotTerms
   if (pricing instanceof PricingPolicyInvalidError) {
     return { accepted: false, refusal: { kind: 'pricingInvalid', cause: pricing } };
   }
+  if (isAboveTheLargestPrice(pricing)) {
+    return { accepted: false, refusal: { kind: 'pricingInvalid', cause: new PricingPolicyInvalidError(lot.id) } };
+  }
   return { accepted: true, pricing };
+}
+
+// A lot priced before the largest cap went down (#151) holds no card above it: out of service until its operator saves a price again.
+function isAboveTheLargestPrice({ incrementCents, dailyCapCents }: PricingPolicy): boolean {
+  return incrementCents > INCREMENT_CENTS_LIMITS.maximum || dailyCapCents > DAILY_CAP_CENTS_LIMITS.maximum;
 }

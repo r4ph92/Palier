@@ -39,4 +39,18 @@ describe('checkLotTerms', () => {
     expect(terms.accepted).toBe(false);
     expect(!terms.accepted && terms.refusal.kind === 'pricingInvalid' && terms.refusal.cause).toBeInstanceOf(PricingPolicyInvalidError);
   });
+
+  it.each([
+    ['a daily cap one cent above 10 000,00 $', { dailyCapCents: 1_000_001 }],
+    ['an increment one cent above 10 000,00 $', { pricingPolicy: { incrementCents: 1_000_001, incrementMinutes: 15 }, dailyCapCents: 1_000_001 }],
+  ])('refuses a lot saved before the largest price went down, with %s', (_case, change) => {
+    const terms = checkLotTerms({ ...parkingDemo, ...change }, STRICT_POLICY);
+
+    expect(terms.accepted).toBe(false);
+    expect(!terms.accepted && terms.refusal.kind).toBe('pricingInvalid');
+  });
+
+  it('accepts a lot at exactly 10 000,00 $', () => {
+    expect(checkLotTerms({ ...parkingDemo, dailyCapCents: 1_000_000 }, STRICT_POLICY).accepted).toBe(true);
+  });
 });
