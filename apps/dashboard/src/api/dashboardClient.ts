@@ -13,6 +13,8 @@ import type {
   DashboardLotOccupancy,
   DashboardMeResponse,
   DashboardOperator,
+  DashboardSessionDetail,
+  DashboardSessionList,
   DashboardSpotsToCheck,
   GateDeviceKey,
   GateQrLink,
@@ -27,6 +29,7 @@ import type {
 import type { BeaconBatteryReading } from '@palier/shared-types/beaconBattery';
 import type { GateDraft, GateSettings } from '@palier/shared-types/gateDraft';
 import { DASHBOARD_CSRF_HEADER, DASHBOARD_CSRF_VALUE } from '@palier/shared-types/dashboard';
+import type { SessionListStatus } from '@palier/shared-types/sessionTimeline';
 import { ATTESTATION_PATH_SEGMENTS } from '@palier/shared-types/publication';
 import { DashboardApiError } from './DashboardApiError.ts';
 
@@ -119,6 +122,19 @@ function attestationPathOf(lotId: string, kind: AttestationKind): string {
   return `${lotPathOf(lotId)}/attestations/${ATTESTATION_PATH_SEGMENTS[kind]}`;
 }
 
+export interface SessionListRequest {
+  readonly status: SessionListStatus;
+  readonly before: string | null;
+}
+
+function sessionsQueryOf({ status, before }: SessionListRequest): string {
+  const query = new URLSearchParams({ status });
+  if (before !== null) {
+    query.set('before', before);
+  }
+  return query.toString();
+}
+
 export const dashboardClient = {
   me: () => dashboardRequest<DashboardMeResponse>('/me'),
   signOut: () => dashboardRequest<undefined>('/sign-out', { method: 'POST' }),
@@ -139,6 +155,8 @@ export const dashboardClient = {
     dashboardRequest<DashboardLotMap>(`${lotPathOf(lotId)}/levels/${encodeURIComponent(levelId)}/aisles`, { method: 'POST', body: aisle }),
   recordBeaconBattery: (lotId: string, aisleId: string, reading: BeaconBatteryReading) =>
     dashboardRequest<DashboardLotMap>(`${aislePathOf(lotId, aisleId)}/beacon-battery`, { method: 'PUT', body: reading }),
+  sessions: (lotId: string, request: SessionListRequest) => dashboardRequest<DashboardSessionList>(`${lotPathOf(lotId)}/sessions?${sessionsQueryOf(request)}`),
+  session: (lotId: string, sessionId: string) => dashboardRequest<DashboardSessionDetail>(`${lotPathOf(lotId)}/sessions/${encodeURIComponent(sessionId)}`),
   lotEquipment: (lotId: string) => dashboardRequest<DashboardLotEquipment>(`${lotPathOf(lotId)}/equipment`),
   aisleSpots: (lotId: string, aisleId: string) => dashboardRequest<DashboardAisleSpots>(spotsPathOf(lotId, aisleId)),
   addSpots: (lotId: string, aisleId: string, request: AddSpotsRequest) =>

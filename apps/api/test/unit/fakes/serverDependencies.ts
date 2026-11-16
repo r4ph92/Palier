@@ -11,6 +11,7 @@ import { FakeLotGateRepository } from './fakeLotGateRepository.ts';
 import { FakeLotMapRepository } from './fakeLotMapRepository.ts';
 import { FakeLotPublicationRepository } from './fakeLotPublicationRepository.ts';
 import { FakeLotSetupRepository } from './fakeLotSetupRepository.ts';
+import { FakeSessionTimelineRepository } from './fakeSessionTimelineRepository.ts';
 import { FakeSpotCheckRepository } from './fakeSpotCheckRepository.ts';
 import { FakeLotSpotRepository } from './fakeLotSpotRepository.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
@@ -72,6 +73,7 @@ export function fakeRepositories({
     lotEquipment: new FakeLotEquipmentReader(operatorRepository.lots),
     lotSpots,
     spotChecks: new FakeSpotCheckRepository(operatorRepository.lots, lotMaps, lotSpots),
+    sessionTimelines: new FakeSessionTimelineRepository(operatorRepository.lots),
     lotGates,
     gateSecrets: lotGates,
     lotPublication: new FakeLotPublicationRepository(operatorRepository.lots),

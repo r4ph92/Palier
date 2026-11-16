@@ -10,7 +10,7 @@ import { LOT_SETUP_MESSAGES } from './lotSetupMessages.ts';
 import { PUBLICATION_MESSAGES, type PublicationReason } from '../publication/publicationMessages.ts';
 
 export type DashboardRefusalReason =
-  | Extract<DashboardErrorCode, 'LEGAL_NAME_INVALID' | 'OPERATOR_EXISTS' | 'NO_OPERATOR' | 'LOT_NOT_FOUND' | 'OPERATOR_NOT_FOUND' | 'STRIPE_UNAVAILABLE'>
+  | Extract<DashboardErrorCode, 'LEGAL_NAME_INVALID' | 'OPERATOR_EXISTS' | 'NO_OPERATOR' | 'LOT_NOT_FOUND' | 'OPERATOR_NOT_FOUND' | 'STRIPE_UNAVAILABLE' | 'SESSION_NOT_FOUND'>
   | LotDraftErrorCode
   | PricingErrorCode
   | LotMapReason
@@ -26,6 +26,7 @@ const MESSAGES: Readonly<Record<DashboardRefusalReason, string>> = {
   LOT_NOT_FOUND: 'No such lot.',
   OPERATOR_NOT_FOUND: 'No such operator.',
   STRIPE_UNAVAILABLE: 'Stripe is unavailable right now.',
+  SESSION_NOT_FOUND: 'No such session.',
   ...LOT_SETUP_MESSAGES,
   ...LOT_MAP_MESSAGES,
   ...LOT_SPOT_MESSAGES,

@@ -15,11 +15,19 @@ interface LastValue<T> {
 
 // After a first value, a failed poll keeps that value on screen and flags it stale; the next successful poll clears the flag.
 // Polling starts with the first value: a failed first load stays a failure with its retry. An error the caller says ends the polling (a lot that vanished) is a failure too.
-export function usePolledResource<T>(load: () => Promise<T>, intervalMilliseconds: number, endsPolling: (error: DashboardApiError) => boolean): PolledResource<T> {
+export interface PollingEnd<T> {
+  // An error that ends the polling and shows as a failure (a lot that vanished).
+  readonly onError: (error: DashboardApiError) => boolean;
+  // A value that ends the polling and stays on screen (a session that ended).
+  readonly onValue?: (value: T) => boolean;
+}
+
+export function usePolledResource<T>(load: () => Promise<T>, intervalMilliseconds: number, { onError, onValue = () => false }: PollingEnd<T>): PolledResource<T> {
   const { resource, reload, isReloading } = useResource(load);
   const lastValue = useLastValue(resource);
-  const isOver = resource.status === 'failed' && endsPolling(resource.error);
-  usePolling(lastValue !== null && !isOver ? reload : null, intervalMilliseconds);
+  const isOver = resource.status === 'failed' && onError(resource.error);
+  const isFinal = lastValue === null || isOver || onValue(lastValue.value);
+  usePolling(isFinal ? null : reload, intervalMilliseconds);
   if (resource.status === 'failed' && (lastValue === null || isOver)) {
     return { status: 'failed', error: resource.error, retry: reload, isRetrying: isReloading };
   }

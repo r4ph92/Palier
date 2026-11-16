@@ -1,4 +1,3 @@
-import type { DashboardErrorCode } from './dashboard.ts';
 import { fieldErrorsOf, isWholeNumberWithin, type FieldErrors } from './fieldErrors.ts';
 
 // 100 000,00 $: far above any parking day, and far below what int4 columns and Stripe amounts hold.
@@ -27,15 +26,16 @@ export type LotPricingRequest = Omit<LotPricingSettings, 'dailyCapCents'> & { re
 
 export type PricingField = keyof LotPricingSettings;
 
-export type PricingErrorCode = Extract<
-  DashboardErrorCode,
-  | 'PRICING_INCREMENT_CENTS_INVALID'
-  | 'PRICING_INCREMENT_MINUTES_INVALID'
-  | 'PRICING_DAILY_CAP_REQUIRED'
-  | 'PRICING_DAILY_CAP_INVALID'
-  | 'PRICING_DAILY_CAP_BELOW_INCREMENT'
-  | 'PRICING_HOLD_QUOTA_INVALID'
->;
+export const PRICING_ERROR_CODES = [
+  'PRICING_INCREMENT_CENTS_INVALID',
+  'PRICING_INCREMENT_MINUTES_INVALID',
+  'PRICING_DAILY_CAP_REQUIRED',
+  'PRICING_DAILY_CAP_INVALID',
+  'PRICING_DAILY_CAP_BELOW_INCREMENT',
+  'PRICING_HOLD_QUOTA_INVALID',
+] as const;
+
+export type PricingErrorCode = (typeof PRICING_ERROR_CODES)[number];
 
 export type PricingErrors = FieldErrors<PricingField, PricingErrorCode>;
 

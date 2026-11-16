@@ -26,6 +26,7 @@ import { PostgresLotMapRepository } from './infrastructure/postgres/PostgresLotM
 import { PostgresLotGateRepository } from './infrastructure/postgres/PostgresLotGateRepository.ts';
 import { PostgresLotPublicationRepository } from './infrastructure/postgres/PostgresLotPublicationRepository.ts';
 import { PostgresLotSpotRepository } from './infrastructure/postgres/PostgresLotSpotRepository.ts';
+import { PostgresSessionTimelineRepository } from './infrastructure/postgres/PostgresSessionTimelineRepository.ts';
 import { PostgresSpotCheckRepository } from './infrastructure/postgres/PostgresSpotCheckRepository.ts';
 import { PostgresLotSetupRepository } from './infrastructure/postgres/PostgresLotSetupRepository.ts';
 import { PostgresOperatorRepository } from './infrastructure/postgres/PostgresOperatorRepository.ts';
@@ -95,6 +96,7 @@ const server = buildServer({
     lotEquipment: new PostgresLotEquipmentReader(connection.database),
     lotSpots: new PostgresLotSpotRepository(connection.database),
     spotChecks: new PostgresSpotCheckRepository(connection.database),
+    sessionTimelines: new PostgresSessionTimelineRepository(connection.database),
     lotGates: new PostgresLotGateRepository(connection.database),
     gateSecrets: new PostgresGateSecretRepository(connection.database),
     lotPublication: new PostgresLotPublicationRepository(connection.database),

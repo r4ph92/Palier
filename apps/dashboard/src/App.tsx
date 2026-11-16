@@ -15,6 +15,8 @@ import { NotFoundPage } from './pages/NotFoundPage.tsx';
 import { OccupancyPage } from './pages/OccupancyPage.tsx';
 import { OperatorHomePage } from './pages/OperatorHomePage.tsx';
 import { PublicationPage } from './pages/PublicationPage.tsx';
+import { SessionPage } from './pages/SessionPage.tsx';
+import { SessionsPage } from './pages/SessionsPage.tsx';
 import { SignInPage } from './pages/SignInPage.tsx';
 import { SpotsToCheckPage } from './pages/SpotsToCheckPage.tsx';
 import { UnreachablePage } from './pages/UnreachablePage.tsx';
@@ -106,5 +108,9 @@ function LotSubpageOf({ route }: { readonly route: LotSubpageRoute }) {
       return <GatesPage lotId={route.lotId} />;
     case 'publication':
       return <PublicationPage lotId={route.lotId} />;
+    case 'sessions':
+      return <SessionsPage lotId={route.lotId} />;
+    case 'session':
+      return <SessionPage lotId={route.lotId} sessionId={route.sessionId} />;
   }
 }

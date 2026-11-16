@@ -6,6 +6,7 @@ import type { LotEquipmentReader } from '../domain/dashboard/LotEquipmentReader.
 import type { LotGateRepository } from '../domain/dashboard/LotGateRepository.ts';
 import type { LotMapRepository } from '../domain/dashboard/LotMapRepository.ts';
 import type { LotSpotRepository } from '../domain/dashboard/LotSpotRepository.ts';
+import type { SessionTimelineRepository } from '../domain/dashboard/SessionTimelineRepository.ts';
 import type { SpotCheckRepository } from '../domain/dashboard/SpotCheckRepository.ts';
 import type { LotSetupRepository } from '../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../domain/dashboard/OperatorRepository.ts';
@@ -70,6 +71,7 @@ export interface ServerDependencies {
     readonly lotEquipment: LotEquipmentReader;
     readonly lotSpots: LotSpotRepository;
     readonly spotChecks: SpotCheckRepository;
+    readonly sessionTimelines: SessionTimelineRepository;
     readonly lotGates: LotGateRepository;
     readonly gateSecrets: GateSecretRepository;
     readonly lotPublication: LotPublicationRepository;
@@ -134,6 +136,7 @@ function dashboardDependencies({ repositories, settings = {}, operatorStripe, te
     clock: composedClockOf(settings, repositories, testClock),
     spots: repositories.lotSpots,
     spotChecks: repositories.spotChecks,
+    sessionTimelines: repositories.sessionTimelines,
     gates: repositories.lotGates,
     gateSecrets: repositories.gateSecrets,
     publication: repositories.lotPublication,

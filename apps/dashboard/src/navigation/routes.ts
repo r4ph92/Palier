@@ -8,6 +8,8 @@ export type Route =
   | { readonly page: 'spotsToCheck'; readonly lotId: string }
   | { readonly page: 'gates'; readonly lotId: string }
   | { readonly page: 'publication'; readonly lotId: string }
+  | { readonly page: 'sessions'; readonly lotId: string }
+  | { readonly page: 'session'; readonly lotId: string; readonly sessionId: string }
   | { readonly page: 'notFound' };
 
 export const NEW_LOT_PATH = '/lots/new';
@@ -19,6 +21,8 @@ const SPOTS_TO_CHECK_PATH = /^\/lots\/([^/]+)\/spots-to-check\/?$/;
 const EQUIPMENT_PATH = /^\/lots\/([^/]+)\/equipment\/?$/;
 const GATES_PATH = /^\/lots\/([^/]+)\/gates\/?$/;
 const PUBLICATION_PATH = /^\/lots\/([^/]+)\/publication\/?$/;
+const SESSIONS_PATH = /^\/lots\/([^/]+)\/sessions\/?$/;
+const SESSION_PATH = /^\/lots\/([^/]+)\/sessions\/([^/]+)\/?$/;
 
 export function routeOf(pathname: string): Route {
   if (pathname === '/' || pathname === '') {
@@ -28,7 +32,7 @@ export function routeOf(pathname: string): Route {
   if (pathname === NEW_LOT_PATH || pathname === `${NEW_LOT_PATH}/`) {
     return { page: 'newLot' };
   }
-  const lotSubpage = lotSubpageOf(pathname);
+  const lotSubpage = lotSubpageOf(pathname) ?? sessionRouteOf(pathname);
   if (lotSubpage !== null) {
     return lotSubpage;
   }
@@ -43,6 +47,7 @@ const LOT_SUBPAGES = [
   ['equipment', EQUIPMENT_PATH],
   ['gates', GATES_PATH],
   ['publication', PUBLICATION_PATH],
+  ['sessions', SESSIONS_PATH],
 ] as const;
 
 function lotSubpageOf(pathname: string): Route | null {
@@ -53,6 +58,13 @@ function lotSubpageOf(pathname: string): Route | null {
     }
   }
   return null;
+}
+
+function sessionRouteOf(pathname: string): Route | null {
+  const [, encodedLotId, encodedSessionId] = SESSION_PATH.exec(pathname) ?? [];
+  const lotId = decodedSegment(encodedLotId);
+  const sessionId = decodedSegment(encodedSessionId);
+  return lotId === null || sessionId === null ? null : { page: 'session', lotId, sessionId };
 }
 
 // A typed or pasted address can hold a broken escape such as "%E0%A4%A", which decodeURIComponent refuses.
@@ -93,6 +105,14 @@ export function gatesPath(lotId: string): string {
 
 export function publicationPath(lotId: string): string {
   return `${lotPath(lotId)}/publication`;
+}
+
+export function sessionsPath(lotId: string): string {
+  return `${lotPath(lotId)}/sessions`;
+}
+
+export function sessionPath(lotId: string, sessionId: string): string {
+  return `${sessionsPath(lotId)}/${encodeURIComponent(sessionId)}`;
 }
 
 export const HOME_PATH = '/';

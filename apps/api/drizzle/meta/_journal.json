@@ -295,6 +295,13 @@
       "when": 1794766263980,
       "tag": "0041_lot_publication",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1794784214083,
+      "tag": "0042_session_list_index",
+      "breakpoints": true
     }
   ]
 }

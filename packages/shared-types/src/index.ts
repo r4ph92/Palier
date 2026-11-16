@@ -100,3 +100,15 @@ export type { PaymentMethodResponse, SavedCard, SavePaymentMethodRequest, SetupI
 export type { CurrentSpotHoldResponse, SpotHold, SpotHoldRefusalBody, SpotHoldRefusalCode, SpotHoldStatus } from './spotHolds.ts';
 export type { SpotState } from './spotStates.ts';
 export type { Vehicle, VehicleListResponse, VehicleNeeds } from './vehicles.ts';
+export type {
+  DashboardSessionDetail,
+  DashboardSessionList,
+  DashboardSessionRow,
+  DashboardSessionSummary,
+  ParkingEvidence,
+  SessionExitMethod,
+  SessionListStatus,
+  TimelineDetails,
+  TimelineEntry,
+  TimelineKind,
+} from './sessionTimeline.ts';

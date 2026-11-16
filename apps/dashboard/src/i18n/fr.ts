@@ -1,9 +1,4 @@
-import { frEquipment } from './frEquipment.ts';
-import { frGateErrors } from './frGateErrors.ts';
-import { frPublication, frPublicationErrors } from './frPublication.ts';
-import { frGates } from './frGates.ts';
-import { frMap } from './frMap.ts';
-import { frSpotsToCheck } from './frSpotsToCheck.ts';
+import { frPageErrors, frPageTexts } from './frPages.ts';
 import { frSpotCheckMessages } from './spotCheckMessages.ts';
 
 export const fr = {
@@ -100,11 +95,7 @@ export const fr = {
     stale: 'Données non mises à jour. Nouvel essai dans un instant.',
     lastUpdate: 'Dernière mise à jour\u00a0: %{time}',
   },
-  spotsToCheck: frSpotsToCheck,
-  map: frMap,
-  equipment: frEquipment,
-  gates: frGates,
-  publication: frPublication,
+  ...frPageTexts,
   spotStates: {
     AVAILABLE: 'Libre',
     HELD: 'Garantie',
@@ -193,8 +184,7 @@ export const fr = {
     SPOT_RELOAD_FAILED: 'La page n’a pas pu être rechargée après ce refus. Rechargez la page avant de recommencer.',
     SPOT_TO_CHECK_GONE: 'La place %{number} est introuvable. La liste des places a été rechargée.',
     SPOT_RANGE_UNREADABLE: 'Numéros illisibles. Écrivez une plage comme A-1 à A-20, ou un seul numéro comme A-7.',
-    ...frGateErrors,
-    ...frPublicationErrors,
+    ...frPageErrors,
     UNKNOWN: 'Une erreur est survenue. Réessayez dans un instant.',
   },
 };

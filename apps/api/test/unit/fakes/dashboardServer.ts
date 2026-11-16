@@ -12,6 +12,7 @@ import { FakeLotGateRepository } from './fakeLotGateRepository.ts';
 import { FakeLotMapRepository } from './fakeLotMapRepository.ts';
 import { FakeLotPublicationRepository } from './fakeLotPublicationRepository.ts';
 import { FakeLotSpotRepository } from './fakeLotSpotRepository.ts';
+import { FakeSessionTimelineRepository } from './fakeSessionTimelineRepository.ts';
 import { FakeSpotCheckRepository } from './fakeSpotCheckRepository.ts';
 import { FakeOperatorRepository } from './fakeOperatorRepository.ts';
 import { fakeGateDependencies, fakeRepositories } from './serverDependencies.ts';
@@ -30,17 +31,18 @@ export function startDashboardServer(settings: ServerSettings = { testSignInEnab
   const lotEquipment = new FakeLotEquipmentReader(operatorRepository.lots);
   const lotSpots = new FakeLotSpotRepository(operatorRepository.lots, lotMaps);
   const spotChecks = new FakeSpotCheckRepository(operatorRepository.lots, lotMaps, lotSpots);
+  const sessionTimelines = new FakeSessionTimelineRepository(operatorRepository.lots);
   const lotGates = new FakeLotGateRepository(operatorRepository.lots);
   const lotPublication = new FakeLotPublicationRepository(operatorRepository.lots);
   const { testClock } = composeClock(settings.testSignInEnabled === true);
   const server: FastifyInstance = buildServer({
     gates: gateDependenciesReading(lotGates),
-    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment, lotSpots, spotChecks, lotGates, gateSecrets: lotGates, lotPublication, ...overrides },
+    repositories: { ...fakeRepositories({ driverRepository, operatorRepository }), lotMaps, lotEquipment, lotSpots, spotChecks, sessionTimelines, lotGates, gateSecrets: lotGates, lotPublication, ...overrides },
     operatorStripe: stripe.dependencies,
     testClock,
     settings,
   });
-  return { server, driverRepository, lots: operatorRepository.lots, lotMaps, lotEquipment, lotSpots, spotChecks, lotGates, lotPublication, testClock, ...stripe };
+  return { server, driverRepository, lots: operatorRepository.lots, lotMaps, lotEquipment, lotSpots, spotChecks, sessionTimelines, lotGates, lotPublication, testClock, ...stripe };
 }
 
 // A key the dashboard issued or rotated authenticates the gate routes; the seeded test keys still do too.
