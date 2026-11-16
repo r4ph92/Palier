@@ -1,6 +1,7 @@
 import { screen, userEvent } from '@testing-library/react-native';
 import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
 import { IPHONE_MINI_METRICS, renderPalierApp, signedInJulie } from './renderPalierApp';
+import { acceptShownTariff } from './acceptShownTariff';
 
 // The card page renders Stripe's native card field, which has no test renderer.
 jest.mock('@stripe/stripe-react-native', () => ({
@@ -16,6 +17,7 @@ async function scanWithoutPrerequisites() {
   await user.press(await screen.findByRole('tab', { name: 'Scanner' }));
   await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
   await user.press(screen.getByRole('button', { name: 'Scanner' }));
+  await acceptShownTariff(user);
   await screen.findByText('Ajoutez une plaque et une carte avant d’entrer');
   return user;
 }

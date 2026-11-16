@@ -8,6 +8,7 @@ import { MemoryLocationExplanationStore } from './fakeLocationExplanationStore';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { visibleText } from './visibleText';
+import { acceptShownTariff } from './acceptShownTariff';
 
 export const TITLE_FR = 'Pourquoi « Toujours » ?';
 export const DETECTION_OFF_FR = 'Détection automatique désactivée — votre place sera présumée occupée après 30 min';
@@ -75,6 +76,7 @@ export async function scanEntreeDemoAndOpenSession(user: ReturnType<typeof userE
   parkingSession.session = julieAtParkingDemo({ state: 'CREATED', elapsedMinutes: 0, amountCents: 75 });
   await user.type(await screen.findByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
   await user.press(screen.getByRole('button', { name: 'Scanner' }));
+  await acceptShownTariff(user);
   expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();
   await user.press(screen.getByRole('button', { name: 'Terminé' }));
   expect(await screen.findByText('Montant à ce jour : 0,75 $', visibleText)).toBeOnTheScreen();

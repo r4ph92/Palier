@@ -12,6 +12,7 @@ import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessi
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { asSeen, visibleText } from './visibleText';
 import { advance, julieWith, PARKED_IN_A1 } from './walkAwayRig';
+import { acceptShownTariff } from './acceptShownTariff';
 
 describe('walking signals that presume nothing (story #18)', () => {
   beforeEach(() => jest.useFakeTimers({ advanceTimers: true, now: new Date(2026, 10, 4, 18, 5) }));
@@ -71,6 +72,7 @@ async function scanAndConfirmAtA1(language: SupportedLanguage) {
   parkingSession.session = julieAtParkingDemo({ state: 'CREATED', elapsedMinutes: 0, amountCents: 75 });
   await user.type(screen.getByLabelText(language === 'fr' ? 'Contenu du QR' : 'QR content'), ENTREE_DEMO_QR);
   await user.press(screen.getByRole('button', { name: language === 'fr' ? 'Scanner' : 'Scan' }));
+  await acceptShownTariff(user);
   entry.sessionState = 'ENTRY_CONFIRMED';
   parkingSession.session = julieAtParkingDemo({ elapsedMinutes: 0, amountCents: 75 });
   await advance(ENTRY_STATUS_POLL_MILLISECONDS);

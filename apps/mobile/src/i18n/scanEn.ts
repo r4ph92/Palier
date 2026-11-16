@@ -9,6 +9,10 @@ export const scanEn = {
   submitting: 'Checking…',
   tariff: '%{price} per %{minutes}\u00A0min, daily cap %{cap}',
   hold: '%{amount} will be held on your card until you exit',
+  tariffChanged: 'This lot’s tariff just changed',
+  enter: 'Enter',
+  entering: 'Opening…',
+  cancel: 'Cancel',
   spotLead: 'Your spot: ',
   spotPlace: '\u00A0· Level\u00A0%{level}\u00A0· Aisle\u00A0%{aisle}',
   barrierOpen: 'Barrier open',
@@ -37,5 +41,6 @@ export const scanEn = {
     CARD_DECLINED: 'Card declined',
     PAYMENTS_UNAVAILABLE: 'Payment temporarily unavailable — the barrier stays closed',
     TOO_MANY_ENTRIES: TOO_MANY_ATTEMPTS,
+    TARIFF_CHANGED: 'This lot’s tariff just changed — scan again',
   },
 };

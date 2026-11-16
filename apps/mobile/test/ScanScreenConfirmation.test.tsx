@@ -8,6 +8,7 @@ import { PalierStatusError } from '../src/api/LotsClient';
 import { PalierConsentRequiredError } from '../src/api/VehicleClient';
 import { FakeEntryClient, spotA1 } from './fakeEntryClient';
 import { scan } from './renderScanScreen';
+import { acceptShownTariff } from './acceptShownTariff';
 
 class CaughtErrorBoundary extends Component<{ readonly children: ReactNode }, { readonly caught?: Error }> {
   override state: { readonly caught?: Error } = {};
@@ -197,6 +198,7 @@ describe('ScanScreen, confirming the entry', () => {
     await user.press(screen.getByRole('button', { name: 'Terminé' }));
     await user.type(screen.getByLabelText('Contenu du QR'), 'https://palier.app/q/palier1.00000000-0000-4000-8000-000000000701.signature');
     await user.press(screen.getByRole('button', { name: 'Scanner' }));
+    await acceptShownTariff(user);
     await screen.findByText('Barrière ouverte');
 
     await act(async () => client.confirmHeldAnswers());

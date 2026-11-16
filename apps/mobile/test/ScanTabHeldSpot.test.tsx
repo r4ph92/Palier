@@ -4,6 +4,7 @@ import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeParkingSessionClient } from './fakeParkingSessionClient';
 import { julieHoldAtParkingDemo, FakeSpotHoldClient } from './fakeSpotHoldClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
+import { acceptShownTariff } from './acceptShownTariff';
 
 async function scanWithHold(entry: FakeEntryClient) {
   const spotHold = new FakeSpotHoldClient(julieHoldAtParkingDemo());
@@ -20,6 +21,7 @@ async function scanWithHold(entry: FakeEntryClient) {
   spotHold.activeHold = null;
   await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
   await user.press(screen.getByRole('button', { name: 'Scanner' }));
+  await acceptShownTariff(user);
   return { spotHold, user, readsBeforeScan };
 }
 

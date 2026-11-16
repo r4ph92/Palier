@@ -1,6 +1,7 @@
 import { act, screen, userEvent } from '@testing-library/react-native';
 import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
 import { IPHONE_MINI_METRICS, renderPalierApp, signedInJulie } from './renderPalierApp';
+import { acceptShownTariff } from './acceptShownTariff';
 
 jest.mock('@stripe/stripe-react-native', () => ({
   CardField: () => null,
@@ -15,6 +16,7 @@ async function submitThenLeaveTheScannerTab() {
   await user.press(await screen.findByRole('tab', { name: 'Scanner' }));
   await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
   await user.press(screen.getByRole('button', { name: 'Scanner' }));
+  await acceptShownTariff(user);
   await user.press(screen.getByRole('tab', { name: 'Stationnements' }));
   await act(async () => entryClient.answer());
 }

@@ -7,6 +7,7 @@ import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { ScanScreen } from '../src/screens/ScanScreen';
 import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
 import { IPHONE_MINI_METRICS } from './renderPalierApp';
+import { acceptShownTariff } from './acceptShownTariff';
 
 interface Scan {
   readonly client?: FakeEntryClient;
@@ -47,5 +48,6 @@ export async function scan(options: Scan = {}) {
   const labels = options.language === 'en' ? { field: 'QR content', submit: 'Scan' } : { field: 'Contenu du QR', submit: 'Scanner' };
   await user.type(screen.getByLabelText(labels.field), ENTREE_DEMO_QR);
   await user.press(screen.getByRole('button', { name: labels.submit }));
+  await acceptShownTariff(user);
   return { client, user };
 }

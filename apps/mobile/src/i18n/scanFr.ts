@@ -9,6 +9,10 @@ export const scanFr = {
   submitting: 'Vérification…',
   tariff: '%{price} par %{minutes}\u00A0min, plafond %{cap} par jour',
   hold: '%{amount} seront retenus sur votre carte jusqu’à votre sortie',
+  tariffChanged: 'Le tarif de ce parking vient de changer',
+  enter: 'Entrer',
+  entering: 'Ouverture…',
+  cancel: 'Annuler',
   spotLead: 'Votre place\u00A0: ',
   spotPlace: '\u00A0· Palier\u00A0%{level}\u00A0· Allée\u00A0%{aisle}',
   barrierOpen: 'Barrière ouverte',
@@ -37,5 +41,6 @@ export const scanFr = {
     CARD_DECLINED: 'Carte refusée',
     PAYMENTS_UNAVAILABLE: 'Paiement momentanément indisponible — la barrière reste fermée',
     TOO_MANY_ENTRIES: TOO_MANY_ATTEMPTS,
+    TARIFF_CHANGED: 'Le tarif de ce parking vient de changer — scannez de nouveau',
   },
 };

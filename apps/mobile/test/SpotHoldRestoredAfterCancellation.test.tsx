@@ -5,6 +5,7 @@ import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessi
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { visibleText } from './visibleText';
+import { acceptShownTariff } from './acceptShownTariff';
 
 jest.mock('@stripe/stripe-react-native', () => ({
   CardField: () => null,
@@ -27,6 +28,7 @@ describe('a hold used by an entry that is then cancelled', () => {
     // The server marks the hold used by the scan, then gives it back with the cancellation.
     spotHold.activeHold = null;
     await user.press(screen.getByRole('button', { name: 'Scanner' }));
+    await acceptShownTariff(user);
     await screen.findByText('Barrière ouverte');
     await user.press(screen.getByRole('tab', { name: 'Stationnements' }));
     expect(screen.queryByTestId('spot-hold-banner')).not.toBeOnTheScreen();

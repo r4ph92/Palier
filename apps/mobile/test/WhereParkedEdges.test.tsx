@@ -13,6 +13,7 @@ import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { asSeen, visibleText } from './visibleText';
 import { advance, julieWith } from './walkAwayRig';
 import { AISLE_B_MINOR, CONFIRM_TYPED, julieAskedInAisleB, WHERE_PARKED } from './whereParkedRig';
+import { acceptShownTariff } from './acceptShownTariff';
 
 // The question's title, the offline notice and the free list's lead, in the order the screen shows them.
 function readingOrder(): string[] {
@@ -167,6 +168,7 @@ describe('walking away in aisle B right after the scan, without « Terminé » (
     parkingSession.session = julieAtParkingDemo({ state: 'CREATED', elapsedMinutes: 0, amountCents: 75 });
     await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
     await user.press(screen.getByRole('button', { name: 'Scanner' }));
+    await acceptShownTariff(user);
     entry.sessionState = 'ENTRY_CONFIRMED';
     parkingSession.session = julieAtParkingDemo({ elapsedMinutes: 0, amountCents: 75 });
     await advance(ENTRY_STATUS_POLL_MILLISECONDS);

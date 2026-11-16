@@ -1,4 +1,4 @@
-import type { Vehicle, VehicleListResponse, VehicleNeeds } from '@palier/shared-types';
+import type { TariffPolicy, Vehicle, VehicleListResponse, VehicleNeeds } from '@palier/shared-types';
 
 export interface NewVehicleInput extends VehicleNeeds {
   readonly plate: string;
@@ -23,12 +23,15 @@ export class PalierRejectedError extends Error {
   readonly code: string;
   // The hold a declined card refused, when the API names it.
   readonly authorizedCents: number | null;
+  // TARIFF_CHANGED: the lot's current tariff, when the API names it.
+  readonly tariff: TariffPolicy | null;
 
-  constructor(code: string, authorizedCents: number | null = null) {
+  constructor(code: string, authorizedCents: number | null = null, tariff: TariffPolicy | null = null) {
     super(`Palier rejected the request: ${code}`);
     this.name = 'PalierRejectedError';
     this.code = code;
     this.authorizedCents = authorizedCents;
+    this.tariff = tariff;
   }
 }
 

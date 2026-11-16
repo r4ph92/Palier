@@ -4,6 +4,7 @@ import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeParkingSessionClient } from './fakeParkingSessionClient';
 import { julieHoldAtParkingDemo, FakeSpotHoldClient } from './fakeSpotHoldClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
+import { acceptShownTariff } from './acceptShownTariff';
 
 jest.mock('@stripe/stripe-react-native', () => ({
   CardField: () => null,
@@ -32,6 +33,7 @@ describe('QA #9: the hold banner once the entry used the hold', () => {
     await screen.findByText('Aucune session en cours');
     await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
     await user.press(screen.getByRole('button', { name: 'Scanner' }));
+    await acceptShownTariff(user);
 
     await user.press(screen.getByRole('tab', { name: 'Stationnements' }));
     spotHold.activeHold = null;
@@ -51,6 +53,7 @@ describe('QA #9: the hold banner once the entry used the hold', () => {
     spotHold.activeHold = null;
     await user.type(screen.getByLabelText('QR content'), ENTREE_DEMO_QR);
     await user.press(screen.getByRole('button', { name: 'Scan' }));
+    await acceptShownTariff(user);
     await screen.findByText('Barrier open');
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -66,6 +69,7 @@ describe('QA #9: the hold banner once the entry used the hold', () => {
     await screen.findByText('Aucune session en cours');
     await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
     await user.press(screen.getByRole('button', { name: 'Scanner' }));
+    await acceptShownTariff(user);
     await screen.findByText('Complet — la barrière reste fermée');
     await user.press(screen.getByRole('tab', { name: 'Stationnements' }));
 

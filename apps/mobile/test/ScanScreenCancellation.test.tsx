@@ -4,6 +4,7 @@ import { ENTRY_STATUS_POLL_MILLISECONDS } from '../src/entries/useConfirmationPo
 import { FakeEntryClient } from './fakeEntryClient';
 import { scan } from './renderScanScreen';
 import { visibleText } from './visibleText';
+import { acceptShownTariff } from './acceptShownTariff';
 
 async function advance(milliseconds: number): Promise<void> {
   await act(async () => {
@@ -41,6 +42,7 @@ describe('ScanScreen, when Palier cancels the entry nobody drove through', () =>
     expect(screen.queryByRole('button', { name: 'Terminé' })).not.toBeOnTheScreen();
     client.sessionState = 'CREATED';
     await user.press(screen.getByRole('button', { name: 'Scanner' }));
+    await acceptShownTariff(user);
     expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();
     expect(screen.queryByRole('alert')).not.toBeOnTheScreen();
   });

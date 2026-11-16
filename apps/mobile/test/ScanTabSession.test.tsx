@@ -4,6 +4,7 @@ import type { CurrentParkingSession } from '@palier/shared-types';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { visibleText } from './visibleText';
+import { acceptShownTariff } from './acceptShownTariff';
 
 const NEW_SESSION = julieAtParkingDemo({ state: 'CREATED', elapsedMinutes: 0, amountCents: 75 });
 
@@ -15,6 +16,7 @@ async function scanAtEntreeDemo(parkingSession: FakeParkingSessionClient, readAf
   parkingSession.session = readAfterScan;
   await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
   await user.press(screen.getByRole('button', { name: 'Scanner' }));
+  await acceptShownTariff(user);
   return user;
 }
 

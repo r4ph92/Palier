@@ -13,6 +13,7 @@ import { useColors } from '../theme/useColors';
 import { MINIMUM_TOUCH_TARGET, spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
 import { EntryProblem } from './EntryProblem';
+import { TariffConfirmation } from './TariffConfirmation';
 
 // A QR content is a link, never words: no capitals, corrections or spelling marks.
 const QR_INPUT_BEHAVIOUR = { autoCapitalize: 'none', autoCorrect: false, spellCheck: false, returnKeyType: 'go' } as const;
@@ -31,6 +32,8 @@ export function ScanScreen({ entry, notice, onDone, onAddPlate, onAddCard }: Sca
     <ScanFrame>
       {entry.state.status === 'entered' ? (
         <EnteredSpot spot={entry.state.spot} isConfirmed={entry.state.isConfirmed} onDone={onDone} />
+      ) : entry.state.status === 'quoted' || entry.state.status === 'entering' ? (
+        <TariffConfirmation state={entry.state} onEnter={entry.accept} onCancel={entry.startOver} />
       ) : (
         <>
           {notice}
