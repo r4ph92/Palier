@@ -112,6 +112,15 @@ describe('the session page', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
   });
 
+  it('words the operator presence check as a step of the visit', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    const visit = api.sessions.get(parkingDemo.id)?.find(({ id }) => id === OPEN_SESSION_ID);
+    api.sessions.set(parkingDemo.id, [{ id: OPEN_SESSION_ID, detail: { ...(visit?.detail as DashboardSessionDetail), timeline: [stepOf([9, 'PRESENCE_CONFIRMED', '14:00:00'])] } }]);
+    renderDashboard({ path: sessionPage(OPEN_SESSION_ID) });
+
+    expect(await screen.findByText('Présence du véhicule confirmée')).toBeDefined();
+  });
+
   it('says so when no step was recorded', async () => {
     const api = installFakeApi({ signedInAs: sophie });
     const visit = api.sessions.get(parkingDemo.id)?.find(({ id }) => id === OPEN_SESSION_ID);
