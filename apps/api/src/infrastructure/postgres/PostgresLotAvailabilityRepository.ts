@@ -12,6 +12,20 @@ interface LotSpotGroup extends AvailableSpotGroup {
   readonly lotId: string;
 }
 
+// What the lot list shows of each lot: occupancy and, since #151, its tariff.
+const ONLINE_LOT_COLUMNS = {
+  id: parkingLot.id,
+  name: parkingLot.name,
+  latitude: parkingLot.latitude,
+  longitude: parkingLot.longitude,
+  capacity: parkingLot.capacity,
+  vehicleCount: parkingLot.vehicleCount,
+  heldSpotCount: HELD_SPOT_COUNT,
+  assignedSpotCount: ASSIGNED_SPOT_COUNT,
+  pricingPolicy: parkingLot.pricingPolicy,
+  dailyCapCents: parkingLot.dailyCapCents,
+};
+
 // Spots are counted by flag combination; which category a combination belongs to is decided in domain/spots/spotCategories.
 export class PostgresLotAvailabilityRepository implements LotAvailabilityRepository {
   readonly #database: Database;
@@ -22,18 +36,7 @@ export class PostgresLotAvailabilityRepository implements LotAvailabilityReposit
 
   async findOnlineLots(limit: number): Promise<readonly OnlineLot[]> {
     const lots = await this.#database
-      .select({
-        id: parkingLot.id,
-        name: parkingLot.name,
-        latitude: parkingLot.latitude,
-        longitude: parkingLot.longitude,
-        capacity: parkingLot.capacity,
-        vehicleCount: parkingLot.vehicleCount,
-        heldSpotCount: HELD_SPOT_COUNT,
-        assignedSpotCount: ASSIGNED_SPOT_COUNT,
-        pricingPolicy: parkingLot.pricingPolicy,
-        dailyCapCents: parkingLot.dailyCapCents,
-      })
+      .select(ONLINE_LOT_COLUMNS)
       .from(parkingLot)
       .where(eq(parkingLot.isOnline, true))
       .orderBy(asc(parkingLot.name))
