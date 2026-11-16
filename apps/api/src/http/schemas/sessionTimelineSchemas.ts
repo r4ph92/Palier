@@ -86,9 +86,9 @@ const timelineDetailsSchema = {
 
 const timelineEntrySchema = {
   type: 'object',
-  required: ['sequence', 'kind', 'occurredAt', 'details'],
+  required: ['step', 'kind', 'occurredAt', 'details'],
   additionalProperties: false,
-  properties: { sequence: { type: 'integer' }, kind: { type: 'string', enum: TIMELINE_KINDS }, occurredAt: instant, details: timelineDetailsSchema },
+  properties: { step: { type: 'integer', minimum: 1 }, kind: { type: 'string', enum: TIMELINE_KINDS }, occurredAt: instant, details: timelineDetailsSchema },
 } as const;
 
 export const sessionDetailSchema = {

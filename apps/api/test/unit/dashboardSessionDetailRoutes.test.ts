@@ -57,7 +57,7 @@ describe('the sessions of a lot and the timeline of one', () => {
         entryAt: '2026-11-15T14:00:00.000Z',
         exitAt: '2026-11-15T16:00:02.000Z',
       });
-      expect(body.timeline.map(({ sequence, kind }) => [sequence, kind])).toEqual([
+      expect(body.timeline.map(({ step, kind }) => [step, kind])).toEqual([
         [1, 'ENTRY_SCANNED'],
         [2, 'GATE_OPENED'],
         [3, 'ENTRY_LOOP_CLOSED'],
@@ -84,7 +84,7 @@ describe('the sessions of a lot and the timeline of one', () => {
 
       const [step] = (await detail(visit.id)).json<DashboardSessionDetail>().timeline;
 
-      expect(step).toEqual({ sequence: 1, kind: 'UNKNOWN', occurredAt: '2026-11-15T14:00:00.000Z', details: {} });
+      expect(step).toEqual({ step: 1, kind: 'UNKNOWN', occurredAt: '2026-11-15T14:00:00.000Z', details: {} });
     });
 
     it('never answers an id, a driver, a card or a payment reference', async () => {

@@ -22,11 +22,11 @@ const DETAILS_OF: Readonly<Record<SessionEventKind, (payload: EventPayload) => T
 
 // The steps in the order they were written; the clock of a step never orders them (decision 037).
 export function timelineOf(events: readonly StoredSessionEvent[]): TimelineEntry[] {
-  return [...events].sort((left, right) => left.sequence - right.sequence).map(timelineEntryOf);
+  return [...events].sort((left, right) => left.sequence - right.sequence).map((event, index) => timelineEntryOf(event, index + 1));
 }
 
-function timelineEntryOf({ sequence, kind, occurredAt, payload }: StoredSessionEvent): TimelineEntry {
-  const base = { sequence, occurredAt: occurredAt.toISOString() };
+function timelineEntryOf({ kind, occurredAt, payload }: StoredSessionEvent, step: number): TimelineEntry {
+  const base = { step, occurredAt: occurredAt.toISOString() };
   return isKnownKind(kind) ? { ...base, kind, details: DETAILS_OF[kind](payloadOf(payload)) } : { ...base, kind: 'UNKNOWN', details: {} };
 }
 

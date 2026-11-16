@@ -34,7 +34,7 @@ describe('the timeline of a session', () => {
   ] satisfies [SessionEvent, object][])('shows only the whitelisted facts of %j', (event, details) => {
     const [entry] = timelineOf([stored(1, event)]);
 
-    expect(entry).toEqual({ sequence: 1, kind: event.kind, occurredAt: AT.toISOString(), details });
+    expect(entry).toEqual({ step: 1, kind: event.kind, occurredAt: AT.toISOString(), details });
   });
 
   it('follows the order of writing, not the clock of each step', () => {
@@ -47,13 +47,13 @@ describe('the timeline of a session', () => {
   it('keeps the written order of steps sharing one instant', () => {
     const events = [1, 2, 3].map((sequence) => stored(sequence, { kind: 'ENTRY_LOOP_CLOSED', payload: { gateId: GATE } }));
 
-    expect(timelineOf([...events].reverse()).map(({ sequence }) => sequence)).toEqual([1, 2, 3]);
+    expect(timelineOf([...events].reverse()).map(({ step }) => step)).toEqual([1, 2, 3]);
   });
 
   it('shows a kind it does not know as a step with its time only', () => {
     const [entry] = timelineOf([{ sequence: 4, kind: 'SPOT_TAKEN_REPORTED', occurredAt: AT, payload: { spotId: SPOT, reporter: 'driver@palier.test' } }]);
 
-    expect(entry).toEqual({ sequence: 4, kind: 'UNKNOWN', occurredAt: AT.toISOString(), details: {} });
+    expect(entry).toEqual({ step: 1, kind: 'UNKNOWN', occurredAt: AT.toISOString(), details: {} });
   });
 
   it('leaves out a field the payload lacks or holds with the wrong type, and never fails', () => {

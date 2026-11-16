@@ -47,7 +47,8 @@ export interface TimelineDetails {
 }
 
 export interface TimelineEntry {
-  readonly sequence: number;
+  // The rank of the step in its session, from 1.
+  readonly step: number;
   readonly kind: TimelineKind;
   readonly occurredAt: string;
   readonly details: TimelineDetails;

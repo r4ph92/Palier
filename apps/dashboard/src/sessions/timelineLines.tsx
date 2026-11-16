@@ -49,10 +49,10 @@ const LABELS: Readonly<Record<TimelineKind, LabelOf>> = {
 };
 
 // A capture that left a balance unpaid reads as two lines at the same instant: what was paid, then what was refused.
-export function timelineLinesOf({ sequence, kind, occurredAt, details }: TimelineEntry, wording: TimelineWording): TimelineLine[] {
-  const main = { key: String(sequence), occurredAt, label: LABELS[kind](wording, details) };
+export function timelineLinesOf({ step, kind, occurredAt, details }: TimelineEntry, wording: TimelineWording): TimelineLine[] {
+  const main = { key: String(step), occurredAt, label: LABELS[kind](wording, details) };
   if (kind !== 'CAPTURED' || details.unpaidCents === undefined || details.unpaidCents === 0) {
     return [main];
   }
-  return [main, { key: `${sequence}-unpaid`, occurredAt, label: amountLabel(wording.steps.UNPAID, details.unpaidCents, wording.language) }];
+  return [main, { key: `${step}-unpaid`, occurredAt, label: amountLabel(wording.steps.UNPAID, details.unpaidCents, wording.language) }];
 }

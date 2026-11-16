@@ -16,10 +16,10 @@ export function rowOf({ id, detail: { summary } }: FakeVisit): DashboardSessionR
   return { id, plate, state, entryAt, exitAt, assignedSpotNumber, amountCents };
 }
 
-export type StepAt = readonly [sequence: number, kind: TimelineEntry['kind'], time: string];
+export type StepAt = readonly [step: number, kind: TimelineEntry['kind'], time: string];
 
-export function stepOf([sequence, kind, time]: StepAt, details: TimelineEntry['details'] = {}): TimelineEntry {
-  return { sequence, kind, occurredAt: `2026-11-15T${time}.000Z`, details };
+export function stepOf([step, kind, time]: StepAt, details: TimelineEntry['details'] = {}): TimelineEntry {
+  return { step, kind, occurredAt: `2026-11-15T${time}.000Z`, details };
 }
 
 const ENTRY_STEPS: TimelineEntry[] = [
