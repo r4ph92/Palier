@@ -104,6 +104,10 @@
     "./sessionTimeline": {
       "types": "./src/sessionTimeline.ts",
       "default": "./src/sessionTimeline.ts"
+    },
+    "./staleSessions": {
+      "types": "./src/staleSessions.ts",
+      "default": "./src/staleSessions.ts"
     }
   },
   "scripts": {

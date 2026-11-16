@@ -31,6 +31,7 @@ describe('the timeline of a session', () => {
     [{ kind: 'CAPTURED', payload: { capturedCents: 1200, surplusPaidCents: 300, unpaidCents: 100 } }, { amountCents: 1500, unpaidCents: 100 }],
     [{ kind: 'CAPTURE_PENDING', payload: { pendingCaptureCents: 1200, pendingSurplusCents: 0 } }, { amountCents: 1200 }],
     [{ kind: 'EXIT_LOOP_CLOSED', payload: { gateId: GATE } }, {}],
+    [{ kind: 'PRESENCE_CONFIRMED', payload: {} }, {}],
   ] satisfies [SessionEvent, object][])('shows only the whitelisted facts of %j', (event, details) => {
     const [entry] = timelineOf([stored(1, event)]);
 

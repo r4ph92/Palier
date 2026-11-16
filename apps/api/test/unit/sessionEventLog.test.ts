@@ -7,7 +7,9 @@ import { ScriptedSql } from './fakes/scriptedSql.ts';
 
 const migration = readFileSync(new URL('../../drizzle/0038_session_event_log.sql', import.meta.url), 'utf8');
 const exitKindsMigration = readFileSync(new URL('../../drizzle/0039_exit_payment_event_kinds.sql', import.meta.url), 'utf8');
+const staleSessionsMigration = readFileSync(new URL('../../drizzle/0043_stale_sessions.sql', import.meta.url), 'utf8');
 const ENTRY_AND_PARKING_KINDS = ['ENTRY_SCANNED', 'GATE_OPENED', 'ENTRY_LOOP_CLOSED', 'AISLE_DETECTED', 'PARKING_PRESUMED', 'PARKING_CONFIRMED', 'ENTRY_CANCELLED'];
+const EXIT_KINDS = ['EXIT_IDENTIFIED', 'CAPTURED', 'CAPTURE_PENDING', 'EXIT_LOOP_CLOSED'];
 
 function kindCheckOf(kinds: readonly string[]): string {
   return `CONSTRAINT "event_log_kind_known" CHECK ("event_log"."kind" in (${kinds.map((kind) => `'${kind}'`).join(', ')}))`;
@@ -58,11 +60,22 @@ describe('migration 0038, the visit event log (story #156)', () => {
 describe('migration 0039, the exit and payment kinds (story #157)', () => {
   it('widens the named check to exactly the kinds the domain writes', () => {
     expect(exitKindsMigration).toContain('ALTER TABLE "event_log" DROP CONSTRAINT "event_log_kind_known"');
-    expect(exitKindsMigration).toContain(`ALTER TABLE "event_log" ADD ${kindCheckOf(SESSION_EVENT_KINDS)}`);
+    expect(exitKindsMigration).toContain(`ALTER TABLE "event_log" ADD ${kindCheckOf([...ENTRY_AND_PARKING_KINDS, ...EXIT_KINDS])}`);
   });
 
   it('keeps the entry and parking kinds and adds the four exit ones after them', () => {
-    expect(SESSION_EVENT_KINDS).toEqual([...ENTRY_AND_PARKING_KINDS, 'EXIT_IDENTIFIED', 'CAPTURED', 'CAPTURE_PENDING', 'EXIT_LOOP_CLOSED']);
+    expect(SESSION_EVENT_KINDS.slice(0, 11)).toEqual([...ENTRY_AND_PARKING_KINDS, ...EXIT_KINDS]);
+  });
+});
+
+describe('migration 0043, the presence kind (story #74)', () => {
+  it('widens the named check to exactly the kinds the domain writes', () => {
+    expect(staleSessionsMigration).toContain('ALTER TABLE "event_log" DROP CONSTRAINT "event_log_kind_known"');
+    expect(staleSessionsMigration).toContain(`ALTER TABLE "event_log" ADD ${kindCheckOf(SESSION_EVENT_KINDS)}`);
+  });
+
+  it('adds the presence kind after the exit ones', () => {
+    expect(SESSION_EVENT_KINDS.at(-1)).toBe('PRESENCE_CONFIRMED');
   });
 });
 

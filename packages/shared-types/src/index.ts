@@ -112,3 +112,4 @@ export type {
   TimelineEntry,
   TimelineKind,
 } from './sessionTimeline.ts';
+export type { DashboardStaleSession, DashboardStaleSessions, LastProofKind } from './staleSessions.ts';
