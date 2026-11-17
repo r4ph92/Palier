@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, type ReactElement } from 'react';
 import { AccessibilityInfo, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { LotsClient } from '../api/LotsClient';
@@ -116,7 +116,7 @@ function freshnessStamp(state: LotsState): string {
   return i18n.t('home.updatedAt', { time: formatClockTime(state.updatedAt, currentLanguage()) });
 }
 
-function HomeStateMessage({ controller }: { readonly controller: LotsController }) {
+function HomeStateMessage({ controller }: { readonly controller: LotsController }): ReactElement {
   switch (controller.state.status) {
     case 'loading':
       return <LotListLoading />;
