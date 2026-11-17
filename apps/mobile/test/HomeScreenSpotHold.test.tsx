@@ -6,6 +6,7 @@ import { FakeLotsClient, PARKING_DEMO_ID, parkingDemo, parkingDemoWith, parkingT
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
 import { lightColors } from '../src/theme/tokens';
 import { typography } from '../src/theme/typography';
+import { findFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreen, renderHomeScreenWith } from './renderHomeScreen';
 import { HOLD_BUTTON_FR, holdAtParkingDemo, tick } from './spotHoldScreen';
 import { visibleText } from './visibleText';
@@ -24,7 +25,7 @@ describe('HomeScreen spot hold', () => {
     expect(await screen.findByText('Place garantie jusqu’à 14 h 17', visibleText)).toBeOnTheScreen();
     expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('15:00');
     expect(screen.getByText('14 h 17', visibleText)).toHaveStyle({ fontFamily: typography.figure.fontFamily });
-    expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('9 places libres')).toBeOnTheScreen();
     expect(spotHoldClient.heldLots).toEqual([PARKING_DEMO_ID]);
     expect(lotsClient.callCount).toBe(2);
 

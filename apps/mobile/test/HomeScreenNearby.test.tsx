@@ -4,6 +4,7 @@ import { NO_BREAK_SPACE } from '../src/i18n/spaces';
 import { AccessibilityInfo } from 'react-native';
 import { FakeDeviceLocationClient, LOCATION_DENIED_NOTICE_FR } from './fakeDeviceLocationClient';
 import { FakeLotsClient, PARKING_DEMO_CATEGORY_LINE_FR, parkingDemo, parkingTestPaliers } from './fakeLotsClient';
+import { findFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreen } from './renderHomeScreen';
 import { visibleText } from './visibleText';
 
@@ -58,7 +59,7 @@ describe('HomeScreen with location allowed', () => {
 
     await renderHomeScreen(new FakeLotsClient([twoLeftByCounter]));
 
-    expect(await screen.findByText('2 places libres', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('2 places libres')).toBeOnTheScreen();
     expect(screen.getByText('Standard 2 · Électrique 1 · Accessible 1 · Grand gabarit 1', visibleText)).toBeOnTheScreen();
   });
 

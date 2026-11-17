@@ -2,6 +2,7 @@ import { act, screen, userEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { FakeDeviceLocationClient, LOCATION_DENIED_NOTICE_FR } from './fakeDeviceLocationClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
+import { findFreeSpotCount, getFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreen } from './renderHomeScreen';
 import { visibleText } from './visibleText';
 
@@ -17,7 +18,7 @@ describe('HomeScreen automatic refresh', () => {
 
   it('shows Complet 30 seconds after Parking Démo fills up', async () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(2), parkingDemoWith(0)));
-    expect(await screen.findByText('2 places libres', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('2 places libres')).toBeOnTheScreen();
 
     await waitForRefresh();
 
@@ -28,13 +29,13 @@ describe('HomeScreen automatic refresh', () => {
     jest.setSystemTime(new Date(2026, 10, 4, 13, 25));
     const client = new FakeLotsClient(parkingDemoWith(2), 'unreachable');
     await renderHomeScreen(client);
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
     jest.setSystemTime(new Date(2026, 10, 4, 13, 26));
 
     await waitForRefresh();
 
     expect(client.callCount).toBe(2);
-    expect(screen.getByText('2 places libres', visibleText)).toBeOnTheScreen();
+    expect(getFreeSpotCount('2 places libres')).toBeOnTheScreen();
     expect(screen.getByText('Mis à jour à 13 h 25', visibleText)).toBeOnTheScreen();
     expect(screen.queryByText('Impossible de joindre Palier.')).not.toBeOnTheScreen();
   });
@@ -43,7 +44,7 @@ describe('HomeScreen automatic refresh', () => {
     const locationClient = new FakeDeviceLocationClient();
     const client = new FakeLotsClient(parkingDemoWith(2));
     await renderHomeScreen(client, 'fr', locationClient);
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
 
     await waitForRefresh();
 
@@ -70,7 +71,7 @@ describe('HomeScreen automatic refresh', () => {
     await renderHomeScreen(client, 'fr', locationClient);
     await act(() => jest.advanceTimersByTimeAsync(20_000));
     await act(async () => locationClient.answerPrompt('granted'));
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
 
     await act(() => jest.advanceTimersByTimeAsync(THIRTY_SECONDS - 1));
     expect(client.callCount).toBe(1);
@@ -82,7 +83,7 @@ describe('HomeScreen automatic refresh', () => {
   it('stops once the screen is gone', async () => {
     const client = new FakeLotsClient(parkingDemoWith(2));
     await renderHomeScreen(client);
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
 
     await act(() => screen.unmount());
     await waitForRefresh();
@@ -105,7 +106,7 @@ describe('HomeScreen pull to refresh', () => {
   it('asks for the position again before reading the lots', async () => {
     const locationClient = new FakeDeviceLocationClient();
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(2), parkingDemoWith(0)), 'fr', locationClient);
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
 
     await userEvent.setup().pullToRefresh(screen.getByTestId('lot-list'));
 

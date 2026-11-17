@@ -2,6 +2,7 @@ import { screen, userEvent } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
+import { findFreeSpotCount, getFreeSpotCount, queryFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreen } from './renderHomeScreen';
 import { visibleText } from './visibleText';
 
@@ -16,26 +17,26 @@ describe('HomeScreen', () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)));
 
     expect(await screen.findByText('Parking Démo')).toBeOnTheScreen();
-    expect(screen.getByText('10 places libres')).toBeOnTheScreen();
+    expect(getFreeSpotCount('10 places libres')).toBeOnTheScreen();
   });
 
   it('shows 9 free spots after pulling down once A-1 is out of service', async () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10), parkingDemoWith(9)));
-    await screen.findByText('10 places libres');
+    await findFreeSpotCount('10 places libres');
 
     await userEvent.setup().pullToRefresh(screen.getByTestId('lot-list'));
 
-    expect(await screen.findByText('9 places libres')).toBeOnTheScreen();
-    expect(screen.queryByText('10 places libres')).not.toBeOnTheScreen();
+    expect(await findFreeSpotCount('9 places libres')).toBeOnTheScreen();
+    expect(queryFreeSpotCount('10 places libres')).not.toBeOnTheScreen();
   });
 
   it('reloads the counts when Actualiser is pressed', async () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10), parkingDemoWith(9)));
-    await screen.findByText('10 places libres');
+    await findFreeSpotCount('10 places libres');
 
     await userEvent.setup().press(screen.getByRole('button', { name: 'Actualiser' }));
 
-    expect(await screen.findByText('9 places libres')).toBeOnTheScreen();
+    expect(await findFreeSpotCount('9 places libres')).toBeOnTheScreen();
   });
 
   it('says so when no lot is online within 10 km', async () => {
@@ -103,7 +104,7 @@ describe('HomeScreen when the API is unreachable', () => {
 
   it('drops the stale counts when a refresh fails', async () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10), 'unreachable'));
-    await screen.findByText('10 places libres');
+    await findFreeSpotCount('10 places libres');
 
     await userEvent.setup().pullToRefresh(screen.getByTestId('lot-list'));
 
@@ -117,7 +118,7 @@ describe('HomeScreen when the API is unreachable', () => {
 
     await userEvent.setup().press(await screen.findByRole('button', { name: 'Réessayer' }));
 
-    expect(await screen.findByText('10 places libres')).toBeOnTheScreen();
+    expect(await findFreeSpotCount('10 places libres')).toBeOnTheScreen();
     expect(client.callCount).toBe(2);
   });
 });
@@ -126,7 +127,7 @@ describe('HomeScreen in English', () => {
   it('shows every label in English', async () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)), 'en');
 
-    expect(await screen.findByText('10 free spots')).toBeOnTheScreen();
+    expect(await findFreeSpotCount('10 free spots')).toBeOnTheScreen();
     expect(screen.getByText('Parking lots')).toBeOnTheScreen();
     expect(screen.getByText('Hello Julie')).toBeOnTheScreen();
   });
