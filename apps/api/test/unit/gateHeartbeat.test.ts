@@ -89,9 +89,9 @@ describe('the console heartbeat', () => {
     expect(api.postHeartbeat).toHaveBeenCalledTimes(1);
   });
 
-  it('beats at once when a well-formed key is typed, and never for a key that cannot be sent', async () => {
+  it('beats at once when a sendable key is typed, and never for a key that cannot be sent', async () => {
     const api = fakeApi();
-    const state = consoleState('short');
+    const state = consoleState('has a space');
     const heartbeat = createHeartbeat(state, api, vi.fn());
 
     await heartbeat.restart();

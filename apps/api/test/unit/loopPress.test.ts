@@ -92,7 +92,7 @@ describe('pressLoop', () => {
   it('refuses a key that cannot be a device key without calling the API', async () => {
     const api = fakeApi({ status: 200, body: entreeDemo });
 
-    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: 'too-short', identity: null, pressedAt, armedAt: null }, api);
+    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: 'has a space', identity: null, pressedAt, armedAt: null }, api);
 
     expect(outcome).toEqual({ kind: 'refused', identity: null, messageKey: 'keyRefused' });
     expect(api.fetchIdentity).not.toHaveBeenCalled();

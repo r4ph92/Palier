@@ -1,4 +1,4 @@
-import { DEVICE_KEY_SHAPE } from './gateIdentity.js';
+import { isSendableDeviceKey } from './gateIdentity.js';
 
 /** @typedef {import('@palier/shared-types').GateCommand} GateCommand */
 /** @typedef {Pick<import('./gateApi.js').GateApi, 'fetchCommands'>} CommandApi */
@@ -40,7 +40,7 @@ export function mergeCommands(known, incoming) {
  * @returns {Promise<PollResult>}
  */
 export async function pollCommands(api, deviceKey, known) {
-  if (!DEVICE_KEY_SHAPE.test(deviceKey)) {
+  if (!isSendableDeviceKey(deviceKey)) {
     return { commands: known, isKeyRefused: false };
   }
   const response = await api.fetchCommands(deviceKey, cursorOf(known));

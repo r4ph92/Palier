@@ -38,10 +38,10 @@ describe('pollCommands', () => {
     expect(api.fetchCommands).toHaveBeenCalledWith(DEVICE_KEY, { issuedAt: first.issuedAt, id: first.id });
   });
 
-  it('does not call the API until the key has the shape of a device key', async () => {
+  it('does not call the API until the key can travel in a header', async () => {
     const api = fakeApi({ status: 200, body: [first] });
 
-    expect(await pollCommands(api, 'short', [])).toEqual({ commands: [], isKeyRefused: false });
+    expect(await pollCommands(api, 'has a space', [])).toEqual({ commands: [], isKeyRefused: false });
     expect(api.fetchCommands).not.toHaveBeenCalled();
   });
 

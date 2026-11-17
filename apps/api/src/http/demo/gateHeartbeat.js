@@ -1,4 +1,4 @@
-import { DEVICE_KEY_SHAPE, knownGateIdentity } from './gateIdentity.js';
+import { isSendableDeviceKey, knownGateIdentity } from './gateIdentity.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {Pick<import('./gateApi.js').GateApi, 'fetchIdentity' | 'postHeartbeat'>} HeartbeatApi */
@@ -53,7 +53,7 @@ export function createHeartbeat(state, api, onIdentified) {
  * @returns {boolean}
  */
 function canBeat(state, pulse) {
-  return !pulse.isStopped && pulse.beatingKey !== state.deviceKey && state.connection.kind === 'online' && DEVICE_KEY_SHAPE.test(state.deviceKey);
+  return !pulse.isStopped && pulse.beatingKey !== state.deviceKey && state.connection.kind === 'online' && isSendableDeviceKey(state.deviceKey);
 }
 
 /**
