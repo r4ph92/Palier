@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DashboardRefusedError } from '../../src/domain/dashboard/DashboardRefusedError.ts';
 import { findLotExitSharesOfMember } from '../../src/domain/dashboard/findLotExitSharesOfMember.ts';
+import type { RecordedExitCounts } from '../../src/domain/dashboard/ExitIdentificationReader.ts';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { julie } from './fakeDriverRepository.ts';
 import { pierre, sophie } from './fakes/dashboardFixtures.ts';
@@ -37,6 +38,17 @@ describe('reading the exit identification shares of a lot as a member', () => {
     const found = await findLotExitSharesOfMember(given, { userId: sophie.id, lotId: PARKING_DEMO_ID });
 
     expect(found.totalExits).toBe(0);
+  });
+
+  it('keeps a recorded staff count and includes it in the total', async () => {
+    const given = sources();
+    const counts = { BEACON: 5, APP: 3, PLATE: 2, TRANSPONDER: 0, STAFF: 4 } as unknown as RecordedExitCounts;
+    given.exitIdentifications.set(PARKING_DEMO_ID, { lotName: 'Parking Démo', counts });
+
+    const found = await findLotExitSharesOfMember(given, { userId: sophie.id, lotId: PARKING_DEMO_ID });
+
+    expect(found.counts.STAFF).toBe(4);
+    expect(found.totalExits).toBe(14);
   });
 
   it.each([
