@@ -103,7 +103,7 @@ ligne par choix ; la raison suit le tiret.
 - Navigation : un état `lots | scan | account` dans `PalierApp` et une barre d'onglets maison, sans bibliothèque de navigation. Depuis « Scanner », « Ajouter une plaque » et « Ajouter une carte » ouvrent directement la page correspondante de « Compte ».
 - « Scanner » (#36) prend le contenu du QR dans un champ texte : Expo Go n'a pas de lecteur de code-barres et la caméra arrive avec #45. Le résultat n'est pas conservé quand on change d'onglet ; la session en cours prend le relais (#38).
 - Les clients authentifiés (véhicules, entrée) passent par `api/authorizedRequest.ts` : 401 déconnecte, 403 `CONSENT_REQUIRED` remontre l'avis, les statuts de refus listés par le client portent le code de l'API, tout autre statut lève `PalierStatusError`.
-- « Connexion de test » n'apparaît que si le build porte `EXPO_PUBLIC_TEST_SIGN_IN=true` (voir `apps/mobile/.env.example`).
+- « Connexion de test » n'apparaît que dans un bundle de développement (Expo Go) dont le `.env` porte `EXPO_PUBLIC_TEST_SIGN_IN=true` (voir `apps/mobile/.env.example`) ; un export de production ne la contient jamais.
 - Signaux de positionnement : `positioning/` porte le port `PositioningModule` et `PositioningCore` (commandes transmises, événements diffusés). Le module simulé et le panneau « Signaux simulés » vivent dans `dev/` et ne sont chargés que par `dev/loadDeveloperTools.ts`, derrière un ternaire `__DEV__` que Metro évalue à la compilation : ils sont absents du bundle de production (voir `docs/pont-natif.md`).
 
 ## Tableau de bord opérateur (#62)
