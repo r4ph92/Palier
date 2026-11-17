@@ -93,7 +93,7 @@ function ConfirmationStatusText({ status: { confirmingPlate, confirmedPlate } }:
   if (confirmingPlate !== null) {
     return <span className="muted">{interpolate(text.confirming.status, { plate: confirmingPlate })}</span>;
   }
-  return confirmedPlate === null ? null : <StateMark tone="free" label={interpolate(text.confirmed, { plate: confirmedPlate })} />;
+  return confirmedPlate === null ? null : <StateMark tone="free" label={interpolate(text.confirmed, { plate: confirmedPlate })} wraps />;
 }
 
 function EmptyList() {
