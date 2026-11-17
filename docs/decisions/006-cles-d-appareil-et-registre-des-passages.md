@@ -27,3 +27,7 @@ en crée une nouvelle et on révoque l'ancienne. Le compteur peut dépasser la
 capacité (passages d'abonnés inconnus de Palier, Q35) ; l'affichage plafonne
 les places libres à `min(capacité − véhicules, places libres)`, jamais négatif.
 #12 ajoutera une clé d'idempotence à `gate_passage` pour la relecture hors ligne.
+Le plancher à zéro a une conséquence : une sortie comptée alors que le compteur est
+déjà à 0 s'enregistre dans `gate_passage` mais ne change pas le compteur. Le registre
+peut donc contenir plus de sorties que le compteur n'en a retirées, et le compteur ne
+se déduit pas du registre seul.

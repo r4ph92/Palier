@@ -46,6 +46,10 @@ describe('demo console', () => {
     expect(response.statusCode).toBe(404);
   });
 
+  it('refuses to be framed by browsers that ignore the frame-ancestors policy', () => {
+    expect(DEMO_SECURITY_HEADERS['x-frame-options']).toBe('DENY');
+  });
+
   it('lets the page load scripts, styles, fonts and data only from itself', () => {
     expect(DEMO_SECURITY_HEADERS['content-security-policy']).toBe(
       "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
