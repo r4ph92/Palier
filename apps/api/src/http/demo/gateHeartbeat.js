@@ -1,8 +1,9 @@
+import { isMessageKey } from './consoleText.js';
 import { isSendableDeviceKey, knownGateIdentity } from './gateIdentity.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 /** @typedef {Pick<import('./gateApi.js').GateApi, 'fetchIdentity' | 'postHeartbeat'>} HeartbeatApi */
-/** @typedef {{ deviceKey: string, identity: GateIdentity | null, connection: { kind: string } }} HeartbeatState */
+/** @typedef {{ deviceKey: string, identity: GateIdentity | null, connection: { kind: string }, message: import('./consoleText.js').ConsoleMessage | null }} HeartbeatState */
 /** @typedef {{ identity: GateIdentity | null, isKeyRefused: boolean }} HeartbeatOutcome */
 
 // Four beats inside the 2 minutes after which Palier calls a gate silent (decision 036), so one lost beat changes nothing.
@@ -33,7 +34,7 @@ export async function sendHeartbeat(request, api) {
  * One beat at a time per key, only online and with a key that can be sent.
  * @param {HeartbeatState} state
  * @param {HeartbeatApi} api
- * @param {() => void} onIdentified called when a beat names the gate the console did not know yet
+ * @param {() => void} onIdentified called when a beat changes what the console shows: the gate it names, or a refused key
  * @returns {{ beat: () => Promise<void>, restart: () => Promise<void> }}
  */
 export function createHeartbeat(state, api, onIdentified) {
@@ -72,10 +73,25 @@ async function beatOnce({ state, api, onIdentified }, pulse) {
     if (deviceKey === state.deviceKey) {
       pulse.isStopped = outcome.isKeyRefused;
       adoptIdentity(state, outcome.identity, onIdentified);
+      showKeyRefusal(state, outcome, onIdentified);
     }
   } finally {
     pulse.beatingKey = pulse.beatingKey === deviceKey ? null : pulse.beatingKey;
   }
+}
+
+/**
+ * A pasted wrong key gets its feedback without a press.
+ * @param {HeartbeatState} state
+ * @param {HeartbeatOutcome} outcome
+ * @param {() => void} onChanged
+ */
+function showKeyRefusal(state, outcome, onChanged) {
+  if (!outcome.isKeyRefused || isMessageKey(state.message, 'keyRefused')) {
+    return;
+  }
+  state.message = { key: 'keyRefused', isError: true };
+  onChanged();
 }
 
 /**

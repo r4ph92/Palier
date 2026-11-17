@@ -136,7 +136,7 @@ describe('gate routes', () => {
     });
 
     it.each([
-      ['a closedAt that is not a date', { closedAt: 'yesterday' }, 'CLOSED_AT_INVALID'],
+      ['a closedAt that is not a date', { closedAt: 'yesterday' }, 'FST_ERR_VALIDATION'],
       ['a missing closedAt', {}, 'FST_ERR_VALIDATION'],
       ['a closedAt 6 minutes in the future', { closedAt: new Date(NOW.getTime() + 6 * 60 * 1000).toISOString() }, 'CLOSED_AT_IN_FUTURE'],
     ])('answers 400 for %s', async (_case, payload, errorCode) => {

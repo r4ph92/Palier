@@ -1,5 +1,7 @@
 import { formatPassageTime, messageText, pendingPassages, translate, vehiclesInside } from './consoleText.js';
 import { focusTargetAfterQueueAction, isLoopAvailable, isToggleAvailable, queueOf } from './offlineControls.js';
+import { keyFieldAttributes } from './keyField.js';
+import { isKeyInputLocked, loopToFocusAfterPress } from './pressOutcome.js';
 import { isReaderEnabled } from './readerRead.js';
 import { isTestPassageEnabled } from './testPassage.js';
 import { isArmingEnabled } from './presenceArming.js';
@@ -21,6 +23,7 @@ import { isPresenceEnabled } from './vehiclePresence.js';
  * @property {import('./consoleText.js').ConsoleMessage | null} message
  * @property {import('./offlineControls.js').Connection} connection
  * @property {boolean} isSending
+ * @property {boolean} isToggling
  * @property {string} renderedCommandLines
  */
 
@@ -93,7 +96,7 @@ function renderOffline(state) {
   const { connection } = state;
   offlineToggle.setAttribute('aria-pressed', String(connection.kind !== 'online'));
   offlineToggle.setAttribute('aria-disabled', String(!isToggleAvailable(state)));
-  deviceKeyInput.disabled = state.isSending || (connection.kind !== 'online' && state.identity !== null);
+  deviceKeyInput.disabled = isKeyInputLocked(state);
   renderPending(state);
   clearQueueButton.hidden = connection.kind !== 'blocked';
   clearQueueButton.disabled = state.isSending;
@@ -116,6 +119,20 @@ export function focusAfterQueueAction(state) {
   (focusTargetAfterQueueAction(state) === 'offlineToggle' ? offlineToggle : deviceKeyInput).focus();
 }
 
+/**
+ * @param {GateKind} pressedLoop
+ * @param {ConsoleState} state
+ */
+export function focusEnabledLoopAfterPress(pressedLoop, state) {
+  const target = loopToFocusAfterPress(pressedLoop, state);
+  const pressedButton = loopButtons.find((button) => button.dataset['loop'] === pressedLoop);
+  const hasFocusLeft = document.activeElement !== pressedButton && document.activeElement !== document.body;
+  if (target === null || hasFocusLeft) {
+    return;
+  }
+  loopButtons.find((button) => button.dataset['loop'] === target)?.focus();
+}
+
 /** @param {ConsoleState} state */
 function renderLoops(state) {
   for (const button of loopButtons) {
@@ -133,6 +150,9 @@ export function renderMessage(state) {
   message.classList.toggle('message-degraded', tone !== undefined);
   message.classList.toggle('message-muted', tone === 'muted');
   message.setAttribute('aria-busy', String(state.isSending));
+  const keyField = keyFieldAttributes(state);
+  deviceKeyInput.setAttribute('aria-invalid', String(keyField.isInvalid));
+  deviceKeyInput.setAttribute('aria-describedby', keyField.describedBy);
 }
 
 /** @param {ConsoleState} state */
