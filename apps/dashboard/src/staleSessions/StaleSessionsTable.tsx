@@ -3,6 +3,7 @@ import { AppLink } from '../components/AppLink.tsx';
 import { ErrorNotice } from '../components/ErrorNotice.tsx';
 import { formatRecentDateTime } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
+import { interpolateKeepingValuesWhole } from '../i18n/interpolateKeepingValuesWhole.tsx';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { sessionPath } from '../navigation/routes.ts';
 import { presenceButtonId, presenceErrorId } from './staleSessionIds.ts';
@@ -72,7 +73,7 @@ function SpotCell({ spot }: { readonly spot: DashboardStaleSession['spot'] }) {
   const { staleSessions: text } = useText();
   return (
     <td role="cell" className="check-place">
-      <span className="figure">{spot.number}</span> · {interpolate(text.place, { level: spot.levelCode, aisle: spot.aisleCode })}
+      <span className="figure no-break">{spot.number}</span> · {interpolateKeepingValuesWhole(text.place, { level: spot.levelCode, aisle: spot.aisleCode })}
     </td>
   );
 }
