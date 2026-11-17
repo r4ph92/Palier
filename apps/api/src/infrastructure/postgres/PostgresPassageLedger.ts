@@ -45,8 +45,8 @@ export class PostgresPassageLedger implements PassageLedger {
 async function countVehicle(tx: Transaction, entry: PassageEntry): Promise<number> {
   const rows = await tx.execute<VehicleCountRow>(sql`
     with inserted as (
-      insert into gate_passage (gate_id, lot_id, closed_at)
-      values (${entry.gate.id}, ${entry.gate.lotId}, ${entry.closedAt.toISOString()})
+      insert into gate_passage (gate_id, lot_id, closed_at, armed_at)
+      values (${entry.gate.id}, ${entry.gate.lotId}, ${entry.closedAt.toISOString()}, ${entry.armedAt?.toISOString() ?? null})
       returning lot_id
     )
     update parking_lot

@@ -6,6 +6,8 @@ export type VehicleCountChange = 1 | -1;
 export interface PassageEntry {
   readonly gate: AuthenticatedGate;
   readonly closedAt: Date;
+  // When the arming loop first saw the vehicle; null when the controller did not report it. The average presence time uses only passages that have it.
+  readonly armedAt: Date | null;
   readonly vehicleCountChange: VehicleCountChange;
   // Openings issued within this duration before the database clock's now may be confirmed by the passage; null when the gate confirms nothing.
   readonly confirmableOpenings: OpeningWindow | null;

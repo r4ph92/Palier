@@ -19,6 +19,14 @@ export function ensureGateMayReport(gate: AuthenticatedGate, requestedGateId: st
   }
 }
 
+// A controller clock fault must never drop a vehicle count: an arming time that cannot be right is forgotten, the passage still counts.
+export function presenceArmingOf(armedAt: Date | null, closedAt: Date): Date | null {
+  if (armedAt === null || !isStorableDate(armedAt) || armedAt.getTime() > closedAt.getTime()) {
+    return null;
+  }
+  return armedAt;
+}
+
 export function ensureClosedAtIsPlausible(closedAt: Date, now: Date): void {
   if (!isStorableDate(closedAt)) {
     throw new PassageRefusedError('CLOSED_AT_INVALID');

@@ -107,6 +107,7 @@ function registerPassageRoute(scope: FastifyInstance, dependencies: GateRouteDep
       gate: authenticatedGateOf(request),
       requestedGateId: request.params.id,
       closedAt: new Date(request.body.closedAt),
+      armedAt: request.body.armedAt === undefined ? null : new Date(request.body.armedAt),
     };
     return recordPassage(command, { ledger: dependencies.ledger, clock: dependencies.passageClock, openingWindow: dependencies.openingWindow });
   });

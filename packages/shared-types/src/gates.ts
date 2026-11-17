@@ -16,6 +16,7 @@ export interface GateIdentity {
 
 export interface GatePassageRequest {
   readonly closedAt: string;
+  readonly armedAt?: string;
 }
 
 export interface GatePassageResponse {
