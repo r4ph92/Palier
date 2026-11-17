@@ -5,9 +5,9 @@ import { isStorableDate } from '../time/storableDate.ts';
 import type { AuthenticatedGate } from './AuthenticatedGate.ts';
 import { ensureOwnGate } from './ownGate.ts';
 import { PassageRefusedError } from './PassageRefusedError.ts';
+import { ALLOWED_CLOCK_DRIFT_MILLISECONDS } from './passageWindow.ts';
 import type { VehicleCountChange } from './PassageLedger.ts';
 
-const ALLOWED_CLOCK_DRIFT_MILLISECONDS = 5 * 60 * 1000;
 const PRESENCE_WINDOW_MILLISECONDS = PRESENCE_WINDOW_DAYS * MILLISECONDS_PER_DAY;
 const VEHICLE_COUNT_CHANGE: Record<GateKind, VehicleCountChange> = { ENTRY: 1, EXIT: -1 };
 

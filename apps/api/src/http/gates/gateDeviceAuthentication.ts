@@ -30,7 +30,7 @@ export function createGateDeviceAuthentication(repository: GateDeviceKeyReposito
 }
 
 export function authenticatedGateOf(request: FastifyRequest): AuthenticatedGate {
-  if (request.authenticatedGate === null) {
+  if (request.authenticatedGate == null) {
     throw new Error('Gate routes must run behind the device-key authentication hook.');
   }
   return request.authenticatedGate;
@@ -38,7 +38,7 @@ export function authenticatedGateOf(request: FastifyRequest): AuthenticatedGate 
 
 // A write that must not outlive the key it came with checks it again in its own statement.
 export function authenticatedKeyHashOf(request: FastifyRequest): string {
-  if (request.authenticatedKeyHash === null) {
+  if (request.authenticatedKeyHash == null) {
     throw new Error('Gate routes must run behind the device-key authentication hook.');
   }
   return request.authenticatedKeyHash;
