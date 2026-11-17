@@ -126,6 +126,7 @@ describe('HomeScreen spot hold refusals', () => {
   const refusals = [
     ['PREREQUISITES_MISSING', 'Ajoutez une plaque et une carte avant de garantir une place', 'Add a plate and a card before guaranteeing a spot'],
     ['HOLD_ALREADY_EXISTS', 'Vous avez déjà une place garantie', 'You already have a guaranteed spot'],
+    ['ALREADY_INSIDE', 'Vous êtes déjà dans un stationnement', 'You are already in a parking lot'],
     ['HOLD_QUOTA_REACHED', 'Trop de places garanties dans ce parking pour le moment', 'Too many guaranteed spots in this lot right now'],
     ['NO_SUITABLE_SPOT', 'Aucune place disponible', 'No spot available'],
     ['LOT_NOT_FOUND', 'Ce parking n’est plus offert', 'This lot is no longer offered'],
@@ -147,6 +148,19 @@ describe('HomeScreen spot hold refusals', () => {
 
     expect(await screen.findByText(message)).toBeOnTheScreen();
     expect(announce).toHaveBeenCalledWith(message);
+    expect(lotsClient.callCount).toBe(1);
+  });
+
+  it('tells Julie she is inside under the tapped lot, with no banner and no list reread', async () => {
+    const spotHoldClient = new FakeSpotHoldClient();
+    spotHoldClient.nextRejection = 'ALREADY_INSIDE';
+    const lotsClient = new FakeLotsClient([parkingDemo(10), parkingTestPaliers]);
+    await renderHomeScreenWith({ lotsClient, locationClient: new FakeDeviceLocationClient(), spotHoldClient });
+
+    await userEvent.setup().press(await screen.findByRole('button', { name: 'Garantir une place 15 min à Parking Test Paliers' }));
+
+    expect(await within(screen.getByTestId(`lot-spot-hold-${parkingTestPaliers.id}`)).findByText('Vous êtes déjà dans un stationnement')).toBeOnTheScreen();
+    expect(screen.queryByTestId('spot-hold-banner')).not.toBeOnTheScreen();
     expect(lotsClient.callCount).toBe(1);
   });
 
