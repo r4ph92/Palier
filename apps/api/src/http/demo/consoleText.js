@@ -109,6 +109,27 @@ export function isMessageKey(message, key) {
 }
 
 /**
+ * Cuts a line around its figures (time, count) so only those are set in the mono face.
+ * @param {string} text
+ * @param {readonly string[]} figures in the order they appear in the text
+ * @returns {{ text: string, isFigure: boolean }[]}
+ */
+export function figureSegments(text, figures) {
+  const segments = [];
+  let cursor = 0;
+  for (const figure of figures) {
+    const start = text.indexOf(figure, cursor);
+    if (start === -1) {
+      continue;
+    }
+    segments.push({ text: text.slice(cursor, start), isFigure: false }, { text: figure, isFigure: true });
+    cursor = start + figure.length;
+  }
+  segments.push({ text: text.slice(cursor), isFigure: false });
+  return segments.filter((segment) => segment.text !== '');
+}
+
+/**
  * @param {number} count
  * @param {Language} language
  * @returns {boolean}

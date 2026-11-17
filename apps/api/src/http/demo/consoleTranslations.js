@@ -1,6 +1,7 @@
 export const translations = {
   fr: {
     pageTitle: 'Console de démonstration — Palier',
+    skipLink: 'Aller au contenu',
     eyebrow: 'Palier · mode démo',
     title: 'Console de barrière',
     intro: 'Cette page joue le contrôleur d’une barrière et ses boucles. Chaque bouton envoie un vrai passage à l’API ; les ouvertures commandées par Palier s’affichent sous « Commandes ».',
@@ -76,6 +77,7 @@ export const translations = {
   },
   en: {
     pageTitle: 'Demo console — Palier',
+    skipLink: 'Skip to content',
     eyebrow: 'Palier · demo mode',
     title: 'Gate console',
     intro: 'This page plays a gate controller and its loops. Each button sends a real passage to the API; the openings Palier commands show under “Commands”.',

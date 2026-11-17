@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatPassageTime, formatTimeWithSeconds, messageText, passagesReplayed, pendingPassages, translate, vehiclesInside } from '../../src/http/demo/consoleText.js';
+import { figureSegments, formatPassageTime, formatTimeWithSeconds, messageText, passagesReplayed, pendingPassages, translate, vehiclesInside } from '../../src/http/demo/consoleText.js';
 import { translations } from '../../src/http/demo/consoleTranslations.js';
 
 describe('console translations', () => {
@@ -129,6 +129,21 @@ describe('refusal messages', () => {
   ] as const)('%s names the button to use', (key, frenchLabel, englishLabel) => {
     expect(translate('fr', key)).toContain(frenchLabel);
     expect(translate('en', key)).toContain(englishLabel);
+  });
+});
+
+describe('figureSegments', () => {
+  it('sets only the time and the count apart in a passage line', () => {
+    expect(figureSegments('14 h 03 · Sortie · 12 véhicules dans le parking', ['14 h 03', '12'])).toEqual([
+      { text: '14 h 03', isFigure: true },
+      { text: ' · Sortie · ', isFigure: false },
+      { text: '12', isFigure: true },
+      { text: ' véhicules dans le parking', isFigure: false },
+    ]);
+  });
+
+  it('keeps a line whole when it holds no figure', () => {
+    expect(figureSegments('Aucun passage', ['12'])).toEqual([{ text: 'Aucun passage', isFigure: false }]);
   });
 });
 

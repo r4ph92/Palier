@@ -1,4 +1,4 @@
-import { formatPassageTime, messageText, pendingPassages, translate, vehiclesInside } from './consoleText.js';
+import { figureSegments, formatPassageTime, messageText, pendingPassages, translate, vehiclesInside } from './consoleText.js';
 import { focusTargetAfterQueueAction, isLoopAvailable, isToggleAvailable, queueOf } from './offlineControls.js';
 import { keyFieldAttributes } from './keyField.js';
 import { isKeyInputLocked, loopToFocusAfterPress } from './pressOutcome.js';
@@ -159,13 +159,13 @@ export function renderMessage(state) {
 function renderPassages(state) {
   elementById('no-passage').hidden = state.passages.length > 0;
   const items = state.passages.map((passage) => {
-    const item = document.createElement('li');
-    item.textContent = translate(state.language, 'passageLine', {
-      time: formatPassageTime(new Date(passage.closedAt), state.language),
+    const time = formatPassageTime(new Date(passage.closedAt), state.language);
+    const line = translate(state.language, 'passageLine', {
+      time,
       loop: translate(state.language, passage.kind === 'ENTRY' ? 'loopENTRY' : 'loopEXIT'),
       vehicles: vehiclesInside(passage.vehicleCount, state.language),
     });
-    return item;
+    return lineItem(line, [time, String(passage.vehicleCount)]);
   });
   elementById('passages').replaceChildren(...items);
 }
@@ -174,22 +174,33 @@ function renderPassages(state) {
 /** @param {ConsoleState} state */
 export function renderCommands(state) {
   elementById('no-command').hidden = state.commands.length > 0;
-  const lines = [...state.commands].reverse().map((command) =>
-    translate(state.language, 'commandLine', {
-      command: translate(state.language, 'commandOPEN'),
-      time: formatPassageTime(new Date(command.issuedAt), state.language),
-    }),
-  );
-  if (lines.join('\n') === state.renderedCommandLines) {
+  const lines = [...state.commands].reverse().map((command) => {
+    const time = formatPassageTime(new Date(command.issuedAt), state.language);
+    return { time, text: translate(state.language, 'commandLine', { command: translate(state.language, 'commandOPEN'), time }) };
+  });
+  const rendered = lines.map((line) => line.text).join('\n');
+  if (rendered === state.renderedCommandLines) {
     return;
   }
-  state.renderedCommandLines = lines.join('\n');
-  elementById('commands').replaceChildren(...lines.map(commandItem));
+  state.renderedCommandLines = rendered;
+  elementById('commands').replaceChildren(...lines.map((line) => lineItem(line.text, [line.time])));
 }
 
-/** @param {string} line */
-function commandItem(line) {
+/**
+ * @param {string} line
+ * @param {readonly string[]} figures
+ */
+function lineItem(line, figures) {
   const item = document.createElement('li');
-  item.textContent = line;
+  const parts = figureSegments(line, figures).map((segment) => {
+    if (!segment.isFigure) {
+      return document.createTextNode(segment.text);
+    }
+    const figure = document.createElement('span');
+    figure.className = 'figure';
+    figure.textContent = segment.text;
+    return figure;
+  });
+  item.replaceChildren(...parts);
   return item;
 }

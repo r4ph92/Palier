@@ -90,6 +90,15 @@ describe('demo console', () => {
     expect(page).not.toMatch(/<style|\sstyle=|\son[a-z]+=/);
   });
 
+  it('starts with a skip link to the main content', async () => {
+    server = buildServer(serverDependencies({ settings: { demoMode: true } }));
+
+    const page = (await server.inject({ method: 'GET', url: '/demo/console' })).body;
+
+    expect(page).toMatch(/<body>\s*<a class="skip-link" href="#content"/);
+    expect(page).toContain('<main id="content" tabindex="-1">');
+  });
+
   it('asks for the device key in a password field that browsers do not fill or remember', async () => {
     server = buildServer(serverDependencies({ settings: { demoMode: true } }));
 
