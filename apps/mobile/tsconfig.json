@@ -1,11 +1,6 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": ["expo/tsconfig.base", "../../tsconfig.base.json"],
   "compilerOptions": {
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "noImplicitOverride": true,
-    "noFallthroughCasesInSwitch": true,
     "allowImportingTsExtensions": true,
     "types": ["jest", "node"]
   },

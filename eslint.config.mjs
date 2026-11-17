@@ -20,6 +20,16 @@ export default tseslint.config(
     },
   },
   {
+    files: ['**/*.{ts,tsx,js}'],
+    languageOptions: {
+      parserOptions: { projectService: { allowDefaultProject: ['eslint.config.mjs'] }, tsconfigRootDir: import.meta.dirname },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+    },
+  },
+  {
     files: ['apps/api/src/http/demo/**/*.js'],
     languageOptions: { globals: { ...globals.browser } },
   },
