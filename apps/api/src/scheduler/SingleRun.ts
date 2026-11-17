@@ -7,6 +7,8 @@ export interface PeriodicTask {
   readonly logger: JobLogger;
   readonly failureMessage: string;
   readonly periodMilliseconds: number;
+  // Runs the task once now, before the first period, for a job whose period is long and whose run is idempotent.
+  readonly runAtStart?: boolean;
 }
 
 // A task still running when the next period comes is skipped, never stacked.
@@ -29,8 +31,12 @@ export class SingleRun {
   }
 
   // A failed run is logged and the next period still runs. The returned function stops the timer and awaits the run in flight.
-  startPeriodicTask(task: () => Promise<void>, { logger, failureMessage, periodMilliseconds }: PeriodicTask): () => Promise<void> {
-    const timer = setInterval(() => void this.start(() => logFailure(task, logger, failureMessage)), periodMilliseconds);
+  startPeriodicTask(task: () => Promise<void>, { logger, failureMessage, periodMilliseconds, runAtStart = false }: PeriodicTask): () => Promise<void> {
+    const tick = (): void => void this.start(() => logFailure(task, logger, failureMessage));
+    const timer = setInterval(tick, periodMilliseconds);
+    if (runAtStart) {
+      tick();
+    }
     return async () => {
       clearInterval(timer);
       await this.finished();

@@ -13,6 +13,7 @@ import { registerDashboardOccupancyRoutes } from './dashboardOccupancyRoutes.ts'
 import { registerDashboardOperatorRoutes } from './dashboardOperatorRoutes.ts';
 import { registerDashboardSessionRoutes } from './dashboardSessionRoutes.ts';
 import { registerDashboardSpotCheckRoutes } from './dashboardSpotCheckRoutes.ts';
+import { registerDashboardStaleSessionRoutes } from './dashboardStaleSessionRoutes.ts';
 import { registerDashboardStripeRoutes } from './dashboardStripeRoutes.ts';
 import { clearDashboardCookie, dashboardCookieToken } from './dashboardSessionCookie.ts';
 import { registerDashboardTestSignInRoutes } from './dashboardTestSignInRoutes.ts';
@@ -44,6 +45,7 @@ function registerLotFeatureRoutes(scope: FastifyInstance, dependencies: Dashboar
   registerDashboardLotSpotRoutes(scope, dependencies);
   registerDashboardSpotCheckRoutes(scope, dependencies);
   registerDashboardSessionRoutes(scope, dependencies);
+  registerDashboardStaleSessionRoutes(scope, dependencies);
   registerDashboardLotGateRoutes(scope, dependencies);
   registerDashboardGateSecretRoutes(scope, dependencies);
   registerDashboardLotPublicationRoutes(scope, dependencies);

@@ -16,7 +16,10 @@ export type DashboardStatementLabel =
   | 'read-session-lot-name'
   | 'list-sessions'
   | 'read-session'
-  | 'read-session-events';
+  | 'read-session-events'
+  | 'list-stale-sessions'
+  | 'lock-session-to-confirm'
+  | 'confirm-presence';
 
 export const DASHBOARD_STATEMENT_PATTERNS: readonly (readonly [DashboardStatementLabel, RegExp])[] = [
   ['read-publication-facts', /as in_service_spot_count/],
@@ -36,4 +39,7 @@ export const DASHBOARD_STATEMENT_PATTERNS: readonly (readonly [DashboardStatemen
   ['list-sessions', /order by ps\.entry_scan_at desc/],
   ['read-session', /as was_answered/],
   ['read-session-events', /from event_log\s+join parking_lot/],
+  ['list-stale-sessions', /order by ps\.stale_flagged_at/],
+  ['lock-session-to-confirm', /select stale_flagged_at is not null as flagged/],
+  ['confirm-presence', /set presence_confirmed_at =/],
 ];

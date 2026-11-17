@@ -1,0 +1,7 @@
+ALTER TABLE "event_log" DROP CONSTRAINT "event_log_kind_known";--> statement-breakpoint
+ALTER TABLE "parking_session" ADD COLUMN "stale_flagged_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "parking_session" ADD COLUMN "presence_confirmed_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "parking_session" ADD COLUMN "presence_confirmed_by" uuid;--> statement-breakpoint
+ALTER TABLE "parking_session" ADD CONSTRAINT "parking_session_presence_confirmed_by_app_user_id_fk" FOREIGN KEY ("presence_confirmed_by") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "parking_session_stale_flagged_by_lot_index" ON "parking_session" USING btree ("lot_id","stale_flagged_at") WHERE "parking_session"."stale_flagged_at" is not null and state in ('CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED');--> statement-breakpoint
+ALTER TABLE "event_log" ADD CONSTRAINT "event_log_kind_known" CHECK ("event_log"."kind" in ('ENTRY_SCANNED', 'GATE_OPENED', 'ENTRY_LOOP_CLOSED', 'AISLE_DETECTED', 'PARKING_PRESUMED', 'PARKING_CONFIRMED', 'ENTRY_CANCELLED', 'EXIT_IDENTIFIED', 'CAPTURED', 'CAPTURE_PENDING', 'EXIT_LOOP_CLOSED', 'PRESENCE_CONFIRMED'));

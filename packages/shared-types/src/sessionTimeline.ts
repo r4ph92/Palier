@@ -27,6 +27,7 @@ export const TIMELINE_KINDS = [
   'CAPTURED',
   'CAPTURE_PENDING',
   'EXIT_LOOP_CLOSED',
+  'PRESENCE_CONFIRMED',
   'UNKNOWN',
 ] as const;
 export type TimelineKind = (typeof TIMELINE_KINDS)[number];

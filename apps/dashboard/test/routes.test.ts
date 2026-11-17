@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { equipmentPath, gatesPath, lotPath, mapPath, occupancyPath, publicationPath, routeOf, sessionPath, sessionsPath } from '../src/navigation/routes.ts';
+import { equipmentPath, gatesPath, lotPath, mapPath, occupancyPath, publicationPath, routeOf, sessionPath, sessionsPath, staleSessionsPath } from '../src/navigation/routes.ts';
 
 describe('dashboard addresses', () => {
   it('opens the lot page for an encoded lot id', () => {
@@ -55,6 +55,14 @@ describe('dashboard addresses', () => {
     expect(routeOf(sessionPath(lotId, sessionId))).toEqual({ page: 'session', lotId, sessionId });
     expect(routeOf(`${sessionPath(lotId, sessionId)}/`)).toEqual({ page: 'session', lotId, sessionId });
     expect(routeOf(`${sessionPath(lotId, sessionId)}/extra`)).toEqual({ page: 'notFound' });
+  });
+
+  it('opens the sessions with no exit of a lot, with or without a trailing slash, and nothing under it', () => {
+    const lotId = '00000000-0000-4000-8000-000000000201';
+
+    expect(routeOf(staleSessionsPath(lotId))).toEqual({ page: 'staleSessions', lotId });
+    expect(routeOf(`${staleSessionsPath(lotId)}/`)).toEqual({ page: 'staleSessions', lotId });
+    expect(routeOf(`${staleSessionsPath(lotId)}/extra`)).toEqual({ page: 'notFound' });
   });
 
   it('treats a session address with a broken escape as not found instead of crashing', () => {

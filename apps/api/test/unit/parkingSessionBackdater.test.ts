@@ -31,8 +31,20 @@ describe('PostgresParkingSessionBackdater', () => {
     await backdate(scripted);
 
     const text = oneLine(scripted.statement('backdate-entry')?.text);
-    expect(text).toContain('set entry_confirmed_at = entry_confirmed_at + previous.delta, parked_at = parked_at + previous.delta, entry_scan_at = $3::timestamptz');
+    expect(text).toContain('set entry_confirmed_at = entry_confirmed_at + previous.delta, parked_at = parked_at + previous.delta,');
+    expect(text).toContain('entry_scan_at = $3::timestamptz');
     expect(text).toContain('from previous where parking_session.id = previous.id returning parking_session.id, previous.delta');
+  });
+
+  it('moves the answer, the presence check and the stale flag too, so the 7 days keep their distance from every proof', async () => {
+    const scripted = new ScriptedSql();
+
+    await backdate(scripted);
+
+    const text = oneLine(scripted.statement('backdate-entry')?.text);
+    expect(text).toContain('parked_answered_at = parked_answered_at + previous.delta');
+    expect(text).toContain('presence_confirmed_at = presence_confirmed_at + previous.delta');
+    expect(text).toContain('stale_flagged_at = stale_flagged_at + previous.delta');
   });
 
   it("shifts that session's logged events and their purge dates by the same delta, keeping the 2160 h rule", async () => {
