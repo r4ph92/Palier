@@ -1,0 +1,1 @@
+ALTER TABLE "parking_lot" ADD CONSTRAINT "parking_lot_name_not_blank" CHECK (btrim("parking_lot"."name") <> '');

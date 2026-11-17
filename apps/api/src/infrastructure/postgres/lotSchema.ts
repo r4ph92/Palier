@@ -56,6 +56,7 @@ export const parkingLot = pgTable(
   },
   (table) => [
     index('parking_lot_operator_id_index').on(table.operatorId),
+    check('parking_lot_name_not_blank', sql`btrim(${table.name}) <> ''`),
     check('parking_lot_capacity_not_negative', sql`${table.capacity} >= 0`),
     check('parking_lot_vehicle_count_not_negative', sql`${table.vehicleCount} >= 0`),
     check('parking_lot_pricing_complete', sql`(${table.pricingPolicy} is null) = (${table.dailyCapCents} is null)`),
