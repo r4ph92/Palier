@@ -7,7 +7,7 @@ import type { SpotHoldLot, SpotHoldRepository } from './SpotHoldRepository.ts';
 
 export interface SpotHoldEligibilityDependencies {
   readonly prerequisites: DriverPrerequisiteSources;
-  readonly spotHolds: Pick<SpotHoldRepository, 'findActiveSpotHold' | 'findSpotHoldLot'>;
+  readonly spotHolds: Pick<SpotHoldRepository, 'findActiveSpotHold' | 'findSpotHoldLot' | 'isInsideALot'>;
   readonly policy: EntryPolicy;
 }
 
@@ -32,6 +32,9 @@ export class SpotHoldEligibility {
     const needs = await this.#vehicleNeeds(driverId);
     if ((await this.#dependencies.spotHolds.findActiveSpotHold(driverId)) !== null) {
       throw new SpotHoldRefusedError('HOLD_ALREADY_EXISTS');
+    }
+    if (await this.#dependencies.spotHolds.isInsideALot(driverId)) {
+      throw new SpotHoldRefusedError('ALREADY_INSIDE');
     }
     this.#ensureLotTakesSpotHolds(await this.#dependencies.spotHolds.findSpotHoldLot(lotId));
     return { driverId, lotId, needs };

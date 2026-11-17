@@ -35,6 +35,8 @@ export interface SpotHoldRepository {
   // Matches the id and the driver in one predicate: another driver's hold is indistinguishable from none.
   findOwnActiveSpotHold(driverId: string, spotHoldId: string): Promise<SpotHold | null>;
   hasUsableSpotHold(query: UsableSpotHoldQuery): Promise<boolean>;
+  // A session in progress or confirmed in any lot; only the driver's own sessions count.
+  isInsideALot(driverId: string): Promise<boolean>;
   findSpotHoldLot(lotId: string): Promise<SpotHoldLot | null>;
   // Under the lot lock; refuses with SpotHoldRefusedError: decideSpotHoldRequest, NO_SUITABLE_SPOT, HOLD_UNAVAILABLE on a lock timeout.
   placeSpotHold(draft: SpotHoldDraft): Promise<SpotHold>;

@@ -4,7 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { configureServer } from './configureServer.ts';
-import { acceptNoticeAs, authorizationFor, FakeDriverRepository, marc } from './fakeDriverRepository.ts';
+import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie, marc } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
 import { STRICT_POLICY } from './fakes/entryGateFakes.ts';
@@ -55,6 +55,17 @@ describe('POST /v1/lots/:id/holds', () => {
     expect(sameLot.json()).toEqual({ statusCode: 409, error: 'HOLD_ALREADY_EXISTS', message: 'You already hold a spot.' });
     expect(otherLot.json()).toMatchObject({ error: 'HOLD_ALREADY_EXISTS' });
     expect(spotHolds.drafts).toHaveLength(1);
+  });
+
+  it('answers 409 ALREADY_INSIDE to a driver inside a lot and places no hold', async () => {
+    const { hold, spotHolds } = await startWithJulieReady();
+    spotHolds.putInside(julie.id);
+
+    const response = await hold();
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ statusCode: 409, error: 'ALREADY_INSIDE', message: 'You are already in a parking lot.' });
+    expect(spotHolds.drafts).toHaveLength(0);
   });
 
   it.each([

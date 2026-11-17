@@ -66,6 +66,29 @@ describe('spot hold eligibility', () => {
     expect((await refusalOf(eligibility))?.reason).toBe('HOLD_ALREADY_EXISTS');
   });
 
+  it('refuses a driver inside a lot as ALREADY_INSIDE, whichever lot she asks for', async () => {
+    const { eligibility, spotHolds } = await eligibilityFor();
+    spotHolds.putInside(julie.id);
+
+    expect((await refusalOf(eligibility))?.reason).toBe('ALREADY_INSIDE');
+    expect((await refusalOf(eligibility, GARAGE_ROY_ID))?.reason).toBe('ALREADY_INSIDE');
+  });
+
+  it('grants a driver whose own session is not active even when another driver is inside', async () => {
+    const { eligibility, spotHolds } = await eligibilityFor();
+    spotHolds.putInside('driver-marc');
+
+    expect(await refusalOf(eligibility)).toBeUndefined();
+  });
+
+  it('keeps HOLD_ALREADY_EXISTS ahead of ALREADY_INSIDE', async () => {
+    const { eligibility, spotHolds } = await eligibilityFor();
+    await spotHolds.placeSpotHold({ driverId: julie.id, lotId: PARKING_DEMO_ID, needs: standardNeeds, createdAt: new Date(), expiresAt: new Date() });
+    spotHolds.putInside(julie.id);
+
+    expect((await refusalOf(eligibility))?.reason).toBe('HOLD_ALREADY_EXISTS');
+  });
+
   it('refuses missing prerequisites before looking at the lot', async () => {
     expect(await reasonOf({ plate: false }, UNKNOWN_LOT_ID)).toBe('PREREQUISITES_MISSING');
   });

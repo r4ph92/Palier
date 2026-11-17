@@ -32,6 +32,7 @@ export class FakeSpotHoldRepository implements SpotHoldRepository {
   readonly lots: Map<string, SpotHoldLot>;
   refusal: SpotHoldRefusalCode | null = null;
   readonly #active = new Map<string, SpotHold>();
+  readonly #insideDriverIds = new Set<string>();
 
   constructor(lots: readonly SpotHoldLot[] = [parkingDemoSpotHoldLot, garageRoySpotHoldLot]) {
     this.lots = new Map(lots.map((lot) => [lot.id, lot]));
@@ -49,6 +50,14 @@ export class FakeSpotHoldRepository implements SpotHoldRepository {
   hasUsableSpotHold({ driverId, lotId, now }: UsableSpotHoldQuery): Promise<boolean> {
     const spotHold = this.#active.get(driverId);
     return Promise.resolve(spotHold?.lotId === lotId && !hasSpotHoldEnded(spotHold, now));
+  }
+
+  isInsideALot(driverId: string): Promise<boolean> {
+    return Promise.resolve(this.#insideDriverIds.has(driverId));
+  }
+
+  putInside(driverId: string): void {
+    this.#insideDriverIds.add(driverId);
   }
 
   // Seeds a hold already taken, as placeSpotHold would have left it.
