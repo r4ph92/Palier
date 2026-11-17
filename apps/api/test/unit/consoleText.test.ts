@@ -10,10 +10,10 @@ describe('console translations', () => {
   it.each([
     ['fr', 'loopENTRY', 'Boucle d’entrée fermée'],
     ['fr', 'loopEXIT', 'Boucle de sortie fermée'],
-    ['fr', 'keyRefused', 'Clé d’appareil refusée'],
+    ['fr', 'keyRefused', 'Clé d’appareil refusée : vérifiez la clé collée, puis réessayez.'],
     ['en', 'loopENTRY', 'Entry loop closed'],
     ['en', 'loopEXIT', 'Exit loop closed'],
-    ['en', 'keyRefused', 'Device key refused'],
+    ['en', 'keyRefused', 'Device key refused: check the pasted key, then try again.'],
   ] as const)('%s %s reads "%s"', (language, key, expected) => {
     expect(translate(language, key)).toBe(expected);
   });
@@ -95,7 +95,40 @@ describe('offline texts', () => {
   });
 
   it('writes a plain message without counts as its key', () => {
-    expect(messageText('en', { key: 'keyRefused', isError: true })).toBe('Device key refused');
+    expect(messageText('en', { key: 'keyRefused', isError: true })).toBe('Device key refused: check the pasted key, then try again.');
+  });
+});
+
+describe('recorded passage message', () => {
+  const vehicleCount = 0;
+
+  it('changes with the time, so two exits at zero vehicles are announced twice', () => {
+    const first = messageText('fr', { recorded: { closedAt: new Date(2026, 10, 17, 14, 3, 12), vehicleCount }, isError: false });
+    const second = messageText('fr', { recorded: { closedAt: new Date(2026, 10, 17, 14, 3, 19), vehicleCount }, isError: false });
+
+    expect(first).toBe('Passage enregistré à 14:03:12 · 0 véhicule dans le parking');
+    expect(second).not.toBe(first);
+  });
+
+  it('reads in English', () => {
+    const message = { recorded: { closedAt: new Date(2026, 10, 17, 14, 3, 12), vehicleCount: 12 }, isError: false } as const;
+
+    expect(messageText('en', message)).toBe('Passage recorded at 14:03:12 · 12 vehicles in the lot');
+  });
+});
+
+describe('refusal messages', () => {
+  it.each(['keyRefused', 'gateForbidden', 'passageFailed'] as const)('%s names a next step in both languages', (key) => {
+    expect(translate('fr', key)).toContain(`\u00a0:`);
+    expect(translate('en', key)).toContain(': ');
+  });
+
+  it.each([
+    ['wrongLoopENTRY', 'Boucle d’entrée fermée', 'Entry loop closed'],
+    ['wrongLoopEXIT', 'Boucle de sortie fermée', 'Exit loop closed'],
+  ] as const)('%s names the button to use', (key, frenchLabel, englishLabel) => {
+    expect(translate('fr', key)).toContain(frenchLabel);
+    expect(translate('en', key)).toContain(englishLabel);
   });
 });
 
