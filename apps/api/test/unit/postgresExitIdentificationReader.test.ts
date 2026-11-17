@@ -20,8 +20,7 @@ describe('the Postgres exit identification reader', () => {
     expect(scripted.labels()).toEqual(['read-exit-counts']);
     expect(read?.params).toEqual([SINCE.toISOString(), LOT, OPERATOR]);
     expect(read?.text).toMatch(/where parking_lot\.id = \$2 and parking_lot\.operator_id = \$3/);
-    expect(read?.text).toMatch(/ps\.exit_at >= \$1::timestamptz/);
-    expect(read?.text).toMatch(/ps\.exit_identification is not null/);
+    expect(read?.text).toMatch(/left join parking_session ps on ps\.lot_id = parking_lot\.id and ps\.exit_identification is not null and ps\.exit_at >= \$1::timestamptz\s+where/);
     expect(read?.text).toMatch(/group by parking_lot\.name, ps\.exit_identification/);
   });
 
