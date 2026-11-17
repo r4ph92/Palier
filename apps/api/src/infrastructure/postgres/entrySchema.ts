@@ -137,7 +137,7 @@ export const parkingSession = pgTable(
     // The spot the driver said they parked in; the assigned spot stays as the history of the entry.
     confirmedSpotId: uuid('confirmed_spot_id'),
     parkedAnsweredAt: timestamp('parked_answered_at', { withTimezone: true }),
-    // Set by the daily check when an open session has shown no proof of presence for 7 days (Q46, decision 043); cleared when the operator confirms the vehicle.
+    // Set by the hourly check when an open session has shown no proof of presence for 7 days (Q46, decision 043); cleared when the operator confirms the vehicle.
     staleFlaggedAt: timestamp('stale_flagged_at', { withTimezone: true }),
     // The operator's physical check: a proof of presence that restarts the 7 days. The member is kept here, never in the event payload (decision 037).
     presenceConfirmedAt: timestamp('presence_confirmed_at', { withTimezone: true }),
