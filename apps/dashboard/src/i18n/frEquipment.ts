@@ -14,6 +14,8 @@ export const frEquipment = {
   silentSince: 'Muette depuis %{time}',
   silentSinceDay: 'Muette depuis le %{day}, %{time}',
   neverHeard: 'Aucun signal reçu',
+  presenceLine: 'Temps de présence moyen (7 jours) : %{value}',
+  noMeasuredPassage: 'aucun passage mesuré',
   batteriesNote: 'Les piles des balises sont suivies avec les balises, dans le plan du stationnement.',
   batteriesLink: 'Plan et balises',
 };

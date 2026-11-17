@@ -48,16 +48,25 @@ describe('pressLoop', () => {
   it('identifies the gate, then records the passage', async () => {
     const api = fakeApi({ status: 200, body: entreeDemo });
 
-    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: null, pressedAt }, api);
+    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: null, pressedAt, armedAt: null }, api);
 
     expect(outcome).toEqual({ kind: 'recorded', identity: entreeDemo, passage: recordedEntry });
-    expect(api.postPassage).toHaveBeenCalledWith(DEVICE_KEY, 'gate-501', '2026-10-27T22:02:00.000Z');
+    expect(api.postPassage).toHaveBeenCalledWith(DEVICE_KEY, 'gate-501', { closedAt: '2026-10-27T22:02:00.000Z', armedAt: null });
+  });
+
+  it('sends the arming time with the closing, 9 seconds earlier', async () => {
+    const api = fakeApi({ status: 200, body: entreeDemo });
+    const armedAt = new Date(pressedAt.getTime() - 9000);
+
+    await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: entreeDemo, pressedAt, armedAt }, api);
+
+    expect(api.postPassage).toHaveBeenCalledWith(DEVICE_KEY, 'gate-501', { closedAt: '2026-10-27T22:02:00.000Z', armedAt: '2026-10-27T22:01:51.000Z' });
   });
 
   it('reuses a known identity without asking again', async () => {
     const api = fakeApi({ status: 200, body: entreeDemo });
 
-    await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: entreeDemo, pressedAt }, api);
+    await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: entreeDemo, pressedAt, armedAt: null }, api);
 
     expect(api.fetchIdentity).not.toHaveBeenCalled();
   });
@@ -65,7 +74,7 @@ describe('pressLoop', () => {
   it('shows the refused key and posts nothing when the key is refused', async () => {
     const api = fakeApi({ status: 401, body: null });
 
-    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: null, pressedAt }, api);
+    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: null, pressedAt, armedAt: null }, api);
 
     expect(outcome).toEqual({ kind: 'refused', identity: null, messageKey: 'keyRefused' });
     expect(api.postPassage).not.toHaveBeenCalled();
@@ -74,7 +83,7 @@ describe('pressLoop', () => {
   it('does not post when the pressed loop does not match the gate', async () => {
     const api = fakeApi({ status: 200, body: entreeDemo });
 
-    const outcome = await pressLoop({ loop: 'EXIT', deviceKey: DEVICE_KEY, identity: null, pressedAt }, api);
+    const outcome = await pressLoop({ loop: 'EXIT', deviceKey: DEVICE_KEY, identity: null, pressedAt, armedAt: null }, api);
 
     expect(outcome).toEqual({ kind: 'wrongLoop', identity: entreeDemo });
     expect(api.postPassage).not.toHaveBeenCalled();
@@ -83,7 +92,7 @@ describe('pressLoop', () => {
   it('refuses a key that cannot be a device key without calling the API', async () => {
     const api = fakeApi({ status: 200, body: entreeDemo });
 
-    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: 'too-short', identity: null, pressedAt }, api);
+    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: 'too-short', identity: null, pressedAt, armedAt: null }, api);
 
     expect(outcome).toEqual({ kind: 'refused', identity: null, messageKey: 'keyRefused' });
     expect(api.fetchIdentity).not.toHaveBeenCalled();
@@ -92,7 +101,7 @@ describe('pressLoop', () => {
   it('warns that the count may have changed when the passage answer cannot be read', async () => {
     const api = fakeApi({ status: 200, body: entreeDemo }, { status: 200, body: null });
 
-    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: entreeDemo, pressedAt }, api);
+    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: entreeDemo, pressedAt, armedAt: null }, api);
 
     expect(outcome).toEqual({ kind: 'refused', identity: entreeDemo, messageKey: 'passageUnconfirmed' });
   });
@@ -100,7 +109,7 @@ describe('pressLoop', () => {
   it('shows the refused key when the key is revoked between identification and passage', async () => {
     const api = fakeApi({ status: 200, body: entreeDemo }, { status: 401, body: null });
 
-    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: entreeDemo, pressedAt }, api);
+    const outcome = await pressLoop({ loop: 'ENTRY', deviceKey: DEVICE_KEY, identity: entreeDemo, pressedAt, armedAt: null }, api);
 
     expect(outcome).toEqual({ kind: 'refused', identity: entreeDemo, messageKey: 'keyRefused' });
   });

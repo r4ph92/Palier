@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatPassageTime, messageText, passagesReplayed, pendingPassages, translate, vehiclesInside } from '../../src/http/demo/consoleText.js';
+import { formatPassageTime, formatTimeWithSeconds, messageText, passagesReplayed, pendingPassages, translate, vehiclesInside } from '../../src/http/demo/consoleText.js';
 import { translations } from '../../src/http/demo/consoleTranslations.js';
 
 describe('console translations', () => {
@@ -84,6 +84,14 @@ describe('offline texts', () => {
 
   it('writes a replay message through the same text', () => {
     expect(messageText('fr', { replayed: { count: 2, vehicleCount: 3 }, isError: false })).toBe(passagesReplayed(2, 3, 'fr'));
+  });
+
+  it('writes the arming instant to the second, so two presses are told apart', () => {
+    const armedAt = new Date(2026, 10, 16, 9, 5, 7);
+
+    expect(formatTimeWithSeconds(armedAt)).toBe('09:05:07');
+    expect(messageText('en', { armedAt, isError: false })).toContain('Loop armed at 09:05:07.');
+    expect(messageText('fr', { armedAt, isError: false })).toContain('Boucle armée à 09:05:07.');
   });
 
   it('writes a plain message without counts as its key', () => {

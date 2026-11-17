@@ -22,6 +22,7 @@ function seededGates(): Map<string, StoredGate[]> {
 export class FakeLotEquipmentReader implements LotEquipmentReader {
   readonly #lots: FakeLotStore;
   readonly #gates = seededGates();
+  readonly #presence = new Map<string, number>();
 
   constructor(lots: FakeLotStore) {
     this.#lots = lots;
@@ -31,6 +32,14 @@ export class FakeLotEquipmentReader implements LotEquipmentReader {
     for (const [lotId, gates] of this.#gates) {
       this.#gates.set(lotId, gates.map((gate) => (gate.id === gateId ? { ...gate, lastHeartbeatAt: at } : gate)));
     }
+  }
+
+  recordPassageMeasure(gateId: string, seconds: number): void {
+    this.#presence.set(gateId, seconds);
+  }
+
+  readGatePresence(operatorId: string, lotId: string): Promise<ReadonlyMap<string, number>> {
+    return Promise.resolve(this.#lots.indexOf(operatorId, lotId) === -1 ? new Map() : this.#presence);
   }
 
   readLotGates(operatorId: string, lotId: string): Promise<LotGates | null> {

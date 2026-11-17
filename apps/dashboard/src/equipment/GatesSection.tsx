@@ -1,8 +1,9 @@
 import type { DashboardGateHealth, DashboardLotEquipment } from '@palier/shared-types';
 import { SILENT_GATE_AFTER_MINUTES } from '@palier/shared-types/gates';
 import { ColumnHeads } from '../components/ColumnHeads.tsx';
+import { FilledTemplate } from '../components/FilledTemplate.tsx';
 import { StateMark } from '../components/StateMark.tsx';
-import { formatCount } from '../i18n/formatNumbers.ts';
+import { formatCount, formatSeconds } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { gateHealthMarkOf } from './gateHealthMark.ts';
@@ -44,7 +45,17 @@ function GateRow({ gate, now }: { readonly gate: DashboardGateHealth; readonly n
       <td>{text.equipment.kinds[gate.kind]}</td>
       <td>
         <StateMark tone={mark.tone} label={mark.label} wraps />
+        <PresenceLine seconds={gate.averagePresenceSeconds} />
       </td>
     </tr>
   );
+}
+
+function PresenceLine({ seconds }: { readonly seconds: number | null }) {
+  const { text, language } = useLanguage();
+  if (seconds === null) {
+    return <p className="gate-presence">{interpolate(text.equipment.presenceLine, { value: text.equipment.noMeasuredPassage })}</p>;
+  }
+  const figure = <span className="figure no-break">{formatSeconds(seconds, language)}</span>;
+  return <p className="gate-presence"><FilledTemplate template={text.equipment.presenceLine} values={{ value: figure }} /></p>;
 }

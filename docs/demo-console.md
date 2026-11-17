@@ -90,6 +90,18 @@ secondes l'un de l'autre, dans l'ordre qu'on veut.
 6. Un signal de balise sans véhicule (un piéton), ou plus de 60 s entre les deux :
    rien ne se passe.
 
+## Temps de présence (#77)
+
+1. Coller la clé d'Entrée Démo dans la console, appuyer sur « Véhicule sur la boucle
+   d'armement » (« Boucle armée à 14:05:03 »), attendre quelques secondes, puis sur
+   « Boucle d'entrée fermée ».
+2. À une sortie, « Véhicule à la sortie » arme la boucle ; « Boucle de sortie fermée »
+   envoie ensuite le passage avec son armement.
+3. Sophie ouvre « Équipement » : sous l'état de la barrière, « Temps de présence moyen
+   (7 jours) : 9,0 s ». Un passage sans armement (ou rejoué après une panne) n'y compte pas.
+
+Décision : `docs/decisions/044`.
+
 ## Utiliser la console
 
 1. Coller une clé dans « Clé d'appareil ». La clé ne quitte jamais la page :
@@ -220,7 +232,7 @@ lot : voir la décision 031.
 
 - `GET /v1/gates/me` : `{ id, name, kind, lotName }` de la barrière de la clé.
 - `POST /v1/gates/:id/passages/replay`, corps `{ "passages": [{ "id": "<uuid>", "kind": "ENTRY" | "EXIT", "closedAt": "<ISO 8601>" }] }` (1 à 500) : `{ counted, duplicates, vehicleCount }`. Compte seulement : aucune session confirmée ni sortie rattachée. 403 `GATE_FORBIDDEN`, 409 `REPLAY_KIND_MISMATCH`, 400 `REPLAY_IDS_REPEATED`, `CLOSED_AT_TOO_OLD`.
-- `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>" }` :
+- `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>", "armedAt"?: "<ISO 8601>" }` (`armedAt` : la boucle d'armement, gardé s'il précède `closedAt` d'au plus 7 jours, mal formé : 400, voir `docs/decisions/044`) :
   `{ gateId, lotId, kind, closedAt, vehicleCount, confirmedSessionId, exitedSessionId }`.
   `confirmedSessionId` est la session d'entrée que ce passage a confirmée (la plus
   ancienne ouverture de cette barrière émise dans les 60 secondes (`ENTRY_CONFIRMATION_WINDOW_SECONDS`) avant la réception du passage, mesurées

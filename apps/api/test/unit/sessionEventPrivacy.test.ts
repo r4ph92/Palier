@@ -54,7 +54,7 @@ const steps: [string, () => Promise<ScriptedSql>][] = [
   }],
   ['the loop', async () => {
     const scripted = new ScriptedSql().answer('count-vehicle', [{ vehicle_count: 1 }]).answer('confirm-opening', [{ id: SESSION_ID, assigned_spot_id: 'spot-a1' }]);
-    await new PostgresPassageLedger(scripted.database()).recordPassage({ gate: entreeDemo, closedAt: NOW, vehicleCountChange: 1, confirmableOpenings: WINDOW, attachableOpenings: null });
+    await new PostgresPassageLedger(scripted.database()).recordPassage({ gate: entreeDemo, closedAt: NOW, armedAt: null, vehicleCountChange: 1, confirmableOpenings: WINDOW, attachableOpenings: null });
     return scripted;
   }],
   ['the walk in the assigned aisle', async () => {
@@ -105,7 +105,7 @@ const steps: [string, () => Promise<ScriptedSql>][] = [
   }],
   ['the exit loop', async () => {
     const scripted = new ScriptedSql().answer('count-vehicle', [{ vehicle_count: 0 }]).answer('attach-exit-passage', [{ id: SESSION_ID }]);
-    await new PostgresPassageLedger(scripted.database()).recordPassage({ gate: sortieDemo, closedAt: NOW, vehicleCountChange: -1, confirmableOpenings: null, attachableOpenings: WINDOW });
+    await new PostgresPassageLedger(scripted.database()).recordPassage({ gate: sortieDemo, closedAt: NOW, armedAt: null, vehicleCountChange: -1, confirmableOpenings: null, attachableOpenings: WINDOW });
     return scripted;
   }],
 ];

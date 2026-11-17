@@ -96,3 +96,30 @@ describe('reading the gates of a lot from Postgres', () => {
     expect(await new PostgresLotEquipmentReader(notOwned.database()).readLotGates('operator-roy', entreeDemo.lotId)).toBeNull();
   });
 });
+
+describe('reading the average presence time of a lot from Postgres', () => {
+  const since = new Date('2026-11-06T19:05:00Z');
+
+  it('averages only the passages with an arming time closed since the window start, per gate of the operator lot', async () => {
+    const scripted = new ScriptedSql().answer('read-gate-presence', [{ gate_id: 'sortie', average_seconds: 9 }]);
+
+    await new PostgresLotEquipmentReader(scripted.database()).readGatePresence('operator-lavoie', entreeDemo.lotId, since);
+
+    const statement = scripted.statement('read-gate-presence');
+    expect(statement?.text).toMatch(/avg\(extract\(epoch from gate_passage\.closed_at - gate_passage\.armed_at\)\)::float8/);
+    expect(statement?.text).toMatch(/gate_passage\.armed_at is not null and gate_passage\.closed_at >= \$3::timestamptz/);
+    expect(statement?.text).toMatch(/group by gate\.id$/);
+    expect(statement?.params).toEqual([entreeDemo.lotId, 'operator-lavoie', since.toISOString()]);
+  });
+
+  it('maps a row to seconds whether the driver returns a number or a string', async () => {
+    const scripted = new ScriptedSql().answer('read-gate-presence', [
+      { gate_id: 'entree', average_seconds: '9.5' },
+      { gate_id: 'sortie', average_seconds: 9 },
+    ]);
+
+    const presence = await new PostgresLotEquipmentReader(scripted.database()).readGatePresence('operator-lavoie', entreeDemo.lotId, since);
+
+    expect(presence).toEqual(new Map([['entree', 9.5], ['sortie', 9]]));
+  });
+});

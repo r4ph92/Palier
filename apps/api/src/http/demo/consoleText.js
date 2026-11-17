@@ -32,6 +32,15 @@ export function formatPassageTime(moment, language) {
 }
 
 /**
+ * The seconds tell two presses of the arming loop apart; a 24-hour clock reads the same in both languages.
+ * @param {Date} moment
+ * @returns {string}
+ */
+export function formatTimeWithSeconds(moment) {
+  return [moment.getHours(), moment.getMinutes(), moment.getSeconds()].map((part) => String(part).padStart(2, '0')).join(':');
+}
+
+/**
  * @param {number} count
  * @param {Language} language
  * @returns {string}
@@ -63,7 +72,8 @@ export function passagesReplayed(count, vehicleCount, language) {
 /**
  * @typedef {{ key: TextKey, isError: boolean, tone?: 'degraded' | 'muted' }
  *   | { replayed: { count: number, vehicleCount: number }, isError: false }
- *   | { verifiedAt: Date, isError: false }} ConsoleMessage
+ *   | { verifiedAt: Date, isError: false }
+ *   | { armedAt: Date, isError: false }} ConsoleMessage
  */
 
 /**
@@ -77,6 +87,9 @@ export function messageText(language, message) {
   }
   if ('verifiedAt' in message) {
     return translate(language, 'gateVerified', { time: formatPassageTime(message.verifiedAt, language) });
+  }
+  if ('armedAt' in message) {
+    return translate(language, 'armed', { time: formatTimeWithSeconds(message.armedAt) });
   }
   return translate(language, message.key);
 }

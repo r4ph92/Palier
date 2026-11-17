@@ -5,7 +5,7 @@ import type { AssertTrue, MutuallyAssignable, WithMutableArrays } from './schema
 
 const gateHealthSchema = {
   type: 'object',
-  required: ['id', 'name', 'kind', 'health', 'lastHeartbeatAt'],
+  required: ['id', 'name', 'kind', 'health', 'lastHeartbeatAt', 'averagePresenceSeconds'],
   additionalProperties: false,
   properties: {
     id: { type: 'string' },
@@ -13,6 +13,7 @@ const gateHealthSchema = {
     kind: { type: 'string', enum: GATE_KINDS },
     health: { type: 'string', enum: ['ONLINE', 'SILENT', 'NEVER_HEARD'] },
     lastHeartbeatAt: { type: ['string', 'null'] },
+    averagePresenceSeconds: { type: ['number', 'null'] },
   },
 } as const;
 

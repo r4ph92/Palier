@@ -41,7 +41,7 @@ export const passageRequestSchema = {
   type: 'object',
   required: ['closedAt'],
   additionalProperties: false,
-  properties: { closedAt: { type: 'string', format: 'date-time' } },
+  properties: { closedAt: { type: 'string', format: 'date-time' }, armedAt: { type: 'string', format: 'date-time' } },
 } as const;
 
 export const passageResponseSchema = {

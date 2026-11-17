@@ -24,6 +24,18 @@ export function recordReportedBatteryStatement({ lotId, beaconMinor, ...reading 
     returning id`;
 }
 
+// Passages without an arming time are left out; the window is on the closing time, and the instant comes from the app clock.
+export function readGatePresenceStatement(operatorId: string, lotId: string, since: Date): SQL {
+  return sql`
+    select gate.id as gate_id, avg(extract(epoch from gate_passage.closed_at - gate_passage.armed_at))::float8 as average_seconds
+    from gate
+    join parking_lot on parking_lot.id = gate.lot_id
+    join gate_passage on gate_passage.gate_id = gate.id
+    where gate.lot_id = ${lotId} and parking_lot.operator_id = ${operatorId}
+      and gate_passage.armed_at is not null and gate_passage.closed_at >= ${since.toISOString()}::timestamptz
+    group by gate.id`;
+}
+
 // Entry gates first, then by name; a lot with no gate reads as one row of nulls. Never the QR secret or the endpoint.
 export function readLotGatesStatement(operatorId: string, lotId: string): SQL {
   return sql`

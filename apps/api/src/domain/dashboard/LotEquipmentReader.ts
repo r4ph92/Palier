@@ -16,4 +16,6 @@ export interface LotGates {
 export interface LotEquipmentReader {
   // Null when the operator has no lot with this id, so another operator's lot reads as absent.
   readLotGates(operatorId: string, lotId: string): Promise<LotGates | null>;
+  // Seconds between arming and closing, averaged over the lot's passages closed since the given instant, by gate id. A gate with no measured passage is absent.
+  readGatePresence(operatorId: string, lotId: string, since: Date): Promise<ReadonlyMap<string, number>>;
 }

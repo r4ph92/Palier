@@ -9,7 +9,7 @@ describe('createGateApi', () => {
   it('sends the key as a Bearer header and the loop time as JSON', async () => {
     const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(Response.json(recordedEntry));
 
-    const response = await createGateApi(fetchFunction).postPassage(DEVICE_KEY, 'gate-501', pressedAt.toISOString());
+    const response = await createGateApi(fetchFunction).postPassage(DEVICE_KEY, 'gate-501', { closedAt: pressedAt.toISOString(), armedAt: null });
 
     expect(response).toEqual({ status: 200, body: recordedEntry });
     expect(fetchFunction).toHaveBeenCalledWith('/v1/gates/gate-501/passage', {
@@ -19,6 +19,15 @@ describe('createGateApi', () => {
       cache: 'no-store',
       credentials: 'omit',
     });
+  });
+
+  it('adds the arming time to the passage body only when there is one', async () => {
+    const fetchFunction = vi.fn<typeof fetch>().mockResolvedValue(Response.json(recordedEntry));
+    const armedAt = new Date(pressedAt.getTime() - 9000).toISOString();
+
+    await createGateApi(fetchFunction).postPassage(DEVICE_KEY, 'gate-501', { closedAt: pressedAt.toISOString(), armedAt });
+
+    expect(fetchFunction).toHaveBeenCalledWith('/v1/gates/gate-501/passage', expect.objectContaining({ body: JSON.stringify({ closedAt: pressedAt.toISOString(), armedAt }) }));
   });
 
   it('sends the reading as the identifier of the gate named in the path', async () => {
