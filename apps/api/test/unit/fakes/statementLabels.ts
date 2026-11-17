@@ -79,6 +79,7 @@ export type StatementLabel =
   | 'record-test-passage'
   | 'record-reported-battery'
   | 'read-lot-gates'
+  | 'read-gate-presence'
   | 'read-owned-lot-id'
   | 'record-aisle-battery'
   | 'count-vehicle'
@@ -133,6 +134,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['record-test-passage', /update gate set verified_at = \$1::timestamptz/],
   ['read-owned-lot-id', /select parking_lot\.id from parking_lot where parking_lot\.id = \$1 and parking_lot\.operator_id = \$2/],
   ['record-aisle-battery', /update aisle set beacon_battery_percent[\s\S]*from parking_lot/],
+  ['read-gate-presence', /avg\(extract\(epoch from gate_passage\.closed_at/],
   ['read-lot-gates', /gate\.last_heartbeat_at\s+from parking_lot/],
   ['record-reported-battery', /where lot_id = \$\d and beacon_minor = \$\d/],
   ['count-vehicle', /insert into gate_passage/],

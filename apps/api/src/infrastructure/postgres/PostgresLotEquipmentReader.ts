@@ -1,7 +1,7 @@
 import type { GateKind } from '@palier/shared-types';
 import type { LotEquipmentReader, LotGates, StoredGate } from '../../domain/dashboard/LotEquipmentReader.ts';
 import type { Database } from './database.ts';
-import { readLotGatesStatement } from './equipmentStatements.ts';
+import { readGatePresenceStatement, readLotGatesStatement } from './equipmentStatements.ts';
 
 interface LotGateRow extends Record<string, unknown> {
   readonly lot_name: string;
@@ -9,6 +9,11 @@ interface LotGateRow extends Record<string, unknown> {
   readonly gate_name: string | null;
   readonly gate_kind: GateKind | null;
   readonly last_heartbeat_at: Date | string | null;
+}
+
+interface GatePresenceRow extends Record<string, unknown> {
+  readonly gate_id: string;
+  readonly average_seconds: number | string;
 }
 
 type GateRow = LotGateRow & { readonly gate_id: string; readonly gate_name: string; readonly gate_kind: GateKind };
@@ -22,6 +27,11 @@ export class PostgresLotEquipmentReader implements LotEquipmentReader {
 
   async readLotGates(operatorId: string, lotId: string): Promise<LotGates | null> {
     return lotGatesOf(await this.#database.execute<LotGateRow>(readLotGatesStatement(operatorId, lotId)));
+  }
+
+  async readGatePresence(operatorId: string, lotId: string, since: Date): Promise<ReadonlyMap<string, number>> {
+    const rows = await this.#database.execute<GatePresenceRow>(readGatePresenceStatement(operatorId, lotId, since));
+    return new Map(rows.map((row) => [row.gate_id, Number(row.average_seconds)]));
   }
 }
 

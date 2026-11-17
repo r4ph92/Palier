@@ -4,6 +4,8 @@ import type { Clock } from '../time/Clock.ts';
 import type { LotEquipmentReader, StoredGate } from './LotEquipmentReader.ts';
 import { operatorIdOfMember, ownedLotOrNotFound, type MemberLot, type MemberOperators } from './memberOperator.ts';
 
+const PRESENCE_WINDOW_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
+
 export interface LotEquipmentSources {
   readonly operators: MemberOperators;
   readonly equipment: LotEquipmentReader;
@@ -14,13 +16,16 @@ export async function readLotEquipmentOfMember({ operators, equipment, clock }: 
   const operatorId = await operatorIdOfMember(operators, lot);
   const gates = ownedLotOrNotFound(await equipment.readLotGates(operatorId, lot.lotId));
   const now = clock();
-  return { lotId: lot.lotId, lotName: gates.lotName, now: now.toISOString(), gates: gates.gates.map((gate) => gateHealthView(gate, now)) };
+  const presence = await equipment.readGatePresence(operatorId, lot.lotId, new Date(now.getTime() - PRESENCE_WINDOW_MILLISECONDS));
+  const gateViews = gates.gates.map((gate) => gateHealthView(gate, now, presence.get(gate.id) ?? null));
+  return { lotId: lot.lotId, lotName: gates.lotName, now: now.toISOString(), gates: gateViews };
 }
 
 export function silentGateNamesOf(gates: readonly StoredGate[], now: Date): string[] {
   return gates.filter((gate) => gateHealthOf(gate.lastHeartbeatAt, now) === 'SILENT').map((gate) => gate.name);
 }
 
-function gateHealthView({ id, name, kind, lastHeartbeatAt }: StoredGate, now: Date): DashboardGateHealth {
-  return { id, name, kind, health: gateHealthOf(lastHeartbeatAt, now), lastHeartbeatAt: lastHeartbeatAt?.toISOString() ?? null };
+function gateHealthView({ id, name, kind, lastHeartbeatAt }: StoredGate, now: Date, averagePresenceSeconds: number | null): DashboardGateHealth {
+  const health = gateHealthOf(lastHeartbeatAt, now);
+  return { id, name, kind, health, lastHeartbeatAt: lastHeartbeatAt?.toISOString() ?? null, averagePresenceSeconds };
 }
