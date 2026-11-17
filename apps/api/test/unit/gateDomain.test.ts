@@ -98,13 +98,6 @@ describe('recordPassage', () => {
     expect(passage.vehicleCount).toBe(0);
   });
 
-  it('documents that the fake ledger, like Postgres, keeps the count at zero', async () => {
-    const ledger = new FakePassageLedger(0);
-    const command = { gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now, armedAt: null };
-
-    expect((await recordPassage(command, { ledger, clock, openingWindow })).vehicleCount).toBe(0);
-  });
-
   it('refuses a passage for another gate than the key’s, without counting', async () => {
     const ledger = new FakePassageLedger(0);
     const command = { gate: entreeDemo, requestedGateId: sortieDemo.id, closedAt: now, armedAt: null };
