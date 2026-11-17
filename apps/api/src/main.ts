@@ -4,6 +4,7 @@ import { readPaymentsSimulation } from './config/paymentsSimulation.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { exitBeaconWindow } from './domain/exits/identifyByBeacon.ts';
 import { composeClock } from './composeClock.ts';
+import { composeDashboardRepositories } from './composeDashboardRepositories.ts';
 import { composeEntries } from './composeEntries.ts';
 import { composeEntryCancellation } from './composeEntryCancellation.ts';
 import { composeHoldExpiry } from './composeHoldExpiry.ts';
@@ -20,18 +21,6 @@ import { PostgresEquipmentReports } from './infrastructure/postgres/PostgresEqui
 import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateCommandFeed.ts';
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
-import { PostgresLevelOccupancyReader } from './infrastructure/postgres/PostgresLevelOccupancyReader.ts';
-import { PostgresGateSecretRepository } from './infrastructure/postgres/PostgresGateSecretRepository.ts';
-import { PostgresLotEquipmentReader } from './infrastructure/postgres/PostgresLotEquipmentReader.ts';
-import { PostgresLotMapRepository } from './infrastructure/postgres/PostgresLotMapRepository.ts';
-import { PostgresLotGateRepository } from './infrastructure/postgres/PostgresLotGateRepository.ts';
-import { PostgresLotPublicationRepository } from './infrastructure/postgres/PostgresLotPublicationRepository.ts';
-import { PostgresLotSpotRepository } from './infrastructure/postgres/PostgresLotSpotRepository.ts';
-import { PostgresSessionTimelineRepository } from './infrastructure/postgres/PostgresSessionTimelineRepository.ts';
-import { PostgresStaleSessionReviewRepository } from './infrastructure/postgres/PostgresStaleSessionReviewRepository.ts';
-import { PostgresSpotCheckRepository } from './infrastructure/postgres/PostgresSpotCheckRepository.ts';
-import { PostgresLotSetupRepository } from './infrastructure/postgres/PostgresLotSetupRepository.ts';
-import { PostgresOperatorRepository } from './infrastructure/postgres/PostgresOperatorRepository.ts';
 import { PostgresParkedAnswerRepository } from './infrastructure/postgres/PostgresParkedAnswerRepository.ts';
 import { PostgresParkedPresumptionRepository } from './infrastructure/postgres/PostgresParkedPresumptionRepository.ts';
 import { PostgresReceiptRepository } from './infrastructure/postgres/PostgresReceiptRepository.ts';
@@ -94,20 +83,9 @@ const server = buildServer({
     lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
     driverRepository,
     sessionTokenRepository,
+    ...composeDashboardRepositories(connection.database),
     userDirectory: new PostgresUserDirectory(connection.database),
     vehicleRepository,
-    operatorRepository: new PostgresOperatorRepository(connection.database),
-    lotSetupRepository: new PostgresLotSetupRepository(connection.database),
-    levelOccupancy: new PostgresLevelOccupancyReader(connection.database),
-    lotMaps: new PostgresLotMapRepository(connection.database),
-    lotEquipment: new PostgresLotEquipmentReader(connection.database),
-    lotSpots: new PostgresLotSpotRepository(connection.database),
-    spotChecks: new PostgresSpotCheckRepository(connection.database),
-    sessionTimelines: new PostgresSessionTimelineRepository(connection.database),
-    staleSessionReviews: new PostgresStaleSessionReviewRepository(connection.database),
-    lotGates: new PostgresLotGateRepository(connection.database),
-    gateSecrets: new PostgresGateSecretRepository(connection.database),
-    lotPublication: new PostgresLotPublicationRepository(connection.database),
     currentParkingSessions: new PostgresCurrentParkingSessionQuery(connection.database, exitBeaconWindow),
     parkingSessionBackdater: new PostgresParkingSessionBackdater(connection.database),
     parkedPresumptions: new PostgresParkedPresumptionRepository(connection.database),

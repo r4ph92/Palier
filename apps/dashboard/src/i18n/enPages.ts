@@ -1,3 +1,4 @@
+import { enExits } from './enExits.ts';
 import { enEquipment } from './enEquipment.ts';
 import { enGateErrors } from './enGateErrors.ts';
 import { enGates } from './enGates.ts';
@@ -12,6 +13,7 @@ export const enPageTexts = {
   spotsToCheck: enSpotsToCheck,
   sessions: enSessions,
   staleSessions: enStaleSessions,
+  exits: enExits,
   map: enMap,
   equipment: enEquipment,
   gates: enGates,

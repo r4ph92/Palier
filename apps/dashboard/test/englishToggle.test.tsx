@@ -23,6 +23,8 @@ const pages: readonly PageCase[] = [
   { page: 'occupancy', signedInAs: sophie, path: `/lots/${parkingDemo.id}/occupancy`, englishHeading: 'Occupancy — Parking Démo' },
   { page: 'lot without pricing', signedInAs: pierre, path: `/lots/${garageRoy.id}`, englishHeading: 'Garage Roy' },
   { page: 'spots to check', signedInAs: sophie, path: `/lots/${parkingDemo.id}/spots-to-check`, englishHeading: 'Spots to check — Parking Démo' },
+  { page: 'exits', signedInAs: sophie, path: `/lots/${parkingDemo.id}/exits`, englishHeading: 'Exits — Parking Démo' },
+  { page: 'exits with no exit', signedInAs: pierre, path: `/lots/${garageRoy.id}/exits`, englishHeading: 'Exits — Garage Roy' },
   { page: 'map', signedInAs: sophie, path: `/lots/${parkingDemo.id}/map`, englishHeading: 'Map and beacons — Parking Démo' },
   { page: 'empty map', signedInAs: pierre, path: `/lots/${garageRoy.id}/map`, englishHeading: 'Map and beacons — Garage Roy' },
 ];

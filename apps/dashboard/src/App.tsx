@@ -7,6 +7,7 @@ import type { Route } from './navigation/routes.ts';
 import { CreateLotPage } from './pages/CreateLotPage.tsx';
 import { CreateOperatorPage } from './pages/CreateOperatorPage.tsx';
 import { EquipmentPage } from './pages/EquipmentPage.tsx';
+import { ExitsPage } from './pages/ExitsPage.tsx';
 import { GatesPage } from './pages/GatesPage.tsx';
 import { LoadingPage } from './pages/LoadingPage.tsx';
 import { LotPage } from './pages/LotPage.tsx';
@@ -109,6 +110,8 @@ function LotSubpageOf({ route }: { readonly route: LotSubpageRoute }) {
       return <GatesPage lotId={route.lotId} />;
     case 'publication':
       return <PublicationPage lotId={route.lotId} />;
+    case 'exits':
+      return <ExitsPage lotId={route.lotId} />;
     default:
       return <SessionSubpageOf route={route} />;
   }
