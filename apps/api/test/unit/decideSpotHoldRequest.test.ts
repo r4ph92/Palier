@@ -3,7 +3,7 @@ import { decideSpotHoldRequest, type SpotHoldFacts } from '../../src/domain/spot
 
 const roomForOne = { capacity: 10, vehicleCount: 7, heldSpotCount: 2, assignedSpotCount: 0 };
 const full = { capacity: 10, vehicleCount: 8, heldSpotCount: 2, assignedSpotCount: 0 };
-const openLot: SpotHoldFacts = { isLotOnline: true, hasOwnActiveHold: false, activeHoldsInLot: 0, holdQuota: 3, occupancy: roomForOne };
+const openLot: SpotHoldFacts = { isLotOnline: true, hasOwnActiveHold: false, hasOwnActiveSession: false, activeHoldsInLot: 0, holdQuota: 3, occupancy: roomForOne };
 
 describe('decideSpotHoldRequest', () => {
   it('lets Julie hold the last room of an online lot, with no hold of her own and the quota unused', () => {
@@ -26,6 +26,7 @@ describe('decideSpotHoldRequest', () => {
   it.each([
     ['the lot went offline', { isLotOnline: false }, 'LOT_NOT_IN_SERVICE'],
     ['Julie already holds a spot', { hasOwnActiveHold: true }, 'HOLD_ALREADY_EXISTS'],
+    ['Julie is inside a lot', { hasOwnActiveSession: true }, 'ALREADY_INSIDE'],
     ['Marc and two other drivers use the quota of 3', { activeHoldsInLot: 3 }, 'HOLD_QUOTA_REACHED'],
     ['more holds than the quota exist', { activeHoldsInLot: 4 }, 'HOLD_QUOTA_REACHED'],
     ['vehicles and held spots fill the lot', { occupancy: full }, 'NO_SUITABLE_SPOT'],
@@ -36,6 +37,8 @@ describe('decideSpotHoldRequest', () => {
   it.each([
     ['an offline lot before her own hold', { isLotOnline: false, hasOwnActiveHold: true }, 'LOT_NOT_IN_SERVICE'],
     ['her own hold before the quota', { hasOwnActiveHold: true, activeHoldsInLot: 3 }, 'HOLD_ALREADY_EXISTS'],
+    ['her own hold before her session', { hasOwnActiveHold: true, hasOwnActiveSession: true }, 'HOLD_ALREADY_EXISTS'],
+    ['her session before the quota', { hasOwnActiveSession: true, activeHoldsInLot: 3 }, 'ALREADY_INSIDE'],
     ['the quota before the room', { activeHoldsInLot: 3, occupancy: full }, 'HOLD_QUOTA_REACHED'],
   ])('names %s', (_case, change: Partial<SpotHoldFacts>, reason) => {
     expect(decideSpotHoldRequest({ ...openLot, ...change })).toEqual({ kind: 'refuse', reason });
