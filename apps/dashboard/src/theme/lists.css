@@ -108,6 +108,10 @@
   font-variant-numeric: tabular-nums;
 }
 
+.share-list .figure {
+  font-weight: 500;
+}
+
 .count-line {
   margin: 0 0 var(--space-small);
 }
