@@ -12,7 +12,7 @@ export const DEMO_SECURITY_HEADERS = {
 
 export function registerDemoConsoleRoutes(server: FastifyInstance): void {
   for (const [fileName, asset] of Object.entries(DEMO_ASSETS)) {
-    const content = readFileSync(asset.location);
+    const content = readFileSync(asset.location());
     server.get(demoAssetUrl(fileName), async (_request, reply) =>
       reply.headers(DEMO_SECURITY_HEADERS).type(asset.contentType).send(content),
     );
