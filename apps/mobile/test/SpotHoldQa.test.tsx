@@ -36,9 +36,7 @@ describe('QA spot hold on the lot list', () => {
     const paliers = screen.getByRole('button', { name: PALIERS_BUTTON });
 
     await act(async () => {
-      fireEvent.press(demo);
-      fireEvent.press(paliers);
-      fireEvent.press(demo);
+      await Promise.all([fireEvent.press(demo), fireEvent.press(paliers), fireEvent.press(demo)]);
     });
 
     expect(spotHoldClient.heldLots).toEqual([expect.any(String)]);

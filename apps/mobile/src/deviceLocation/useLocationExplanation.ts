@@ -31,7 +31,7 @@ function useStoredAnswer(store: LocationExplanationStore): StoredAnswer {
   const [state, setState] = useState<LocationExplanationState>({ status: 'reading' });
   useEffect(() => {
     let isCurrent = true;
-    wasAnsweredOrFalse(store).then((answered) => {
+    void wasAnsweredOrFalse(store).then((answered) => {
       if (isCurrent) {
         setState({ status: answered ? 'answered' : 'unanswered' });
       }

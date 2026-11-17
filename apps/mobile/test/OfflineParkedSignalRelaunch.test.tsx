@@ -12,7 +12,7 @@ describe('keeping the parking signal across a relaunch of the app (story #26)', 
     await pressInPanel(first.user, 'Réseau coupé');
     const beforeWalk = Date.now();
     await pressInPanel(first.user, WALKING);
-    first.view.unmount();
+    await first.view.unmount();
     await advance(60_000);
 
     const relaunched = await julieWithPanel('fr', first.storage);
@@ -20,6 +20,6 @@ describe('keeping the parking signal across a relaunch of the app (story #26)', 
     expect(relaunched.parkingSession.parkedReports).toEqual([{ sessionId: 'session-1', detectedAt: expect.any(Number), aisleMinor: null }]);
     expect(relaunched.parkingSession.parkedReports[0]?.detectedAt).toBeLessThan(beforeWalk + 4000);
     expect(await screen.findByText(PARKED_IN_A1, visibleText)).toBeOnTheScreen();
-    relaunched.view.unmount();
+    await relaunched.view.unmount();
   });
 });

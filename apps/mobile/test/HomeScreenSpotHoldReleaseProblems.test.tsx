@@ -59,7 +59,7 @@ describe('HomeScreen release: focus and escape', () => {
     const { user } = await renderJulieHolding(spotHoldClient);
     await user.press(screen.getByRole('button', { name: RELEASE_FR }));
 
-    fireEvent(await screen.findByTestId('release-confirmation'), 'accessibilityEscape');
+    await fireEvent(await screen.findByTestId('release-confirmation'), 'accessibilityEscape');
 
     expect(await screen.findByText('Libérer')).toBeOnTheScreen();
     expect(screen.queryByText('Libérer cette garantie?')).not.toBeOnTheScreen();
