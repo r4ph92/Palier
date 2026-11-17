@@ -14,6 +14,12 @@ describe('databaseUrlAllowedForSeeding', () => {
     expect(databaseUrlAllowedForSeeding({ NODE_ENV: 'development', DATABASE_URL: url })).toBe(url);
   });
 
+  it('allows a local host written in capitals', () => {
+    const url = 'postgres://palier:palier@LOCALHOST:5433/palier';
+
+    expect(databaseUrlAllowedForSeeding({ NODE_ENV: 'development', DATABASE_URL: url })).toBe(url);
+  });
+
   it.each([undefined, 'production', 'staging'])('refuses NODE_ENV %s', (environment) => {
     expect(() => databaseUrlAllowedForSeeding({ NODE_ENV: environment, DATABASE_URL: localUrl })).toThrow(
       /NODE_ENV must be development or test/,
