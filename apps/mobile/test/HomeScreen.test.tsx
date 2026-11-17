@@ -1,4 +1,4 @@
-import { screen, userEvent } from '@testing-library/react-native';
+import { screen, userEvent, waitFor } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
@@ -99,6 +99,17 @@ describe('HomeScreen when the API is unreachable', () => {
     await screen.findByText('Impossible de joindre Palier.');
 
     expect(announce).toHaveBeenCalledWith('Impossible de joindre Palier.');
+    announce.mockRestore();
+  });
+
+  it('announces the error again when a refresh from the error screen fails again', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    await renderHomeScreen(new FakeLotsClient('unreachable'));
+    await screen.findByText('Impossible de joindre Palier.');
+
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Actualiser' }));
+
+    await waitFor(() => expect(announce.mock.calls.filter(([message]) => message === 'Impossible de joindre Palier.')).toHaveLength(2));
     announce.mockRestore();
   });
 

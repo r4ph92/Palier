@@ -121,7 +121,7 @@ function HomeStateMessage({ controller }: { readonly controller: LotsController 
     case 'loading':
       return <LotListLoading />;
     case 'error':
-      return <ErrorState onRetry={controller.retry} />;
+      return <ErrorState onRetry={controller.retry} repeatKey={controller.state.failureCount} />;
     case 'loaded':
       return <EmptyState message={emptyMessage(controller.state.location)} />;
   }
