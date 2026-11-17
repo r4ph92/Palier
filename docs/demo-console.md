@@ -131,10 +131,25 @@ Décision : `docs/decisions/044`.
    2 minutes. » Un changement de câblage, d'adresse ou de boucles de la borne, ou une
    nouvelle clé d'appareil, efface la vérification : refaire le passage de test.
 
-Messages : « Clé d'appareil refusée » (clé inconnue, mal formée ou révoquée),
+Messages : « Clé d'appareil refusée » (clé inconnue ou révoquée, ou clé que
+l'en-tête ne peut pas porter : espace, accent, plus de 512 caractères),
 « Accès refusé pour cette barrière » (403), « Cette barrière n'a pas de
-boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouton
-« English » passe toute la page en anglais.
+boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Chaque refus
+dit quoi faire ensuite. Le bouton « English » passe toute la page en anglais.
+
+Comportements de saisie :
+
+- La console ne vérifie plus la forme de la clé : toute clé que l'en-tête peut porter
+  part vers Palier, qui répond 401 si elle est fausse. Une clé collée est identifiée
+  après une pause de 400 ms dans la saisie ; une clé refusée l'affiche sans appui,
+  marque le champ `aria-invalid` et le relie au message. La saisie efface les deux.
+- Le champ de clé reste modifiable pendant un envoi : coller la clé de Sortie Démo
+  pendant un appui sur Entrée affiche l'identité de Sortie Démo et active son bouton ;
+  la réponse tardive ne change ni l'identité ni le message, mais un passage compté
+  par le serveur reste dans la liste.
+- Un appui sur la mauvaise boucle nomme le bon bouton et lui donne le focus.
+- « Passage enregistré à 14:03:12 · 12 véhicules dans le parking » change à chaque
+  passage, donc le lecteur d'écran l'annonce à nouveau.
 
 ## Hors ligne (#12)
 
