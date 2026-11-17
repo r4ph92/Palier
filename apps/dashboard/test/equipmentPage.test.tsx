@@ -15,13 +15,18 @@ const YESTERDAY_AT_TWO_FIVE = new Date(2026, 10, 12, 14, 5);
 // French and English times hold narrow no-break spaces ("14 h 05", "2:05 PM"); the test compares plain spaces.
 function stateOf(gateName: string): string {
   const row = screen.getByRole('rowheader', { name: gateName }).closest('tr') as HTMLElement;
-  return (within(row).getAllByRole('cell').at(-1)?.textContent ?? '').replace(WHITESPACE, ' ').trim();
+  return (row.querySelector('.state-mark')?.textContent ?? '').replace(WHITESPACE, ' ').trim();
+}
+
+function presenceOf(gateName: string): string {
+  const row = screen.getByRole('rowheader', { name: gateName }).closest('tr') as HTMLElement;
+  return (row.querySelector('.gate-presence')?.textContent ?? '').replace(WHITESPACE, ' ').trim();
 }
 
 // As shown, before any space is normalised: the time never holds a plain space the line could break at.
 function rawStateOf(gateName: string): string {
   const row = screen.getByRole('rowheader', { name: gateName }).closest('tr') as HTMLElement;
-  return within(row).getAllByRole('cell').at(-1)?.textContent ?? '';
+  return row.querySelector('.state-mark')?.textContent ?? '';
 }
 
 function toneOf(gateName: string): string | undefined {
@@ -107,6 +112,43 @@ describe('the equipment page', () => {
     await vi.waitFor(() => expect(stateOf('Entrée Démo')).toBe('Silent since 2:05 PM'));
     expect(stateOf('Sortie Démo')).toBe('Silent since Nov 12, 2:05 PM');
     expect(rawStateOf('Entrée Démo')).not.toContain('2:05 PM');
+  });
+
+  it('reads the average presence time of each gate, "9,0 s" for Sortie Démo and none measured for Entrée Démo', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    api.equipment.set(parkingDemo.id, equipmentOf([entreeDemo, { ...sortieDemo, averagePresenceSeconds: 9 }]));
+    renderDashboard({ path: EQUIPMENT_PATH });
+
+    await screen.findByRole('rowheader', { name: 'Entrée Démo' });
+
+    expect(presenceOf('Sortie Démo')).toBe('Temps de présence moyen (7 jours) : 9,0 s');
+    expect(presenceOf('Entrée Démo')).toBe('Temps de présence moyen (7 jours) : aucun passage mesuré');
+  });
+
+  it('rounds the raw average to one decimal and keeps the figure unbreakable', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    api.equipment.set(parkingDemo.id, equipmentOf([{ ...entreeDemo, averagePresenceSeconds: 9.04 }, { ...sortieDemo, averagePresenceSeconds: 12.96 }]));
+    renderDashboard({ path: EQUIPMENT_PATH });
+
+    await screen.findByRole('rowheader', { name: 'Entrée Démo' });
+
+    expect(presenceOf('Entrée Démo')).toBe('Temps de présence moyen (7 jours) : 9,0 s');
+    expect(presenceOf('Sortie Démo')).toBe('Temps de présence moyen (7 jours) : 13,0 s');
+    const figure = screen.getByRole('rowheader', { name: 'Entrée Démo' }).closest('tr')?.querySelector('.gate-presence .no-break');
+    expect(figure?.textContent).toBe('9,0\u00a0s');
+  });
+
+  it('reads "Average presence time (7 days): 9.0 s" in English', async () => {
+    const api = installFakeApi({ signedInAs: sophie });
+    api.equipment.set(parkingDemo.id, equipmentOf([entreeDemo, { ...sortieDemo, averagePresenceSeconds: 9 }]));
+    renderDashboard({ path: EQUIPMENT_PATH });
+    await userEvent.click(await screen.findByRole('button', { name: 'English' }));
+
+    await screen.findByRole('heading', { level: 1, name: 'Equipment — Parking Démo' });
+
+    expect(presenceOf('Sortie Démo')).toBe('Average presence time (7 days): 9.0 s');
+    expect(presenceOf('Entrée Démo')).toBe('Average presence time (7 days): no measured passage');
+    expect(frenchLeftOnEnglishPage()).toEqual([]);
   });
 
   it('gives Pierre not found on Parking Démo and nothing about its gates', async () => {

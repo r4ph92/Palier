@@ -11,8 +11,9 @@ export const entreeDemo: DashboardGateHealth = {
   kind: 'ENTRY',
   health: 'ONLINE',
   lastHeartbeatAt: new Date(2026, 10, 13, 14, 9, 40).toISOString(),
+  averagePresenceSeconds: null,
 };
-export const sortieDemo: DashboardGateHealth = { id: '00000000-0000-4000-8000-000000000702', name: 'Sortie Démo', kind: 'EXIT', health: 'NEVER_HEARD', lastHeartbeatAt: null };
+export const sortieDemo: DashboardGateHealth = { id: '00000000-0000-4000-8000-000000000702', name: 'Sortie Démo', kind: 'EXIT', health: 'NEVER_HEARD', lastHeartbeatAt: null, averagePresenceSeconds: null };
 
 export const gateNames: readonly string[] = [entreeDemo.name, sortieDemo.name];
 

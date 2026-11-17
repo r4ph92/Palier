@@ -15,6 +15,8 @@ export const enEquipment: typeof frEquipment = {
   silentSince: 'Silent since %{time}',
   silentSinceDay: 'Silent since %{day}, %{time}',
   neverHeard: 'No signal received',
+  presenceLine: 'Average presence time (7 days): %{value}',
+  noMeasuredPassage: 'no measured passage',
   batteriesNote: 'Beacon batteries are tracked with the beacons, on the parking lot map.',
   batteriesLink: 'Map and beacons',
 };

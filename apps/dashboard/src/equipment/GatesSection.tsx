@@ -2,8 +2,9 @@ import type { DashboardGateHealth, DashboardLotEquipment } from '@palier/shared-
 import { SILENT_GATE_AFTER_MINUTES } from '@palier/shared-types/gates';
 import { ColumnHeads } from '../components/ColumnHeads.tsx';
 import { StateMark } from '../components/StateMark.tsx';
-import { formatCount } from '../i18n/formatNumbers.ts';
+import { formatCount, formatSeconds } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
+import { interpolateKeepingValuesWhole } from '../i18n/interpolateKeepingValuesWhole.tsx';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
 import { gateHealthMarkOf } from './gateHealthMark.ts';
 
@@ -44,7 +45,14 @@ function GateRow({ gate, now }: { readonly gate: DashboardGateHealth; readonly n
       <td>{text.equipment.kinds[gate.kind]}</td>
       <td>
         <StateMark tone={mark.tone} label={mark.label} wraps />
+        <PresenceLine seconds={gate.averagePresenceSeconds} />
       </td>
     </tr>
   );
+}
+
+function PresenceLine({ seconds }: { readonly seconds: number | null }) {
+  const { text, language } = useLanguage();
+  const value = seconds === null ? text.equipment.noMeasuredPassage : formatSeconds(seconds, language);
+  return <p className="gate-presence">{interpolateKeepingValuesWhole(text.equipment.presenceLine, { value })}</p>;
 }
