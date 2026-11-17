@@ -3,6 +3,7 @@ import { createCommandRefresh } from './commandPolling.js';
 import { createGateApi } from './gateApi.js';
 import { createHeartbeat, scheduleHeartbeat } from './gateHeartbeat.js';
 import {
+  armingButton,
   clearQueueButton,
   deviceKeyInput,
   languageButtons,
@@ -20,6 +21,7 @@ import { clearQueue, hasPendingPassages, isToggleAvailable, pressLoopWhileOfflin
 import { restoredConnection, saveConnection } from './queueStorage.js';
 import { readingMessage, sendReading } from './readerRead.js';
 import { sendTestPassage, testPassageMessage } from './testPassage.js';
+import { createPresenceArming } from './presenceArming.js';
 import { presenceMessage, sendPresence } from './vehiclePresence.js';
 
 /** @typedef {import('./consoleText.js').Language} Language */
@@ -47,6 +49,7 @@ const state = {
   renderedCommandLines: '',
 };
 
+const presenceArming = createPresenceArming();
 const heartbeat = createHeartbeat(state, api, () => render(state));
 
 /** @param {PressOutcome} outcome */
@@ -89,11 +92,12 @@ async function whileSending(work, busyMessage = null) {
 /** @param {GateKind} loop */
 function onLoopPressed(loop) {
   return whileSending(async () => {
+    const armedAt = presenceArming.take(state.deviceKey);
     if (state.connection.kind !== 'online') {
       applyPatch(pressLoopWhileOffline(state.connection, loop, new Date()));
       return;
     }
-    const press = { loop, deviceKey: state.deviceKey, identity: state.identity, pressedAt: new Date() };
+    const press = { loop, deviceKey: state.deviceKey, identity: state.identity, pressedAt: new Date(), armedAt };
     applyOutcome(await pressLoop(press, api));
   });
 }
@@ -130,8 +134,16 @@ function onReadingSent() {
   });
 }
 
+function onArmingPressed() {
+  const armedAt = new Date();
+  presenceArming.arm(state.deviceKey, armedAt);
+  state.message = { armedAt, isError: false };
+  render(state);
+}
+
 function onPresenceSent() {
   return whileSending(async () => {
+    presenceArming.arm(state.deviceKey, new Date());
     const outcome = await sendPresence({ deviceKey: state.deviceKey, identity: state.identity }, api);
     state.identity = outcome.identity;
     state.message = presenceMessage(outcome);
@@ -149,6 +161,7 @@ function onTestPassageSent() {
 readerButton.addEventListener('click', () => void onReadingSent());
 testPassageButton.addEventListener('click', () => void onTestPassageSent());
 presenceButton.addEventListener('click', () => void onPresenceSent());
+armingButton.addEventListener('click', onArmingPressed);
 offlineToggle.addEventListener('click', () => void onOfflineToggled());
 clearQueueButton.addEventListener('click', onQueueCleared);
 window.addEventListener('beforeunload', (event) => {
@@ -159,6 +172,7 @@ window.addEventListener('beforeunload', (event) => {
 
 deviceKeyInput.addEventListener('input', () => {
   state.deviceKey = deviceKeyInput.value.trim();
+  presenceArming.clear();
   state.identity = null;
   state.message = statusMessageOf(state.connection);
   state.commands = [];

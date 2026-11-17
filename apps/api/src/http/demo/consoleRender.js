@@ -2,6 +2,7 @@ import { formatPassageTime, messageText, pendingPassages, translate, vehiclesIns
 import { focusTargetAfterQueueAction, isLoopAvailable, isToggleAvailable, queueOf } from './offlineControls.js';
 import { isReaderEnabled } from './readerRead.js';
 import { isTestPassageEnabled } from './testPassage.js';
+import { isArmingEnabled } from './presenceArming.js';
 import { isPresenceEnabled } from './vehiclePresence.js';
 
 /** @typedef {import('./consoleText.js').TextKey} TextKey */
@@ -41,6 +42,7 @@ export const offlineToggle = /** @type {HTMLButtonElement} */ (elementById('offl
 export const clearQueueButton = /** @type {HTMLButtonElement} */ (elementById('clear-queue'));
 export const plateInput = /** @type {HTMLInputElement} */ (elementById('plate-read'));
 export const readerButton = /** @type {HTMLButtonElement} */ (elementById('reader-send'));
+export const armingButton = /** @type {HTMLButtonElement} */ (elementById('arming-send'));
 export const presenceButton = /** @type {HTMLButtonElement} */ (elementById('presence-send'));
 export const testPassageButton = /** @type {HTMLButtonElement} */ (elementById('test-passage-send'));
 export const languageButtons = /** @type {HTMLButtonElement[]} */ ([...document.querySelectorAll('[data-language]')]);
@@ -56,6 +58,7 @@ export function render(state) {
   const controls = { ...state, isOffline: state.connection.kind !== 'online' };
   readerButton.disabled = !isReaderEnabled(controls);
   presenceButton.disabled = !isPresenceEnabled(controls);
+  armingButton.disabled = !isArmingEnabled(controls);
   testPassageButton.disabled = !isTestPassageEnabled(controls);
   renderMessage(state);
   renderCommands(state);
