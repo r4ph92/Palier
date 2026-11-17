@@ -5,11 +5,11 @@ import { PostgresParkedAnswerRepository } from '../../src/infrastructure/postgre
 import { PostgresParkedPresumptionRepository } from '../../src/infrastructure/postgres/PostgresParkedPresumptionRepository.ts';
 import { onlyAppendedSessionEvent } from './fakes/appendedSessionEvents.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
+import { AISLE_A_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 
 const JULIE_ID = '00000000-0000-4000-8000-000000000501';
 const SESSION_ID = '00000000-0000-4000-8000-000000000951';
 const LOT_ID = '00000000-0000-4000-8000-000000000201';
-const AISLE_A_ID = '00000000-0000-4000-8000-000000000401';
 const AISLE_B_ID = '00000000-0000-4000-8000-000000000402';
 const SPOT_A1_ID = '00000000-0000-4000-8000-0000000003a1';
 const SPOT_B3_ID = '00000000-0000-4000-8000-0000000003b3';

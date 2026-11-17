@@ -5,7 +5,7 @@ import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { createTestClock } from '../../src/domain/time/TestClock.ts';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { ENTREE_DEMO_ID, SORTIE_DEMO_ID } from '../../src/seed/fixtures/gates.ts';
-import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
+import { AISLE_A_ID, PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { configureServer } from './configureServer.ts';
 import { acceptNoticeAs, authorizationFor, julie } from './fakeDriverRepository.ts';
 import { nouvelOperateur, sophie } from './fakes/dashboardFixtures.ts';
@@ -15,7 +15,6 @@ import { ENTREE_DEMO_KEY, entreeDemo, FakeEquipmentReports } from './fakes/gateF
 import { fakeGateDependencies, serverDependencies } from './fakes/serverDependencies.ts';
 
 const SERVER_INSTANT = new Date('2026-11-13T19:05:00Z');
-const AISLE_A_ID = '00000000-0000-4000-8000-000000000401';
 const LOT_NOT_FOUND = { statusCode: 404, error: 'LOT_NOT_FOUND', message: 'No such lot.' };
 
 function secondsFromServerInstant(seconds: number): Date {
