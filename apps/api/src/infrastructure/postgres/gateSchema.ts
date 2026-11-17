@@ -1,4 +1,5 @@
-import { boolean, foreignKey, index, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { boolean, check, foreignKey, index, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { GATE_KINDS } from '@palier/shared-types/gates';
 import { parkingLot } from './lotSchema.ts';
 
@@ -53,6 +54,7 @@ export const gatePassage = pgTable(
     closedAt: timestamp('closed_at', { withTimezone: true }).notNull(),
     recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
     replayId: uuid('replay_id'),
+    armedAt: timestamp('armed_at', { withTimezone: true }),
   },
   (table) => [
     foreignKey({
@@ -62,5 +64,7 @@ export const gatePassage = pgTable(
     }),
     index('gate_passage_gate_id_recorded_at_index').on(table.gateId, table.recordedAt),
     uniqueIndex('gate_passage_gate_id_replay_id_unique').on(table.gateId, table.replayId),
+    check('gate_passage_armed_before_closed', sql`${table.armedAt} is null or ${table.armedAt} <= ${table.closedAt}`),
+    index('gate_passage_presence_index').on(table.gateId, table.closedAt).where(sql`${table.armedAt} is not null`),
   ],
 );
