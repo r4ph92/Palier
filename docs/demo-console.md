@@ -105,7 +105,8 @@ Décision : `docs/decisions/044`.
 ## Utiliser la console
 
 1. Coller une clé dans « Clé d'appareil ». La clé ne quitte jamais la page :
-   ni URL, ni stockage du navigateur.
+   ni URL, ni stockage du navigateur. Seule la langue choisie est mémorisée
+   (`localStorage`), pour qu'un rechargement garde l'anglais.
 2. Appuyer sur « Boucle d'entrée fermée » ou « Boucle de sortie fermée ». Au
    premier appui, la console identifie la barrière (`GET /v1/gates/me`), affiche
    son nom, son sens et son parking, puis désactive le bouton de l'autre sens.

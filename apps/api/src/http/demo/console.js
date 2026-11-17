@@ -18,6 +18,7 @@ import {
 } from './consoleRender.js';
 import { pressLoop } from './loopPress.js';
 import { clearQueue, hasPendingPassages, isToggleAvailable, pressLoopWhileOffline, statusMessageOf, toggleOffline } from './offlineControls.js';
+import { restoredLanguage, saveLanguage } from './languageStorage.js';
 import { restoredConnection, saveConnection } from './queueStorage.js';
 import { readingMessage, sendReading } from './readerRead.js';
 import { sendTestPassage, testPassageMessage } from './testPassage.js';
@@ -37,7 +38,7 @@ const api = createGateApi(window.fetch.bind(window));
 const initialConnection = restoredConnection(window.sessionStorage);
 
 const state = {
-  /** @type {Language} */ language: 'fr',
+  /** @type {Language} */ language: restoredLanguage(window.localStorage),
   deviceKey: '',
   /** @type {GateIdentity | null} */ identity: null,
   /** @type {GatePassageResponse[]} */ passages: [],
@@ -187,6 +188,7 @@ for (const button of loopButtons) {
 for (const button of languageButtons) {
   button.addEventListener('click', () => {
     state.language = button.dataset['language'] === 'en' ? 'en' : 'fr';
+    saveLanguage(state.language, window.localStorage);
     render(state);
   });
 }
