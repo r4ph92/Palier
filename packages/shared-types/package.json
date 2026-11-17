@@ -105,6 +105,10 @@
       "types": "./src/sessionTimeline.ts",
       "default": "./src/sessionTimeline.ts"
     },
+    "./exitIdentifications": {
+      "types": "./src/exitIdentifications.ts",
+      "default": "./src/exitIdentifications.ts"
+    },
     "./staleSessions": {
       "types": "./src/staleSessions.ts",
       "default": "./src/staleSessions.ts"

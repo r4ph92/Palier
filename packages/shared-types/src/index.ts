@@ -28,6 +28,7 @@ export type {
   SpotCheckReason,
   StripeOnboardingLink,
 } from './dashboard.ts';
+export type { ExitShareMethod, LotExitShares } from './exitIdentifications.ts';
 export type { BatteryStatus, BeaconBatteryErrorCode, BeaconBatteryErrors, BeaconBatteryField, BeaconBatteryReading } from './beaconBattery.ts';
 export type { AisleDraft, AisleDraftErrorCode, AisleDraftErrors, AisleDraftField, AisleRequest } from './aisleDraft.ts';
 export type { AddSpotsRequest, SpotAttributes, SpotDraftErrorCode, SpotDraftErrors, SpotDraftField, SpotRange } from './spotDraft.ts';

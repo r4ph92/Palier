@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { AccountWebhookReader, OperatorStripeAccounts, OperatorStripeGateway } from '../domain/dashboard/OperatorStripe.ts';
 import type { GateSecretRepository } from '../domain/dashboard/GateSecretRepository.ts';
+import type { ExitIdentificationReader } from '../domain/dashboard/ExitIdentificationReader.ts';
 import type { LevelOccupancyReader } from '../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotEquipmentReader } from '../domain/dashboard/LotEquipmentReader.ts';
 import type { LotGateRepository } from '../domain/dashboard/LotGateRepository.ts';
@@ -74,6 +75,7 @@ export interface ServerDependencies {
     readonly spotChecks: SpotCheckRepository;
     readonly sessionTimelines: SessionTimelineRepository;
     readonly staleSessionReviews: StaleSessionReviewRepository;
+    readonly exitIdentifications: ExitIdentificationReader;
     readonly lotGates: LotGateRepository;
     readonly gateSecrets: GateSecretRepository;
     readonly lotPublication: LotPublicationRepository;
@@ -132,6 +134,7 @@ function lotFeatureRepositories(repositories: ServerDependencies['repositories']
     spotChecks: repositories.spotChecks,
     sessionTimelines: repositories.sessionTimelines,
     staleSessionReviews: repositories.staleSessionReviews,
+    exitIdentifications: repositories.exitIdentifications,
     gates: repositories.lotGates,
     gateSecrets: repositories.gateSecrets,
     publication: repositories.lotPublication,

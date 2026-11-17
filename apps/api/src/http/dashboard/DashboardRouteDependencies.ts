@@ -1,3 +1,4 @@
+import type { ExitIdentificationReader } from '../../domain/dashboard/ExitIdentificationReader.ts';
 import type { GateSecretRepository } from '../../domain/dashboard/GateSecretRepository.ts';
 import type { LevelOccupancyReader } from '../../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotEquipmentReader } from '../../domain/dashboard/LotEquipmentReader.ts';
@@ -34,6 +35,7 @@ export interface DashboardRouteDependencies {
   readonly spotChecks: SpotCheckRepository;
   readonly sessionTimelines: SessionTimelineRepository;
   readonly staleSessionReviews: StaleSessionReviewRepository;
+  readonly exitIdentifications: ExitIdentificationReader;
   readonly gates: LotGateRepository;
   readonly gateSecrets: GateSecretRepository;
   readonly publication: LotPublicationRepository;
