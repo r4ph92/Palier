@@ -232,7 +232,7 @@ lot : voir la décision 031.
 
 - `GET /v1/gates/me` : `{ id, name, kind, lotName }` de la barrière de la clé.
 - `POST /v1/gates/:id/passages/replay`, corps `{ "passages": [{ "id": "<uuid>", "kind": "ENTRY" | "EXIT", "closedAt": "<ISO 8601>" }] }` (1 à 500) : `{ counted, duplicates, vehicleCount }`. Compte seulement : aucune session confirmée ni sortie rattachée. 403 `GATE_FORBIDDEN`, 409 `REPLAY_KIND_MISMATCH`, 400 `REPLAY_IDS_REPEATED`, `CLOSED_AT_TOO_OLD`.
-- `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>", "armedAt"?: "<ISO 8601>" }` (`armedAt` : la boucle d'armement, gardé s'il précède `closedAt`, voir `docs/decisions/044`) :
+- `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>", "armedAt"?: "<ISO 8601>" }` (`armedAt` : la boucle d'armement, gardé s'il précède `closedAt` d'au plus 7 jours, mal formé : 400, voir `docs/decisions/044`) :
   `{ gateId, lotId, kind, closedAt, vehicleCount, confirmedSessionId, exitedSessionId }`.
   `confirmedSessionId` est la session d'entrée que ce passage a confirmée (la plus
   ancienne ouverture de cette barrière émise dans les 60 secondes (`ENTRY_CONFIRMATION_WINDOW_SECONDS`) avant la réception du passage, mesurées

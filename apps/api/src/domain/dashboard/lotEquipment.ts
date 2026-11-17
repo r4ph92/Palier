@@ -1,10 +1,12 @@
 import type { DashboardGateHealth, DashboardLotEquipment } from '@palier/shared-types';
+import { PRESENCE_WINDOW_DAYS } from '@palier/shared-types/gates';
 import { gateHealthOf } from '../equipment/gateHealth.ts';
 import type { Clock } from '../time/Clock.ts';
+import { MILLISECONDS_PER_DAY } from '../time/durations.ts';
 import type { LotEquipmentReader, StoredGate } from './LotEquipmentReader.ts';
 import { operatorIdOfMember, ownedLotOrNotFound, type MemberLot, type MemberOperators } from './memberOperator.ts';
 
-const PRESENCE_WINDOW_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
+const PRESENCE_WINDOW_MILLISECONDS = PRESENCE_WINDOW_DAYS * MILLISECONDS_PER_DAY;
 
 export interface LotEquipmentSources {
   readonly operators: MemberOperators;

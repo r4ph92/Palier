@@ -253,6 +253,6 @@ curl -X DELETE localhost:3000/v1/test/clock
 
 ## Temps de présence par voie (#77)
 
-- Règles et choix : `docs/decisions/044`. Migration 0044 : `gate_passage.armed_at`, `CHECK` et index partiel. `presenceArmingOf` (`domain/gates/passageRules.ts`) garde l'armement reçu seulement s'il est représentable et antérieur à la fermeture.
+- Règles et choix : `docs/decisions/044`. Migration 0044 : `gate_passage.armed_at`, `CHECK` et index partiel. `presenceArmingOf` (`domain/gates/passageRules.ts`) garde l'armement reçu seulement s'il est représentable et antérieur à la fermeture d'au plus 7 jours (`PRESENCE_WINDOW_DAYS`) ; un `armedAt` mal formé donne 400.
 - Lecture : `LotEquipmentReader.readGatePresence` (`readGatePresenceStatement`) fusionnée dans `domain/dashboard/lotEquipment.ts` ; la page Équipement affiche la ligne sous l'état de chaque barrière.
 - Console : `presenceArming.js` tient l'instant d'armement ; `postPassage` reçoit `{ closedAt, armedAt }`.
