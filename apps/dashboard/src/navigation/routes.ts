@@ -10,6 +10,7 @@ export type Route =
   | { readonly page: 'publication'; readonly lotId: string }
   | { readonly page: 'sessions'; readonly lotId: string }
   | { readonly page: 'staleSessions'; readonly lotId: string }
+  | { readonly page: 'exits'; readonly lotId: string }
   | { readonly page: 'session'; readonly lotId: string; readonly sessionId: string }
   | { readonly page: 'notFound' };
 
@@ -24,6 +25,7 @@ const GATES_PATH = /^\/lots\/([^/]+)\/gates\/?$/;
 const PUBLICATION_PATH = /^\/lots\/([^/]+)\/publication\/?$/;
 const SESSIONS_PATH = /^\/lots\/([^/]+)\/sessions\/?$/;
 const STALE_SESSIONS_PATH = /^\/lots\/([^/]+)\/stale-sessions\/?$/;
+const EXITS_PATH = /^\/lots\/([^/]+)\/exits\/?$/;
 const SESSION_PATH = /^\/lots\/([^/]+)\/sessions\/([^/]+)\/?$/;
 
 export function routeOf(pathname: string): Route {
@@ -51,6 +53,7 @@ const LOT_SUBPAGES = [
   ['publication', PUBLICATION_PATH],
   ['sessions', SESSIONS_PATH],
   ['staleSessions', STALE_SESSIONS_PATH],
+  ['exits', EXITS_PATH],
 ] as const;
 
 function lotSubpageOf(pathname: string): Route | null {
@@ -116,6 +119,10 @@ export function sessionsPath(lotId: string): string {
 
 export function staleSessionsPath(lotId: string): string {
   return `${lotPath(lotId)}/stale-sessions`;
+}
+
+export function exitsPath(lotId: string): string {
+  return `${lotPath(lotId)}/exits`;
 }
 
 export function sessionPath(lotId: string, sessionId: string): string {

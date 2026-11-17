@@ -8,6 +8,7 @@ import { seededGates } from './fakeGateData.ts';
 import { seededMaps } from './fakeMapData.ts';
 import { seededPublication } from './fakePublicationData.ts';
 import { seededSessions } from './fakeSessionData.ts';
+import { seededExitShares } from './fakeExitData.ts';
 import { seededStaleSessions } from './fakeStaleSessionData.ts';
 import { seededSpots, seededSpotsToCheck } from './fakeSpotData.ts';
 
@@ -22,7 +23,7 @@ interface FakeApiOptions {
 // Stands in for the API behind the Vite proxy: same paths, same status codes, same error bodies.
 export function installFakeApi({ signedInAs, testUsersListed = true, answers = {} }: FakeApiOptions = {}): FakeApiState {
   const me = signedInAs === undefined ? null : meFor(signedInAs);
-  const seeded = { lots: seededLots(), occupancy: seededOccupancy(), maps: seededMaps(), equipment: seededEquipment(), spots: seededSpots(), spotsToCheck: seededSpotsToCheck(), sessions: seededSessions(), staleSessions: seededStaleSessions(), gates: seededGates(), publication: seededPublication() };
+  const seeded = { lots: seededLots(), occupancy: seededOccupancy(), maps: seededMaps(), equipment: seededEquipment(), spots: seededSpots(), spotsToCheck: seededSpotsToCheck(), sessions: seededSessions(), staleSessions: seededStaleSessions(), exitShares: seededExitShares(), gates: seededGates(), publication: seededPublication() };
   const state: FakeApiState = { me, testUsersListed, requests: [], answers: new Map(Object.entries(answers)), answered: [], ...seeded };
   vi.stubGlobal('fetch', vi.fn((input: string, init?: RequestInit) => toResponse(state, routeRequest(state, input, init))));
   return state;

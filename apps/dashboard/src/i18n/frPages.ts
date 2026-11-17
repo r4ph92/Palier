@@ -1,3 +1,4 @@
+import { frExits } from './frExits.ts';
 import { frEquipment } from './frEquipment.ts';
 import { frGateErrors } from './frGateErrors.ts';
 import { frGates } from './frGates.ts';
@@ -12,6 +13,7 @@ export const frPageTexts = {
   spotsToCheck: frSpotsToCheck,
   sessions: frSessions,
   staleSessions: frStaleSessions,
+  exits: frExits,
   map: frMap,
   equipment: frEquipment,
   gates: frGates,

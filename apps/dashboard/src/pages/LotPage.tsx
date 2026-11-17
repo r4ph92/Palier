@@ -10,7 +10,7 @@ import { RetryableFailure, type RetryableFailureProps } from '../components/Retr
 import { formatCount, formatDegrees } from '../i18n/formatNumbers.ts';
 import type { Dictionary } from '../i18n/fr.ts';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
-import { equipmentPath, gatesPath, HOME_PATH, mapPath, occupancyPath, publicationPath, sessionsPath, spotsToCheckPath, staleSessionsPath } from '../navigation/routes.ts';
+import { equipmentPath, exitsPath, gatesPath, HOME_PATH, mapPath, occupancyPath, publicationPath, sessionsPath, spotsToCheckPath, staleSessionsPath } from '../navigation/routes.ts';
 import { NotFoundPage } from './NotFoundPage.tsx';
 import { PricingSection } from './PricingSection.tsx';
 
@@ -69,6 +69,7 @@ function linksOf(lotId: string, text: Dictionary): readonly (readonly [string, s
     [sessionsPath(lotId), text.sessions.link],
     [spotsToCheckPath(lotId), text.spotsToCheck.title],
     [staleSessionsPath(lotId), text.staleSessions.title],
+    [exitsPath(lotId), text.exits.title],
     [mapPath(lotId), text.lot.mapLink],
     [equipmentPath(lotId), text.lot.equipmentLink],
     [gatesPath(lotId), text.lot.gatesLink],
