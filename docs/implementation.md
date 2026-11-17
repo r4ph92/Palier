@@ -250,3 +250,9 @@ curl -X DELETE localhost:3000/v1/test/clock
 
 - Règles et choix : `docs/decisions/038`. Écrivains : `exitEventStatements.ts` (identification, capture, capture en attente) appelé par `PostgresExitRepository`, `storeOpenCommand` (toute ouverture et son `GATE_OPENED`), `PostgresPendingCaptureRepository.markPaid` (reprise), `PostgresPassageLedger` (boucle de sortie). `takePayment` (capture puis surplus, instant de la capture) sert le toucher et la reprise ; les sorties reçoivent l'horloge (`clock`), plus un instant figé.
 - Pour essayer : `npm run db:migrate` d'abord, horloge de test remise en temps réel (`DELETE /v1/test/clock`), sortie par « Ouvrir », par lecture de plaque ou par balise, boucle fermée à la console, puis la même requête sur `event_log`.
+
+## Temps de présence par voie (#77)
+
+- Règles et choix : `docs/decisions/044`. Migration 0044 : `gate_passage.armed_at`, `CHECK` et index partiel. `presenceArmingOf` (`domain/gates/passageRules.ts`) garde l'armement reçu seulement s'il est représentable et antérieur à la fermeture.
+- Lecture : `LotEquipmentReader.readGatePresence` (`readGatePresenceStatement`) fusionnée dans `domain/dashboard/lotEquipment.ts` ; la page Équipement affiche la ligne sous l'état de chaque barrière.
+- Console : `presenceArming.js` tient l'instant d'armement ; `postPassage` reçoit `{ closedAt, armedAt }`.
