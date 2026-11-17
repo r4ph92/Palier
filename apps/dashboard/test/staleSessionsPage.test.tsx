@@ -25,7 +25,7 @@ describe('the sessions with no exit page', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Sessions sans sortie — Parking Démo' })).toBeDefined();
     expect(screen.getByText('2 sessions sans sortie')).toBeDefined();
     expect(within(rowOf('JTR 482')).getByText('A-1')).toBeDefined();
-    expect(within(rowOf('JTR 482')).getByText(/P1 · allée.A/)).toBeDefined();
+    expect(rowOf('JTR 482').querySelector('.check-place')?.textContent).toMatch(/P1 · allée.A/);
     expect(within(rowOf('JTR 482')).getByText(/Entrée confirmée/)).toBeDefined();
     expect(within(rowOf('MGA 913')).getByText(/Présence confirmée/)).toBeDefined();
     expect(rowOf('JTR 482').querySelectorAll('time')).toHaveLength(2);
@@ -65,6 +65,23 @@ describe('the sessions with no exit page', () => {
     await screen.findByText(/Présence du véhicule JTR 482 confirmée/);
 
     expect(document.activeElement).toBe(presentButton('MGA 913'));
+  });
+
+  it('lets the confirmed status line wrap so it reflows at 375 px', async () => {
+    await openStaleSessions();
+
+    await userEvent.click(presentButton('JTR 482'));
+
+    const status = await screen.findByText(/Présence du véhicule JTR 482 confirmée/);
+    expect(status.closest('.state-mark')?.classList.contains('state-mark-sentence')).toBe(true);
+  });
+
+  it('keeps the spot number and the level and aisle codes whole at line breaks', async () => {
+    await openStaleSessions();
+
+    const cell = rowOf('JTR 482').querySelector('.check-place') as HTMLElement;
+    expect(within(cell).getByText('A-1').classList.contains('no-break')).toBe(true);
+    expect(within(cell).getByText('P1').classList.contains('no-break')).toBe(true);
   });
 
   it('shows the empty state and focuses the status line once the last vehicle is confirmed', async () => {
