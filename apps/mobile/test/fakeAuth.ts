@@ -3,6 +3,7 @@ import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { PalierUnauthorizedError, type AuthClient } from '../src/api/AuthClient';
 import { PalierUnreachableError } from '../src/api/LotsClient';
 import type { TokenStore } from '../src/auth/TokenStore';
+import type { TestSignInClient } from '../src/testSignIn/TestSignInClient';
 
 export const julie: DriverProfile = { id: '00000000-0000-4000-8000-000000000501', firstName: 'Julie' };
 export const testDrivers: TestDriverListResponse = [
@@ -13,21 +14,10 @@ export const testDrivers: TestDriverListResponse = [
 export class FakeAuthClient implements AuthClient {
   validTokens = new Set<string>();
   isReachable = true;
-  driversListIsReachable = true;
   acceptIsReachable = true;
   acceptedNoticeVersion: string | null = PRIVACY_NOTICE_VERSION;
   acceptedNotices: string[] = [];
   signedOutTokens: string[] = [];
-
-  listTestDrivers(): Promise<TestDriverListResponse> {
-    return this.driversListIsReachable ? Promise.resolve(testDrivers) : Promise.reject(new PalierUnreachableError('fake'));
-  }
-
-  signInAsTestDriver(driverId: string): Promise<SignInResponse> {
-    const token = `${driverId}-token`;
-    this.validTokens.add(token);
-    return Promise.resolve({ token, driver: julie });
-  }
 
   fetchMe(token: string): Promise<CurrentDriver> {
     if (!this.isReachable) {
@@ -53,6 +43,25 @@ export class FakeAuthClient implements AuthClient {
     this.signedOutTokens.push(token);
     this.validTokens.delete(token);
     return Promise.resolve();
+  }
+}
+
+export class FakeTestSignInClient implements TestSignInClient {
+  driversListIsReachable = true;
+  readonly #authClient: FakeAuthClient;
+
+  constructor(authClient: FakeAuthClient) {
+    this.#authClient = authClient;
+  }
+
+  listTestDrivers(): Promise<TestDriverListResponse> {
+    return this.driversListIsReachable ? Promise.resolve(testDrivers) : Promise.reject(new PalierUnreachableError('fake'));
+  }
+
+  signInAsTestDriver(driverId: string): Promise<SignInResponse> {
+    const token = `${driverId}-token`;
+    this.#authClient.validTokens.add(token);
+    return Promise.resolve({ token, driver: julie });
   }
 }
 

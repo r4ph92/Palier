@@ -13,7 +13,7 @@ export type SessionState =
 
 export interface SessionController {
   readonly state: SessionState;
-  signIn(driverId: string): Promise<void>;
+  signIn(token: string): Promise<void>;
   acceptNotice(): Promise<void>;
   signOut(): Promise<void>;
   expire(): void;
@@ -93,8 +93,7 @@ function useRefreshDriver(authClient: AuthClient, setState: Dispatch<SetStateAct
 
 function useSignIn(authClient: AuthClient, tokenStore: TokenStore, setState: Dispatch<SetStateAction<SessionState>>) {
   return useCallback(
-    async (driverId: string) => {
-      const { token } = await authClient.signInAsTestDriver(driverId);
+    async (token: string) => {
       const driver = await authClient.fetchMe(token);
       await tokenStore.save(token);
       setState({ status: 'signedIn', token, driver });

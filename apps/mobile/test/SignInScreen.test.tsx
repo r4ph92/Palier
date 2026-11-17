@@ -4,7 +4,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PalierStatusError } from '../src/api/LotsClient';
 import { applyLanguage, type SupportedLanguage } from '../src/i18n/i18n';
 import { SignInScreen } from '../src/screens/SignInScreen';
-import { FakeAuthClient, julie } from './fakeAuth';
+import { TestSignInSection } from '../src/testSignIn/TestSignInSection';
+import { FakeAuthClient, FakeTestSignInClient, julie } from './fakeAuth';
 
 const SAFE_AREA_METRICS = {
   frame: { x: 0, y: 0, width: 393, height: 852 },
@@ -14,17 +15,18 @@ const SAFE_AREA_METRICS = {
 interface RenderOptions {
   readonly testSignInEnabled?: boolean;
   readonly language?: SupportedLanguage;
-  readonly authClient?: FakeAuthClient;
+  readonly testSignInClient?: FakeTestSignInClient;
   readonly onSignIn?: (driverId: string) => Promise<void>;
 }
 
 async function renderSignInScreen(options: RenderOptions = {}) {
   applyLanguage(options.language ?? 'fr');
+  const client = options.testSignInClient ?? new FakeTestSignInClient(new FakeAuthClient());
+  const testSignIn = (options.testSignInEnabled ?? true) ? { Section: TestSignInSection, client } : null;
   return render(
     <SafeAreaProvider initialMetrics={SAFE_AREA_METRICS}>
       <SignInScreen
-        testSignInEnabled={options.testSignInEnabled ?? true}
-        authClient={options.authClient ?? new FakeAuthClient()}
+        testSignIn={testSignIn}
         onSignIn={options.onSignIn ?? (() => Promise.resolve())}
       />
     </SafeAreaProvider>,
@@ -49,30 +51,30 @@ describe('SignInScreen with test sign-in enabled', () => {
     await user.press(screen.getByRole('button', { name: 'Connexion de test' }));
     await user.press(await screen.findByRole('button', { name: 'Julie Tremblay' }));
 
-    expect(onSignIn).toHaveBeenCalledWith(julie.id);
+    expect(onSignIn).toHaveBeenCalledWith(`${julie.id}-token`);
   });
 
   it('offers to try again when the drivers cannot be loaded', async () => {
-    const authClient = new FakeAuthClient();
-    authClient.driversListIsReachable = false;
-    await renderSignInScreen({ authClient });
+    const testSignInClient = new FakeTestSignInClient(new FakeAuthClient());
+    testSignInClient.driversListIsReachable = false;
+    await renderSignInScreen({ testSignInClient });
     const user = userEvent.setup();
 
     await user.press(screen.getByRole('button', { name: 'Connexion de test' }));
     expect(await screen.findByText('Impossible de joindre Palier.')).toBeOnTheScreen();
 
-    authClient.driversListIsReachable = true;
+    testSignInClient.driversListIsReachable = true;
     await user.press(screen.getByRole('button', { name: 'Réessayer' }));
 
     expect(await screen.findByRole('button', { name: 'Julie Tremblay' })).toBeOnTheScreen();
   });
 
   it('says a driver removed by a reseed no longer exists, and lists the drivers again', async () => {
-    const authClient = new FakeAuthClient();
-    const listDrivers = jest.spyOn(authClient, 'listTestDrivers');
+    const testSignInClient = new FakeTestSignInClient(new FakeAuthClient());
+    const listDrivers = jest.spyOn(testSignInClient, 'listTestDrivers');
     const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
     const onSignIn = jest.fn(() => Promise.reject(new PalierStatusError(404)));
-    await renderSignInScreen({ authClient, onSignIn });
+    await renderSignInScreen({ testSignInClient, onSignIn });
     const user = userEvent.setup();
 
     await user.press(screen.getByRole('button', { name: 'Connexion de test' }));
