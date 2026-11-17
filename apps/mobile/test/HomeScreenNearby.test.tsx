@@ -1,4 +1,5 @@
-import { screen, within } from '@testing-library/react-native';
+import { act, screen, within } from '@testing-library/react-native';
+import { PLACEHOLDER_DELAY_MILLISECONDS } from '../src/components/LotListLoading';
 import { NO_BREAK_SPACE } from '../src/i18n/spaces';
 import { AccessibilityInfo } from 'react-native';
 import { FakeDeviceLocationClient, LOCATION_DENIED_NOTICE_FR } from './fakeDeviceLocationClient';
@@ -34,9 +35,13 @@ describe('HomeScreen with location allowed', () => {
   });
 
   it('shows placeholder rows shaped like a lot while the position is asked', async () => {
+    jest.useFakeTimers();
     await renderHomeScreen(new FakeLotsClient([parkingDemo(10)]), 'fr', new FakeDeviceLocationClient('pending'));
 
+    await act(() => jest.advanceTimersByTime(PLACEHOLDER_DELAY_MILLISECONDS));
+
     expect(screen.getAllByTestId('lot-placeholder')).toHaveLength(3);
+    jest.useRealTimers();
   });
 
   it('leaves out a lot further than 10 km', async () => {
