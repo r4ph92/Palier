@@ -1,3 +1,4 @@
+import type { ParkingSessionRepository } from '../entries/ParkingSessionRepository.ts';
 import { findDriverPrerequisites, type DriverPrerequisiteSources } from '../drivers/driverPrerequisites.ts';
 import { checkLotTerms } from '../lots/lotTerms.ts';
 import type { EntryPolicy } from '../payments/EntryPolicy.ts';
@@ -7,7 +8,8 @@ import type { SpotHoldLot, SpotHoldRepository } from './SpotHoldRepository.ts';
 
 export interface SpotHoldEligibilityDependencies {
   readonly prerequisites: DriverPrerequisiteSources;
-  readonly spotHolds: Pick<SpotHoldRepository, 'findActiveSpotHold' | 'findSpotHoldLot' | 'isInsideALot'>;
+  readonly spotHolds: Pick<SpotHoldRepository, 'findActiveSpotHold' | 'findSpotHoldLot'>;
+  readonly sessions: Pick<ParkingSessionRepository, 'hasActiveSession'>;
   readonly policy: EntryPolicy;
 }
 
@@ -33,7 +35,7 @@ export class SpotHoldEligibility {
     if ((await this.#dependencies.spotHolds.findActiveSpotHold(driverId)) !== null) {
       throw new SpotHoldRefusedError('HOLD_ALREADY_EXISTS');
     }
-    if (await this.#dependencies.spotHolds.isInsideALot(driverId)) {
+    if (await this.#dependencies.sessions.hasActiveSession(driverId)) {
       throw new SpotHoldRefusedError('ALREADY_INSIDE');
     }
     this.#ensureLotTakesSpotHolds(await this.#dependencies.spotHolds.findSpotHoldLot(lotId));

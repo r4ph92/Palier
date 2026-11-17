@@ -3,7 +3,6 @@ import { decideSpotHoldRequest } from '../../domain/spotHolds/decideSpotHoldRequ
 import type { SpotHold } from '../../domain/spotHolds/SpotHold.ts';
 import { SpotHoldRefusedError } from '../../domain/spotHolds/SpotHoldRefusedError.ts';
 import type { SpotHoldDraft, SpotHoldExpiry, SpotHoldLot, SpotHoldRelease, SpotHoldRepository, UsableSpotHoldQuery } from '../../domain/spotHolds/SpotHoldRepository.ts';
-import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import { ACTIVE_SPOT_HOLD, usableSpotHold } from './activeSpotHold.ts';
 import type { Database, Transaction } from './database.ts';
 import { inLotLock, LOT_LOCK_TRANSACTION, lockParkingLot, orLotBusyError, type LockedParkingLot } from './lockParkingLot.ts';
@@ -55,11 +54,6 @@ export class PostgresSpotHoldRepository implements SpotHoldRepository {
 
   async hasUsableSpotHold(query: UsableSpotHoldQuery): Promise<boolean> {
     const rows = await this.#database.execute(sql`select 1 from spot_hold where ${usableSpotHold(query)} limit 1`);
-    return rows.length > 0;
-  }
-
-  async isInsideALot(driverId: string): Promise<boolean> {
-    const rows = await this.#database.execute(sql`select 1 from parking_session where user_id = ${driverId} and ${ACTIVE_SESSION} limit 1`);
     return rows.length > 0;
   }
 

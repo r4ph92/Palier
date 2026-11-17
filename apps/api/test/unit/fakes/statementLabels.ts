@@ -19,7 +19,7 @@ export type StatementLabel =
   | 'read-held-spot'
   | 'use-spot-hold'
   | 'has-usable-spot-hold'
-  | 'read-driver-inside-a-lot'
+  | 'read-driver-active-session'
   | 'assign-held-spot'
   | 'free-held-spot'
   | 'find-stale-session-lots'
@@ -181,6 +181,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-active-spot-hold', /from \(select id, lot_id, expires_at from spot_hold/],
   ['read-spot-hold-lot', /join operator on/],
   ['read-spot-hold-facts', /as active_holds_in_lot/],
+  ['read-driver-active-session', /^select 1 from parking_session where user_id = \$\d and state in/],
   ['insert-spot-hold', /insert into spot_hold/],
   ['release-lot-spot-holds', /update spot_hold set status = 'RELEASED'\s+where lot_id/],
   ['release-spot-hold', /update spot_hold set status = 'RELEASED'/],
@@ -188,7 +189,6 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['expire-spot-holds', /update spot_hold set status = 'EXPIRED'/],
   ['use-spot-hold', /update spot_hold set status = 'USED'/],
   ['read-held-spot', /from \(select id, spot_id from spot_hold/],
-  ['read-driver-inside-a-lot', /select 1 from parking_session where user_id = \$\d and state in/],
   ['has-usable-spot-hold', /select 1 from spot_hold/],
   ['free-held-spot', /update spot set/],
   ['log-entry-without-loop', /insert into event_log[\s\S]*'NO_LOOP'/],

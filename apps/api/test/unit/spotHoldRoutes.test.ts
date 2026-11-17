@@ -4,10 +4,13 @@ import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { configureServer } from './configureServer.ts';
-import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie, marc } from './fakeDriverRepository.ts';
+import { acceptNoticeAs, authorizationFor, FakeDriverRepository, marc } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
-import { STRICT_POLICY } from './fakes/entryGateFakes.ts';
+import { ENTREE_DEMO_SECRET, entreeDemoGate, STRICT_POLICY } from './fakes/entryGateFakes.ts';
+import { FakeParkingSessionRepository, fakeSessionId } from './fakes/fakeParkingSessions.ts';
+import type { FakeEntries } from './fakes/entryFakes.ts';
+import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { FakeSpotHoldRepository, fakeSpotHoldId } from './fakes/fakeSpotHolds.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 import { fakeRepositories, serverDependencies } from './fakes/serverDependencies.ts';
@@ -57,15 +60,33 @@ describe('POST /v1/lots/:id/holds', () => {
     expect(spotHolds.drafts).toHaveLength(1);
   });
 
-  it('answers 409 ALREADY_INSIDE to a driver inside a lot and places no hold', async () => {
-    const { hold, spotHolds } = await startWithJulieReady();
-    spotHolds.putInside(julie.id);
+  describe('with an entry of her own', () => {
+    const entreeDemoQr = gateQrLink(entreeDemoGate.id, ENTREE_DEMO_SECRET);
 
-    const response = await hold();
+    it.each([
+      ['an entry in progress', () => undefined, 409],
+      ['a confirmed entry', (entries: FakeEntries) => entries.sessions.confirmEntry(fakeSessionId(1), AT_14_02), 409],
+      ['an entry cancelled for lack of passage', (entries: FakeEntries) => entries.sessions.cancelIfCreated(fakeSessionId(1)), 201],
+    ])('answers a hold after %s with %i', async (_case, change, statusCode) => {
+      const { hold, entries, server: running, headers } = await startWithJulieReady();
+      const entered = await running.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr } });
+      expect(entered.statusCode).toBe(201);
+      change(entries);
 
-    expect(response.statusCode).toBe(409);
-    expect(response.json()).toEqual({ statusCode: 409, error: 'ALREADY_INSIDE', message: 'You are already in a parking lot.' });
-    expect(spotHolds.drafts).toHaveLength(0);
+      const response = await hold();
+
+      expect(response.statusCode).toBe(statusCode);
+    });
+
+    it('answers 409 ALREADY_INSIDE with its message and places no hold', async () => {
+      const { hold, spotHolds, server: running, headers } = await startWithJulieReady();
+      await running.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr } });
+
+      const response = await hold();
+
+      expect(response.json()).toEqual({ statusCode: 409, error: 'ALREADY_INSIDE', message: 'You are already in a parking lot.' });
+      expect(spotHolds.drafts).toHaveLength(0);
+    });
   });
 
   it.each([
@@ -144,7 +165,7 @@ describe('POST /v1/lots/:id/holds', () => {
     const leaking = new FakeSpotHoldRepository();
     const place = leaking.placeSpotHold.bind(leaking);
     leaking.placeSpotHold = async (draft) => Object.assign(await place(draft), { spotNumber: 'A-1' });
-    server = buildServer(serverDependencies({ repositories: fakeRepositories({ driverRepository, vehicleRepository }), spotHolds: spotHoldServicesOf(leaking, { vehicles: vehicleRepository, drivers: driverRepository }, STRICT_POLICY) }));
+    server = buildServer(serverDependencies({ repositories: fakeRepositories({ driverRepository, vehicleRepository }), spotHolds: spotHoldServicesOf({ repository: leaking, prerequisites: { vehicles: vehicleRepository, drivers: driverRepository }, sessions: new FakeParkingSessionRepository(), policy: STRICT_POLICY }) }));
     const headers = await readyDriver(driverRepository, vehicleRepository);
 
     const response = await server.inject({ method: 'POST', url: `/v1/lots/${PARKING_DEMO_ID}/holds`, headers });

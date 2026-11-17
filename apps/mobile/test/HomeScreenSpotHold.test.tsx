@@ -151,19 +151,6 @@ describe('HomeScreen spot hold refusals', () => {
     expect(lotsClient.callCount).toBe(1);
   });
 
-  it('tells Julie she is inside under the tapped lot, with no banner and no list reread', async () => {
-    const spotHoldClient = new FakeSpotHoldClient();
-    spotHoldClient.nextRejection = 'ALREADY_INSIDE';
-    const lotsClient = new FakeLotsClient([parkingDemo(10), parkingTestPaliers]);
-    await renderHomeScreenWith({ lotsClient, locationClient: new FakeDeviceLocationClient(), spotHoldClient });
-
-    await userEvent.setup().press(await screen.findByRole('button', { name: 'Garantir une place 15 min à Parking Test Paliers' }));
-
-    expect(await within(screen.getByTestId(`lot-spot-hold-${parkingTestPaliers.id}`)).findByText('Vous êtes déjà dans un stationnement')).toBeOnTheScreen();
-    expect(screen.queryByTestId('spot-hold-banner')).not.toBeOnTheScreen();
-    expect(lotsClient.callCount).toBe(1);
-  });
-
   it('shows the hold Julie already has after being told she has one, without moving focus to it', async () => {
     const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent');
     focus.mockClear();

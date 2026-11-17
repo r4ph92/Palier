@@ -6,10 +6,11 @@ import { SpotHoldEligibility } from '../../src/domain/spotHolds/SpotHoldEligibil
 import { SpotHoldRefusedError } from '../../src/domain/spotHolds/SpotHoldRefusedError.ts';
 import type { SpotHoldLot } from '../../src/domain/spotHolds/SpotHoldRepository.ts';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
-import { FakeDriverRepository, julie } from './fakeDriverRepository.ts';
+import { FakeDriverRepository, julie, marc } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository, standardNeeds } from './fakeVehicleRepository.ts';
 import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
-import { STRICT_POLICY } from './fakes/entryGateFakes.ts';
+import { PARKING_DEMO_POLICY, STRICT_POLICY } from './fakes/entryGateFakes.ts';
+import { FakeParkingSessionRepository, fakeSessionId } from './fakes/fakeParkingSessions.ts';
 import { FakeSpotHoldRepository, parkingDemoSpotHoldLot } from './fakes/fakeSpotHolds.ts';
 
 const UNKNOWN_LOT_ID = '00000000-0000-4000-8000-000000000299';
@@ -19,9 +20,10 @@ interface Setup {
   readonly card?: boolean;
   readonly lots?: readonly SpotHoldLot[];
   readonly policy?: EntryPolicy;
+  readonly sessions?: FakeParkingSessionRepository;
 }
 
-async function eligibilityFor({ plate = true, card = true, lots, policy = STRICT_POLICY }: Setup = {}) {
+async function eligibilityFor({ plate = true, card = true, lots, policy = STRICT_POLICY, sessions = new FakeParkingSessionRepository() }: Setup = {}) {
   const drivers = new FakeDriverRepository();
   const vehicles = new FakeVehicleRepository();
   const spotHolds = new FakeSpotHoldRepository(lots);
@@ -32,7 +34,7 @@ async function eligibilityFor({ plate = true, card = true, lots, policy = STRICT
     await drivers.saveStripeCustomerIdIfMissing(julie.id, 'cus_julie');
     await drivers.saveSavedCard(julie.id, 'pm_julie', { brand: 'visa', last4: '4242' });
   }
-  return { spotHolds, eligibility: new SpotHoldEligibility({ prerequisites: { vehicles, drivers }, spotHolds, policy }) };
+  return { spotHolds, eligibility: new SpotHoldEligibility({ prerequisites: { vehicles, drivers }, spotHolds, sessions, policy }) };
 }
 
 async function refusalOf(eligibility: SpotHoldEligibility, lotId = PARKING_DEMO_ID): Promise<SpotHoldRefusedError | undefined> {
@@ -66,27 +68,39 @@ describe('spot hold eligibility', () => {
     expect((await refusalOf(eligibility))?.reason).toBe('HOLD_ALREADY_EXISTS');
   });
 
-  it('refuses a driver inside a lot as ALREADY_INSIDE, whichever lot she asks for', async () => {
-    const { eligibility, spotHolds } = await eligibilityFor();
-    spotHolds.putInside(julie.id);
+  describe('a driver with an entry', () => {
+    async function sessionsWithEntryOf(driverId: string, lotId = PARKING_DEMO_ID): Promise<FakeParkingSessionRepository> {
+      const sessions = new FakeParkingSessionRepository();
+      await sessions.openOrReplay({ driverId, now: new Date(), vehicleId: 'vehicle-1', plate: 'ABC 123', needs: standardNeeds, lotId, entryGateId: 'gate-1', authorizedCents: 2500, pricing: { ...PARKING_DEMO_POLICY, dailyCapCents: 2500 }, cardLast4: '4242' });
+      return sessions;
+    }
 
-    expect((await refusalOf(eligibility))?.reason).toBe('ALREADY_INSIDE');
-    expect((await refusalOf(eligibility, GARAGE_ROY_ID))?.reason).toBe('ALREADY_INSIDE');
-  });
+    it.each([[PARKING_DEMO_ID], [GARAGE_ROY_ID]])('refuses Julie inside a lot as ALREADY_INSIDE when she asks for lot %s', async (lotId) => {
+      const { eligibility } = await eligibilityFor({ sessions: await sessionsWithEntryOf(julie.id) });
 
-  it('grants a driver whose own session is not active even when another driver is inside', async () => {
-    const { eligibility, spotHolds } = await eligibilityFor();
-    spotHolds.putInside('driver-marc');
+      expect((await refusalOf(eligibility, lotId))?.reason).toBe('ALREADY_INSIDE');
+    });
 
-    expect(await refusalOf(eligibility)).toBeUndefined();
-  });
+    it('grants Julie while only Marc has an open entry', async () => {
+      const { eligibility } = await eligibilityFor({ sessions: await sessionsWithEntryOf(marc.id) });
 
-  it('keeps HOLD_ALREADY_EXISTS ahead of ALREADY_INSIDE', async () => {
-    const { eligibility, spotHolds } = await eligibilityFor();
-    await spotHolds.placeSpotHold({ driverId: julie.id, lotId: PARKING_DEMO_ID, needs: standardNeeds, createdAt: new Date(), expiresAt: new Date() });
-    spotHolds.putInside(julie.id);
+      expect(await refusalOf(eligibility)).toBeUndefined();
+    });
 
-    expect((await refusalOf(eligibility))?.reason).toBe('HOLD_ALREADY_EXISTS');
+    it('grants Julie once her entry was cancelled', async () => {
+      const sessions = await sessionsWithEntryOf(julie.id);
+      sessions.cancelIfCreated(fakeSessionId(1));
+      const { eligibility } = await eligibilityFor({ sessions });
+
+      expect(await refusalOf(eligibility)).toBeUndefined();
+    });
+
+    it('keeps HOLD_ALREADY_EXISTS ahead of ALREADY_INSIDE', async () => {
+      const { eligibility, spotHolds } = await eligibilityFor({ sessions: await sessionsWithEntryOf(julie.id, GARAGE_ROY_ID) });
+      await spotHolds.placeSpotHold({ driverId: julie.id, lotId: PARKING_DEMO_ID, needs: standardNeeds, createdAt: new Date(), expiresAt: new Date() });
+
+      expect((await refusalOf(eligibility))?.reason).toBe('HOLD_ALREADY_EXISTS');
+    });
   });
 
   it('refuses missing prerequisites before looking at the lot', async () => {
