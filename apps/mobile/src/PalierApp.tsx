@@ -17,13 +17,14 @@ import { AppUpdateRequiredScreen } from './screens/AppUpdateRequiredScreen';
 import { PrivacyNoticeScreen } from './screens/PrivacyNoticeScreen';
 import { SignedInTabs } from './screens/SignedInTabs';
 import { SignInScreen } from './screens/SignInScreen';
+import type { TestSignIn } from './testSignIn/TestSignIn';
 import { useColors } from './theme/useColors';
 import { spacing } from './theme/tokens';
 
 export interface PalierAppProps {
   readonly authClient: AuthClient;
   readonly tokenStore: TokenStore;
-  readonly testSignInEnabled: boolean;
+  readonly testSignIn: TestSignIn | null;
   readonly createSignedInClients: CreateSignedInClients;
   readonly developerEntry?: DeveloperEntry | undefined;
   readonly positioning?: PositioningCore | undefined;
@@ -45,7 +46,7 @@ export function PalierApp(props: PalierAppProps) {
     case 'unreachable':
       return <StartupError onRetry={session.retry} />;
     case 'signedOut':
-      return <SignInScreen testSignInEnabled={props.testSignInEnabled} authClient={props.authClient} onSignIn={session.signIn} />;
+      return <SignInScreen testSignIn={props.testSignIn} onSignIn={session.signIn} />;
     case 'signedIn':
       return <SignedInApp signedIn={state} session={session} createClients={props.createSignedInClients} device={deviceOf(props, fallbackSignals)} />;
   }

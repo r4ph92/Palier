@@ -12,3 +12,4 @@ Le positionnement (balises, détection du stationnement) passera par des modules
 - Le panneau n'existe que dans un bundle de développement ; la preuve est un `expo export` sans aucune occurrence des identifiants du panneau (vérifié en QA et par le pentest).
 - Les stories #19/#20 implémentent `PositioningModule` sans toucher au cœur ni au panneau.
 - Un abonné défaillant ne bloque ni les autres ni le rappel natif.
+- La connexion de test suit le même schéma (`apps/mobile/src/testSignIn/`, décision 004) ; la même vérification s'applique : aucune occurrence de « Connexion de test », « Test sign-in », `/v1/test/drivers` ni `/v1/test/sign-in` dans l'export.

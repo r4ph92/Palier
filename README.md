@@ -206,6 +206,27 @@ exécute exactement les mêmes étapes. Après un changement du schéma
 (`apps/api/src/infrastructure/postgres/schema.ts`), générer la migration avec
 `npm run db:generate --workspace @palier/api`.
 
+### Build de production
+
+```
+cd apps/mobile
+npx expo export --platform ios --output-dir <dossier-hors-du-dépôt>
+```
+
+L'export produit un bundle où `__DEV__` est faux : la connexion de test
+(« Connexion de test », `/v1/test/drivers`, `/v1/test/sign-in`) n'existe que dans
+un bundle de développement, quel que soit `EXPO_PUBLIC_TEST_SIGN_IN` dans `.env`
+(décision 004). Il en va de même du panneau « Signaux simulés » (décision 008).
+Vérifier l'export :
+
+```
+grep -r -e "Connexion de test" -e "Test sign-in" -e "/v1/test/" <dossier-hors-du-dépôt>   # aucun résultat
+```
+
+`npx expo export:embed` produit un bundle de développement par défaut : lui passer
+`--dev false`. Dans la barrière, `testSignInReleaseGraph.test.ts` vérifie que le graphe
+du bundle de production ne contient pas la connexion de test.
+
 ## Documents
 
 | # | Document | Contenu |
