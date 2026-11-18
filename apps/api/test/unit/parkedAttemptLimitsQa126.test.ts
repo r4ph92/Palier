@@ -4,7 +4,7 @@ import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { PARKED_ANSWER_LIMIT, PARKED_ATTEMPT_WINDOW_MILLISECONDS, PARKED_SIGNAL_LIMIT } from '../../src/domain/parkingSessions/parkedAttemptLimits.ts';
 import { configureServer } from './configureServer.ts';
 import { acceptNoticeAs, authorizationFor, julie, marc } from './fakeDriverRepository.ts';
-import { ENTREE_DEMO_SECRET, entreeDemoGate } from './fakes/entryFakes.ts';
+import { ACCEPTED_DEMO_TARIFF, ENTREE_DEMO_SECRET, entreeDemoGate } from './fakes/entryFakes.ts';
 import { JULIE_SESSION_ID } from './fakes/fakeCurrentParkingSessions.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 import { julieSessionIn, julieWithAnsweringSession } from './parkedAnswerRig.ts';
