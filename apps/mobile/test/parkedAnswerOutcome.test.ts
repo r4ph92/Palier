@@ -8,6 +8,7 @@ describe('what a refused spot answer leads to (story #21)', () => {
     ['UNKNOWN_SPOT', 'UNKNOWN_SPOT'],
     ['SPOT_TAKEN', 'SPOT_TAKEN'],
     ['SPOT_OUT_OF_SERVICE', 'SPOT_OUT_OF_SERVICE'],
+    ['SPOT_NOT_SUITABLE', 'SPOT_NOT_SUITABLE'],
   ])('shows %s as %s', (code, problem) => {
     expect(parkedAnswerOutcomeOf(new PalierRejectedError(code))).toEqual({ kind: 'problem', problem });
   });

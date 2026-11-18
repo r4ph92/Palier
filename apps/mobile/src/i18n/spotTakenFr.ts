@@ -8,6 +8,6 @@ export const spotTakenFr = {
   cancel: 'Garder %{number}',
   sending: SENDING,
   newSpotLead: 'Nouvelle place\u00A0: ',
-  noneFree: 'Aucune autre place libre\u00A0— garez-vous sur une place libre et indiquez son numéro',
+  noneFree: 'Aucune autre place libre\u00A0— garez-vous sur une place libre non réservée et indiquez son numéro',
   unreachable: UNREACHABLE,
 };

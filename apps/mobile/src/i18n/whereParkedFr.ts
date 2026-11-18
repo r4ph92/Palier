@@ -12,6 +12,7 @@ export const whereParkedFr = {
   unknownSpot: 'Numéro inconnu dans ce parking',
   spotTaken: 'Cette place est déjà attribuée\u00A0— vérifiez le numéro au sol',
   spotOutOfService: 'Cette place est hors service\u00A0— vérifiez le numéro au sol',
+  spotNotSuitable: 'Cette place est réservée\u00A0— vérifiez le numéro au sol',
   invalidNumber: 'Numéro invalide',
   offline: 'Hors ligne, places libres au dernier relevé',
   unreachable: UNREACHABLE,

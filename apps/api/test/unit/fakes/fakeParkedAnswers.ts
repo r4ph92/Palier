@@ -8,11 +8,14 @@ import {
   type SpotAnswer,
   type SpotFacts,
 } from '../../../src/domain/parkingSessions/ParkedAnswer.ts';
-import { parkingDemoSpots, type StoredDemoSpot } from './parkingDemoSpots.ts';
+import type { VehicleNeeds } from '../../../src/domain/vehicles/VehicleRepository.ts';
+import { standardNeeds } from '../fakeVehicleRepository.ts';
+import { demoSpotFlagsOf, parkingDemoSpots, type StoredDemoSpot } from './parkingDemoSpots.ts';
 
 export interface StoredAnsweringSession {
   readonly driverId: string;
   readonly assignedSpotNumber: string;
+  readonly needs?: VehicleNeeds;
   state: EntrySessionState;
   confirmedSpotNumber: string | null;
   answeredAt: Date | null;
@@ -72,7 +75,12 @@ export class FakeParkedAnswers implements ParkedAnswerRepository {
     if (spotNumber === undefined || spot === undefined) {
       return { outcome: 'unknown-spot' };
     }
-    const placement = placementOf({ sessionState: session.state, assignedSpot: this.#factsOf(session.assignedSpotNumber), answeredSpot: { id: spotNumber, state: spot.state } });
+    const placement = placementOf({
+      sessionState: session.state,
+      needs: session.needs ?? standardNeeds,
+      assignedSpot: this.#factsOf(session.assignedSpotNumber),
+      answeredSpot: { id: spotNumber, state: spot.state, ...demoSpotFlagsOf(spotNumber, spot) },
+    });
     if (placement.outcome === 'refused') {
       return { outcome: placement.refusal };
     }

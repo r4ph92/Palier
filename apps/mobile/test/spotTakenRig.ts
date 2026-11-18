@@ -8,7 +8,7 @@ export const CONFIRM_A1_TAKEN = 'Confirmer que la place A-1 est prise ?';
 // The labels carry the spot number, with the word joiner that keeps « A-1 » whole.
 export const REPORT_A1 = /^Signaler A-\u2060?1 prise$/;
 export const KEEP_A1 = /^Garder A-\u2060?1$/;
-export const NONE_FREE = 'Aucune autre place libre — garez-vous sur une place libre et indiquez son numéro';
+export const NONE_FREE = 'Aucune autre place libre — garez-vous sur une place libre non réservée et indiquez son numéro';
 
 // Julie went through the gate on A-1 and has not parked yet.
 export async function julieThroughTheGate(language: SupportedLanguage = 'fr') {

@@ -72,7 +72,7 @@ async function placeCar(tx: Transaction, answer: SpotAnswer, { lotId, session }:
   if (spot === null) {
     return { outcome: 'unknown-spot' };
   }
-  const placement = placementOf({ sessionState: session.state, assignedSpot: session.assignedSpot, answeredSpot: spot });
+  const placement = placementOf({ sessionState: session.state, needs: session.needs, assignedSpot: session.assignedSpot, answeredSpot: spot });
   if (placement.outcome === 'refused') {
     return { outcome: placement.refusal };
   }

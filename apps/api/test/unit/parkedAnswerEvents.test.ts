@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { PostgresParkedAnswerRepository } from '../../src/infrastructure/postgres/PostgresParkedAnswerRepository.ts';
 import { onlyAppendedSessionEvent } from './fakes/appendedSessionEvents.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
+import { NO_FLAGS_ROW, STANDARD_VEHICLE_ROW } from './fakes/answerRows.ts';
 
 const JULIE_ID = '00000000-0000-4000-8000-000000000501';
 const SESSION_ID = '00000000-0000-4000-8000-000000000951';
@@ -14,7 +15,7 @@ const NO_CONFIRMED_SPOT = { number: null, aisle_code: null, level_code: null };
 const CONFIRMED_ON_A3 = { number: 'A-3', aisle_code: 'A', level_code: 'P1' };
 
 function answeringSession(state: EntrySessionState, assignedSpotState: string, confirmed: typeof NO_CONFIRMED_SPOT | typeof CONFIRMED_ON_A3 = NO_CONFIRMED_SPOT) {
-  return { state, assigned_spot_id: SPOT_A1_ID, assigned_spot_state: assignedSpotState, ...confirmed };
+  return { state, assigned_spot_id: SPOT_A1_ID, assigned_spot_state: assignedSpotState, ...STANDARD_VEHICLE_ROW, ...confirmed };
 }
 
 function answerA3(scripted: ScriptedSql) {
@@ -26,7 +27,7 @@ describe('Julie corrects the spot presumed on foot (story #156, decision 021)', 
     return new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
       .answer('lock-answering-session', [answeringSession('PARKED_PRESUMED', 'OCCUPIED')])
-      .answer('lock-answered-spot', [{ id: SPOT_A3_ID, state: 'AVAILABLE', ...CONFIRMED_ON_A3 }])
+      .answer('lock-answered-spot', [{ id: SPOT_A3_ID, state: 'AVAILABLE', ...NO_FLAGS_ROW, ...CONFIRMED_ON_A3 }])
       .answer('occupy-answered-spot', [{ id: SPOT_A3_ID }])
       .answer('flag-assigned-spot', [{ id: SPOT_A1_ID }])
       .answer('confirm-parked-spot', [{ id: SESSION_ID }]);

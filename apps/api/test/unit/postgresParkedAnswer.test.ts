@@ -4,6 +4,7 @@ import type { SpotAnswer } from '../../src/domain/parkingSessions/ParkedAnswer.t
 import type { SpotState } from '../../src/domain/spots/spotStates.ts';
 import { PostgresParkedAnswerRepository } from '../../src/infrastructure/postgres/PostgresParkedAnswerRepository.ts';
 import { LOCK_NOT_AVAILABLE, ScriptedSql } from './fakes/scriptedSql.ts';
+import { NO_FLAGS_ROW, STANDARD_VEHICLE_ROW } from './fakes/answerRows.ts';
 
 const JULIE_ID = '00000000-0000-4000-8000-000000000501';
 const MARC_ID = '00000000-0000-4000-8000-000000000502';
@@ -13,12 +14,12 @@ const SPOT_B3_ID = '00000000-0000-4000-8000-0000000003b3';
 const SPOT_A1_ID = '00000000-0000-4000-8000-0000000003a1';
 const AISLE_A_ID = '00000000-0000-4000-8000-0000000002a1';
 const B3 = { number: 'B-3', levelCode: 'P1', aisleCode: 'B' };
-const NO_CONFIRMED_SPOT = { assigned_spot_id: SPOT_A1_ID, assigned_aisle_id: AISLE_A_ID, assigned_spot_state: 'OCCUPIED', number: null, aisle_code: null, level_code: null };
+const NO_CONFIRMED_SPOT = { assigned_spot_id: SPOT_A1_ID, assigned_aisle_id: AISLE_A_ID, assigned_spot_state: 'OCCUPIED', number: null, aisle_code: null, level_code: null, ...STANDARD_VEHICLE_ROW };
 
 const julieAnswersB3: SpotAnswer = { sessionId: SESSION_ID, driverId: JULIE_ID, spotNumber: 'B-3' };
 
 function spotRow(state: SpotState, number = 'B-3') {
-  return { id: SPOT_B3_ID, aisle_id: AISLE_A_ID, state, number, aisle_code: number.charAt(0), level_code: 'P1' };
+  return { id: SPOT_B3_ID, aisle_id: AISLE_A_ID, state, number, aisle_code: number.charAt(0), level_code: 'P1', ...NO_FLAGS_ROW };
 }
 
 function asked(spotState: SpotState | null = 'AVAILABLE', sessionState: EntrySessionState = 'PARKED_UNCONFIRMED') {
@@ -140,7 +141,7 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
   it('answers the first spot again, without a spot read, once Julie already answered', async () => {
     const sql = new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
-      .answer('lock-answering-session', [{ state: 'PARKED_CONFIRMED', assigned_spot_id: SPOT_A1_ID, assigned_spot_state: 'OCCUPIED_UNKNOWN', number: 'B-3', aisle_code: 'B', level_code: 'P1' }]);
+      .answer('lock-answering-session', [{ state: 'PARKED_CONFIRMED', assigned_spot_id: SPOT_A1_ID, assigned_spot_state: 'OCCUPIED_UNKNOWN', number: 'B-3', aisle_code: 'B', level_code: 'P1', ...STANDARD_VEHICLE_ROW }]);
 
     await expect(answerWith(sql, { ...julieAnswersB3, spotNumber: 'B-5' })).resolves.toEqual({ outcome: 'already', spot: B3 });
     expect(sql.count('lock-answered-spot')).toBe(0);
@@ -186,7 +187,7 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
     return new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
       .answer('lock-answering-session', [{ state: 'PARKED_PRESUMED', ...NO_CONFIRMED_SPOT, assigned_spot_state: assignedSpotState }])
-      .answer('lock-answered-spot', [{ ...spot, aisle_id: AISLE_A_ID, aisle_code: 'A', level_code: 'P1' }])
+      .answer('lock-answered-spot', [{ ...spot, aisle_id: AISLE_A_ID, aisle_code: 'A', level_code: 'P1', ...NO_FLAGS_ROW }])
       .answer('occupy-answered-spot', [{ id: spot.id }])
       .answer('flag-assigned-spot', [{ id: SPOT_A1_ID }])
       .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
@@ -248,7 +249,7 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
     const sql = new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
       .answer('lock-answering-session', [{ state: 'PARKED_PRESUMED', ...NO_CONFIRMED_SPOT }])
-      .answer('lock-answered-spot', [{ id: SPOT_A3_ID, state: 'AVAILABLE', number: 'A-3', aisle_code: 'A', level_code: 'P1' }])
+      .answer('lock-answered-spot', [{ id: SPOT_A3_ID, state: 'AVAILABLE', number: 'A-3', aisle_code: 'A', level_code: 'P1', ...NO_FLAGS_ROW }])
       .answer('occupy-answered-spot', [{ id: SPOT_A3_ID }]);
 
     await expect(answerWith(sql, julieCorrectsToA3)).rejects.toThrow(`Assigned spot ${SPOT_A1_ID} of a session leaving it was not occupied.`);

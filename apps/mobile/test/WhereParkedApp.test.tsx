@@ -103,6 +103,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     ['UNKNOWN_SPOT', 'Z-99', REFUSAL_MESSAGES.UNKNOWN_SPOT],
     ['SPOT_TAKEN', 'B-4', REFUSAL_MESSAGES.SPOT_TAKEN],
     ['SPOT_OUT_OF_SERVICE', 'B-5', REFUSAL_MESSAGES.SPOT_OUT_OF_SERVICE],
+    ['SPOT_NOT_SUITABLE', 'B-5', REFUSAL_MESSAGES.SPOT_NOT_SUITABLE],
   ])('shows the refusal %s under the field and keeps the question', async (code, typed, message) => {
     const { user, parkingSession } = await julieAskedInAisleB();
     parkingSession.answerFailure = new PalierRejectedError(code);
@@ -141,6 +142,17 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     await julieAskedInAisleB();
 
     expect(screen.getByLabelText('Numéro de place')).not.toHaveProp('accessibilityHint', expect.anything());
+  });
+
+  it('reads the reserved-spot refusal on an English device', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB('en');
+    parkingSession.answerFailure = new PalierRejectedError('SPOT_NOT_SUITABLE');
+
+    await user.press(screen.getByRole('radio', { name: 'B-3' }));
+    await user.press(screen.getByRole('button', { name: /^Confirm\s/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('This spot is reserved — check the number on the ground', visibleText);
+    expect(screen.getByRole('header', { name: 'Where are you parked?' })).toBeOnTheScreen();
   });
 
   it('reads « Where are you parked? » and its refusals on an English device', async () => {

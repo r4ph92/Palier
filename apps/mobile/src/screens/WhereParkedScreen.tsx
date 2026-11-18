@@ -27,6 +27,7 @@ const PROBLEM_MESSAGES: Readonly<Record<ParkedAnswerProblem, string>> = {
   UNKNOWN_SPOT: 'session.whereParked.unknownSpot',
   SPOT_TAKEN: 'session.whereParked.spotTaken',
   SPOT_OUT_OF_SERVICE: 'session.whereParked.spotOutOfService',
+  SPOT_NOT_SUITABLE: 'session.whereParked.spotNotSuitable',
   INVALID_NUMBER: 'session.whereParked.invalidNumber',
   UNREACHABLE: 'session.whereParked.unreachable',
 };
