@@ -96,5 +96,5 @@ function aisleOf(number: string): string {
 
 // The aisle code stands for the aisle id here: one level, aisles named once.
 function freeSpotOf(number: string, spot: StoredReportSpot): FreeSpot {
-  return freeSpotFixture(number, { aisleId: aisleOf(number), needsCheck: spot.needsCheck, isEv: spot.isEv ?? false });
+  return freeSpotFixture(number, { aisleId: aisleOf(number), needsCheck: spot.needsCheck, isEv: spot.isEv ?? false, isAccessible: spot.isAccessible ?? false, isOversize: spot.isOversize ?? false });
 }

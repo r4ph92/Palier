@@ -8,6 +8,7 @@ import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 
 export const julie: Driver = { id: '00000000-0000-4000-8000-000000000501', firstName: 'Julie', lastName: 'Tremblay' };
 export const marc: Driver = { id: '00000000-0000-4000-8000-000000000502', firstName: 'Marc', lastName: 'Gagnon' };
+export const amelie: Driver = { id: '00000000-0000-4000-8000-000000000503', firstName: 'Amélie', lastName: 'Lavoie' };
 
 // Drivers and the user directory read the same user rows, so one fake plays both.
 export class FakeDriverRepository implements DriverRepository, UserDirectory {

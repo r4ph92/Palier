@@ -88,6 +88,13 @@ describe('PostgresCurrentParkingSessionQuery, free spots for the vehicle (story 
     expect((await readWith(askedWith({})))?.question?.freeSpotNumbers).toEqual(['B-1', 'B-4']);
   });
 
+  it("offers Julie's standard car B-1 to B-4 of the seeded aisle B, never the accessible B-5", async () => {
+    const seededAisleB = [freeSpotRow('B-1'), freeSpotRow('B-2'), freeSpotRow('B-3'), freeSpotRow('B-4', { is_oversize: true }), freeSpotRow('B-5', { is_accessible: true })];
+    const sql = new ScriptedSql().answer('read-current-session', [sessionRow('PARKED_UNCONFIRMED', AISLE_B_ID)]).answer('read-parked-question', seededAisleB);
+
+    expect((await readWith(sql))?.question?.freeSpotNumbers).toEqual(['B-1', 'B-2', 'B-3', 'B-4']);
+  });
+
   it('lists the electric spot to an electric car, and the accessible one to a permit holder', async () => {
     expect((await readWith(askedWith({ is_electric: true })))?.question?.freeSpotNumbers).toEqual(['B-1', 'B-4', 'B-6']);
     expect((await readWith(askedWith({ has_accessible_permit: true })))?.question?.freeSpotNumbers).toEqual(['B-1', 'B-4', 'B-5']);

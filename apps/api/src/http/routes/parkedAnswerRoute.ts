@@ -24,6 +24,7 @@ const sendRefusal = refusalSender<ParkedAnswerRefusal, ParkedSpotAnswerRefusalCo
     'unknown-spot': { statusCode: CONFLICT, error: 'UNKNOWN_SPOT', message: 'No spot has this number in this parking lot.' },
     'spot-taken': { statusCode: CONFLICT, error: 'SPOT_TAKEN', message: 'This spot is already assigned.' },
     'spot-out-of-service': { statusCode: CONFLICT, error: 'SPOT_OUT_OF_SERVICE', message: 'This spot is out of service.' },
+    'spot-not-suitable': { statusCode: CONFLICT, error: 'SPOT_NOT_SUITABLE', message: 'This spot does not suit your vehicle.' },
     'lot-busy': LOT_BUSY_BODY,
   },
   'spot answer',

@@ -12,6 +12,7 @@ import { SimulatedGateCommander } from '../../src/infrastructure/postgres/Simula
 import { appendedSessionEvents, builtPayloads } from './fakes/appendedSessionEvents.ts';
 import { entreeDemo, sortieDemo } from './fakes/gateFixtures.ts';
 import { PARKING_DEMO_OCCUPANCY_ROW, ScriptedSql } from './fakes/scriptedSql.ts';
+import { NO_FLAGS_ROW, STANDARD_VEHICLE_ROW } from './fakes/answerRows.ts';
 
 const SESSION_ID = '00000000-0000-4000-8000-000000000951';
 const DRIVER_ID = '00000000-0000-4000-8000-000000000501';
@@ -68,7 +69,7 @@ const steps: [string, () => Promise<ScriptedSql>][] = [
     return scripted;
   }],
   ['the answer', async () => {
-    const scripted = new ScriptedSql().answer('read-session-lot', [{ lot_id: LOT_ID }]).answer('lock-answering-session', [{ state: 'PARKED_UNCONFIRMED', assigned_spot_id: 'spot-a1', assigned_spot_state: 'OCCUPIED_UNKNOWN', number: null, aisle_code: null, level_code: null }]).answer('lock-answered-spot', [{ ...spotRow, id: 'spot-b3', number: 'B-3', state: 'AVAILABLE' }]).answer('occupy-answered-spot', [{ id: 'spot-b3' }]).answer('confirm-parked-spot', [{ id: SESSION_ID }]);
+    const scripted = new ScriptedSql().answer('read-session-lot', [{ lot_id: LOT_ID }]).answer('lock-answering-session', [{ state: 'PARKED_UNCONFIRMED', assigned_spot_id: 'spot-a1', assigned_spot_state: 'OCCUPIED_UNKNOWN', number: null, aisle_code: null, level_code: null, ...STANDARD_VEHICLE_ROW }]).answer('lock-answered-spot', [{ ...spotRow, id: 'spot-b3', number: 'B-3', state: 'AVAILABLE', ...NO_FLAGS_ROW }]).answer('occupy-answered-spot', [{ id: 'spot-b3' }]).answer('confirm-parked-spot', [{ id: SESSION_ID }]);
     await new PostgresParkedAnswerRepository(scripted.database()).answer({ sessionId: SESSION_ID, driverId: DRIVER_ID, spotNumber: 'B-3' });
     return scripted;
   }],

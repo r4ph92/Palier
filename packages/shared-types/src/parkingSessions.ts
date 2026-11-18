@@ -93,6 +93,7 @@ export type ParkedSpotAnswerRefusalCode =
   | 'UNKNOWN_SPOT'
   | 'SPOT_TAKEN'
   | 'SPOT_OUT_OF_SERVICE'
+  | 'SPOT_NOT_SUITABLE'
   | 'LOT_BUSY';
 
 // The number of the spot the driver found taken, as the app showed it: a report naming a spot that is no longer theirs changes nothing.

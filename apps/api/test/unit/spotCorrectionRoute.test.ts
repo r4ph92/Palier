@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { JULIE_SESSION_ID } from './fakes/fakeCurrentParkingSessions.ts';
-import { julieSessionIn, julieWithAnsweringSession, SPOT_TAKEN_BODY, UNKNOWN_SPOT_BODY } from './parkedAnswerRig.ts';
+import { julieSessionIn, julieWithAnsweringSession, SPOT_NOT_SUITABLE_BODY, SPOT_TAKEN_BODY, UNKNOWN_SPOT_BODY } from './parkedAnswerRig.ts';
 
 const juliePresumedInA1 = () => julieSessionIn('PARKED_PRESUMED');
 
@@ -87,5 +87,18 @@ describe('POST /v1/entries/:sessionId/spot correcting a presumed spot (story #22
     expect(again.json()).toMatchObject({ state: 'PARKED_CONFIRMED', spot: { number: 'A-3' } });
     expect(parkedAnswers.spotOf('A-4')).toEqual({ state: 'AVAILABLE', needsCheck: false });
     expect(parkedAnswers.writes).toBe(1);
+  });
+
+  it.each(['B-5', 'A-5'])('refuses Julie, standard vehicle, a correction to the reserved %s and changes nothing (story #125)', async (reserved) => {
+    const { correct, parkedAnswers } = await juliePresumed();
+
+    const response = await correct(reserved);
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual(SPOT_NOT_SUITABLE_BODY);
+    expect(parkedAnswers.spotOf(reserved)).toEqual({ state: 'AVAILABLE', needsCheck: false });
+    expect(parkedAnswers.spotOf('A-1')).toEqual({ state: 'OCCUPIED', needsCheck: false });
+    expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toEqual(juliePresumedInA1());
+    expect(parkedAnswers.writes).toBe(0);
   });
 });

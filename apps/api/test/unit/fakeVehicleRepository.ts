@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { TRANSPONDER_TAKEN, type DeleteVehicleResult, type NewVehicle, type Vehicle, type VehicleEdit, type VehicleNeeds, type VehicleRepository } from '../../src/domain/vehicles/VehicleRepository.ts';
 
 export const standardNeeds: VehicleNeeds = { isElectric: false, hasAccessiblePermit: false, isOversize: false };
+export const electricWithPermitNeeds: VehicleNeeds = { isElectric: true, hasAccessiblePermit: true, isOversize: false };
 
 interface StoredVehicle extends VehicleNeeds {
   readonly driverId: string;
