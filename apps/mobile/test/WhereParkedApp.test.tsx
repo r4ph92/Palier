@@ -2,6 +2,7 @@ import { screen, userEvent, within } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import { PositioningCore } from '../src/positioning/PositioningCore';
+import { PalierStatusError } from '../src/api/LotsClient';
 import { PalierRejectedError } from '../src/api/VehicleClient';
 import { AISLE_B_FREE_SPOTS, FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
