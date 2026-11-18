@@ -4,6 +4,7 @@ import { PalierRejectedError } from '../src/api/VehicleClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeLotsClient, PARKING_DEMO_ID, parkingDemo, parkingTestPaliers } from './fakeLotsClient';
 import { FakeSpotHoldClient } from './fakeSpotHoldClient';
+import { getFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreenWith } from './renderHomeScreen';
 
 // The body the lane API answered to Julie inside Parking Démo (QA #119, http://127.0.0.1:3119).
@@ -32,7 +33,7 @@ describe('Julie refused a hold while inside a lot (QA #119)', () => {
     expect(await within(screen.getByTestId(`lot-spot-hold-${PARKING_DEMO_ID}`)).findByText('Vous êtes déjà dans un stationnement')).toBeOnTheScreen();
     expect(within(screen.getByTestId(`lot-spot-hold-${parkingTestPaliers.id}`)).queryByText('Vous êtes déjà dans un stationnement')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('spot-hold-banner')).not.toBeOnTheScreen();
-    expect(screen.getByText('10 places libres')).toBeOnTheScreen();
+    expect(getFreeSpotCount('10 places libres')).toBeOnTheScreen();
     expect(lotsClient.callCount).toBe(1);
   });
 
