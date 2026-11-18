@@ -6,6 +6,7 @@ import type { DeviceLocationClient, LocationPermission } from '../src/deviceLoca
 import { distanceBetween } from '../src/lots/distanceBetween';
 import { FakeDeviceLocationClient, LOCATION_DENIED_NOTICE_FR, SIMULATOR_POSITION } from './fakeDeviceLocationClient';
 import { FakeLotsClient, parkingDemo, parkingTestPaliers } from './fakeLotsClient';
+import { findFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreen } from './renderHomeScreen';
 import { visibleText } from './visibleText';
 
@@ -108,7 +109,7 @@ describe('QA #5 hostile lot data on the list', () => {
   it('says 1 place libre in the singular and Complet at zero', async () => {
     await renderHomeScreen(new FakeLotsClient([parkingDemo(1), lotAt('Vide', SIMULATOR_POSITION, 0)]));
 
-    expect(await screen.findByText('1 place libre', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('1 place libre')).toBeOnTheScreen();
     expect(screen.getByText('Complet')).toBeOnTheScreen();
   });
 });

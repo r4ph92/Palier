@@ -39,6 +39,16 @@ describe('lotsReducer', () => {
 
     expect(lotsReducer(refreshing, { type: 'unreachable' })).toMatchObject({ state: { status: 'error' }, inFlight: 'none' });
   });
+
+  it('counts a refresh that misses again from the error screen, but not a missed poll', () => {
+    const firstError = lotsReducer(initialLotsModel, { type: 'unreachable' });
+    const refreshedTwice = lotsReducer(lotsReducer(firstError, { type: 'refreshRequested' }), { type: 'unreachable' });
+    const polled = lotsReducer(lotsReducer(refreshedTwice, { type: 'pollRequested' }), { type: 'unreachable' });
+
+    expect(firstError.state).toEqual({ status: 'error', failureCount: 1 });
+    expect(refreshedTwice.state).toEqual({ status: 'error', failureCount: 2 });
+    expect(polled.state).toEqual({ status: 'error', failureCount: 2 });
+  });
 });
 
 describe('lotsReducer polling', () => {

@@ -2,12 +2,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { DashboardLotMap, DashboardMapAisle } from '@palier/shared-types';
 import type { FastifyInstance } from 'fastify';
 import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
-import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
+import { AISLE_A_ID, PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { pierre, sophie } from './fakes/dashboardFixtures.ts';
 import { dashboardCookieFor, startDashboardServer, writeHeader } from './fakes/dashboardServer.ts';
 import type { FakeLotMapRepository } from './fakes/fakeLotMapRepository.ts';
 
-const AISLE_A_ID = '00000000-0000-4000-8000-000000000401';
 const EXIT_LANE_ID = '00000000-0000-4000-8000-000000000403';
 const READ_AT = new Date('2026-11-13T19:05:00Z');
 const LOT_NOT_FOUND = { statusCode: 404, error: 'LOT_NOT_FOUND', message: 'No such lot.' };

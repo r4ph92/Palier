@@ -2,9 +2,9 @@ import { screen, userEvent } from '@testing-library/react-native';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
+import { findFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreenWith } from './renderHomeScreen';
 import { HOLD_BUTTON_FR, holdAtParkingDemo, tick } from './spotHoldScreen';
-import { visibleText } from './visibleText';
 
 describe('HomeScreen spot hold across list refreshes', () => {
   beforeEach(() => {
@@ -17,7 +17,7 @@ describe('HomeScreen spot hold across list refreshes', () => {
     const spotHoldClient = new FakeSpotHoldClient();
     spotHoldClient.isReachable = false;
     await renderHomeScreenWith({ lotsClient: new FakeLotsClient(parkingDemoWith(10)), locationClient: new FakeDeviceLocationClient(), spotHoldClient });
-    await screen.findByText('10 places libres', visibleText);
+    await findFreeSpotCount('10 places libres');
     expect(screen.queryByRole('button', { name: HOLD_BUTTON_FR })).not.toBeOnTheScreen();
 
     spotHoldClient.isReachable = true;
@@ -38,7 +38,7 @@ describe('HomeScreen spot hold across list refreshes', () => {
 
     await tick(2);
 
-    expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('9 places libres')).toBeOnTheScreen();
     expect(screen.getByText('Trop de places garanties dans ce parking pour le moment')).toBeOnTheScreen();
   });
 
@@ -50,7 +50,7 @@ describe('HomeScreen spot hold across list refreshes', () => {
 
     await userEvent.setup().pullToRefresh(screen.getByTestId('lot-list'));
 
-    expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('9 places libres')).toBeOnTheScreen();
     expect(screen.queryByText('Trop de places garanties dans ce parking pour le moment')).not.toBeOnTheScreen();
   });
 
@@ -63,7 +63,7 @@ describe('HomeScreen spot hold across list refreshes', () => {
 
     await tick(30);
 
-    expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('9 places libres')).toBeOnTheScreen();
     expect(spotHoldClient.currentRequests).toBe(readsBefore);
   });
 
@@ -84,7 +84,7 @@ describe('HomeScreen spot hold across list refreshes', () => {
 
     await userEvent.setup().press(screen.getByRole('button', { name: 'Actualiser' }));
 
-    expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('9 places libres')).toBeOnTheScreen();
     expect(screen.queryByText('Trop de places garanties dans ce parking pour le moment')).not.toBeOnTheScreen();
   });
 

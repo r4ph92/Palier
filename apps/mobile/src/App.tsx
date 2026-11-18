@@ -1,4 +1,3 @@
-import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -21,7 +20,7 @@ import { PalierApp } from './PalierApp';
 import { NullPositioningModule } from './positioning/NullPositioningModule';
 import { ParkedSignalQueue, secureQueueStorage } from './parkingSessions/ParkedSignalQueue';
 import { PositioningCore } from './positioning/PositioningCore';
-import { fontAssets } from './theme/fonts';
+import { useAppFonts } from './theme/useAppFonts';
 
 const LOCAL_API_URL = 'http://localhost:3000';
 
@@ -68,8 +67,7 @@ const palierApp = (
 );
 
 export function App() {
-  const [fontsLoaded] = useFonts(fontAssets);
-  if (!fontsLoaded) {
+  if (!useAppFonts()) {
     return null;
   }
   return (

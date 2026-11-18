@@ -5,11 +5,13 @@ import { useAnnouncement } from './useAnnouncement';
 
 interface ErrorStateProps {
   readonly onRetry: () => void;
+  // A new key announces the same error again.
+  readonly repeatKey?: number;
 }
 
-export function ErrorState({ onRetry }: ErrorStateProps) {
+export function ErrorState({ onRetry, repeatKey = 0 }: ErrorStateProps) {
   const message = i18n.t('home.unreachable');
-  useAnnouncement(message);
+  useAnnouncement(message, repeatKey);
   return (
     <MessageState
       message={message}

@@ -110,8 +110,7 @@ describe('the explanation while the iOS prompt is open', () => {
     const continueButton = await screen.findByRole('button', { name: 'Continuer' });
 
     await act(async () => {
-      fireEvent.press(continueButton);
-      fireEvent.press(continueButton);
+      await Promise.all([fireEvent.press(continueButton), fireEvent.press(continueButton)]);
     });
     await user.press(screen.getByRole('button', { name: 'Continuer' }));
     await user.press(screen.getByRole('button', { name: 'Continuer sans « Toujours »' }));

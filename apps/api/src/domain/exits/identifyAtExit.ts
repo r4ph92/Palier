@@ -40,18 +40,24 @@ export async function identifyAtExit(dependencies: ExitDependencies, request: Id
   return outcomeOf(await payAndClose(dependencies, session, { clock, identification, exitGateId: gate.id }), read.kind);
 }
 
+function identificationOf(kind: ReadIdentifierKind): 'plate' | 'transponder' {
+  return kind === 'PLATE' ? 'plate' : 'transponder';
+}
+
 // A capture that stays pending still opened the barrier (decision 026).
 function outcomeOf(left: ExitOutcome, kind: ReadIdentifierKind): IdentifyOutcome {
   switch (left.outcome) {
     case 'left':
     case 'already':
     case 'capture-pending':
-      return { outcome: 'opened', identification: kind === 'PLATE' ? 'plate' : 'transponder' };
+      return { outcome: 'opened', identification: identificationOf(kind) };
     case 'gate-unavailable':
     case 'payments-unavailable':
     case 'lot-busy':
       return { outcome: left.outcome };
-    default:
+    case 'not-found':
+    case 'entry-not-confirmed':
+    case 'closed':
       return { outcome: 'fallback' };
   }
 }

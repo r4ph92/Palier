@@ -9,7 +9,7 @@ export function databaseUrlAllowedForSeeding(variables: NodeJS.ProcessEnv): stri
     throw new Error(`Seeding refused: NODE_ENV must be development or test, got "${environment ?? ''}".`);
   }
   const databaseUrl = readDatabaseUrl(variables);
-  const host = new URL(databaseUrl).hostname;
+  const host = new URL(databaseUrl).hostname.toLowerCase();
   if (!LOCAL_HOSTS.has(host)) {
     throw new Error(`Seeding refused: the database host must be one of ${LOCAL_HOST_NAMES}, got "${host}".`);
   }
