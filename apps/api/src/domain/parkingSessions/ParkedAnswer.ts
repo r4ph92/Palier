@@ -73,8 +73,10 @@ export interface SpotWrites {
   readonly flagsAssigned: boolean;
 }
 
+type PlacementRefusal = Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service' | 'spot-not-suitable'>;
+
 export type Placement =
-  | { readonly outcome: 'refused'; readonly refusal: Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service' | 'spot-not-suitable'> }
+  | { readonly outcome: 'refused'; readonly refusal: PlacementRefusal }
   | ({ readonly outcome: 'placed' } & SpotWrites);
 
 type CorrectionReason = Extract<SpotCheckReason, 'WRONG_AISLE' | 'WRONG_SPOT'>;
@@ -84,24 +86,27 @@ export function correctionReasonOf(assignedAisleId: string, answeredAisleId: str
   return assignedAisleId === answeredAisleId ? 'WRONG_SPOT' : 'WRONG_AISLE';
 }
 
-// The state check keeps its priority over fitness: a taken spot is « taken » whatever it is reserved for. The driver's own assigned
-// spot was allocated to this vehicle and is never fit-checked: an operator may have ticked a flag on it, or the vehicle may have changed, since.
-function answeredSpotRefusal({ needs, answeredSpot }: PlacementFacts, isAssigned: boolean): Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service' | 'spot-not-suitable'> | null {
-  const decision = decideSpotAnswer(answeredSpot.state);
+function isOwnAssignedSpot({ assignedSpot, answeredSpot }: PlacementFacts): boolean {
+  return answeredSpot.id === assignedSpot.id;
+}
+
+// Taken wins over fitness; the own assigned spot was allocated to this vehicle, so it is never fit-checked (decision 020).
+function answeredSpotRefusal(facts: PlacementFacts): PlacementRefusal | null {
+  const decision = decideSpotAnswer(facts.answeredSpot.state);
   if (decision !== 'occupy') {
     return decision;
   }
-  return isAssigned || spotFits(needs, answeredSpot) ? null : 'spot-not-suitable';
+  return isOwnAssignedSpot(facts) || spotFits(facts.needs, facts.answeredSpot) ? null : 'spot-not-suitable';
 }
 
 export function placementOf(facts: PlacementFacts): Placement {
   const { sessionState, assignedSpot, answeredSpot } = facts;
   const isPresumed = sessionState === 'PARKED_PRESUMED';
-  const isAssigned = answeredSpot.id === assignedSpot.id;
+  const isAssigned = isOwnAssignedSpot(facts);
   if (isPresumed && isAssigned && answeredSpot.state === 'OCCUPIED') {
     return { outcome: 'placed', occupiesAnswered: false, flagsAssigned: false };
   }
-  const refusal = answeredSpotRefusal(facts, isAssigned);
+  const refusal = answeredSpotRefusal(facts);
   if (refusal !== null) {
     return { outcome: 'refused', refusal };
   }
