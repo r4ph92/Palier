@@ -3,6 +3,7 @@ import type { FastifyBaseLogger, FastifyReply } from 'fastify';
 
 const BAD_REQUEST = 400;
 const CONFLICT = 409;
+const TOO_MANY_REQUESTS = 429;
 const SERVICE_UNAVAILABLE = 503;
 
 // The same bodies on the walk, the answer and the spot-taken report: the app reads them the same way.
@@ -13,6 +14,9 @@ export const ENTRY_NOT_CONFIRMED_BODY = {
   error: 'ENTRY_NOT_CONFIRMED',
   message: 'The entry loop has not confirmed this session yet.',
 } as const;
+const TOO_MANY_ATTEMPTS_MESSAGE = 'Too many attempts. Try again in a few minutes.';
+export const TOO_MANY_PARKED_ANSWERS_BODY = { statusCode: TOO_MANY_REQUESTS, error: 'TOO_MANY_PARKED_ANSWERS', message: TOO_MANY_ATTEMPTS_MESSAGE } as const;
+export const TOO_MANY_PARKED_SIGNALS_BODY = { statusCode: TOO_MANY_REQUESTS, error: 'TOO_MANY_PARKED_SIGNALS', message: TOO_MANY_ATTEMPTS_MESSAGE } as const;
 const BLANK_SPOT_NUMBER_BODY = { statusCode: BAD_REQUEST, error: 'Bad Request', message: 'spotNumber is blank.' } as const;
 
 export interface RefusalBody<Code extends string> {
