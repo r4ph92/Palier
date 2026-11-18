@@ -38,4 +38,16 @@ describe('PostgresParkedAnswerRepository refusing a reserved spot (story #125)',
 
     await expect(new PostgresParkedAnswerRepository(sql.database()).answer(answerB5)).resolves.toMatchObject({ outcome: 'confirmed' });
   });
+
+  it("reads the session's vehicle needs and the spot's flags under the existing locks", async () => {
+    const sql = askedForB5(STANDARD_VEHICLE_ROW);
+
+    await new PostgresParkedAnswerRepository(sql.database()).answer(answerB5);
+
+    const sessionText = sql.statement('lock-answering-session')?.text;
+    expect(sessionText).toMatch(/left join vehicle on vehicle\.id = ps\.vehicle_id/);
+    expect(sessionText).toMatch(/coalesce\(vehicle\.is_electric, false\) as is_electric/);
+    expect(sessionText).toMatch(/for update of ps, assigned$/);
+    expect(sql.statement('lock-answered-spot')?.text).toMatch(/spot\.is_ev, spot\.is_accessible, spot\.is_oversize/);
+  });
 });

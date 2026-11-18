@@ -65,9 +65,6 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
 
     expect(sql.statement('read-session-lot')?.params).toEqual([SESSION_ID, JULIE_ID]);
     expect(sql.statement('lock-answering-session')?.text).toMatch(/where ps\.id = \$\d+ and ps\.user_id = \$\d+\s+for update of ps/);
-    expect(sql.statement('lock-answering-session')?.text).toMatch(/left join vehicle on vehicle\.id = ps\.vehicle_id/);
-    expect(sql.statement('lock-answering-session')?.text).toMatch(/coalesce\(vehicle\.is_electric, false\) as is_electric/);
-    expect(sql.statement('lock-answered-spot')?.text).toMatch(/spot\.is_ev, spot\.is_accessible, spot\.is_oversize/);
     const lookup = sql.statement('lock-answered-spot');
     expect(lookup?.text).toMatch(/where spot\.lot_id = \$\d+ and spot\.retired_at is null and upper\(regexp_replace\("spot"\."number", '\[\[:space:\]–—-\]', '', 'g'\)\) = \$\d+/);
     expect(lookup?.text).toMatch(/order by spot\.number\s+for update of spot/);
