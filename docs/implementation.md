@@ -257,3 +257,10 @@ curl -X DELETE localhost:3000/v1/test/clock
 - Règles et choix : `docs/decisions/044`. Migration 0044 : `gate_passage.armed_at`, `CHECK` et index partiel. `presenceArmingOf` (`domain/gates/passageRules.ts`) garde l'armement reçu seulement s'il est représentable et antérieur à la fermeture d'au plus 7 jours (`PRESENCE_WINDOW_DAYS`) ; un `armedAt` mal formé donne 400.
 - Lecture : `LotEquipmentReader.readGatePresence` (`readGatePresenceStatement`) fusionnée dans `domain/dashboard/lotEquipment.ts` ; la page Équipement affiche la ligne sous l'état de chaque barrière.
 - Console : `presenceArming.js` tient l'instant d'armement ; `postPassage` reçoit `{ closedAt, armedAt }`.
+
+## Places tenues par une autre session dans la question (#130)
+
+- Une place qu'une autre session active tient (place attribuée ou place confirmée) n'est ni proposée dans `question.freeSpotNumbers` ni acceptée en réponse, même si un opérateur l'a remise à `AVAILABLE`. `sessionHoldsSpot(alias, exceptSessionId)` (`infrastructure/postgres/sessionHoldsSpot.ts`) écarte la session qui demande : la place qu'elle tient elle-même reste offerte et acceptée.
+- Lecture : `readParkedQuestion` reçoit l'identifiant de la session. Réponse : `lockAnsweredSpot` lit `held_by_other_session` ; `answeredSpotRefusal` refuse en `spot-taken` après l'état de la place et avant l'exemption de la place propre et l'adéquation (ordre de #125 conservé).
+- Le texte d'erreur `SPOT_TAKEN` ne change pas : même clé pour toute place prise.
+- Pour essayer : `npm run seed:spot-state --workspace @palier/api -- --lot "Parking Démo" --spot A-1 --state AVAILABLE --force-active-session` sur une place tenue par une session active, puis `GET /v1/me/session` et `POST /v1/entries/:sessionId/spot` pour un autre conducteur.
