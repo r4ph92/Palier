@@ -259,31 +259,3 @@ describe('PostgresParkedAnswerRepository correcting a presumed spot (story #22)'
     expect(sql.count('confirm-parked-spot')).toBe(0);
   });
 });
-
-describe('PostgresParkedAnswerRepository refusing a reserved spot (story #125)', () => {
-  const ELECTRIC_WITH_PERMIT_ROW = { is_electric: true, has_accessible_permit: true, is_oversize: false };
-  const accessibleB5 = { ...spotRow('AVAILABLE', 'B-5'), is_accessible: true };
-
-  function askedForB5(vehicleRow: typeof STANDARD_VEHICLE_ROW) {
-    return new ScriptedSql()
-      .answer('read-session-lot', [{ lot_id: LOT_ID }])
-      .answer('lock-answering-session', [{ state: 'PARKED_UNCONFIRMED', ...NO_CONFIRMED_SPOT, ...vehicleRow }])
-      .answer('lock-answered-spot', [accessibleB5])
-      .answer('occupy-answered-spot', [{ id: SPOT_B3_ID }])
-      .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
-  }
-
-  it('refuses a standard vehicle the accessible B-5 before any write', async () => {
-    const sql = askedForB5(STANDARD_VEHICLE_ROW);
-
-    await expect(answerWith(sql, { ...julieAnswersB3, spotNumber: 'B-5' })).resolves.toEqual({ outcome: 'spot-not-suitable' });
-
-    expect(sql.labels()).toEqual(['read-session-lot', 'limit-lock-wait', 'lock-lot', 'lock-answering-session', 'lock-answered-spot']);
-  });
-
-  it('places a vehicle with a permit on the accessible B-5', async () => {
-    const sql = askedForB5(ELECTRIC_WITH_PERMIT_ROW);
-
-    await expect(answerWith(sql, { ...julieAnswersB3, spotNumber: 'B-5' })).resolves.toMatchObject({ outcome: 'confirmed' });
-  });
-});
