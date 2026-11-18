@@ -29,6 +29,7 @@ const PROBLEM_MESSAGES: Readonly<Record<ParkedAnswerProblem, string>> = {
   SPOT_OUT_OF_SERVICE: 'session.whereParked.spotOutOfService',
   SPOT_NOT_SUITABLE: 'session.whereParked.spotNotSuitable',
   INVALID_NUMBER: 'session.whereParked.invalidNumber',
+  TOO_MANY_ATTEMPTS: 'session.whereParked.tooManyAttempts',
   UNREACHABLE: 'session.whereParked.unreachable',
 };
 

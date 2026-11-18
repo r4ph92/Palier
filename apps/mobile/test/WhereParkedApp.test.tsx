@@ -167,4 +167,15 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     expect(await screen.findByRole('alert')).toHaveTextContent('This spot is already assigned — check the number on the ground', visibleText);
     expect(within(screen.getByRole('button', { name: /^Confirm\s/ })).getByText('Confirm B-3', visibleText)).toBeOnTheScreen();
   });
+
+  it('reads « Too many attempts » on an English device when the answer limit is reached', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB('en');
+    parkingSession.answerFailure = new PalierStatusError(429);
+
+    await user.press(screen.getByRole('radio', { name: 'B-3' }));
+    await user.press(screen.getByRole('button', { name: /^Confirm\s/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Too many attempts, try again in a few minutes', visibleText);
+    expect(screen.getByRole('header', { name: 'Where are you parked?' })).toBeOnTheScreen();
+  });
 });

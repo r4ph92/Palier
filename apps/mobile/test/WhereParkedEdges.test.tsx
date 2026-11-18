@@ -65,6 +65,18 @@ describe('answering where Julie parked, the edges (story #21)', () => {
     expect(screen.getByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
   });
 
+  it('says « Trop de tentatives » on a 429 and keeps the question and the typed number', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB();
+    parkingSession.answerFailure = new PalierStatusError(429);
+
+    await user.type(screen.getByLabelText('Numéro de place'), 'B-3');
+    await user.press(screen.getByRole('button', { name: CONFIRM_TYPED }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Trop de tentatives, réessayez dans quelques minutes');
+    expect(screen.getByRole('header', { name: WHERE_PARKED })).toBeOnTheScreen();
+    expect(screen.getByLabelText('Numéro de place')).toHaveDisplayValue('B-3');
+  });
+
   it('sends one answer for two presses of « Confirmer » before Palier answers', async () => {
     const { user, parkingSession } = await julieAskedInAisleB();
     parkingSession.holdsSpotAnswer = true;
