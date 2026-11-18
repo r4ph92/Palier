@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { configureServer } from './configureServer.ts';
 import { acceptNoticeAs, authorizationFor, julie, marc } from './fakeDriverRepository.ts';
 import { JULIE_SESSION_ID } from './fakes/fakeCurrentParkingSessions.ts';
-import { julieSessionIn, julieWithAnsweringSession } from './parkedAnswerRig.ts';
+import { julieSessionIn, julieWithAnsweringSession, SPOT_NOT_SUITABLE_BODY } from './parkedAnswerRig.ts';
 import { PARKED_ANSWER_LIMIT, PARKED_ATTEMPT_WINDOW_MILLISECONDS, PARKED_SIGNAL_LIMIT } from '../../src/domain/parkingSessions/parkedAttemptLimits.ts';
 import { SESSION_NOT_FOUND_BODY } from '../../src/http/sessionNotFound.ts';
 
@@ -46,6 +46,21 @@ describe('Limits on parked answers and walking signals (story #126)', () => {
       expect(parkedAnswers.spotOf('B-3')).toEqual({ state: 'AVAILABLE', needsCheck: false });
       expect(parkedAnswers.spotOf('A-1')).toEqual({ state: 'OCCUPIED_UNKNOWN', needsCheck: true });
       expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toMatchObject({ state: 'PARKED_UNCONFIRMED' });
+    });
+
+    it('counts reserved-spot refusals, then answers B-5 and B-3 with the same 429 body', async () => {
+      const { answer, parkedAnswers } = await julieAskedWhereParked();
+      for (let attempt = 0; attempt < PARKED_ANSWER_LIMIT; attempt += 1) {
+        const refused = await answer('B-5');
+        expect([refused.statusCode, refused.json()]).toEqual([409, SPOT_NOT_SUITABLE_BODY]);
+      }
+
+      const reserved = await answer('B-5');
+      const free = await answer('B-3');
+
+      expect([reserved.statusCode, reserved.json()]).toEqual([429, TOO_MANY_ANSWERS_BODY]);
+      expect([free.statusCode, free.json()]).toEqual([429, TOO_MANY_ANSWERS_BODY]);
+      expect(parkedAnswers.answeredNumbers).toHaveLength(PARKED_ANSWER_LIMIT);
     });
 
     it('accepts the answer again once 10 minutes have passed since the 10th', async () => {

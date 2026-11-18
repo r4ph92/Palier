@@ -39,7 +39,7 @@ describe('Limits on parked answers and walking signals, attacked (story #126 QA)
     }
   }
 
-  it.each(['B-3', 'A-2', 'B-4', 'Z-99', 'A-1'])('answers %s past the limit with the same 429 body whatever the spot is, and never reaches the lot', async (spotNumber) => {
+  it.each(['B-3', 'A-2', 'B-4', 'B-5', 'Z-99', 'A-1'])('answers %s past the limit with the same 429 body whatever the spot is, and never reaches the lot', async (spotNumber) => {
     const { answer, parkedAnswers } = await julieAskedWhereParked();
     await answerTimes(answer, PARKED_ANSWER_LIMIT);
     const writesBefore = parkedAnswers.writes;
@@ -183,7 +183,7 @@ describe('Limits on parked answers and walking signals, attacked (story #126 QA)
     }
     const answerLimited = await server.inject({ method: 'POST', url: `/v1/entries/${JULIE_SESSION_ID}/spot`, headers, payload: { spotNumber: 'B-3' } });
 
-    const entry = await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: gateQrLink(entreeDemoGate.id, ENTREE_DEMO_SECRET) } });
+    const entry = await server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: gateQrLink(entreeDemoGate.id, ENTREE_DEMO_SECRET), tariff: ACCEPTED_DEMO_TARIFF } });
 
     expect(answerLimited.statusCode).toBe(429);
     expect(entry.statusCode).toBe(201);
