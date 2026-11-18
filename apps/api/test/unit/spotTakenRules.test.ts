@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { reportPlanOf } from '../../src/domain/parkingSessions/SpotTakenReport.ts';
 import type { SpotState } from '../../src/domain/spots/spotStates.ts';
 
-function planFor(sessionState: EntrySessionState, reportedNumber = 'A-1', assignedSpotState: SpotState = 'OCCUPIED', acceptedReportCount = 0) {
+interface PlanCase {
+  readonly reportedNumber?: string;
+  readonly assignedSpotState?: SpotState;
+  readonly acceptedReportCount?: number;
+}
+
+function planFor(sessionState: EntrySessionState, { reportedNumber = 'A-1', assignedSpotState = 'OCCUPIED', acceptedReportCount = 0 }: PlanCase = {}) {
   return reportPlanOf({ sessionState, assignedSpot: { number: 'A-1', state: assignedSpotState }, reportedNumber, acceptedReportCount });
 }
 
@@ -25,29 +31,29 @@ describe('which session may report its spot taken (story #23)', () => {
 
 describe('which spot the report names', () => {
   it.each(['A-1', 'a1', ' a - 1 '])('takes « %s » as Julie\'s assigned A-1', (reportedNumber) => {
-    expect(planFor('ENTRY_CONFIRMED', reportedNumber)).toMatchObject({ outcome: 'report' });
+    expect(planFor('ENTRY_CONFIRMED', { reportedNumber })).toMatchObject({ outcome: 'report' });
   });
 
   it('refuses a report naming A-2, no longer or never her spot, so a retry after a reassignment changes nothing', () => {
-    expect(planFor('ENTRY_CONFIRMED', 'A-2')).toEqual({ outcome: 'refused', refusal: 'spot-not-assigned' });
+    expect(planFor('ENTRY_CONFIRMED', { reportedNumber: 'A-2' })).toEqual({ outcome: 'refused', refusal: 'spot-not-assigned' });
   });
 
   it.each(['OCCUPIED_UNKNOWN', 'AVAILABLE', 'OUT_OF_SERVICE'] as const)('reassigns without flagging A-1 when an operator moved it to %s', (state) => {
-    expect(planFor('ENTRY_CONFIRMED', 'A-1', state)).toEqual({ outcome: 'report', flagsReported: false });
+    expect(planFor('ENTRY_CONFIRMED', { assignedSpotState: state })).toEqual({ outcome: 'report', flagsReported: false });
   });
 });
 
 describe('how many reports one session may make (story #129)', () => {
   it.each([0, 1, 2])('takes the report of a session that made %i', (acceptedReportCount) => {
-    expect(planFor('ENTRY_CONFIRMED', 'A-1', 'OCCUPIED', acceptedReportCount)).toEqual({ outcome: 'report', flagsReported: true });
+    expect(planFor('ENTRY_CONFIRMED', { acceptedReportCount })).toEqual({ outcome: 'report', flagsReported: true });
   });
 
   it.each([3, 4])('refuses with report-limit a session that made %i', (acceptedReportCount) => {
-    expect(planFor('ENTRY_CONFIRMED', 'A-1', 'OCCUPIED', acceptedReportCount)).toEqual({ outcome: 'refused', refusal: 'report-limit' });
+    expect(planFor('ENTRY_CONFIRMED', { acceptedReportCount })).toEqual({ outcome: 'refused', refusal: 'report-limit' });
   });
 
   it('keeps the parked and not-assigned refusals ahead of the cap', () => {
-    expect(planFor('PARKED_CONFIRMED', 'A-1', 'OCCUPIED', 3)).toEqual({ outcome: 'refused', refusal: 'already-parked' });
-    expect(planFor('ENTRY_CONFIRMED', 'A-2', 'OCCUPIED', 3)).toEqual({ outcome: 'refused', refusal: 'spot-not-assigned' });
+    expect(planFor('PARKED_CONFIRMED', { acceptedReportCount: 3 })).toEqual({ outcome: 'refused', refusal: 'already-parked' });
+    expect(planFor('ENTRY_CONFIRMED', { reportedNumber: 'A-2', acceptedReportCount: 3 })).toEqual({ outcome: 'refused', refusal: 'spot-not-assigned' });
   });
 });
