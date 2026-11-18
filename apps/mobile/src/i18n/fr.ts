@@ -27,7 +27,7 @@ export const fr = {
       other: '%{count} places libres sur %{capacity}',
     },
     full: 'Complet',
-    tariff: '%{price} / %{minutes}\u00A0min · plafond %{cap} par jour',
+    tariff: '%{price} / %{minutes}\u00A0min\u00A0· plafond %{cap} par jour',
     fullAccessibilityLabel: 'Complet, 0 place libre',
     loading: 'Chargement des stationnements',
     empty: 'Aucun stationnement en ligne.',

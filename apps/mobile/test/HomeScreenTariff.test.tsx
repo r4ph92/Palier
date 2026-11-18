@@ -1,5 +1,8 @@
 import { screen } from '@testing-library/react-native';
 import { FakeLotsClient, parkingDemo } from './fakeLotsClient';
+import { applyLanguage } from '../src/i18n/i18n';
+import { tariffLine } from '../src/i18n/tariffText';
+import { PARKING_DEMO_TARIFF } from './fakeEntryClient';
 import { renderHomeScreen } from './renderHomeScreen';
 import { asSeen, visibleText } from './visibleText';
 
@@ -16,6 +19,12 @@ describe('HomeScreen lot tariff', () => {
 
     expect(await screen.findByText('$0.75 / 15 min · daily cap $25.00', visibleText)).toBeOnTheScreen();
     expect(screen.queryByText(/plafond|par jour/, visibleText)).not.toBeOnTheScreen();
+  });
+
+  it.each(['fr', 'en'] as const)('in %s, never starts a line with the « · » of the tariff line, even at the largest text', (language) => {
+    applyLanguage(language);
+
+    expect(tariffLine(PARKING_DEMO_TARIFF)).toContain('min\u00A0· ');
   });
 
   it('reads the tariff to VoiceOver with the rest of the row', async () => {

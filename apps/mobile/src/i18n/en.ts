@@ -27,7 +27,7 @@ export const en: Translations = {
       other: '%{count} free spots out of %{capacity}',
     },
     full: 'Full',
-    tariff: '%{price} / %{minutes}\u00A0min · daily cap %{cap}',
+    tariff: '%{price} / %{minutes}\u00A0min\u00A0· daily cap %{cap}',
     fullAccessibilityLabel: 'Full, 0 free spots',
     loading: 'Loading parking lots',
     empty: 'No parking lot online.',
