@@ -223,6 +223,10 @@ Vérifier l'export :
 grep -r -e "Connexion de test" -e "Test sign-in" -e "/v1/test/" <dossier-hors-du-dépôt>   # aucun résultat
 ```
 
+`npx expo export:embed` produit un bundle de développement par défaut : lui passer
+`--dev false`. Dans la barrière, `testSignInReleaseGraph.test.ts` vérifie que le graphe
+du bundle de production ne contient pas la connexion de test.
+
 ## Documents
 
 | # | Document | Contenu |
