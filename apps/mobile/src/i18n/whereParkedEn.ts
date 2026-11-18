@@ -1,5 +1,5 @@
 import type { Translations } from './fr';
-import { SENDING, UNREACHABLE } from './sharedEn';
+import { SENDING, TOO_MANY_ATTEMPTS, UNREACHABLE } from './sharedEn';
 
 export const whereParkedEn: Translations['session']['whereParked'] = {
   question: 'Where are you parked?',
@@ -15,6 +15,7 @@ export const whereParkedEn: Translations['session']['whereParked'] = {
   spotNotSuitable: 'This spot is reserved\u00A0— check the number on the ground',
   invalidNumber: 'Invalid number',
   offline: 'Offline, free spots as of last check',
+  tooManyAttempts: TOO_MANY_ATTEMPTS,
   unreachable: UNREACHABLE,
   notMySpot: 'This is not my spot',
   correctedNumberLabel: 'Number of the spot you parked in',

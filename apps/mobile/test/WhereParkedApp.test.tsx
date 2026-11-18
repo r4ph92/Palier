@@ -2,6 +2,7 @@ import { screen, userEvent, within } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import { PositioningCore } from '../src/positioning/PositioningCore';
+import { PalierStatusError } from '../src/api/LotsClient';
 import { PalierRejectedError } from '../src/api/VehicleClient';
 import { AISLE_B_FREE_SPOTS, FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
@@ -166,5 +167,16 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     expect(screen.getByText('Free spots in aisle B for your vehicle')).toBeOnTheScreen();
     expect(await screen.findByRole('alert')).toHaveTextContent('This spot is already assigned — check the number on the ground', visibleText);
     expect(within(screen.getByRole('button', { name: /^Confirm\s/ })).getByText('Confirm B-3', visibleText)).toBeOnTheScreen();
+  });
+
+  it('reads « Too many attempts » on an English device when the answer limit is reached', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB('en');
+    parkingSession.answerFailure = new PalierStatusError(429);
+
+    await user.press(screen.getByRole('radio', { name: 'B-3' }));
+    await user.press(screen.getByRole('button', { name: /^Confirm\s/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Too many attempts, try again in a few minutes', visibleText);
+    expect(screen.getByRole('header', { name: 'Where are you parked?' })).toBeOnTheScreen();
   });
 });
