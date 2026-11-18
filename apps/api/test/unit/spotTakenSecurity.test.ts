@@ -95,34 +95,25 @@ describe('POST /v1/entries/:sessionId/spot-taken security (story #23)', () => {
     },
   );
 
-  // Accepted risk (decision 022): no cap on reports per session. One consented driver can flag the whole lot, but it is
-  // bounded by the free-spot count and self-terminates: once no spot is free the driver is parked and further reports refuse.
-  it('lets one driver flag every spot in the lot, bounded by its free spots, then self-terminates', async () => {
+  // Decision 022: three accepted reports per session, the fourth is refused and writes nothing.
+  it('lets one driver flag at most three spots in a session, then refuses and changes nothing', async () => {
     const { report, spotTakenReports } = await julieThroughTheGate();
 
-    let response = await report('A-1');
-    let body = response.json() as ReportResponse;
-    let successes = 0;
-    while (response.statusCode === 200) {
-      successes += 1;
-      if (body.outcome === 'none-free') {
-        break;
-      }
-      response = await report(body.spot?.number ?? '');
-      body = response.json() as ReportResponse;
+    let assigned = 'A-1';
+    for (let accepted = 0; accepted < 3; accepted += 1) {
+      const response = await report(assigned);
+      expect(response.statusCode).toBe(200);
+      assigned = (response.json() as ReportResponse).spot?.number ?? '';
     }
+    const writesBefore = spotTakenReports.writes;
+    const refused = await report(assigned);
 
-    expect(body.outcome).toBe('none-free');
-    // Exactly one report per spot: the lot size caps the damage, it is not unbounded.
-    expect(successes).toBe(DEMO_SPOTS.length);
-    for (const number of DEMO_SPOTS) {
-      expect(spotTakenReports.spotOf(number)).toEqual(FLAGGED);
-    }
-    expect(spotTakenReports.sessionOf(JULIE_SESSION_ID)).toMatchObject({ state: 'PARKED_UNCONFIRMED' });
-
-    const afterParked = await report('B-5');
-    expect(afterParked.statusCode).toBe(409);
-    expect(afterParked.json()).toMatchObject({ error: 'ALREADY_PARKED' });
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json()).toMatchObject({ error: 'SPOT_REPORT_LIMIT' });
+    expect(spotTakenReports.writes).toBe(writesBefore);
+    expect(spotTakenReports.spotOf(assigned)).toEqual(OCCUPIED);
+    expect(spotTakenReports.sessionOf(JULIE_SESSION_ID)).toMatchObject({ state: 'ENTRY_CONFIRMED', assignedSpotNumber: assigned });
+    expect(DEMO_SPOTS.filter((number) => spotTakenReports.spotOf(number)?.needsCheck === true)).toHaveLength(3);
   });
 
   it('never offers the reported spot back as the replacement, even AVAILABLE and nearest the exit', () => {

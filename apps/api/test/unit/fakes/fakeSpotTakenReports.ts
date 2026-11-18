@@ -51,7 +51,7 @@ export class FakeSpotTakenReports implements SpotTakenReportRepository {
 
   #reportOwn(session: StoredReportingSession, reportedNumber: string): SpotTakenOutcome {
     const assigned = this.#existingSpot(session.assignedSpotNumber);
-    const plan = reportPlanOf({ sessionState: session.state, assignedSpot: { number: session.assignedSpotNumber, state: assigned.state }, reportedNumber });
+    const plan = reportPlanOf({ sessionState: session.state, assignedSpot: { number: session.assignedSpotNumber, state: assigned.state }, reportedNumber, acceptedReportCount: session.reportedSpotNumbers.length });
     if (plan.outcome === 'refused') {
       return { outcome: plan.refusal };
     }

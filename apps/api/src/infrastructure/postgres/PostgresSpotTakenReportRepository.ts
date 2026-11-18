@@ -5,7 +5,7 @@ import { inLotLock, orLotBusy } from './lockParkingLot.ts';
 import { flagAssignedSpotToCheck, readSessionLot } from './parkedAnswerStatements.ts';
 import { spotOf } from './spotLabel.ts';
 import { claimFirstFittingSpot, OCCUPIED_BY_REPORT, readFreeSpotsNoSessionHolds, type SpotChooser } from './spotClaim.ts';
-import { askWhereParkedAfterReport, lockReportingSession, reassignSession, recordReportedSpot, type ReportingSession } from './spotTakenStatements.ts';
+import { askWhereParkedAfterReport, countReportedSpots, lockReportingSession, reassignSession, recordReportedSpot, type ReportingSession } from './spotTakenStatements.ts';
 
 // Lot, then session with its spot, then the new spot, in one transaction (docs/03, decision 022).
 export class PostgresSpotTakenReportRepository implements SpotTakenReportRepository {
@@ -29,7 +29,8 @@ async function reportUnderLotLock(tx: Transaction, report: SpotTakenReport, lotI
   if (session === null) {
     return { outcome: 'not-found' };
   }
-  const plan = reportPlanOf({ sessionState: session.state, assignedSpot: session.assignedSpot, reportedNumber: report.spotNumber });
+  const acceptedReportCount = await countReportedSpots(tx, report.sessionId);
+  const plan = reportPlanOf({ sessionState: session.state, assignedSpot: session.assignedSpot, reportedNumber: report.spotNumber, acceptedReportCount });
   if (plan.outcome === 'refused') {
     return { outcome: plan.refusal };
   }

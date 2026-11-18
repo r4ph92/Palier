@@ -110,6 +110,7 @@ export type SpotTakenRefusalCode =
   | 'ALREADY_PARKED'
   | 'SESSION_CLOSED'
   | 'SPOT_NOT_ASSIGNED'
+  | 'SPOT_REPORT_LIMIT'
   | 'LOT_BUSY';
 
 // One line of the receipt of a stay over 24 hours: a full day at the daily cap, or the minutes beyond the last full day (Q39).

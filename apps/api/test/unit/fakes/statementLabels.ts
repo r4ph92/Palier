@@ -37,6 +37,7 @@ export type StatementLabel =
   | 'restore-spot-hold'
   | 'lock-answering-session'
   | 'lock-reporting-session'
+  | 'count-reported-spots'
   | 'record-reported-spot'
   | 'reassign-spot'
   | 'lock-answered-spot'
@@ -162,6 +163,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-session-lot', /select lot_id from parking_session/],
   ['lock-answering-session', /left join spot on spot\.id = ps\.confirmed_spot_id[\s\S]*for update of ps/],
   ['lock-reporting-session', /left join vehicle[\s\S]*for update of ps/],
+  ['count-reported-spots', /select count\(\*\)::int as reported from parking_session_reported_spot/],
   ['record-reported-spot', /insert into parking_session_reported_spot/],
   ['reassign-spot', /update parking_session set assigned_spot_id/],
   ['lock-answered-spot', /for update of spot/],

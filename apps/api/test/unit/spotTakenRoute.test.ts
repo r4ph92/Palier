@@ -113,6 +113,94 @@ describe('POST /v1/entries/:sessionId/spot-taken (story #23)', () => {
     expect(spotTakenReports.writes).toBe(1);
   });
 
+  describe('the cap of three accepted reports per session (story #129)', () => {
+    const LIMIT_BODY = { statusCode: 409, error: 'SPOT_REPORT_LIMIT', message: 'You have reached the report limit for this session.' };
+
+    async function julieAfterReports(count: number) {
+      const configured = await julieThroughTheGate();
+      let assigned = 'A-1';
+      for (let made = 0; made < count; made += 1) {
+        const response = await configured.report(assigned);
+        assigned = (response.json() as { spot: { number: string } }).spot.number;
+      }
+      return { ...configured, assigned };
+    }
+
+    it('accepts her third report after two, as today', async () => {
+      const { report, assigned, spotTakenReports } = await julieAfterReports(2);
+
+      const response = await report(assigned);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({ outcome: 'reassigned' });
+      expect(spotTakenReports.spotOf(assigned)).toEqual(FLAGGED);
+    });
+
+    it('refuses her fourth with SPOT_REPORT_LIMIT, leaving the spot unflagged, her assignment and the writes unchanged', async () => {
+      const { report, assigned, spotTakenReports } = await julieAfterReports(3);
+      const writes = spotTakenReports.writes;
+
+      const response = await report(assigned);
+
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toEqual(LIMIT_BODY);
+      expect(spotTakenReports.spotOf(assigned)).toEqual(OCCUPIED);
+      expect(spotTakenReports.sessionOf(JULIE_SESSION_ID)).toMatchObject({ state: 'ENTRY_CONFIRMED', assignedSpotNumber: assigned });
+      expect(spotTakenReports.writes).toBe(writes);
+    });
+
+    it('keeps refusing her, never counting the refusals as reports', async () => {
+      const { report, assigned, spotTakenReports } = await julieAfterReports(3);
+
+      await report(assigned);
+      const again = await report(assigned);
+
+      expect(again.json()).toEqual(LIMIT_BODY);
+      expect(spotTakenReports.sessionOf(JULIE_SESSION_ID)?.reportedSpotNumbers).toHaveLength(3);
+    });
+
+    it('counts per session: a new session of Julie starts again at zero', async () => {
+      const { report, spotTakenReports, driverRepository } = await julieAfterReports(3);
+      const newSession = '00000000-0000-4000-8000-000000000952';
+      spotTakenReports.add(newSession, julieSessionIn('ENTRY_CONFIRMED'));
+      spotTakenReports.setSpot('A-1', OCCUPIED);
+
+      const response = await server.inject({ method: 'POST', url: `/v1/entries/${newSession}/spot-taken`, headers: await authorizationFor(driverRepository, julie), payload: { spotNumber: 'A-1' } });
+
+      expect(response.statusCode).toBe(200);
+      expect((await report('A-1')).statusCode).toBe(409);
+    });
+
+    it('counts per driver: Marc still reports his own spot while Julie is capped', async () => {
+      const { spotTakenReports, driverRepository, report, assigned } = await julieAfterReports(3);
+      const marcSession = '00000000-0000-4000-8000-000000000953';
+      spotTakenReports.add(marcSession, { ...julieSessionIn('ENTRY_CONFIRMED'), driverId: marc.id, assignedSpotNumber: 'B-1' });
+      spotTakenReports.setSpot('B-1', OCCUPIED);
+
+      const response = await server.inject({ method: 'POST', url: `/v1/entries/${marcSession}/spot-taken`, headers: await authorizationFor(driverRepository, marc), payload: { spotNumber: 'B-1' } });
+
+      expect(response.statusCode).toBe(200);
+      expect((await report(assigned)).json()).toEqual(LIMIT_BODY);
+    });
+
+    it("answers not found to Marc on Julie's capped session, and the count does not change", async () => {
+      const { report, assigned, driverRepository, spotTakenReports } = await julieAfterReports(3);
+
+      const response = await report(assigned, await authorizationFor(driverRepository, marc));
+
+      expect(response.statusCode).toBe(404);
+      expect(spotTakenReports.sessionOf(JULIE_SESSION_ID)?.reportedSpotNumbers).toHaveLength(3);
+    });
+
+    it('accepts exactly one of two reports sent together at two reports', async () => {
+      const { report, assigned } = await julieAfterReports(2);
+
+      const responses = await Promise.all([report(assigned), report(assigned)]);
+
+      expect(responses.map((response) => response.statusCode).sort()).toEqual([200, 409]);
+    });
+  });
+
   it('answers 503 LOT_BUSY when the lot stays locked', async () => {
     const { report, spotTakenReports } = await julieThroughTheGate();
     spotTakenReports.isLotBusy = true;

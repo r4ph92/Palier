@@ -23,6 +23,7 @@ const sendRefusal = refusalSender<SpotTakenRefusal, SpotTakenRefusalCode>(
     'already-parked': { statusCode: CONFLICT, error: 'ALREADY_PARKED', message: 'This session is already parked.' },
     closed: SESSION_CLOSED_BODY,
     'spot-not-assigned': { statusCode: CONFLICT, error: 'SPOT_NOT_ASSIGNED', message: 'This spot is not the one assigned to this session.' },
+    'report-limit': { statusCode: CONFLICT, error: 'SPOT_REPORT_LIMIT', message: 'You have reached the report limit for this session.' },
     'lot-busy': LOT_BUSY_BODY,
   },
   'spot-taken report',

@@ -37,10 +37,11 @@ function freeSpot(number: string, aisleId: string, distanceToExit: number) {
 const A2_FREE = { ...freeSpot('A-2', AISLE_A_ID, 10), id: SPOT_A2_ID };
 const A2_CLAIMED = { id: SPOT_A2_ID, number: 'A-2', aisle_code: 'A', level_code: 'P1' };
 
-function reportOn(session = lockedSession(), freeSpots: readonly Record<string, unknown>[] = [A2_FREE, freeSpot('B-1', AISLE_B_ID, 5)]) {
+function reportOn(session = lockedSession(), freeSpots: readonly Record<string, unknown>[] = [A2_FREE, freeSpot('B-1', AISLE_B_ID, 5)], reportedCount = 0) {
   return new ScriptedSql()
     .answer('read-session-lot', [{ lot_id: LOT_ID }])
     .answer('lock-reporting-session', [session])
+    .answer('count-reported-spots', [{ reported: reportedCount }])
     .answer('flag-assigned-spot', [{ id: SPOT_A1_ID }])
     .answer('read-free-spots', freeSpots)
     .answer('claim-spot', [A2_CLAIMED])
@@ -65,6 +66,7 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
       'limit-lock-wait',
       'lock-lot',
       'lock-reporting-session',
+      'count-reported-spots',
       'flag-assigned-spot',
       'record-reported-spot',
       'read-free-spots',
@@ -115,7 +117,7 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
 
     await expect(reportWith(sql)).resolves.toEqual({ outcome: 'none-free' });
 
-    expect(sql.labels().slice(3)).toEqual(['lock-reporting-session', 'flag-assigned-spot', 'record-reported-spot', 'read-free-spots', 'ask-where-parked']);
+    expect(sql.labels().slice(3)).toEqual(['lock-reporting-session', 'count-reported-spots', 'flag-assigned-spot', 'record-reported-spot', 'read-free-spots', 'ask-where-parked']);
     const ask = sql.statement('ask-where-parked');
     expect(ask?.text).toMatch(/set state = 'PARKED_UNCONFIRMED', parked_aisle_id = \$\d+, parked_at = now\(\)\s+where id = \$\d+ and state = 'ENTRY_CONFIRMED'/);
     expect(ask?.params).toEqual([AISLE_A_ID, SESSION_ID]);
@@ -125,6 +127,7 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
     const lostEverySpot = new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
       .answer('lock-reporting-session', [lockedSession()])
+      .answer('count-reported-spots', [{ reported: 0 }])
       .answer('flag-assigned-spot', [{ id: SPOT_A1_ID }])
       .answer('read-free-spots', [A2_FREE])
       .answer('ask-where-parked', [{ id: SESSION_ID }]);
@@ -161,6 +164,29 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
     expect(WRITES.map((label) => sql.count(label))).toEqual([0, 0, 0, 0, 0]);
   });
 
+  it('counts the reports of her own session only, under the session lock', async () => {
+    const sql = reportOn();
+
+    await reportWith(sql);
+
+    const count = sql.statement('count-reported-spots');
+    expect(count?.text).toMatch(/from parking_session_reported_spot where session_id = \$\d+$/);
+    expect(count?.params).toEqual([SESSION_ID]);
+  });
+
+  it('accepts her third report, made after two', async () => {
+    const sql = reportOn(lockedSession(), undefined, 2);
+
+    await expect(reportWith(sql)).resolves.toMatchObject({ outcome: 'reassigned' });
+  });
+
+  it('refuses her fourth report after three accepted, before any write', async () => {
+    const sql = reportOn(lockedSession(), undefined, 3);
+
+    await expect(reportWith(sql)).resolves.toEqual({ outcome: 'report-limit' });
+    expect(WRITES.map((label) => sql.count(label))).toEqual([0, 0, 0, 0, 0]);
+  });
+
   it("answers not found, without a lock, for Marc reporting Julie's spot", async () => {
     const sql = new ScriptedSql();
 
@@ -179,6 +205,7 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
     const sql = new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
       .answer('lock-reporting-session', [lockedSession()])
+      .answer('count-reported-spots', [{ reported: 0 }])
       .answer('flag-assigned-spot', [{ id: SPOT_A1_ID }])
       .answer('read-free-spots', [A2_FREE])
       .answer('claim-spot', [A2_CLAIMED]);

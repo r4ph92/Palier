@@ -44,6 +44,13 @@ function reportingSessionOf(row: ReportingSessionRow): ReportingSession {
   };
 }
 
+// One row per accepted report of the session; read under the session lock, so a concurrent report cannot slip past the cap.
+export async function countReportedSpots(tx: Executor, sessionId: string): Promise<number> {
+  const [row] = await tx.execute<{ reported: number }>(sql`
+    select count(*)::int as reported from parking_session_reported_spot where session_id = ${sessionId}`);
+  return row?.reported ?? 0;
+}
+
 export interface ReportedSpot {
   readonly sessionId: string;
   readonly spotId: string;

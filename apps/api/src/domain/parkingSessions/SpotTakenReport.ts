@@ -9,13 +9,16 @@ export interface SpotTakenReport {
   readonly spotNumber: string;
 }
 
-export type SpotTakenRefusal = 'not-found' | 'entry-not-confirmed' | 'already-parked' | 'closed' | 'spot-not-assigned' | 'lot-busy';
+export type SpotTakenRefusal = 'not-found' | 'entry-not-confirmed' | 'already-parked' | 'closed' | 'spot-not-assigned' | 'report-limit' | 'lot-busy';
 
 // reassigned: another fitting spot became the session's; none-free: the driver is asked where they parked (decision 022).
 export type SpotTakenOutcome =
   | { readonly outcome: 'reassigned'; readonly spot: AssignedSpot }
   | { readonly outcome: 'none-free' }
   | { readonly outcome: SpotTakenRefusal };
+
+// One consented driver must not flag every spot of the lot to check (decision 022).
+export const MAX_SPOT_TAKEN_REPORTS = 3;
 
 export interface SpotTakenReportRepository {
   // The driver's own session only: another driver's session is not found, like an unknown id.
@@ -40,21 +43,25 @@ export interface ReportFacts {
   readonly sessionState: EntrySessionState;
   readonly assignedSpot: { readonly number: string; readonly state: SpotState };
   readonly reportedNumber: string;
+  readonly acceptedReportCount: number;
 }
 
 // flagsReported: the spot is OCCUPIED_UNKNOWN to check only when it was still OCCUPIED for the driver; an operator may have
 // moved it meanwhile, and the driver gets another spot anyway (as in decision 021).
 export type ReportPlan =
-  | { readonly outcome: 'refused'; readonly refusal: SessionRefusal | 'spot-not-assigned' }
+  | { readonly outcome: 'refused'; readonly refusal: SessionRefusal | 'spot-not-assigned' | 'report-limit' }
   | { readonly outcome: 'report'; readonly flagsReported: boolean };
 
-export function reportPlanOf({ sessionState, assignedSpot, reportedNumber }: ReportFacts): ReportPlan {
+export function reportPlanOf({ sessionState, assignedSpot, reportedNumber, acceptedReportCount }: ReportFacts): ReportPlan {
   const sessionRefusal = SESSION_REFUSALS[sessionState];
   if (sessionRefusal !== null) {
     return { outcome: 'refused', refusal: sessionRefusal };
   }
   if (canonicalSpotNumber(reportedNumber) !== canonicalSpotNumber(assignedSpot.number)) {
     return { outcome: 'refused', refusal: 'spot-not-assigned' };
+  }
+  if (acceptedReportCount >= MAX_SPOT_TAKEN_REPORTS) {
+    return { outcome: 'refused', refusal: 'report-limit' };
   }
   return { outcome: 'report', flagsReported: assignedSpot.state === 'OCCUPIED' };
 }
