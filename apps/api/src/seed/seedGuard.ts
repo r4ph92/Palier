@@ -6,6 +6,7 @@ const ALLOWED_ENVIRONMENTS = new Set(['development', 'test']);
 // Query parameters that libpq (psql) would connect to; postgres-js only forwards them to the server.
 const HOST_PARAMETERS = ['host', 'hostaddr'] as const;
 
+// PGHOST is read from process.env, as postgres-js reads it, not from `variables`.
 export function databaseUrlAllowedForSeeding(variables: NodeJS.ProcessEnv): string {
   const environment = variables['NODE_ENV'];
   if (environment === undefined || !ALLOWED_ENVIRONMENTS.has(environment)) {
