@@ -3,20 +3,21 @@ import { pathToFileURL } from 'node:url';
 
 export interface DemoAsset {
   readonly contentType: string;
-  readonly location: URL;
+  readonly location: () => URL;
 }
 
 const CONSOLE_PAGE = 'console.html';
 const JAVASCRIPT = 'text/javascript; charset=utf-8';
 const FONT = 'font/ttf';
-const resolvePackageFile = createRequire(import.meta.url).resolve;
+const resolvePackageFile = (specifier: string): string => createRequire(import.meta.url).resolve(specifier);
 
-function besideThisFile(fileName: string): URL {
-  return new URL(fileName, import.meta.url);
+function besideThisFile(fileName: string): () => URL {
+  return () => new URL(fileName, import.meta.url);
 }
 
-function fromPackage(specifier: string): URL {
-  return pathToFileURL(resolvePackageFile(specifier));
+// Resolved on demand: a server without demo mode never needs the font packages to be installed.
+function fromPackage(specifier: string): () => URL {
+  return () => pathToFileURL(resolvePackageFile(specifier));
 }
 
 export const DEMO_ASSETS: Readonly<Record<string, DemoAsset>> = {
@@ -30,7 +31,12 @@ export const DEMO_ASSETS: Readonly<Record<string, DemoAsset>> = {
   'consoleTranslations.js': { contentType: JAVASCRIPT, location: besideThisFile('consoleTranslations.js') },
   'gateApi.js': { contentType: JAVASCRIPT, location: besideThisFile('gateApi.js') },
   'loopPress.js': { contentType: JAVASCRIPT, location: besideThisFile('loopPress.js') },
+  'presenceArming.js': { contentType: JAVASCRIPT, location: besideThisFile('presenceArming.js') },
   'vehiclePresence.js': { contentType: JAVASCRIPT, location: besideThisFile('vehiclePresence.js') },
+  'languageStorage.js': { contentType: JAVASCRIPT, location: besideThisFile('languageStorage.js') },
+  'pressOutcome.js': { contentType: JAVASCRIPT, location: besideThisFile('pressOutcome.js') },
+  'debounce.js': { contentType: JAVASCRIPT, location: besideThisFile('debounce.js') },
+  'keyField.js': { contentType: JAVASCRIPT, location: besideThisFile('keyField.js') },
   'gateIdentity.js': { contentType: JAVASCRIPT, location: besideThisFile('gateIdentity.js') },
   'gateAction.js': { contentType: JAVASCRIPT, location: besideThisFile('gateAction.js') },
   'gateRefusals.js': { contentType: JAVASCRIPT, location: besideThisFile('gateRefusals.js') },

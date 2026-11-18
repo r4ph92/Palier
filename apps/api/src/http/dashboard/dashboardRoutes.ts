@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { signOutDashboardUser } from '../../domain/dashboard/dashboardSessions.ts';
 import type { DashboardRouteDependencies } from './DashboardRouteDependencies.ts';
 import { registerDashboardEquipmentRoutes } from './dashboardEquipmentRoutes.ts';
+import { registerDashboardExitRoutes } from './dashboardExitRoutes.ts';
 import { registerDashboardGateSecretRoutes } from './dashboardGateSecretRoutes.ts';
 import { registerDashboardLotGateRoutes } from './dashboardLotGateRoutes.ts';
 import { registerDashboardLotMapRoutes } from './dashboardLotMapRoutes.ts';
@@ -13,6 +14,7 @@ import { registerDashboardOccupancyRoutes } from './dashboardOccupancyRoutes.ts'
 import { registerDashboardOperatorRoutes } from './dashboardOperatorRoutes.ts';
 import { registerDashboardSessionRoutes } from './dashboardSessionRoutes.ts';
 import { registerDashboardSpotCheckRoutes } from './dashboardSpotCheckRoutes.ts';
+import { registerDashboardStaleSessionRoutes } from './dashboardStaleSessionRoutes.ts';
 import { registerDashboardStripeRoutes } from './dashboardStripeRoutes.ts';
 import { clearDashboardCookie, dashboardCookieToken } from './dashboardSessionCookie.ts';
 import { registerDashboardTestSignInRoutes } from './dashboardTestSignInRoutes.ts';
@@ -44,6 +46,8 @@ function registerLotFeatureRoutes(scope: FastifyInstance, dependencies: Dashboar
   registerDashboardLotSpotRoutes(scope, dependencies);
   registerDashboardSpotCheckRoutes(scope, dependencies);
   registerDashboardSessionRoutes(scope, dependencies);
+  registerDashboardStaleSessionRoutes(scope, dependencies);
+  registerDashboardExitRoutes(scope, dependencies);
   registerDashboardLotGateRoutes(scope, dependencies);
   registerDashboardGateSecretRoutes(scope, dependencies);
   registerDashboardLotPublicationRoutes(scope, dependencies);

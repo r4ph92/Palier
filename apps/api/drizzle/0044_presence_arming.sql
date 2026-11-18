@@ -1,0 +1,3 @@
+ALTER TABLE "gate_passage" ADD COLUMN "armed_at" timestamp with time zone;--> statement-breakpoint
+CREATE INDEX "gate_passage_presence_index" ON "gate_passage" USING btree ("gate_id","closed_at") WHERE "gate_passage"."armed_at" is not null;--> statement-breakpoint
+ALTER TABLE "gate_passage" ADD CONSTRAINT "gate_passage_armed_before_closed" CHECK ("gate_passage"."armed_at" is null or "gate_passage"."armed_at" <= "gate_passage"."closed_at");

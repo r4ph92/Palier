@@ -4,8 +4,8 @@ import { PalierUnreachableError } from '../src/api/LotsClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
+import { findFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreenWith } from './renderHomeScreen';
-import { visibleText } from './visibleText';
 
 const RELEASE_FR = 'Libérer la garantie à Parking Démo';
 const RELEASE_EN = 'Release the guarantee at Parking Démo';
@@ -36,14 +36,14 @@ describe('HomeScreen releasing a hold', () => {
     announce.mockClear();
     const spotHoldClient = new FakeSpotHoldClient(julieHoldAtParkingDemo());
     const { lotsClient, user } = await renderJulieHolding(spotHoldClient);
-    expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('9 places libres')).toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: RELEASE_FR }));
     expect(screen.getByText('Libérer cette garantie?')).toBeOnTheScreen();
     expect(spotHoldClient.releasedIds).toHaveLength(0);
     await user.press(screen.getByRole('button', { name: CONFIRM_FR }));
 
-    expect(await screen.findByText('10 places libres', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('10 places libres')).toBeOnTheScreen();
     expect(screen.queryByTestId('spot-hold-banner')).not.toBeOnTheScreen();
     expect(spotHoldClient.releasedIds).toEqual(['hold-1']);
     expect(lotsClient.callCount).toBe(2);
@@ -142,7 +142,7 @@ describe('HomeScreen releasing a hold', () => {
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeOnTheScreen();
     await user.press(screen.getByRole('button', { name: CONFIRM_EN }));
 
-    expect(await screen.findByText('10 free spots', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('10 free spots')).toBeOnTheScreen();
     expect(announce).toHaveBeenCalledWith('Guarantee released');
   });
 

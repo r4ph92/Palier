@@ -1,12 +1,14 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { AccountWebhookReader, OperatorStripeAccounts, OperatorStripeGateway } from '../domain/dashboard/OperatorStripe.ts';
 import type { GateSecretRepository } from '../domain/dashboard/GateSecretRepository.ts';
+import type { ExitIdentificationReader } from '../domain/dashboard/ExitIdentificationReader.ts';
 import type { LevelOccupancyReader } from '../domain/dashboard/LevelOccupancyReader.ts';
 import type { LotEquipmentReader } from '../domain/dashboard/LotEquipmentReader.ts';
 import type { LotGateRepository } from '../domain/dashboard/LotGateRepository.ts';
 import type { LotMapRepository } from '../domain/dashboard/LotMapRepository.ts';
 import type { LotSpotRepository } from '../domain/dashboard/LotSpotRepository.ts';
 import type { SessionTimelineRepository } from '../domain/dashboard/SessionTimelineRepository.ts';
+import type { StaleSessionReviewRepository } from '../domain/dashboard/StaleSessionReviewRepository.ts';
 import type { SpotCheckRepository } from '../domain/dashboard/SpotCheckRepository.ts';
 import type { LotSetupRepository } from '../domain/dashboard/LotSetupRepository.ts';
 import type { OperatorRepository } from '../domain/dashboard/OperatorRepository.ts';
@@ -72,6 +74,8 @@ export interface ServerDependencies {
     readonly lotSpots: LotSpotRepository;
     readonly spotChecks: SpotCheckRepository;
     readonly sessionTimelines: SessionTimelineRepository;
+    readonly staleSessionReviews: StaleSessionReviewRepository;
+    readonly exitIdentifications: ExitIdentificationReader;
     readonly lotGates: LotGateRepository;
     readonly gateSecrets: GateSecretRepository;
     readonly lotPublication: LotPublicationRepository;
@@ -124,6 +128,19 @@ export function buildServer({ repositories, gates, cardGateway, entries, exits, 
   return server;
 }
 
+function lotFeatureRepositories(repositories: ServerDependencies['repositories']) {
+  return {
+    spots: repositories.lotSpots,
+    spotChecks: repositories.spotChecks,
+    sessionTimelines: repositories.sessionTimelines,
+    staleSessionReviews: repositories.staleSessionReviews,
+    exitIdentifications: repositories.exitIdentifications,
+    gates: repositories.lotGates,
+    gateSecrets: repositories.gateSecrets,
+    publication: repositories.lotPublication,
+  };
+}
+
 // The dashboard has its own scope, outside the app's: the minimum app version does not apply to a browser.
 function dashboardDependencies({ repositories, settings = {}, operatorStripe, testClock }: Omit<ServerDependencies, 'gates'>): DashboardRouteDependencies {
   return {
@@ -134,12 +151,7 @@ function dashboardDependencies({ repositories, settings = {}, operatorStripe, te
     maps: repositories.lotMaps,
     equipment: repositories.lotEquipment,
     clock: composedClockOf(settings, repositories, testClock),
-    spots: repositories.lotSpots,
-    spotChecks: repositories.spotChecks,
-    sessionTimelines: repositories.sessionTimelines,
-    gates: repositories.lotGates,
-    gateSecrets: repositories.gateSecrets,
-    publication: repositories.lotPublication,
+    ...lotFeatureRepositories(repositories),
     stripe: operatorStripe?.gateway == null ? null : { accounts: operatorStripe.accounts, gateway: operatorStripe.gateway },
     testSignInEnabled: settings.testSignInEnabled === true,
     secureCookies: settings.secureCookies ?? true,

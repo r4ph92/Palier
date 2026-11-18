@@ -19,8 +19,11 @@ export type StatementLabel =
   | 'read-held-spot'
   | 'use-spot-hold'
   | 'has-usable-spot-hold'
+  | 'read-driver-active-session'
   | 'assign-held-spot'
   | 'free-held-spot'
+  | 'find-stale-session-lots'
+  | 'flag-stale-sessions'
   | 'find-silent-session-lots'
   | 'presume-silent-entries'
   | 'presume-silent-questions'
@@ -77,6 +80,7 @@ export type StatementLabel =
   | 'record-test-passage'
   | 'record-reported-battery'
   | 'read-lot-gates'
+  | 'read-gate-presence'
   | 'read-owned-lot-id'
   | 'record-aisle-battery'
   | 'count-vehicle'
@@ -131,6 +135,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['record-test-passage', /update gate set verified_at = \$1::timestamptz/],
   ['read-owned-lot-id', /select parking_lot\.id from parking_lot where parking_lot\.id = \$1 and parking_lot\.operator_id = \$2/],
   ['record-aisle-battery', /update aisle set beacon_battery_percent[\s\S]*from parking_lot/],
+  ['read-gate-presence', /avg\(extract\(epoch from gate_passage\.closed_at/],
   ['read-lot-gates', /gate\.last_heartbeat_at\s+from parking_lot/],
   ['record-reported-battery', /where lot_id = \$\d and beacon_minor = \$\d/],
   ['count-vehicle', /insert into gate_passage/],
@@ -143,6 +148,8 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['occupy-confirmed-spot', /update spot set state = 'OCCUPIED', state_changed_at = now\(\)/],
   ['insert-gate-command', /insert into gate_command/],
   ['backdate-entry', /set entry_confirmed_at = /],
+  ['find-stale-session-lots', /select distinct lot_id from parking_session where .* stale_flagged_at is null/s],
+  ['flag-stale-sessions', /set stale_flagged_at =/],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],
   ['presume-silent-questions', /where lot_id = \$\d and state = 'PARKED_UNCONFIRMED' and parked_at/],
@@ -174,6 +181,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-active-spot-hold', /from \(select id, lot_id, expires_at from spot_hold/],
   ['read-spot-hold-lot', /join operator on/],
   ['read-spot-hold-facts', /as active_holds_in_lot/],
+  ['read-driver-active-session', /^select 1 from parking_session where user_id = \$\d and state in/],
   ['insert-spot-hold', /insert into spot_hold/],
   ['release-lot-spot-holds', /update spot_hold set status = 'RELEASED'\s+where lot_id/],
   ['release-spot-hold', /update spot_hold set status = 'RELEASED'/],

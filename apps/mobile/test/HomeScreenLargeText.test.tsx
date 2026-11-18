@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react-native';
 import { FakeLotsClient, PARKING_DEMO_CATEGORY_LINE_FR, parkingDemoWith } from './fakeLotsClient';
+import { getFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreen } from './renderHomeScreen';
 import { visibleText } from './visibleText';
 
@@ -19,7 +20,7 @@ describe.each([1, 1.35, 2.3, 3.1])('HomeScreen at text scale %d', (fontScale) =>
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(10)));
 
     expect(await screen.findByText('Parking Démo')).toBeOnTheScreen();
-    expect(screen.getByText('10 places libres')).toBeOnTheScreen();
+    expect(getFreeSpotCount('10 places libres')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Actualiser' })).toBeOnTheScreen();
   });
 
@@ -48,5 +49,15 @@ describe.each([1, 1.35, 2.3, 3.1])('HomeScreen at text scale %d', (fontScale) =>
     }
     // The tariff line keeps its own « · »; only the categories split.
     expect(screen.queryByText(/Standard.*·/, visibleText)).not.toBeOnTheScreen();
+  });
+
+  it('shows « Complet » alone at zero free spots, stacked under the name at large text sizes, without any category', async () => {
+    await renderHomeScreen(new FakeLotsClient(parkingDemoWith(0)));
+
+    await screen.findByText('Parking Démo');
+
+    expect(screen.getByText('Complet')).toBeOnTheScreen();
+    expect(screen.getByTestId(`lot-summary-${parkingDemoWith(0)[0]?.id}`)).toHaveStyle({ flexDirection: fontScale >= 1.35 ? 'column' : 'row' });
+    expect(screen.queryByText(/Standard|Électrique|Accessible|Grand gabarit/, visibleText)).not.toBeOnTheScreen();
   });
 });

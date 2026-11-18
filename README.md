@@ -74,6 +74,11 @@ npm run seed --workspace @palier/api         # Parking Démo, Garage Roy, barri�
 npm run start --workspace @palier/api        # http://127.0.0.1:3000 (/v1/lots exige un jeton)
 ```
 
+Le script d'initialisation de Postgres (création de `palier_test`) ne s'exécute
+qu'à la création du volume `palier-postgres`. Sur un volume plus ancien, la base
+`palier_test` manque : `docker compose down -v` puis `docker compose up -d --wait`
+la recrée, au prix des données locales.
+
 Avec `DEMO_MODE=true` (valeur de `.env.example`), l'API sert aussi la console
 de démonstration des barrières sur http://localhost:3000/demo/console ; clés et
 scénarios dans [`docs/demo-console.md`](docs/demo-console.md).

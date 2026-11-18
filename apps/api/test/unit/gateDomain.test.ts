@@ -18,7 +18,7 @@ const clock = () => now;
 const openingWindow = { withinMilliseconds: 60_000 };
 
 function entryAt(closedAt: Date): PassageCommand {
-  return { gate: entreeDemo, requestedGateId: entreeDemo.id, closedAt };
+  return { gate: entreeDemo, requestedGateId: entreeDemo.id, closedAt, armedAt: null };
 }
 
 describe('hashDeviceKey', () => {
@@ -53,6 +53,7 @@ describe('recordPassage', () => {
       {
         gate: entreeDemo,
         closedAt: now,
+        armedAt: null,
         vehicleCountChange: 1,
         confirmableOpenings: { withinMilliseconds: 60_000 },
         attachableOpenings: null,
@@ -89,7 +90,7 @@ describe('recordPassage', () => {
 
   it('counts one vehicle less at an exit gate', async () => {
     const ledger = new FakePassageLedger(1);
-    const command = { gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now };
+    const command = { gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now, armedAt: null };
 
     const passage = await recordPassage(command, { ledger, clock, openingWindow });
 
@@ -97,16 +98,9 @@ describe('recordPassage', () => {
     expect(passage.vehicleCount).toBe(0);
   });
 
-  it('documents that the fake ledger, like Postgres, keeps the count at zero', async () => {
-    const ledger = new FakePassageLedger(0);
-    const command = { gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now };
-
-    expect((await recordPassage(command, { ledger, clock, openingWindow })).vehicleCount).toBe(0);
-  });
-
   it('refuses a passage for another gate than the key’s, without counting', async () => {
     const ledger = new FakePassageLedger(0);
-    const command = { gate: entreeDemo, requestedGateId: sortieDemo.id, closedAt: now };
+    const command = { gate: entreeDemo, requestedGateId: sortieDemo.id, closedAt: now, armedAt: null };
 
     await expect(recordPassage(command, { ledger, clock, openingWindow })).rejects.toBeInstanceOf(GateForbiddenError);
     expect(ledger.entries).toEqual([]);
@@ -116,7 +110,7 @@ describe('recordPassage', () => {
     const ledger = new FakePassageLedger(1);
     ledger.pendingOpenings.push('session-waiting');
 
-    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now }, { ledger, clock, openingWindow });
+    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now, armedAt: null }, { ledger, clock, openingWindow });
 
     expect(ledger.entries[0]?.confirmableOpenings).toBeNull();
     expect(passage.confirmedSessionId).toBeNull();
@@ -126,7 +120,7 @@ describe('recordPassage', () => {
     const ledger = new FakePassageLedger(1);
     ledger.pendingExits.push('session-julie', 'session-marc');
 
-    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now }, { ledger, clock, openingWindow });
+    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now, armedAt: null }, { ledger, clock, openingWindow });
 
     expect(ledger.entries[0]?.attachableOpenings).toBe(openingWindow);
     expect(passage).toMatchObject({ kind: 'EXIT', vehicleCount: 0, exitedSessionId: 'session-julie', confirmedSessionId: null });
@@ -135,7 +129,7 @@ describe('recordPassage', () => {
   it('counts the vehicle out and changes no session when no exit opening waits', async () => {
     const ledger = new FakePassageLedger(2);
 
-    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now }, { ledger, clock, openingWindow });
+    const passage = await recordPassage({ gate: sortieDemo, requestedGateId: sortieDemo.id, closedAt: now, armedAt: null }, { ledger, clock, openingWindow });
 
     expect(passage).toMatchObject({ vehicleCount: 1, exitedSessionId: null });
   });

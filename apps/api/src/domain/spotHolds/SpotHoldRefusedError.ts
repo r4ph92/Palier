@@ -3,6 +3,7 @@ import type { SpotHoldRefusalCode } from '@palier/shared-types';
 const MESSAGES: Record<SpotHoldRefusalCode, string> = {
   PREREQUISITES_MISSING: 'Add a plate and a card before holding a spot.',
   HOLD_ALREADY_EXISTS: 'You already hold a spot.',
+  ALREADY_INSIDE: 'You are already in a parking lot.',
   HOLD_QUOTA_REACHED: 'Too many spots are held in this lot right now.',
   NO_SUITABLE_SPOT: 'No free spot fits this vehicle.',
   LOT_NOT_FOUND: 'No such lot.',

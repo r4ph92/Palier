@@ -6,6 +6,7 @@ import { FakeLotsClient, PARKING_DEMO_ID, parkingDemo, parkingDemoWith, parkingT
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
 import { lightColors } from '../src/theme/tokens';
 import { typography } from '../src/theme/typography';
+import { findFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreen, renderHomeScreenWith } from './renderHomeScreen';
 import { HOLD_BUTTON_FR, holdAtParkingDemo, tick } from './spotHoldScreen';
 import { visibleText } from './visibleText';
@@ -24,7 +25,7 @@ describe('HomeScreen spot hold', () => {
     expect(await screen.findByText('Place garantie jusqu’à 14 h 17', visibleText)).toBeOnTheScreen();
     expect(screen.getByTestId('spot-hold-countdown')).toHaveTextContent('15:00');
     expect(screen.getByText('14 h 17', visibleText)).toHaveStyle({ fontFamily: typography.figure.fontFamily });
-    expect(await screen.findByText('9 places libres', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('9 places libres')).toBeOnTheScreen();
     expect(spotHoldClient.heldLots).toEqual([PARKING_DEMO_ID]);
     expect(lotsClient.callCount).toBe(2);
 
@@ -126,6 +127,7 @@ describe('HomeScreen spot hold refusals', () => {
   const refusals = [
     ['PREREQUISITES_MISSING', 'Ajoutez une plaque et une carte avant de garantir une place', 'Add a plate and a card before guaranteeing a spot'],
     ['HOLD_ALREADY_EXISTS', 'Vous avez déjà une place garantie', 'You already have a guaranteed spot'],
+    ['ALREADY_INSIDE', 'Vous êtes déjà dans un stationnement', 'You are already in a parking lot'],
     ['HOLD_QUOTA_REACHED', 'Trop de places garanties dans ce parking pour le moment', 'Too many guaranteed spots in this lot right now'],
     ['NO_SUITABLE_SPOT', 'Aucune place disponible', 'No spot available'],
     ['LOT_NOT_FOUND', 'Ce parking n’est plus offert', 'This lot is no longer offered'],

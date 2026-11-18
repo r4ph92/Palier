@@ -1,4 +1,4 @@
-# 043 — Tarif accepté avant l'entrée
+# 047 — Tarif accepté avant l'entrée
 
 **Contexte.** #151 : le pentest de #64 (section N) a montré qu'un opérateur pouvait changer le tarif une seconde avant le scan d'un conducteur, qui entrait alors à un prix qu'il n'avait jamais vu, avec une retenue égale au nouveau plafond (Q19). Depuis la mise en ligne d'un parking créé au tableau de bord (#68, 041), la faille est exploitable. La décision 032 reste : une session ouverte garde son tarif d'entrée, une nouvelle entrée lit le tarif courant.
 

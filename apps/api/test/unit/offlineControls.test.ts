@@ -191,7 +191,7 @@ describe('going back online after a reload', () => {
     expect(patch).toEqual({ identity: null, message: { key: expected, isError: true } });
   });
 
-  it.each(['', 'short', `${DEVICE_KEY}!`])('asks for the gate key without any request when the key is "%s"', async (deviceKey) => {
+  it.each(['', 'has a space', `${DEVICE_KEY}é`])('asks for the gate key without any request when the key is "%s"', async (deviceKey) => {
     const api = fakeApi();
 
     const patch = await toggleOffline({ connection: reloaded, deviceKey, identity: null }, api);

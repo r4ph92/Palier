@@ -1,10 +1,11 @@
 /** @typedef {import('@palier/shared-types').PassageReplayItem} PassageReplayItem */
 /** @typedef {{ status: number, body: unknown }} ApiResponse */
 /** @typedef {{ issuedAt: string, id: string }} CommandCursor */
+/** @typedef {{ closedAt: string, armedAt: string | null }} PassageMoments */
 /**
  * @typedef {object} GateApi
  * @property {(deviceKey: string) => Promise<ApiResponse>} fetchIdentity
- * @property {(deviceKey: string, gateId: string, closedAt: string) => Promise<ApiResponse>} postPassage
+ * @property {(deviceKey: string, gateId: string, moments: PassageMoments) => Promise<ApiResponse>} postPassage
  * @property {(deviceKey: string, gateId: string, passages: readonly PassageReplayItem[]) => Promise<ApiResponse>} replayPassages
  * @property {(deviceKey: string, gateId: string, identifier: string) => Promise<ApiResponse>} postIdentify
  * @property {(deviceKey: string, gateId: string) => Promise<ApiResponse>} postPresence
@@ -28,7 +29,8 @@ export function createGateApi(fetchFunction) {
   };
   return {
     fetchIdentity: (deviceKey) => request(fetchFunction, '/v1/gates/me', { headers: authorization(deviceKey) }),
-    postPassage: (deviceKey, gateId, closedAt) => postJson(deviceKey, gatePath(gateId, 'passage'), { closedAt }),
+    postPassage: (deviceKey, gateId, { closedAt, armedAt }) =>
+      postJson(deviceKey, gatePath(gateId, 'passage'), armedAt === null ? { closedAt } : { closedAt, armedAt }),
     replayPassages: (deviceKey, gateId, passages) => postJson(deviceKey, gatePath(gateId, 'passages/replay'), { passages }),
     postIdentify: (deviceKey, gateId, identifier) => postJson(deviceKey, gatePath(gateId, 'identify'), { identifier }),
     postPresence: (deviceKey, gateId) =>

@@ -4,10 +4,12 @@ import { readPaymentsSimulation } from './config/paymentsSimulation.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { exitBeaconWindow } from './domain/exits/identifyByBeacon.ts';
 import { composeClock } from './composeClock.ts';
+import { composeDashboardRepositories } from './composeDashboardRepositories.ts';
 import { composeEntries } from './composeEntries.ts';
 import { composeEntryCancellation } from './composeEntryCancellation.ts';
 import { composeHoldExpiry } from './composeHoldExpiry.ts';
 import { composeSilentSessionPresumption } from './composeSilentSessionPresumption.ts';
+import { composeStaleSessionFlagging } from './composeStaleSessionFlagging.ts';
 import { composeOperatorStripe } from './composeOperatorStripe.ts';
 import { composeSpotHolds } from './composeSpotHolds.ts';
 import { buildServer } from './http/buildServer.ts';
@@ -19,17 +21,6 @@ import { PostgresEquipmentReports } from './infrastructure/postgres/PostgresEqui
 import { PostgresGateCommandFeed } from './infrastructure/postgres/PostgresGateCommandFeed.ts';
 import { PostgresGateDeviceKeyRepository } from './infrastructure/postgres/PostgresGateDeviceKeyRepository.ts';
 import { PostgresLotAvailabilityRepository } from './infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
-import { PostgresLevelOccupancyReader } from './infrastructure/postgres/PostgresLevelOccupancyReader.ts';
-import { PostgresGateSecretRepository } from './infrastructure/postgres/PostgresGateSecretRepository.ts';
-import { PostgresLotEquipmentReader } from './infrastructure/postgres/PostgresLotEquipmentReader.ts';
-import { PostgresLotMapRepository } from './infrastructure/postgres/PostgresLotMapRepository.ts';
-import { PostgresLotGateRepository } from './infrastructure/postgres/PostgresLotGateRepository.ts';
-import { PostgresLotPublicationRepository } from './infrastructure/postgres/PostgresLotPublicationRepository.ts';
-import { PostgresLotSpotRepository } from './infrastructure/postgres/PostgresLotSpotRepository.ts';
-import { PostgresSessionTimelineRepository } from './infrastructure/postgres/PostgresSessionTimelineRepository.ts';
-import { PostgresSpotCheckRepository } from './infrastructure/postgres/PostgresSpotCheckRepository.ts';
-import { PostgresLotSetupRepository } from './infrastructure/postgres/PostgresLotSetupRepository.ts';
-import { PostgresOperatorRepository } from './infrastructure/postgres/PostgresOperatorRepository.ts';
 import { PostgresParkedAnswerRepository } from './infrastructure/postgres/PostgresParkedAnswerRepository.ts';
 import { PostgresParkedPresumptionRepository } from './infrastructure/postgres/PostgresParkedPresumptionRepository.ts';
 import { PostgresReceiptRepository } from './infrastructure/postgres/PostgresReceiptRepository.ts';
@@ -41,6 +32,7 @@ import { PostgresUserDirectory } from './infrastructure/postgres/PostgresUserDir
 import { StripeCardGateway } from './infrastructure/stripe/StripeCardGateway.ts';
 import { PostgresVehicleRepository } from './infrastructure/postgres/PostgresVehicleRepository.ts';
 import { openingWindowOf } from './domain/gates/OpeningWindow.ts';
+import { flagStaleSessions } from './domain/parkingSessions/flagStaleSessions.ts';
 import { presumeSilentSessions } from './domain/parkingSessions/presumeSilentSessions.ts';
 import { expireSpotHolds } from './domain/spotHolds/expireSpotHolds.ts';
 import { systemClock } from './domain/time/Clock.ts';
@@ -82,24 +74,18 @@ const silentSessionPresumption = composeSilentSessionPresumption(
   { clock, periodSeconds: environment.silentSessionCheckPeriodSeconds },
   connection.database,
 );
+const staleSessionFlagging = composeStaleSessionFlagging(
+  { clock, periodSeconds: environment.staleSessionCheckPeriodSeconds },
+  connection.database,
+);
 const server = buildServer({
   repositories: {
     lotAvailabilityRepository: new PostgresLotAvailabilityRepository(connection.database),
     driverRepository,
     sessionTokenRepository,
+    ...composeDashboardRepositories(connection.database),
     userDirectory: new PostgresUserDirectory(connection.database),
     vehicleRepository,
-    operatorRepository: new PostgresOperatorRepository(connection.database),
-    lotSetupRepository: new PostgresLotSetupRepository(connection.database),
-    levelOccupancy: new PostgresLevelOccupancyReader(connection.database),
-    lotMaps: new PostgresLotMapRepository(connection.database),
-    lotEquipment: new PostgresLotEquipmentReader(connection.database),
-    lotSpots: new PostgresLotSpotRepository(connection.database),
-    spotChecks: new PostgresSpotCheckRepository(connection.database),
-    sessionTimelines: new PostgresSessionTimelineRepository(connection.database),
-    lotGates: new PostgresLotGateRepository(connection.database),
-    gateSecrets: new PostgresGateSecretRepository(connection.database),
-    lotPublication: new PostgresLotPublicationRepository(connection.database),
     currentParkingSessions: new PostgresCurrentParkingSessionQuery(connection.database, exitBeaconWindow),
     parkingSessionBackdater: new PostgresParkingSessionBackdater(connection.database),
     parkedPresumptions: new PostgresParkedPresumptionRepository(connection.database),
@@ -119,7 +105,7 @@ const server = buildServer({
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   entries: entries.routes,
   exits: { exits: new PostgresExitRepository(connection.database), payments: entries.payments },
-  spotHolds: composeSpotHolds(connection.database, environment.demoMode, { vehicles: vehicleRepository, drivers: driverRepository }),
+  spotHolds: composeSpotHolds({ database: connection.database, demoMode: environment.demoMode, prerequisites: { vehicles: vehicleRepository, drivers: driverRepository }, sessions: entries.routes.sessions }),
   operatorStripe: composeOperatorStripe({
     database: connection.database,
     stripeKey,
@@ -174,6 +160,13 @@ const stopSilentSessionPresumption = new SingleRun().startPeriodicTask(() => pre
   failureMessage: 'Presuming silent sessions failed',
   periodMilliseconds: silentSessionPresumption.periodMilliseconds,
 });
+// Every API instance runs it, at startup too: the lot lock and the unflagged guard make a second run flag nothing twice, and it never touches a payment.
+const stopStaleSessionFlagging = new SingleRun().startPeriodicTask(() => flagStaleSessions(staleSessionFlagging.job, server.log), {
+  logger: server.log,
+  failureMessage: 'Flagging stale sessions failed',
+  periodMilliseconds: staleSessionFlagging.periodMilliseconds,
+  runAtStart: true,
+});
 // Every API instance runs it: the state guard on the paid update and Stripe's idempotency key make a second run take nothing twice.
 const captureRetryPayments = entries.payments;
 const stopCaptureRetry =
@@ -184,7 +177,7 @@ const stopCaptureRetry =
         server.log,
       );
 server.addHook('onClose', async () => {
-  await stopAll([stopSilentSessionPresumption, stopHoldExpiry, stopEntryCancellation, stopSessionTokenPurge, stopCaptureRetry]);
+  await stopAll([stopSilentSessionPresumption, stopStaleSessionFlagging, stopHoldExpiry, stopEntryCancellation, stopSessionTokenPurge, stopCaptureRetry]);
   await connection.close();
 });
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

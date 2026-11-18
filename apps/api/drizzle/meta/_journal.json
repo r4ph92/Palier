@@ -302,6 +302,27 @@
       "when": 1794784214083,
       "tag": "0042_session_list_index",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1794790408332,
+      "tag": "0043_stale_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1794889216393,
+      "tag": "0044_presence_arming",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1794948767480,
+      "tag": "0045_lot_name_not_blank",
+      "breakpoints": true
     }
   ]
 }

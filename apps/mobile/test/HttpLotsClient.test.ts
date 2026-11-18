@@ -69,6 +69,9 @@ describe('HttpLotsClient', () => {
   it.each([
     ['a missing category count', { ...parkingDemo, freeSpotsByCategory: { standard: 7, electric: 1, accessible: 1 } }],
     ['a category count that is not an integer', { ...parkingDemo, freeSpotsByCategory: { ...parkingDemo.freeSpotsByCategory, oversize: '1' } }],
+    ['a negative free spot count', { ...parkingDemo, freeSpots: -1 }],
+    ['a free spot count that is not an integer', { ...parkingDemo, freeSpots: 1.5 }],
+    ['a negative category count', { ...parkingDemo, freeSpotsByCategory: { ...parkingDemo.freeSpotsByCategory, oversize: -1 } }],
     ['a missing location', { id: parkingDemo.id, name: parkingDemo.name, freeSpots: 10, capacity: 10, freeSpotsByCategory: parkingDemo.freeSpotsByCategory }],
     ['a missing capacity', { id: parkingDemo.id, name: parkingDemo.name, freeSpots: 10, freeSpotsByCategory: parkingDemo.freeSpotsByCategory, location: parkingDemo.location }],
     ['a negative capacity', { ...parkingDemo, capacity: -1 }],

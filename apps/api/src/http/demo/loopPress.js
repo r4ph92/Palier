@@ -12,6 +12,7 @@ import { knownGateIdentity, messageForStatus } from './gateIdentity.js';
  * @property {string} deviceKey
  * @property {GateIdentity | null} identity
  * @property {Date} pressedAt
+ * @property {Date | null} armedAt
  */
 /** @typedef {{ kind: 'refused', identity: GateIdentity | null, messageKey: TextKey }} RefusedOutcome */
 /**
@@ -46,7 +47,10 @@ export async function pressLoop(press, api) {
   if (identity.kind !== press.loop) {
     return { kind: 'wrongLoop', identity };
   }
-  const response = await api.postPassage(press.deviceKey, identity.id, press.pressedAt.toISOString());
+  const response = await api.postPassage(press.deviceKey, identity.id, {
+    closedAt: press.pressedAt.toISOString(),
+    armedAt: press.armedAt?.toISOString() ?? null,
+  });
   if (response.status !== OK || response.body === null) {
     return { kind: 'refused', identity, messageKey: passageRefusal(response.status) };
   }

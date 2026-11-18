@@ -6,6 +6,12 @@ export function formatCount(count: number, language: Language): string {
   return new Intl.NumberFormat(language).format(count);
 }
 
+// One decimal, then the unit after a no-break space: « 9,0 s » in French, "9.0 s" in English.
+export function formatSeconds(seconds: number, language: Language): string {
+  const figure = new Intl.NumberFormat(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(seconds);
+  return `${figure}\u00a0s`;
+}
+
 export function formatDegrees(degrees: number, language: Language): string {
   return new Intl.NumberFormat(language, { maximumFractionDigits: COORDINATE_DIGITS }).format(degrees);
 }

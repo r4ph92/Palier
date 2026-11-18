@@ -46,6 +46,10 @@ describe('demo console', () => {
     expect(response.statusCode).toBe(404);
   });
 
+  it('refuses to be framed by browsers that ignore the frame-ancestors policy', () => {
+    expect(DEMO_SECURITY_HEADERS['x-frame-options']).toBe('DENY');
+  });
+
   it('lets the page load scripts, styles, fonts and data only from itself', () => {
     expect(DEMO_SECURITY_HEADERS['content-security-policy']).toBe(
       "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
@@ -84,6 +88,15 @@ describe('demo console', () => {
 
     expect(page).not.toMatch(/<script(?![^>]*\ssrc=)[^>]*>/);
     expect(page).not.toMatch(/<style|\sstyle=|\son[a-z]+=/);
+  });
+
+  it('starts with a skip link to the main content', async () => {
+    server = buildServer(serverDependencies({ settings: { demoMode: true } }));
+
+    const page = (await server.inject({ method: 'GET', url: '/demo/console' })).body;
+
+    expect(page).toMatch(/<body>\s*<a class="skip-link" href="#content"/);
+    expect(page).toContain('<main id="content" tabindex="-1">');
   });
 
   it('asks for the device key in a password field that browsers do not fill or remember', async () => {

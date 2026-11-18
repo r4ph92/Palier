@@ -62,6 +62,7 @@ export const frSessions = {
     UNPAID: 'Solde impayé : %{amount}',
     CAPTURE_PENDING: { amount: 'Capture en attente : %{amount}', unknown: 'Capture en attente' },
     EXIT_LOOP_CLOSED: 'Boucle de sortie franchie',
+    PRESENCE_CONFIRMED: 'Présence du véhicule confirmée',
     UNKNOWN: 'Autre étape',
   },
 };

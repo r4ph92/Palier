@@ -48,10 +48,19 @@ describe('GET /v1/dashboard/lots/:id/equipment', () => {
       lotName: 'Parking Démo',
       now: secondsAfterLastBeat(30).toISOString(),
       gates: [
-        { id: ENTREE_DEMO_ID, name: 'Entrée Démo', kind: 'ENTRY', health: 'ONLINE', lastHeartbeatAt: LAST_BEAT.toISOString() },
-        { id: SORTIE_DEMO_ID, name: 'Sortie Démo', kind: 'EXIT', health: 'NEVER_HEARD', lastHeartbeatAt: null },
+        { id: ENTREE_DEMO_ID, name: 'Entrée Démo', kind: 'ENTRY', health: 'ONLINE', lastHeartbeatAt: LAST_BEAT.toISOString(), averagePresenceSeconds: null },
+        { id: SORTIE_DEMO_ID, name: 'Sortie Démo', kind: 'EXIT', health: 'NEVER_HEARD', lastHeartbeatAt: null, averagePresenceSeconds: null },
       ],
     });
+  });
+
+  it('shows the average presence time measured for a gate, and null for a gate with no measured passage', async () => {
+    start();
+    lotEquipment.recordPassageMeasure(SORTIE_DEMO_ID, 9);
+
+    const gates = (await equipmentOf(sophie, PARKING_DEMO_ID)).json().gates;
+
+    expect(gates.map((gate: { averagePresenceSeconds: number | null }) => gate.averagePresenceSeconds)).toEqual([null, 9]);
   });
 
   it('turns Entrée Démo silent once the test clock is more than 2 minutes past its last heartbeat', async () => {

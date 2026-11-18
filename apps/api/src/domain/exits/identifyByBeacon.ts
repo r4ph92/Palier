@@ -49,7 +49,9 @@ function outcomeOf(left: ExitOutcome): BeaconExitOutcome {
     case 'payments-unavailable':
     case 'lot-busy':
       return { outcome: left.outcome };
-    default:
+    case 'not-found':
+    case 'entry-not-confirmed':
+    case 'closed':
       return { outcome: 'waiting' };
   }
 }

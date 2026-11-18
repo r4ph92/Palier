@@ -138,6 +138,7 @@ describe('the console closing the entry loop (story #156)', () => {
     return new PostgresPassageLedger(scripted.database()).recordPassage({
       gate: entreeDemo,
       closedAt: CLOSED_AT,
+      armedAt: null,
       vehicleCountChange: 1,
       confirmableOpenings: WINDOW,
       attachableOpenings: null,

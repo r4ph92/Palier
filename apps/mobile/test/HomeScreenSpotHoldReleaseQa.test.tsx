@@ -5,9 +5,9 @@ import { PalierRejectedError } from '../src/api/VehicleClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
 import { FakeSpotHoldClient, julieHoldAtParkingDemo } from './fakeSpotHoldClient';
+import { findFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreenWith } from './renderHomeScreen';
 import { HOLD_BUTTON_FR } from './spotHoldScreen';
-import { visibleText } from './visibleText';
 
 const RELEASE_FR = 'Libérer la garantie à Parking Démo';
 const RELEASE_EN = 'Release the guarantee at Parking Démo';
@@ -128,7 +128,7 @@ describe('QA HomeScreen releasing a hold', () => {
     const { user } = await renderJulieHolding(spotHoldClient, new FakeLotsClient(parkingDemoWith(9), parkingDemoWith(10), parkingDemoWith(9)));
 
     await confirmRelease(user);
-    await screen.findByText('10 places libres', visibleText);
+    await findFreeSpotCount('10 places libres');
     await user.press(screen.getByRole('button', { name: HOLD_BUTTON_FR }));
 
     expect(await screen.findByTestId('spot-hold-banner')).toBeOnTheScreen();

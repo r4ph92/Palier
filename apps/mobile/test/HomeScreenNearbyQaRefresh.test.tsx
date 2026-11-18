@@ -5,6 +5,7 @@ import type { DeviceLocationClient, LocationPermission } from '../src/deviceLoca
 import { LOTS_REFRESH_MILLISECONDS } from '../src/lots/useLots';
 import { SIMULATOR_POSITION } from './fakeDeviceLocationClient';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
+import { findFreeSpotCount, getFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreen } from './renderHomeScreen';
 import { visibleText } from './visibleText';
 
@@ -32,21 +33,21 @@ describe('QA #5 automatic refresh abuse', () => {
   it('shows Complet after 30 seconds, then the count again after 30 more when a spot frees up', async () => {
     const client = new FakeLotsClient(parkingDemoWith(2), parkingDemoWith(0), parkingDemoWith(1));
     await renderHomeScreen(client);
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
 
     await waitForRefresh();
     expect(await screen.findByText('Complet')).toBeOnTheScreen();
     expect(screen.queryByText(/^Standard/, visibleText)).not.toBeOnTheScreen();
     await waitForRefresh();
 
-    expect(await screen.findByText('1 place libre', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('1 place libre')).toBeOnTheScreen();
     expect(client.callCount).toBe(3);
   });
 
   it('does not refresh before 30 seconds', async () => {
     const client = new FakeLotsClient(parkingDemoWith(2), parkingDemoWith(0));
     await renderHomeScreen(client);
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
 
     await act(() => jest.advanceTimersByTimeAsync(LOTS_REFRESH_MILLISECONDS - 1));
 
@@ -57,10 +58,10 @@ describe('QA #5 automatic refresh abuse', () => {
   it('keeps polling after a missed poll and shows the new list when the API is back', async () => {
     const client = new FakeLotsClient(parkingDemoWith(2), 'unreachable', parkingDemoWith(0));
     await renderHomeScreen(client);
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
 
     await waitForRefresh();
-    expect(screen.getByText('2 places libres', visibleText)).toBeOnTheScreen();
+    expect(getFreeSpotCount('2 places libres')).toBeOnTheScreen();
     await waitForRefresh();
 
     expect(await screen.findByText('Complet')).toBeOnTheScreen();
@@ -73,13 +74,13 @@ describe('QA #5 automatic refresh abuse', () => {
 
     await waitForRefresh();
 
-    expect(await screen.findByText('2 places libres', visibleText)).toBeOnTheScreen();
+    expect(await findFreeSpotCount('2 places libres')).toBeOnTheScreen();
   });
 
   it('shows the list without the pull-to-refresh spinner during a poll', async () => {
     const client = new FakeLotsClient(parkingDemoWith(2), parkingDemoWith(0));
     await renderHomeScreen(client);
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
 
     await waitForRefresh();
 
@@ -89,7 +90,7 @@ describe('QA #5 automatic refresh abuse', () => {
   it('does not ask for the permission again on any poll over several minutes', async () => {
     const location = new ScriptedLocationClient();
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(2)), 'fr', location);
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
 
     for (let minute = 0; minute < 10; minute += 1) {
       await waitForRefresh();
@@ -109,7 +110,7 @@ describe('QA #5 automatic refresh abuse', () => {
     };
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     await renderHomeScreen(client);
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
     await waitForRefresh();
 
     await act(() => screen.unmount());
@@ -131,14 +132,14 @@ describe('QA #5 automatic refresh abuse', () => {
       },
     };
     await renderHomeScreen(client);
-    await screen.findByText('2 places libres', visibleText);
+    await findFreeSpotCount('2 places libres');
     await waitForRefresh();
     await userEvent.setup({ advanceTimers: jest.advanceTimersByTime }).press(screen.getByRole('button', { name: 'Actualiser' }));
 
     await act(async () => resolvers[1]?.(parkingDemoWith(5)));
     await act(async () => resolvers[0]?.(parkingDemoWith(0)));
 
-    expect(screen.getByText('5 places libres', visibleText)).toBeOnTheScreen();
+    expect(getFreeSpotCount('5 places libres')).toBeOnTheScreen();
     expect(screen.queryByText('Complet')).not.toBeOnTheScreen();
   });
 

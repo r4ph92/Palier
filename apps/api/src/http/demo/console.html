@@ -9,6 +9,7 @@
     <script type="module" src="/demo/console.js"></script>
   </head>
   <body>
+    <a class="skip-link" href="#content" data-text="skipLink">Aller au contenu</a>
     <header class="masthead">
       <p class="eyebrow" data-text="eyebrow">Palier · mode démo</p>
       <div class="language" role="group" aria-labelledby="language-label">
@@ -17,7 +18,7 @@
         <button type="button" class="language-option" data-language="en" lang="en" aria-pressed="false">English</button>
       </div>
     </header>
-    <main>
+    <main id="content" tabindex="-1">
       <h1 data-text="title">Console de barrière</h1>
       <p class="intro" data-text="intro">Cette page joue le contrôleur d’une barrière et ses boucles.</p>
 
@@ -32,6 +33,7 @@
 
       <section class="block" aria-labelledby="loops-heading">
         <h2 id="loops-heading" class="eyebrow" data-text="loopsHeading">Boucles</h2>
+        <button type="button" id="arming-send" class="loop-button" data-text="armingSend" disabled>Véhicule sur la boucle d’armement</button>
         <div class="loops">
           <button type="button" class="loop-button" data-loop="ENTRY" data-text="loopENTRY" disabled>Boucle d’entrée fermée</button>
           <button type="button" class="loop-button" data-loop="EXIT" data-text="loopEXIT" disabled>Boucle de sortie fermée</button>

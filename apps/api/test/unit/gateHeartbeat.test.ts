@@ -1,5 +1,6 @@
 import type { GateIdentity } from '@palier/shared-types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ConsoleMessage } from '../../src/http/demo/consoleText.js';
 import type { ApiResponse, GateApi } from '../../src/http/demo/gateApi.js';
 import { createHeartbeat, HEARTBEAT_MILLISECONDS, scheduleHeartbeat, sendHeartbeat } from '../../src/http/demo/gateHeartbeat.js';
 
@@ -12,6 +13,7 @@ interface ConsoleState {
   deviceKey: string;
   identity: GateIdentity | null;
   connection: { kind: string };
+  message: ConsoleMessage | null;
 }
 
 function fakeApi(heartbeat: ApiResponse = ACCEPTED, identity: ApiResponse = { status: 200, body: entreeDemo }) {
@@ -22,7 +24,7 @@ function fakeApi(heartbeat: ApiResponse = ACCEPTED, identity: ApiResponse = { st
 }
 
 function consoleState(deviceKey = ENTREE_KEY): ConsoleState {
-  return { deviceKey, identity: null, connection: { kind: 'online' } };
+  return { deviceKey, identity: null, connection: { kind: 'online' }, message: null };
 }
 
 describe('sendHeartbeat', () => {
@@ -89,9 +91,9 @@ describe('the console heartbeat', () => {
     expect(api.postHeartbeat).toHaveBeenCalledTimes(1);
   });
 
-  it('beats at once when a well-formed key is typed, and never for a key that cannot be sent', async () => {
+  it('beats at once when a sendable key is typed, and never for a key that cannot be sent', async () => {
     const api = fakeApi();
-    const state = consoleState('short');
+    const state = consoleState('has a space');
     const heartbeat = createHeartbeat(state, api, vi.fn());
 
     await heartbeat.restart();
@@ -145,5 +147,19 @@ describe('the console heartbeat', () => {
     await Promise.all([heartbeat.beat(), heartbeat.beat()]);
 
     expect(api.postHeartbeat).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the refused-key message at once for a pasted wrong key, once', async () => {
+    const api = fakeApi(ACCEPTED, { status: 401, body: null });
+    const state = consoleState('wrong-key');
+    const onChanged = vi.fn();
+    const heartbeat = createHeartbeat(state, api, onChanged);
+
+    await heartbeat.beat();
+    await heartbeat.restart();
+
+    expect(state.message).toEqual({ key: 'keyRefused', isError: true });
+    expect(state.identity).toBeNull();
+    expect(onChanged).toHaveBeenCalledTimes(1);
   });
 });

@@ -5,6 +5,7 @@ import { PostgresExitRepository } from '../../src/infrastructure/postgres/Postgr
 import { PostgresParkingSessionRepository } from '../../src/infrastructure/postgres/PostgresParkingSessionRepository.ts';
 import { PostgresPassageLedger } from '../../src/infrastructure/postgres/PostgresPassageLedger.ts';
 import { PostgresPendingCaptureRepository } from '../../src/infrastructure/postgres/PostgresPendingCaptureRepository.ts';
+import { PostgresStaleSessionReviewRepository } from '../../src/infrastructure/postgres/PostgresStaleSessionReviewRepository.ts';
 import { PostgresSilentSessionRepository } from '../../src/infrastructure/postgres/PostgresSilentSessionRepository.ts';
 import { PostgresUnconfirmedEntryRepository } from '../../src/infrastructure/postgres/PostgresUnconfirmedEntryRepository.ts';
 import { SimulatedGateCommander } from '../../src/infrastructure/postgres/SimulatedGateCommander.ts';
@@ -53,7 +54,7 @@ const steps: [string, () => Promise<ScriptedSql>][] = [
   }],
   ['the loop', async () => {
     const scripted = new ScriptedSql().answer('count-vehicle', [{ vehicle_count: 1 }]).answer('confirm-opening', [{ id: SESSION_ID, assigned_spot_id: 'spot-a1' }]);
-    await new PostgresPassageLedger(scripted.database()).recordPassage({ gate: entreeDemo, closedAt: NOW, vehicleCountChange: 1, confirmableOpenings: WINDOW, attachableOpenings: null });
+    await new PostgresPassageLedger(scripted.database()).recordPassage({ gate: entreeDemo, closedAt: NOW, armedAt: null, vehicleCountChange: 1, confirmableOpenings: WINDOW, attachableOpenings: null });
     return scripted;
   }],
   ['the walk in the assigned aisle', async () => {
@@ -97,9 +98,14 @@ const steps: [string, () => Promise<ScriptedSql>][] = [
     await new PostgresPendingCaptureRepository(scripted.database()).markPaid(SESSION_ID, { capturedCents: 2500, surplusPaidCents: 1800, unpaidCents: 0, capturedAt: NOW });
     return scripted;
   }],
+  ['the presence check', async () => {
+    const scripted = new ScriptedSql().answer('lock-owned-lot', [{ id: LOT_ID }]).answer('lock-session-to-confirm', [{ flagged: true }]).answer('confirm-presence', [{ id: SESSION_ID }]);
+    await new PostgresStaleSessionReviewRepository(scripted.database()).confirmPresence('operator-lavoie', { lotId: LOT_ID, sessionId: SESSION_ID, memberId: DRIVER_ID, confirmedAt: NOW });
+    return scripted;
+  }],
   ['the exit loop', async () => {
     const scripted = new ScriptedSql().answer('count-vehicle', [{ vehicle_count: 0 }]).answer('attach-exit-passage', [{ id: SESSION_ID }]);
-    await new PostgresPassageLedger(scripted.database()).recordPassage({ gate: sortieDemo, closedAt: NOW, vehicleCountChange: -1, confirmableOpenings: null, attachableOpenings: WINDOW });
+    await new PostgresPassageLedger(scripted.database()).recordPassage({ gate: sortieDemo, closedAt: NOW, armedAt: null, vehicleCountChange: -1, confirmableOpenings: null, attachableOpenings: WINDOW });
     return scripted;
   }],
 ];
@@ -129,6 +135,7 @@ describe('what the visit log keeps (story #156)', () => {
       'GATE_OPENED commandId,direction,gateId',
       'PARKING_CONFIRMED spotId,spotNumber',
       'PARKING_PRESUMED evidence,spotId,spotNumber',
+      'PRESENCE_CONFIRMED ',
     ]);
   });
 

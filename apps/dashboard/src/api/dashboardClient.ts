@@ -16,6 +16,8 @@ import type {
   DashboardSessionDetail,
   DashboardSessionList,
   DashboardSpotsToCheck,
+  DashboardStaleSessions,
+  LotExitShares,
   GateDeviceKey,
   GateQrLink,
   LevelDraft,
@@ -169,6 +171,10 @@ export const dashboardClient = {
   spotsToCheck: (lotId: string) => dashboardRequest<DashboardSpotsToCheck>(`${lotPathOf(lotId)}/spots-to-check`),
   clearSpotCheck: (lotId: string, spotId: string) =>
     dashboardRequest<DashboardSpotsToCheck>(`${spotPathOf(lotId, spotId)}/check-cleared`, { method: 'POST' }),
+  staleSessions: (lotId: string) => dashboardRequest<DashboardStaleSessions>(`${lotPathOf(lotId)}/stale-sessions`),
+  confirmPresence: (lotId: string, sessionId: string) =>
+    dashboardRequest<DashboardStaleSessions>(`${lotPathOf(lotId)}/stale-sessions/${encodeURIComponent(sessionId)}/presence`, { method: 'POST' }),
+  exitShares: (lotId: string) => dashboardRequest<LotExitShares>(`${lotPathOf(lotId)}/exits`),
   lotGates: (lotId: string) => dashboardRequest<DashboardLotGates>(`${lotPathOf(lotId)}/gates`),
   addGate: (lotId: string, draft: GateDraft) => dashboardRequest<CreatedGate>(`${lotPathOf(lotId)}/gates`, { method: 'POST', body: draft }),
   changeGate: (lotId: string, gateId: string, settings: GateSettings) =>

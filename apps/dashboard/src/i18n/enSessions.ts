@@ -62,6 +62,7 @@ export const enSessions = {
     UNPAID: 'Unpaid balance: %{amount}',
     CAPTURE_PENDING: { amount: 'Capture pending: %{amount}', unknown: 'Capture pending' },
     EXIT_LOOP_CLOSED: 'Exit loop crossed',
+    PRESENCE_CONFIRMED: 'Vehicle presence confirmed',
     UNKNOWN: 'Other step',
   },
 };

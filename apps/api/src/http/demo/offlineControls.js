@@ -1,5 +1,5 @@
 import { isLoopEnabled } from './loopPress.js';
-import { DEVICE_KEY_SHAPE, knownGateIdentity } from './gateIdentity.js';
+import { isSendableDeviceKey, knownGateIdentity } from './gateIdentity.js';
 import { offlineStatusKey, pressLoopOffline, replayQueue, startQueue } from './offlineMode.js';
 
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
@@ -87,7 +87,7 @@ export function pressLoopWhileOffline(connection, loop, pressedAt) {
  * @returns {Promise<ConsolePatch>}
  */
 export async function toggleOffline(request, api) {
-  if (request.connection.kind !== 'online' && !DEVICE_KEY_SHAPE.test(request.deviceKey)) {
+  if (request.connection.kind !== 'online' && !isSendableDeviceKey(request.deviceKey)) {
     return { message: { key: 'replayKeyHint', isError: false, tone: 'muted' } };
   }
   const identityOrRefusal = await knownGateIdentity(request, api);

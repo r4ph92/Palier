@@ -1,7 +1,7 @@
 import type { GateIdentity } from '@palier/shared-types';
 import { describe, expect, it, vi } from 'vitest';
 import type { GateApi } from '../../src/http/demo/gateApi.js';
-import { knownGateIdentity } from '../../src/http/demo/gateIdentity.js';
+import { isSendableDeviceKey, knownGateIdentity } from '../../src/http/demo/gateIdentity.js';
 
 const DEVICE_KEY = 'gkXGrHor9PJGFGYu4xrNZ5nMkid18rTHXBmuCuI63as';
 const sortieDemo: GateIdentity = { id: 'gate-702', name: 'Sortie Démo', kind: 'EXIT', lotName: 'Parking Démo' };
@@ -14,7 +14,7 @@ describe('knownGateIdentity', () => {
   it('refuses a key a header cannot carry without asking Palier', async () => {
     const api = apiAnswering(200, sortieDemo);
 
-    const identity = await knownGateIdentity({ deviceKey: 'short', identity: null }, api);
+    const identity = await knownGateIdentity({ deviceKey: 'has a space', identity: null }, api);
 
     expect(identity).toEqual({ kind: 'refused', identity: null, messageKey: 'keyRefused' });
     expect(api.fetchIdentity).not.toHaveBeenCalled();
@@ -37,5 +37,21 @@ describe('knownGateIdentity', () => {
     [403, 'gateForbidden'],
   ] as const)('answers status %i with %s', async (status, messageKey) => {
     expect(await knownGateIdentity({ deviceKey: DEVICE_KEY, identity: null }, apiAnswering(status))).toEqual({ kind: 'refused', identity: null, messageKey });
+  });
+});
+
+describe('isSendableDeviceKey', () => {
+  it.each(['short', DEVICE_KEY, 'a'.repeat(512), '~!'])('accepts %s', (deviceKey) => {
+    expect(isSendableDeviceKey(deviceKey)).toBe(true);
+  });
+
+  it.each(['', 'has a space', 'clé', 'tab\there', 'a'.repeat(513)])('refuses %j', (deviceKey) => {
+    expect(isSendableDeviceKey(deviceKey)).toBe(false);
+  });
+
+  it('sends a short key to Palier, which answers it like any wrong key', async () => {
+    const identity = await knownGateIdentity({ deviceKey: 'short', identity: null }, apiAnswering(401));
+
+    expect(identity).toEqual({ kind: 'refused', identity: null, messageKey: 'keyRefused' });
   });
 });

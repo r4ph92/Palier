@@ -13,6 +13,7 @@ function closeExitLoopAt(scripted: ScriptedSql, closedAt: Date) {
   return new PostgresPassageLedger(scripted.database()).recordPassage({
     gate: sortieDemo,
     closedAt,
+    armedAt: null,
     vehicleCountChange: -1,
     confirmableOpenings: null,
     attachableOpenings: WINDOW,
@@ -27,5 +28,21 @@ describe('an exit loop reported by a gate clock behind the database (QA #157, ro
 
     expect(onlyAppendedSessionEvent(scripted).occurredAtText).toMatch(/select "exit_passage_at" from parking_session/);
     expect(scripted.statement('attach-exit-passage')?.text).toMatch(/exit_passage_at = greatest\([\s\S]*issued_at/);
+  });
+});
+
+describe('the arming time stored with a live passage', () => {
+  it('writes the arming instant with the passage, and null when none was reported', async () => {
+    const armedAt = new Date('2026-11-13T19:04:51Z');
+    const closedAt = new Date('2026-11-13T19:05:00Z');
+    const entry = { gate: sortieDemo, closedAt, vehicleCountChange: -1, confirmableOpenings: null, attachableOpenings: null } as const;
+    const withArming = new ScriptedSql().answer('count-vehicle', [{ vehicle_count: 0 }]);
+    const without = new ScriptedSql().answer('count-vehicle', [{ vehicle_count: 0 }]);
+
+    await new PostgresPassageLedger(withArming.database()).recordPassage({ ...entry, armedAt });
+    await new PostgresPassageLedger(without.database()).recordPassage({ ...entry, armedAt: null });
+
+    expect(withArming.statement('count-vehicle')?.params).toContain(armedAt.toISOString());
+    expect(without.statement('count-vehicle')?.params).toContain(null);
   });
 });

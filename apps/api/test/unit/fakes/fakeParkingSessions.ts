@@ -1,4 +1,5 @@
 import type { EntrySessionState } from '@palier/shared-types';
+import { ACTIVE_ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import { decideRepeatedScan, openingFor, type ActiveSessionFacts } from '../../../src/domain/entries/decideRepeatedScan.ts';
 import { EntryRefusedError } from '../../../src/domain/entries/EntryRefusedError.ts';
 import type {
@@ -87,6 +88,10 @@ export class FakeParkingSessionRepository implements ParkingSessionRepository {
 
   hasOpeningEntry(driverId: string, lotId: string): Promise<boolean> {
     return Promise.resolve([...this.#sessions.values()].some((session) => session.driverId === driverId && session.lotId === lotId && session.state === 'CREATED'));
+  }
+
+  hasActiveSession(driverId: string): Promise<boolean> {
+    return Promise.resolve([...this.#sessions.values()].some((session) => session.driverId === driverId && (ACTIVE_ENTRY_SESSION_STATES as readonly EntrySessionState[]).includes(session.state)));
   }
 
   cancel(sessionId: string): Promise<void> {

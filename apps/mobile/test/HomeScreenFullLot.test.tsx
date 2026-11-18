@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react-native';
 import { FakeLotsClient, parkingDemoWith } from './fakeLotsClient';
+import { findFreeSpotCount } from './freeSpotCountQueries';
 import { renderHomeScreen } from './renderHomeScreen';
 
 describe('HomeScreen when Parking Démo is full', () => {
@@ -26,7 +27,7 @@ describe('HomeScreen when Parking Démo is full', () => {
   it('shows the count again once a spot frees up', async () => {
     await renderHomeScreen(new FakeLotsClient(parkingDemoWith(1)));
 
-    expect(await screen.findByText('1 place libre')).toBeOnTheScreen();
+    expect(await findFreeSpotCount('1 place libre')).toBeOnTheScreen();
     expect(screen.queryByText('Complet')).not.toBeOnTheScreen();
   });
 });

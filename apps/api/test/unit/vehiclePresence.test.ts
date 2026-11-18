@@ -35,7 +35,7 @@ describe('sendPresence', () => {
   it('refuses a key that cannot be sent without calling the API', async () => {
     const api = fakeApi({ status: 200, body: null });
 
-    expect(await sendPresence({ deviceKey: 'short', identity: null }, api)).toEqual({ kind: 'refused', identity: null, messageKey: 'keyRefused' });
+    expect(await sendPresence({ deviceKey: 'has a space', identity: null }, api)).toEqual({ kind: 'refused', identity: null, messageKey: 'keyRefused' });
     expect(api.postPresence).not.toHaveBeenCalled();
   });
 

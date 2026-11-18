@@ -30,6 +30,7 @@ export const spotHoldEn: Translations['spotHold'] = {
   refusals: {
     PREREQUISITES_MISSING: 'Add a plate and a card before guaranteeing a spot',
     HOLD_ALREADY_EXISTS: 'You already have a guaranteed spot',
+    ALREADY_INSIDE: 'You are already in a parking lot',
     HOLD_QUOTA_REACHED: 'Too many guaranteed spots in this lot right now',
     NO_SUITABLE_SPOT: 'No spot available',
     LOT_NOT_FOUND: 'This lot is no longer offered',

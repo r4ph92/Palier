@@ -93,7 +93,11 @@ function problemMessage(state: EntryState): string | null {
       return i18n.t('scan.unreachable');
     case 'cancelled':
       return i18n.t('scan.entryCancelled');
-    default:
+    case 'idle':
+    case 'submitting':
+    case 'quoted':
+    case 'entering':
+    case 'entered':
       return null;
   }
 }

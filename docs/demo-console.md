@@ -90,10 +90,23 @@ secondes l'un de l'autre, dans l'ordre qu'on veut.
 6. Un signal de balise sans véhicule (un piéton), ou plus de 60 s entre les deux :
    rien ne se passe.
 
+## Temps de présence (#77)
+
+1. Coller la clé d'Entrée Démo dans la console, appuyer sur « Véhicule sur la boucle
+   d'armement » (« Boucle armée à 14:05:03 »), attendre quelques secondes, puis sur
+   « Boucle d'entrée fermée ».
+2. À une sortie, « Véhicule à la sortie » arme la boucle ; « Boucle de sortie fermée »
+   envoie ensuite le passage avec son armement.
+3. Sophie ouvre « Équipement » : sous l'état de la barrière, « Temps de présence moyen
+   (7 jours) : 9,0 s ». Un passage sans armement (ou rejoué après une panne) n'y compte pas.
+
+Décision : `docs/decisions/044`.
+
 ## Utiliser la console
 
 1. Coller une clé dans « Clé d'appareil ». La clé ne quitte jamais la page :
-   ni URL, ni stockage du navigateur.
+   ni URL, ni stockage du navigateur. Seule la langue choisie est mémorisée
+   (`localStorage`), pour qu'un rechargement garde l'anglais.
 2. Appuyer sur « Boucle d'entrée fermée » ou « Boucle de sortie fermée ». Au
    premier appui, la console identifie la barrière (`GET /v1/gates/me`), affiche
    son nom, son sens et son parking, puis désactive le bouton de l'autre sens.
@@ -118,10 +131,26 @@ secondes l'un de l'autre, dans l'ordre qu'on veut.
    2 minutes. » Un changement de câblage, d'adresse ou de boucles de la borne, ou une
    nouvelle clé d'appareil, efface la vérification : refaire le passage de test.
 
-Messages : « Clé d'appareil refusée » (clé inconnue, mal formée ou révoquée),
+Messages : « Clé d'appareil refusée » (clé inconnue ou révoquée, ou clé que
+l'en-tête ne peut pas porter : espace, accent, plus de 512 caractères),
 « Accès refusé pour cette barrière » (403), « Cette barrière n'a pas de
-boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Le bouton
-« English » passe toute la page en anglais.
+boucles. » (409), « Impossible de joindre Palier. » (API arrêtée). Chaque refus
+dit quoi faire ensuite. Le bouton « English » passe toute la page en anglais.
+
+Comportements de saisie :
+
+- La console ne vérifie plus la forme de la clé : toute clé que l'en-tête peut porter
+  part vers Palier, qui répond 401 si elle est fausse. Une clé collée est identifiée
+  après une pause de 400 ms dans la saisie ; une clé refusée l'affiche sans appui,
+  marque le champ `aria-invalid` et le relie au message. La saisie efface les deux.
+- Le champ de clé reste modifiable pendant un envoi : coller la clé de Sortie Démo
+  pendant un appui sur Entrée affiche l'identité de Sortie Démo et active son bouton ;
+  la réponse tardive ne change ni l'identité ni le message, mais un passage compté
+  par le serveur reste dans la liste.
+- Un appui sur la mauvaise boucle nomme le bon bouton et lui donne le focus.
+- « Envoi… » remplace le message avant chaque réponse, puis « Passage enregistré à
+  14:03:12 · 12 véhicules dans le parking » : le message change donc à chaque passage,
+  même identique au précédent, et le lecteur d'écran l'annonce à nouveau.
 
 ## Hors ligne (#12)
 
@@ -220,7 +249,7 @@ lot : voir la décision 031.
 
 - `GET /v1/gates/me` : `{ id, name, kind, lotName }` de la barrière de la clé.
 - `POST /v1/gates/:id/passages/replay`, corps `{ "passages": [{ "id": "<uuid>", "kind": "ENTRY" | "EXIT", "closedAt": "<ISO 8601>" }] }` (1 à 500) : `{ counted, duplicates, vehicleCount }`. Compte seulement : aucune session confirmée ni sortie rattachée. 403 `GATE_FORBIDDEN`, 409 `REPLAY_KIND_MISMATCH`, 400 `REPLAY_IDS_REPEATED`, `CLOSED_AT_TOO_OLD`.
-- `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>" }` :
+- `POST /v1/gates/:id/passage`, corps `{ "closedAt": "<ISO 8601>", "armedAt"?: "<ISO 8601>" }` (`armedAt` : la boucle d'armement, gardé s'il précède `closedAt` d'au plus 7 jours, mal formé : 400, voir `docs/decisions/044`) :
   `{ gateId, lotId, kind, closedAt, vehicleCount, confirmedSessionId, exitedSessionId }`.
   `confirmedSessionId` est la session d'entrée que ce passage a confirmée (la plus
   ancienne ouverture de cette barrière émise dans les 60 secondes (`ENTRY_CONFIRMATION_WINDOW_SECONDS`) avant la réception du passage, mesurées

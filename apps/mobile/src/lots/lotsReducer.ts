@@ -4,7 +4,8 @@ import type { NearbyLot } from './nearbyLots';
 export type LotsState =
   | { readonly status: 'loading' }
   | { readonly status: 'loaded'; readonly lots: readonly NearbyLot[]; readonly location: DriverLocation; readonly updatedAt: Date }
-  | { readonly status: 'error' };
+  // failureCount: how many reads in a row ended here, so a repeated failure can be announced again.
+  | { readonly status: 'error'; readonly failureCount: number };
 
 // The read in flight, permission prompt included; 'none' once it settles.
 export type ReadInFlight = 'none' | 'first' | 'refresh' | 'retry' | 'poll';
@@ -45,8 +46,12 @@ export function lotsReducer(model: LotsModel, action: LotsAction): LotsModel {
     case 'loaded':
       return { ...model, state: action.state, inFlight: 'none' };
     case 'unreachable':
-      return { ...model, state: model.inFlight === 'poll' ? model.state : { status: 'error' }, inFlight: 'none' };
+      return { ...model, state: model.inFlight === 'poll' ? model.state : failedState(model.state), inFlight: 'none' };
   }
+}
+
+function failedState(previous: LotsState): LotsState {
+  return { status: 'error', failureCount: previous.status === 'error' ? previous.failureCount + 1 : 1 };
 }
 
 function nextRead(model: LotsModel, inFlight: ReadInFlight): LotsModel {

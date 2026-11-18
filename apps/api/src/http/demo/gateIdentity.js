@@ -5,7 +5,17 @@ import { messageForStatusOf } from './gateRefusals.js';
 /** @typedef {import('./consoleText.js').TextKey} TextKey */
 /** @typedef {{ kind: 'refused', identity: null, messageKey: TextKey }} IdentityRefusal */
 
-export const DEVICE_KEY_SHAPE = /^[A-Za-z0-9_-]{43}$/;
+const HEADER_SAFE_CHARACTERS = /^[\x21-\x7E]+$/;
+const LONGEST_SENDABLE_DEVICE_KEY = 512;
+
+/**
+ * Whether a header can carry the key; Palier alone decides if it is a real one, so a wrong key is answered 401 like any other.
+ * @param {string} deviceKey
+ * @returns {boolean}
+ */
+export function isSendableDeviceKey(deviceKey) {
+  return deviceKey.length <= LONGEST_SENDABLE_DEVICE_KEY && HEADER_SAFE_CHARACTERS.test(deviceKey);
+}
 
 export const messageForStatus = messageForStatusOf({ 409: 'gateWithoutLoops' }, 'passageFailed');
 
@@ -16,7 +26,7 @@ export const messageForStatus = messageForStatusOf({ 409: 'gateWithoutLoops' }, 
  * @returns {Promise<GateIdentity | IdentityRefusal>}
  */
 export async function knownGateIdentity(request, api) {
-  if (!DEVICE_KEY_SHAPE.test(request.deviceKey)) {
+  if (!isSendableDeviceKey(request.deviceKey)) {
     return { kind: 'refused', identity: null, messageKey: 'keyRefused' };
   }
   if (request.identity !== null) {

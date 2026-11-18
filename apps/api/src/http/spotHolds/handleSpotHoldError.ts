@@ -14,6 +14,7 @@ declare module 'fastify' {
 const STATUS_BY_REASON: Record<SpotHoldRefusalCode, number> = {
   PREREQUISITES_MISSING: 409,
   HOLD_ALREADY_EXISTS: 409,
+  ALREADY_INSIDE: 409,
   HOLD_QUOTA_REACHED: 409,
   NO_SUITABLE_SPOT: 409,
   LOT_NOT_FOUND: 404,

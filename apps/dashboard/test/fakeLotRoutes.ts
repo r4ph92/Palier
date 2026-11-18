@@ -4,6 +4,7 @@ import { isGateRequest, routeGates } from './fakeGateRoutes.ts';
 import { isMapRequest, routeMap } from './fakeMapRoutes.ts';
 import { isPublicationRequest, routePublication } from './fakePublicationRoutes.ts';
 import { isSessionRequest, routeSessions } from './fakeSessionRoutes.ts';
+import { isStaleSessionRequest, routeStaleSessions } from './fakeStaleSessionRoutes.ts';
 import { isSpotCheckRequest, routeSpotChecks } from './fakeSpotCheckRoutes.ts';
 import { isSpotRequest, routeSpots } from './fakeSpotRoutes.ts';
 
@@ -12,6 +13,7 @@ const FIRST_CREATED_MAJOR = 4;
 const OCCUPANCY_PATH = /^GET \/lots\/([^/]+)\/occupancy$/;
 const PRICING_PATH = /^PUT \/lots\/([^/]+)\/pricing$/;
 const EQUIPMENT_PATH = /^GET \/lots\/([^/]+)\/equipment$/;
+const EXITS_PATH = /^GET \/lots\/([^/]+)\/exits$/;
 
 // Only a member's own lots answer; any other id is not found, as in the API.
 export function routeLots(state: FakeApiState, request: string, body: Record<string, unknown>): FakeResponse {
@@ -32,7 +34,7 @@ export function routeLots(state: FakeApiState, request: string, body: Record<str
   if (featureAnswer !== undefined) {
     return featureAnswer;
   }
-  return routeLot({ occupancy: state.occupancy, equipment: state.equipment, lots }, request, body);
+  return routeLot({ occupancy: state.occupancy, equipment: state.equipment, exitShares: state.exitShares, lots }, request, body);
 }
 
 interface FeatureContext {
@@ -47,6 +49,9 @@ function routeFeature({ state, lots, ownedLotIds }: FeatureContext, request: str
   }
   if (isSpotCheckRequest(request)) {
     return routeSpotChecks({ spotsToCheck: state.spotsToCheck, lots }, request);
+  }
+  if (isStaleSessionRequest(request)) {
+    return routeStaleSessions({ staleSessions: state.staleSessions, lots }, request);
   }
   if (isSessionRequest(request)) {
     return routeSessions({ sessions: state.sessions, ownedLotIds }, request);
@@ -63,10 +68,11 @@ function routeFeature({ state, lots, ownedLotIds }: FeatureContext, request: str
 interface MemberLots {
   readonly occupancy: FakeApiState['occupancy'];
   readonly equipment: FakeApiState['equipment'];
+  readonly exitShares: FakeApiState['exitShares'];
   readonly lots: DashboardLotDetails[];
 }
 
-function routeLot({ occupancy, equipment, lots }: MemberLots, request: string, body: Record<string, unknown>): FakeResponse {
+function routeLot({ occupancy, equipment, exitShares, lots }: MemberLots, request: string, body: Record<string, unknown>): FakeResponse {
   const occupancyLotId = OCCUPANCY_PATH.exec(request)?.[1];
   if (occupancyLotId !== undefined) {
     return readOwned(occupancy, lots, occupancyLotId);
@@ -74,6 +80,10 @@ function routeLot({ occupancy, equipment, lots }: MemberLots, request: string, b
   const equipmentLotId = EQUIPMENT_PATH.exec(request)?.[1];
   if (equipmentLotId !== undefined) {
     return readOwned(equipment, lots, equipmentLotId);
+  }
+  const exitsLotId = EXITS_PATH.exec(request)?.[1];
+  if (exitsLotId !== undefined) {
+    return readOwned(exitShares, lots, exitsLotId);
   }
   const pricingLotId = PRICING_PATH.exec(request)?.[1];
   return pricingLotId === undefined ? readLot(lots, request) : setPricing(lots, pricingLotId, body as unknown as LotPricingSettings);

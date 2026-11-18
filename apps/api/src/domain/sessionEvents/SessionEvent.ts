@@ -15,6 +15,7 @@ export const SESSION_EVENT_KINDS = [
   'CAPTURED',
   'CAPTURE_PENDING',
   'EXIT_LOOP_CLOSED',
+  'PRESENCE_CONFIRMED',
 ] as const;
 
 export type SessionEventKind = (typeof SESSION_EVENT_KINDS)[number];
@@ -88,6 +89,9 @@ export interface ExitLoopClosedPayload {
   readonly gateId: string;
 }
 
+// The operator checked the vehicle in person; who did it is stored on the session, never here (decision 037).
+export type PresenceConfirmedPayload = Record<string, never>;
+
 export interface SessionEventPayloads {
   readonly ENTRY_SCANNED: EntryScannedPayload;
   readonly GATE_OPENED: GateOpenedPayload;
@@ -100,6 +104,7 @@ export interface SessionEventPayloads {
   readonly CAPTURED: CapturedPayload;
   readonly CAPTURE_PENDING: CapturePendingPayload;
   readonly EXIT_LOOP_CLOSED: ExitLoopClosedPayload;
+  readonly PRESENCE_CONFIRMED: PresenceConfirmedPayload;
 }
 
 // Each payload holds the facts of its step only: never an email, a card, a Stripe id or a user id.

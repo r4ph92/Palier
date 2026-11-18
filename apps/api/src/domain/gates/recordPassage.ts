@@ -3,12 +3,13 @@ import type { Clock } from '../time/Clock.ts';
 import type { AuthenticatedGate } from './AuthenticatedGate.ts';
 import type { OpeningWindow } from './OpeningWindow.ts';
 import type { PassageLedger } from './PassageLedger.ts';
-import { ensureClosedAtIsPlausible, ensureGateMayReport, vehicleCountChangeFor } from './passageRules.ts';
+import { ensureClosedAtIsPlausible, ensureGateMayReport, presenceArmingOf, vehicleCountChangeFor } from './passageRules.ts';
 
 export interface PassageCommand {
   readonly gate: AuthenticatedGate;
   readonly requestedGateId: string;
   readonly closedAt: Date;
+  readonly armedAt: Date | null;
 }
 
 export interface PassageCollaborators {
@@ -31,6 +32,7 @@ export async function recordPassage(
   const recorded = await collaborators.ledger.recordPassage({
     gate,
     closedAt,
+    armedAt: presenceArmingOf(command.armedAt, closedAt),
     vehicleCountChange,
     confirmableOpenings,
     attachableOpenings,

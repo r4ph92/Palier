@@ -120,6 +120,8 @@ export interface DashboardGateHealth {
   readonly kind: GateKind;
   readonly health: GateHealth;
   readonly lastHeartbeatAt: string | null;
+  // Raw seconds over the last 7 days; null when no passage was measured. The page rounds it once.
+  readonly averagePresenceSeconds: number | null;
 }
 
 // now is the server's clock, so the page tells today from another day as the server judged the gates.

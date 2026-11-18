@@ -3,14 +3,17 @@ import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
+import { useElapsed } from './useElapsed';
 import { COUNT_BAR, NAME_BAR, PLACEHOLDER_ROWS } from './placeholderBars';
 
+// A fast answer replaces the list before the placeholders would flash.
+export const PLACEHOLDER_DELAY_MILLISECONDS = 300;
+
 export function LotListLoading() {
+  const showPlaceholders = useElapsed(PLACEHOLDER_DELAY_MILLISECONDS);
   return (
     <View accessible accessibilityLabel={i18n.t('home.loading')} accessibilityState={{ busy: true }}>
-      {PLACEHOLDER_ROWS.map((row) => (
-        <PlaceholderRow key={row} />
-      ))}
+      {showPlaceholders ? PLACEHOLDER_ROWS.map((row) => <PlaceholderRow key={row} />) : null}
     </View>
   );
 }

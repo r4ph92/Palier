@@ -5,7 +5,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['**/node_modules/**', '**/dist/**', '**/.expo/**', 'apps/mobile/ios/**', 'apps/mobile/android/**', 'docs/**', 'tools/**', 'remise/**'],
+    ignores: ['**/node_modules/**', '.claude/**', '**/dist/**', '**/.expo/**', 'apps/mobile/ios/**', 'apps/mobile/android/**', 'docs/**', 'tools/**', 'remise/**'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.strict,
@@ -17,6 +17,16 @@ export default tseslint.config(
       'max-depth': ['error', 2],
       complexity: ['error', 10],
       'max-lines': ['error', { max: 200, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  {
+    files: ['**/*.{ts,tsx,js}'],
+    languageOptions: {
+      parserOptions: { projectService: { allowDefaultProject: ['eslint.config.mjs'] }, tsconfigRootDir: import.meta.dirname },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
     },
   },
   {

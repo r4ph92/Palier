@@ -12,6 +12,7 @@ export interface DatabaseConnection {
 }
 
 export function connectToDatabase(databaseUrl: string, poolMax: number = DEFAULT_DATABASE_POOL_MAX): DatabaseConnection {
+  // NOTICE messages (DDL that skips an existing object, for one) are not errors; postgres-js would print each to the console.
   const client = postgres(databaseUrl, { max: poolMax, onnotice: () => undefined });
   return {
     database: drizzle(client, { schema }),
