@@ -1,13 +1,23 @@
-import { DEVICE_KEY_SHAPE } from './gateIdentity.js';
+import { isSendableDeviceKey } from './gateIdentity.js';
 
 /** @typedef {import('@palier/shared-types').GateCommand} GateCommand */
 /** @typedef {Pick<import('./gateApi.js').GateApi, 'fetchCommands'>} CommandApi */
 /** @typedef {import('./gateApi.js').CommandCursor} CommandCursor */
+/** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 
 const OK = 200;
 const KEY_REFUSED_STATUSES = [401, 403];
 // The barrier must look like it reacts to the scan: the console asks for new commands every second.
 export const COMMAND_POLL_MILLISECONDS = 1000;
+
+/**
+ * Only a key that named its gate is polled, so a key still being typed never asks for commands.
+ * @param {{ isPolling: boolean, connection: { kind: string }, identity: GateIdentity | null }} state
+ * @returns {boolean}
+ */
+export function canPollCommands(state) {
+  return !state.isPolling && state.connection.kind === 'online' && state.identity !== null;
+}
 
 /**
  * The last command shown; its id tells apart two commands of the same millisecond.
@@ -40,7 +50,7 @@ export function mergeCommands(known, incoming) {
  * @returns {Promise<PollResult>}
  */
 export async function pollCommands(api, deviceKey, known) {
-  if (!DEVICE_KEY_SHAPE.test(deviceKey)) {
+  if (!isSendableDeviceKey(deviceKey)) {
     return { commands: known, isKeyRefused: false };
   }
   const response = await api.fetchCommands(deviceKey, cursorOf(known));

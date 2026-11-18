@@ -25,6 +25,7 @@ describe('POST /v1/gates/:id/passage with a closedAt JavaScript cannot represent
       });
 
       expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: 'CLOSED_AT_INVALID' });
       expect(ledger.entries).toHaveLength(0);
     },
   );

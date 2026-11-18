@@ -72,6 +72,7 @@ export function passagesReplayed(count, vehicleCount, language) {
 /**
  * @typedef {{ key: TextKey, isError: boolean, tone?: 'degraded' | 'muted' }
  *   | { replayed: { count: number, vehicleCount: number }, isError: false }
+ *   | { recorded: { closedAt: Date, vehicleCount: number }, isError: false }
  *   | { verifiedAt: Date, isError: false }
  *   | { armedAt: Date, isError: false }} ConsoleMessage
  */
@@ -84,6 +85,10 @@ export function passagesReplayed(count, vehicleCount, language) {
 export function messageText(language, message) {
   if ('replayed' in message) {
     return passagesReplayed(message.replayed.count, message.replayed.vehicleCount, language);
+  }
+  if ('recorded' in message) {
+    const { closedAt, vehicleCount } = message.recorded;
+    return translate(language, 'passageRecorded', { time: formatTimeWithSeconds(closedAt), vehicles: vehiclesInside(vehicleCount, language) });
   }
   if ('verifiedAt' in message) {
     return translate(language, 'gateVerified', { time: formatPassageTime(message.verifiedAt, language) });
@@ -101,6 +106,27 @@ export function messageText(language, message) {
  */
 export function isMessageKey(message, key) {
   return message !== null && 'key' in message && message.key === key;
+}
+
+/**
+ * Cuts a line around its figures (time, count) so only those are set in the mono face.
+ * @param {string} text
+ * @param {readonly string[]} figures in the order they appear in the text
+ * @returns {{ text: string, isFigure: boolean }[]}
+ */
+export function figureSegments(text, figures) {
+  const segments = [];
+  let cursor = 0;
+  for (const figure of figures) {
+    const start = text.indexOf(figure, cursor);
+    if (start === -1) {
+      continue;
+    }
+    segments.push({ text: text.slice(cursor, start), isFigure: false }, { text: figure, isFigure: true });
+    cursor = start + figure.length;
+  }
+  segments.push({ text: text.slice(cursor), isFigure: false });
+  return segments.filter((segment) => segment.text !== '');
 }
 
 /**

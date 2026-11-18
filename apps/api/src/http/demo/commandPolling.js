@@ -1,4 +1,4 @@
-import { pollCommands } from './commandFeed.js';
+import { canPollCommands, pollCommands } from './commandFeed.js';
 import { renderCommands, renderMessage } from './consoleRender.js';
 import { isMessageKey } from './consoleText.js';
 
@@ -10,7 +10,7 @@ import { isMessageKey } from './consoleText.js';
  */
 export function createCommandRefresh(state, api) {
   return async function refreshCommands() {
-    if (state.isPolling || state.connection.kind !== 'online') {
+    if (!canPollCommands(state)) {
       return;
     }
     state.isPolling = true;

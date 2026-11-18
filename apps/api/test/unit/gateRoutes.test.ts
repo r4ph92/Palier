@@ -131,19 +131,21 @@ describe('gate routes', () => {
       const response = await postPassage(entreeDemo.id, bearer(keyOfGateWithoutLoops));
 
       expect(response.statusCode).toBe(409);
+      expect(response.json()).toMatchObject({ error: 'GATE_WITHOUT_LOOPS' });
       expect(ledger.entries).toEqual([]);
     });
 
     it.each([
-      ['a closedAt that is not a date', { closedAt: 'yesterday' }],
-      ['a missing closedAt', {}],
-      ['a closedAt 6 minutes in the future', { closedAt: new Date(NOW.getTime() + 6 * 60 * 1000).toISOString() }],
-    ])('answers 400 for %s', async (_case, payload) => {
+      ['a closedAt that is not a date', { closedAt: 'yesterday' }, 'FST_ERR_VALIDATION'],
+      ['a missing closedAt', {}, 'FST_ERR_VALIDATION'],
+      ['a closedAt 6 minutes in the future', { closedAt: new Date(NOW.getTime() + 6 * 60 * 1000).toISOString() }, 'CLOSED_AT_IN_FUTURE'],
+    ])('answers 400 for %s', async (_case, payload, errorCode) => {
       startServer(0);
 
       const response = await postPassage(entreeDemo.id, bearer(ENTREE_DEMO_KEY), payload);
 
       expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: errorCode });
       expect(ledger.entries).toEqual([]);
     });
 

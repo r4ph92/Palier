@@ -1,6 +1,6 @@
 import type { GateCommand } from '@palier/shared-types';
 import { describe, expect, it, vi } from 'vitest';
-import { cursorOf, mergeCommands, pollCommands } from '../../src/http/demo/commandFeed.js';
+import { canPollCommands, cursorOf, mergeCommands, pollCommands } from '../../src/http/demo/commandFeed.js';
 import { translate } from '../../src/http/demo/consoleText.js';
 import type { ApiResponse, GateApi } from '../../src/http/demo/gateApi.js';
 
@@ -38,10 +38,10 @@ describe('pollCommands', () => {
     expect(api.fetchCommands).toHaveBeenCalledWith(DEVICE_KEY, { issuedAt: first.issuedAt, id: first.id });
   });
 
-  it('does not call the API until the key has the shape of a device key', async () => {
+  it('does not call the API until the key can travel in a header', async () => {
     const api = fakeApi({ status: 200, body: [first] });
 
-    expect(await pollCommands(api, 'short', [])).toEqual({ commands: [], isKeyRefused: false });
+    expect(await pollCommands(api, 'has a space', [])).toEqual({ commands: [], isKeyRefused: false });
     expect(api.fetchCommands).not.toHaveBeenCalled();
   });
 
@@ -75,5 +75,24 @@ describe('command line', () => {
     expect(translate(language, 'commandLine', { command: translate(language, 'commandOPEN'), time: language === 'fr' ? '18 h 02' : '6:02 PM' })).toBe(
       expected,
     );
+  });
+});
+
+describe('canPollCommands', () => {
+  const identity = { id: 'gate-501', name: 'Entrée Démo', kind: 'ENTRY', lotName: 'Parking Démo' } as const;
+
+  it('polls once the key has named its gate', () => {
+    expect(canPollCommands({ isPolling: false, connection: { kind: 'online' }, identity })).toBe(true);
+  });
+
+  it('never polls for a key still being typed, which has no gate yet', () => {
+    expect(canPollCommands({ isPolling: false, connection: { kind: 'online' }, identity: null })).toBe(false);
+  });
+
+  it.each([
+    ['a poll in flight', { isPolling: true, connection: { kind: 'online' } }],
+    ['an offline console', { isPolling: false, connection: { kind: 'offline' } }],
+  ])('does not poll with %s', (_case, state) => {
+    expect(canPollCommands({ ...state, identity })).toBe(false);
   });
 });

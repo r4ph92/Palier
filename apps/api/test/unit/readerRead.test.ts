@@ -35,7 +35,7 @@ describe('sendReading', () => {
   it('refuses a key that cannot be sent without calling the API', async () => {
     const api = fakeApi({ status: 200, body: null });
 
-    const outcome = await sendReading({ deviceKey: 'short', identity: null, identifier: 'ABC123' }, api);
+    const outcome = await sendReading({ deviceKey: 'has a space', identity: null, identifier: 'ABC123' }, api);
 
     expect(outcome).toEqual({ kind: 'refused', identity: null, messageKey: 'keyRefused' });
     expect(api.postIdentify).not.toHaveBeenCalled();

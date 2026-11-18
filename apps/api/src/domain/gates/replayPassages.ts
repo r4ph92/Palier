@@ -2,10 +2,9 @@ import type { GateKind, PassageReplayResponse } from '@palier/shared-types';
 import type { Clock } from '../time/Clock.ts';
 import type { AuthenticatedGate } from './AuthenticatedGate.ts';
 import { PassageRefusedError } from './PassageRefusedError.ts';
+import { MAXIMUM_REPLAY_AGE_MILLISECONDS } from './passageWindow.ts';
 import { ensureClosedAtIsPlausible, ensureGateMayReport, vehicleCountChangeFor } from './passageRules.ts';
 import type { PassageLedger, ReplayedPassage } from './PassageLedger.ts';
-
-const MAXIMUM_REPLAY_AGE_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
 
 export interface ReplayedPassageCommand extends ReplayedPassage {
   readonly kind: GateKind;
