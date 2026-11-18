@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import type { EntryGate } from '../../src/domain/entries/EntryGateRepository.ts';
 import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { configureServer } from './configureServer.ts';
-import { ENTREE_DEMO_SECRET, entreeDemoGate, FakeEntryGateRepository, SORTIE_DEMO_SECRET, sortieDemoGate } from './fakes/entryFakes.ts';
+import { ENTREE_DEMO_SECRET, entreeDemoGate, FakeEntryGateRepository, SORTIE_DEMO_SECRET, sortieDemoGate, ACCEPTED_DEMO_TARIFF } from './fakes/entryFakes.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 
 const NOW = new Date('2026-11-13T19:05:00Z');
@@ -22,7 +22,7 @@ describe('POST /v1/entries at a gate whose controller stopped beating', () => {
     const configured = configureServer({ entryClock: () => NOW, entryGates: new FakeEntryGateRepository([gate]) });
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
-    const enter = (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent } });
+    const enter = (qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent, tariff: ACCEPTED_DEMO_TARIFF } });
     return { ...configured, enter };
   }
 

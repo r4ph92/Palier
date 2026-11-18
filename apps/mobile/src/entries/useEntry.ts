@@ -1,4 +1,4 @@
-import type { AssignedSpot, EntryRefusalCode } from '@palier/shared-types';
+import type { AssignedSpot, EntryQuoteResponse, EntryRefusalCode } from '@palier/shared-types';
 import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
 import { PalierUnauthorizedError } from '../api/AuthClient';
 import type { EntryClient } from '../api/EntryClient';
@@ -21,6 +21,7 @@ export const ENTRY_REFUSALS = [
   'CARD_DECLINED',
   'PAYMENTS_UNAVAILABLE',
   'TOO_MANY_ENTRIES',
+  'TARIFF_CHANGED',
 ] as const satisfies readonly EntryRefusalCode[];
 
 export type EntryRefusal = (typeof ENTRY_REFUSALS)[number];
@@ -28,6 +29,9 @@ export type EntryRefusal = (typeof ENTRY_REFUSALS)[number];
 export type EntryState =
   | { readonly status: 'idle' }
   | { readonly status: 'submitting' }
+  // The tariff and the hold the driver accepts with « Entrer » (#151); tariffChanged once the lot's tariff changed under her.
+  | { readonly status: 'quoted'; readonly quote: EntryQuoteResponse; readonly tariffChanged: boolean }
+  | { readonly status: 'entering'; readonly quote: EntryQuoteResponse; readonly tariffChanged: boolean }
   | { readonly status: 'entered'; readonly sessionId: string; readonly spot: AssignedSpot; readonly isConfirmed: boolean }
   | { readonly status: 'cancelled'; readonly sessionId: string }
   // authorizedCents is the hold a declined card refused, when the API named it.
@@ -39,7 +43,10 @@ export interface EntryController {
   readonly state: EntryState;
   readonly qrContent: string;
   setQrContent(qrContent: string): void;
+  // Reads the lot's tariff for the QR: nothing is held or opened yet.
   submit(): void;
+  // « Entrer »: enters at the tariff on screen.
+  accept(): void;
   startOver(): void;
 }
 
@@ -54,14 +61,25 @@ export function useEntry(client: EntryClient, pendingEntry: PendingEntryWatch): 
   const submit = useCallback(() => {
     if (qrContent.trim() !== '') {
       clear();
-      void enter(client, qrContent, { setState, watch, submissionEnded });
+      void readQuote(client, qrContent, setState);
     }
-  }, [client, qrContent, clear, watch, submissionEnded]);
+  }, [client, qrContent, clear]);
+  const accept = useAccept(client, { qrContent, state }, { setState, watch, submissionEnded });
   const startOver = useCallback(() => {
     setQrContent('');
     setState(IDLE);
   }, []);
-  return { state: withFollowedOutcome(state, followed), qrContent, setQrContent, submit, startOver };
+  return { state: withFollowedOutcome(state, followed), qrContent, setQrContent, submit, accept, startOver };
+}
+
+// « Entrer » enters only from the tariff screen, at the tariff it shows.
+function useAccept(client: EntryClient, { qrContent, state }: { readonly qrContent: string; readonly state: EntryState }, updates: EntryUpdates): () => void {
+  const { setState, watch, submissionEnded } = updates;
+  return useCallback(() => {
+    if (state.status === 'quoted') {
+      void enter(client, { qrContent, quote: state.quote }, { setState, watch, submissionEnded });
+    }
+  }, [client, qrContent, state, setState, watch, submissionEnded]);
 }
 
 // On the spot the outcome replaces the barrier line; once the driver left the spot, only a cancellation still shows, on the form.
@@ -82,18 +100,40 @@ interface EntryUpdates {
   readonly submissionEnded: () => void;
 }
 
-async function enter(client: EntryClient, qrContent: string, { setState, watch, submissionEnded }: EntryUpdates): Promise<void> {
+async function readQuote(client: EntryClient, qrContent: string, setState: Dispatch<SetStateAction<EntryState>>): Promise<void> {
   setState({ status: 'submitting' });
   try {
-    const entry = await client.enter(qrContent);
-    setState({ status: 'entered', sessionId: entry.sessionId, spot: entry.spot, isConfirmed: false });
-    watch(entry.sessionId);
+    setState({ status: 'quoted', quote: await client.quote(qrContent), tariffChanged: false });
   } catch (error) {
     // Run inside the state update so an unexpected error is thrown during render and reaches the error boundary.
     setState(() => stateAfterFailure(error));
+  }
+}
+
+interface AcceptedEntry {
+  readonly qrContent: string;
+  readonly quote: EntryQuoteResponse;
+}
+
+async function enter(client: EntryClient, { qrContent, quote }: AcceptedEntry, { setState, watch, submissionEnded }: EntryUpdates): Promise<void> {
+  setState({ status: 'entering', quote, tariffChanged: false });
+  try {
+    const entry = await client.enter(qrContent, quote.tariff);
+    setState({ status: 'entered', sessionId: entry.sessionId, spot: entry.spot, isConfirmed: false });
+    watch(entry.sessionId);
+  } catch (error) {
+    setState(() => changedTariffState(error, quote) ?? stateAfterFailure(error));
   } finally {
     submissionEnded();
   }
+}
+
+// The barrier stayed shut: the driver sees the lot's new tariff and its hold (the daily cap, Q19), and enters only if she taps « Entrer » again.
+function changedTariffState(error: unknown, quote: EntryQuoteResponse): EntryState | null {
+  if (!(error instanceof PalierRejectedError) || error.code !== 'TARIFF_CHANGED' || error.tariff === null) {
+    return null;
+  }
+  return { status: 'quoted', quote: { ...quote, tariff: error.tariff, holdCents: error.tariff.dailyCapCents }, tariffChanged: true };
 }
 
 // A refused session or a missing notice already moves the app off this screen, so the form simply goes back to idle.

@@ -1,6 +1,22 @@
+import type { TariffPolicy } from './lotPricing.ts';
+
 export interface EntryRequest {
   // What the entry terminal's QR holds: its link, or the bare token at the end of that link.
   readonly qrContent: string;
+  // The tariff the driver saw and accepted (#151). Missing or not the lot's current one: TARIFF_CHANGED, nothing held or opened.
+  readonly tariff?: TariffPolicy;
+}
+
+// Read before the barrier: what the driver accepts by tapping « Entrer » (#151).
+export interface EntryQuoteRequest {
+  readonly qrContent: string;
+}
+
+export interface EntryQuoteResponse {
+  readonly lotName: string;
+  readonly tariff: TariffPolicy;
+  // What the card will hold until exit: the daily cap (Q19).
+  readonly holdCents: number;
 }
 
 export interface AssignedSpot {
@@ -63,7 +79,8 @@ export type EntryRefusalCode =
   | 'ALREADY_INSIDE'
   | 'CARD_DECLINED'
   | 'PAYMENTS_UNAVAILABLE'
-  | 'TOO_MANY_ENTRIES';
+  | 'TOO_MANY_ENTRIES'
+  | 'TARIFF_CHANGED';
 
 export interface EntryRefusalBody {
   readonly statusCode: number;
@@ -71,6 +88,8 @@ export interface EntryRefusalBody {
   readonly message: string;
   // CARD_DECLINED only: the hold the card refused, so the app can name the amount.
   readonly authorizedCents?: number;
+  // TARIFF_CHANGED only: the lot's current tariff, shown to the driver before she accepts it.
+  readonly tariff?: TariffPolicy;
 }
 
 export type GateCommandKind = 'OPEN';

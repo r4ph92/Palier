@@ -6,7 +6,7 @@ import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
 import { PARKING_DEMO_ID } from '../../src/seed/fixtures/parkingDemo.ts';
 import { configureServer } from './configureServer.ts';
 import { marc } from './fakeDriverRepository.ts';
-import { ENTREE_DEMO_SECRET, ENTREE_ROY_SECRET, entreeDemoGate, entreeRoyGate, FakeEntryGateRepository, LAVOIE_ACCOUNT } from './fakes/entryGateFakes.ts';
+import { ACCEPTED_DEMO_TARIFF, ENTREE_DEMO_SECRET, ENTREE_ROY_SECRET, entreeDemoGate, entreeRoyGate, FakeEntryGateRepository, LAVOIE_ACCOUNT } from './fakes/entryGateFakes.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 
 const AT_14_02 = new Date('2026-11-04T19:02:00Z');
@@ -26,7 +26,7 @@ describe('POST /v1/lots/:id/holds around real entries (QA #119)', () => {
     configured.testClock.setFixed(AT_14_02);
     const julieHeaders = await readyDriver(configured.driverRepository, configured.vehicleRepository);
     const marcHeaders = await readyDriver(configured.driverRepository, configured.vehicleRepository, marc);
-    const enter = (headers: typeof julieHeaders, qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent } });
+    const enter = (headers: typeof julieHeaders, qrContent: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent, tariff: ACCEPTED_DEMO_TARIFF } });
     const hold = (lotId: string = PARKING_DEMO_ID, headers = julieHeaders) => server.inject({ method: 'POST', url: `/v1/lots/${lotId}/holds`, headers });
     return { ...configured, julieHeaders, marcHeaders, enter, hold };
   }

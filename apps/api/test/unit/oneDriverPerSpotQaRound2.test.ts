@@ -7,7 +7,7 @@ import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { parseEntryLoadArguments } from '../../src/load/entryLoadArguments.ts';
 import { fireEntries } from '../../src/load/fireEntries.ts';
 import { configureServer } from './configureServer.ts';
-import { ENTREE_DEMO_SECRET, entreeDemoGate, fakeSessionId } from './fakes/entryFakes.ts';
+import { ENTREE_DEMO_SECRET, entreeDemoGate, fakeSessionId, ACCEPTED_DEMO_TARIFF } from './fakes/entryFakes.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 
 const entreeDemoQr = gateQrLink(entreeDemoGate.id, ENTREE_DEMO_SECRET);
@@ -21,7 +21,7 @@ describe('replayed scans and the entry limit', () => {
     const configured = configureServer();
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
-    const enter = () => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr } });
+    const enter = () => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr, tariff: ACCEPTED_DEMO_TARIFF } });
     return { ...configured, enter };
   }
 
@@ -85,7 +85,7 @@ describe('the load script against an API that never answers', () => {
     await new Promise<void>((resolve) => silentApi.listen(0, '127.0.0.1', resolve));
     const { port } = silentApi.address() as AddressInfo;
 
-    const outcomes = await fireEntries({ apiUrl: new URL(`http://127.0.0.1:${port}`), qrContent: entreeDemoQr, appVersion: '0.1.0' }, ['token-1']);
+    const outcomes = await fireEntries({ apiUrl: new URL(`http://127.0.0.1:${port}`), qrContent: entreeDemoQr, tariff: ACCEPTED_DEMO_TARIFF, appVersion: '0.1.0' }, ['token-1']);
 
     expect(outcomes[0]?.answer).toMatch(/^UNREACHABLE/);
     expect(outcomes[0]?.latencyMilliseconds).toBeLessThan(10_000);

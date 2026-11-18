@@ -76,7 +76,7 @@ describe('hostile lot setup requests', () => {
 
   it.each([
     ['a cap of 0,49 $', { incrementCents: 50, dailyCapCents: 49 }, 'PRICING_DAILY_CAP_INVALID'],
-    ['a cap one cent past 100 000,00 $', { dailyCapCents: 10_000_001 }, 'PRICING_DAILY_CAP_INVALID'],
+    ['a cap one cent past 10 000,00 $', { dailyCapCents: 1_000_001 }, 'PRICING_DAILY_CAP_INVALID'],
     ['an increment price of 1e300', { incrementCents: 1e300 }, 'PRICING_INCREMENT_CENTS_INVALID'],
     ['a fractional increment length', { incrementMinutes: 20.5 }, 'FST_ERR_VALIDATION'],
     ['a cap given as text', { dailyCapCents: '1800' }, 'FST_ERR_VALIDATION'],
@@ -93,7 +93,7 @@ describe('hostile lot setup requests', () => {
 
   it.each([
     ['the smallest cap Stripe charges, 0,50 $', { incrementCents: 50, dailyCapCents: 50 }],
-    ['the largest amounts, 100 000,00 $', { incrementCents: 10_000_000, dailyCapCents: 10_000_000 }],
+    ['the largest amounts, 10 000,00 $', { incrementCents: 1_000_000, dailyCapCents: 1_000_000 }],
   ])('saves %s', async (_case, change) => {
     await signInPierre();
 

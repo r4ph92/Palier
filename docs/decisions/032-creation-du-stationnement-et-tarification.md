@@ -13,3 +13,5 @@
 - **Adresse.** Colonne `parking_lot.address`, vide pour les parkings d'avant la migration ; le seed en donne une aux trois parkings.
 
 **Conséquences.** La mise en ligne d'un parking n'existe pas encore dans le tableau de bord : un parking créé reste « Hors ligne ». Le SQL n'est prouvé que sur la base de la voie (002, 005) ; les instructions ont des tests sur un exécuteur scripté.
+
+**Mise à jour (#151).** La borne de 100 000,00 $ du prix d'un incrément et du plafond devient 10 000,00 $ : voir 047.

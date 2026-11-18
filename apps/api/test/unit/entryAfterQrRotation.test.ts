@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
 import { newQrSecret } from '../../src/domain/gates/newGateSecret.ts';
 import { configureServer } from './configureServer.ts';
-import { ENTREE_DEMO_SECRET, ENTREE_ROY_SECRET, entreeDemoGate, entreeRoyGate, FakeEntryGateRepository, sortieDemoGate } from './fakes/entryFakes.ts';
+import { ENTREE_DEMO_SECRET, ENTREE_ROY_SECRET, entreeDemoGate, entreeRoyGate, FakeEntryGateRepository, sortieDemoGate, ACCEPTED_DEMO_TARIFF } from './fakes/entryFakes.ts';
 import { readyDriver } from './fakes/readyDriver.ts';
 
 // The entry reads the gate's secret at each scan, so a rotated secret is the one these gates now hold.
@@ -24,7 +24,7 @@ describe('scanning a gate QR after its secret was regenerated', () => {
     const configured = configureServer({ entryGates: rotatedGates });
     server = configured.server;
     const headers = await readyDriver(configured.driverRepository, configured.vehicleRepository);
-    return (link: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: link } });
+    return (link: string) => server.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: link, tariff: ACCEPTED_DEMO_TARIFF } });
   }
 
   it('refuses the old printed QR as QR_NOT_RECOGNIZED and admits Julie with the new one', async () => {

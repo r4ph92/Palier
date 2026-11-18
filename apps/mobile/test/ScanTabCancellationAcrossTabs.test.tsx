@@ -5,6 +5,7 @@ import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { visibleText } from './visibleText';
+import { acceptShownTariff } from './acceptShownTariff';
 
 jest.mock('@stripe/stripe-react-native', () => ({
   CardField: () => null,
@@ -32,6 +33,7 @@ async function julieOpensEntreeDemo(language: SupportedLanguage) {
   parkingSession.session = julieAtParkingDemo({ state: 'CREATED', elapsedMinutes: 0, amountCents: 75 });
   await user.type(screen.getByLabelText(text.qr), ENTREE_DEMO_QR);
   await user.press(screen.getByRole('button', { name: text.scan }));
+  await acceptShownTariff(user);
   await screen.findByText(text.barrierOpen);
   return { entryClient, parkingSession, user, text };
 }

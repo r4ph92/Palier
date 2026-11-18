@@ -7,6 +7,7 @@ import { FakeParkingSessionClient, julieAtB3 } from './fakeParkingSessionClient'
 import { positioningRig } from './positioningRig';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
 import { PLATFORM_BEACON_UUID } from '@palier/shared-types/beacons';
+import { acceptShownTariff } from './acceptShownTariff';
 
 const MONITORED_UUID = PLATFORM_BEACON_UUID.slice(0, 8);
 const START_MONITORING_LINE = new RegExp(`^\\d{1,2} h \\d{2} min \\d{2} s\\s+startMonitoring uuid=${MONITORED_UUID} major=1$`);
@@ -30,6 +31,7 @@ async function scanAtEntreeDemo(user: User, parkingSession: FakeParkingSessionCl
   parkingSession.session = julieAtB3({ state: 'CREATED', elapsedMinutes: 0, amountCents: 75 });
   await user.type(screen.getByLabelText('Contenu du QR'), ENTREE_DEMO_QR);
   await user.press(screen.getByRole('button', { name: 'Scanner' }));
+  await acceptShownTariff(user);
   await user.press(await screen.findByRole('button', { name: 'Terminé' }));
 }
 

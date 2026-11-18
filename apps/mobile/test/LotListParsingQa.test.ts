@@ -4,12 +4,14 @@ import { parkingDemo as parkingDemoWithFreeSpots } from './fakeLotsClient';
 
 const parkingDemo = parkingDemoWithFreeSpots(10);
 
-// GET /v1/lots as the lane API answered Julie Tremblay on the seeded database, a full lot included.
+// GET /v1/lots as the lane API answered Julie Tremblay on the seeded database, a full lot included, with the tariff since #151.
 const SEEDED_LOT_LIST_BODY =
   '[{"id":"00000000-0000-4000-8000-000000000201","name":"Parking Démo","freeSpots":10,"capacity":10,' +
-  '"freeSpotsByCategory":{"standard":7,"electric":1,"accessible":1,"oversize":1},"location":{"latitude":45.50165,"longitude":-73.5673}},' +
+  '"freeSpotsByCategory":{"standard":7,"electric":1,"accessible":1,"oversize":1},"location":{"latitude":45.50165,"longitude":-73.5673},' +
+  '"tariff":{"incrementCents":75,"incrementMinutes":15,"dailyCapCents":2500}},' +
   '{"id":"00000000-0000-4000-8000-000000000203","name":"Parking Test Paliers","freeSpots":0,"capacity":6,' +
-  '"freeSpotsByCategory":{"standard":0,"electric":0,"accessible":0,"oversize":0},"location":{"latitude":45.505,"longitude":-73.56}}]';
+  '"freeSpotsByCategory":{"standard":0,"electric":0,"accessible":0,"oversize":0},"location":{"latitude":45.505,"longitude":-73.56},' +
+  '"tariff":{"incrementCents":75,"incrementMinutes":15,"dailyCapCents":2500}}]';
 
 function withCategory(category: string, count: unknown): unknown {
   return { ...parkingDemo, freeSpotsByCategory: { ...parkingDemo.freeSpotsByCategory, [category]: count } };

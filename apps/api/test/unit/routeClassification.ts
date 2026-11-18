@@ -16,6 +16,7 @@ export const GATED = [
   'PUT /v1/me/payment-method',
   'POST /v1/me/setup-intent',
   'POST /v1/entries',
+  'POST /v1/entries/quote',
   'GET /v1/entries/:sessionId',
   'GET /v1/me/session',
   'POST /v1/entries/:sessionId/exit',

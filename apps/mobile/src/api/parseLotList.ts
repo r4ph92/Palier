@@ -2,6 +2,7 @@ import type { GeoPosition, LotListResponse, LotSummary, SpotCountByCategory } fr
 import { isOnEarth, SPOT_CATEGORIES } from '@palier/shared-types/lots';
 import { asRecord } from './asRecord';
 import { isNonNegativeInteger } from './isNonNegativeInteger';
+import { isTariff } from './isTariff';
 import { PalierUnreachableError } from './LotsClient';
 
 export function parseLotList(body: unknown): LotListResponse {
@@ -12,14 +13,15 @@ export function parseLotList(body: unknown): LotListResponse {
 }
 
 function isLotSummary(candidate: unknown): candidate is LotSummary {
-  const { id, name, freeSpots, capacity, freeSpotsByCategory, location } = asRecord(candidate);
+  const { id, name, freeSpots, capacity, freeSpotsByCategory, location, tariff } = asRecord(candidate);
   return (
     typeof id === 'string' &&
     typeof name === 'string' &&
     isNonNegativeInteger(freeSpots) &&
     isNonNegativeInteger(capacity) &&
     isSpotCountByCategory(freeSpotsByCategory) &&
-    (location === null || isGeoPosition(location))
+    (location === null || isGeoPosition(location)) &&
+    (tariff === null || isTariff(tariff))
   );
 }
 

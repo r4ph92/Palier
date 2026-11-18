@@ -1,4 +1,4 @@
-import type { EntryRefusalCode } from '@palier/shared-types';
+import type { EntryRefusalCode, TariffPolicy } from '@palier/shared-types';
 
 const MESSAGES: Record<EntryRefusalCode, string> = {
   QR_NOT_RECOGNIZED: 'This QR is not a Palier terminal.',
@@ -14,21 +14,26 @@ const MESSAGES: Record<EntryRefusalCode, string> = {
   CARD_DECLINED: 'The card was declined.',
   PAYMENTS_UNAVAILABLE: 'Card payments are unavailable right now.',
   TOO_MANY_ENTRIES: 'Too many entry attempts. Try again in a few minutes.',
+  TARIFF_CHANGED: "This lot's tariff just changed.",
 };
 
 export interface EntryRefusalOptions extends ErrorOptions {
   // CARD_DECLINED only: the hold the card refused.
   readonly authorizedCents?: number;
+  // TARIFF_CHANGED only: the lot's current tariff.
+  readonly tariff?: TariffPolicy;
 }
 
 export class EntryRefusedError extends Error {
   readonly reason: EntryRefusalCode;
   readonly authorizedCents: number | undefined;
+  readonly tariff: TariffPolicy | undefined;
 
   constructor(reason: EntryRefusalCode, options?: EntryRefusalOptions) {
     super(MESSAGES[reason], options);
     this.name = 'EntryRefusedError';
     this.reason = reason;
     this.authorizedCents = options?.authorizedCents;
+    this.tariff = options?.tariff;
   }
 }

@@ -12,6 +12,7 @@ const entryGateColumns = {
   lastHeartbeatAt: gate.lastHeartbeatAt,
   lot: {
     id: parkingLot.id,
+    name: parkingLot.name,
     isOnline: parkingLot.isOnline,
     dailyCapCents: parkingLot.dailyCapCents,
     pricingPolicy: parkingLot.pricingPolicy,

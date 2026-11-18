@@ -41,6 +41,10 @@ describe('seededEntryGate', () => {
     expect(target.qrContent).toMatch(/^https:\/\/palier\.app\/q\/palier1\.00000000-0000-4000-8000-000000000701\./);
   });
 
+  it('accepts Parking Démo at its seeded tariff, 0,75 $ par 15 min, plafond 25,00 $', () => {
+    expect(seededEntryGate('Entrée Démo').tariff).toEqual({ incrementCents: 75, incrementMinutes: 15, dailyCapCents: 2500 });
+  });
+
   it.each(['Sortie Démo', 'Entrée Inconnue'])('refuses %s, which is not a seeded entry gate', (gateName) => {
     expect(() => seededEntryGate(gateName)).toThrow(/is not a seeded entry gate/);
   });

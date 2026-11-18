@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react-native';
 import { ENTREE_DEMO_QR, FakeEntryClient } from './fakeEntryClient';
 import { scan } from './renderScanScreen';
+import { acceptShownTariff } from './acceptShownTariff';
 
 describe('ScanScreen refusals', () => {
   const refusals = [
@@ -103,6 +104,7 @@ describe('ScanScreen when Palier cannot answer', () => {
     expect(screen.getByText('Vérifiez votre connexion, puis réessayez.')).toBeOnTheScreen();
     client.isReachable = true;
     await user.press(screen.getByRole('button', { name: 'Réessayer' }));
+    await acceptShownTariff(user);
 
     expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();
   });
@@ -119,6 +121,7 @@ describe('ScanScreen when Palier cannot answer', () => {
     expect(screen.queryByText('Vérifiez votre connexion, puis réessayez.')).not.toBeOnTheScreen();
     Object.assign(client, { nextStatus: null, nextRejection: null });
     await user.press(screen.getByRole('button', { name: 'Réessayer' }));
+    await acceptShownTariff(user);
 
     expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();
     expect(client.scanned).toEqual([ENTREE_DEMO_QR, ENTREE_DEMO_QR]);

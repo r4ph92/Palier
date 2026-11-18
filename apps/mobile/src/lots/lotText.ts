@@ -2,6 +2,7 @@ import type { LotSummary, SpotCountByCategory } from '@palier/shared-types';
 import { SPOT_CATEGORIES } from '@palier/shared-types/lots';
 import { spokenDistance } from '../i18n/formatDistance';
 import { i18n } from '../i18n/i18n';
+import { tariffSentence } from '../i18n/tariffText';
 import { LIST_SEPARATOR, NO_BREAK_SPACE } from '../i18n/spaces';
 import type { NearbyLot } from './nearbyLots';
 
@@ -17,7 +18,8 @@ export function categoryLine(counts: SpotCountByCategory): string {
 
 export function lotAccessibilityLabel({ lot, distanceMetres }: NearbyLot): string {
   const distance = distanceMetres === null ? [] : [spokenDistance(distanceMetres)];
-  return [lot.name, ...distance, ...spokenAvailability(lot)].join(SPOKEN_SEPARATOR);
+  const tariff = lot.tariff === null ? [] : [tariffSentence(lot.tariff)];
+  return [lot.name, ...distance, ...spokenAvailability(lot), ...tariff].join(SPOKEN_SEPARATOR);
 }
 
 function spokenAvailability({ freeSpots, capacity, freeSpotsByCategory }: LotSummary): string[] {

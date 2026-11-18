@@ -1,5 +1,7 @@
+import type { TariffPolicy } from '@palier/shared-types';
 import { palierFetch } from './appUpdate';
 import { isNonNegativeInteger } from './isNonNegativeInteger';
+import { isTariff } from './isTariff';
 import { PalierUnauthorizedError } from './AuthClient';
 import { PalierStatusError, PalierUnreachableError } from './LotsClient';
 import { PalierConsentRequiredError, PalierRejectedError } from './VehicleClient';
@@ -50,8 +52,8 @@ export class AuthorizedRequester {
       throw new PalierConsentRequiredError();
     }
     if (this.#rejectedStatuses.has(response.status)) {
-      const { error, authorizedCents } = await errorBody(response);
-      throw new PalierRejectedError(error ?? String(response.status), authorizedCents);
+      const { error, authorizedCents, tariff } = await errorBody(response);
+      throw new PalierRejectedError(error ?? String(response.status), authorizedCents, tariff);
     }
     if (!response.ok) {
       throw new PalierStatusError(response.status);
@@ -82,16 +84,18 @@ export async function readJson(response: Response): Promise<unknown> {
 interface ErrorBody {
   readonly error: string | undefined;
   readonly authorizedCents: number | null;
+  readonly tariff: TariffPolicy | null;
 }
 
 async function errorBody(response: Response): Promise<ErrorBody> {
   try {
-    const { error, authorizedCents } = (await response.json()) as { error?: unknown; authorizedCents?: unknown };
+    const { error, authorizedCents, tariff } = (await response.json()) as { error?: unknown; authorizedCents?: unknown; tariff?: unknown };
     return {
       error: typeof error === 'string' ? error : undefined,
       authorizedCents: isNonNegativeInteger(authorizedCents) ? authorizedCents : null,
+      tariff: isTariff(tariff) ? tariff : null,
     };
   } catch {
-    return { error: undefined, authorizedCents: null };
+    return { error: undefined, authorizedCents: null, tariff: null };
   }
 }

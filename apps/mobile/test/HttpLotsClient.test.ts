@@ -54,6 +54,12 @@ describe('HttpLotsClient', () => {
     await expect(clientAnswering(jsonResponse([empty])).listLots()).resolves.toEqual([empty]);
   });
 
+  it('accepts a lot whose tariff cannot be read, as a null tariff', async () => {
+    const withoutTariff = { ...parkingDemo, tariff: null };
+
+    await expect(clientAnswering(jsonResponse([withoutTariff])).listLots()).resolves.toEqual([withoutTariff]);
+  });
+
   it('accepts a lot without a location', async () => {
     const withoutLocation = { ...parkingDemo, location: null };
 
@@ -73,6 +79,10 @@ describe('HttpLotsClient', () => {
     ['a location without longitude', { ...parkingDemo, location: { latitude: 45.5 } }],
     ['a latitude that is not a number', { ...parkingDemo, location: { latitude: '45.5', longitude: -73.5 } }],
     ['a latitude past the pole', { ...parkingDemo, location: { latitude: 120, longitude: -73.5 } }],
+    ['a missing tariff', { ...parkingDemo, tariff: undefined }],
+    ['a tariff without its cap', { ...parkingDemo, tariff: { incrementCents: 75, incrementMinutes: 15 } }],
+    ['a zero increment price', { ...parkingDemo, tariff: { ...parkingDemo.tariff, incrementCents: 0 } }],
+    ['a cap given as text', { ...parkingDemo, tariff: { ...parkingDemo.tariff, dailyCapCents: '2500' } }],
   ])('treats a lot with %s as unreachable', async (_case, lot) => {
     await expect(clientAnswering(jsonResponse([lot])).listLots()).rejects.toBeInstanceOf(PalierUnreachableError);
   });

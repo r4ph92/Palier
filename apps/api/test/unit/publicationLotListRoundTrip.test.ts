@@ -7,7 +7,7 @@ import { acceptNoticeAs, authorizationFor, julie } from './fakeDriverRepository.
 import { pierre } from './fakes/dashboardFixtures.ts';
 import { dashboardCookieFor, startDashboardServer } from './fakes/dashboardServer.ts';
 import type { FakeLotStore } from './fakes/fakeLotSetupRepository.ts';
-import { parkingDemoAvailability } from './fakes/lotFixtures.ts';
+import { PARKING_DEMO_TARIFF, parkingDemoAvailability } from './fakes/lotFixtures.ts';
 import { lotPublicationRoutesOf } from './fakes/lotPublicationRoutes.ts';
 import { GARAGE_ROY_NORD_ID, readyGarageRoyNord } from './fakes/publicationFixtures.ts';
 
@@ -16,7 +16,7 @@ function availabilityReading(store: () => FakeLotStore): LotAvailabilityReposito
   const onlineLotsOf = (lots: FakeLotStore): OnlineLot[] =>
     lots.owned
       .filter(({ isOnline }) => isOnline)
-      .map(({ id, name, latitude, longitude }) => ({ id, name, location: { latitude: Number(latitude), longitude: Number(longitude) }, availability: parkingDemoAvailability() }));
+      .map(({ id, name, latitude, longitude }) => ({ id, name, location: { latitude: Number(latitude), longitude: Number(longitude) }, availability: parkingDemoAvailability(), tariff: PARKING_DEMO_TARIFF }));
   return { findOnlineLots: () => Promise.resolve(onlineLotsOf(store())) };
 }
 

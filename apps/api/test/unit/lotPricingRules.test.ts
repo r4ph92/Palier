@@ -31,7 +31,7 @@ describe('the pricing rule', () => {
 
   it.each([
     ['the smallest cap Stripe charges, 0,50 $', { incrementCents: 50, dailyCapCents: 50 }],
-    ['the largest amounts, 100 000,00 $', { incrementCents: 10_000_000, dailyCapCents: 10_000_000 }],
+    ['the largest amounts, 10 000,00 $', { incrementCents: 1_000_000, dailyCapCents: 1_000_000 }],
     ['a cap equal to one increment', { incrementCents: 1800, dailyCapCents: 1800 }],
     ['5- and 60-minute increments', { incrementMinutes: 5 }],
     ['a 60-minute increment', { incrementMinutes: 60 }],

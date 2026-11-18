@@ -15,7 +15,7 @@ function lotNamesInOrder(): string[] {
 }
 
 function lotAt(name: string, location: GeoPosition | null, freeSpots = 3): LotSummary {
-  return { id: `lot-${name}`, name, freeSpots, capacity: 10, freeSpotsByCategory: { standard: freeSpots, electric: 0, accessible: 0, oversize: 0 }, location };
+  return { id: `lot-${name}`, name, freeSpots, capacity: 10, freeSpotsByCategory: { standard: freeSpots, electric: 0, accessible: 0, oversize: 0 }, location, tariff: null };
 }
 
 function metresNorthOf(position: GeoPosition, metres: number): GeoPosition {

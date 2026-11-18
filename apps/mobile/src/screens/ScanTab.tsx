@@ -163,7 +163,7 @@ function exitButtonFor({ client, sessionId, beaconFallback, onLeft, refresh }: E
 
 // A cancelled entry keeps the scan screen too: its message stays on the form, whatever the session read answers.
 function isEntryInProgress(state: EntryState): boolean {
-  return state.status === 'submitting' || state.status === 'entered' || state.status === 'cancelled';
+  return ['submitting', 'quoted', 'entering', 'entered', 'cancelled'].includes(state.status);
 }
 
 // The tab label turns to « Session » as soon as the barrier opens, and the state follows the loop confirmation; the watch refreshes on a cancellation.

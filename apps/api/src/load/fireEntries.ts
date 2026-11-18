@@ -1,9 +1,10 @@
-import type { EntryRefusalBody, EntryRefusalCode } from '@palier/shared-types';
+import type { EntryRefusalBody, EntryRefusalCode, EntryRequest, TariffPolicy } from '@palier/shared-types';
 import { APP_VERSION_HEADER } from '@palier/shared-types/appVersion';
 
 export interface EntryRequestTarget {
   readonly apiUrl: URL;
   readonly qrContent: string;
+  readonly tariff: TariffPolicy;
   readonly appVersion: string;
 }
 
@@ -32,11 +33,12 @@ export function fireEntries(target: EntryRequestTarget, driverTokens: readonly s
   return Promise.all(driverTokens.map((token) => timedEntry(url, requestFor(target, token))));
 }
 
-function requestFor({ qrContent, appVersion }: EntryRequestTarget, token: string): RequestInit {
+function requestFor({ qrContent, tariff, appVersion }: EntryRequestTarget, token: string): RequestInit {
+  const body: EntryRequest = { qrContent, tariff };
   return {
     method: 'POST',
     headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', [APP_VERSION_HEADER]: appVersion },
-    body: JSON.stringify({ qrContent }),
+    body: JSON.stringify(body),
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MILLISECONDS),
   };
 }

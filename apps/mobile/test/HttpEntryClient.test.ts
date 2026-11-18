@@ -2,7 +2,7 @@ import { PalierUnauthorizedError } from '../src/api/AuthClient';
 import { HttpEntryClient } from '../src/api/HttpEntryClient';
 import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 import { PalierConsentRequiredError, PalierRejectedError } from '../src/api/VehicleClient';
-import { ENTREE_DEMO_QR, spotA1 } from './fakeEntryClient';
+import { ENTREE_DEMO_QR, PARKING_DEMO_TARIFF, SOPHIE_NEW_TARIFF, spotA1 } from './fakeEntryClient';
 
 const BASE_URL = 'http://localhost:3000';
 const TOKEN = 'julie-token';
@@ -25,18 +25,65 @@ function clientAnswering(response: Promise<Response>, callbacks: { onUnauthorize
 }
 
 describe('HttpEntryClient', () => {
-  it('posts the QR content with the bearer token and returns the spot', async () => {
+  it('posts the QR content and the accepted tariff with the bearer token and returns the spot', async () => {
     const { client, fetchFunction } = clientAnswering(jsonResponse(entered));
 
-    await expect(client.enter(ENTREE_DEMO_QR)).resolves.toEqual(entered);
+    await expect(client.enter(ENTREE_DEMO_QR, PARKING_DEMO_TARIFF)).resolves.toEqual(entered);
     expect(fetchFunction).toHaveBeenCalledWith(
       `${BASE_URL}/v1/entries`,
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
-        body: JSON.stringify({ qrContent: ENTREE_DEMO_QR }),
+        body: JSON.stringify({ qrContent: ENTREE_DEMO_QR, tariff: PARKING_DEMO_TARIFF }),
       }),
     );
+  });
+
+  it('carries the new tariff of a TARIFF_CHANGED refusal', async () => {
+    const { client } = clientAnswering(jsonResponse({ statusCode: 409, error: 'TARIFF_CHANGED', message: 'changed', tariff: SOPHIE_NEW_TARIFF }, 409));
+
+    await expect(client.enter(ENTREE_DEMO_QR, PARKING_DEMO_TARIFF)).rejects.toMatchObject({ code: 'TARIFF_CHANGED', tariff: SOPHIE_NEW_TARIFF });
+  });
+
+  it.each([
+    ['as text', '1,00 $ / 15 min'],
+    ['without its cap', { incrementCents: 100, incrementMinutes: 15 }],
+    ['with a zero increment', { ...SOPHIE_NEW_TARIFF, incrementMinutes: 0 }],
+  ])('ignores a changed tariff given %s', async (_case, tariff) => {
+    const { client } = clientAnswering(jsonResponse({ statusCode: 409, error: 'TARIFF_CHANGED', message: 'changed', tariff }, 409));
+
+    await expect(client.enter(ENTREE_DEMO_QR, PARKING_DEMO_TARIFF)).rejects.toMatchObject({ code: 'TARIFF_CHANGED', tariff: null });
+  });
+
+  describe('quote', () => {
+    const quoted = { lotName: 'Parking Démo', tariff: PARKING_DEMO_TARIFF, holdCents: 2500 };
+
+    it('posts the QR content to the quote route and returns the lot, its tariff and the hold', async () => {
+      const { client, fetchFunction } = clientAnswering(jsonResponse(quoted, 200));
+
+      await expect(client.quote(ENTREE_DEMO_QR)).resolves.toEqual(quoted);
+      expect(fetchFunction).toHaveBeenCalledWith(
+        `${BASE_URL}/v1/entries/quote`,
+        expect.objectContaining({ method: 'POST', body: JSON.stringify({ qrContent: ENTREE_DEMO_QR }) }),
+      );
+    });
+
+    it('reports the entry refusals of a quote with their code', async () => {
+      const { client } = clientAnswering(jsonResponse({ statusCode: 409, error: 'LOT_FULL', message: 'full' }, 409));
+
+      await expect(client.quote(ENTREE_DEMO_QR)).rejects.toMatchObject({ code: 'LOT_FULL' });
+    });
+
+    it.each([
+      ['without a lot name', { tariff: PARKING_DEMO_TARIFF, holdCents: 2500 }],
+      ['with a tariff that is not whole cents', { ...quoted, tariff: { ...PARKING_DEMO_TARIFF, incrementCents: 0.75 } }],
+      ['without a hold', { lotName: 'Parking Démo', tariff: PARKING_DEMO_TARIFF }],
+      ['with a zero hold', { ...quoted, holdCents: 0 }],
+    ])('treats an answer %s as unreachable', async (_case, body) => {
+      const { client } = clientAnswering(jsonResponse(body, 200));
+
+      await expect(client.quote(ENTREE_DEMO_QR)).rejects.toBeInstanceOf(PalierUnreachableError);
+    });
   });
 
   it.each([
@@ -50,32 +97,32 @@ describe('HttpEntryClient', () => {
   ])('reports a %i with the API reason %s', async (status, code) => {
     const { client } = clientAnswering(jsonResponse({ statusCode: status, error: code, message: 'refused' }, status));
 
-    await expect(client.enter(ENTREE_DEMO_QR)).rejects.toEqual(new PalierRejectedError(code));
+    await expect(client.enter(ENTREE_DEMO_QR, PARKING_DEMO_TARIFF)).rejects.toEqual(new PalierRejectedError(code));
   });
 
   it('carries the refused amount of a declined card', async () => {
     const { client } = clientAnswering(jsonResponse({ statusCode: 402, error: 'CARD_DECLINED', message: 'refused', authorizedCents: 2500 }, 402));
 
-    await expect(client.enter(ENTREE_DEMO_QR)).rejects.toMatchObject({ code: 'CARD_DECLINED', authorizedCents: 2500 });
+    await expect(client.enter(ENTREE_DEMO_QR, PARKING_DEMO_TARIFF)).rejects.toMatchObject({ code: 'CARD_DECLINED', authorizedCents: 2500 });
   });
 
   it.each([-1, 12.5, '2500'])('ignores a refused amount of %p that is not whole cents', async (authorizedCents) => {
     const { client } = clientAnswering(jsonResponse({ statusCode: 402, error: 'CARD_DECLINED', message: 'refused', authorizedCents }, 402));
 
-    await expect(client.enter(ENTREE_DEMO_QR)).rejects.toMatchObject({ code: 'CARD_DECLINED', authorizedCents: null });
+    await expect(client.enter(ENTREE_DEMO_QR, PARKING_DEMO_TARIFF)).rejects.toMatchObject({ code: 'CARD_DECLINED', authorizedCents: null });
   });
 
   it('reports a 500 as a status error, not a refusal', async () => {
     const { client } = clientAnswering(jsonResponse({ statusCode: 500, error: 'Internal Server Error' }, 500));
 
-    await expect(client.enter(ENTREE_DEMO_QR)).rejects.toBeInstanceOf(PalierStatusError);
+    await expect(client.enter(ENTREE_DEMO_QR, PARKING_DEMO_TARIFF)).rejects.toBeInstanceOf(PalierStatusError);
   });
 
   it('signs the driver out on 401', async () => {
     const onUnauthorized = jest.fn();
     const { client } = clientAnswering(jsonResponse({ error: 'Unauthorized' }, 401), { onUnauthorized });
 
-    await expect(client.enter(ENTREE_DEMO_QR)).rejects.toBeInstanceOf(PalierUnauthorizedError);
+    await expect(client.enter(ENTREE_DEMO_QR, PARKING_DEMO_TARIFF)).rejects.toBeInstanceOf(PalierUnauthorizedError);
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
   });
 
@@ -83,7 +130,7 @@ describe('HttpEntryClient', () => {
     const onConsentRequired = jest.fn();
     const { client } = clientAnswering(jsonResponse({ error: 'CONSENT_REQUIRED' }, 403), { onConsentRequired });
 
-    await expect(client.enter(ENTREE_DEMO_QR)).rejects.toBeInstanceOf(PalierConsentRequiredError);
+    await expect(client.enter(ENTREE_DEMO_QR, PARKING_DEMO_TARIFF)).rejects.toBeInstanceOf(PalierConsentRequiredError);
     expect(onConsentRequired).toHaveBeenCalledTimes(1);
   });
 
@@ -95,7 +142,7 @@ describe('HttpEntryClient', () => {
   ])('treats an answer %s as unreachable', async (_case, body) => {
     const { client } = clientAnswering(jsonResponse(body));
 
-    await expect(client.enter(ENTREE_DEMO_QR)).rejects.toBeInstanceOf(PalierUnreachableError);
+    await expect(client.enter(ENTREE_DEMO_QR, PARKING_DEMO_TARIFF)).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 
   describe('status', () => {

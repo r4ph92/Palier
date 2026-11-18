@@ -24,11 +24,22 @@ const locationSchema = {
   },
 } as const;
 
+const tariffSchema = {
+  type: ['object', 'null'],
+  required: ['incrementCents', 'incrementMinutes', 'dailyCapCents'],
+  additionalProperties: false,
+  properties: {
+    incrementCents: { type: 'integer' },
+    incrementMinutes: { type: 'integer' },
+    dailyCapCents: { type: 'integer' },
+  },
+} as const;
+
 export const lotListResponseSchema = {
   type: 'array',
   items: {
     type: 'object',
-    required: ['id', 'name', 'freeSpots', 'capacity', 'freeSpotsByCategory', 'location'],
+    required: ['id', 'name', 'freeSpots', 'capacity', 'freeSpotsByCategory', 'location', 'tariff'],
     additionalProperties: false,
     properties: {
       id: { type: 'string' },
@@ -37,6 +48,7 @@ export const lotListResponseSchema = {
       capacity: { type: 'integer', minimum: 0 },
       freeSpotsByCategory: spotCountByCategorySchema,
       location: locationSchema,
+      tariff: tariffSchema,
     },
   },
 } as const;

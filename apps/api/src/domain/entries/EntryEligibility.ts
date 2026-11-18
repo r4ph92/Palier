@@ -26,7 +26,7 @@ export interface EntryAttempt {
 export interface EligibleEntry {
   readonly driverId: string;
   readonly now: Date;
-  readonly gate: { readonly id: string; readonly lotId: string };
+  readonly gate: { readonly id: string; readonly lotId: string; readonly lotName: string };
   readonly vehicle: DriverPrerequisites['vehicle'];
   readonly payment: {
     readonly customerId: string;
@@ -114,7 +114,7 @@ function eligibleEntryOf({ driverId, now }: Omit<EntryAttempt, 'qrContent'>, { g
   return {
     driverId,
     now,
-    gate: { id: gate.id, lotId: gate.lot.id },
+    gate: { id: gate.id, lotId: gate.lot.id, lotName: gate.lot.name },
     vehicle: prerequisites.vehicle,
     payment: {
       customerId: prerequisites.customerId,

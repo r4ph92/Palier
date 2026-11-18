@@ -1,8 +1,8 @@
 import type { SpotCategory } from '@palier/shared-types';
 import { accountFr, receiptsFr } from './accountFr';
 import { sessionPartsFr } from './sessionPartsFr';
+import { scanFr } from './scanFr';
 import { spotHoldFr } from './spotHoldFr';
-import { LOT_NOT_IN_SERVICE, NOT_RESPONDING, TOO_MANY_ATTEMPTS } from './sharedFr';
 
 export const fr = {
   app: {
@@ -27,6 +27,7 @@ export const fr = {
       other: '%{count} places libres sur %{capacity}',
     },
     full: 'Complet',
+    tariff: '%{price} / %{minutes}\u00A0min\u00A0· plafond %{cap} par jour',
     fullAccessibilityLabel: 'Complet, 0 place libre',
     loading: 'Chargement des stationnements',
     empty: 'Aucun stationnement en ligne.',
@@ -102,43 +103,7 @@ export const fr = {
     keepOneVehicle: 'Gardez au moins un véhicule',
     actionFailed: 'Mise à jour impossible. Vérifiez votre connexion, puis réessayez.',
   },
-  scan: {
-    eyebrow: 'Entrée',
-    title: 'Scanner',
-    qrLabel: 'Contenu du QR',
-    qrHint: 'Collez le contenu du QR de la borne d’entrée.',
-    submit: 'Scanner',
-    submitting: 'Vérification…',
-    spotLead: 'Votre place\u00A0: ',
-    spotPlace: '\u00A0· Palier\u00A0%{level}\u00A0· Allée\u00A0%{aisle}',
-    barrierOpen: 'Barrière ouverte',
-    entryConfirmed: 'Entrée confirmée',
-    entryCancelled: 'Entrée annulée\u00A0: aucun passage détecté. Aucun montant retenu.',
-    done: 'Terminé',
-    addPlate: 'Ajouter une plaque',
-    addCard: 'Ajouter une carte',
-    retry: 'Réessayer',
-    unreachable: 'Impossible de joindre Palier',
-    unreachableHint: 'Vérifiez votre connexion, puis réessayez.',
-    notResponding: NOT_RESPONDING,
-    cardDeclined: 'Votre carte a refusé l’autorisation de %{amount}. Mettez à jour votre moyen de paiement.',
-    paymentMethod: 'Moyen de paiement',
-    refusals: {
-      QR_NOT_RECOGNIZED: 'QR non reconnu',
-      NOT_AN_ENTRY_GATE: 'Ce QR n’est pas une borne d’entrée',
-      LOT_NOT_IN_SERVICE,
-      GATE_UNAVAILABLE: 'Cette borne n’est pas disponible',
-      GATE_SILENT: 'Borne hors service — entrée impossible',
-      PREREQUISITES_MISSING: 'Ajoutez une plaque et une carte avant d’entrer',
-      OPERATOR_NOT_PAYABLE: 'Ce parking n’accepte pas les paiements pour le moment',
-      LOT_FULL: 'Complet — la barrière reste fermée',
-      NO_SUITABLE_SPOT: 'Aucune place adaptée à votre véhicule — la barrière reste fermée',
-      ALREADY_INSIDE: 'Vous avez déjà une entrée en cours',
-      CARD_DECLINED: 'Carte refusée',
-      PAYMENTS_UNAVAILABLE: 'Paiement momentanément indisponible — la barrière reste fermée',
-      TOO_MANY_ENTRIES: TOO_MANY_ATTEMPTS,
-    },
-  },
+  scan: scanFr,
   session: {
     eyebrow: 'Session en cours',
     none: 'Aucune session en cours',

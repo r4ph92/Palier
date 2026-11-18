@@ -7,7 +7,7 @@ import { configureServer } from './configureServer.ts';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, marc } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 import { GARAGE_ROY_ID } from '../../src/seed/fixtures/garageRoy.ts';
-import { ENTREE_DEMO_SECRET, entreeDemoGate, STRICT_POLICY } from './fakes/entryGateFakes.ts';
+import { ACCEPTED_DEMO_TARIFF, ENTREE_DEMO_SECRET, entreeDemoGate, STRICT_POLICY } from './fakes/entryGateFakes.ts';
 import { FakeParkingSessionRepository, fakeSessionId } from './fakes/fakeParkingSessions.ts';
 import type { FakeEntries } from './fakes/entryFakes.ts';
 import { gateQrLink } from '../../src/domain/entries/gateToken.ts';
@@ -69,7 +69,7 @@ describe('POST /v1/lots/:id/holds', () => {
       ['an entry cancelled for lack of passage', (entries: FakeEntries) => entries.sessions.cancelIfCreated(fakeSessionId(1)), 201],
     ])('answers a hold after %s with %i', async (_case, change, statusCode) => {
       const { hold, entries, server: running, headers } = await startWithJulieReady();
-      const entered = await running.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr } });
+      const entered = await running.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr, tariff: ACCEPTED_DEMO_TARIFF } });
       expect(entered.statusCode).toBe(201);
       change(entries);
 
@@ -80,7 +80,7 @@ describe('POST /v1/lots/:id/holds', () => {
 
     it('answers 409 ALREADY_INSIDE with its message and places no hold', async () => {
       const { hold, spotHolds, server: running, headers } = await startWithJulieReady();
-      await running.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr } });
+      await running.inject({ method: 'POST', url: '/v1/entries', headers, payload: { qrContent: entreeDemoQr, tariff: ACCEPTED_DEMO_TARIFF } });
 
       const response = await hold();
 

@@ -95,6 +95,8 @@ function problemMessage(state: EntryState): string | null {
       return i18n.t('scan.entryCancelled');
     case 'idle':
     case 'submitting':
+    case 'quoted':
+    case 'entering':
     case 'entered':
       return null;
   }

@@ -39,7 +39,7 @@ describe('pricing bounds through PUT /v1/dashboard/lots/:id/pricing, verificatio
     ['a cap one cent under the increment', { incrementCents: 1801, dailyCapCents: 1800 }, 'PRICING_DAILY_CAP_BELOW_INCREMENT'],
     ['a cap of 0,49 $ under an increment of 0,50 $', { incrementCents: 50, dailyCapCents: 49 }, 'PRICING_DAILY_CAP_INVALID'],
     ['a zero cap', { dailyCapCents: 0 }, 'PRICING_DAILY_CAP_INVALID'],
-    ['a cap above 100 000,00 $', { dailyCapCents: 10_000_001 }, 'PRICING_DAILY_CAP_INVALID'],
+    ['a cap above 10 000,00 $', { dailyCapCents: 1_000_001 }, 'PRICING_DAILY_CAP_INVALID'],
     ['a cap of 1e20 cents, an integer to JSON Schema', { dailyCapCents: 1e20 }, 'PRICING_DAILY_CAP_INVALID'],
   ])('refuses %s and keeps the saved pricing', async (_case, change, error) => {
     const response = await putPricingAs(pierre, { ...royPricing, ...change });

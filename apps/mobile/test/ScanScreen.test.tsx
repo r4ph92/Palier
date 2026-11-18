@@ -61,12 +61,12 @@ describe('ScanScreen, entering Parking Démo', () => {
     expect(screen.queryByText('Barrière ouverte')).not.toBeOnTheScreen();
   });
 
-  it('shows the button busy while Palier checks the QR', async () => {
+  it('shows « Entrer » busy while Palier opens the barrier', async () => {
     const client = new FakeEntryClient();
     client.holdsAnswer = true;
     await scan({ client });
 
-    expect(screen.getByRole('button', { name: 'Vérification…' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Ouverture…' })).toBeDisabled();
 
     client.answer();
     expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();
