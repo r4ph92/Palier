@@ -148,8 +148,9 @@ Comportements de saisie :
   la réponse tardive ne change ni l'identité ni le message, mais un passage compté
   par le serveur reste dans la liste.
 - Un appui sur la mauvaise boucle nomme le bon bouton et lui donne le focus.
-- « Passage enregistré à 14:03:12 · 12 véhicules dans le parking » change à chaque
-  passage, donc le lecteur d'écran l'annonce à nouveau.
+- « Envoi… » remplace le message avant chaque réponse, puis « Passage enregistré à
+  14:03:12 · 12 véhicules dans le parking » : le message change donc à chaque passage,
+  même identique au précédent, et le lecteur d'écran l'annonce à nouveau.
 
 ## Hors ligne (#12)
 
