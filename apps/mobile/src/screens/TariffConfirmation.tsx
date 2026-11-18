@@ -34,16 +34,16 @@ export function TariffConfirmation({ state, onEnter, onCancel }: TariffConfirmat
         <Text style={[typography.body, { color: colors.ink }]}>{holdSentence(quote.holdCents)}</Text>
       </View>
       <PrimaryButton label={i18n.t('scan.enter')} busy={isEntering} busyLabel={i18n.t('scan.entering')} onPress={onEnter} />
-      {isEntering ? null : <TextButton label={i18n.t('scan.cancel')} onPress={onCancel} />}
+      {isEntering ? null : <TextButton label={i18n.t('scan.cancel')} align="start" onPress={onCancel} />}
     </View>
   );
 }
 
-// Announced with the new tariff, since VoiceOver focus stays on the lot it already read.
+// Announced with the new tariff, queued behind « Entrer » changing back from « Ouverture… », since VoiceOver focus stays on the lot it already read.
 function TariffChangedMark({ sentence }: { readonly sentence: string }) {
   const colors = useColors();
   const changed = i18n.t('scan.tariffChanged');
-  useAnnouncement(`${changed}. ${sentence}`);
+  useAnnouncement(`${changed}. ${sentence}`, 0, { queued: true });
   return (
     <StateMark color={colors.low}>
       <Text accessibilityRole="alert" style={[typography.bodyStrong, { color: colors.ink }]}>

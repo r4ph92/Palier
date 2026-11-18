@@ -1,4 +1,5 @@
 import { screen, userEvent } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import { ENTREE_DEMO_QR, FakeEntryClient, PARKING_DEMO_TARIFF, SOPHIE_NEW_TARIFF } from './fakeEntryClient';
 import { openScanner } from './renderScanScreen';
 import { visibleText } from './visibleText';
@@ -64,6 +65,19 @@ describe('ScanScreen, the tariff before the barrier opens', () => {
 
     expect(await screen.findByText('Barrière ouverte')).toBeOnTheScreen();
     expect(client.enteredAt).toEqual([PARKING_DEMO_TARIFF, SOPHIE_NEW_TARIFF]);
+  });
+
+  it('queues the change and the new tariff for VoiceOver behind « Entrer » coming back', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibilityWithOptions').mockImplementation(() => undefined);
+    const client = new FakeEntryClient();
+    const user = await scanEntreeDemo(client);
+    client.lotTariff = SOPHIE_NEW_TARIFF;
+
+    await user.press(await screen.findByRole('button', { name: 'Entrer' }));
+    await screen.findByText('Le tarif de ce parking vient de changer');
+
+    expect(announce).toHaveBeenCalledWith(expect.stringMatching(/^Le tarif de ce parking vient de changer\. 1,00\s\$ par 15\smin, plafond 30,00\s\$ par jour$/), { queue: true });
+    announce.mockRestore();
   });
 
   it('shows the tariff and the hold in English, with no French left', async () => {
