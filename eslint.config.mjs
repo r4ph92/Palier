@@ -5,7 +5,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['**/node_modules/**', '**/dist/**', '**/.expo/**', 'apps/mobile/ios/**', 'apps/mobile/android/**', 'docs/**', 'tools/**', 'remise/**'],
+    ignores: ['**/node_modules/**', '.claude/**', '**/dist/**', '**/.expo/**', 'apps/mobile/ios/**', 'apps/mobile/android/**', 'docs/**', 'tools/**', 'remise/**'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.strict,
