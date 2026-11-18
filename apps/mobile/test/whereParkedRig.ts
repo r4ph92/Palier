@@ -15,6 +15,7 @@ export const REFUSAL_MESSAGES = {
   UNKNOWN_SPOT: 'Numéro inconnu dans ce parking',
   SPOT_TAKEN: 'Cette place est déjà attribuée — vérifiez le numéro au sol',
   SPOT_OUT_OF_SERVICE: 'Cette place est hors service — vérifiez le numéro au sol',
+  SPOT_NOT_SUITABLE: 'Cette place est réservée — vérifiez le numéro au sol',
 } as const;
 
 // Watches VoiceOver from now on; the returned check says the form gave way to « Garé en B-3 »: the focus moved to the spot,
