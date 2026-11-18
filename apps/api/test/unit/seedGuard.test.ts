@@ -73,6 +73,12 @@ describe('databaseUrlAllowedForSeeding', () => {
     expect(databaseUrlAllowedForSeeding({ NODE_ENV: 'development', DATABASE_URL: url })).toBe(url);
   });
 
+  it('refuses a host that makes postgres-js open a Unix socket', () => {
+    const url = 'postgres://a@localhost:%2Ftmp%2Fsock,localhost:@localhost:5433/palier';
+
+    expect(() => databaseUrlAllowedForSeeding({ NODE_ENV: 'development', DATABASE_URL: url })).toThrow(/\.s\.PGSQL\.5433/);
+  });
+
   describe('with PGHOST set', () => {
     afterEach(() => {
       vi.unstubAllEnvs();
@@ -84,6 +90,14 @@ describe('databaseUrlAllowedForSeeding', () => {
       expect(() =>
         databaseUrlAllowedForSeeding({ NODE_ENV: 'development', DATABASE_URL: 'postgres:///palier' }),
       ).toThrow('got "db.example.com"');
+    });
+
+    it('refuses a PGHOST that hides a Unix socket behind localhost', () => {
+      vi.stubEnv('PGHOST', 'localhost:/tmp/evil');
+
+      expect(() =>
+        databaseUrlAllowedForSeeding({ NODE_ENV: 'development', DATABASE_URL: 'postgres:///palier' }),
+      ).toThrow('/tmp/evil');
     });
 
     it('allows a local URL, which PGHOST does not override', () => {

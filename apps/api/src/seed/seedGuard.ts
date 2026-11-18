@@ -28,5 +28,7 @@ function hostsNamedBy(databaseUrl: string): string[] {
   const hosts = options.host.length === 1 && options.host[0] === '[' ? [new URL(databaseUrl).hostname] : options.host;
   const connection: Record<string, unknown> = options.connection;
   const hostParameters = HOST_PARAMETERS.map((name) => connection[name]).filter((value) => typeof value === 'string');
-  return [...hosts, ...hostParameters].map((host) => host.toLowerCase());
+  // A host with a "/" makes postgres-js open this Unix socket path instead of any host of the list.
+  const socketPaths = typeof options.path === 'string' ? [options.path] : [];
+  return [...[...hosts, ...hostParameters].map((host) => host.toLowerCase()), ...socketPaths];
 }
