@@ -28,6 +28,9 @@ import {
 import { seededDriverPersonas, seededVehicles } from './fixtures/seededDrivers.ts';
 import type { StripeIds } from './stripeTestCustomers.ts';
 
+// Every lot the seed inserts, so the seed tests check the same list.
+export const seededLots = [parkingDemoLot, garageRoyLot, parkingTestPaliersLot];
+
 export interface SeedStripeIds {
   readonly drivers?: ReadonlyMap<string, StripeIds> | undefined;
   // The connected test account entry holds go to; without one, holds stay on the platform in demo mode.
@@ -50,7 +53,7 @@ async function insertLots(transaction: Transaction, demoOperatorAccountId: strin
   if (demoOperatorAccountId !== null) {
     await transaction.update(operator).set({ stripeAccountId: demoOperatorAccountId }).where(eq(operator.id, LAVOIE_OPERATOR_ID));
   }
-  await transaction.insert(parkingLot).values([parkingDemoLot, garageRoyLot, parkingTestPaliersLot]);
+  await transaction.insert(parkingLot).values(seededLots);
   await transaction.insert(level).values([...parkingDemoLevels, ...parkingTestPaliersLevels]);
   await transaction.insert(aisle).values([...parkingDemoAisles, ...parkingTestPaliersAisles]);
   await transaction.insert(spot).values([...parkingDemoSpots, ...parkingTestPaliersSpots]);

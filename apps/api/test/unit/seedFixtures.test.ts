@@ -18,6 +18,7 @@ import { aisleRectangleOf } from '../../src/domain/lots/AisleRectangle.ts';
 import { parkingDemoAisles, parkingDemoLot } from '../../src/seed/fixtures/parkingDemo.ts';
 import { PARKING_TEST_PALIERS_ID, parkingTestPaliersAisles, parkingTestPaliersLot, parkingTestPaliersSpots } from '../../src/seed/fixtures/parkingTestPaliers.ts';
 import { vehicleFixtures } from '../../src/seed/fixtures/vehicles.ts';
+import { seededLots } from '../../src/seed/seedDatabase.ts';
 
 describe('seeded entry fixtures', () => {
   it('prints one QR link per gate, each signed with that gate secret', () => {
@@ -32,7 +33,7 @@ describe('seeded entry fixtures', () => {
     }
   });
 
-  it.each([parkingDemoLot, garageRoyLot, parkingTestPaliersLot].filter(({ isOnline }) => isOnline === true))(
+  it.each(seededLots.filter(({ isOnline }) => isOnline === true))(
     'gives online $name an exit gate to open',
     ({ id }) => {
       expect(gateFixtures.some(({ lotId, kind }) => lotId === id && kind === 'EXIT')).toBe(true);
