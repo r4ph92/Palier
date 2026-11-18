@@ -4,9 +4,11 @@ import type { ParkingSessionClient } from '../api/ParkingSessionClient';
 import { useSingleFlight } from '../useSingleFlight';
 import { spotTakenFailureOf } from './spotTakenOutcome';
 
+export type SpotTakenProblem = 'unreachable' | 'limit';
+
 export interface SpotTakenReportController {
   readonly isSending: boolean;
-  readonly isUnreachable: boolean;
+  readonly problem: SpotTakenProblem | null;
   // Grows with every report Palier did not get, so the same message twice is announced twice.
   readonly attempts: number;
   report(): void;
@@ -22,7 +24,7 @@ export interface SpotTakenReportTarget {
 
 interface ReportHandlers {
   readonly onReported: (response: SpotTakenResponse | null) => void;
-  readonly onUnreachable: () => void;
+  readonly onProblem: (problem: SpotTakenProblem) => void;
 }
 
 // One report at a time; any answer that settles it reads the session again (the new spot, or the question).
@@ -33,22 +35,22 @@ export function useSpotTakenReport(
   onReported: (response: SpotTakenResponse | null) => void,
 ): SpotTakenReportController {
   const [attempts, setAttempts] = useState(0);
-  const [isUnreachable, setIsUnreachable] = useState(false);
+  const [problem, setProblem] = useState<SpotTakenProblem | null>(null);
   const { runningKey, run } = useSingleFlight<'report'>();
   const { sessionId, spotNumber } = target;
   const report = useCallback(() => {
-    setIsUnreachable(false);
-    const onUnreachable = () => {
-      setIsUnreachable(true);
+    setProblem(null);
+    const onProblem = (reason: SpotTakenProblem) => {
+      setProblem(reason);
       setAttempts((previous) => previous + 1);
     };
-    run('report', () => sendReport(() => client.reportSpotTaken(sessionId, spotNumber), { onReported, onUnreachable }));
+    run('report', () => sendReport(() => client.reportSpotTaken(sessionId, spotNumber), { onReported, onProblem }));
   }, [client, sessionId, spotNumber, onReported, run]);
-  const clearProblem = useCallback(() => setIsUnreachable(false), []);
-  return { isSending: runningKey !== null, isUnreachable, attempts, report, clearProblem };
+  const clearProblem = useCallback(() => setProblem(null), []);
+  return { isSending: runningKey !== null, problem, attempts, report, clearProblem };
 }
 
-async function sendReport(send: () => Promise<SpotTakenResponse>, { onReported, onUnreachable }: ReportHandlers): Promise<void> {
+async function sendReport(send: () => Promise<SpotTakenResponse>, { onReported, onProblem }: ReportHandlers): Promise<void> {
   try {
     onReported(await send());
   } catch (error) {
@@ -56,8 +58,8 @@ async function sendReport(send: () => Promise<SpotTakenResponse>, { onReported, 
     if (failure === 'refresh') {
       onReported(null);
     }
-    if (failure === 'unreachable') {
-      onUnreachable();
+    if (failure === 'unreachable' || failure === 'limit') {
+      onProblem(failure);
     }
   }
 }

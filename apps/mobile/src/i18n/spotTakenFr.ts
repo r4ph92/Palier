@@ -10,4 +10,5 @@ export const spotTakenFr = {
   newSpotLead: 'Nouvelle place\u00A0: ',
   noneFree: 'Aucune autre place libre\u00A0— garez-vous sur une place libre non réservée et indiquez son numéro',
   unreachable: UNREACHABLE,
+  limitReached: 'Vous avez atteint la limite de signalements pour cette session. Rendez-vous à la place indiquée ou signalez votre position au personnel.',
 };

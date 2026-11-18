@@ -232,6 +232,7 @@ describe('HttpParkingSessionClient, reporting the assigned spot taken (story #23
     [404, 'SESSION_NOT_FOUND'],
     [409, 'ALREADY_PARKED'],
     [409, 'SPOT_NOT_ASSIGNED'],
+    [409, 'SPOT_REPORT_LIMIT'],
   ])('rejects a %i with the code %s', async (status, error) => {
     await expect(clientAnswering({ statusCode: status, error }, status).client.reportSpotTaken('session-1', 'A-1')).rejects.toEqual(new PalierRejectedError(error));
   });

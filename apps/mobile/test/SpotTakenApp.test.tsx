@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
+import { PalierRejectedError } from '../src/api/VehicleClient';
 import { julieAtParkingDemo, spotB3 } from './fakeParkingSessionClient';
 import { CONFIRM_A1_TAKEN, julieReportingA1, julieThroughTheGate, NONE_FREE, REPORT_A1, SPOT_TAKEN } from './spotTakenRig';
 import { asSeen, visibleText } from './visibleText';
@@ -131,6 +132,16 @@ describe('reporting the assigned spot taken (story #23)', () => {
     await user.press(screen.getByRole('button', { name: /^Report A-\u2060?1 taken$/ }));
 
     expect(await screen.findByText('New spot: A-2', visibleText)).toBeOnTheScreen();
+  });
+
+  it('reads the report limit in English on an English device', async () => {
+    const { user, parkingSession } = await julieThroughTheGate('en');
+    parkingSession.spotTakenFailure = new PalierRejectedError('SPOT_REPORT_LIMIT');
+
+    await user.press(screen.getByRole('button', { name: 'Spot taken' }));
+    await user.press(screen.getByRole('button', { name: /^Report A-\u2060?1 taken$/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('You have reached the report limit for this session. Go to the spot shown or tell staff where you are.');
   });
 
   it('drops « Nouvelle place » once Julie walks away from A-2, without announcing it again', async () => {

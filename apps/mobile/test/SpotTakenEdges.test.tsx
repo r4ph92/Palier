@@ -2,10 +2,11 @@ import { screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 import { PalierRejectedError } from '../src/api/VehicleClient';
-import { CONFIRM_A1_TAKEN, julieReportingA1, KEEP_A1, REPORT_A1, SPOT_TAKEN } from './spotTakenRig';
+import { CONFIRM_A1_TAKEN, julieReportingA1, KEEP_A1, NONE_FREE, REPORT_A1, SPOT_TAKEN } from './spotTakenRig';
 import { visibleText } from './visibleText';
 import { PARKED_IN_A1 } from './walkAwayRig';
 
+const LIMIT_REACHED = 'Vous avez atteint la limite de signalements pour cette session. Rendez-vous à la place indiquée ou signalez votre position au personnel.';
 const UNREACHABLE = 'Impossible de joindre Palier. Vérifiez votre connexion, puis réessayez.';
 
 describe('reporting the assigned spot taken, the edges (story #23)', () => {
@@ -47,6 +48,19 @@ describe('reporting the assigned spot taken, the edges (story #23)', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(UNREACHABLE);
     expect(announce).toHaveBeenCalledWith(UNREACHABLE);
     expect(screen.getByText(CONFIRM_A1_TAKEN, visibleText)).toBeOnTheScreen();
+  });
+
+  it('tells Julie the report limit is reached, keeps A-1 and the question, and announces it', async () => {
+    const { user, parkingSession } = await julieReportingA1();
+    parkingSession.spotTakenFailure = new PalierRejectedError('SPOT_REPORT_LIMIT');
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+
+    await user.press(screen.getByRole('button', { name: REPORT_A1 }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(LIMIT_REACHED);
+    expect(announce).toHaveBeenCalledWith(LIMIT_REACHED);
+    expect(screen.getByText(CONFIRM_A1_TAKEN, visibleText)).toBeOnTheScreen();
+    expect(screen.queryByText(NONE_FREE, visibleText)).toBeNull();
   });
 
   it('reads the session again, without an error, when Palier says Julie already parked', async () => {

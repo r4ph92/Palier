@@ -10,7 +10,7 @@ import { useAccessibilityFocusOnMount } from '../components/useAccessibilityFocu
 import { useAnnouncement } from '../components/useAnnouncement';
 import { i18n } from '../i18n/i18n';
 import { unbrokenSpotNumber } from '../spots/spotNumber';
-import { useSpotTakenReport, type SpotTakenReportController } from '../parkingSessions/useSpotTakenReport';
+import { useSpotTakenReport, type SpotTakenProblem, type SpotTakenReportController } from '../parkingSessions/useSpotTakenReport';
 import { useColors } from '../theme/useColors';
 import { spacing } from '../theme/tokens';
 import { typography } from '../theme/typography';
@@ -95,7 +95,7 @@ function ConfirmReport({ spot, reporting, onCancel }: ConfirmReportProps) {
   return (
     <View style={styles.group} onAccessibilityEscape={cancel}>
       <ConfirmQuestion spot={spot} />
-      <ReportProblem isUnreachable={reporting.isUnreachable} attempts={reporting.attempts} />
+      <ReportProblem problem={reporting.problem} attempts={reporting.attempts} />
       <PrimaryButton
         label={i18n.t('session.spotTaken.confirm', { number })}
         busyLabel={i18n.t('session.spotTaken.sending')}
@@ -125,11 +125,13 @@ function ConfirmQuestion({ spot }: { readonly spot: AssignedSpot }) {
 }
 
 // Announced on every report Palier did not get, the same one twice included, since the focus stays on « Confirmer ».
-function ReportProblem({ isUnreachable, attempts }: { readonly isUnreachable: boolean; readonly attempts: number }) {
-  const message = isUnreachable ? i18n.t('session.spotTaken.unreachable') : null;
+function ReportProblem({ problem, attempts }: { readonly problem: SpotTakenProblem | null; readonly attempts: number }) {
+  const message = problem === null ? null : i18n.t(PROBLEM_MESSAGES[problem]);
   useAnnouncement(message, attempts);
   return message === null ? null : <FieldError message={message} />;
 }
+
+const PROBLEM_MESSAGES = { unreachable: 'session.spotTaken.unreachable', limit: 'session.spotTaken.limitReached' } as const;
 
 const styles = StyleSheet.create({
   group: { gap: spacing.medium },
