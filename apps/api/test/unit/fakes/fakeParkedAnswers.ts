@@ -79,7 +79,7 @@ export class FakeParkedAnswers implements ParkedAnswerRepository {
       sessionState: session.state,
       needs: session.needs ?? standardNeeds,
       assignedSpot: this.#factsOf(session.assignedSpotNumber),
-      answeredSpot: { id: spotNumber, state: spot.state, ...demoSpotFlagsOf(spotNumber, spot) },
+      answeredSpot: { id: spotNumber, state: spot.state, ...demoSpotFlagsOf(spotNumber, spot), heldByAnotherSession: spot.heldByAnotherSession ?? false },
     });
     if (placement.outcome === 'refused') {
       return { outcome: placement.refusal };

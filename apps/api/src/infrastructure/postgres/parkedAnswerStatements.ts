@@ -10,6 +10,7 @@ import { canonicalNumberOf } from './canonicalNumberSql.ts';
 import type { Database, Transaction } from './database.ts';
 import { requireUpdatedRow } from './requireUpdatedRow.ts';
 import { liveSpot } from './liveSpot.ts';
+import { sessionHoldsSpot } from './sessionHoldsSpot.ts';
 import { spot } from './lotSchema.ts';
 import { spotFlagsOf, type SpotFlagsRow } from './spotClaim.ts';
 import { spotOf, type SpotLabelRow } from './spotLabel.ts';
@@ -28,6 +29,7 @@ export interface AnsweredSpot extends SpotFlags {
   readonly id: string;
   readonly aisleId: string;
   readonly state: SpotState;
+  readonly heldByAnotherSession: boolean;
   readonly label: AssignedSpot;
 }
 
@@ -49,6 +51,7 @@ interface AnsweredSpotRow extends SpotLabelRow, SpotFlagsRow {
   readonly id: string;
   readonly aisle_id: string;
   readonly state: SpotState;
+  readonly held_by_other_session: boolean;
 }
 
 // Read before the lock, to know which lot to lock; a session never changes lot.
@@ -78,14 +81,16 @@ export async function lockAnsweringSession(tx: Executor, { sessionId, driverId }
 
 export interface SpotNumberInLot {
   readonly lotId: string;
+  readonly sessionId: string;
   readonly spotNumber: string;
 }
 
 // The number is looked up among the live spots of the session's lot only: another lot's « C-1 », or a retired one, is unknown here.
 // Painted numbers have no fixed shape (« P1-12 », « B-7a »), so every spot equal without case, spaces or dashes is locked, then one is named.
-export async function lockAnsweredSpot(tx: Executor, { lotId, spotNumber }: SpotNumberInLot): Promise<AnsweredSpot | null> {
+export async function lockAnsweredSpot(tx: Executor, { lotId, sessionId, spotNumber }: SpotNumberInLot): Promise<AnsweredSpot | null> {
   const rows = await tx.execute<AnsweredSpotRow>(sql`
-    select spot.id, spot.aisle_id, spot.state, spot.number, spot.is_ev, spot.is_accessible, spot.is_oversize, aisle.code as aisle_code, level.code as level_code
+    select spot.id, spot.aisle_id, spot.state, spot.number, spot.is_ev, spot.is_accessible, spot.is_oversize, aisle.code as aisle_code, level.code as level_code,
+      ${sessionHoldsSpot('spot', sessionId)} as held_by_other_session
     from spot
     join aisle on aisle.id = spot.aisle_id
     join level on level.id = aisle.level_id
@@ -94,7 +99,7 @@ export async function lockAnsweredSpot(tx: Executor, { lotId, spotNumber }: Spot
     for update of spot`);
   const named = paintedNumberNamed(rows.map(({ number }) => number), spotNumber);
   const row = rows.find(({ number }) => number === named);
-  return row === undefined ? null : { id: row.id, aisleId: row.aisle_id, state: row.state, label: spotOf(row), ...spotFlagsOf(row) };
+  return row === undefined ? null : { id: row.id, aisleId: row.aisle_id, state: row.state, heldByAnotherSession: row.held_by_other_session, label: spotOf(row), ...spotFlagsOf(row) };
 }
 
 // The state was read under the lock just before: a zero-row update is a broken invariant, and rolls the answer back.

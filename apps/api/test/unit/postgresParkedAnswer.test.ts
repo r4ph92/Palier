@@ -26,6 +26,10 @@ function asked(spotState: SpotState | null = 'AVAILABLE', sessionState: EntrySes
   return askedAmong(spotState === null ? [] : [spotRow(spotState)], sessionState);
 }
 
+function heldBySomeoneElse(state: SpotState, number = 'B-3') {
+  return { ...spotRow(state, number), held_by_other_session: true };
+}
+
 function askedAmong(spotRows: readonly ReturnType<typeof spotRow>[], sessionState: EntrySessionState = 'PARKED_UNCONFIRMED') {
   return spotsReadFor(spotRows, sessionState)
     .answer('occupy-answered-spot', [{ id: SPOT_B3_ID }])
@@ -69,7 +73,7 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
     expect(lookup?.text).toMatch(/where spot\.lot_id = \$\d+ and spot\.retired_at is null and upper\(regexp_replace\("spot"\."number", '\[\[:space:\]–—-\]', '', 'g'\)\) = \$\d+/);
     expect(lookup?.text).toMatch(/order by spot\.number\s+for update of spot/);
     expect(lookup?.text).not.toMatch(/limit/);
-    expect(lookup?.params).toEqual([LOT_ID, 'B3']);
+    expect(lookup?.params).toEqual([SESSION_ID, LOT_ID, 'B3']);
   });
 
   it('places no car for « b12 » between B12 and B1-2, both free, and writes nothing', async () => {
@@ -116,6 +120,22 @@ describe('PostgresParkedAnswerRepository (story #21)', () => {
 
     await expect(answerWith(sql)).resolves.toEqual({ outcome });
     expect(WRITES.map((label) => sql.count(label))).toEqual([0, 0]);
+  });
+
+  it('refuses a free spot another active session holds as SPOT_TAKEN, without any write (story #130)', async () => {
+    const sql = askedAmong([heldBySomeoneElse('AVAILABLE')]);
+
+    await expect(answerWith(sql)).resolves.toEqual({ outcome: 'spot-taken' });
+
+    expect(sql.labels()).toEqual(['read-session-lot', 'limit-lock-wait', 'lock-lot', 'lock-answering-session', 'lock-answered-spot']);
+  });
+
+  it('looks for the holder among the active sessions other than the answering one (story #130)', async () => {
+    const sql = asked();
+
+    await answerWith(sql);
+
+    expect(sql.statement('lock-answered-spot')?.text).toMatch(/\(holder\.assigned_spot_id = spot\.id or holder\.confirmed_spot_id = spot\.id\) and holder\.id <> \$1 and holder\.state in \('CREATED'.*'PARKED_CONFIRMED'\)\) as held_by_other_session/);
   });
 
   it('refuses a number this lot does not have, another lot\'s included, without any write', async () => {

@@ -4,6 +4,7 @@ import { spotFits } from '../../domain/allocation/chooseSpotFor.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Database } from './database.ts';
 import { liveSpot } from './liveSpot.ts';
+import { sessionHoldsSpot } from './sessionHoldsSpot.ts';
 import { spotFlagsOf, type SpotFlagsRow } from './spotClaim.ts';
 
 // The left join yields no number, and no flags, when the aisle has no free spot.
@@ -13,16 +14,18 @@ type QuestionRow = Record<string, unknown> & {
 
 export interface QuestionScope {
   readonly aisleId: string;
+  readonly sessionId: string;
   readonly needs: VehicleNeeds;
 }
 
-// The free spots of the aisle seen at the walk that fit the session's vehicle, in natural order (B-2 before B-10);
+// The free spots of the aisle seen at the walk that fit the session's vehicle and that no other active session holds, in natural order (B-2 before B-10);
 // the aisle is in the session's lot by its foreign key.
-export async function readParkedQuestion(database: Database, { aisleId, needs }: QuestionScope): Promise<ParkedQuestion | null> {
+export async function readParkedQuestion(database: Database, { aisleId, sessionId, needs }: QuestionScope): Promise<ParkedQuestion | null> {
   const rows = await database.execute<QuestionRow>(sql`
     select aisle.code, spot.number, spot.is_ev, spot.is_accessible, spot.is_oversize
     from aisle
     left join spot on spot.aisle_id = aisle.id and spot.state = 'AVAILABLE' and ${liveSpot()}
+      and not ${sessionHoldsSpot('spot', sessionId)}
     where aisle.id = ${aisleId}
     order by length(spot.number), spot.number`);
   const [first] = rows;

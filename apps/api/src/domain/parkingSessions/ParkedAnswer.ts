@@ -56,7 +56,7 @@ export interface SpotFacts {
   readonly state: SpotState;
 }
 
-export type AnsweredSpotFacts = SpotFacts & SpotFlags;
+export type AnsweredSpotFacts = SpotFacts & SpotFlags & { readonly heldByAnotherSession: boolean };
 
 export interface PlacementFacts {
   readonly sessionState: EntrySessionState;
@@ -90,11 +90,15 @@ function isOwnAssignedSpot({ assignedSpot, answeredSpot }: PlacementFacts): bool
   return answeredSpot.id === assignedSpot.id;
 }
 
+// A spot another active session holds is taken whatever its state shows (an operator may have freed it).
 // Taken wins over fitness; the own assigned spot was allocated to this vehicle, so it is never fit-checked (decision 020).
 function answeredSpotRefusal(facts: PlacementFacts): PlacementRefusal | null {
   const decision = decideSpotAnswer(facts.answeredSpot.state);
   if (decision !== 'occupy') {
     return decision;
+  }
+  if (facts.answeredSpot.heldByAnotherSession) {
+    return 'spot-taken';
   }
   return isOwnAssignedSpot(facts) || spotFits(facts.needs, facts.answeredSpot) ? null : 'spot-not-suitable';
 }

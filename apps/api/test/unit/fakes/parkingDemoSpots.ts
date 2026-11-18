@@ -7,6 +7,7 @@ export interface StoredDemoSpot {
   readonly isEv?: boolean;
   readonly isAccessible?: boolean;
   readonly isOversize?: boolean;
+  readonly heldByAnotherSession?: boolean;
 }
 
 const NO_FLAGS: SpotFlags = { isEv: false, isAccessible: false, isOversize: false };

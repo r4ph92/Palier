@@ -79,7 +79,7 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
     if (row.state !== 'PARKED_UNCONFIRMED' || row.parked_aisle_id === null) {
       return Promise.resolve(null);
     }
-    return readParkedQuestion(this.#database, { aisleId: row.parked_aisle_id, needs: vehicleNeedsOf(row) });
+    return readParkedQuestion(this.#database, { aisleId: row.parked_aisle_id, sessionId: row.id, needs: vehicleNeedsOf(row) });
   }
 
   async #levelAisles(levelId: string): Promise<StoredLevelAisle[]> {

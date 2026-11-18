@@ -66,6 +66,19 @@ describe('POST /v1/entries/:sessionId/spot (story #21)', () => {
     expect(parkedAnswers.writes).toBe(0);
   });
 
+  it('refuses A-3, free but held by another active session, with SPOT_TAKEN and changes nothing (story #130)', async () => {
+    const { answer, parkedAnswers } = await julieAskedWhereParked();
+    parkedAnswers.setSpot('A-3', { state: 'AVAILABLE', needsCheck: false, heldByAnotherSession: true });
+
+    const response = await answer('A-3');
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual(SPOT_TAKEN_BODY);
+    expect(parkedAnswers.spotOf('A-3')).toMatchObject({ state: 'AVAILABLE' });
+    expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toEqual(julieAsked());
+    expect(parkedAnswers.writes).toBe(0);
+  });
+
   it('refuses an out-of-service spot with SPOT_OUT_OF_SERVICE', async () => {
     const { answer, parkedAnswers } = await julieAskedWhereParked();
     parkedAnswers.setSpot('B-5', { state: 'OUT_OF_SERVICE', needsCheck: false });

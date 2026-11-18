@@ -42,15 +42,15 @@ describe('readers that skip retired spots', () => {
   it('never names a retired spot in a driver’s answer, so a retired A-3 and a live A-3 are one number', async () => {
     const scripted = new ScriptedSql();
 
-    await lockAnsweredSpot(scripted.executor(), { lotId: LOT, spotNumber: 'A-3' });
+    await lockAnsweredSpot(scripted.executor(), { lotId: LOT, sessionId: 'session-1', spotNumber: 'A-3' });
 
-    expect(scripted.statement('lock-answered-spot')?.text).toMatch(/where spot\.lot_id = \$1 and spot\.retired_at is null and upper/);
+    expect(scripted.statement('lock-answered-spot')?.text).toMatch(/where spot\.lot_id = \$2 and spot\.retired_at is null and upper/);
   });
 
   it('never suggests a retired spot in the question about the aisle the driver walked to', async () => {
     const scripted = new ScriptedSql();
 
-    await readParkedQuestion(scripted.database(), { aisleId: 'aisle-b', needs: noNeeds });
+    await readParkedQuestion(scripted.database(), { aisleId: 'aisle-b', sessionId: 'session-1', needs: noNeeds });
 
     expect(scripted.statement('read-parked-question')?.text).toMatch(/spot\.state = 'AVAILABLE' and spot\.retired_at is null/);
   });

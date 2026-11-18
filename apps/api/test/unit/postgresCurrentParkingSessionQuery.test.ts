@@ -54,9 +54,21 @@ describe('PostgresCurrentParkingSessionQuery, the spot and the question (story #
 
     expect(session?.question).toEqual({ aisleCode: 'B', freeSpotNumbers: ['B-1', 'B-3'] });
     const question = sql.statements.find(({ label }) => label === 'read-parked-question');
-    expect(question?.params).toEqual([AISLE_B_ID]);
+    expect(question?.params).toEqual(['session-1', AISLE_B_ID]);
     expect(question?.text).toMatch(/spot\.state = 'AVAILABLE'/);
     expect(question?.text).toMatch(/order by length\(spot\.number\), spot\.number/);
+  });
+
+  it('hides the spots another active session holds as assigned or confirmed spot, but not the ones of Julie herself (story #130)', async () => {
+    const sql = new ScriptedSql()
+      .answer('read-current-session', [sessionRow('PARKED_UNCONFIRMED', AISLE_B_ID)])
+      .answer('read-parked-question', [freeSpotRow('B-1')]);
+
+    await readWith(sql);
+
+    const text = sql.statement('read-parked-question')?.text;
+    expect(text).toMatch(/and not exists \(select 1 from parking_session holder where \(holder\.assigned_spot_id = spot\.id or holder\.confirmed_spot_id = spot\.id\) and holder\.id <> \$1 and holder\.state in \('CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED'\)\)/);
+    expect(text).not.toMatch(/'(EXITED|ENDED|CLOSED)/);
   });
 
   it('asks with an empty list when aisle B has no free spot', async () => {

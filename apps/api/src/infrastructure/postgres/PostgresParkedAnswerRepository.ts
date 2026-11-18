@@ -68,7 +68,7 @@ interface PlacementScope {
 }
 
 async function placeCar(tx: Transaction, answer: SpotAnswer, { lotId, session }: PlacementScope): Promise<ParkedAnswer> {
-  const spot = await lockAnsweredSpot(tx, { lotId, spotNumber: answer.spotNumber });
+  const spot = await lockAnsweredSpot(tx, { lotId, sessionId: answer.sessionId, spotNumber: answer.spotNumber });
   if (spot === null) {
     return { outcome: 'unknown-spot' };
   }

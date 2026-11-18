@@ -49,19 +49,49 @@ describe('where a presumed session goes once it names its spot (story #22)', () 
   ] as const)('naming $naming', ({ spotId, spotState, placement }) => {
     const assignedSpot = { id: A1, state: spotId === A1 ? spotState : 'OCCUPIED' } as const;
 
-    expect(placementOf({ sessionState: 'PARKED_PRESUMED', assignedSpot, needs: STANDARD, answeredSpot: { id: spotId, state: spotState, ...NO_FLAGS } })).toEqual(placement);
+    expect(placementOf({ sessionState: 'PARKED_PRESUMED', assignedSpot, needs: STANDARD, answeredSpot: { id: spotId, state: spotState, ...NO_FLAGS, heldByAnotherSession: false } })).toEqual(placement);
   });
 
   it('naming a free spot after an operator freed the presumed one occupies it without flagging the freed spot', () => {
     const assignedSpot = { id: A1, state: 'AVAILABLE' } as const;
 
-    expect(placementOf({ sessionState: 'PARKED_PRESUMED', assignedSpot, needs: STANDARD, answeredSpot: { id: 'spot-a3', state: 'AVAILABLE', ...NO_FLAGS } })).toEqual(OCCUPY);
+    expect(placementOf({ sessionState: 'PARKED_PRESUMED', assignedSpot, needs: STANDARD, answeredSpot: { id: 'spot-a3', state: 'AVAILABLE', ...NO_FLAGS, heldByAnotherSession: false } })).toEqual(OCCUPY);
   });
 
   it('an asked session naming its own assigned spot occupies it again, as in #21', () => {
     const assignedSpot = { id: A1, state: 'OCCUPIED_UNKNOWN' } as const;
 
-    expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', needs: STANDARD, assignedSpot, answeredSpot: { ...assignedSpot, ...NO_FLAGS } })).toEqual(OCCUPY);
+    expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', needs: STANDARD, assignedSpot, answeredSpot: { ...assignedSpot, ...NO_FLAGS, heldByAnotherSession: false } })).toEqual(OCCUPY);
+  });
+});
+
+describe('a free spot another active session holds (story #130)', () => {
+  const A1 = 'spot-a1';
+  const assignedSpot = { id: A1, state: 'OCCUPIED_UNKNOWN' } as const;
+  const TAKEN = { outcome: 'refused', refusal: 'spot-taken' };
+
+  it.each(['PARKED_UNCONFIRMED', 'PARKED_PRESUMED'] as const)('refuses it to a %s session as taken', (sessionState) => {
+    const answeredSpot = { id: 'spot-a3', state: 'AVAILABLE', ...NO_FLAGS, heldByAnotherSession: true } as const;
+
+    expect(placementOf({ sessionState, needs: STANDARD, assignedSpot, answeredSpot })).toEqual(TAKEN);
+  });
+
+  it('says taken, not unsuitable, for a held accessible spot and a standard vehicle', () => {
+    const answeredSpot = { id: 'spot-a3', state: 'AVAILABLE', ...NO_FLAGS, isAccessible: true, heldByAnotherSession: true } as const;
+
+    expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', needs: STANDARD, assignedSpot, answeredSpot })).toEqual(TAKEN);
+  });
+
+  it('says taken for an occupied held spot, as for any occupied spot', () => {
+    const answeredSpot = { id: 'spot-a3', state: 'OCCUPIED', ...NO_FLAGS, heldByAnotherSession: true } as const;
+
+    expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', needs: STANDARD, assignedSpot, answeredSpot })).toEqual(TAKEN);
+  });
+
+  it('keeps out of service ahead of held', () => {
+    const answeredSpot = { id: 'spot-a3', state: 'OUT_OF_SERVICE', ...NO_FLAGS, heldByAnotherSession: true } as const;
+
+    expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', needs: STANDARD, assignedSpot, answeredSpot })).toEqual({ outcome: 'refused', refusal: 'spot-out-of-service' });
   });
 });
 
@@ -81,19 +111,19 @@ describe('which spot a car can be placed on (story #125)', () => {
     { naming: 'a taken accessible spot, standard vehicle: taken wins', needs: STANDARD, flags: { isAccessible: true }, state: 'ASSIGNED', placement: { outcome: 'refused', refusal: 'spot-taken' } },
     { naming: 'an out-of-service electric spot, standard vehicle: out of service wins', needs: STANDARD, flags: { isEv: true }, state: 'OUT_OF_SERVICE', placement: { outcome: 'refused', refusal: 'spot-out-of-service' } },
   ] as const)('naming $naming', ({ needs, flags, state, placement }) => {
-    const answeredSpot = { id: 'spot-x', state, ...NO_FLAGS, ...flags };
+    const answeredSpot = { id: 'spot-x', state, ...NO_FLAGS, ...flags, heldByAnotherSession: false };
 
     expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', needs, assignedSpot, answeredSpot })).toEqual(placement);
   });
 
   it('never fit-checks the own assigned spot of an asked session, flagged electric since', () => {
-    const answeredSpot = { ...assignedSpot, ...NO_FLAGS, isEv: true };
+    const answeredSpot = { ...assignedSpot, ...NO_FLAGS, isEv: true, heldByAnotherSession: false };
 
     expect(placementOf({ sessionState: 'PARKED_UNCONFIRMED', needs: STANDARD, assignedSpot, answeredSpot })).toEqual(OCCUPY);
   });
 
   it('never fit-checks the own presumed spot, flagged accessible since', () => {
-    const answeredSpot = { ...assignedSpot, ...NO_FLAGS, isAccessible: true };
+    const answeredSpot = { ...assignedSpot, ...NO_FLAGS, isAccessible: true, heldByAnotherSession: false };
 
     expect(placementOf({ sessionState: 'PARKED_PRESUMED', needs: STANDARD, assignedSpot, answeredSpot })).toEqual(OCCUPY);
   });
