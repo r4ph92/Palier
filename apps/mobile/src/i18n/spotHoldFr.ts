@@ -32,6 +32,7 @@ export const spotHoldFr = {
   refusals: {
     PREREQUISITES_MISSING: 'Ajoutez une plaque et une carte avant de garantir une place',
     HOLD_ALREADY_EXISTS: 'Vous avez déjà une place garantie',
+    ALREADY_INSIDE: 'Vous êtes déjà dans un stationnement',
     HOLD_QUOTA_REACHED: 'Trop de places garanties dans ce parking pour le moment',
     NO_SUITABLE_SPOT: 'Aucune place disponible',
     LOT_NOT_FOUND: 'Ce parking n’est plus offert',

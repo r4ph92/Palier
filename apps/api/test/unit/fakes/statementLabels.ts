@@ -19,6 +19,7 @@ export type StatementLabel =
   | 'read-held-spot'
   | 'use-spot-hold'
   | 'has-usable-spot-hold'
+  | 'read-driver-active-session'
   | 'assign-held-spot'
   | 'free-held-spot'
   | 'find-stale-session-lots'
@@ -180,6 +181,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['read-active-spot-hold', /from \(select id, lot_id, expires_at from spot_hold/],
   ['read-spot-hold-lot', /join operator on/],
   ['read-spot-hold-facts', /as active_holds_in_lot/],
+  ['read-driver-active-session', /^select 1 from parking_session where user_id = \$\d and state in/],
   ['insert-spot-hold', /insert into spot_hold/],
   ['release-lot-spot-holds', /update spot_hold set status = 'RELEASED'\s+where lot_id/],
   ['release-spot-hold', /update spot_hold set status = 'RELEASED'/],

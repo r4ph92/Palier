@@ -58,7 +58,7 @@ export function configureServer({ testSignInEnabled = false, demoMode = false, m
     cardGateway: new FakeCardGateway(),
     entries: entries.dependencies,
     exits: { exits, payments: entries.payments },
-    spotHolds: spotHoldServicesOf(spotHolds, { vehicles: vehicleRepository, drivers: driverRepository }, STRICT_POLICY),
+    spotHolds: spotHoldServicesOf({ repository: spotHolds, prerequisites: { vehicles: vehicleRepository, drivers: driverRepository }, sessions: entries.sessions, policy: STRICT_POLICY }),
     testClock,
     settings: { testSignInEnabled, demoMode, minimumAppVersion },
   });

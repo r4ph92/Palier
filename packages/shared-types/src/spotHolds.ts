@@ -20,6 +20,7 @@ export interface CurrentSpotHoldResponse {
 export const SPOT_HOLD_REFUSAL_CODES = [
   'PREREQUISITES_MISSING',
   'HOLD_ALREADY_EXISTS',
+  'ALREADY_INSIDE',
   'HOLD_QUOTA_REACHED',
   'NO_SUITABLE_SPOT',
   'LOT_NOT_FOUND',

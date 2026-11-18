@@ -12,6 +12,7 @@ import type {
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
 import { hasRoomForAnotherVehicle } from '../../domain/occupancy/hasRoomForAnotherVehicle.ts';
 import type { Clock } from '../../domain/time/Clock.ts';
+import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import { findActiveSessionFacts } from './activeSessionFacts.ts';
 import { admissionRefusalOf } from './admissionRefusal.ts';
 import { logFailedAdmission, logScan } from './entryEvents.ts';
@@ -93,6 +94,11 @@ export class PostgresParkingSessionRepository implements ParkingSessionRepositor
   async hasOpeningEntry(driverId: string, lotId: string): Promise<boolean> {
     const rows = await this.#database.execute(sql`
       select 1 from parking_session where user_id = ${driverId} and lot_id = ${lotId} and state = 'CREATED' limit 1`);
+    return rows.length > 0;
+  }
+
+  async hasActiveSession(driverId: string): Promise<boolean> {
+    const rows = await this.#database.execute(sql`select 1 from parking_session where user_id = ${driverId} and ${ACTIVE_SESSION} limit 1`);
     return rows.length > 0;
   }
 

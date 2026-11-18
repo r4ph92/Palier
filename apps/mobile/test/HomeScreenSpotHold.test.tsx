@@ -127,6 +127,7 @@ describe('HomeScreen spot hold refusals', () => {
   const refusals = [
     ['PREREQUISITES_MISSING', 'Ajoutez une plaque et une carte avant de garantir une place', 'Add a plate and a card before guaranteeing a spot'],
     ['HOLD_ALREADY_EXISTS', 'Vous avez déjà une place garantie', 'You already have a guaranteed spot'],
+    ['ALREADY_INSIDE', 'Vous êtes déjà dans un stationnement', 'You are already in a parking lot'],
     ['HOLD_QUOTA_REACHED', 'Trop de places garanties dans ce parking pour le moment', 'Too many guaranteed spots in this lot right now'],
     ['NO_SUITABLE_SPOT', 'Aucune place disponible', 'No spot available'],
     ['LOT_NOT_FOUND', 'Ce parking n’est plus offert', 'This lot is no longer offered'],
