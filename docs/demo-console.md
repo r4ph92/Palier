@@ -27,6 +27,8 @@ les recrée et remet le compteur à 0.
 | Entrée Démo | Parking Démo | entrée | `gkXGrHor9PJGFGYu4xrNZ5nMkid18rTHXBmuCuI63as` |
 | Sortie Démo | Parking Démo | sortie | `Vlsp0SpmrjrASkf5BViukfAHhaqATVEuKnksWh1tcOw` |
 | Entrée Roy | Garage Roy (hors ligne) | entrée | `qwWc90SgLYX15MzN2UBX8lSQA-hKBlaqbIG9v--98tM` |
+| Entrée Paliers | Parking Test Paliers | entrée | `sC_lGeu2tZI7I7wrV2XOaNkKqo8r45zbvGOIROUKCPo` |
+| Sortie Paliers | Parking Test Paliers | sortie | `CHZWCLzFHXiJ3AnqWnp_hC9M8uMpdr5ier9VvdLQZC0` |
 | Entrée Démo, clé **révoquée** | Parking Démo | entrée | `L-xYpKfzUH4NHKxi_r6EKJbBXOIiYvhbawTSt34sgRs` |
 
 ## QR des bornes semées
@@ -44,6 +46,8 @@ jusqu'au prochain seed.
 | Entrée Démo | `https://palier.app/q/palier1.00000000-0000-4000-8000-000000000701.-Un39K4J0Of87m3s0GAvLuA4iU_WHFQcti4imXHXk6s` | place attribuée, « Barrière ouverte » |
 | Sortie Démo | `https://palier.app/q/palier1.00000000-0000-4000-8000-000000000702.5zM0Mh2G5z5103ZlWxTZQpV74SzJzqo4FatczcMHJQ0` | « Ce QR n’est pas une borne d’entrée » |
 | Entrée Roy | `https://palier.app/q/palier1.00000000-0000-4000-8000-000000000703.58pH8pV4hMitS9Lj679T9Tw5EDVtxcUQ2aQDqVATUXY` | « Ce parking n’est pas en service » |
+| Entrée Paliers | `https://palier.app/q/palier1.00000000-0000-4000-8000-000000000704.nHu8OtBJ2awuTSpBtG713O3Lk8dum-XYZT9gUpmE9P8` | place attribuée à Parking Test Paliers, « Barrière ouverte » |
+| Sortie Paliers | `https://palier.app/q/palier1.00000000-0000-4000-8000-000000000705.1z22lIAjzBUjC7L0UvrXdGsbbAFuYvsUsFXyoIRUw-I` | « Ce QR n’est pas une borne d’entrée » |
 
 L'entrée exige `STRIPE_SECRET_KEY` (clé `sk_test_`) dans `apps/api/.env`, puis
 un seed, pour que les conducteurs aient une carte ; sans clé, l'entrée répond

@@ -14,6 +14,8 @@ export const SORTIE_DEMO_DEVICE_KEY = 'Vlsp0SpmrjrASkf5BViukfAHhaqATVEuKnksWh1tc
 export const ENTREE_ROY_DEVICE_KEY = 'qwWc90SgLYX15MzN2UBX8lSQA-hKBlaqbIG9v--98tM';
 export const ENTREE_PALIERS_ID = '00000000-0000-4000-8000-000000000704';
 export const ENTREE_PALIERS_DEVICE_KEY = 'sC_lGeu2tZI7I7wrV2XOaNkKqo8r45zbvGOIROUKCPo';
+export const SORTIE_PALIERS_ID = '00000000-0000-4000-8000-000000000705';
+export const SORTIE_PALIERS_DEVICE_KEY = 'CHZWCLzFHXiJ3AnqWnp_hC9M8uMpdr5ier9VvdLQZC0';
 export const REVOKED_ENTREE_DEMO_DEVICE_KEY = 'L-xYpKfzUH4NHKxi_r6EKJbBXOIiYvhbawTSt34sgRs';
 
 // Development-only QR secrets, fixed so the printed demo QRs stay the same from one seed to the next.
@@ -22,6 +24,7 @@ const SORTIE_DEMO_QR_SECRET = 'KARsBq4xkQ5CC0f4niXpE-m5VIngbyCgh5AsC5ZEYWg';
 const ENTREE_ROY_QR_SECRET = 'GMFyEaQ-_nJfRymq45V_h6o-yU6H94Nu2sbpwm8fkDI';
 
 const ENTREE_PALIERS_QR_SECRET = 'm-WlQo2sUdvRO31bTDGcYrEmCVU7YFHO_pfI8BwSd6I';
+const SORTIE_PALIERS_QR_SECRET = 'kPE66L4q7-PKrQ10nx2YN3VWNc5XFZqHKz7eeDb02kk';
 
 const VERIFIED_AT = new Date('2026-10-01T12:00:00Z');
 const REVOKED_AT = new Date('2026-10-15T12:00:00Z');
@@ -67,6 +70,17 @@ export const gateFixtures: (typeof gate.$inferInsert)[] = [
     qrSecret: ENTREE_PALIERS_QR_SECRET,
     verifiedAt: VERIFIED_AT,
   },
+  {
+    id: SORTIE_PALIERS_ID,
+    lotId: PARKING_TEST_PALIERS_ID,
+    name: 'Sortie Paliers',
+    kind: 'EXIT',
+    integrationKind: 'SIMULATED',
+    hasLoops: true,
+    exitIdKind: 'ANPR',
+    qrSecret: SORTIE_PALIERS_QR_SECRET,
+    verifiedAt: VERIFIED_AT,
+  },
 ];
 
 // What each printed QR holds, for a tester to paste into the app's Scanner tab.
@@ -81,6 +95,7 @@ export const gateDeviceKeyFixtures: (typeof gateDeviceKey.$inferInsert)[] = [
   { id: '00000000-0000-4000-8000-000000000602', gateId: SORTIE_DEMO_ID, keyHash: hashDeviceKey(SORTIE_DEMO_DEVICE_KEY) },
   { id: '00000000-0000-4000-8000-000000000603', gateId: ENTREE_ROY_ID, keyHash: hashDeviceKey(ENTREE_ROY_DEVICE_KEY) },
   { id: '00000000-0000-4000-8000-000000000605', gateId: ENTREE_PALIERS_ID, keyHash: hashDeviceKey(ENTREE_PALIERS_DEVICE_KEY) },
+  { id: '00000000-0000-4000-8000-000000000606', gateId: SORTIE_PALIERS_ID, keyHash: hashDeviceKey(SORTIE_PALIERS_DEVICE_KEY) },
   {
     id: '00000000-0000-4000-8000-000000000604',
     gateId: ENTREE_DEMO_ID,

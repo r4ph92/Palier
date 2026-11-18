@@ -1,26 +1,61 @@
 import { describe, expect, it } from 'vitest';
 import { isSignedWith, readGateToken } from '../../src/domain/entries/gateToken.ts';
 import { AMELIE_LAVOIE_ID, JULIE_TREMBLAY_ID, NADIA_BOUCHARD_ID } from '../../src/config/testPersonas.ts';
-import { ENTREE_DEMO_ID, gateFixtures, seededQrLinks } from '../../src/seed/fixtures/gates.ts';
+import { hashDeviceKey } from '../../src/domain/gates/hashDeviceKey.ts';
+import {
+  ENTREE_DEMO_ID,
+  gateDeviceKeyFixtures,
+  gateFixtures,
+  seededQrLinks,
+  SORTIE_DEMO_ID,
+  SORTIE_PALIERS_DEVICE_KEY,
+  SORTIE_PALIERS_ID,
+} from '../../src/seed/fixtures/gates.ts';
 import { parsePricingPolicy } from '../../src/domain/pricing/PricingPolicy.ts';
 import { garageRoyLot } from '../../src/seed/fixtures/garageRoy.ts';
 import { BEACON_MAJOR_SEQUENCE_START } from '../../src/infrastructure/postgres/lotSchema.ts';
 import { aisleRectangleOf } from '../../src/domain/lots/AisleRectangle.ts';
 import { parkingDemoAisles, parkingDemoLot } from '../../src/seed/fixtures/parkingDemo.ts';
-import { parkingTestPaliersAisles, parkingTestPaliersLot, parkingTestPaliersSpots } from '../../src/seed/fixtures/parkingTestPaliers.ts';
+import { PARKING_TEST_PALIERS_ID, parkingTestPaliersAisles, parkingTestPaliersLot, parkingTestPaliersSpots } from '../../src/seed/fixtures/parkingTestPaliers.ts';
 import { vehicleFixtures } from '../../src/seed/fixtures/vehicles.ts';
+import { seededLots } from '../../src/seed/seedDatabase.ts';
 
 describe('seeded entry fixtures', () => {
   it('prints one QR link per gate, each signed with that gate secret', () => {
     const links = seededQrLinks();
 
-    expect(links.map(({ gateName }) => gateName)).toEqual(['Entrée Démo', 'Sortie Démo', 'Entrée Roy', 'Entrée Paliers']);
+    expect(links.map(({ gateName }) => gateName)).toEqual(['Entrée Démo', 'Sortie Démo', 'Entrée Roy', 'Entrée Paliers', 'Sortie Paliers']);
     for (const { gateName, link } of links) {
       const gate = gateFixtures.find(({ name }) => name === gateName);
       const token = readGateToken(link);
       expect(token?.gateId).toBe(gate?.id);
       expect(token !== null && isSignedWith(token, gate?.qrSecret ?? null)).toBe(true);
     }
+  });
+
+  it.each(seededLots.filter(({ isOnline }) => isOnline === true))(
+    'gives online $name an exit gate to open',
+    ({ id }) => {
+      expect(gateFixtures.some(({ lotId, kind }) => lotId === id && kind === 'EXIT')).toBe(true);
+    },
+  );
+
+  it('seeds Sortie Paliers like Sortie Démo, with its own device key', () => {
+    const sortieDemo = gateFixtures.find(({ id }) => id === SORTIE_DEMO_ID);
+    const sortiePaliers = gateFixtures.find(({ id }) => id === SORTIE_PALIERS_ID);
+    const sameSetup = ({ kind, integrationKind, hasLoops, exitIdKind, verifiedAt }: (typeof gateFixtures)[number]) => ({
+      kind,
+      integrationKind,
+      hasLoops,
+      exitIdKind,
+      verifiedAt,
+    });
+
+    expect(sortiePaliers).toMatchObject({ name: 'Sortie Paliers', lotId: PARKING_TEST_PALIERS_ID });
+    expect(sortiePaliers && sameSetup(sortiePaliers)).toEqual(sortieDemo && sameSetup(sortieDemo));
+    expect(gateDeviceKeyFixtures).toContainEqual(
+      expect.objectContaining({ gateId: SORTIE_PALIERS_ID, keyHash: hashDeviceKey(SORTIE_PALIERS_DEVICE_KEY) }),
+    );
   });
 
   it('prints the same Entrée Démo link at every seed', () => {
