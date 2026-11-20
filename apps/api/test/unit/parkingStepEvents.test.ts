@@ -6,6 +6,7 @@ import { PostgresParkedPresumptionRepository } from '../../src/infrastructure/po
 import { onlyAppendedSessionEvent } from './fakes/appendedSessionEvents.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
 import { AISLE_A_ID } from '../../src/seed/fixtures/parkingDemo.ts';
+import { NO_FLAGS_ROW, STANDARD_VEHICLE_ROW } from './fakes/answerRows.ts';
 
 const JULIE_ID = '00000000-0000-4000-8000-000000000501';
 const SESSION_ID = '00000000-0000-4000-8000-000000000951';
@@ -158,8 +159,8 @@ describe('Julie walks away in aisle B, then answers B-3 (story #156)', () => {
   it('logs her answer with the spot she gave, at the answer time, in the answer transaction', async () => {
     const scripted = new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
-      .answer('lock-answering-session', [{ state: 'PARKED_UNCONFIRMED', assigned_spot_id: SPOT_A1_ID, assigned_spot_state: 'OCCUPIED_UNKNOWN', number: null, aisle_code: null, level_code: null }])
-      .answer('lock-answered-spot', [{ id: SPOT_B3_ID, state: 'AVAILABLE', number: 'B-3', aisle_code: 'B', level_code: 'P1' }])
+      .answer('lock-answering-session', [{ state: 'PARKED_UNCONFIRMED', assigned_spot_id: SPOT_A1_ID, assigned_spot_state: 'OCCUPIED_UNKNOWN', number: null, aisle_code: null, level_code: null, ...STANDARD_VEHICLE_ROW }])
+      .answer('lock-answered-spot', [{ id: SPOT_B3_ID, state: 'AVAILABLE', number: 'B-3', aisle_code: 'B', level_code: 'P1', ...NO_FLAGS_ROW }])
       .answer('occupy-answered-spot', [{ id: SPOT_B3_ID }])
       .answer('confirm-parked-spot', [{ id: SESSION_ID }]);
 
@@ -175,8 +176,8 @@ describe('Julie walks away in aisle B, then answers B-3 (story #156)', () => {
   it('logs no answer for a spot refused without any write', async () => {
     const scripted = new ScriptedSql()
       .answer('read-session-lot', [{ lot_id: LOT_ID }])
-      .answer('lock-answering-session', [{ state: 'PARKED_UNCONFIRMED', assigned_spot_id: SPOT_A1_ID, assigned_spot_state: 'OCCUPIED_UNKNOWN', number: null, aisle_code: null, level_code: null }])
-      .answer('lock-answered-spot', [{ id: SPOT_B3_ID, state: 'OCCUPIED', number: 'B-3', aisle_code: 'B', level_code: 'P1' }]);
+      .answer('lock-answering-session', [{ state: 'PARKED_UNCONFIRMED', assigned_spot_id: SPOT_A1_ID, assigned_spot_state: 'OCCUPIED_UNKNOWN', number: null, aisle_code: null, level_code: null, ...STANDARD_VEHICLE_ROW }])
+      .answer('lock-answered-spot', [{ id: SPOT_B3_ID, state: 'OCCUPIED', number: 'B-3', aisle_code: 'B', level_code: 'P1', ...NO_FLAGS_ROW }]);
 
     await expect(new PostgresParkedAnswerRepository(scripted.database()).answer({ sessionId: SESSION_ID, driverId: JULIE_ID, spotNumber: 'B-3' })).resolves.toEqual({ outcome: 'spot-taken' });
     expect(scripted.labels()).toEqual(['read-session-lot', 'limit-lock-wait', 'lock-lot', 'lock-answering-session', 'lock-answered-spot']);

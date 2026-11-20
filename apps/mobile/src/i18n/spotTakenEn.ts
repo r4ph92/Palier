@@ -9,6 +9,6 @@ export const spotTakenEn: Translations['session']['spotTaken'] = {
   cancel: 'Keep %{number}',
   sending: SENDING,
   newSpotLead: 'New spot: ',
-  noneFree: 'No other free spot\u00A0— park in a free spot and enter its number',
+  noneFree: 'No other free spot\u00A0— park in a free spot that isn\'t reserved and enter its number',
   unreachable: UNREACHABLE,
 };

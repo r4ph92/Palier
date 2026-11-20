@@ -1,5 +1,8 @@
 import type { AssignedSpot, EntrySessionState, SpotCheckReason } from '@palier/shared-types';
+import { spotFits } from '../allocation/chooseSpotFor.ts';
+import type { SpotFlags } from '../spots/spotCategories.ts';
 import type { SpotState } from '../spots/spotStates.ts';
+import type { VehicleNeeds } from '../vehicles/VehicleRepository.ts';
 
 // Trimmed, otherwise as typed, so an exact painted number wins over its canonical match (decision 020).
 export interface SpotAnswer {
@@ -8,7 +11,7 @@ export interface SpotAnswer {
   readonly spotNumber: string;
 }
 
-export type ParkedAnswerRefusal = 'not-found' | 'not-asked' | 'closed' | 'unknown-spot' | 'spot-taken' | 'spot-out-of-service' | 'lot-busy';
+export type ParkedAnswerRefusal = 'not-found' | 'not-asked' | 'closed' | 'unknown-spot' | 'spot-taken' | 'spot-out-of-service' | 'spot-not-suitable' | 'lot-busy';
 
 // confirmed: this answer placed the car; already: an earlier answer did, and its spot stands.
 export type ParkedAnswer = { readonly outcome: 'confirmed' | 'already'; readonly spot: AssignedSpot } | { readonly outcome: ParkedAnswerRefusal };
@@ -53,10 +56,13 @@ export interface SpotFacts {
   readonly state: SpotState;
 }
 
+export type AnsweredSpotFacts = SpotFacts & SpotFlags;
+
 export interface PlacementFacts {
   readonly sessionState: EntrySessionState;
+  readonly needs: VehicleNeeds;
   readonly assignedSpot: SpotFacts;
-  readonly answeredSpot: SpotFacts;
+  readonly answeredSpot: AnsweredSpotFacts;
 }
 
 // What a placement writes: the answered spot occupied, unless it is the presumed one still occupied; the presumed spot flagged
@@ -67,8 +73,10 @@ export interface SpotWrites {
   readonly flagsAssigned: boolean;
 }
 
+type PlacementRefusal = Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service' | 'spot-not-suitable'>;
+
 export type Placement =
-  | { readonly outcome: 'refused'; readonly refusal: Extract<ParkedAnswerRefusal, 'spot-taken' | 'spot-out-of-service'> }
+  | { readonly outcome: 'refused'; readonly refusal: PlacementRefusal }
   | ({ readonly outcome: 'placed' } & SpotWrites);
 
 type CorrectionReason = Extract<SpotCheckReason, 'WRONG_AISLE' | 'WRONG_SPOT'>;
@@ -78,15 +86,29 @@ export function correctionReasonOf(assignedAisleId: string, answeredAisleId: str
   return assignedAisleId === answeredAisleId ? 'WRONG_SPOT' : 'WRONG_AISLE';
 }
 
-export function placementOf({ sessionState, assignedSpot, answeredSpot }: PlacementFacts): Placement {
+function isOwnAssignedSpot({ assignedSpot, answeredSpot }: PlacementFacts): boolean {
+  return answeredSpot.id === assignedSpot.id;
+}
+
+// Taken wins over fitness; the own assigned spot was allocated to this vehicle, so it is never fit-checked (decision 020).
+function answeredSpotRefusal(facts: PlacementFacts): PlacementRefusal | null {
+  const decision = decideSpotAnswer(facts.answeredSpot.state);
+  if (decision !== 'occupy') {
+    return decision;
+  }
+  return isOwnAssignedSpot(facts) || spotFits(facts.needs, facts.answeredSpot) ? null : 'spot-not-suitable';
+}
+
+export function placementOf(facts: PlacementFacts): Placement {
+  const { sessionState, assignedSpot, answeredSpot } = facts;
   const isPresumed = sessionState === 'PARKED_PRESUMED';
-  const isAssigned = answeredSpot.id === assignedSpot.id;
+  const isAssigned = isOwnAssignedSpot(facts);
   if (isPresumed && isAssigned && answeredSpot.state === 'OCCUPIED') {
     return { outcome: 'placed', occupiesAnswered: false, flagsAssigned: false };
   }
-  const decision = decideSpotAnswer(answeredSpot.state);
-  if (decision !== 'occupy') {
-    return { outcome: 'refused', refusal: decision };
+  const refusal = answeredSpotRefusal(facts);
+  if (refusal !== null) {
+    return { outcome: 'refused', refusal };
   }
   return { outcome: 'placed', occupiesAnswered: true, flagsAssigned: isPresumed && !isAssigned && assignedSpot.state === 'OCCUPIED' };
 }

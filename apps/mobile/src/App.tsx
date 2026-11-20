@@ -21,13 +21,13 @@ import { NullPositioningModule } from './positioning/NullPositioningModule';
 import { ParkedSignalQueue, secureQueueStorage } from './parkingSessions/ParkedSignalQueue';
 import { PositioningCore } from './positioning/PositioningCore';
 import { useAppFonts } from './theme/useAppFonts';
+import { loadedTestSignIn, offeredTestSignIn } from './testSignIn/loadTestSignIn';
 
 const LOCAL_API_URL = 'http://localhost:3000';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? LOCAL_API_URL;
 const authClient = new HttpAuthClient({ baseUrl: apiUrl });
-// Set only in local and test builds; a production build leaves it out and shows no test sign-in.
-const testSignInEnabled = process.env.EXPO_PUBLIC_TEST_SIGN_IN === 'true';
+const testSignIn = offeredTestSignIn(loadedTestSignIn, process.env.EXPO_PUBLIC_TEST_SIGN_IN, apiUrl);
 // The publishable key comes from the environment; use a test key (pk_test_…) in local and test builds.
 const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 applyLanguage(deviceLanguage());
@@ -57,7 +57,7 @@ const palierApp = (
     <PalierApp
       authClient={authClient}
       tokenStore={secureTokenStore}
-      testSignInEnabled={testSignInEnabled}
+      testSignIn={testSignIn}
       createSignedInClients={createSignedInClients}
       developerEntry={developerEntry}
       positioning={positioningCore}

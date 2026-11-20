@@ -5,6 +5,7 @@ import { spotHoldServicesOf } from '../../src/composeSpotHolds.ts';
 import { createTestClock } from '../../src/domain/time/TestClock.ts';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { FakeCardGateway } from './fakeCardGateway.ts';
+import type { Driver } from '../../src/domain/drivers/Driver.ts';
 import { FakeDriverRepository } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 import { FakeOperatorRepository } from './fakes/fakeOperatorRepository.ts';
@@ -30,11 +31,12 @@ interface ServerOptions {
   readonly entryClock?: Clock;
   readonly deviceKeys?: FakeGateDeviceKeyRepository;
   readonly entryGates?: EntryGateRepository;
+  readonly drivers?: readonly Driver[];
 }
 
 // The one place route tests build the real server over fake repositories.
-export function configureServer({ testSignInEnabled = false, demoMode = false, minimumAppVersion, entryClock, deviceKeys, entryGates }: ServerOptions = {}) {
-  const driverRepository = new FakeDriverRepository();
+export function configureServer({ testSignInEnabled = false, demoMode = false, minimumAppVersion, entryClock, deviceKeys, entryGates, drivers }: ServerOptions = {}) {
+  const driverRepository = new FakeDriverRepository(drivers);
   const vehicleRepository = new FakeVehicleRepository();
   const entries = fakeEntries({
     drivers: driverRepository,

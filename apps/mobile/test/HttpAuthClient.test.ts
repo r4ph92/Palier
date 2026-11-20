@@ -16,21 +16,6 @@ function clientRecording(response: () => Promise<Response>) {
 }
 
 describe('HttpAuthClient', () => {
-  it('lists the test drivers', async () => {
-    const drivers = [{ ...julie, lastName: 'Tremblay' }];
-    const { client, fetchFunction } = clientRecording(() => jsonResponse(drivers));
-
-    await expect(client.listTestDrivers()).resolves.toEqual(drivers);
-    expect(fetchFunction.mock.calls[0]?.[0]).toBe(`${BASE_URL}/v1/test/drivers`);
-  });
-
-  it('posts the chosen driver id to sign in, and returns the token and driver', async () => {
-    const { client, fetchFunction } = clientRecording(() => jsonResponse({ token: 'julie-token', driver: julie }));
-
-    await expect(client.signInAsTestDriver('driver-1')).resolves.toEqual({ token: 'julie-token', driver: julie });
-    expect(fetchFunction.mock.calls[0]?.[1]).toMatchObject({ method: 'POST', body: JSON.stringify({ driverId: 'driver-1' }) });
-  });
-
   it('sends the token as a bearer token to read the profile', async () => {
     const { client, fetchFunction } = clientRecording(() => jsonResponse({ ...julie, acceptedNoticeVersion: null }));
 
@@ -75,7 +60,7 @@ describe('HttpAuthClient', () => {
   it('reports other failures as a status error', async () => {
     const { client } = clientRecording(() => jsonResponse({}, 404));
 
-    await expect(client.listTestDrivers()).rejects.toBeInstanceOf(PalierStatusError);
+    await expect(client.fetchMe('julie-token')).rejects.toBeInstanceOf(PalierStatusError);
   });
 
   it('treats a network failure as unreachable', async () => {
@@ -85,8 +70,8 @@ describe('HttpAuthClient', () => {
   });
 
   it('treats a body of the wrong shape as unreachable', async () => {
-    const { client } = clientRecording(() => jsonResponse({ token: 'julie-token' }));
+    const { client } = clientRecording(() => jsonResponse({ id: 'driver-1' }));
 
-    await expect(client.signInAsTestDriver('driver-1')).rejects.toBeInstanceOf(PalierUnreachableError);
+    await expect(client.fetchMe('julie-token')).rejects.toBeInstanceOf(PalierUnreachableError);
   });
 });

@@ -53,10 +53,6 @@ export const fr = {
   spotHold: spotHoldFr,
   signIn: {
     title: 'Connexion',
-    testSignIn: 'Connexion de test',
-    pickDriver: 'Choisissez un conducteur de démonstration.',
-    loadingDrivers: 'Chargement des conducteurs',
-    driverGone: 'Ce conducteur n’existe plus.',
   },
   account: accountFr,
   receipts: receiptsFr,

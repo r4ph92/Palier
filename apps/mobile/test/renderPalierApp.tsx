@@ -6,7 +6,8 @@ import { PalierApp } from '../src/PalierApp';
 import type { ParkedSignalQueue } from '../src/parkingSessions/ParkedSignalQueue';
 import type { PositioningCore } from '../src/positioning/PositioningCore';
 import type { DeveloperEntry } from '../src/screens/DeveloperEntry';
-import { FakeAuthClient, julie, MemoryTokenStore } from './fakeAuth';
+import { TestSignInSection } from '../src/testSignIn/TestSignInSection';
+import { FakeAuthClient, FakeTestSignInClient, julie, MemoryTokenStore } from './fakeAuth';
 import { FakeBackgroundLocationClient } from './fakeBackgroundLocationClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeEntryClient } from './fakeEntryClient';
@@ -32,6 +33,7 @@ export interface PalierAppOptions {
   readonly authClient?: FakeAuthClient;
   readonly tokenStore?: MemoryTokenStore;
   readonly testSignInEnabled?: boolean;
+  readonly testSignInClient?: FakeTestSignInClient;
   readonly language?: SupportedLanguage;
   readonly metrics?: typeof IPHONE_15_METRICS;
   readonly developerEntry?: DeveloperEntry | undefined;
@@ -64,13 +66,15 @@ export function signedInJulie() {
 
 export async function renderPalierApp(options: PalierAppOptions = {}) {
   applyLanguage(options.language ?? 'fr');
+  const authClient = options.authClient ?? new FakeAuthClient();
+  const testSignIn = (options.testSignInEnabled ?? true) ? { Section: TestSignInSection, client: options.testSignInClient ?? new FakeTestSignInClient(authClient) } : null;
   const createSignedInClients = (session: SignedInSession): SignedInClients => ({ ...fakeSignedInClients(), ...options.clients?.(session) });
   return render(
     <SafeAreaProvider initialMetrics={options.metrics ?? IPHONE_15_METRICS}>
       <PalierApp
-        authClient={options.authClient ?? new FakeAuthClient()}
+        authClient={authClient}
         tokenStore={options.tokenStore ?? new MemoryTokenStore()}
-        testSignInEnabled={options.testSignInEnabled ?? true}
+        testSignIn={testSignIn}
         createSignedInClients={createSignedInClients}
         developerEntry={options.developerEntry}
         positioning={options.positioning}

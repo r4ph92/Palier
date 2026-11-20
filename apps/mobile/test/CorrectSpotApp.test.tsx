@@ -45,6 +45,7 @@ describe('correcting the spot Palier presumed (story #22)', () => {
   it.each([
     ['UNKNOWN_SPOT', 'Z-99', REFUSAL_MESSAGES.UNKNOWN_SPOT],
     ['SPOT_TAKEN', 'B-4', REFUSAL_MESSAGES.SPOT_TAKEN],
+    ['SPOT_NOT_SUITABLE', 'B-5', REFUSAL_MESSAGES.SPOT_NOT_SUITABLE],
   ])('shows the refusal %s of #21 under the field and keeps the form', async (code, typed, message) => {
     const { user, parkingSession } = await julieCorrecting();
     parkingSession.answerFailure = new PalierRejectedError(code);

@@ -2,6 +2,7 @@ import { screen, userEvent, within } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { createSimulatedToolkit } from '../src/dev/simulatedToolkit';
 import { PositioningCore } from '../src/positioning/PositioningCore';
+import { PalierStatusError } from '../src/api/LotsClient';
 import { PalierRejectedError } from '../src/api/VehicleClient';
 import { AISLE_B_FREE_SPOTS, FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
 import { renderPalierApp, signedInJulie } from './renderPalierApp';
@@ -103,6 +104,7 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     ['UNKNOWN_SPOT', 'Z-99', REFUSAL_MESSAGES.UNKNOWN_SPOT],
     ['SPOT_TAKEN', 'B-4', REFUSAL_MESSAGES.SPOT_TAKEN],
     ['SPOT_OUT_OF_SERVICE', 'B-5', REFUSAL_MESSAGES.SPOT_OUT_OF_SERVICE],
+    ['SPOT_NOT_SUITABLE', 'B-5', REFUSAL_MESSAGES.SPOT_NOT_SUITABLE],
   ])('shows the refusal %s under the field and keeps the question', async (code, typed, message) => {
     const { user, parkingSession } = await julieAskedInAisleB();
     parkingSession.answerFailure = new PalierRejectedError(code);
@@ -143,6 +145,17 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     expect(screen.getByLabelText('Numéro de place')).not.toHaveProp('accessibilityHint', expect.anything());
   });
 
+  it('reads the reserved-spot refusal on an English device', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB('en');
+    parkingSession.answerFailure = new PalierRejectedError('SPOT_NOT_SUITABLE');
+
+    await user.press(screen.getByRole('radio', { name: 'B-3' }));
+    await user.press(screen.getByRole('button', { name: /^Confirm\s/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('This spot is reserved — check the number on the ground', visibleText);
+    expect(screen.getByRole('header', { name: 'Where are you parked?' })).toBeOnTheScreen();
+  });
+
   it('reads « Where are you parked? » and its refusals on an English device', async () => {
     const { user, parkingSession } = await julieAskedInAisleB('en');
     parkingSession.answerFailure = new PalierRejectedError('SPOT_TAKEN');
@@ -154,5 +167,16 @@ describe('asking where Julie parked after a walk in another aisle (story #21)', 
     expect(screen.getByText('Free spots in aisle B for your vehicle')).toBeOnTheScreen();
     expect(await screen.findByRole('alert')).toHaveTextContent('This spot is already assigned — check the number on the ground', visibleText);
     expect(within(screen.getByRole('button', { name: /^Confirm\s/ })).getByText('Confirm B-3', visibleText)).toBeOnTheScreen();
+  });
+
+  it('reads « Too many attempts » on an English device when the answer limit is reached', async () => {
+    const { user, parkingSession } = await julieAskedInAisleB('en');
+    parkingSession.answerFailure = new PalierStatusError(429);
+
+    await user.press(screen.getByRole('radio', { name: 'B-3' }));
+    await user.press(screen.getByRole('button', { name: /^Confirm\s/ }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Too many attempts, try again in a few minutes', visibleText);
+    expect(screen.getByRole('header', { name: 'Where are you parked?' })).toBeOnTheScreen();
   });
 });

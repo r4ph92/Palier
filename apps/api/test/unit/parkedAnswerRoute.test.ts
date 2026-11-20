@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { acceptNoticeAs, authorizationFor, julie, marc } from './fakeDriverRepository.ts';
 import { JULIE_SESSION_ID } from './fakes/fakeCurrentParkingSessions.ts';
-import { julieSessionIn, julieWithAnsweringSession, SPOT_TAKEN_BODY, UNKNOWN_SPOT_BODY } from './parkedAnswerRig.ts';
+import { amelieSessionIn, julieSessionIn, julieWithAnsweringSession, SPOT_NOT_SUITABLE_BODY, SPOT_TAKEN_BODY, UNKNOWN_SPOT_BODY } from './parkedAnswerRig.ts';
 import { SESSION_NOT_FOUND_BODY } from '../../src/http/sessionNotFound.ts';
 
 const julieAsked = () => julieSessionIn('PARKED_UNCONFIRMED');
@@ -196,5 +196,65 @@ describe('POST /v1/entries/:sessionId/spot (story #21)', () => {
     const { answer } = await julieAskedWhereParked();
 
     expect((await answer('B-3', {})).statusCode).toBe(401);
+  });
+
+  describe('spots reserved for a vehicle need (story #125)', () => {
+    it.each(['B-5', 'A-5', 'b5', ' a 5 '])('refuses Julie, standard vehicle, the reserved spot « %s » with SPOT_NOT_SUITABLE and changes nothing', async (typed) => {
+      const { answer, parkedAnswers } = await julieAskedWhereParked();
+
+      const response = await answer(typed);
+
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toEqual(SPOT_NOT_SUITABLE_BODY);
+      expect(parkedAnswers.spotOf('B-5')).toEqual({ state: 'AVAILABLE', needsCheck: false });
+      expect(parkedAnswers.spotOf('A-5')).toEqual({ state: 'AVAILABLE', needsCheck: false });
+      expect(parkedAnswers.spotOf('A-1')).toEqual({ state: 'OCCUPIED_UNKNOWN', needsCheck: true });
+      expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toEqual(julieAsked());
+      expect(parkedAnswers.writes).toBe(0);
+    });
+
+    it('places Julie in the free oversize B-4, as allocation would allow her', async () => {
+      const { answer, parkedAnswers } = await julieAskedWhereParked();
+      parkedAnswers.setSpot('B-4', { state: 'AVAILABLE', needsCheck: false });
+
+      const response = await answer('B-4');
+
+      expect(response.json()).toEqual({ state: 'PARKED_CONFIRMED', spot: { number: 'B-4', levelCode: 'P1', aisleCode: 'B' } });
+      expect(parkedAnswers.spotOf('B-4')).toEqual({ state: 'OCCUPIED', needsCheck: false });
+      expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toMatchObject({ state: 'PARKED_CONFIRMED', confirmedSpotNumber: 'B-4' });
+    });
+
+    it('accepts B-3 after a refused B-5', async () => {
+      const { answer, parkedAnswers } = await julieAskedWhereParked();
+
+      await answer('B-5');
+      const response = await answer('B-3');
+
+      expect(response.statusCode).toBe(200);
+      expect(parkedAnswers.sessionOf(JULIE_SESSION_ID)).toMatchObject({ state: 'PARKED_CONFIRMED', confirmedSpotNumber: 'B-3' });
+    });
+
+    it.each([
+      { naming: 'the electric A-5, walked away from aisle B', assigned: 'B-1', answered: 'A-5' },
+      { naming: 'the accessible B-5, walked away from aisle A', assigned: 'A-1', answered: 'B-5' },
+    ])('places Amélie, electric with a permit, on $naming', async ({ assigned, answered }) => {
+      const rig = await julieWithAnsweringSession(amelieSessionIn('PARKED_UNCONFIRMED', assigned), { [assigned]: { state: 'OCCUPIED_UNKNOWN', needsCheck: true } });
+      server = rig.server;
+
+      const response = await rig.answer(answered, rig.amelieHeaders);
+
+      expect(response.statusCode).toBe(200);
+      expect(rig.parkedAnswers.sessionOf(JULIE_SESSION_ID)).toMatchObject({ state: 'PARKED_CONFIRMED', confirmedSpotNumber: answered });
+      expect(rig.parkedAnswers.spotOf(answered)).toEqual({ state: 'OCCUPIED', needsCheck: false });
+    });
+
+    it('keeps SPOT_TAKEN for a reserved spot assigned to someone else', async () => {
+      const { answer, parkedAnswers } = await julieAskedWhereParked();
+      parkedAnswers.setSpot('B-5', { state: 'ASSIGNED', needsCheck: false });
+
+      const response = await answer('B-5');
+
+      expect(response.json()).toEqual(SPOT_TAKEN_BODY);
+    });
   });
 });

@@ -8,12 +8,17 @@ describe('what a refused spot answer leads to (story #21)', () => {
     ['UNKNOWN_SPOT', 'UNKNOWN_SPOT'],
     ['SPOT_TAKEN', 'SPOT_TAKEN'],
     ['SPOT_OUT_OF_SERVICE', 'SPOT_OUT_OF_SERVICE'],
+    ['SPOT_NOT_SUITABLE', 'SPOT_NOT_SUITABLE'],
   ])('shows %s as %s', (code, problem) => {
     expect(parkedAnswerOutcomeOf(new PalierRejectedError(code))).toEqual({ kind: 'problem', problem });
   });
 
   it('shows the 400 of the schema check (FST_ERR_VALIDATION) as an invalid number', () => {
     expect(parkedAnswerOutcomeOf(new PalierStatusError(400))).toEqual({ kind: 'problem', problem: 'INVALID_NUMBER' });
+  });
+
+  it('shows the 429 of the answer limit as too many attempts', () => {
+    expect(parkedAnswerOutcomeOf(new PalierStatusError(429))).toEqual({ kind: 'problem', problem: 'TOO_MANY_ATTEMPTS' });
   });
 
   it.each(['NOT_ASKED', 'SESSION_CLOSED', 'SESSION_NOT_FOUND'])('reads the session again for %s', (code) => {

@@ -4,7 +4,9 @@ import type { DriverAccess } from '../../domain/drivers/driverSessions.ts';
 import type { ParkedPresumption, ParkedPresumptionRepository, WalkingSignal } from '../../domain/parkingSessions/ParkedPresumption.ts';
 import { isStorableDate } from '../../domain/time/storableDate.ts';
 import { consentedDriverGuards } from '../requireConsent.ts';
-import { ENTRY_NOT_CONFIRMED_BODY, LOT_BUSY_BODY, refusalSender, SESSION_CLOSED_BODY } from '../parkedRefusals.ts';
+import { ENTRY_NOT_CONFIRMED_BODY, LOT_BUSY_BODY, refusalSender, SESSION_CLOSED_BODY, TOO_MANY_PARKED_SIGNALS_BODY } from '../parkedRefusals.ts';
+import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
+import { PARKED_ATTEMPT_WINDOW_MILLISECONDS, PARKED_SIGNAL_LIMIT } from '../../domain/parkingSessions/parkedAttemptLimits.ts';
 import { SESSION_NOT_FOUND_BODY } from '../sessionNotFound.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { entrySessionParametersSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
@@ -29,14 +31,23 @@ const sendRefusal = refusalSender<Exclude<ParkedPresumption['outcome'], 'recorde
 export function registerParkedPresumptionRoute(server: FastifyInstance, driverAccess: DriverAccess, presumptions: ParkedPresumptionRepository): void {
   const onRequest = consentedDriverGuards(driverAccess);
   const schema = { params: entrySessionParametersSchema, body: parkedPresumptionRequestSchema, response: { 200: parkedPresumptionResponseSchema } };
-  server.post<ParkedRoute>('/v1/entries/:sessionId/parked', { onRequest, schema }, (request, reply) => presume(presumptions, request, reply));
+  const limiter = createSetupLimiter(PARKED_SIGNAL_LIMIT, PARKED_ATTEMPT_WINDOW_MILLISECONDS);
+  server.post<ParkedRoute>('/v1/entries/:sessionId/parked', { onRequest, schema }, (request, reply) => presume({ presumptions, limiter }, request, reply));
+}
+
+interface PresumeContext {
+  readonly presumptions: ParkedPresumptionRepository;
+  readonly limiter: SetupLimiter;
 }
 
 async function presume(
-  presumptions: ParkedPresumptionRepository,
+  { presumptions, limiter }: PresumeContext,
   request: FastifyRequest<ParkedRoute>,
   reply: FastifyReply,
 ): Promise<ParkedPresumptionResponse | FastifyReply> {
+  if (!limiter.allow(signedInDriver(request).id)) {
+    return reply.status(TOO_MANY_PARKED_SIGNALS_BODY.statusCode).send(TOO_MANY_PARKED_SIGNALS_BODY);
+  }
   const detectedAt = new Date(request.body.detectedAt);
   // The schema's date-time format admits a leap second, which Date cannot hold, and year 0000, which Postgres cannot.
   if (!isStorableDate(detectedAt)) {

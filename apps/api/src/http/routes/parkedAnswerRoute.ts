@@ -6,7 +6,9 @@ import { consentedDriverGuards } from '../requireConsent.ts';
 import { signedInDriver } from '../requireDriver.ts';
 import { entrySessionParametersSchema, type EntrySessionParameters } from '../schemas/entrySchemas.ts';
 import { parkedSpotAnswerRequestSchema, parkedSpotAnswerResponseSchema } from '../schemas/parkingSessionSchemas.ts';
-import { isBlankSpotNumber, LOT_BUSY_BODY, refusalSender, replyBlankSpotNumber, SESSION_CLOSED_BODY } from '../parkedRefusals.ts';
+import { isBlankSpotNumber, LOT_BUSY_BODY, refusalSender, replyBlankSpotNumber, SESSION_CLOSED_BODY, TOO_MANY_PARKED_ANSWERS_BODY } from '../parkedRefusals.ts';
+import { createSetupLimiter, type SetupLimiter } from '../SetupLimiter.ts';
+import { PARKED_ANSWER_LIMIT, PARKED_ATTEMPT_WINDOW_MILLISECONDS } from '../../domain/parkingSessions/parkedAttemptLimits.ts';
 import { SESSION_NOT_FOUND_BODY } from '../sessionNotFound.ts';
 
 const CONFLICT = 409;
@@ -24,6 +26,7 @@ const sendRefusal = refusalSender<ParkedAnswerRefusal, ParkedSpotAnswerRefusalCo
     'unknown-spot': { statusCode: CONFLICT, error: 'UNKNOWN_SPOT', message: 'No spot has this number in this parking lot.' },
     'spot-taken': { statusCode: CONFLICT, error: 'SPOT_TAKEN', message: 'This spot is already assigned.' },
     'spot-out-of-service': { statusCode: CONFLICT, error: 'SPOT_OUT_OF_SERVICE', message: 'This spot is out of service.' },
+    'spot-not-suitable': { statusCode: CONFLICT, error: 'SPOT_NOT_SUITABLE', message: 'This spot does not suit your vehicle.' },
     'lot-busy': LOT_BUSY_BODY,
   },
   'spot answer',
@@ -33,15 +36,25 @@ const sendRefusal = refusalSender<ParkedAnswerRefusal, ParkedSpotAnswerRefusalCo
 export function registerParkedAnswerRoute(server: FastifyInstance, driverAccess: DriverAccess, answers: ParkedAnswerRepository): void {
   const onRequest = consentedDriverGuards(driverAccess);
   const schema = { params: entrySessionParametersSchema, body: parkedSpotAnswerRequestSchema, response: { 200: parkedSpotAnswerResponseSchema } };
-  server.post<AnswerRoute>('/v1/entries/:sessionId/spot', { onRequest, schema }, (request, reply) => answer(answers, request, reply));
+  const limiter = createSetupLimiter(PARKED_ANSWER_LIMIT, PARKED_ATTEMPT_WINDOW_MILLISECONDS);
+  server.post<AnswerRoute>('/v1/entries/:sessionId/spot', { onRequest, schema }, (request, reply) => answer({ answers, limiter }, request, reply));
 }
 
-async function answer(answers: ParkedAnswerRepository, request: FastifyRequest<AnswerRoute>, reply: FastifyReply): Promise<ParkedSpotAnswerResponse | FastifyReply> {
+interface AnswerContext {
+  readonly answers: ParkedAnswerRepository;
+  readonly limiter: SetupLimiter;
+}
+
+async function answer({ answers, limiter }: AnswerContext, request: FastifyRequest<AnswerRoute>, reply: FastifyReply): Promise<ParkedSpotAnswerResponse | FastifyReply> {
+  const driver = signedInDriver(request);
+  if (!limiter.allow(driver.id)) {
+    return reply.status(TOO_MANY_PARKED_ANSWERS_BODY.statusCode).send(TOO_MANY_PARKED_ANSWERS_BODY);
+  }
   const spotNumber = request.body.spotNumber.trim();
   if (isBlankSpotNumber(spotNumber)) {
     return replyBlankSpotNumber(reply);
   }
-  const answered = await answers.answer({ sessionId: request.params.sessionId, driverId: signedInDriver(request).id, spotNumber });
+  const answered = await answers.answer({ sessionId: request.params.sessionId, driverId: driver.id, spotNumber });
   if (answered.outcome === 'confirmed' || answered.outcome === 'already') {
     return { state: 'PARKED_CONFIRMED', spot: answered.spot };
   }

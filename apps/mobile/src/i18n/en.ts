@@ -53,10 +53,6 @@ export const en: Translations = {
   spotHold: spotHoldEn,
   signIn: {
     title: 'Sign in',
-    testSignIn: 'Test sign-in',
-    pickDriver: 'Pick a demo driver.',
-    loadingDrivers: 'Loading drivers',
-    driverGone: 'This driver no longer exists.',
   },
   account: accountEn,
   receipts: receiptsEn,

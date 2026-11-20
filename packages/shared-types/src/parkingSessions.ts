@@ -73,7 +73,7 @@ export interface ParkedPresumptionResponse {
   readonly parkedAt: string;
 }
 
-export type ParkedPresumptionRefusalCode = 'SESSION_NOT_FOUND' | 'ENTRY_NOT_CONFIRMED' | 'SESSION_CLOSED' | 'LOT_BUSY';
+export type ParkedPresumptionRefusalCode = 'SESSION_NOT_FOUND' | 'ENTRY_NOT_CONFIRMED' | 'SESSION_CLOSED' | 'LOT_BUSY' | 'TOO_MANY_PARKED_SIGNALS';
 
 // The number the driver read on the ground, as typed: Palier normalizes « b3 » or « B – 3 » to « B-3 ».
 export interface ParkedSpotAnswerRequest {
@@ -93,7 +93,9 @@ export type ParkedSpotAnswerRefusalCode =
   | 'UNKNOWN_SPOT'
   | 'SPOT_TAKEN'
   | 'SPOT_OUT_OF_SERVICE'
-  | 'LOT_BUSY';
+  | 'SPOT_NOT_SUITABLE'
+  | 'LOT_BUSY'
+  | 'TOO_MANY_PARKED_ANSWERS';
 
 // The number of the spot the driver found taken, as the app showed it: a report naming a spot that is no longer theirs changes nothing.
 export interface SpotTakenRequest {

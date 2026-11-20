@@ -4,6 +4,7 @@ import type { WalkingSignal } from '../../src/domain/parkingSessions/ParkedPresu
 import { PostgresParkedAnswerRepository } from '../../src/infrastructure/postgres/PostgresParkedAnswerRepository.ts';
 import { PostgresParkedPresumptionRepository } from '../../src/infrastructure/postgres/PostgresParkedPresumptionRepository.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
+import { NO_FLAGS_ROW, STANDARD_VEHICLE_ROW } from './fakes/answerRows.ts';
 
 const ERIC_ID = '00000000-0000-4000-8000-000000000505';
 const SESSION_ID = '00000000-0000-4000-8000-000000000951';
@@ -20,9 +21,9 @@ function ericPresumedInA2Answers(answered: { readonly id: string; readonly aisle
   return new ScriptedSql()
     .answer('read-session-lot', [{ lot_id: LOT_ID }])
     .answer('lock-answering-session', [
-      { state: 'PARKED_PRESUMED', assigned_spot_id: SPOT_A2_ID, assigned_aisle_id: AISLE_A_ID, assigned_spot_state: 'OCCUPIED', number: null, aisle_code: null, level_code: null },
+      { state: 'PARKED_PRESUMED', assigned_spot_id: SPOT_A2_ID, assigned_aisle_id: AISLE_A_ID, assigned_spot_state: 'OCCUPIED', number: null, aisle_code: null, level_code: null, ...STANDARD_VEHICLE_ROW },
     ])
-    .answer('lock-answered-spot', [{ id: answered.id, aisle_id: answered.aisleId, state: 'AVAILABLE', number: answered.number, aisle_code: answered.aisleCode, level_code: 'P1' }])
+    .answer('lock-answered-spot', [{ id: answered.id, aisle_id: answered.aisleId, state: 'AVAILABLE', number: answered.number, aisle_code: answered.aisleCode, level_code: 'P1', ...NO_FLAGS_ROW }])
     .answer('occupy-answered-spot', [{ id: answered.id }])
     .answer('flag-assigned-spot', [{ id: SPOT_A2_ID }])
     .answer('confirm-parked-spot', [{ id: SESSION_ID }]);

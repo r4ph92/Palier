@@ -3,13 +3,17 @@ import type { AssignedSpot, EntrySessionState, SpotCheckReason } from '@palier/s
 import { canonicalSpotNumber } from '@palier/shared-types/spotNumber';
 import type { SpotAnswer } from '../../domain/parkingSessions/ParkedAnswer.ts';
 import { paintedNumberNamed } from '../../domain/spots/paintedSpotNumber.ts';
+import type { SpotFlags } from '../../domain/spots/spotCategories.ts';
 import type { SpotState } from '../../domain/spots/spotStates.ts';
+import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import { canonicalNumberOf } from './canonicalNumberSql.ts';
 import type { Database, Transaction } from './database.ts';
 import { requireUpdatedRow } from './requireUpdatedRow.ts';
 import { liveSpot } from './liveSpot.ts';
 import { spot } from './lotSchema.ts';
+import { spotFlagsOf, type SpotFlagsRow } from './spotClaim.ts';
 import { spotOf, type SpotLabelRow } from './spotLabel.ts';
+import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './vehicleNeedsSql.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
 
@@ -17,9 +21,10 @@ export interface AnsweringSession {
   readonly state: EntrySessionState;
   readonly assignedSpot: { readonly id: string; readonly aisleId: string; readonly state: SpotState };
   readonly confirmedSpot: AssignedSpot | null;
+  readonly needs: VehicleNeeds;
 }
 
-export interface AnsweredSpot {
+export interface AnsweredSpot extends SpotFlags {
   readonly id: string;
   readonly aisleId: string;
   readonly state: SpotState;
@@ -30,7 +35,7 @@ interface SessionLotRow extends Record<string, unknown> {
   readonly lot_id: string;
 }
 
-interface AnsweringSessionRow extends Record<string, unknown> {
+interface AnsweringSessionRow extends VehicleNeedsRow, Record<string, unknown> {
   readonly state: EntrySessionState;
   readonly assigned_spot_id: string;
   readonly assigned_aisle_id: string;
@@ -40,7 +45,7 @@ interface AnsweringSessionRow extends Record<string, unknown> {
   readonly level_code: string | null;
 }
 
-interface AnsweredSpotRow extends SpotLabelRow {
+interface AnsweredSpotRow extends SpotLabelRow, SpotFlagsRow {
   readonly id: string;
   readonly aisle_id: string;
   readonly state: SpotState;
@@ -54,9 +59,10 @@ export async function readSessionLot(database: Database, { sessionId, driverId }
 
 export async function lockAnsweringSession(tx: Executor, { sessionId, driverId }: SpotAnswer): Promise<AnsweringSession | null> {
   const [row] = await tx.execute<AnsweringSessionRow>(sql`
-    select ps.state, ps.assigned_spot_id, assigned.aisle_id as assigned_aisle_id, assigned.state as assigned_spot_state, spot.number, aisle.code as aisle_code, level.code as level_code
+    select ps.state, ps.assigned_spot_id, assigned.aisle_id as assigned_aisle_id, assigned.state as assigned_spot_state, spot.number, aisle.code as aisle_code, level.code as level_code, ${vehicleNeedsColumns}
     from parking_session ps
     join spot assigned on assigned.id = ps.assigned_spot_id
+    left join vehicle on vehicle.id = ps.vehicle_id
     left join spot on spot.id = ps.confirmed_spot_id
     left join aisle on aisle.id = spot.aisle_id
     left join level on level.id = aisle.level_id
@@ -67,7 +73,7 @@ export async function lockAnsweringSession(tx: Executor, { sessionId, driverId }
   }
   const { number, aisle_code, level_code } = row;
   const confirmedSpot = number === null || aisle_code === null || level_code === null ? null : spotOf({ number, aisle_code, level_code });
-  return { state: row.state, assignedSpot: { id: row.assigned_spot_id, aisleId: row.assigned_aisle_id, state: row.assigned_spot_state }, confirmedSpot };
+  return { state: row.state, assignedSpot: { id: row.assigned_spot_id, aisleId: row.assigned_aisle_id, state: row.assigned_spot_state }, confirmedSpot, needs: vehicleNeedsOf(row) };
 }
 
 export interface SpotNumberInLot {
@@ -79,7 +85,7 @@ export interface SpotNumberInLot {
 // Painted numbers have no fixed shape (« P1-12 », « B-7a »), so every spot equal without case, spaces or dashes is locked, then one is named.
 export async function lockAnsweredSpot(tx: Executor, { lotId, spotNumber }: SpotNumberInLot): Promise<AnsweredSpot | null> {
   const rows = await tx.execute<AnsweredSpotRow>(sql`
-    select spot.id, spot.aisle_id, spot.state, spot.number, aisle.code as aisle_code, level.code as level_code
+    select spot.id, spot.aisle_id, spot.state, spot.number, spot.is_ev, spot.is_accessible, spot.is_oversize, aisle.code as aisle_code, level.code as level_code
     from spot
     join aisle on aisle.id = spot.aisle_id
     join level on level.id = aisle.level_id
@@ -88,7 +94,7 @@ export async function lockAnsweredSpot(tx: Executor, { lotId, spotNumber }: Spot
     for update of spot`);
   const named = paintedNumberNamed(rows.map(({ number }) => number), spotNumber);
   const row = rows.find(({ number }) => number === named);
-  return row === undefined ? null : { id: row.id, aisleId: row.aisle_id, state: row.state, label: spotOf(row) };
+  return row === undefined ? null : { id: row.id, aisleId: row.aisle_id, state: row.state, label: spotOf(row), ...spotFlagsOf(row) };
 }
 
 // The state was read under the lock just before: a zero-row update is a broken invariant, and rolls the answer back.

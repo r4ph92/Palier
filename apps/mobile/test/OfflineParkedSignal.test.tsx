@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react-native';
-import { PalierUnreachableError } from '../src/api/LotsClient';
+import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 import { memoryQueueStorage } from '../src/parkingSessions/ParkedSignalQueue';
 import { SENT_BANNER_MILLISECONDS } from '../src/parkingSessions/useParkedSignalBanner';
 import { FakeParkingSessionClient, julieAtParkingDemo } from './fakeParkingSessionClient';
@@ -64,6 +64,20 @@ describe('keeping the parking signal when the network drops (story #26)', () => 
 
     expect(parkingSession.parkedReports).toHaveLength(2);
     expect(parkingSession.parkedReports[1]?.detectedAt).toBe(parkingSession.parkedReports[0]?.detectedAt);
+    expect(await screen.findByText(PARKED_IN_A1, visibleText)).toBeOnTheScreen();
+  });
+
+  it('keeps a signal refused with a 429 and sends it again at the next flush', async () => {
+    const parkingSession = new FakeParkingSessionClient(julieAtParkingDemo());
+    const { user } = await julieWithPanel('fr', memoryQueueStorage(), parkingSession);
+    parkingSession.parkedFailure = new PalierStatusError(429);
+    await pressInPanel(user, WALKING);
+    expect(parkingSession.parkedReports).toHaveLength(1);
+    parkingSession.parkedFailure = null;
+
+    await pressInPanel(user, 'flushOfflineQueue');
+
+    expect(parkingSession.parkedReports).toHaveLength(2);
     expect(await screen.findByText(PARKED_IN_A1, visibleText)).toBeOnTheScreen();
   });
 
