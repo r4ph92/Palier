@@ -1,9 +1,8 @@
 import { sql } from 'drizzle-orm';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 
-// The session's vehicle, joined as `vehicle`; a session whose vehicle was deleted keeps standard needs.
-export const vehicleNeedsColumns = sql`coalesce(vehicle.is_electric, false) as is_electric,
-      coalesce(vehicle.has_accessible_permit, false) as has_accessible_permit, coalesce(vehicle.is_oversize, false) as is_oversize`;
+// The needs written on the session at entry, joined as `ps`: a change to the vehicle, or its deletion, during the session never changes them (story #219).
+export const sessionNeedsColumns = sql`ps.is_electric, ps.has_accessible_permit, ps.is_oversize`;
 
 export interface VehicleNeedsRow {
   readonly is_electric: boolean;
