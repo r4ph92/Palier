@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { NADIA_BOUCHARD_ID } from '../../src/config/testPersonas.ts';
+import type { Driver } from '../../src/domain/drivers/Driver.ts';
 import type { LotAvailabilityRepository } from '../../src/domain/lots/LotAvailabilityRepository.ts';
 import { buildServer } from '../../src/http/buildServer.ts';
-import type { Driver } from '../../src/domain/drivers/Driver.ts';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie } from './fakeDriverRepository.ts';
 import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 import { PARKING_DEMO_CATEGORIES, PARKING_DEMO_CATEGORIES_WITH_8_INSIDE, parkingDemoAvailability, parkingDemoOnline, repositoryReturning } from './fakes/lotFixtures.ts';
@@ -120,7 +121,7 @@ describe('GET /v1/lots without a valid driver token', () => {
 // The position stays on the phone (decision 015): the list route takes no parameter, and a request carrying one gets no lot.
 describe('GET /v1/lots with query parameters', () => {
   const POSITION_QUERY = '?latitude=45.5&longitude=-73.5';
-  const nadia: Driver = { id: '00000000-0000-4000-8000-000000000504', firstName: 'Nadia', lastName: 'Bouchard' };
+  const nadia: Driver = { id: NADIA_BOUCHARD_ID, firstName: 'Nadia', lastName: 'Bouchard' };
   let server: FastifyInstance;
   let findOnlineLots: LotAvailabilityRepository['findOnlineLots'];
   let driverRepository: FakeDriverRepository;
