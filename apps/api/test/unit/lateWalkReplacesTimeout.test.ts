@@ -94,15 +94,23 @@ describe('a late walk replacing a timeout presumption (story #147)', () => {
     expect(scripted.count('lock-lot')).toBe(0);
   });
 
-  it('keeps the timeout and its time when the walk is later than the presumption, answering already at 10:31', async () => {
-    const scripted = timeoutPresumedAtA1();
+  // The time comparison itself is the SQL guard checked above; these cases prove what the walk answers when that guard matches nothing.
+  it('keeps the timeout and its time when the guarded update refuses a later walk, answering already at 10:31 as read back', async () => {
+    const scripted = timeoutPresumedAtA1().answer('read-unchanged-session', [{ state: 'PARKED_PRESUMED', parked_at: TIMEOUT_AT.toISOString() }]);
 
     await expect(walkWith(scripted, walk(1, JULIE_ID, new Date('2026-11-04T15:40:00Z')))).resolves.toEqual({
       outcome: 'already',
       state: 'PARKED_PRESUMED',
       parkedAt: TIMEOUT_AT,
     });
-    expect(scripted.labels()).toEqual(['read-walk-facts', 'presume-parked']);
+    expect(scripted.labels()).toEqual(['read-walk-facts', 'presume-parked', 'read-unchanged-session']);
+  });
+
+  it('answers with the correction when Julie confirmed A-2 between the facts read and the guarded update', async () => {
+    const scripted = timeoutPresumedAtA1().answer('read-unchanged-session', [{ state: 'PARKED_CONFIRMED', parked_at: TIMEOUT_AT.toISOString() }]);
+
+    await expect(walkWith(scripted, walk(1))).resolves.toEqual({ outcome: 'already', state: 'PARKED_CONFIRMED', parkedAt: TIMEOUT_AT });
+    expect(scripted.statement('read-unchanged-session')?.params).toEqual([SESSION_ID, JULIE_ID]);
   });
 
   it('keeps the timeout for a walk with no aisle that it cannot replace, answering with the session as read back', async () => {
@@ -112,8 +120,10 @@ describe('a late walk replacing a timeout presumption (story #147)', () => {
     expect(scripted.labels()).toEqual(['presume-parked', 'read-unchanged-session']);
   });
 
-  it('keeps a walk presumption at its own time: the guarded update matches nothing, a walk never replaces a walk', async () => {
-    const scripted = new ScriptedSql().answer('read-walk-facts', [factsRow('PARKED_PRESUMED', aisleA, WALKED_AT)]);
+  it('keeps a walk presumption at its own time when the guarded update matches nothing: a walk never replaces a walk', async () => {
+    const scripted = new ScriptedSql()
+      .answer('read-walk-facts', [factsRow('PARKED_PRESUMED', aisleA, WALKED_AT)])
+      .answer('read-unchanged-session', [{ state: 'PARKED_PRESUMED', parked_at: WALKED_AT.toISOString() }]);
 
     await expect(walkWith(scripted, walk(1, JULIE_ID, new Date('2026-11-04T15:03:00Z')))).resolves.toEqual({
       outcome: 'already',

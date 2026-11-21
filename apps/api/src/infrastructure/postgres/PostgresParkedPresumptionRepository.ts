@@ -44,7 +44,7 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
   }
 
   // Null when the write found the confirmed entry changed since its facts were read, a spot-taken report in between: the caller reads them again.
-  // A presumed session is tried once in the spot's aisle, for a late walk replacing a timeout (#147); one it cannot replace stands as read.
+  // A presumed session is tried once in the spot's aisle, for a late walk replacing a timeout (#147); one it cannot replace is read back, a correction may have won the race.
   // Another aisle asks nothing once the session is presumed.
   async #walkOnFacts(signal: WalkingSignal): Promise<ParkedPresumption | null> {
     const facts = await readWalkFacts(this.#database, signal);
@@ -59,7 +59,7 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
     if (parkedAt !== null) {
       return { outcome: 'recorded', state: 'PARKED_PRESUMED', parkedAt };
     }
-    return facts.state === 'ENTRY_CONFIRMED' ? null : classifyRefusedSignal(facts);
+    return facts.state === 'ENTRY_CONFIRMED' ? null : classifyRefusedSignal(await this.#readSessionAfterRefusal(signal));
   }
 
   async #recordedOrRefused(signal: WalkingSignal, parkedAt: Date | null): Promise<ParkedPresumption> {
