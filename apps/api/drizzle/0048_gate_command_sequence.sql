@@ -1,4 +1,3 @@
-DROP INDEX "gate_command_gate_id_issued_at_index";--> statement-breakpoint
 ALTER TABLE "gate" ADD COLUMN "last_command_sequence" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
 ALTER TABLE "gate_command" ADD COLUMN "sequence" integer;--> statement-breakpoint
 -- The commands stored before #100 keep the order the console showed them in: issue time, then id.

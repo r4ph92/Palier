@@ -1,5 +1,5 @@
 {
-  "id": "d3160eec-a33e-456a-8934-78806a1bd075",
+  "id": "42a99c25-28d1-44c5-a26d-46a2acf532a0",
   "prevId": "2a7226e7-1935-43f6-b441-9aafb8da9af2",
   "version": "7",
   "dialect": "postgresql",
@@ -1500,6 +1500,33 @@
         }
       },
       "indexes": {
+        "gate_command_gate_id_issued_at_index": {
+          "name": "gate_command_gate_id_issued_at_index",
+          "columns": [
+            {
+              "expression": "gate_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "issued_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "gate_command_session_id_index": {
           "name": "gate_command_session_id_index",
           "columns": [

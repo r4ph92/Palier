@@ -225,6 +225,7 @@ export const gateCommand = pgTable(
       columns: [table.gateId, table.lotId],
       foreignColumns: [gate.id, gate.lotId],
     }),
+    index('gate_command_gate_id_issued_at_index').on(table.gateId, table.issuedAt, table.id),
     unique('gate_command_gate_id_sequence_unique').on(table.gateId, table.sequence),
     index('gate_command_session_id_index').on(table.sessionId),
   ],
