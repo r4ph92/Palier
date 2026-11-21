@@ -10,7 +10,7 @@
   - `GATE_OPENED` `{ direction: 'ENTRY', gateId, commandId }` — à `gate_command.issued_at` ;
   - `ENTRY_LOOP_CLOSED` `{ gateId }` — à `entry_confirmed_at`, l'heure rapportée par la barrière ;
   - `AISLE_DETECTED` `{ aisleId, aisleCode, beaconMinor, isAssignedAisle }` — au `parked_at` gardé par 019 ;
-  - `PARKING_PRESUMED` `{ evidence: 'ON_FOOT' | 'TIMEOUT', spotId, spotNumber }` — à pied, au `parked_at` ; après le silence de 030, à l'horloge de la tâche (une question sans réponse garde son `parked_at`, l'événement prend l'instant de la tâche), sur la place assignée ;
+  - `PARKING_PRESUMED` `{ evidence: 'ON_FOOT' | 'TIMEOUT', spotId, spotNumber }` — à pied, au `parked_at`, aussi quand un passage tardif remplace une présomption `TIMEOUT` (030, #147) : il s'inscrit alors après l'événement `TIMEOUT`, à l'heure antérieure du passage ; après le silence de 030, à l'horloge de la tâche (une question sans réponse garde son `parked_at`, l'événement prend l'instant de la tâche), sur la place assignée ;
   - `PARKING_CONFIRMED` `{ spotId, spotNumber }` — la place répondue, à `parked_answered_at`, aussi pour la correction d'une place présumée (021) ;
   - `ENTRY_CANCELLED` `{ reason: 'NO_LOOP', wasBarrierOpened }` par la tâche de 013 (`wasBarrierOpened` : une commande `OPEN` existait pour la session), `{ reason: 'ADMISSION_FAILED' }` quand l'entrée se défait elle-même (carte refusée, autorisation non attachée, barrière en échec) — à `cancelled_at`. Toute entrée inscrite se termine ainsi par la boucle ou par une annulation.
   Jamais d'adresse courriel, de carte (pas même les quatre derniers chiffres), d'identifiant Stripe ni d'identifiant d'utilisateur. La plaque est un texte saisi par le conducteur : #72 doit l'échapper à l'affichage.
