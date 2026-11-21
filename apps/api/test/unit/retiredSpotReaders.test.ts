@@ -26,7 +26,7 @@ describe('readers that skip retired spots', () => {
     const onlineLot = [LOT, 'Parking Démo', '45.5', '-73.5', 10, 0, 0, 0];
     const { database, statements } = capturedSqlDatabase((statementText) => (statementText.includes('"parking_lot"."is_online"') ? [onlineLot] : []));
 
-    await new PostgresLotAvailabilityRepository(database).findOnlineLots(5);
+    await new PostgresLotAvailabilityRepository(database).findOnlineLots();
 
     expect(statements.find((statementText) => statementText.includes('group by'))).toMatch(/"spot"\."state" = \$\d+ and "spot"\."retired_at" is null/);
   });

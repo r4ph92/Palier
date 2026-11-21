@@ -1,49 +1,34 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { listOnlineLots } from '../../src/domain/lots/listOnlineLots.ts';
+import { PostgresLotAvailabilityRepository } from '../../src/infrastructure/postgres/PostgresLotAvailabilityRepository.ts';
+import { capturedSqlDatabase } from './fakes/capturedSql.ts';
 import { parkingDemoOnline, repositoryReturning } from './fakes/lotFixtures.ts';
 
-const LIMIT = 50;
-
 function onlineLots(count: number) {
-  return Array.from({ length: count }, (_unused, index) => ({ ...parkingDemoOnline(), id: `lot-${index}` }));
-}
-
-async function freshListOnlineLots() {
-  vi.resetModules();
-  return (await import('../../src/domain/lots/listOnlineLots.ts')).listOnlineLots;
+  return Array.from({ length: count }, (_unused, index) => ({ ...parkingDemoOnline(), id: `lot-${index}`, name: `Lot ${String(index).padStart(2, '0')}` }));
 }
 
 describe('listOnlineLots', () => {
-  let listOnlineLots: Awaited<ReturnType<typeof freshListOnlineLots>>;
+  it('lists every online lot, even past 50, in the order read', async () => {
+    const lots = await listOnlineLots(repositoryReturning([...onlineLots(59), { ...parkingDemoOnline(), id: 'lot-zenith', name: 'Zénith' }]));
 
-  beforeEach(async () => {
-    listOnlineLots = await freshListOnlineLots();
+    expect(lots).toHaveLength(60);
+    expect(lots.at(-1)?.name).toBe('Zénith');
   });
 
-  it('asks the repository for one lot more than the limit', async () => {
-    const findOnlineLots = vi.fn(() => Promise.resolve([]));
-
-    await listOnlineLots({ findOnlineLots }, { warn: vi.fn() });
-
-    expect(findOnlineLots).toHaveBeenCalledWith(LIMIT + 1);
+  it('lists nothing when no lot is online', async () => {
+    expect(await listOnlineLots(repositoryReturning([]))).toEqual([]);
   });
+});
 
-  it('stays quiet at exactly the limit and under it', async () => {
-    const log = { warn: vi.fn() };
+describe('PostgresLotAvailabilityRepository.findOnlineLots', () => {
+  it('reads every online lot by name, with no limit', async () => {
+    const { database, statements } = capturedSqlDatabase();
 
-    await listOnlineLots(repositoryReturning(onlineLots(LIMIT)), log);
-    await listOnlineLots(repositoryReturning(onlineLots(LIMIT - 1)), log);
+    await new PostgresLotAvailabilityRepository(database).findOnlineLots();
 
-    expect(log.warn).not.toHaveBeenCalled();
-  });
-
-  it('returns at most the limit and warns once when more lots exist', async () => {
-    const log = { warn: vi.fn() };
-
-    const lots = await listOnlineLots(repositoryReturning(onlineLots(LIMIT + 1)), log);
-    await listOnlineLots(repositoryReturning(onlineLots(LIMIT + 1)), log);
-
-    expect(lots).toHaveLength(LIMIT);
-    expect(log.warn).toHaveBeenCalledTimes(1);
-    expect(log.warn).toHaveBeenCalledWith({ limit: LIMIT }, expect.stringContaining('limit'));
+    const lotStatement = statements.find((statementText) => statementText.includes('"parking_lot"."is_online"'));
+    expect(lotStatement).toMatch(/order by "parking_lot"\."name" asc$/);
+    expect(lotStatement).not.toMatch(/\blimit\b/i);
   });
 });
