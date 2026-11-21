@@ -90,18 +90,17 @@ describe('QA #5 GET /v1/lots as Julie', () => {
     expect(response.json()).toEqual([expect.objectContaining({ freeSpots: 1, freeSpotsByCategory: { standard: 0, electric: 1, accessible: 1, oversize: 1 } })]);
   });
 
-  it('ignores a position sent in the query: the position never changes the answer', async () => {
-    const plain = await getAsJulie();
-    await server.close();
-
+  it('refuses a position sent in the query, garbage included, with no lot in the answer (#112)', async () => {
     const withQuery = await getAsJulie([parkingDemo], '/v1/lots?latitude=45.5048&longitude=-73.5673');
     await server.close();
     const withGarbage = await getAsJulie([parkingDemo], '/v1/lots?latitude=abc&longitude=&latitude=1e999&__proto__=x');
+    await server.close();
+    const withProtoOnly = await getAsJulie([parkingDemo], '/v1/lots?__proto__=x');
 
-    expect(withQuery.statusCode).toBe(200);
-    expect(withQuery.json()).toEqual(plain.json());
-    expect(withGarbage.statusCode).toBe(200);
-    expect(withGarbage.json()).toEqual(plain.json());
+    for (const response of [withQuery, withGarbage, withProtoOnly]) {
+      expect(response.statusCode).toBe(400);
+      expect(response.body).not.toContain('Parking Démo');
+    }
   });
 
   it('returns lot names with markup, quotes, accents, emoji and a very long text untouched, as JSON', async () => {
