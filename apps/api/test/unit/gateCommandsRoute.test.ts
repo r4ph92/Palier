@@ -94,7 +94,7 @@ describe('GET /v1/gates/me/commands', () => {
     ['a signed number', '?afterSequence=%2B1'],
     ['an empty value', '?afterSequence='],
     ['a value past the Postgres integer', '?afterSequence=2147483648'],
-    ['a repeated cursor', '?afterSequence=1&afterSequence=2'],
+    
     ['the cursor mixed with after', `?afterSequence=1&after=${first.issuedAt}`],
     ['the cursor mixed with afterId', `?afterSequence=1&afterId=${first.id}`],
     ['the old cursor alone', `?after=${first.issuedAt}&afterId=${first.id}`],
@@ -107,6 +107,17 @@ describe('GET /v1/gates/me/commands', () => {
     expect(response.statusCode).toBe(400);
     expect(response.json()).not.toBeInstanceOf(Array);
     expect(response.json()).toHaveProperty('error');
+    expect(feed.requestedSequences).toEqual([]);
+  });
+
+  it('refuses a repeated cursor at the schema with 400 and no commands', async () => {
+    const feed = new FakeGateCommandFeed().add(entreeDemo.id, first);
+    startServer(feed);
+
+    const response = await listCommands('?afterSequence=1&afterSequence=2');
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ error: 'FST_ERR_VALIDATION' });
     expect(feed.requestedSequences).toEqual([]);
   });
 

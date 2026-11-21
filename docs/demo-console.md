@@ -274,8 +274,8 @@ lot : voir la décision 031.
   dernières sans curseur, de la plus ancienne à la plus récente. La séquence suit
   l'ordre des commits de la barrière : une commande validée après le passage de la
   console arrive quand même (`docs/decisions/048`). Curseur qui n'est pas un entier
-  de 0 à 2 147 483 647, répété ou mêlé à l'ancien `after`/`afterId` : 400
-  `CURSOR_INVALID`, aucune commande.
+  de 0 à 2 147 483 647 ou mêlé à l'ancien `after`/`afterId` : 400
+  `CURSOR_INVALID`, aucune commande ; paramètre répété : 400 `FST_ERR_VALIDATION`.
 - Authentification : `Authorization: Bearer <clé>` (32 octets en base64url,
   43 caractères). Toute clé absente, mal formée, inconnue ou révoquée reçoit le
   même 401 avec `WWW-Authenticate: Bearer`, avant toute lecture du corps.
