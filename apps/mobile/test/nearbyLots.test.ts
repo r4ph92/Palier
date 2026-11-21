@@ -48,3 +48,27 @@ describe('nearbyLots without a position', () => {
     ]);
   });
 });
+
+// #112: the API lists every online lot, so a lot whose name sorts after the 50th is never left out.
+describe('nearbyLots with 60 online lots and Zénith 300 m away, last by name', () => {
+  const sixtyLotsByName = [
+    ...Array.from({ length: 59 }, (_unused, index) => lotNorthOfSimulatorBy(1_000 + index * 100, `Lot ${String(index).padStart(2, '0')}`)),
+    lotNorthOfSimulatorBy(300, 'Zénith'),
+  ];
+
+  it('lists Zénith first, with its distance, when the position is known', () => {
+    const [first] = nearbyLots(sixtyLotsByName, SIMULATOR_POSITION);
+
+    expect(first?.lot.name).toBe('Zénith');
+    expect(first?.distanceMetres).toBe(300);
+  });
+
+  it('keeps all 60 lots by name, without distance, Zénith last, when the position is refused', () => {
+    const lots = nearbyLots(sixtyLotsByName, null);
+
+    expect(lots).toHaveLength(60);
+    expect(lots.map(({ lot }) => lot.name)).toEqual(sixtyLotsByName.map(({ name }) => name));
+    expect(lots.at(-1)?.lot.name).toBe('Zénith');
+    expect(lots.every(({ distanceMetres }) => distanceMetres === null)).toBe(true);
+  });
+});
