@@ -44,16 +44,18 @@ describe('presuming the silent sessions of a lot', () => {
     expect(statement?.params.slice(0, 3)).toEqual([NOW.toISOString(), PARKING_DEMO_LOCK_ID, CUTOFF.toISOString()]);
   });
 
-  it('presumes an unanswered question by timeout and keeps the instant it was asked', async () => {
+  it('presumes a question unanswered since the cutoff by timeout, measured from when it was asked, and keeps the walk time', async () => {
     const scripted = lockedLot();
 
     await presumeWith(scripted);
 
     const statement = scripted.statements.find(({ label }) => label === 'presume-silent-questions');
     expect(statement?.text).toContain(`state = 'PARKED_UNCONFIRMED'`);
-    expect(statement?.text).toContain('parked_at <=');
+    expect(oneLine(statement?.text)).toMatch(/and parked_asked_at <= \$\d::timestamptz/);
+    expect(oneLine(statement?.text)).not.toMatch(/[^_]parked_at <=/);
     expect(statement?.text).toContain(`presumed_by = 'TIMEOUT'`);
     expect(statement?.text).not.toContain('parked_at =');
+    expect(statement?.text).not.toContain('parked_asked_at =');
     expect(statement?.params.slice(0, 2)).toEqual([PARKING_DEMO_LOCK_ID, CUTOFF.toISOString()]);
   });
 
@@ -83,14 +85,14 @@ describe('presuming the silent sessions of a lot', () => {
     expect(scripted.statements[0]?.params).toEqual([CUTOFF.toISOString(), CUTOFF.toISOString()]);
   });
 
-  it('finds silent lots by the entry instant for a confirmed entry and by the question instant for an unanswered one, and no other state', async () => {
+  it('finds silent lots by the entry instant for a confirmed entry and by the instant the question was asked for an unanswered one, and no other state', async () => {
     const scripted = new ScriptedSql();
 
     await new PostgresSilentSessionRepository(scripted.database()).findLotsWithSilentSessions(CUTOFF);
 
     const text = oneLine(scripted.statement('find-silent-session-lots')?.text);
     expect(text).toMatch(/\(state = 'ENTRY_CONFIRMED' and entry_confirmed_at <= \$1::timestamptz\)/);
-    expect(text).toMatch(/\(state = 'PARKED_UNCONFIRMED' and parked_at <= \$2::timestamptz\)/);
+    expect(text).toMatch(/\(state = 'PARKED_UNCONFIRMED' and parked_asked_at <= \$2::timestamptz\)/);
     expect(text).not.toMatch(/CANCELLED|CREATED|PARKED_CONFIRMED|'PARKED_PRESUMED'/);
   });
 
@@ -102,7 +104,7 @@ describe('presuming the silent sessions of a lot', () => {
     const entries = oneLine(scripted.statement('presume-silent-entries')?.text);
     const questions = oneLine(scripted.statement('presume-silent-questions')?.text);
     expect(entries).toMatch(/where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at <= \$\d::timestamptz/);
-    expect(questions).toMatch(/where lot_id = \$\d and state = 'PARKED_UNCONFIRMED' and parked_at <= \$\d::timestamptz/);
+    expect(questions).toMatch(/where lot_id = \$\d and state = 'PARKED_UNCONFIRMED' and parked_asked_at <= \$\d::timestamptz/);
     expect(`${entries} ${questions}`).not.toMatch(/confirmed_spot_id|parked_aisle_id|needs_check/);
   });
 });

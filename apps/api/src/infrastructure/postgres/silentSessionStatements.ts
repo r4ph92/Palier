@@ -10,7 +10,7 @@ export function silentConfirmedEntry(cutoff: Date): SQL {
 }
 
 export function unansweredQuestion(cutoff: Date): SQL {
-  return sql`state = 'PARKED_UNCONFIRMED' and parked_at <= ${cutoff.toISOString()}::timestamptz`;
+  return sql`state = 'PARKED_UNCONFIRMED' and parked_asked_at <= ${cutoff.toISOString()}::timestamptz`;
 }
 
 export async function findLotsWithSilentSessions(database: Executor, cutoff: Date): Promise<string[]> {
@@ -31,7 +31,8 @@ export async function presumeSilentConfirmedEntries(executor: Executor, lotId: s
   return rows.length;
 }
 
-// The spot stays OCCUPIED_UNKNOWN and flagged, and parked_at keeps the instant of the question; the event is at the job's clock.
+// Measured from the question's own instant, never from parked_at: a walk sent late by the offline queue keeps its walk time (#146).
+// The spot stays OCCUPIED_UNKNOWN and flagged, and parked_at keeps the walk's time; the event is at the job's clock.
 export async function presumeUnansweredQuestions(executor: Executor, lotId: string, { cutoff, now }: SilenceCheck): Promise<number> {
   const rows = await executor.execute(withTimeoutEvents(sql`
     update parking_session
