@@ -161,7 +161,7 @@ describe('a walk racing a spot-taken report (story #23)', () => {
     await walkWith(sql);
 
     const presume = sql.statement('presume-parked');
-    expect(presume?.text).toMatch(/and state = 'ENTRY_CONFIRMED' and assigned_spot_id = \$\d+/);
+    expect(presume?.text).toMatch(/parked_at\)\) and assigned_spot_id = \$\d+/);
     expect(presume?.params).toContain(SPOT_A1_ID);
   });
 

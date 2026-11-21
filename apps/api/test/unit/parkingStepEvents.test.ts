@@ -185,11 +185,19 @@ describe('Julie walks away in aisle B, then answers B-3 (story #156)', () => {
 });
 
 describe('the same walk sent again (story #156)', () => {
-  it.each(['PARKED_PRESUMED', 'PARKED_UNCONFIRMED'] as const)('logs nothing more for a session already %s', async (state) => {
-    const scripted = new ScriptedSql().answer('read-walk-facts', [{ ...factsRow(aisleA, state), ...PARKED_AT }]);
+  it('logs nothing more for a session already PARKED_UNCONFIRMED', async () => {
+    const scripted = new ScriptedSql().answer('read-walk-facts', [{ ...factsRow(aisleA, 'PARKED_UNCONFIRMED'), ...PARKED_AT }]);
 
     await expect(walkWith(scripted, walkIn(1))).resolves.toMatchObject({ outcome: 'already' });
     expect(scripted.labels()).toEqual(['read-walk-facts']);
+  });
+
+  it('logs nothing more for a session already PARKED_PRESUMED, whose guarded update finds no timeout to replace', async () => {
+    const scripted = new ScriptedSql().answer('read-walk-facts', [{ ...factsRow(aisleA, 'PARKED_PRESUMED'), ...PARKED_AT }]);
+
+    await expect(walkWith(scripted, walkIn(1))).resolves.toMatchObject({ outcome: 'already' });
+    expect(scripted.labels()).toEqual(['read-walk-facts', 'presume-parked']);
+    expect(presumptionTexts(scripted)).toEqual([expect.stringMatching(PRESUMPTION_LOGGING_ITS_ROWS)]);
   });
 
   it('logs nothing more for a walk without an aisle once the session is presumed', async () => {

@@ -26,7 +26,7 @@ describe('PostgresParkedPresumptionRepository, a walk without an aisle', () => {
     await presumeWith(sql);
 
     const [update] = sql.statements;
-    expect(update?.text).toMatch(/where id = \$\d+ and user_id = \$\d+ and state = 'ENTRY_CONFIRMED'/);
+    expect(update?.text).toMatch(/where id = \$\d+ and user_id = \$\d+\s+and \(state = 'ENTRY_CONFIRMED'\s+or /);
     expect(update?.params).toEqual(expect.arrayContaining([SESSION_ID, JULIE_ID]));
   });
 
