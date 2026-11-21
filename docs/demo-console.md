@@ -219,11 +219,15 @@ lot : voir la décision 031.
     from app_user u join vehicle v on v.user_id = u.id, chosen_spot
     where u.email = 'julie.tremblay@palier.test'
     returning id
+  ), counted as (
+    update gate set last_command_sequence = last_command_sequence + 1
+    where id = '00000000-0000-4000-8000-000000000701'
+    returning last_command_sequence
   )
-  insert into gate_command (gate_id, lot_id, kind, session_id, issued_at)
-  select '00000000-0000-4000-8000-000000000701', '00000000-0000-4000-8000-000000000201', 'OPEN', id,
-    now() - make_interval(secs => :ago)
-  from session returning session_id;
+  insert into gate_command (gate_id, lot_id, kind, session_id, issued_at, sequence)
+  select '00000000-0000-4000-8000-000000000701', '00000000-0000-4000-8000-000000000201', 'OPEN', session.id,
+    now() - make_interval(secs => :ago), counted.last_command_sequence
+  from session, counted returning session_id;
   SQL
   ```
 
@@ -264,10 +268,14 @@ lot : voir la décision 031.
   Le compteur baisse dans les deux cas (jamais sous 0). Le sens et le parking
   viennent de la barrière, jamais du corps. `closedAt` à plus de 5 minutes dans
   le futur : 400.
-- `GET /v1/gates/me/commands?after=<ISO 8601>&afterId=<uuid>` : `[{ id, kind: "OPEN", issuedAt }]`
-  de la barrière de la clé, triées par `issuedAt` puis `id`, 50 au plus ;
-  strictement après le curseur `(after, afterId)` (la dernière commande lue), ou
-  les 50 dernières sans curseur. Curseur incomplet ou illisible : 400.
+- `GET /v1/gates/me/commands?afterSequence=<n>` : `[{ id, kind: "OPEN", issuedAt, sequence }]`
+  de la barrière de la clé, triées par `sequence`, 50 au plus ;
+  strictement après `afterSequence` (la plus grande séquence lue), ou les 50
+  dernières sans curseur, de la plus ancienne à la plus récente. La séquence suit
+  l'ordre des commits de la barrière : une commande validée après le passage de la
+  console arrive quand même (`docs/decisions/048`). Curseur qui n'est pas un entier
+  de 0 à 2 147 483 647, répété ou mêlé à l'ancien `after`/`afterId` : 400
+  `CURSOR_INVALID`, aucune commande.
 - Authentification : `Authorization: Bearer <clé>` (32 octets en base64url,
   43 caractères). Toute clé absente, mal formée, inconnue ou révoquée reçoit le
   même 401 avec `WWW-Authenticate: Bearer`, avant toute lecture du corps.
