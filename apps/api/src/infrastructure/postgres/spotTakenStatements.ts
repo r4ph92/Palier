@@ -5,7 +5,7 @@ import type { SpotState } from '../../domain/spots/spotStates.ts';
 import type { VehicleNeeds } from '../../domain/vehicles/VehicleRepository.ts';
 import type { Transaction } from './database.ts';
 import { requireUpdatedRow } from './requireUpdatedRow.ts';
-import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './vehicleNeedsSql.ts';
+import { sessionNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './sessionNeedsSql.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
 type SessionOfDriver = Pick<SpotTakenReport, 'sessionId' | 'driverId'>;
@@ -27,10 +27,9 @@ interface ReportingSessionRow extends Record<string, unknown>, VehicleNeedsRow {
 export async function lockReportingSession(tx: Executor, { sessionId, driverId }: SessionOfDriver): Promise<ReportingSession | null> {
   const [row] = await tx.execute<ReportingSessionRow>(sql`
     select ps.state, ps.assigned_spot_id, assigned.number as assigned_spot_number, assigned.state as assigned_spot_state,
-      assigned.aisle_id as assigned_aisle_id, ${vehicleNeedsColumns}
+      assigned.aisle_id as assigned_aisle_id, ${sessionNeedsColumns}
     from parking_session ps
     join spot assigned on assigned.id = ps.assigned_spot_id
-    left join vehicle on vehicle.id = ps.vehicle_id
     where ps.id = ${sessionId} and ps.user_id = ${driverId}
     for update of ps, assigned`);
   return row === undefined ? null : reportingSessionOf(row);

@@ -161,7 +161,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['restore-spot-hold', /update spot_hold set status = 'ACTIVE'/],
   ['read-session-lot', /select lot_id from parking_session/],
   ['lock-answering-session', /left join spot on spot\.id = ps\.confirmed_spot_id[\s\S]*for update of ps/],
-  ['lock-reporting-session', /left join vehicle[\s\S]*for update of ps/],
+  ['lock-reporting-session', /assigned\.number as assigned_spot_number[\s\S]*for update of ps/],
   ['record-reported-spot', /insert into parking_session_reported_spot/],
   ['reassign-spot', /update parking_session set assigned_spot_id/],
   ['lock-answered-spot', /for update of spot/],

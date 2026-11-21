@@ -13,7 +13,7 @@ import { liveSpot } from './liveSpot.ts';
 import { spot } from './lotSchema.ts';
 import { spotFlagsOf, type SpotFlagsRow } from './spotClaim.ts';
 import { spotOf, type SpotLabelRow } from './spotLabel.ts';
-import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './vehicleNeedsSql.ts';
+import { sessionNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './sessionNeedsSql.ts';
 
 type Executor = Pick<Transaction, 'execute'>;
 
@@ -59,10 +59,9 @@ export async function readSessionLot(database: Database, { sessionId, driverId }
 
 export async function lockAnsweringSession(tx: Executor, { sessionId, driverId }: SpotAnswer): Promise<AnsweringSession | null> {
   const [row] = await tx.execute<AnsweringSessionRow>(sql`
-    select ps.state, ps.assigned_spot_id, assigned.aisle_id as assigned_aisle_id, assigned.state as assigned_spot_state, spot.number, aisle.code as aisle_code, level.code as level_code, ${vehicleNeedsColumns}
+    select ps.state, ps.assigned_spot_id, assigned.aisle_id as assigned_aisle_id, assigned.state as assigned_spot_state, spot.number, aisle.code as aisle_code, level.code as level_code, ${sessionNeedsColumns}
     from parking_session ps
     join spot assigned on assigned.id = ps.assigned_spot_id
-    left join vehicle on vehicle.id = ps.vehicle_id
     left join spot on spot.id = ps.confirmed_spot_id
     left join aisle on aisle.id = spot.aisle_id
     left join level on level.id = aisle.level_id

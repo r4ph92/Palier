@@ -104,14 +104,14 @@ describe('PostgresCurrentParkingSessionQuery, free spots for the vehicle (story 
     expect((await readWith(askedWith({ is_oversize: true })))?.question?.freeSpotNumbers).toEqual(['B-4']);
   });
 
-  it("reads the vehicle's needs with the session, standard when the vehicle was deleted", async () => {
+  it("reads the needs frozen on the session at entry, never the vehicle as it is now (story #219)", async () => {
     const sql = askedWith({});
 
     await readWith(sql);
 
     const text = sql.statement('read-current-session')?.text;
-    expect(text).toMatch(/left join vehicle on vehicle\.id = ps\.vehicle_id/);
-    expect(text).toMatch(/coalesce\(vehicle\.is_electric, false\) as is_electric/);
+    expect(text).toMatch(/ps\.is_electric, ps\.has_accessible_permit, ps\.is_oversize/);
+    expect(text).not.toMatch(/\bvehicle\b/);
     expect(sql.statement('read-parked-question')?.text).toMatch(/spot\.is_ev, spot\.is_accessible, spot\.is_oversize/);
   });
 });

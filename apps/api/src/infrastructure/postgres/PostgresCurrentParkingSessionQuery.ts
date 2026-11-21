@@ -8,7 +8,7 @@ import type { Database } from './database.ts';
 import { LEAVABLE_STATES } from './exitableSessionSql.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
 import { readParkedQuestion } from './parkedQuestion.ts';
-import { vehicleNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './vehicleNeedsSql.ts';
+import { sessionNeedsColumns, vehicleNeedsOf, type VehicleNeedsRow } from './sessionNeedsSql.ts';
 
 interface CurrentSessionRow extends Record<string, unknown>, VehicleNeedsRow {
   readonly id: string;
@@ -49,11 +49,10 @@ export class PostgresCurrentParkingSessionQuery implements CurrentParkingSession
     const rows = await this.#database.execute<CurrentSessionRow>(sql`
       select ps.id, ps.state, ps.entry_scan_at, ps.pricing_increment_cents, ps.pricing_increment_minutes, ps.pricing_daily_cap_cents,
         ps.parked_aisle_id, lot.name as lot_name, lot.beacon_major, spot.number, aisle.code as aisle_code, level.code as level_code, aisle.level_id,
-        ${vehicleNeedsColumns},
+        ${sessionNeedsColumns},
         ${this.#exitBeaconFallbackColumn()}
       from (select * from parking_session where user_id = ${userId} and ${ACTIVE_SESSION}) ps
       join parking_lot lot on lot.id = ps.lot_id
-      left join vehicle on vehicle.id = ps.vehicle_id
       join spot on spot.id = coalesce(ps.confirmed_spot_id, ps.assigned_spot_id)
       join aisle on aisle.id = spot.aisle_id
       join level on level.id = aisle.level_id`);

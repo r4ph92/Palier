@@ -75,15 +75,15 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
     expect(sql.isolationLevels).toEqual(['read committed']);
   });
 
-  it('locks only her own session with its assigned spot, and reads her vehicle needs, standard without a vehicle', async () => {
+  it('locks only her own session with its assigned spot, and reads the needs frozen on it at entry (story #219)', async () => {
     const sql = reportOn();
 
     await reportWith(sql);
 
     const lock = sql.statement('lock-reporting-session');
     expect(lock?.text).toMatch(/where ps\.id = \$\d+ and ps\.user_id = \$\d+\s+for update of ps, assigned$/);
-    expect(lock?.text).toMatch(/coalesce\(vehicle\.is_electric, false\)/);
-    expect(lock?.text).toMatch(/left join vehicle on vehicle\.id = ps\.vehicle_id/);
+    expect(lock?.text).toMatch(/ps\.is_electric, ps\.has_accessible_permit, ps\.is_oversize/);
+    expect(lock?.text).not.toMatch(/\bvehicle\b/);
     expect(lock?.params).toEqual([SESSION_ID, JULIE_ID]);
   });
 

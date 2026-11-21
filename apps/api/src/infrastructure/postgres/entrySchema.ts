@@ -111,6 +111,10 @@ export const parkingSession = pgTable(
       .references(() => appUser.id),
     vehicleId: uuid('vehicle_id').references(() => vehicle.id, { onDelete: 'set null' }),
     plate: text('plate').notNull(),
+    // The vehicle's needs at entry, the ones the spot was chosen with: a later change to the vehicle never changes them (story #219).
+    isElectric: boolean('is_electric').notNull().default(false),
+    hasAccessiblePermit: boolean('has_accessible_permit').notNull().default(false),
+    isOversize: boolean('is_oversize').notNull().default(false),
     lotId: uuid('lot_id')
       .notNull()
       .references(() => parkingLot.id),
