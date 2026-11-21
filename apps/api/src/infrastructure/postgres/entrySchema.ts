@@ -44,6 +44,7 @@ export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
 interface StateColumns {
   readonly state: AnyPgColumn;
   readonly parkedAisleId: AnyPgColumn;
+  readonly parkedAskedAt: AnyPgColumn;
   readonly presumedBy: AnyPgColumn;
   readonly confirmedSpotId: AnyPgColumn;
   readonly parkedAnsweredAt: AnyPgColumn;
@@ -71,6 +72,7 @@ function spotHistoryIndexes(table: SpotColumns) {
 function stateChecks(table: StateColumns) {
   return [
     check('parking_session_unconfirmed_has_aisle', sql`${table.state}::text <> 'PARKED_UNCONFIRMED' or ${table.parkedAisleId} is not null`),
+    check('parking_session_unconfirmed_has_question', sql`${table.state}::text <> 'PARKED_UNCONFIRMED' or ${table.parkedAskedAt} is not null`),
     check('parking_session_presumed_has_evidence', sql`${table.state}::text <> 'PARKED_PRESUMED' or ${table.presumedBy} is not null`),
     check(
       'parking_session_confirmed_has_spot',
@@ -138,6 +140,8 @@ export const parkingSession = pgTable(
     presumedBy: parkingSessionPresumption('presumed_by'),
     // The aisle the device last saw at the walk, when it was not the assigned spot's: the driver is asked where they parked.
     parkedAisleId: uuid('parked_aisle_id'),
+    // When the API asked the driver where they parked: the 30 minutes of silence run from here, while parked_at keeps the walk's time (story #146).
+    parkedAskedAt: timestamp('parked_asked_at', { withTimezone: true }),
     // The spot the driver said they parked in; the assigned spot stays as the history of the entry.
     confirmedSpotId: uuid('confirmed_spot_id'),
     parkedAnsweredAt: timestamp('parked_answered_at', { withTimezone: true }),
