@@ -36,12 +36,13 @@ describe('PostgresParkingSessionBackdater', () => {
     expect(text).toContain('from previous where parking_session.id = previous.id returning parking_session.id, previous.delta');
   });
 
-  it('moves the answer, the presence check and the stale flag too, so the 7 days keep their distance from every proof', async () => {
+  it('moves the question, the answer, the presence check and the stale flag too, so the 7 days keep their distance from every proof', async () => {
     const scripted = new ScriptedSql();
 
     await backdate(scripted);
 
     const text = oneLine(scripted.statement('backdate-entry')?.text);
+    expect(text).toContain('parked_asked_at = parked_asked_at + previous.delta');
     expect(text).toContain('parked_answered_at = parked_answered_at + previous.delta');
     expect(text).toContain('presence_confirmed_at = presence_confirmed_at + previous.delta');
     expect(text).toContain('stale_flagged_at = stale_flagged_at + previous.delta');
