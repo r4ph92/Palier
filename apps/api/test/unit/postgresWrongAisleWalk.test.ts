@@ -58,6 +58,14 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
     expect(update?.params).toEqual(expect.arrayContaining([AISLE_B_ID, SESSION_ID, JULIE_ID]));
   });
 
+  it('records the instant the question is asked apart from the walk time, which a late walk sets in the past', async () => {
+    const sql = julieConfirmedAtA1();
+
+    await walkWith(sql);
+
+    expect(sql.statement('ask-where-parked')?.text).toMatch(/, parked_asked_at = now\(\)\s+where/);
+  });
+
   it('makes the occupied A-1 occupied-unknown and flagged to check, with the time of the change', async () => {
     const sql = julieConfirmedAtA1();
 
@@ -95,6 +103,13 @@ describe('PostgresParkedPresumptionRepository, a walk in another aisle than the 
 
     await expect(walkWith(sql)).resolves.toEqual({ outcome: 'already', state, parkedAt: WALKED_AT });
     expect(sql.labels()).toEqual(['read-walk-facts']);
+  });
+
+  it('answers a late walk sent again with the first walk state and time, and never asks again nor moves the question instant (story #146)', async () => {
+    const sql = new ScriptedSql().answer('read-walk-facts', [factsRow('PARKED_UNCONFIRMED', AISLE_B_ID, WALKED_AT.toISOString())]);
+
+    await expect(walkWith(sql, { ...walkInAisleB, detectedAt: new Date('2026-11-04T18:25:00Z') })).resolves.toEqual({ outcome: 'already', state: 'PARKED_UNCONFIRMED', parkedAt: WALKED_AT });
+    expect(sql.statements.some(({ text }) => text.includes('parked_asked_at'))).toBe(false);
   });
 
   it("answers not found for an unknown id or another driver's session, without a lock", async () => {
@@ -146,7 +161,8 @@ describe('a walk racing a spot-taken report (story #23)', () => {
     await walkWith(sql);
 
     const presume = sql.statement('presume-parked');
-    expect(presume?.text).toMatch(/and state = 'ENTRY_CONFIRMED' and assigned_spot_id = \$\d+/);
+    const where = (presume?.text ?? '').replace(/\s+/g, ' ').split(' where ')[1] ?? '';
+    expect(where).toMatch(/^id = \$\d+ and user_id = \$\d+ and \(state = 'ENTRY_CONFIRMED' or \(.*< parked_at\)\) and assigned_spot_id = \$\d+ returning/);
     expect(presume?.params).toContain(SPOT_A1_ID);
   });
 

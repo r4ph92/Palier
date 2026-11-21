@@ -39,12 +39,17 @@ export async function presumeOnFoot(database: Database, presumption: OnFootPresu
   return row === undefined ? null : new Date(row.parked_at);
 }
 
+// A walk sent late by the offline queue also replaces a silence presumption it predates (#147), but only one from a silent confirmed
+// entry: no question was ever asked, so no walk was ever received. A walk never replaces a walk, a question's timeout or an answer.
 function presumeSession({ signal, assignedSpotId }: OnFootPresumption): SQL {
   const sameSpot = assignedSpotId === null ? sql.empty() : sql` and assigned_spot_id = ${assignedSpotId}`;
+  const walkedAt = clampedParkedAt(signal.detectedAt);
   return sql`
     update parking_session
-    set state = 'PARKED_PRESUMED', presumed_by = 'WALK', parked_at = ${clampedParkedAt(signal.detectedAt)}
-    where id = ${signal.sessionId} and user_id = ${signal.driverId} and state = 'ENTRY_CONFIRMED'${sameSpot}
+    set state = 'PARKED_PRESUMED', presumed_by = 'WALK', parked_at = ${walkedAt}
+    where id = ${signal.sessionId} and user_id = ${signal.driverId}
+      and (state = 'ENTRY_CONFIRMED'
+        or (state = 'PARKED_PRESUMED' and presumed_by = 'TIMEOUT' and parked_asked_at is null and ${walkedAt} < parked_at))${sameSpot}
     returning id, lot_id, assigned_spot_id, parked_at`;
 }
 

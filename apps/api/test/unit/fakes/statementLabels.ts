@@ -152,7 +152,7 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['flag-stale-sessions', /set stale_flagged_at =/],
   ['find-silent-session-lots', /select distinct lot_id from parking_session/],
   ['presume-silent-entries', /where lot_id = \$\d and state = 'ENTRY_CONFIRMED' and entry_confirmed_at/],
-  ['presume-silent-questions', /where lot_id = \$\d and state = 'PARKED_UNCONFIRMED' and parked_at/],
+  ['presume-silent-questions', /where lot_id = \$\d and state = 'PARKED_UNCONFIRMED' and parked_asked_at/],
   ['presume-parked', /set state = 'PARKED_PRESUMED'/],
   ['read-walk-facts', /left join aisle detected/],
   ['ask-where-parked', /set state = 'PARKED_UNCONFIRMED'/],

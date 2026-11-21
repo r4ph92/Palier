@@ -241,6 +241,8 @@ curl -X DELETE localhost:3000/v1/test/clock
 - Journal : `presumed parked the sessions silent for 30 minutes` (info, `lotId`, `confirmedEntries`, `unansweredQuestions`, jamais de conducteur ni de place), `could not presume the silent sessions of a lot, retried at the next check` (erreur avec la trace; un verrou de lot non obtenu est journalisé en avertissement avec le `lotId`, sans trace).
 - App : aucun changement. Une question restée sans réponse cède la place à « Garé en A-1 » à la lecture suivante (test dans `WhereParkedEdges.test.tsx`).
 - Pour essayer : `PUT /v1/test/clock` à 30 minutes après l'entrée, attendre la période (ou `SILENT_SESSION_CHECK_PERIOD_SECONDS=5`).
+- Âge de la question (#146) : migration 0047, colonne `parking_session.parked_asked_at` et `CHECK parking_session_unconfirmed_has_question`. `markSessionUnconfirmed` (`wrongAisleWalk.ts`) et `askWhereParkedAfterReport` l'écrivent à `now()` ; `unansweredQuestion` (`silentSessionStatements.ts`) la compare au seuil ; `parked_at` garde l'heure du passage. Pour essayer un passage tardif : reculer la session (`PUT /v1/test/sessions/:id/entered-at`) et l'heure détectée plutôt qu'avancer l'horloge de test au-delà de l'heure réelle.
+- Passage tardif (#147) : `presumeSession` (`onFootPresumption.ts`) accepte aussi `PARKED_PRESUMED` par `TIMEOUT` sans question (`parked_asked_at` nul) quand l'heure bornée du passage précède `parked_at` ; `PostgresParkedPresumptionRepository` ne l'essaie qu'une fois pour une session présumée lue dans l'allée de la place, sinon `already`. Mêmes événements que le passage à pied, dans la même instruction.
 
 ## Journal des événements de visite (#156)
 

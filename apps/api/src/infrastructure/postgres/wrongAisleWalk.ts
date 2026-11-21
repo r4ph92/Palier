@@ -90,10 +90,11 @@ async function logWrongAisle(tx: Transaction, { signal, facts, wrongAisle }: Wro
   });
 }
 
+// parked_at keeps the walk's time; parked_asked_at is the question's own instant, which the 30 minutes of silence start from (decision 030).
 async function markSessionUnconfirmed(tx: Transaction, { signal, facts, wrongAisle }: WrongAisleWalk): Promise<UnconfirmedWalkRow | undefined> {
   const [row] = await tx.execute<UnconfirmedWalkRow>(sql`
     update parking_session
-    set state = 'PARKED_UNCONFIRMED', parked_aisle_id = ${wrongAisle.id}, parked_at = ${clampedParkedAt(signal.detectedAt)}
+    set state = 'PARKED_UNCONFIRMED', parked_aisle_id = ${wrongAisle.id}, parked_at = ${clampedParkedAt(signal.detectedAt)}, parked_asked_at = now()
     where id = ${signal.sessionId} and user_id = ${signal.driverId} and state = 'ENTRY_CONFIRMED' and assigned_spot_id = ${facts.assignedSpotId}
     returning parked_at, assigned_spot_id`);
   return row;

@@ -330,6 +330,13 @@
       "when": 1795217464239,
       "tag": "0046_session_vehicle_needs",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1795219681524,
+      "tag": "0047_parked_asked_at",
+      "breakpoints": true
     }
   ]
 }

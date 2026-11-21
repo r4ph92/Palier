@@ -43,18 +43,23 @@ export class PostgresParkedPresumptionRepository implements ParkedPresumptionRep
     return classifyRefusedSignal(await this.#readSessionAfterRefusal(signal));
   }
 
-  // Null when the write found the session changed since its facts were read, a spot-taken report in between: the caller reads them again.
+  // Null when the write found the confirmed entry changed since its facts were read, a spot-taken report in between: the caller reads them again.
+  // A presumed session is tried once in the spot's aisle, for a late walk replacing a timeout (#147); one it cannot replace is read back, a correction may have won the race.
+  // Another aisle asks nothing once the session is presumed.
   async #walkOnFacts(signal: WalkingSignal): Promise<ParkedPresumption | null> {
     const facts = await readWalkFacts(this.#database, signal);
-    if (facts?.state !== 'ENTRY_CONFIRMED') {
+    if (facts === null || (facts.state !== 'ENTRY_CONFIRMED' && facts.state !== 'PARKED_PRESUMED')) {
       return classifyRefusedSignal(facts);
     }
     const wrongAisle = wrongAisleOf(facts);
     if (wrongAisle !== null) {
-      return this.#askWhereParked({ signal, facts, wrongAisle });
+      return facts.state === 'ENTRY_CONFIRMED' ? this.#askWhereParked({ signal, facts, wrongAisle }) : classifyRefusedSignal(facts);
     }
     const parkedAt = await presumeOnFoot(this.#database, { signal, assignedSpotId: facts.assignedSpotId, assignedAisleSeen: facts.detectedAisle });
-    return parkedAt === null ? null : { outcome: 'recorded', state: 'PARKED_PRESUMED', parkedAt };
+    if (parkedAt !== null) {
+      return { outcome: 'recorded', state: 'PARKED_PRESUMED', parkedAt };
+    }
+    return facts.state === 'ENTRY_CONFIRMED' ? null : classifyRefusedSignal(await this.#readSessionAfterRefusal(signal));
   }
 
   async #recordedOrRefused(signal: WalkingSignal, parkedAt: Date | null): Promise<ParkedPresumption> {

@@ -117,7 +117,7 @@ describe('PostgresSpotTakenReportRepository (story #23)', () => {
 
     expect(sql.labels().slice(3)).toEqual(['lock-reporting-session', 'flag-assigned-spot', 'record-reported-spot', 'read-free-spots', 'ask-where-parked']);
     const ask = sql.statement('ask-where-parked');
-    expect(ask?.text).toMatch(/set state = 'PARKED_UNCONFIRMED', parked_aisle_id = \$\d+, parked_at = now\(\)\s+where id = \$\d+ and state = 'ENTRY_CONFIRMED'/);
+    expect(ask?.text).toMatch(/set state = 'PARKED_UNCONFIRMED', parked_aisle_id = \$\d+, parked_at = now\(\), parked_asked_at = now\(\)\s+where id = \$\d+ and state = 'ENTRY_CONFIRMED'/);
     expect(ask?.params).toEqual([AISLE_A_ID, SESSION_ID]);
   });
 

@@ -67,7 +67,7 @@ export async function reassignSession(tx: Executor, sessionId: string, spotId: s
 // No other spot fits: the driver parks where they can and says where, the #21 question in the reported spot's aisle.
 export async function askWhereParkedAfterReport(tx: Executor, sessionId: string, aisleId: string): Promise<void> {
   const rows = await tx.execute(sql`
-    update parking_session set state = 'PARKED_UNCONFIRMED', parked_aisle_id = ${aisleId}, parked_at = now()
+    update parking_session set state = 'PARKED_UNCONFIRMED', parked_aisle_id = ${aisleId}, parked_at = now(), parked_asked_at = now()
     where id = ${sessionId} and state = 'ENTRY_CONFIRMED'
     returning id`);
   requireUpdatedRow(rows, `Session ${sessionId} was no longer waiting to park.`);
