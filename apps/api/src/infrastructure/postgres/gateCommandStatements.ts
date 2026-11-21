@@ -20,10 +20,16 @@ export async function storeOpenCommand(tx: Transaction, command: OpenCommand, di
   });
 }
 
+// The gate's row lock, taken by raising its count, is held until commit: the gate's next command waits for this one, so the
+// sequence a reader sees is the commit order and no command lands behind a cursor (docs/decisions/048).
 async function insertOpenCommand(tx: Transaction, { gateId, lotId, sessionId }: OpenCommand): Promise<string> {
   const [issued] = await tx.execute<IssuedCommandRow>(sql`
-    insert into gate_command (gate_id, lot_id, kind, session_id)
-    values (${gateId}, ${lotId}, 'OPEN', ${sessionId})
+    with counted as (
+      update gate set last_command_sequence = last_command_sequence + 1
+      where id = ${gateId} and lot_id = ${lotId}
+      returning last_command_sequence)
+    insert into gate_command (gate_id, lot_id, kind, session_id, sequence)
+    select ${gateId}, ${lotId}, 'OPEN', ${sessionId}, counted.last_command_sequence from counted
     returning id`);
   if (issued === undefined) {
     throw new Error('The gate command was not stored.');

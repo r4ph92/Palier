@@ -111,7 +111,7 @@ describe('the barrier opening for Julie (story #156)', () => {
     expect(scripted.labels()).toEqual(['insert-gate-command', 'append-session-event']);
     expect(scripted.transactionsOf('append-session-event')).toEqual(scripted.transactionsOf('insert-gate-command'));
     expect(scripted.transactionsOf('insert-gate-command')).toEqual([expect.any(Number)]);
-    expect(scripted.statement('insert-gate-command')?.params).toEqual([entreeDemo.id, entreeDemo.lotId, SESSION_ID]);
+    expect(scripted.statement('insert-gate-command')?.params).toEqual([entreeDemo.id, entreeDemo.lotId, entreeDemo.id, entreeDemo.lotId, SESSION_ID]);
   });
 
   it('marks the opening as an entry, at the time the command was issued', async () => {

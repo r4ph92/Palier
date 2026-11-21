@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, foreignKey, index, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { boolean, check, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, unique, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { GATE_KINDS } from '@palier/shared-types/gates';
 import { parkingLot } from './lotSchema.ts';
 
@@ -24,6 +24,8 @@ export const gate = pgTable(
     verifiedAt: timestamp('verified_at', { withTimezone: true }),
     // Stamped by the server clock on each heartbeat; null until the controller first beats.
     lastHeartbeatAt: timestamp('last_heartbeat_at', { withTimezone: true }),
+    // The sequence of this gate's last command: raised in the command's own insert, so its row lock orders the commands by commit (docs/decisions/048).
+    lastCommandSequence: integer('last_command_sequence').notNull().default(0),
   },
   (table) => [
     unique('gate_lot_id_name_unique').on(table.lotId, table.name),
