@@ -76,9 +76,9 @@ export type EntrySessionParameters = FromSchema<typeof entrySessionParametersSch
 
 const gateCommandSchema = {
   type: 'object',
-  required: ['id', 'kind', 'issuedAt'],
+  required: ['id', 'kind', 'issuedAt', 'sequence'],
   additionalProperties: false,
-  properties: { id: { type: 'string' }, kind: { type: 'string', enum: ['OPEN'] }, issuedAt: { type: 'string' } },
+  properties: { id: { type: 'string' }, kind: { type: 'string', enum: ['OPEN'] }, issuedAt: { type: 'string' }, sequence: { type: 'integer' } },
 } as const;
 
 export const gateCommandListSchema = { type: 'array', items: gateCommandSchema } as const;
@@ -86,7 +86,8 @@ export const gateCommandListSchema = { type: 'array', items: gateCommandSchema }
 export const gateCommandsQuerySchema = {
   type: 'object',
   additionalProperties: false,
-  properties: { after: { type: 'string', format: 'date-time' }, afterId: uuidSchema },
+  // after and afterId are the cursor before #100: named here so ajv keeps them and the route refuses them instead of ignoring them.
+  properties: { afterSequence: { type: 'string' }, after: { type: 'string' }, afterId: { type: 'string' } },
 } as const;
 
 export type GateCommandsQuery = FromSchema<typeof gateCommandsQuerySchema>;

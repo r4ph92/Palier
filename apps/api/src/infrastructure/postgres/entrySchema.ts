@@ -216,6 +216,8 @@ export const gateCommand = pgTable(
     kind: gateCommandKind('kind').notNull(),
     sessionId: uuid('session_id').references(() => parkingSession.id),
     issuedAt: timestamp('issued_at', { withTimezone: true, precision: 3 }).notNull().defaultNow(),
+    // The gate's own count, in commit order: the console's cursor (docs/decisions/048).
+    sequence: integer('sequence').notNull(),
   },
   (table) => [
     foreignKey({
@@ -224,6 +226,7 @@ export const gateCommand = pgTable(
       foreignColumns: [gate.id, gate.lotId],
     }),
     index('gate_command_gate_id_issued_at_index').on(table.gateId, table.issuedAt, table.id),
+    unique('gate_command_gate_id_sequence_unique').on(table.gateId, table.sequence),
     index('gate_command_session_id_index').on(table.sessionId),
   ],
 );
