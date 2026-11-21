@@ -19,12 +19,13 @@ export function canPollCommands(state) {
 }
 
 /**
- * The highest sequence shown: the gate numbers its commands in commit order, so nothing committed later is below it.
+ * The sequence of the last command shown, the highest since mergeCommands keeps them in order: the gate numbers its
+ * commands in commit order, so nothing committed later is below it.
  * @param {readonly GateCommand[]} known
  * @returns {number | null}
  */
 export function cursorOf(known) {
-  return known.length === 0 ? null : Math.max(...known.map((command) => command.sequence));
+  return known.at(-1)?.sequence ?? null;
 }
 
 /**
