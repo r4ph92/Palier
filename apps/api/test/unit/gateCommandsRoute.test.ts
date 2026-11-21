@@ -1,16 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '../../src/http/buildServer.ts';
-import { ENTREE_DEMO_KEY, entreeDemo, FakeEquipmentReports, FakeGateCommandFeed, FakeGateDeviceKeyRepository, FakePassageLedger, sortieDemo } from './fakes/gateFixtures.ts';
+import { GATE_COMMAND_PAGE_SIZE } from '../../src/domain/gates/GateCommandFeed.ts';
+import { ENTREE_DEMO_KEY, entreeDemo, FakeEquipmentReports, FakeGateCommandFeed, FakeGateDeviceKeyRepository, FakePassageLedger, SORTIE_DEMO_KEY, sortieDemo } from './fakes/gateFixtures.ts';
 import { NOW, serverDependencies, SIXTY_SECOND_WINDOW } from './fakes/serverDependencies.ts';
 
-const firstOpen = { id: '00000000-0000-4000-8000-000000000c01', kind: 'OPEN', issuedAt: '2026-10-27T22:02:00.000Z' } as const;
-const sameMillisecondA = { id: '00000000-0000-4000-8000-000000000c2a', kind: 'OPEN', issuedAt: '2026-10-27T22:03:00.000Z' } as const;
-const sameMillisecondB = { id: '00000000-0000-4000-8000-000000000c2b', kind: 'OPEN', issuedAt: '2026-10-27T22:03:00.000Z' } as const;
-
-function cursorAt(command: { readonly id: string; readonly issuedAt: string }): string {
-  return `?after=${command.issuedAt}&afterId=${command.id}`;
-}
+const first = { id: '00000000-0000-4000-8000-000000000c01', kind: 'OPEN', issuedAt: '2026-10-27T22:02:00.000Z', sequence: 1 } as const;
+const second = { id: '00000000-0000-4000-8000-000000000c02', kind: 'OPEN', issuedAt: '2026-10-27T22:03:00.000Z', sequence: 2 } as const;
+// Issued before second but committed after it: its sequence follows the commit, not the issue time.
+const committedLate = { id: '00000000-0000-4000-8000-000000000c03', kind: 'OPEN', issuedAt: '2026-10-27T22:02:30.000Z', sequence: 3 } as const;
+const sortieOpen = { id: '00000000-0000-4000-8000-000000000c51', kind: 'OPEN', issuedAt: '2026-10-27T22:04:00.000Z', sequence: 1 } as const;
 
 describe('GET /v1/gates/me/commands', () => {
   let server: FastifyInstance;
@@ -26,39 +25,60 @@ describe('GET /v1/gates/me/commands', () => {
 
   afterEach(() => server.close());
 
-  it('lists the commands of the key gate only, oldest first', async () => {
-    startServer(new FakeGateCommandFeed().add(entreeDemo.id, sameMillisecondA).add(entreeDemo.id, firstOpen).add(sortieDemo.id, sameMillisecondB));
+  it('lists the commands of the key gate only, oldest first by sequence', async () => {
+    startServer(new FakeGateCommandFeed().add(entreeDemo.id, second).add(entreeDemo.id, first).add(sortieDemo.id, sortieOpen));
 
     const response = await listCommands();
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual([firstOpen, sameMillisecondA]);
+    expect(response.json()).toEqual([first, second]);
   });
 
-  it('brings only commands issued after the cursor, both rows of one millisecond included', async () => {
-    startServer(new FakeGateCommandFeed().add(entreeDemo.id, firstOpen).add(entreeDemo.id, sameMillisecondB).add(entreeDemo.id, sameMillisecondA));
+  it("gives Sortie Démo's key only Sortie Démo's commands, with or without a cursor", async () => {
+    startServer(new FakeGateCommandFeed().add(entreeDemo.id, first).add(entreeDemo.id, second).add(sortieDemo.id, sortieOpen));
 
-    const response = await listCommands(cursorAt(firstOpen));
-
-    expect(response.json()).toEqual([sameMillisecondA, sameMillisecondB]);
+    expect((await listCommands('', SORTIE_DEMO_KEY)).json()).toEqual([sortieOpen]);
+    expect((await listCommands('?afterSequence=0', SORTIE_DEMO_KEY)).json()).toEqual([sortieOpen]);
   });
 
-  it('brings the second command of a millisecond when the cursor is the first one', async () => {
-    startServer(new FakeGateCommandFeed().add(entreeDemo.id, firstOpen).add(entreeDemo.id, sameMillisecondB).add(entreeDemo.id, sameMillisecondA));
+  it('shows the latest page on reload, oldest first', async () => {
+    const feed = new FakeGateCommandFeed();
+    for (let sequence = 1; sequence <= GATE_COMMAND_PAGE_SIZE + 2; sequence += 1) {
+      feed.add(entreeDemo.id, { ...first, id: `command-${sequence}`, sequence });
+    }
+    startServer(feed);
 
-    const response = await listCommands(cursorAt(sameMillisecondA));
+    const sequences = (await listCommands()).json<{ sequence: number }[]>().map((command) => command.sequence);
 
-    expect(response.json()).toEqual([sameMillisecondB]);
+    expect(sequences).toHaveLength(GATE_COMMAND_PAGE_SIZE);
+    expect(sequences[0]).toBe(3);
+    expect(sequences.at(-1)).toBe(GATE_COMMAND_PAGE_SIZE + 2);
+  });
+
+  it('brings a command committed after the cursor even when it was issued earlier', async () => {
+    startServer(new FakeGateCommandFeed().add(entreeDemo.id, first).add(entreeDemo.id, second).add(entreeDemo.id, committedLate));
+
+    const response = await listCommands(`?afterSequence=${second.sequence}`);
+
+    expect(response.json()).toEqual([committedLate]);
   });
 
   it('answers nothing new when the cursor is the last command', async () => {
-    startServer(new FakeGateCommandFeed().add(entreeDemo.id, firstOpen));
+    startServer(new FakeGateCommandFeed().add(entreeDemo.id, first));
 
-    expect((await listCommands(cursorAt(firstOpen))).json()).toEqual([]);
+    expect((await listCommands('?afterSequence=1')).json()).toEqual([]);
+  });
+
+  it('reads the largest sequence Postgres can store', async () => {
+    const feed = new FakeGateCommandFeed();
+    startServer(feed);
+
+    expect((await listCommands('?afterSequence=2147483647')).statusCode).toBe(200);
+    expect(feed.requestedSequences).toEqual([2_147_483_647]);
   });
 
   it('refuses a request without a valid device key', async () => {
-    startServer(new FakeGateCommandFeed().add(entreeDemo.id, firstOpen));
+    startServer(new FakeGateCommandFeed().add(entreeDemo.id, first));
 
     const response = await server.inject({ method: 'GET', url: '/v1/gates/me/commands' });
 
@@ -66,19 +86,33 @@ describe('GET /v1/gates/me/commands', () => {
     expect(response.json()).toMatchObject({ error: 'DEVICE_KEY_REFUSED' });
   });
 
-  it.each(['yesterday', '2025-12-31T23:59:60Z', '0000-06-01T12:00:00Z'])('refuses the cursor %s with 400', async (after) => {
-    startServer(new FakeGateCommandFeed());
+  it.each([
+    ['a negative number', '?afterSequence=-1'],
+    ['a decimal', '?afterSequence=1.5'],
+    ['a word', '?afterSequence=latest'],
+    ['an exponent', '?afterSequence=1e3'],
+    ['a signed number', '?afterSequence=%2B1'],
+    ['an empty value', '?afterSequence='],
+    ['a value past the Postgres integer', '?afterSequence=2147483648'],
+    ['a repeated cursor', '?afterSequence=1&afterSequence=2'],
+    ['the cursor mixed with after', `?afterSequence=1&after=${first.issuedAt}`],
+    ['the cursor mixed with afterId', `?afterSequence=1&afterId=${first.id}`],
+    ['the old cursor alone', `?after=${first.issuedAt}&afterId=${first.id}`],
+  ])('refuses %s with 400 and no commands', async (_case, query) => {
+    const feed = new FakeGateCommandFeed().add(entreeDemo.id, first);
+    startServer(feed);
 
-    expect((await listCommands(`?after=${encodeURIComponent(after)}&afterId=${firstOpen.id}`)).statusCode).toBe(400);
+    const response = await listCommands(query);
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).not.toBeInstanceOf(Array);
+    expect(response.json()).toHaveProperty('error');
+    expect(feed.requestedSequences).toEqual([]);
   });
 
-  it.each([
-    ['a time without an id', `?after=${firstOpen.issuedAt}`],
-    ['an id without a time', `?afterId=${firstOpen.id}`],
-    ['an id that is not a UUID', `?after=${firstOpen.issuedAt}&afterId=command-1`],
-  ])('refuses %s with 400', async (_case, query) => {
+  it('names the refused cursor with CURSOR_INVALID', async () => {
     startServer(new FakeGateCommandFeed());
 
-    expect((await listCommands(query)).statusCode).toBe(400);
+    expect((await listCommands('?afterSequence=-1')).json()).toMatchObject({ statusCode: 400, error: 'CURSOR_INVALID' });
   });
 });

@@ -98,6 +98,8 @@ export interface GateCommand {
   readonly id: string;
   readonly kind: GateCommandKind;
   readonly issuedAt: string;
+  // The gate's own count, in commit order: the console sends the last one it shows as afterSequence.
+  readonly sequence: number;
 }
 
 export type GateCommandListResponse = readonly GateCommand[];

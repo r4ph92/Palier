@@ -5,18 +5,24 @@ import { translate } from '../../src/http/demo/consoleText.js';
 import type { ApiResponse, GateApi } from '../../src/http/demo/gateApi.js';
 
 const DEVICE_KEY = 'gkXGrHor9PJGFGYu4xrNZ5nMkid18rTHXBmuCuI63as';
-const first: GateCommand = { id: 'command-1', kind: 'OPEN', issuedAt: '2026-10-27T22:02:00.000Z' };
-const sameMillisecondA: GateCommand = { id: 'command-2a', kind: 'OPEN', issuedAt: '2026-10-27T22:03:00.000Z' };
-const sameMillisecondB: GateCommand = { id: 'command-2b', kind: 'OPEN', issuedAt: '2026-10-27T22:03:00.000Z' };
+const first: GateCommand = { id: 'command-1', kind: 'OPEN', issuedAt: '2026-10-27T22:02:00.000Z', sequence: 1 };
+const sameMillisecondA: GateCommand = { id: 'command-2a', kind: 'OPEN', issuedAt: '2026-10-27T22:03:00.000Z', sequence: 2 };
+const sameMillisecondB: GateCommand = { id: 'command-2b', kind: 'OPEN', issuedAt: '2026-10-27T22:03:00.000Z', sequence: 3 };
+// Issued before sameMillisecondA but committed after it: the gate numbered it later.
+const committedLate: GateCommand = { id: 'command-late', kind: 'OPEN', issuedAt: '2026-10-27T22:02:30.000Z', sequence: 4 };
 
 function fakeApi(response: ApiResponse) {
   return { fetchCommands: vi.fn<GateApi['fetchCommands']>().mockResolvedValue(response) };
 }
 
 describe('cursorOf', () => {
-  it('starts without a cursor, then follows the last command shown', () => {
+  it('starts without a cursor, then follows the highest sequence shown', () => {
     expect(cursorOf([])).toBeNull();
-    expect(cursorOf([first, sameMillisecondA])).toEqual({ issuedAt: sameMillisecondA.issuedAt, id: sameMillisecondA.id });
+    expect(cursorOf([first, sameMillisecondA])).toBe(2);
+  });
+
+  it('keeps the highest sequence when a later command was issued earlier', () => {
+    expect(cursorOf([first, sameMillisecondA, committedLate])).toBe(4);
   });
 });
 
@@ -28,6 +34,14 @@ describe('mergeCommands', () => {
   it('shows a command once when two polls bring it', () => {
     expect(mergeCommands([first, sameMillisecondA], [sameMillisecondA])).toEqual([first, sameMillisecondA]);
   });
+
+  it('places each command by its sequence, whatever order the polls answered in', () => {
+    expect(mergeCommands([first, sameMillisecondB], [sameMillisecondA])).toEqual([first, sameMillisecondA, sameMillisecondB]);
+  });
+
+  it('adds a command committed after the last one shown even though it was issued earlier', () => {
+    expect(mergeCommands([first, sameMillisecondA], [committedLate])).toEqual([first, sameMillisecondA, committedLate]);
+  });
 });
 
 describe('pollCommands', () => {
@@ -35,7 +49,14 @@ describe('pollCommands', () => {
     const api = fakeApi({ status: 200, body: [sameMillisecondA] });
 
     expect(await pollCommands(api, DEVICE_KEY, [first])).toEqual({ commands: [first, sameMillisecondA], isKeyRefused: false });
-    expect(api.fetchCommands).toHaveBeenCalledWith(DEVICE_KEY, { issuedAt: first.issuedAt, id: first.id });
+    expect(api.fetchCommands).toHaveBeenCalledWith(DEVICE_KEY, first.sequence);
+  });
+
+  it('asks for the latest commands when none is shown yet', async () => {
+    const api = fakeApi({ status: 200, body: [first] });
+
+    expect((await pollCommands(api, DEVICE_KEY, [])).commands).toEqual([first]);
+    expect(api.fetchCommands).toHaveBeenCalledWith(DEVICE_KEY, null);
   });
 
   it('does not call the API until the key can travel in a header', async () => {

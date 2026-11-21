@@ -2,7 +2,6 @@ import { isSendableDeviceKey } from './gateIdentity.js';
 
 /** @typedef {import('@palier/shared-types').GateCommand} GateCommand */
 /** @typedef {Pick<import('./gateApi.js').GateApi, 'fetchCommands'>} CommandApi */
-/** @typedef {import('./gateApi.js').CommandCursor} CommandCursor */
 /** @typedef {import('@palier/shared-types').GateIdentity} GateIdentity */
 
 const OK = 200;
@@ -20,24 +19,24 @@ export function canPollCommands(state) {
 }
 
 /**
- * The last command shown; its id tells apart two commands of the same millisecond.
+ * The highest sequence shown: the gate numbers its commands in commit order, so nothing committed later is below it.
  * @param {readonly GateCommand[]} known
- * @returns {CommandCursor | null}
+ * @returns {number | null}
  */
 export function cursorOf(known) {
-  const last = known.at(-1);
-  return last === undefined ? null : { issuedAt: last.issuedAt, id: last.id };
+  return known.length === 0 ? null : Math.max(...known.map((command) => command.sequence));
 }
 
 /**
- * Oldest first, each command once, whatever order the polls answered in.
+ * Oldest first by sequence, each command once, whatever order the polls answered in.
  * @param {readonly GateCommand[]} known
  * @param {readonly GateCommand[]} incoming
  * @returns {GateCommand[]}
  */
 export function mergeCommands(known, incoming) {
   const knownIds = new Set(known.map((command) => command.id));
-  return [...known, ...incoming.filter((command) => !knownIds.has(command.id))];
+  const added = incoming.filter((command) => !knownIds.has(command.id));
+  return [...known, ...added].sort((left, right) => left.sequence - right.sequence);
 }
 
 /** @typedef {{ commands: readonly GateCommand[], isKeyRefused: boolean }} PollResult */

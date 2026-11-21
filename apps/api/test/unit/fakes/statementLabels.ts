@@ -3,6 +3,8 @@ import { DASHBOARD_STATEMENT_PATTERNS, type DashboardStatementLabel } from './da
 // Names each statement the repositories run by the text it matches, so a test scripts and inspects statements by label.
 export type StatementLabel =
   | 'limit-lock-wait'
+  | 'list-gate-commands-after'
+  | 'list-latest-gate-commands'
   | 'lock-lot'
   | 'read-active-session'
   | 'read-free-spots'
@@ -147,6 +149,8 @@ const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['mark-capture-paid', /set state = 'CLOSED_PAID', captured_cents/],
   ['occupy-confirmed-spot', /update spot set state = 'OCCUPIED', state_changed_at = now\(\)/],
   ['insert-gate-command', /insert into gate_command/],
+  ['list-gate-commands-after', /from gate_command\s+where gate_id = \$\d and sequence > /],
+  ['list-latest-gate-commands', /from gate_command\s+where gate_id = \$\d\s+order by sequence desc/],
   ['backdate-entry', /set entry_confirmed_at = /],
   ['find-stale-session-lots', /select distinct lot_id from parking_session where .* stale_flagged_at is null/s],
   ['flag-stale-sessions', /set stale_flagged_at =/],

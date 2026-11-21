@@ -1,6 +1,5 @@
 /** @typedef {import('@palier/shared-types').PassageReplayItem} PassageReplayItem */
 /** @typedef {{ status: number, body: unknown }} ApiResponse */
-/** @typedef {{ issuedAt: string, id: string }} CommandCursor */
 /** @typedef {{ closedAt: string, armedAt: string | null }} PassageMoments */
 /**
  * @typedef {object} GateApi
@@ -11,7 +10,7 @@
  * @property {(deviceKey: string, gateId: string) => Promise<ApiResponse>} postPresence
  * @property {(deviceKey: string, gateId: string) => Promise<ApiResponse>} postHeartbeat
  * @property {(deviceKey: string, gateId: string) => Promise<ApiResponse>} postTestPassage
- * @property {(deviceKey: string, after: CommandCursor | null) => Promise<ApiResponse>} fetchCommands
+ * @property {(deviceKey: string, afterSequence: number | null) => Promise<ApiResponse>} fetchCommands
  */
 
 export const UNREACHABLE = 0;
@@ -39,7 +38,7 @@ export function createGateApi(fetchFunction) {
       request(fetchFunction, gatePath(gateId, 'heartbeat'), { method: 'POST', headers: authorization(deviceKey) }),
     postTestPassage: (deviceKey, gateId) =>
       request(fetchFunction, gatePath(gateId, 'test-passage'), { method: 'POST', headers: authorization(deviceKey) }),
-    fetchCommands: (deviceKey, after) => request(fetchFunction, commandsUrl(after), { headers: authorization(deviceKey) }),
+    fetchCommands: (deviceKey, afterSequence) => request(fetchFunction, commandsUrl(afterSequence), { headers: authorization(deviceKey) }),
   };
 }
 
@@ -53,14 +52,14 @@ function gatePath(gateId, action) {
 }
 
 /**
- * @param {CommandCursor | null} after
+ * @param {number | null} afterSequence
  * @returns {string}
  */
-function commandsUrl(after) {
-  if (after === null) {
+function commandsUrl(afterSequence) {
+  if (afterSequence === null) {
     return '/v1/gates/me/commands';
   }
-  return `/v1/gates/me/commands?${new URLSearchParams({ after: after.issuedAt, afterId: after.id })}`;
+  return `/v1/gates/me/commands?${new URLSearchParams({ afterSequence: String(afterSequence) })}`;
 }
 
 /**

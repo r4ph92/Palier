@@ -1,17 +1,16 @@
 import type { GateCommand } from '@palier/shared-types';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
-import { GATE_COMMAND_PAGE_SIZE, type GateCommandCursor, type GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
+import { sql } from 'drizzle-orm';
+import { GATE_COMMAND_PAGE_SIZE, type GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
 import type { Database } from './database.ts';
-import { gateCommand } from './schema.ts';
 
-const commandColumns = { id: gateCommand.id, kind: gateCommand.kind, issuedAt: gateCommand.issuedAt };
-
-interface CommandRow {
+interface CommandRow extends Record<string, unknown> {
   readonly id: string;
   readonly kind: GateCommand['kind'];
-  readonly issuedAt: Date;
+  readonly issued_at: Date | string;
+  readonly sequence: number;
 }
 
+// Paged on the gate's sequence, which follows commit order (docs/decisions/048): a command committed late is never behind the cursor.
 export class PostgresGateCommandFeed implements GateCommandFeed {
   readonly #database: Database;
 
@@ -19,28 +18,23 @@ export class PostgresGateCommandFeed implements GateCommandFeed {
     this.#database = database;
   }
 
-  async listCommands(gateId: string, after: GateCommandCursor | null): Promise<readonly GateCommand[]> {
-    const rows = after === null ? await this.#latest(gateId) : await this.#after(gateId, after);
-    return rows.map((row) => ({ id: row.id, kind: row.kind, issuedAt: row.issuedAt.toISOString() }));
+  async listCommands(gateId: string, afterSequence: number | null): Promise<readonly GateCommand[]> {
+    const rows = afterSequence === null ? await this.#latest(gateId) : await this.#after(gateId, afterSequence);
+    return rows.map((row) => ({ id: row.id, kind: row.kind, issuedAt: new Date(row.issued_at).toISOString(), sequence: row.sequence }));
   }
 
-  #after(gateId: string, after: GateCommandCursor): Promise<CommandRow[]> {
-    const isAfterCursor = sql`(${gateCommand.issuedAt}, ${gateCommand.id}) > (${after.issuedAt.toISOString()}::timestamptz, ${after.id}::uuid)`;
-    return this.#database
-      .select(commandColumns)
-      .from(gateCommand)
-      .where(and(eq(gateCommand.gateId, gateId), isAfterCursor))
-      .orderBy(asc(gateCommand.issuedAt), asc(gateCommand.id))
-      .limit(GATE_COMMAND_PAGE_SIZE);
+  #after(gateId: string, afterSequence: number): Promise<readonly CommandRow[]> {
+    return this.#database.execute<CommandRow>(sql`
+      select id, kind, issued_at, sequence from gate_command
+      where gate_id = ${gateId} and sequence > ${afterSequence}
+      order by sequence asc limit ${GATE_COMMAND_PAGE_SIZE}`);
   }
 
-  async #latest(gateId: string): Promise<CommandRow[]> {
-    const newestFirst = await this.#database
-      .select(commandColumns)
-      .from(gateCommand)
-      .where(eq(gateCommand.gateId, gateId))
-      .orderBy(desc(gateCommand.issuedAt), desc(gateCommand.id))
-      .limit(GATE_COMMAND_PAGE_SIZE);
-    return newestFirst.reverse();
+  async #latest(gateId: string): Promise<readonly CommandRow[]> {
+    const newestFirst = await this.#database.execute<CommandRow>(sql`
+      select id, kind, issued_at, sequence from gate_command
+      where gate_id = ${gateId}
+      order by sequence desc limit ${GATE_COMMAND_PAGE_SIZE}`);
+    return [...newestFirst].reverse();
   }
 }

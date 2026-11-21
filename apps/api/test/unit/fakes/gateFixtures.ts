@@ -1,6 +1,6 @@
 import type { GateCommand } from '@palier/shared-types';
 import type { AuthenticatedGate } from '../../../src/domain/gates/AuthenticatedGate.ts';
-import { GATE_COMMAND_PAGE_SIZE, type GateCommandCursor, type GateCommandFeed } from '../../../src/domain/gates/GateCommandFeed.ts';
+import { GATE_COMMAND_PAGE_SIZE, type GateCommandFeed } from '../../../src/domain/gates/GateCommandFeed.ts';
 import type { BeaconBatteryReport, EquipmentReports, ReportingGate, TestPassage } from '../../../src/domain/equipment/EquipmentReports.ts';
 import type { DeviceKeyRecord, GateDeviceKeyRepository } from '../../../src/domain/gates/GateDeviceKeyRepository.ts';
 import { hashDeviceKey } from '../../../src/domain/gates/hashDeviceKey.ts';
@@ -76,30 +76,27 @@ export class FakePassageLedger implements PassageLedger {
   }
 }
 
-// Mirrors PostgresGateCommandFeed: strictly after the cursor, ordered by time then id, the latest page without one.
+// Mirrors PostgresGateCommandFeed: strictly after the sequence, ordered by sequence, the latest page without one.
 export class FakeGateCommandFeed implements GateCommandFeed {
   readonly #commands: { gateId: string; command: GateCommand }[] = [];
+  readonly requestedSequences: (number | null)[] = [];
 
   add(gateId: string, command: GateCommand): this {
     this.#commands.push({ gateId, command });
     return this;
   }
 
-  listCommands(gateId: string, after: GateCommandCursor | null): Promise<readonly GateCommand[]> {
+  listCommands(gateId: string, afterSequence: number | null): Promise<readonly GateCommand[]> {
+    this.requestedSequences.push(afterSequence);
     const ordered = this.#commands
       .filter((entry) => entry.gateId === gateId)
       .map((entry) => entry.command)
-      .sort((left, right) => left.issuedAt.localeCompare(right.issuedAt) || left.id.localeCompare(right.id));
-    if (after === null) {
+      .sort((left, right) => left.sequence - right.sequence);
+    if (afterSequence === null) {
       return Promise.resolve(ordered.slice(-GATE_COMMAND_PAGE_SIZE));
     }
-    return Promise.resolve(ordered.filter((command) => isAfter(command, after)).slice(0, GATE_COMMAND_PAGE_SIZE));
+    return Promise.resolve(ordered.filter((command) => command.sequence > afterSequence).slice(0, GATE_COMMAND_PAGE_SIZE));
   }
-}
-
-function isAfter(command: GateCommand, cursor: GateCommandCursor): boolean {
-  const issuedAt = new Date(command.issuedAt).getTime();
-  return issuedAt > cursor.issuedAt.getTime() || (issuedAt === cursor.issuedAt.getTime() && command.id > cursor.id);
 }
 
 // Parking Démo's beacons as seeded: the exit lane (minor 0), aisles A (1) and B (2); the SQL scopes each write to the gate's lot.

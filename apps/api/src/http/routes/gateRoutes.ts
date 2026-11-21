@@ -1,7 +1,6 @@
 import type { GateIdentifyRequest, GateIdentifyResponse, GateIdentity, GatePassageRequest, GatePassageResponse, GatePresenceResponse, PassageReplayRequest, PassageReplayResponse } from '@palier/shared-types';
-import { isStorableDate } from '../../domain/time/storableDate.ts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import type { GateCommandCursor, GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
+import type { GateCommandFeed } from '../../domain/gates/GateCommandFeed.ts';
 import type { EquipmentReports } from '../../domain/equipment/EquipmentReports.ts';
 import type { GateDeviceKeyRepository } from '../../domain/gates/GateDeviceKeyRepository.ts';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
@@ -166,27 +165,32 @@ function identifyReply(identified: IdentifyOutcome, request: FastifyRequest<Iden
   return reply.status(SERVICE_UNAVAILABLE).send({ statusCode: SERVICE_UNAVAILABLE, error, message: 'The exit could not be completed; use the app.' });
 }
 
-// The demo console polls this with the issuedAt and id of the last command it shows, so each poll brings only new ones.
+// The demo console polls this with the sequence of the last command it shows, so each poll brings only new ones.
 function registerCommandsRoute(scope: FastifyInstance, commands: GateCommandFeed): void {
   const schema = { querystring: gateCommandsQuerySchema, response: { 200: gateCommandListSchema } };
   scope.get<CommandsRoute>('/me/commands', { schema }, async (request, reply) => {
     const cursor = cursorOf(request.query);
     if (cursor.kind === 'invalid') {
-      return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'AFTER_INVALID', message: 'after and afterId do not form a cursor the server can read.' });
+      return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'CURSOR_INVALID', message: 'afterSequence must be a whole number from 0 to 2147483647, without after or afterId.' });
     }
-    return commands.listCommands(authenticatedGateOf(request).id, cursor.kind === 'after' ? cursor.after : null);
+    return commands.listCommands(authenticatedGateOf(request).id, cursor.kind === 'after' ? cursor.afterSequence : null);
   });
 }
 
-type CommandsCursor = { readonly kind: 'latest' } | { readonly kind: 'invalid' } | { readonly kind: 'after'; readonly after: GateCommandCursor };
+type CommandsCursor = { readonly kind: 'latest' } | { readonly kind: 'invalid' } | { readonly kind: 'after'; readonly afterSequence: number };
 
-function cursorOf({ after, afterId }: GateCommandsQuery): CommandsCursor {
-  if (after === undefined && afterId === undefined) {
-    return { kind: 'latest' };
-  }
-  if (after === undefined || afterId === undefined) {
+// Digits only, so "1e3", "+1", " 1" and "1.0" are refused rather than read as numbers.
+const WHOLE_NUMBER = /^\d+$/;
+// The sequence is a Postgres integer: a larger cursor could never be compared to it.
+const MAX_SEQUENCE = 2_147_483_647;
+
+function cursorOf({ afterSequence, after, afterId }: GateCommandsQuery): CommandsCursor {
+  if (after !== undefined || afterId !== undefined) {
     return { kind: 'invalid' };
   }
-  const issuedAt = new Date(after);
-  return isStorableDate(issuedAt) ? { kind: 'after', after: { issuedAt, id: afterId } } : { kind: 'invalid' };
+  if (afterSequence === undefined) {
+    return { kind: 'latest' };
+  }
+  const sequence = Number(afterSequence);
+  return WHOLE_NUMBER.test(afterSequence) && sequence <= MAX_SEQUENCE ? { kind: 'after', afterSequence: sequence } : { kind: 'invalid' };
 }
