@@ -34,13 +34,12 @@ export class PostgresLotAvailabilityRepository implements LotAvailabilityReposit
     this.#database = database;
   }
 
-  async findOnlineLots(limit: number): Promise<readonly OnlineLot[]> {
+  async findOnlineLots(): Promise<readonly OnlineLot[]> {
     const lots = await this.#database
       .select(ONLINE_LOT_COLUMNS)
       .from(parkingLot)
       .where(eq(parkingLot.isOnline, true))
-      .orderBy(asc(parkingLot.name))
-      .limit(limit);
+      .orderBy(asc(parkingLot.name));
     const groups = await this.#availableSpotGroups(lots.map(({ id }) => id));
     return lots.map((lot) => onlineLotFromRow(lot, groups.filter(({ lotId }) => lotId === lot.id)));
   }

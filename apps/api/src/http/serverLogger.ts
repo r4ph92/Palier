@@ -1,5 +1,5 @@
 import { DrizzleQueryError } from 'drizzle-orm/errors';
-import type { FastifyServerOptions } from 'fastify';
+import type { FastifyRequest, FastifyServerOptions } from 'fastify';
 
 export interface LogStream {
   write(line: string): void;
@@ -19,7 +19,22 @@ export function serverLoggerOf({ logsRequests = false, logStream }: ServerLoggin
   if (!logsRequests) {
     return false;
   }
-  return { ...(logStream === undefined ? {} : { stream: logStream }), hooks: { logMethod: withoutQueryParametersHook } };
+  return {
+    ...(logStream === undefined ? {} : { stream: logStream }),
+    hooks: { logMethod: withoutQueryParametersHook },
+    serializers: { req: requestWithoutQueryString },
+  };
+}
+
+// Fastify's default request line prints the whole URL: a query string, a position sent by a modified client included,
+// would reach the log even when the route refuses it (decision 015). Only the path is kept.
+function requestWithoutQueryString(request: FastifyRequest) {
+  return {
+    method: request.method,
+    url: request.url.replace(/[?#].*$/s, ''),
+    host: request.host,
+    remoteAddress: request.ip,
+  };
 }
 
 const withoutQueryParametersHook: LogMethodHook = function (args, method) {

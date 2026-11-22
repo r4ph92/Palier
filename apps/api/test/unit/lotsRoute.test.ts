@@ -1,5 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { NADIA_BOUCHARD_ID } from '../../src/config/testPersonas.ts';
+import type { Driver } from '../../src/domain/drivers/Driver.ts';
 import type { LotAvailabilityRepository } from '../../src/domain/lots/LotAvailabilityRepository.ts';
 import { buildServer } from '../../src/http/buildServer.ts';
 import { acceptNoticeAs, authorizationFor, FakeDriverRepository, julie } from './fakeDriverRepository.ts';
@@ -113,5 +115,60 @@ describe('GET /v1/lots without a valid driver token', () => {
     const response = await listLotsWith({ authorization });
 
     expect(response.statusCode).toBe(401);
+  });
+});
+
+// The position stays on the phone (decision 015): the list route takes no parameter, and a request carrying one gets no lot.
+describe('GET /v1/lots with query parameters', () => {
+  const POSITION_QUERY = '?latitude=45.5&longitude=-73.5';
+  const nadia: Driver = { id: NADIA_BOUCHARD_ID, firstName: 'Nadia', lastName: 'Bouchard' };
+  let server: FastifyInstance;
+  let findOnlineLots: LotAvailabilityRepository['findOnlineLots'];
+  let driverRepository: FakeDriverRepository;
+
+  afterEach(() => server.close());
+
+  function startServer() {
+    findOnlineLots = vi.fn(() => Promise.resolve([parkingDemo]));
+    driverRepository = new FakeDriverRepository([julie, nadia]);
+    server = buildServer({ gates: fakeGateDependencies(), repositories: fakeRepositories({ vehicleRepository: new FakeVehicleRepository(), lotAvailabilityRepository: { findOnlineLots }, driverRepository }) });
+  }
+
+  it.each([
+    ['a position', POSITION_QUERY],
+    ['one coordinate', '?latitude=45.5'],
+    ['any other parameter', '?limit=1000'],
+    ['an empty parameter', '?latitude='],
+  ])('answers 400 to Julie with %s, without reading or returning any lot', async (_case, query) => {
+    startServer();
+    await acceptNoticeAs(driverRepository, julie);
+    const headers = await authorizationFor(driverRepository, julie);
+
+    const response = await server.inject({ method: 'GET', url: `/v1/lots${query}`, headers });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ error: 'QUERY_NOT_ALLOWED' });
+    expect(response.body).not.toMatch(/Parking Démo|45\.5|-73\.5/);
+    expect(findOnlineLots).not.toHaveBeenCalled();
+  });
+
+  it('still answers 401 to a request without a session', async () => {
+    startServer();
+
+    const response = await server.inject({ method: 'GET', url: `/v1/lots${POSITION_QUERY}` });
+
+    expect(response.statusCode).toBe(401);
+    expect(findOnlineLots).not.toHaveBeenCalled();
+  });
+
+  it('still answers 403 to Nadia Bouchard, who has not accepted the notice', async () => {
+    startServer();
+    const headers = await authorizationFor(driverRepository, nadia);
+
+    const response = await server.inject({ method: 'GET', url: `/v1/lots${POSITION_QUERY}`, headers });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ error: 'CONSENT_REQUIRED' });
+    expect(findOnlineLots).not.toHaveBeenCalled();
   });
 });

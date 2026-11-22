@@ -31,6 +31,7 @@ import type { VehicleRepository } from '../domain/vehicles/VehicleRepository.ts'
 import type { DashboardRouteDependencies } from './dashboard/DashboardRouteDependencies.ts';
 import { registerDashboardRoutes } from './dashboard/dashboardRoutes.ts';
 import { registerDemoConsoleRoutes } from './demo/demoConsoleRoutes.ts';
+import { handleNotFound } from './handleNotFound.ts';
 import { handleServerError } from './handleServerError.ts';
 import { serverLoggerOf, type ServerLogging } from './serverLogger.ts';
 import { requireMinimumAppVersion } from './requireMinimumAppVersion.ts';
@@ -112,6 +113,7 @@ export function buildServer({ repositories, gates, cardGateway, entries, exits, 
   // Refuse a value of the wrong JSON type rather than converting it, so ["2026-10-28"] is not read as "2026-10-28".
   const server = Fastify({ logger: serverLoggerOf(settings), ajv: { customOptions: { coerceTypes: false } } });
   server.setErrorHandler(handleServerError);
+  server.setNotFoundHandler(handleNotFound);
   server.decorateRequest('driver', null);
   void server.register(async (appScope) => registerAppRoutes(appScope, { repositories, cardGateway, entries, exits, spotHolds, testClock, settings }));
   void server.register(async (dashboardScope) => registerDashboardRoutes(dashboardScope, dashboardDependencies({ repositories, settings, operatorStripe, testClock })));
