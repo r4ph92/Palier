@@ -93,6 +93,7 @@ describe('exitParking', () => {
   it.each([
     { state: 'CREATED', outcome: 'entry-not-confirmed' },
     { state: 'CANCELLED', outcome: 'closed' },
+    { state: 'CLOSED_BY_STAFF', outcome: 'closed' },
   ] as const)('refuses a $state session without taking anything', async ({ state, outcome }) => {
     const { exits, payments, exit } = setup();
     exits.add(JULIE_ID, { ...julieInside(enteredAt), state });
