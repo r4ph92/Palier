@@ -125,3 +125,104 @@ describe('confirming the presence of a vehicle in Postgres', () => {
     expect(await repositoryOn(scripted).confirmPresence(SOPHIE_OPERATOR, check)).toBe('LOT_BUSY');
   });
 });
+
+describe('closing a stale session at its last proof in Postgres (story #75)', () => {
+  const CLOSED_AT = new Date('2026-11-12T10:30:00Z');
+  const closing = { lotId: PARKING_DEMO, sessionId: SESSION_ID, memberId: SOPHIE_ID, closedAt: CLOSED_AT };
+  const LAST_PROOF = `greatest(parking_session.entry_confirmed_at, case when parking_session.presumed_by = 'WALK' then parking_session.parked_at end, parking_session.parked_answered_at, parking_session.presence_confirmed_at)`;
+  const closedRow = { assigned_spot_id: 'spot-a1', confirmed_spot_id: null, payment_intent_id: 'pi_julie' };
+  const julieSpotOccupied = { id: 'spot-a1', state: 'OCCUPIED', held_by_another_session: false };
+
+  function closedJulie(row: Record<string, unknown> = closedRow): ScriptedSql {
+    return lockedLot().answer('close-at-last-proof', [row]).answer('lock-exit-spots', [julieSpotOccupied]);
+  }
+
+  function oneLine(text: string | undefined): string {
+    return (text ?? '').replace(/\s+/g, ' ');
+  }
+
+  it('locks the lot, closes the session, frees and flags its spot and logs the step, in one transaction', async () => {
+    const scripted = closedJulie();
+
+    expect(await repositoryOn(scripted).closeAtLastProof(SOPHIE_OPERATOR, closing)).toEqual({ paymentIntentId: 'pi_julie' });
+
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'close-at-last-proof', 'lock-exit-spots', 'free-exit-spots', 'flag-closed-spot-to-check', 'append-session-event']);
+    expect(scripted.isolationLevels).toEqual(['read committed']);
+    expect(scripted.statements.every(({ onTransaction }) => onTransaction)).toBe(true);
+  });
+
+  it('closes only an active flagged session of the lot with a proof, at that proof, as a staff exit by the member', async () => {
+    const scripted = closedJulie();
+
+    await repositoryOn(scripted).closeAtLastProof(SOPHIE_OPERATOR, closing);
+
+    const update = scripted.statement('close-at-last-proof');
+    const text = oneLine(update?.text);
+    expect(text).toContain(`set state = 'CLOSED_BY_STAFF', exit_at = ${LAST_PROOF}, exit_identification = 'STAFF', staff_closed_by = $1, stale_flagged_at = null`);
+    expect(text).toContain(`where id = $2 and lot_id = $3 and state in ('CREATED', 'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED') and stale_flagged_at is not null and ${LAST_PROOF} is not null`);
+    expect(update?.params).toEqual([SOPHIE_ID, SESSION_ID, PARKING_DEMO]);
+  });
+
+  it('marks the card hold for release in the same write and touches no amount, so nothing is captured', async () => {
+    const scripted = closedJulie();
+
+    await repositoryOn(scripted).closeAtLastProof(SOPHIE_OPERATOR, closing);
+
+    const text = oneLine(scripted.statement('close-at-last-proof')?.text);
+    expect(text).toContain('hold_release_pending = payment_intent_id is not null');
+    expect(scripted.statements.map(({ text: statement }) => statement).join(' ')).not.toMatch(/captured_cents|pending_capture_cents|surplus_paid_cents|unpaid_cents/);
+  });
+
+  it('frees the spot the car stood in, confirmed before assigned, and flags it to check as a stale session, keeping an earlier flag', async () => {
+    const scripted = lockedLot()
+      .answer('close-at-last-proof', [{ ...closedRow, confirmed_spot_id: 'spot-a2' }])
+      .answer('lock-exit-spots', [{ id: 'spot-a2', state: 'OCCUPIED', held_by_another_session: false }]);
+
+    await repositoryOn(scripted).closeAtLastProof(SOPHIE_OPERATOR, closing);
+
+    expect(scripted.statement('free-exit-spots')?.params).toContain('spot-a2');
+    const flag = scripted.statement('flag-closed-spot-to-check');
+    const text = oneLine(flag?.text);
+    expect(text).toContain('set needs_check = true, needs_check_since = coalesce(needs_check_since, $1::timestamptz), needs_check_reason = coalesce(needs_check_reason, \'STALE_SESSION\')');
+    expect(text).toContain("where id = $2 and state = 'AVAILABLE'");
+    expect(flag?.params).toEqual([CLOSED_AT.toISOString(), 'spot-a2']);
+  });
+
+  it('logs CLOSED_BY_STAFF with an empty payload, dated by the exit the update wrote, and never the member', async () => {
+    const scripted = closedJulie();
+
+    await repositoryOn(scripted).closeAtLastProof(SOPHIE_OPERATOR, closing);
+
+    const event = onlyAppendedSessionEvent(scripted);
+    expect([event.kind, event.payload]).toEqual(['CLOSED_BY_STAFF', {}]);
+    expect(event.occurredAtText).toContain('exit_at');
+    expect(JSON.stringify(appendedSessionEvents(scripted))).not.toContain(SOPHIE_ID);
+  });
+
+  it('answers no hold to cancel for a session that had none', async () => {
+    const scripted = closedJulie({ ...closedRow, payment_intent_id: null });
+
+    expect(await repositoryOn(scripted).closeAtLastProof(SOPHIE_OPERATOR, closing)).toEqual({ paymentIntentId: null });
+  });
+
+  it('refuses a session no longer active, no longer flagged or not in the lot as SESSION_NOT_FOUND, freeing and logging nothing', async () => {
+    const scripted = lockedLot();
+
+    expect(await repositoryOn(scripted).closeAtLastProof(SOPHIE_OPERATOR, closing)).toBe('SESSION_NOT_FOUND');
+    expect(scripted.labels()).toEqual(['limit-lock-wait', 'lock-owned-lot', 'close-at-last-proof']);
+  });
+
+  it("refuses another operator's lot before touching any session", async () => {
+    const scripted = new ScriptedSql();
+
+    expect(await repositoryOn(scripted).closeAtLastProof('operator-roy', closing)).toBe('LOT_NOT_FOUND');
+    expect(scripted.count('close-at-last-proof')).toBe(0);
+  });
+
+  it('answers LOT_BUSY when the lot lock times out, closing nothing', async () => {
+    const scripted = new ScriptedSql().fail('lock-owned-lot', LOCK_NOT_AVAILABLE);
+
+    expect(await repositoryOn(scripted).closeAtLastProof(SOPHIE_OPERATOR, closing)).toBe('LOT_BUSY');
+    expect(scripted.count('close-at-last-proof')).toBe(0);
+  });
+});

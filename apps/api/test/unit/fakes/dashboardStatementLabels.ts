@@ -20,6 +20,8 @@ export type DashboardStatementLabel =
   | 'list-stale-sessions'
   | 'lock-session-to-confirm'
   | 'confirm-presence'
+  | 'close-at-last-proof'
+  | 'flag-closed-spot-to-check'
   | 'read-exit-counts';
 
 export const DASHBOARD_STATEMENT_PATTERNS: readonly (readonly [DashboardStatementLabel, RegExp])[] = [
@@ -43,5 +45,7 @@ export const DASHBOARD_STATEMENT_PATTERNS: readonly (readonly [DashboardStatemen
   ['list-stale-sessions', /order by ps\.stale_flagged_at/],
   ['lock-session-to-confirm', /select stale_flagged_at is not null as flagged/],
   ['confirm-presence', /set presence_confirmed_at =/],
+  ['close-at-last-proof', /set state = 'CLOSED_BY_STAFF'/],
+  ['flag-closed-spot-to-check', /'STALE_SESSION'\)/],
   ['read-exit-counts', /as exit_count/],
 ];

@@ -1,19 +1,24 @@
 import type { AssignedSpot, EntrySessionState } from '@palier/shared-types';
 import { ACTIVE_ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
-import type { PresenceCheck, PresenceRefusal, StaleSessionListRead, StaleSessionReviewRepository } from '../../../src/domain/dashboard/StaleSessionReviewRepository.ts';
-import type { SessionProofs } from '../../../src/domain/parkingSessions/sessionProofs.ts';
+import type { ClosedAtLastProof, PresenceCheck, PresenceRefusal, StaffClosing, StaleSessionListRead, StaleSessionReviewRepository } from '../../../src/domain/dashboard/StaleSessionReviewRepository.ts';
+import { lastProofOf, type SessionProofs } from '../../../src/domain/parkingSessions/sessionProofs.ts';
 import type { FakeLotStore } from './fakeLotSetupRepository.ts';
 
 export interface FakeReviewedSession {
   readonly id: string;
   readonly lotId: string;
   readonly plate: string;
-  readonly state: EntrySessionState;
+  state: EntrySessionState;
   readonly spot: AssignedSpot;
   proofs: SessionProofs;
   staleFlaggedAt: Date | null;
   presenceConfirmedBy: string | null;
   readonly events: string[];
+  readonly paymentIntentId?: string | null;
+  // What a closing at the last proof writes (story #75).
+  exitAt?: Date;
+  staffClosedBy?: string;
+  holdReleasePending?: boolean;
 }
 
 const ACTIVE_STATES: readonly EntrySessionState[] = ACTIVE_ENTRY_SESSION_STATES;
@@ -56,6 +61,28 @@ export class FakeStaleSessionReviewRepository implements StaleSessionReviewRepos
       session.events.push('PRESENCE_CONFIRMED');
     }
     return Promise.resolve('CONFIRMED');
+  }
+
+  closeAtLastProof(operatorId: string, closing: StaffClosing): Promise<ClosedAtLastProof | PresenceRefusal> {
+    if (this.#lots.indexOf(operatorId, closing.lotId) < 0) {
+      return Promise.resolve('LOT_NOT_FOUND');
+    }
+    if (this.busyLots.has(closing.lotId)) {
+      return Promise.resolve('LOT_BUSY');
+    }
+    const session = this.sessions.find(({ id, lotId }) => id === closing.sessionId && lotId === closing.lotId);
+    const last = session === undefined ? null : lastProofOf(session.proofs);
+    if (session === undefined || !isOpen(session) || session.staleFlaggedAt === null || last === null) {
+      return Promise.resolve('SESSION_NOT_FOUND');
+    }
+    const paymentIntentId = session.paymentIntentId ?? null;
+    session.state = 'CLOSED_BY_STAFF';
+    session.exitAt = last.at;
+    session.staffClosedBy = closing.memberId;
+    session.staleFlaggedAt = null;
+    session.holdReleasePending = paymentIntentId !== null;
+    session.events.push('CLOSED_BY_STAFF');
+    return Promise.resolve({ paymentIntentId });
   }
 }
 
