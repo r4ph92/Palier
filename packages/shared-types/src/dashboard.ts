@@ -151,9 +151,10 @@ export interface DashboardAisleSpots {
   readonly capacity: number;
 }
 
-export const SPOT_CHECK_REASONS = ['WRONG_AISLE', 'WRONG_SPOT', 'REPORTED_TAKEN'] as const;
+export const SPOT_CHECK_REASONS = ['WRONG_AISLE', 'WRONG_SPOT', 'REPORTED_TAKEN', 'STALE_SESSION'] as const;
 
-// Why a spot was flagged for a physical check: its driver parked in another aisle, in another spot of the same aisle, or reported it taken.
+// Why a spot was flagged for a physical check: its driver parked in another aisle, in another spot of the same aisle, or reported it taken;
+// or an operator closed the stale session that held it, so nobody saw the vehicle leave.
 export type SpotCheckReason = (typeof SPOT_CHECK_REASONS)[number];
 
 // A flagged spot of a lot, oldest flag first. The reason is null for a flag raised before reasons were recorded, or by the seed:spot-state script.

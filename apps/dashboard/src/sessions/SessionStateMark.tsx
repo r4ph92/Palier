@@ -12,6 +12,7 @@ const TONES: Readonly<Record<EntrySessionState, StateTone>> = {
   CANCELLED: 'muted',
   CLOSED_PAID: 'muted',
   CLOSED_CAPTURE_PENDING: 'warning',
+  CLOSED_BY_STAFF: 'muted',
 };
 
 export function SessionStateMark({ state }: { readonly state: EntrySessionState }) {

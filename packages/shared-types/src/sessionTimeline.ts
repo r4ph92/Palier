@@ -7,7 +7,8 @@ export type SessionListStatus = (typeof SESSION_LIST_STATUSES)[number];
 
 export const SESSION_LIST_PAGE_SIZE = 50;
 
-export const SESSION_EXIT_METHODS = ['APP', 'PLATE', 'TRANSPONDER', 'BEACON'] as const;
+// STAFF: an operator closed a stale session at its last known proof, with no gate and no capture (decision 043).
+export const SESSION_EXIT_METHODS = ['APP', 'PLATE', 'TRANSPONDER', 'BEACON', 'STAFF'] as const;
 export type SessionExitMethod = (typeof SESSION_EXIT_METHODS)[number];
 
 export const PARKING_EVIDENCES = ['ON_FOOT', 'TIMEOUT', 'ANSWERED'] as const;
@@ -28,6 +29,7 @@ export const TIMELINE_KINDS = [
   'CAPTURE_PENDING',
   'EXIT_LOOP_CLOSED',
   'PRESENCE_CONFIRMED',
+  'CLOSED_BY_STAFF',
   'UNKNOWN',
 ] as const;
 export type TimelineKind = (typeof TIMELINE_KINDS)[number];

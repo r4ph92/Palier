@@ -33,7 +33,7 @@ describe('reading the exit identification shares of a lot as a member', () => {
 
   it('reads a lot with no exit as a total of 0', async () => {
     const given = sources();
-    given.exitIdentifications.set(PARKING_DEMO_ID, { lotName: 'Parking Démo', counts: { BEACON: 0, APP: 0, PLATE: 0, TRANSPONDER: 0 } });
+    given.exitIdentifications.set(PARKING_DEMO_ID, { lotName: 'Parking Démo', counts: { BEACON: 0, APP: 0, PLATE: 0, TRANSPONDER: 0, STAFF: 0 } });
 
     const found = await findLotExitSharesOfMember(given, { userId: sophie.id, lotId: PARKING_DEMO_ID });
 
@@ -42,7 +42,7 @@ describe('reading the exit identification shares of a lot as a member', () => {
 
   it('keeps a recorded staff count and includes it in the total', async () => {
     const given = sources();
-    const counts = { BEACON: 5, APP: 3, PLATE: 2, TRANSPONDER: 0, STAFF: 4 } as unknown as RecordedExitCounts;
+    const counts: RecordedExitCounts = { BEACON: 5, APP: 3, PLATE: 2, TRANSPONDER: 0, STAFF: 4 };
     given.exitIdentifications.set(PARKING_DEMO_ID, { lotName: 'Parking Démo', counts });
 
     const found = await findLotExitSharesOfMember(given, { userId: sophie.id, lotId: PARKING_DEMO_ID });

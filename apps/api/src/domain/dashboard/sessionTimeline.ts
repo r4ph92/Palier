@@ -17,6 +17,7 @@ const DETAILS_OF: Readonly<Record<SessionEventKind, (payload: EventPayload) => T
   CAPTURE_PENDING: (payload) => detailsOf({ amountCents: amountWithSurplusOf(payload, 'pendingCaptureCents', 'pendingSurplusCents') }),
   EXIT_LOOP_CLOSED: () => ({}),
   PRESENCE_CONFIRMED: () => ({}),
+  CLOSED_BY_STAFF: () => ({}),
 };
 
 // The steps in the order they were written; the clock of a step never orders them (decision 037).

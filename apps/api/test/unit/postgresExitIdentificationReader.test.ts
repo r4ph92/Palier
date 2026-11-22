@@ -41,7 +41,7 @@ describe('the Postgres exit identification reader', () => {
 
     const read = await readerOn(scripted).readExitCounts(OPERATOR, LOT, SINCE);
 
-    expect(read).toEqual({ lotName: 'Parking Démo', counts: { BEACON: 0, APP: 0, PLATE: 0, TRANSPONDER: 0 } });
+    expect(read).toEqual({ lotName: 'Parking Démo', counts: { BEACON: 0, APP: 0, PLATE: 0, TRANSPONDER: 0, STAFF: 0 } });
   });
 
   it('fills the methods with no exit with zero', async () => {
@@ -52,6 +52,17 @@ describe('the Postgres exit identification reader', () => {
 
     const read = await readerOn(scripted).readExitCounts(OPERATOR, LOT, SINCE);
 
-    expect(read?.counts).toEqual({ BEACON: 5, APP: 0, PLATE: 2, TRANSPONDER: 0 });
+    expect(read?.counts).toEqual({ BEACON: 5, APP: 0, PLATE: 2, TRANSPONDER: 0, STAFF: 0 });
+  });
+
+  it('counts a stale session closed at its last proof under staff (story #75)', async () => {
+    const scripted = new ScriptedSql().answer('read-exit-counts', [
+      { lot_name: 'Parking Démo', exit_identification: 'APP', exit_count: 3 },
+      { lot_name: 'Parking Démo', exit_identification: 'STAFF', exit_count: 1 },
+    ]);
+
+    const read = await readerOn(scripted).readExitCounts(OPERATOR, LOT, SINCE);
+
+    expect(read?.counts).toEqual({ BEACON: 0, APP: 3, PLATE: 0, TRANSPONDER: 0, STAFF: 1 });
   });
 });

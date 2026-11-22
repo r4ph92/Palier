@@ -9,7 +9,7 @@ interface ExitCountRow extends Record<string, unknown> {
   readonly exit_count: number;
 }
 
-const NO_EXITS: RecordedExitCounts = { BEACON: 0, APP: 0, PLATE: 0, TRANSPONDER: 0 };
+const NO_EXITS: RecordedExitCounts = { BEACON: 0, APP: 0, PLATE: 0, TRANSPONDER: 0, STAFF: 0 };
 
 export class PostgresExitIdentificationReader implements ExitIdentificationReader {
   readonly #database: Database;

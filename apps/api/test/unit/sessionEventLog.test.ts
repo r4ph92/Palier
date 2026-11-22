@@ -8,6 +8,7 @@ import { ScriptedSql } from './fakes/scriptedSql.ts';
 const migration = readFileSync(new URL('../../drizzle/0038_session_event_log.sql', import.meta.url), 'utf8');
 const exitKindsMigration = readFileSync(new URL('../../drizzle/0039_exit_payment_event_kinds.sql', import.meta.url), 'utf8');
 const staleSessionsMigration = readFileSync(new URL('../../drizzle/0043_stale_sessions.sql', import.meta.url), 'utf8');
+const closedByStaffMigration = readFileSync(new URL('../../drizzle/0049_closed_by_staff.sql', import.meta.url), 'utf8');
 const ENTRY_AND_PARKING_KINDS = ['ENTRY_SCANNED', 'GATE_OPENED', 'ENTRY_LOOP_CLOSED', 'AISLE_DETECTED', 'PARKING_PRESUMED', 'PARKING_CONFIRMED', 'ENTRY_CANCELLED'];
 const EXIT_KINDS = ['EXIT_IDENTIFIED', 'CAPTURED', 'CAPTURE_PENDING', 'EXIT_LOOP_CLOSED'];
 
@@ -71,11 +72,31 @@ describe('migration 0039, the exit and payment kinds (story #157)', () => {
 describe('migration 0043, the presence kind (story #74)', () => {
   it('widens the named check to exactly the kinds the domain writes', () => {
     expect(staleSessionsMigration).toContain('ALTER TABLE "event_log" DROP CONSTRAINT "event_log_kind_known"');
-    expect(staleSessionsMigration).toContain(`ALTER TABLE "event_log" ADD ${kindCheckOf(SESSION_EVENT_KINDS)}`);
+    expect(staleSessionsMigration).toContain(`ALTER TABLE "event_log" ADD ${kindCheckOf([...ENTRY_AND_PARKING_KINDS, ...EXIT_KINDS, 'PRESENCE_CONFIRMED'])}`);
   });
 
   it('adds the presence kind after the exit ones', () => {
-    expect(SESSION_EVENT_KINDS.at(-1)).toBe('PRESENCE_CONFIRMED');
+    expect(SESSION_EVENT_KINDS[11]).toBe('PRESENCE_CONFIRMED');
+  });
+});
+
+describe('migration 0049, the staff closing kind (story #75)', () => {
+  it('widens the named check to exactly the kinds the domain writes', () => {
+    expect(closedByStaffMigration).toContain('ALTER TABLE "event_log" DROP CONSTRAINT "event_log_kind_known"');
+    expect(closedByStaffMigration).toContain(`ALTER TABLE "event_log" ADD ${kindCheckOf(SESSION_EVENT_KINDS)}`);
+  });
+
+  it('adds the staff closing kind after the presence one', () => {
+    expect(SESSION_EVENT_KINDS.slice(11)).toEqual(['PRESENCE_CONFIRMED', 'CLOSED_BY_STAFF']);
+  });
+
+  it('adds the staff state, the staff exit and the stale session reason, and a closed session must say when, who and that nothing was captured', () => {
+    expect(closedByStaffMigration).toContain(`ALTER TYPE "public"."parking_session_state" ADD VALUE 'CLOSED_BY_STAFF'`);
+    expect(closedByStaffMigration).toContain(`ALTER TYPE "public"."exit_identification" ADD VALUE 'STAFF'`);
+    expect(closedByStaffMigration).toContain(`ALTER TYPE "public"."spot_check_reason" ADD VALUE 'STALE_SESSION'`);
+    expect(closedByStaffMigration).toContain(
+      `CHECK ("parking_session"."state"::text <> 'CLOSED_BY_STAFF' or ("parking_session"."exit_at" is not null and "parking_session"."exit_identification"::text = 'STAFF' and "parking_session"."staff_closed_by" is not null and "parking_session"."captured_cents" is null))`,
+    );
   });
 });
 

@@ -15,8 +15,7 @@ export async function findLotExitSharesOfMember(sources: LotExitShareSources, lo
   const operatorId = await operatorIdOfMember(sources.operators, lot);
   const since = new Date(sources.clock().getTime() - EXIT_SHARE_WINDOW_DAYS * MILLISECONDS_PER_DAY);
   const { lotName, counts } = ownedLotOrNotFound(await sources.exitIdentifications.readExitCounts(operatorId, lot.lotId, since));
-  const shownCounts: Record<ExitShareMethod, number> = { STAFF: 0, ...counts };
-  return { lotName, totalExits: totalOf(shownCounts), counts: shownCounts };
+  return { lotName, totalExits: totalOf(counts), counts };
 }
 
 function totalOf(counts: Readonly<Record<ExitShareMethod, number>>): number {

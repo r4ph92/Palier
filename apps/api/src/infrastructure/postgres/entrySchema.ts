@@ -36,8 +36,8 @@ export function sameLotForeignKey(name: string, columns: [AnyPgColumn, AnyPgColu
 
 export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION_STATES);
 // How the vehicle was identified at the exit: the tap in the app, the gate's plate or transponder reader, or the exit beacon seen by
-// the app together with a vehicle at the gate (docs/03, sequence C).
-export const exitIdentification = pgEnum('exit_identification', ['APP', 'PLATE', 'TRANSPONDER', 'BEACON']);
+// the app together with a vehicle at the gate (docs/03, sequence C). STAFF: an operator closed a stale session at its last known proof (decision 043).
+export const exitIdentification = pgEnum('exit_identification', ['APP', 'PLATE', 'TRANSPONDER', 'BEACON', 'STAFF']);
 export const parkingSessionPresumption = pgEnum('parking_session_presumption', PRESUMPTION_EVIDENCES);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
 
@@ -52,6 +52,7 @@ interface StateColumns {
   readonly exitIdentification: AnyPgColumn;
   readonly capturedCents: AnyPgColumn;
   readonly pendingCaptureCents: AnyPgColumn;
+  readonly staffClosedBy: AnyPgColumn;
 }
 
 interface SpotColumns {
@@ -87,6 +88,11 @@ function stateChecks(table: StateColumns) {
     check(
       'parking_session_pending_has_exit',
       sql`${table.state}::text <> 'CLOSED_CAPTURE_PENDING' or (${table.exitAt} is not null and ${table.exitIdentification} is not null and ${table.pendingCaptureCents} is not null)`,
+    ),
+    // A session an operator closed at its last proof says when, that it was staff, and who; it never captured (decision 043).
+    check(
+      'parking_session_closed_by_staff_has_exit',
+      sql`${table.state}::text <> 'CLOSED_BY_STAFF' or (${table.exitAt} is not null and ${table.exitIdentification}::text = 'STAFF' and ${table.staffClosedBy} is not null and ${table.capturedCents} is null)`,
     ),
   ];
 }
@@ -150,6 +156,8 @@ export const parkingSession = pgTable(
     // The operator's physical check: a proof of presence that restarts the 7 days. The member is kept here, never in the event payload (decision 037).
     presenceConfirmedAt: timestamp('presence_confirmed_at', { withTimezone: true }),
     presenceConfirmedBy: uuid('presence_confirmed_by').references(() => appUser.id),
+    // The dashboard user who closed the stale session at its last proof; kept here, never in the event payload (decision 037).
+    staffClosedBy: uuid('staff_closed_by').references(() => appUser.id),
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
     // Set together when the exit captures the amount and closes the session as CLOSED_PAID (decision 023).
     exitAt: timestamp('exit_at', { withTimezone: true }),
