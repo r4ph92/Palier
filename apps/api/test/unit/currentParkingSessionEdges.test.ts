@@ -66,8 +66,9 @@ describe('test routes without test sign-in', () => {
     const url = urlOf(route);
 
     const response = await server.inject({ method: methodOf(route) as 'GET', url });
+    const neverExisted = await server.inject({ method: methodOf(route) as 'GET', url: '/v1/never-existed' });
 
     expect(response.statusCode).toBe(404);
-    expect(response.json()).toEqual({ message: `Route ${methodOf(route)}:${url} not found`, error: 'Not Found', statusCode: 404 });
+    expect(response.json()).toEqual(neverExisted.json());
   });
 });
