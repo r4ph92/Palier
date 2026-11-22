@@ -31,7 +31,8 @@ import type { VehicleRepository } from '../domain/vehicles/VehicleRepository.ts'
 import type { DashboardRouteDependencies } from './dashboard/DashboardRouteDependencies.ts';
 import { registerDashboardRoutes } from './dashboard/dashboardRoutes.ts';
 import { registerDemoConsoleRoutes } from './demo/demoConsoleRoutes.ts';
-import { handleNotFound, handleServerError } from './handleServerError.ts';
+import { handleNotFound } from './handleNotFound.ts';
+import { handleServerError } from './handleServerError.ts';
 import { serverLoggerOf, type ServerLogging } from './serverLogger.ts';
 import { requireMinimumAppVersion } from './requireMinimumAppVersion.ts';
 import { registerCurrentParkingSessionRoute } from './routes/currentParkingSessionRoute.ts';
