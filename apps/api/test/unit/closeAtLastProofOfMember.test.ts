@@ -63,6 +63,15 @@ describe('closing a stale session at its last proof as a member (story #75)', ()
     expect(session).toMatchObject({ state: 'CLOSED_BY_STAFF', exitAt: PARKED_AT, staffClosedBy: sophie.id, staleFlaggedAt: null, events: ['CLOSED_BY_STAFF'] });
   });
 
+  it('never closes at a parking presumed by silence: a TIMEOUT is not a proof', async () => {
+    const entryConfirmedAt = new Date('2026-03-03T23:30:00Z');
+    const { session, close } = setup(julieFlagged({ proofs: { entryConfirmedAt, parkedAt: PARKED_AT, presumedBy: 'TIMEOUT', parkedAnsweredAt: null, presenceConfirmedAt: null } }));
+
+    await close();
+
+    expect(session.exitAt).toEqual(entryConfirmedAt);
+  });
+
   it('cancels the card hold once the session is closed, and captures nothing', async () => {
     const { session, holds, close } = setup();
 
