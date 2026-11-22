@@ -77,7 +77,7 @@ export async function reportExitBeacon(dependencies: ExitDependencies, report: B
   if (session.state === 'CREATED') {
     return { outcome: 'entry-not-confirmed' };
   }
-  if (session.state === 'CANCELLED' || session.state === 'CLOSED_PAID' || session.state === 'CLOSED_CAPTURE_PENDING') {
+  if (session.state === 'CANCELLED' || session.state === 'CLOSED_PAID' || session.state === 'CLOSED_CAPTURE_PENDING' || session.state === 'CLOSED_BY_STAFF') {
     return { outcome: 'closed' };
   }
   if (!(await dependencies.exits.recordBeaconReport(session.id, report.major))) {

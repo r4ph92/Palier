@@ -138,6 +138,13 @@ describe('exit by beacon', () => {
     expect(await reportExitBeacon({ exits, payments: null }, { sessionId: 'session-omar', driverId: 'driver-omar', major: 1, clock: () => at2117 })).toEqual({ outcome: 'closed' });
   });
 
+  it('says closed for a session the staff closed at its last proof', async () => {
+    const { exits } = setup();
+    exits.add('driver-paul', { ...julieInside(enteredAt), id: 'session-paul', state: 'CLOSED_BY_STAFF' });
+
+    expect(await reportExitBeacon({ exits, payments: null }, { sessionId: 'session-paul', driverId: 'driver-paul', major: 1, clock: () => at2117 })).toEqual({ outcome: 'closed' });
+  });
+
   it('does not report a session that already left', async () => {
     const { vehicleArrives, julieReports } = setup();
     await julieReports();
