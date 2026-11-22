@@ -103,7 +103,8 @@ describe('closing a stale session at its last proof (story #75)', () => {
 
     const alert = await within(rowOf('JTR 482')).findByRole('alert');
     expect(alert.textContent).toBe('Le stationnement est occupé par une autre opération. Réessayez dans quelques secondes.');
-    expect(closeButton('JTR 482')).toBeDefined();
+    expect(closeButton('JTR 482').getAttribute('aria-describedby')).toBe(alert.id);
+    expect(screen.getByRole('button', { name: 'Véhicule présent, JTR 482' }).getAttribute('aria-describedby')).toBeNull();
   });
 
   it('reads the closing in English, with no French left', async () => {

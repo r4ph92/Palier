@@ -122,7 +122,7 @@ function PresenceButton({ session, confirmation }: Pick<RowProps, 'session' | 'c
       id={presenceButtonId(session.id)}
       className="text-button"
       aria-label={interpolate(text.present.name, { plate: session.plate })}
-      aria-describedby={refused === null ? undefined : presenceErrorId(session.id)}
+      aria-describedby={refused === null || confirmation.action !== 'PRESENCE' ? undefined : presenceErrorId(session.id)}
       aria-disabled={confirmation.confirmingId !== null}
       onClick={() => void confirmation.confirm(session)}
     >
@@ -136,12 +136,14 @@ function CloseButton({ session, confirmation }: Pick<RowProps, 'session' | 'conf
   const { staleSessions: text } = useText();
   const closeRef = useFocusWhen<HTMLButtonElement>(confirmation.question.cancelledId === session.id);
   const busy = confirmation.confirmingId !== null;
+  const refused = rowRefusalOf(session, confirmation) !== null && confirmation.action === 'CLOSE';
   return (
     <button
       type="button"
       ref={closeRef}
       className="text-button"
       aria-label={interpolate(text.close.name, { plate: session.plate })}
+      aria-describedby={refused ? presenceErrorId(session.id) : undefined}
       aria-disabled={busy}
       onClick={() => (busy ? undefined : confirmation.question.ask(session))}
     >
