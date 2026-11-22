@@ -28,6 +28,7 @@ import { systemClock, type Clock } from '../domain/time/Clock.ts';
 import type { TestClock } from '../domain/time/TestClock.ts';
 import type { UserDirectory } from '../domain/sessions/UserDirectory.ts';
 import type { VehicleRepository } from '../domain/vehicles/VehicleRepository.ts';
+import type { CardHoldCanceller } from '../domain/dashboard/CardHoldCanceller.ts';
 import type { DashboardRouteDependencies } from './dashboard/DashboardRouteDependencies.ts';
 import { registerDashboardRoutes } from './dashboard/dashboardRoutes.ts';
 import { registerDemoConsoleRoutes } from './demo/demoConsoleRoutes.ts';
@@ -95,6 +96,8 @@ export interface ServerDependencies {
   readonly exits?: ExitDependencies | undefined;
   // main.ts always passes it; tests of other routes leave it out, and holds then answer 503 HOLD_UNAVAILABLE.
   readonly spotHolds?: SpotHoldServices | undefined;
+  // main.ts passes the entry's card authorizer (null without a Stripe key): a stale session closed by staff only ever cancels its hold with it.
+  readonly cardHolds?: CardHoldCanceller | null | undefined;
   // main.ts always passes it; without it the dashboard cannot connect Stripe.
   readonly operatorStripe?: OperatorStripeDependencies | undefined;
   // Required when test sign-in is enabled (composeClock builds it); gates keep their own clock.
@@ -109,14 +112,14 @@ export interface ServerSettings extends ServerLogging {
   readonly secureCookies?: boolean;
 }
 
-export function buildServer({ repositories, gates, cardGateway, entries, exits, spotHolds, operatorStripe, testClock, settings = {} }: ServerDependencies): FastifyInstance {
+export function buildServer({ repositories, gates, cardGateway, entries, exits, spotHolds, cardHolds, operatorStripe, testClock, settings = {} }: ServerDependencies): FastifyInstance {
   // Refuse a value of the wrong JSON type rather than converting it, so ["2026-10-28"] is not read as "2026-10-28".
   const server = Fastify({ logger: serverLoggerOf(settings), ajv: { customOptions: { coerceTypes: false } } });
   server.setErrorHandler(handleServerError);
   server.setNotFoundHandler(handleNotFound);
   server.decorateRequest('driver', null);
   void server.register(async (appScope) => registerAppRoutes(appScope, { repositories, cardGateway, entries, exits, spotHolds, testClock, settings }));
-  void server.register(async (dashboardScope) => registerDashboardRoutes(dashboardScope, dashboardDependencies({ repositories, settings, operatorStripe, testClock })));
+  void server.register(async (dashboardScope) => registerDashboardRoutes(dashboardScope, dashboardDependencies({ repositories, settings, operatorStripe, testClock, cardHolds })));
   if (operatorStripe?.webhookReader != null) {
     registerStripeWebhookRoute(server, { reader: operatorStripe.webhookReader, accounts: operatorStripe.accounts });
   }
@@ -144,7 +147,7 @@ function lotFeatureRepositories(repositories: ServerDependencies['repositories']
 }
 
 // The dashboard has its own scope, outside the app's: the minimum app version does not apply to a browser.
-function dashboardDependencies({ repositories, settings = {}, operatorStripe, testClock }: Omit<ServerDependencies, 'gates'>): DashboardRouteDependencies {
+function dashboardDependencies({ repositories, settings = {}, operatorStripe, testClock, cardHolds }: Omit<ServerDependencies, 'gates'>): DashboardRouteDependencies {
   return {
     access: { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository },
     operators: repositories.operatorRepository,
@@ -154,6 +157,7 @@ function dashboardDependencies({ repositories, settings = {}, operatorStripe, te
     equipment: repositories.lotEquipment,
     clock: composedClockOf(settings, repositories, testClock),
     ...lotFeatureRepositories(repositories),
+    holds: cardHolds ?? null,
     stripe: operatorStripe?.gateway == null ? null : { accounts: operatorStripe.accounts, gateway: operatorStripe.gateway },
     testSignInEnabled: settings.testSignInEnabled === true,
     secureCookies: settings.secureCookies ?? true,
@@ -196,7 +200,7 @@ function registerParkingSessionRoutes(server: FastifyInstance, driverAccess: Dri
   registerReceiptRoutes(server, driverAccess, repositories.receipts);
 }
 
-type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock' | 'operatorStripe'> & Pick<ServerDependencies, 'testClock'>;
+type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock' | 'operatorStripe' | 'cardHolds'> & Pick<ServerDependencies, 'testClock'>;
 
 // The clock the app's routes share: the test clock exactly when test sign-in is on.
 function composedClockOf(settings: ServerSettings, repositories: ServerDependencies['repositories'], testClock: TestClock | undefined): Clock {
