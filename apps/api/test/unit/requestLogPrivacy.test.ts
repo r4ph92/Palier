@@ -40,7 +40,7 @@ describe('the request log', () => {
   it.each([
     { requester: 'Julie, signed in', signedIn: true, url: `/v1/lots?latitude=${LATITUDE}&longitude=${LONGITUDE}`, loggedPath: '/v1/lots' },
     { requester: 'a request without a session', signedIn: false, url: `/v1/lots?latitude=${LATITUDE}&longitude=${LONGITUDE}`, loggedPath: '/v1/lots' },
-    { requester: 'an unknown path', signedIn: false, url: `/v1/lots/?latitude=${LATITUDE}&longitude=${LONGITUDE}`, loggedPath: '/v1/lots/' },
+    { requester: 'a request to an unknown path', signedIn: false, url: `/v1/lots/?latitude=${LATITUDE}&longitude=${LONGITUDE}`, loggedPath: '/v1/lots/' },
   ])('keeps the path of $requester and never the coordinates in its query', async ({ signedIn, url, loggedPath }) => {
     startLoggingServer();
     await acceptNoticeAs(driverRepository, julie);
