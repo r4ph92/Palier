@@ -57,6 +57,7 @@ export const fr = {
     google: 'Continuer avec Google',
     busy: 'Connexion…',
     failed: 'La connexion n’a pas abouti. Réessayez.',
+    accountExists: 'Un compte Palier existe déjà avec ce courriel. Connectez-vous comme lors de sa création.',
   },
   name: {
     title: 'Votre nom',

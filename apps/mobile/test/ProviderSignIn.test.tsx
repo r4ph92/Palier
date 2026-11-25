@@ -94,6 +94,20 @@ describe('sign-in with Apple or Google', () => {
     expect(await screen.findByRole('alert', { name: 'La connexion n’a pas abouti. Réessayez.' })).toBeOnTheScreen();
     expect(setup.tokenStore.token).toBeNull();
   });
+
+  it.each([
+    ['fr', 'Continuer avec Google', 'Un compte Palier existe déjà avec ce courriel. Connectez-vous comme lors de sa création.'],
+    ['en', 'Continue with Google', 'A Palier account already uses this email. Sign in the way you created it.'],
+  ] as const)('in %s, says to sign in the way the account was created when its email cannot be joined', async (language, button, message) => {
+    const setup = setUp({ language });
+    setup.authClient.notLinkableIdentityTokens.add('google-identity');
+    await setup.render();
+
+    await userEvent.setup().press(await screen.findByRole('button', { name: button }));
+
+    expect(await screen.findByRole('alert', { name: message })).toBeOnTheScreen();
+    expect(setup.tokenStore.token).toBeNull();
+  });
 });
 
 describe('asking for the name the provider did not give', () => {

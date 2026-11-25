@@ -57,6 +57,7 @@ export const en: Translations = {
     google: 'Continue with Google',
     busy: 'Signing in…',
     failed: 'Sign-in did not go through. Try again.',
+    accountExists: 'A Palier account already uses this email. Sign in the way you created it.',
   },
   name: {
     title: 'Your name',

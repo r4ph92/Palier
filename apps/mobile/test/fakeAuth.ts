@@ -2,7 +2,7 @@ import type { CurrentDriver, DriverProfile, SignInResponse, TestDriverListRespon
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import { PalierUnauthorizedError, type AppleIdentity, type AuthClient } from '../src/api/AuthClient';
 import type { ProviderSignIn } from '../src/auth/ProviderSignIn';
-import { PalierUnreachableError } from '../src/api/LotsClient';
+import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 import type { TokenStore } from '../src/auth/TokenStore';
 import type { TestSignInClient } from '../src/testSignIn/TestSignInClient';
 
@@ -25,6 +25,7 @@ export class FakeAuthClient implements AuthClient {
   appleNames: { firstName: string | null; lastName: string | null }[] = [];
   savedNames: { firstName: string; lastName: string }[] = [];
   saveNameIsReachable = true;
+  notLinkableIdentityTokens = new Set<string>();
 
   fetchMe(token: string): Promise<CurrentDriver> {
     if (!this.isReachable) {
@@ -56,6 +57,9 @@ export class FakeAuthClient implements AuthClient {
   }
 
   #signInWith(identityToken: string): Promise<string> {
+    if (this.notLinkableIdentityTokens.has(identityToken)) {
+      return Promise.reject(new PalierStatusError(409));
+    }
     const token = this.trustedIdentityTokens.get(identityToken);
     if (token === undefined) {
       return Promise.reject(new PalierUnauthorizedError());

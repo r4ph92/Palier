@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { PalierStatusError } from '../api/LotsClient';
 import type { IdentityProviderName } from '../auth/ProviderSignIn';
 import { FieldError } from '../components/FieldError';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -9,6 +10,8 @@ import { i18n } from '../i18n/i18n';
 import type { TestSignIn } from '../testSignIn/TestSignIn';
 import { spacing } from '../theme/tokens';
 import { useSingleFlight } from '../useSingleFlight';
+
+const CONFLICT = 409;
 
 interface SignInScreenProps {
   readonly testSignIn: TestSignIn | null;
@@ -28,7 +31,7 @@ export function SignInScreen({ testSignIn, onSignIn, onContinueWith }: SignInScr
 
 // Apple comes first: App Store rule 4.8 requires it beside any other third-party sign-in.
 function ProviderButtons({ onContinueWith }: { readonly onContinueWith: SignInScreenProps['onContinueWith'] }) {
-  const { runningKey, failed, continueWith } = useContinueWith(onContinueWith);
+  const { runningKey, failure, continueWith } = useContinueWith(onContinueWith);
   return (
     <View style={styles.providers}>
       {(['apple', 'google'] as const).map((provider) => (
@@ -41,21 +44,28 @@ function ProviderButtons({ onContinueWith }: { readonly onContinueWith: SignInSc
           onPress={() => continueWith(provider)}
         />
       ))}
-      {failed ? <FieldError message={i18n.t('signIn.failed')} /> : null}
+      {failure === null ? null : <FieldError message={i18n.t(`signIn.${failure}`)} />}
     </View>
   );
+}
+
+type SignInFailure = 'failed' | 'accountExists';
+
+// 409: the email's account cannot be joined by this provider, so the person must use the way it was created.
+function failureOf(error: unknown): SignInFailure {
+  return error instanceof PalierStatusError && error.status === CONFLICT ? 'accountExists' : 'failed';
 }
 
 // One provider at a time; any failure, from the sheet or from Palier, reads the same to the person.
 function useContinueWith(onContinueWith: SignInScreenProps['onContinueWith']) {
   const { runningKey, run } = useSingleFlight<IdentityProviderName>();
-  const [failed, setFailed] = useState(false);
+  const [failure, setFailure] = useState<SignInFailure | null>(null);
   const continueWith = (provider: IdentityProviderName) =>
     run(provider, () => {
-      setFailed(false);
-      return onContinueWith(provider).catch(() => setFailed(true));
+      setFailure(null);
+      return onContinueWith(provider).catch((error: unknown) => setFailure(failureOf(error)));
     });
-  return { runningKey, failed, continueWith };
+  return { runningKey, failure, continueWith };
 }
 
 const styles = StyleSheet.create({
