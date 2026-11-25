@@ -3,6 +3,10 @@ import { DASHBOARD_STATEMENT_PATTERNS, type DashboardStatementLabel } from './da
 // Names each statement the repositories run by the text it matches, so a test scripts and inspects statements by label.
 export type StatementLabel =
   | 'limit-lock-wait'
+  | 'find-identity-user'
+  | 'insert-app-user'
+  | 'find-user-by-email'
+  | 'insert-user-identity'
   | 'list-gate-commands-after'
   | 'list-latest-gate-commands'
   | 'lock-lot'
@@ -103,6 +107,10 @@ export type StatementLabel =
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
+  ['find-identity-user', /select user_id from user_identity/],
+  ['insert-app-user', /insert into app_user/],
+  ['find-user-by-email', /select id as user_id from app_user where email/],
+  ['insert-user-identity', /insert into user_identity/],
   ...DASHBOARD_STATEMENT_PATTERNS,
   ['insert-lot', /insert into parking_lot/],
   ['lock-owned-lot', /from parking_lot where id = \$1 and operator_id = \$2 for no key update/],
