@@ -227,6 +227,20 @@ grep -r -e "Connexion de test" -e "Test sign-in" -e "/v1/test/" <dossier-hors-du
 `--dev false`. Dans la barrière, `testSignInReleaseGraph.test.ts` vérifie que le graphe
 du bundle de production ne contient pas la connexion de test.
 
+### Build iOS et TestFlight (EAS)
+
+Le projet Expo appartient au compte `paliers-team`; la config est dans `apps/mobile/eas.json`.
+
+```
+cd apps/mobile
+npx eas-cli build -p ios --profile production   # compile et signe l'app sur les serveurs d'Expo (15 à 25 min)
+npx eas-cli submit -p ios --latest              # envoie le dernier build à App Store Connect, puis TestFlight
+```
+
+Le numéro de build augmente tout seul. À la question sur le chiffrement, répondre `Y`
+(seul le HTTPS d'iOS est utilisé); dans TestFlight, « Aucun des algorithmes mentionnés ».
+Un refus d'Apple arrive par courriel (codes `ITMS-…`).
+
 ## Documents
 
 | # | Document | Contenu |
