@@ -28,6 +28,8 @@ const config: ExpoConfig = {
     'expo-status-bar',
     'expo-localization',
     'expo-font',
+    // Stripe's iOS SDK comes through Swift Package Manager, which needs dynamic frameworks.
+    ['expo-build-properties', { ios: { useFrameworks: 'dynamic' } }],
     [
       'expo-location',
       {
