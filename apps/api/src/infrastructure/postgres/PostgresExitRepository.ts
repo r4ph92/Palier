@@ -10,7 +10,7 @@ import { inLotLock, orLotBusy } from './lockParkingLot.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
 import { freeSpots, type ClosedSessionRow } from './sessionSpotRelease.ts';
 
-// An exit takes over a session an operator closed while its capture was on the way to Stripe (decision 043, course connue).
+// An exit takes over a session an operator closed while its capture was on the way to Stripe (decision 043, the exit wins).
 const EXIT_CLOSABLE_STATES = sql`('ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED', 'CLOSED_BY_STAFF')`;
 
 interface ExitClosedRow extends ClosedSessionRow {

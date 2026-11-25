@@ -5,7 +5,7 @@ import { appendedSessionEvents } from './fakes/appendedSessionEvents.ts';
 import { sortieDemo } from './fakes/gateFixtures.ts';
 import { ScriptedSql } from './fakes/scriptedSql.ts';
 
-// Decision 043, course connue: the operator closes Julie's session at its last proof while her exit capture is on the way to Stripe.
+// Decision 043, the exit wins: the operator closes Julie's session at its last proof while her exit capture is on the way to Stripe.
 const SESSION_ID = '00000000-0000-4000-8000-000000000975';
 const SPOT_A1_ID = '00000000-0000-4000-8000-0000000003a1';
 const TAPPED_AT = new Date('2026-11-21T21:17:00Z');
