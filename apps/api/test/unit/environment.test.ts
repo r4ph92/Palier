@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   readDashboardUrl,
+  readIdentityAudiences,
   readMinimumAppVersion,
   readSecureCookies,
   readServerEnvironment,
@@ -202,5 +203,18 @@ describe('readDashboardUrl', () => {
 
   it.each(['not a url', 'javascript:alert(1)', 'ftp://dashboard.example'])('refuses %s', (rawUrl) => {
     expect(() => readDashboardUrl({ DASHBOARD_URL: rawUrl })).toThrow(/http\(s\) address/);
+  });
+});
+
+describe('readIdentityAudiences', () => {
+  it('reads the Apple bundle id and the Google iOS client id', () => {
+    expect(readIdentityAudiences({ APPLE_BUNDLE_ID: 'ca.palier.app', GOOGLE_IOS_CLIENT_ID: ' 123.apps.googleusercontent.com ' })).toEqual({
+      apple: 'ca.palier.app',
+      google: '123.apps.googleusercontent.com',
+    });
+  });
+
+  it.each([{}, { APPLE_BUNDLE_ID: '', GOOGLE_IOS_CLIENT_ID: '   ' }])('leaves a provider unset when its value is missing or blank (%o)', (variables) => {
+    expect(readIdentityAudiences(variables)).toEqual({ apple: undefined, google: undefined });
   });
 });

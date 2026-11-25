@@ -1,5 +1,7 @@
 import Stripe from 'stripe';
-import { readDashboardUrl, readServerEnvironment, readStripeWebhookSecret } from './config/environment.ts';
+import { readDashboardUrl, readIdentityAudiences, readServerEnvironment, readStripeWebhookSecret } from './config/environment.ts';
+import { JoseIdentityTokenVerifier, providerTrustsFor } from './infrastructure/identity/JoseIdentityTokenVerifier.ts';
+import { PostgresIdentityRepository } from './infrastructure/postgres/PostgresIdentityRepository.ts';
 import { readPaymentsSimulation } from './config/paymentsSimulation.ts';
 import { stripeTestKey } from './config/stripeTestKey.ts';
 import { exitBeaconWindow } from './domain/exits/identifyByBeacon.ts';
@@ -102,6 +104,10 @@ const server = buildServer({
     equipment: new PostgresEquipmentReports(connection.database),
   },
   testClock,
+  identitySignIn: {
+    verifier: new JoseIdentityTokenVerifier(providerTrustsFor(readIdentityAudiences(process.env))),
+    identities: new PostgresIdentityRepository(connection.database),
+  },
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   entries: entries.routes,
   exits: { exits: new PostgresExitRepository(connection.database), payments: entries.payments },

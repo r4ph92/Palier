@@ -27,6 +27,7 @@ export const GATED = [
   'POST /v1/lots/:id/holds',
   'GET /v1/me/hold',
   'DELETE /v1/holds/:id',
+  'PUT /v1/me/name',
 ];
 
 // The test routes exist only in test environments and take no driver token.
@@ -39,7 +40,10 @@ export const TEST_ROUTES = [
   'PUT /v1/test/sessions/:sessionId/entered-at',
 ];
 
-const DRIVER_EXEMPT = ['GET /v1/me', 'POST /v1/consent', 'POST /v1/sign-out', ...TEST_ROUTES];
+// Apple and Google sign-in take no driver token: they issue one, and the notice comes after.
+const SIGN_IN_ROUTES = ['POST /v1/sign-in/apple', 'POST /v1/sign-in/google'];
+
+const DRIVER_EXEMPT = ['GET /v1/me', 'POST /v1/consent', 'POST /v1/sign-out', ...SIGN_IN_ROUTES, ...TEST_ROUTES];
 
 // Gate controllers sign with a device key, never a driver token: there is no driver whose consent could be checked.
 const GATE_DEVICE_ROUTES = [

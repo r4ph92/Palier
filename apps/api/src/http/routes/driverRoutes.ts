@@ -3,11 +3,18 @@ import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
 import type { FastifyInstance, preHandlerAsyncHookHandler } from 'fastify';
 import type { DriverRepository } from '../../domain/drivers/DriverRepository.ts';
 import { signOutDriver, type DriverAccess } from '../../domain/drivers/driverSessions.ts';
+import { cleanName } from '../../domain/identity/signInWithIdentity.ts';
+import { consentedDriverGuards } from '../requireConsent.ts';
 import { bearerToken, requireDriver, signedInDriver } from '../requireDriver.ts';
-import { acceptNoticeBodySchema, currentDriverSchema } from '../schemas/driverSchemas.ts';
+import { acceptNoticeBodySchema, currentDriverSchema, driverNameBodySchema } from '../schemas/driverSchemas.ts';
 
 const NO_CONTENT = 204;
+const BAD_REQUEST = 400;
 const CONFLICT = 409;
+
+interface DriverNameRequest {
+  readonly Body: { readonly firstName: string; readonly lastName: string };
+}
 
 interface AcceptNoticeRequest {
   readonly Body: { readonly noticeVersion: string };
@@ -17,6 +24,7 @@ export function registerDriverRoutes(server: FastifyInstance, { drivers, session
   const preHandler = requireDriver(sessions);
   registerMeRoute(server, drivers, preHandler);
   registerConsentRoute(server, drivers, preHandler);
+  registerNameRoute(server, { drivers, sessions });
 
   server.post('/v1/sign-out', { preHandler }, async (request, reply) => {
     await signOutDriver(sessions, bearerToken(request) ?? '');
@@ -46,6 +54,19 @@ function registerConsentRoute(server: FastifyInstance, repository: DriverReposit
       });
     }
     await repository.saveNoticeAcceptance(signedInDriver(request).id, request.body.noticeVersion);
+    return reply.status(NO_CONTENT).send();
+  });
+}
+
+// Apple and Google may give no name; the app asks for it once the notice is accepted, since the notice comes before any personal data.
+function registerNameRoute(server: FastifyInstance, driverAccess: DriverAccess): void {
+  const guards = consentedDriverGuards(driverAccess);
+  server.put<DriverNameRequest>('/v1/me/name', { onRequest: guards, schema: { body: driverNameBodySchema } }, async (request, reply) => {
+    const firstName = cleanName(request.body.firstName);
+    if (firstName === '') {
+      return reply.status(BAD_REQUEST).send({ statusCode: BAD_REQUEST, error: 'FIRST_NAME_REQUIRED', message: 'A first name is required.' });
+    }
+    await driverAccess.drivers.saveName(signedInDriver(request).id, firstName, cleanName(request.body.lastName));
     return reply.status(NO_CONTENT).send();
   });
 }

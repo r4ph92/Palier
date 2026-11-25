@@ -134,4 +134,56 @@ describe('driver routes', () => {
 
     expect(response.statusCode).toBe(401);
   });
+
+  describe('PUT /v1/me/name', () => {
+    async function consentedJulie() {
+      const headers = await authorizationFor(driverRepository, julie);
+      await acceptNoticeAs(driverRepository, julie);
+      return headers;
+    }
+
+    it('saves the trimmed name, answers 204, and /v1/me shows it', async () => {
+      startServer();
+      const headers = await consentedJulie();
+
+      const response = await server.inject({ method: 'PUT', url: '/v1/me/name', headers, payload: { firstName: '  Juju ', lastName: ' T. ' } });
+      const me = await server.inject({ method: 'GET', url: '/v1/me', headers });
+
+      expect(response.statusCode).toBe(204);
+      expect(me.json<{ firstName: string }>().firstName).toBe('Juju');
+    });
+
+    it.each([
+      ['a blank first name', { firstName: '   ', lastName: 'Tremblay' }],
+      ['an empty first name', { firstName: '', lastName: 'Tremblay' }],
+      ['a first name over 50 characters', { firstName: 'J'.repeat(51), lastName: '' }],
+      ['no last name', { firstName: 'Julie' }],
+    ])('answers 400 for %s and keeps the name', async (_case, payload) => {
+      startServer();
+      const headers = await consentedJulie();
+
+      const response = await server.inject({ method: 'PUT', url: '/v1/me/name', headers, payload });
+      const me = await server.inject({ method: 'GET', url: '/v1/me', headers });
+
+      expect(response.statusCode).toBe(400);
+      expect(me.json<{ firstName: string }>().firstName).toBe('Julie');
+    });
+
+    it('answers 401 without a token', async () => {
+      startServer();
+
+      const response = await server.inject({ method: 'PUT', url: '/v1/me/name', payload: { firstName: 'Julie', lastName: '' } });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it('answers 403 before the driver accepts the notice', async () => {
+      startServer();
+      const headers = await authorizationFor(driverRepository, julie);
+
+      const response = await server.inject({ method: 'PUT', url: '/v1/me/name', headers, payload: { firstName: 'Juju', lastName: '' } });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
 });

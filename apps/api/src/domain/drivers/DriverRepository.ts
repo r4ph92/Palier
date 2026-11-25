@@ -5,6 +5,7 @@ export interface DriverRepository {
   // True when the latest notice the driver accepted is the given version, which is the consent rule the guards apply.
   hasLatestNoticeVersion(driverId: string, noticeVersion: string): Promise<boolean>;
   saveNoticeAcceptance(driverId: string, noticeVersion: string): Promise<void>;
+  saveName(driverId: string, firstName: string, lastName: string): Promise<void>;
   findStripeCustomerId(driverId: string): Promise<string | null>;
   // Stores the customer only if the driver has none yet, and returns the customer that is stored after the call.
   saveStripeCustomerIdIfMissing(driverId: string, stripeCustomerId: string): Promise<string>;
