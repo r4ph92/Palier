@@ -29,6 +29,7 @@ interface TokenOptions {
   readonly audience?: string;
   readonly expiresIn?: string | number;
   readonly signedBy?: KeyPair;
+  readonly subject?: string;
 }
 
 function appleToken({ claims = {}, issuer = 'https://appleid.apple.com', audience = APPLE_AUDIENCE, expiresIn = '10m', signedBy = providerKeys }: TokenOptions = {}) {
@@ -42,10 +43,10 @@ function appleToken({ claims = {}, issuer = 'https://appleid.apple.com', audienc
     .sign(signedBy.privateKey);
 }
 
-function googleToken({ claims = {}, issuer = 'https://accounts.google.com', audience = GOOGLE_AUDIENCE }: TokenOptions = {}) {
+function googleToken({ claims = {}, issuer = 'https://accounts.google.com', audience = GOOGLE_AUDIENCE, subject = 'google-marc' }: TokenOptions = {}) {
   return new SignJWT({ email: 'Marc.Gagnon@gmail.com', email_verified: true, given_name: 'Marc', family_name: 'Gagnon', ...claims })
     .setProtectedHeader({ alg: 'RS256', kid: KEY_ID })
-    .setSubject('google-marc')
+    .setSubject(subject)
     .setIssuer(issuer)
     .setAudience(audience)
     .setIssuedAt()
@@ -105,6 +106,31 @@ describe('JoseIdentityTokenVerifier', () => {
     const unsigned = `${Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64url')}.${payload}.`;
 
     expect(await verifier.verify('APPLE', unsigned)).toBeNull();
+  });
+
+  it('refuses a token without a key id when the provider publishes several keys', async () => {
+    const otherKeys = await generateKeyPair('RS256');
+    const twoKeys = createLocalJWKSet({
+      keys: [
+        { ...(await exportJWK(providerKeys.publicKey)), kid: KEY_ID, alg: 'RS256' },
+        { ...(await exportJWK(otherKeys.publicKey)), kid: 'other-key', alg: 'RS256' },
+      ],
+    });
+    const twoKeyVerifier = new JoseIdentityTokenVerifier({ APPLE: { issuers: ['https://appleid.apple.com'], audience: APPLE_AUDIENCE, keys: twoKeys } });
+    const withoutKid = await new SignJWT({ email: 'julie@privaterelay.appleid.com', email_verified: 'true' })
+      .setProtectedHeader({ alg: 'RS256' })
+      .setSubject('001234.apple-julie')
+      .setIssuer('https://appleid.apple.com')
+      .setAudience(APPLE_AUDIENCE)
+      .setIssuedAt()
+      .setExpirationTime('10m')
+      .sign(attackerKeys.privateKey);
+
+    expect(await twoKeyVerifier.verify('APPLE', withoutKid)).toBeNull();
+  });
+
+  it('refuses a token with an empty subject', async () => {
+    expect(await verifier.verify('GOOGLE', await googleToken({ subject: '' }))).toBeNull();
   });
 
   it('rethrows a key set it could not fetch, so an outage is not read as a refused token', async () => {

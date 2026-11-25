@@ -25,6 +25,8 @@ const TOKEN_REFUSALS = [
   errors.JOSEAlgNotAllowed,
   errors.JOSENotSupported,
   errors.JWKSNoMatchingKey,
+  // A token with no kid matches several of the provider's keys.
+  errors.JWKSMultipleMatchingKeys,
 ];
 
 // Only a provider with an audience is trusted; the other one answers as not configured.
@@ -73,7 +75,7 @@ function identityOf(provider: IdentityProvider, payload: JWTPayload): VerifiedId
   const { sub, email } = payload;
   // Apple writes email_verified as the string "true", Google as a boolean.
   const emailVerified = payload['email_verified'] === true || payload['email_verified'] === 'true';
-  if (sub === undefined || typeof email !== 'string' || email === '' || !emailVerified) {
+  if (typeof sub !== 'string' || sub === '' || typeof email !== 'string' || email === '' || !emailVerified) {
     return null;
   }
   return {
