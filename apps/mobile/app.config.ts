@@ -11,6 +11,7 @@ const LOCATION_ALWAYS_REASON_EN =
 const config: ExpoConfig = {
   name: 'Palier',
   slug: 'palier',
+  owner: 'paliers-team',
   version: '0.1.0',
   orientation: 'portrait',
   userInterfaceStyle: 'automatic',
@@ -37,6 +38,9 @@ const config: ExpoConfig = {
       },
     ],
   ],
+  extra: {
+    eas: { projectId: 'd3d2d7af-d2e3-46e6-892c-e52e6ff905ad' },
+  },
 };
 
 export default config;
