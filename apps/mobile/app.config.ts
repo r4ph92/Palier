@@ -13,6 +13,9 @@ const LOCATION_ALWAYS_REASON_EN =
 const CAMERA_REASON_FR = 'Palier utilise la caméra pour lire le QR de la borne à l’entrée du stationnement.';
 const CAMERA_REASON_EN = 'Palier uses the camera to read the terminal’s QR at the parking entrance.';
 
+// Google sends the person back through this scheme: the iOS client id in src/auth/googleClient.ts, reversed.
+const GOOGLE_IOS_URL_SCHEME = 'com.googleusercontent.apps.29475020077-emjaqt9c511qjl4obbdqu6lsqa3o0uj0';
+
 const config: ExpoConfig = {
   name: 'Palier',
   slug: 'palier',
@@ -24,6 +27,8 @@ const config: ExpoConfig = {
   ios: {
     bundleIdentifier: 'ca.palier.app',
     supportsTablet: false,
+    // Needs the Sign in with Apple capability on the App ID ca.palier.app.
+    usesAppleSignIn: true,
     infoPlist: { NSCameraUsageDescription: CAMERA_REASON_FR },
   },
   locales: {
@@ -34,6 +39,8 @@ const config: ExpoConfig = {
     'expo-status-bar',
     'expo-localization',
     'expo-font',
+    'expo-apple-authentication',
+    ['@react-native-google-signin/google-signin', { iosUrlScheme: GOOGLE_IOS_URL_SCHEME }],
     // Stripe's iOS SDK comes through Swift Package Manager, which needs dynamic frameworks.
     ['expo-build-properties', { ios: { useFrameworks: 'dynamic' } }],
     [
