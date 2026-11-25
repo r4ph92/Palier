@@ -41,7 +41,6 @@ export function PalierApp(props: PalierAppProps) {
   useEffect(() => onUpdateRequired(() => setUpdateRequired(true)), []);
   const session = useSession(props.authClient, props.tokenStore);
   const { state } = session;
-  const continueWith = useContinueWith(props, session);
   if (updateRequired) {
     return <AppUpdateRequiredScreen storeUrl={STORE_URL} />;
   }
@@ -51,10 +50,15 @@ export function PalierApp(props: PalierAppProps) {
     case 'unreachable':
       return <StartupError onRetry={session.retry} />;
     case 'signedOut':
-      return <SignInScreen testSignIn={props.testSignIn} onSignIn={session.signIn} onContinueWith={continueWith} />;
+      return <SignedOutApp app={props} session={session} />;
     case 'signedIn':
       return <SignedInApp signedIn={state} session={session} createClients={props.createSignedInClients} device={deviceOf(props, fallbackSignals)} />;
   }
+}
+
+function SignedOutApp({ app, session }: { readonly app: PalierAppProps; readonly session: SessionController }) {
+  const continueWith = useContinueWith(app, session);
+  return <SignInScreen testSignIn={app.testSignIn} onSignIn={session.signIn} onContinueWith={continueWith} />;
 }
 
 function useContinueWith({ providerSignIn, authClient }: PalierAppProps, { signIn }: SessionController) {

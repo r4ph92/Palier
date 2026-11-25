@@ -22,6 +22,21 @@ type NameError = 'firstNameRequired' | 'failed' | null;
 // Shown after the notice when the provider gave no name, as Apple does after the first sign-in.
 export function NameScreen({ onSave }: NameScreenProps) {
   const colors = useColors();
+  const { firstName, setFirstName, lastName, setLastName, error, saving, save } = useNameForm(onSave);
+  return (
+    <ScreenFrame>
+      <ScreenHeader eyebrow="Palier" title={i18n.t('name.title')} />
+      <Text maxFontSizeMultiplier={BODY_TEXT_MAX_FONT_SCALE} style={[typography.body, { color: colors.muted }]}>{i18n.t('name.intro')}</Text>
+      <NameField label={i18n.t('name.firstName')} value={firstName} onChange={setFirstName} autoComplete="given-name" />
+      {error === 'firstNameRequired' ? <FieldError message={i18n.t('name.firstNameRequired')} /> : null}
+      <NameField label={i18n.t('name.lastName')} value={lastName} onChange={setLastName} autoComplete="family-name" />
+      <PrimaryButton label={i18n.t('name.save')} busy={saving} busyLabel={i18n.t('name.busy')} onPress={save} />
+      {error === 'failed' ? <FieldError message={i18n.t('name.failed')} /> : null}
+    </ScreenFrame>
+  );
+}
+
+function useNameForm(onSave: NameScreenProps['onSave']) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [error, setError] = useState<NameError>(null);
@@ -36,17 +51,7 @@ export function NameScreen({ onSave }: NameScreenProps) {
       return onSave(firstName.trim(), lastName.trim()).catch(() => setError('failed'));
     });
   };
-  return (
-    <ScreenFrame>
-      <ScreenHeader eyebrow="Palier" title={i18n.t('name.title')} />
-      <Text maxFontSizeMultiplier={BODY_TEXT_MAX_FONT_SCALE} style={[typography.body, { color: colors.muted }]}>{i18n.t('name.intro')}</Text>
-      <NameField label={i18n.t('name.firstName')} value={firstName} onChange={setFirstName} autoComplete="given-name" />
-      {error === 'firstNameRequired' ? <FieldError message={i18n.t('name.firstNameRequired')} /> : null}
-      <NameField label={i18n.t('name.lastName')} value={lastName} onChange={setLastName} autoComplete="family-name" />
-      <PrimaryButton label={i18n.t('name.save')} busy={runningKey === 'save'} busyLabel={i18n.t('name.busy')} onPress={save} />
-      {error === 'failed' ? <FieldError message={i18n.t('name.failed')} /> : null}
-    </ScreenFrame>
-  );
+  return { firstName, setFirstName, lastName, setLastName, error, saving: runningKey === 'save', save };
 }
 
 interface NameFieldProps {

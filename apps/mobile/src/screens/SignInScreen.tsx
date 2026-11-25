@@ -28,13 +28,7 @@ export function SignInScreen({ testSignIn, onSignIn, onContinueWith }: SignInScr
 
 // Apple comes first: App Store rule 4.8 requires it beside any other third-party sign-in.
 function ProviderButtons({ onContinueWith }: { readonly onContinueWith: SignInScreenProps['onContinueWith'] }) {
-  const { runningKey, run } = useSingleFlight<IdentityProviderName>();
-  const [failed, setFailed] = useState(false);
-  const continueWith = (provider: IdentityProviderName) =>
-    run(provider, () => {
-      setFailed(false);
-      return onContinueWith(provider).catch(() => setFailed(true));
-    });
+  const { runningKey, failed, continueWith } = useContinueWith(onContinueWith);
   return (
     <View style={styles.providers}>
       {(['apple', 'google'] as const).map((provider) => (
@@ -50,6 +44,18 @@ function ProviderButtons({ onContinueWith }: { readonly onContinueWith: SignInSc
       {failed ? <FieldError message={i18n.t('signIn.failed')} /> : null}
     </View>
   );
+}
+
+// One provider at a time; any failure, from the sheet or from Palier, reads the same to the person.
+function useContinueWith(onContinueWith: SignInScreenProps['onContinueWith']) {
+  const { runningKey, run } = useSingleFlight<IdentityProviderName>();
+  const [failed, setFailed] = useState(false);
+  const continueWith = (provider: IdentityProviderName) =>
+    run(provider, () => {
+      setFailed(false);
+      return onContinueWith(provider).catch(() => setFailed(true));
+    });
+  return { runningKey, failed, continueWith };
 }
 
 const styles = StyleSheet.create({
