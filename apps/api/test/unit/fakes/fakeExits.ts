@@ -57,6 +57,7 @@ export class FakeExits implements ExitRepository {
     return Promise.resolve(found?.driverId === driverId ? found.session : null);
   }
 
+  // Like the SQL, a session an operator closed while the capture was out gives way to the exit (decision 043).
   close(closing: ExitClosing): Promise<ClosedExit> {
     if (this.busy) {
       return Promise.resolve({ outcome: 'lot-busy' });

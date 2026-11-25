@@ -10,6 +10,14 @@ import { inLotLock, orLotBusy } from './lockParkingLot.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
 import { freeSpots, type ClosedSessionRow } from './sessionSpotRelease.ts';
 
+// An exit takes over a session an operator closed while its capture was on the way to Stripe (decision 043, course connue).
+const EXIT_CLOSABLE_STATES = sql`('ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED', 'CLOSED_BY_STAFF')`;
+
+interface ExitClosedRow extends ClosedSessionRow {
+  // The operator's closing already freed and flagged the spots: the exit leaves them as they are now.
+  readonly was_closed_by_staff: boolean;
+}
+
 interface PaidExitRow extends Record<string, unknown> {
   readonly state: EntrySessionState;
   readonly exit_at: Date | string;
@@ -121,23 +129,27 @@ interface GateOpening {
   readonly sessionId: string;
   readonly lotId: string;
   readonly exitGateId: string;
-  readonly session: ClosedSessionRow;
+  readonly session: ExitClosedRow;
   readonly now: Date;
 }
 
 async function openGate(tx: Transaction, { sessionId, lotId, exitGateId, session, now }: GateOpening): Promise<void> {
-  await freeSpots(tx, { sessionId, session, now });
+  if (!session.was_closed_by_staff) {
+    await freeSpots(tx, { sessionId, session, now });
+  }
   await storeOpenCommand(tx, { gateId: exitGateId, lotId, sessionId }, 'EXIT');
 }
 
-// Null when the session is not leavable any more: another request closed it first.
-async function closeSession(tx: Transaction, sessionId: string, { identification, exitedAt, capturedCents, surplusPaidCents, unpaidCents }: PaidExit & IdentifiedExit): Promise<ClosedSessionRow | null> {
-  const rows = await tx.execute<ClosedSessionRow>(sql`
+// Null when another request closed the session first. A driver at the exit gate proves the car was there, so a staff closing gives way:
+// the hold the operator meant to cancel now pays the stay, and the #50 job stops cancelling it. staff_closed_by stays as history.
+async function closeSession(tx: Transaction, sessionId: string, { identification, exitedAt, capturedCents, surplusPaidCents, unpaidCents }: PaidExit & IdentifiedExit): Promise<ExitClosedRow | null> {
+  const rows = await tx.execute<ExitClosedRow>(sql`
+    with previous as (select state from parking_session where id = ${sessionId})
     update parking_session
     set state = 'CLOSED_PAID', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = ${identification}, captured_cents = ${capturedCents},
-      surplus_paid_cents = ${surplusPaidCents}, unpaid_cents = ${unpaidCents}
-    where id = ${sessionId} and state in ${LEAVABLE_STATES}
-    returning assigned_spot_id, confirmed_spot_id`);
+      surplus_paid_cents = ${surplusPaidCents}, unpaid_cents = ${unpaidCents}, hold_release_pending = false
+    where id = ${sessionId} and state in ${EXIT_CLOSABLE_STATES}
+    returning assigned_spot_id, confirmed_spot_id, (select state = 'CLOSED_BY_STAFF' from previous) as was_closed_by_staff`);
   return rows[0] ?? null;
 }
 
@@ -151,13 +163,14 @@ async function readPaidExit(tx: Transaction, sessionId: string): Promise<PaidExi
   return row.state === 'CLOSED_PAID' && row.captured_cents !== null ? paidExitOf(row, row.exit_at, row.captured_cents) : null;
 }
 
-// Null when the session is not leavable any more: another request closed it first.
-async function closePendingSession(tx: Transaction, sessionId: string, { identification, exitedAt, pendingCaptureCents, pendingSurplusCents }: Omit<PendingExitClosing, 'sessionId' | 'lotId' | 'exitGateId'>): Promise<ClosedSessionRow | null> {
-  const rows = await tx.execute<ClosedSessionRow>(sql`
+// Null when another request closed the session first; a staff closing gives way as for a paid exit, and the retry takes the capture.
+async function closePendingSession(tx: Transaction, sessionId: string, { identification, exitedAt, pendingCaptureCents, pendingSurplusCents }: Omit<PendingExitClosing, 'sessionId' | 'lotId' | 'exitGateId'>): Promise<ExitClosedRow | null> {
+  const rows = await tx.execute<ExitClosedRow>(sql`
+    with previous as (select state from parking_session where id = ${sessionId})
     update parking_session
     set state = 'CLOSED_CAPTURE_PENDING', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = ${identification},
-      pending_capture_cents = ${pendingCaptureCents}, pending_surplus_cents = ${pendingSurplusCents}
-    where id = ${sessionId} and state in ${LEAVABLE_STATES}
-    returning assigned_spot_id, confirmed_spot_id`);
+      pending_capture_cents = ${pendingCaptureCents}, pending_surplus_cents = ${pendingSurplusCents}, hold_release_pending = false
+    where id = ${sessionId} and state in ${EXIT_CLOSABLE_STATES}
+    returning assigned_spot_id, confirmed_spot_id, (select state = 'CLOSED_BY_STAFF' from previous) as was_closed_by_staff`);
   return rows[0] ?? null;
 }
