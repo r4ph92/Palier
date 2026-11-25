@@ -2,16 +2,13 @@ import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
 import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitIdentification, ExitRepository, PaidExit, PendingExitClosing, ReadIdentifierKind } from '../../domain/exits/ExitRepository.ts';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
-import { EXITABLE_COLUMNS, exitableSessionOf, LEAVABLE_STATES, paidExitOf, type ExitableRow } from './exitableSessionSql.ts';
+import { EXIT_CLOSABLE_STATES, EXITABLE_COLUMNS, exitableSessionOf, LEAVABLE_STATES, paidExitOf, type ExitableRow } from './exitableSessionSql.ts';
 import type { Database, Transaction } from './database.ts';
 import { logPaidExit, logPendingExit } from './exitEventStatements.ts';
 import { storeOpenCommand } from './gateCommandStatements.ts';
 import { inLotLock, orLotBusy } from './lockParkingLot.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
 import { freeSpots, type ClosedSessionRow } from './sessionSpotRelease.ts';
-
-// An exit takes over a session an operator closed while its capture was on the way to Stripe (decision 043, the exit wins).
-const EXIT_CLOSABLE_STATES = sql`('ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED', 'CLOSED_BY_STAFF')`;
 
 interface ExitClosedRow extends ClosedSessionRow {
   // The operator's closing already freed and flagged the spots: the exit leaves them as they are now.

@@ -20,7 +20,11 @@ export interface ExitableRow extends Record<string, unknown> {
 }
 
 // Sessions that went through the gate and have not left: the only ones an exit closes.
-export const LEAVABLE_STATES = sql`('ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED')`;
+const LEAVABLE_STATE_LIST = `'ENTRY_CONFIRMED', 'PARKED_PRESUMED', 'PARKED_UNCONFIRMED', 'PARKED_CONFIRMED'`;
+export const LEAVABLE_STATES = sql.raw(`(${LEAVABLE_STATE_LIST})`);
+
+// The exit's own close also takes over a session an operator closed while its capture was on the way to Stripe (decision 043).
+export const EXIT_CLOSABLE_STATES = sql.raw(`(${LEAVABLE_STATE_LIST}, 'CLOSED_BY_STAFF')`);
 
 // What every exit read takes of a session: the columns of ExitableRow.
 export const EXITABLE_COLUMNS = sql.raw(`ps.id, ps.state, ps.lot_id, ps.payment_intent_id, ps.authorized_cents, ps.entry_scan_at, ps.exit_at, ps.captured_cents,
