@@ -46,7 +46,7 @@ conservée pour mémoire, plus à jour.
 ## Lancer en local
 
 Monorepo npm : `apps/api` (API Fastify + Drizzle sur Postgres), `apps/mobile`
-(React Native avec Expo SDK 58, ouvert dans Expo Go sur le simulateur iOS),
+(React Native avec Expo SDK 58, ouvert dans un build de développement sur le simulateur iOS),
 `apps/dashboard` (tableau de bord opérateur, React + Vite) et
 `packages/shared-types` (types échangés entre l'API et l'app). Les choix
 d'implémentation sont dans [`docs/implementation.md`](docs/implementation.md),
@@ -60,8 +60,9 @@ et le panneau de signaux simulés dans [`docs/pont-natif.md`](docs/pont-natif.md
   (ou `nvm use`, le fichier `.nvmrc` indique 24).
 - **Docker** pour Postgres (port 5433, pour ne pas entrer en conflit avec un
   Postgres local sur 5432).
-- **Xcode** avec un simulateur iPhone. Expo Go s'installe tout seul au premier
-  lancement ; ni CocoaPods ni build natif ne sont nécessaires pour l'instant.
+- **Xcode** avec un simulateur iPhone, et le build de développement de Palier
+  installé dedans (voir « Build de développement » plus bas). Expo Go ne suffit plus
+  depuis la connexion avec Apple et Google (#30, `docs/decisions/049`).
 
 ### Démarrer
 
@@ -86,13 +87,27 @@ scénarios dans [`docs/demo-console.md`](docs/demo-console.md).
 Dans un second terminal :
 
 ```
-npm run ios --workspace @palier/mobile       # Metro + Expo Go dans le simulateur
+npm run ios --workspace @palier/mobile       # Metro + le build de développement dans le simulateur
 ```
+
+#### Build de développement
+
+À faire une fois, puis après chaque ajout de module natif ou de plugin dans `app.config.ts` :
+
+```
+cd apps/mobile
+npx eas-cli build -p ios --profile development   # build pour le simulateur, sur les serveurs d'Expo
+npx eas-cli build:run -p ios --latest            # l'installe dans le simulateur ouvert
+```
+
+« Continuer avec Apple » demande un identifiant Apple connecté dans le simulateur
+(Réglages). L'API vérifie les jetons avec `APPLE_BUNDLE_ID` et `GOOGLE_IOS_CLIENT_ID`
+de `apps/api/.env` (valeurs dans `.env.example`) ; sans eux, la connexion répond 503.
 
 Copier `apps/mobile/.env.example` en `apps/mobile/.env` : il garde l'API sur
 `http://localhost:3000` (`EXPO_PUBLIC_API_URL`) et active « Connexion de test »
 (`EXPO_PUBLIC_TEST_SIGN_IN=true`). Sans ce fichier, l'écran de connexion n'offre
-rien tant qu'Apple et Google (#30) ne sont pas là.
+qu'Apple et Google.
 
 Tableau de bord opérateur, dans un autre terminal :
 
@@ -113,7 +128,7 @@ aussi `STRIPE_WEBHOOK_SECRET` dans `apps/api/.env` : lancer
 Pour que le seed crée les clients Stripe de test des conducteurs (carte Visa 4242
 pour Julie et Marc), mettre une clé `sk_test_…` dans `STRIPE_SECRET_KEY` de
 `apps/api/.env` ; sans clé, le seed les crée sans Stripe.
-Si Expo Go affiche « UNIQUE constraint failed: updates.scope_key » à la
+Si l'app affiche « UNIQUE constraint failed: updates.scope_key » à la
 réouverture, toucher « Try again ».
 
 ### Scénarios de test manuels
