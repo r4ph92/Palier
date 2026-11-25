@@ -5,6 +5,9 @@ export interface VerifiedIdentity {
   readonly provider: IdentityProvider;
   readonly subject: string;
   readonly email: string;
+  // True when the provider owns the email's mailbox: Apple always, Google for Gmail and the domains it manages (hd claim).
+  // Only then may the identity join an existing account with this email.
+  readonly emailVouched: boolean;
   readonly firstName: string | null;
   readonly lastName: string | null;
 }
@@ -23,5 +26,6 @@ export interface PersonName {
 
 export interface IdentityRepository {
   // The account of this identity; else the account with its email, which the identity joins; else a new account. Returns its id.
-  findOrCreateAccount(identity: VerifiedIdentity, name: PersonName): Promise<string>;
+  // Null, writing nothing, when the email's account cannot be joined: the email is not vouched for, or the account is an operator's.
+  findOrCreateAccount(identity: VerifiedIdentity, name: PersonName): Promise<string | null>;
 }

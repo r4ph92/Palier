@@ -45,13 +45,16 @@ export class FakeIdentityRepository implements IdentityRepository {
     return this.#accountsByIdentity.size;
   }
 
-  findOrCreateAccount(identity: VerifiedIdentity, name: PersonName): Promise<string> {
+  findOrCreateAccount(identity: VerifiedIdentity, name: PersonName): Promise<string | null> {
     const key = `${identity.provider}:${identity.subject}`;
     const known = this.#accountsByIdentity.get(key);
     if (known !== undefined) {
       return Promise.resolve(known);
     }
     let userId = this.#accountsByEmail.get(identity.email);
+    if (userId !== undefined && !identity.emailVouched) {
+      return Promise.resolve(null);
+    }
     if (userId === undefined) {
       userId = randomUUID();
       this.#drivers.addDriver({ id: userId, ...name });

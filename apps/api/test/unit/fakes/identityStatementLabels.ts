@@ -4,6 +4,6 @@ export type IdentityStatementLabel = 'find-identity-user' | 'insert-app-user' | 
 export const IDENTITY_STATEMENT_PATTERNS: readonly (readonly [IdentityStatementLabel, RegExp])[] = [
   ['find-identity-user', /select user_id from user_identity/],
   ['insert-app-user', /insert into app_user/],
-  ['find-user-by-email', /select id as user_id from app_user where email/],
+  ['find-user-by-email', /as is_operator\s+from app_user where email/],
   ['insert-user-identity', /insert into user_identity/],
 ];

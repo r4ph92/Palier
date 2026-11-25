@@ -22,14 +22,23 @@ export interface IdentitySignIn {
   readonly name?: SuppliedName | undefined;
 }
 
-// Null when the token is not trusted: nothing is created and no session is opened.
-export async function signInWithIdentity({ verifier, identities, access }: IdentitySignInDependencies, signIn: IdentitySignIn): Promise<SignedInDriver | null> {
+// Refused and not linkable both create nothing and open no session.
+export type IdentitySignInResult =
+  | { readonly status: 'signedIn'; readonly signedIn: SignedInDriver }
+  | { readonly status: 'refused' }
+  | { readonly status: 'notLinkable' };
+
+export async function signInWithIdentity({ verifier, identities, access }: IdentitySignInDependencies, signIn: IdentitySignIn): Promise<IdentitySignInResult> {
   const identity = await verifier.verify(signIn.provider, signIn.identityToken);
   if (identity === null) {
-    return null;
+    return { status: 'refused' };
   }
   const userId = await identities.findOrCreateAccount(identity, newAccountName(identity, signIn.name));
-  return signInDriver(access, userId);
+  if (userId === null) {
+    return { status: 'notLinkable' };
+  }
+  const signedIn = await signInDriver(access, userId);
+  return signedIn === null ? { status: 'refused' } : { status: 'signedIn', signedIn };
 }
 
 // The provider's name first, then the one the app passed; empty when neither has one, and the app then asks for it.

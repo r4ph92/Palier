@@ -78,13 +78,20 @@ function identityOf(provider: IdentityProvider, payload: JWTPayload): VerifiedId
   if (typeof sub !== 'string' || sub === '' || typeof email !== 'string' || email === '' || !emailVerified) {
     return null;
   }
+  const normalizedEmail = lowercaseAscii(email);
   return {
     provider,
     subject: sub,
-    email: email.toLowerCase(),
+    email: normalizedEmail,
+    emailVouched: provider === 'APPLE' || normalizedEmail.endsWith('@gmail.com') || textClaim(payload['hd']) !== null,
     firstName: textClaim(payload['given_name']),
     lastName: textClaim(payload['family_name']),
   };
+}
+
+// Only A to Z: a full Unicode lowercase folds look-alikes (the Kelvin sign becomes k) onto another person's email.
+function lowercaseAscii(email: string): string {
+  return email.replace(/[A-Z]/g, (letter) => letter.toLowerCase());
 }
 
 function textClaim(value: unknown): string | null {

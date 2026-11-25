@@ -8,6 +8,7 @@ import type { SetupLimiter } from '../SetupLimiter.ts';
 import { createSignInLimiter, refuseTooManySignIns } from '../signInLimit.ts';
 
 const UNAUTHORIZED = 401;
+const CONFLICT = 409;
 const SERVICE_UNAVAILABLE = 503;
 
 export interface IdentitySignInServices {
@@ -50,11 +51,15 @@ function signInWith(provider: IdentityProvider, { access, services, limiter }: R
       return refuseUnavailable(reply);
     }
     const { identityToken, firstName, lastName } = request.body;
-    const signedIn = await signInWithIdentity({ ...services, access }, { provider, identityToken, name: { firstName, lastName } });
-    if (signedIn === null) {
+    const result = await signInWithIdentity({ ...services, access }, { provider, identityToken, name: { firstName, lastName } });
+    if (result.status === 'refused') {
       return reply.status(UNAUTHORIZED).send({ statusCode: UNAUTHORIZED, error: 'Unauthorized', message: 'The identity token was refused.' });
     }
-    return { token: signedIn.token, driver: { id: signedIn.driver.id, firstName: signedIn.driver.firstName } };
+    if (result.status === 'notLinkable') {
+      return reply.status(CONFLICT).send({ statusCode: CONFLICT, error: 'ACCOUNT_NOT_LINKABLE', message: 'An account with this email exists; sign in the way it was created.' });
+    }
+    const { token, driver } = result.signedIn;
+    return { token, driver: { id: driver.id, firstName: driver.firstName } };
   };
 }
 

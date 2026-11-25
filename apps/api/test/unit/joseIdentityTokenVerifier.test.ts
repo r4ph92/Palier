@@ -58,13 +58,29 @@ describe('JoseIdentityTokenVerifier', () => {
   it('trusts an Apple token for Palier, with a hidden email and no name', async () => {
     const identity = await verifier.verify('APPLE', await appleToken());
 
-    expect(identity).toEqual({ provider: 'APPLE', subject: '001234.apple-julie', email: 'julie@privaterelay.appleid.com', firstName: null, lastName: null });
+    expect(identity).toEqual({ provider: 'APPLE', subject: '001234.apple-julie', email: 'julie@privaterelay.appleid.com', emailVouched: true, firstName: null, lastName: null });
   });
 
   it('trusts a Google token, keeps its name and lowercases its email', async () => {
     const identity = await verifier.verify('GOOGLE', await googleToken());
 
-    expect(identity).toEqual({ provider: 'GOOGLE', subject: 'google-marc', email: 'marc.gagnon@gmail.com', firstName: 'Marc', lastName: 'Gagnon' });
+    expect(identity).toEqual({ provider: 'GOOGLE', subject: 'google-marc', email: 'marc.gagnon@gmail.com', emailVouched: true, firstName: 'Marc', lastName: 'Gagnon' });
+  });
+
+  it.each([
+    ['a Gmail address', { email: 'marc@gmail.com' }, true],
+    ['a domain Google manages (hd claim)', { email: 'marc@cegep.qc.ca', hd: 'cegep.qc.ca' }, true],
+    ['any other address', { email: 'marc@old-employer.example' }, false],
+  ])('says whether Google owns the mailbox for %s', async (_case, claims, vouched) => {
+    const identity = await verifier.verify('GOOGLE', await googleToken({ claims }));
+
+    expect(identity?.emailVouched).toBe(vouched);
+  });
+
+  it('lowercases only A to Z, so a look-alike letter does not become another email', async () => {
+    const identity = await verifier.verify('GOOGLE', await googleToken({ claims: { email: '\u212Aate@Kel.test' } }));
+
+    expect(identity?.email).toBe('\u212Aate@kel.test');
   });
 
   it('refuses a token signed with a key the provider does not publish', async () => {

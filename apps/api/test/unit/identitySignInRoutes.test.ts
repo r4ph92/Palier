@@ -8,9 +8,9 @@ import { FakeVehicleRepository } from './fakeVehicleRepository.ts';
 import { FakeIdentityRepository, FakeIdentityTokenVerifier } from './fakes/fakeIdentities.ts';
 import { fakeGateDependencies, fakeRepositories } from './fakes/serverDependencies.ts';
 
-const hiddenEmailApple: VerifiedIdentity = { provider: 'APPLE', subject: 'apple-nouveau', email: 'x7f3k@privaterelay.appleid.com', firstName: null, lastName: null };
-const marcGoogle: VerifiedIdentity = { provider: 'GOOGLE', subject: 'google-marc', email: 'marc.gagnon@gmail.com', firstName: 'Marc', lastName: 'Gagnon' };
-const julieGoogle: VerifiedIdentity = { provider: 'GOOGLE', subject: 'google-julie', email: 'julie.tremblay@palier.test', firstName: 'Julie', lastName: 'Tremblay' };
+const hiddenEmailApple: VerifiedIdentity = { provider: 'APPLE', subject: 'apple-nouveau', email: 'x7f3k@privaterelay.appleid.com', emailVouched: true, firstName: null, lastName: null };
+const marcGoogle: VerifiedIdentity = { provider: 'GOOGLE', subject: 'google-marc', email: 'marc.gagnon@gmail.com', emailVouched: true, firstName: 'Marc', lastName: 'Gagnon' };
+const julieGoogle: VerifiedIdentity = { provider: 'GOOGLE', subject: 'google-julie', email: 'julie.tremblay@palier.test', emailVouched: true, firstName: 'Julie', lastName: 'Tremblay' };
 
 interface Setup {
   readonly verifier?: FakeIdentityTokenVerifier;
@@ -90,6 +90,17 @@ describe('sign-in with Apple or Google', () => {
 
     expect(response.json<{ driver: { id: string } }>().driver.id).toBe(julie.id);
     expect(identities.accountCount).toBe(1);
+  });
+
+  it('answers 409 when the email belongs to an account this identity may not join, and opens no session', async () => {
+    startServer({ verifier: trustedTokens().trust('google-julie-unvouched', { ...julieGoogle, subject: 'google-julie-2', emailVouched: false }) });
+
+    const response = await signIn('google', { identityToken: 'google-julie-unvouched' });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe('ACCOUNT_NOT_LINKABLE');
+    expect(identities.identityCount).toBe(0);
+    expect(drivers.sessions.activeTokenHashes).toEqual([]);
   });
 
   it.each([
