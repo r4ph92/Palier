@@ -10,6 +10,8 @@ import { HttpReceiptClient } from './api/HttpReceiptClient';
 import { HttpSpotHoldClient } from './api/HttpSpotHoldClient';
 import { HttpVehicleClient } from './api/HttpVehicleClient';
 import type { SignedInClients, SignedInSession } from './api/SignedInClients';
+import { GOOGLE_IOS_CLIENT_ID } from './auth/googleClient';
+import { nativeProviderSignIn } from './auth/nativeProviderSignIn';
 import { secureTokenStore } from './auth/TokenStore';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
 import { fileLocationExplanationStore } from './deviceLocation/LocationExplanationStore';
@@ -27,6 +29,7 @@ const LOCAL_API_URL = 'http://localhost:3000';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? LOCAL_API_URL;
 const authClient = new HttpAuthClient({ baseUrl: apiUrl });
+const providerSignIn = nativeProviderSignIn(GOOGLE_IOS_CLIENT_ID);
 const testSignIn = offeredTestSignIn(loadedTestSignIn, process.env.EXPO_PUBLIC_TEST_SIGN_IN, apiUrl);
 // The publishable key comes from the environment; use a test key (pk_test_…) in local and test builds.
 const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
@@ -57,6 +60,7 @@ const palierApp = (
     <PalierApp
       authClient={authClient}
       tokenStore={secureTokenStore}
+      providerSignIn={providerSignIn}
       testSignIn={testSignIn}
       createSignedInClients={createSignedInClients}
       developerEntry={developerEntry}

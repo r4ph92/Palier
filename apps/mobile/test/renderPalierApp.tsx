@@ -7,7 +7,7 @@ import type { ParkedSignalQueue } from '../src/parkingSessions/ParkedSignalQueue
 import type { PositioningCore } from '../src/positioning/PositioningCore';
 import type { DeveloperEntry } from '../src/screens/DeveloperEntry';
 import { TestSignInSection } from '../src/testSignIn/TestSignInSection';
-import { FakeAuthClient, FakeTestSignInClient, julie, MemoryTokenStore } from './fakeAuth';
+import { FakeAuthClient, FakeProviderSignIn, FakeTestSignInClient, julie, MemoryTokenStore } from './fakeAuth';
 import { FakeBackgroundLocationClient } from './fakeBackgroundLocationClient';
 import { FakeDeviceLocationClient } from './fakeDeviceLocationClient';
 import { FakeEntryClient } from './fakeEntryClient';
@@ -32,6 +32,7 @@ export const IPHONE_MINI_METRICS = {
 export interface PalierAppOptions {
   readonly authClient?: FakeAuthClient;
   readonly tokenStore?: MemoryTokenStore;
+  readonly providerSignIn?: FakeProviderSignIn;
   readonly testSignInEnabled?: boolean;
   readonly testSignInClient?: FakeTestSignInClient;
   readonly language?: SupportedLanguage;
@@ -74,6 +75,7 @@ export async function renderPalierApp(options: PalierAppOptions = {}) {
       <PalierApp
         authClient={authClient}
         tokenStore={options.tokenStore ?? new MemoryTokenStore()}
+        providerSignIn={options.providerSignIn ?? new FakeProviderSignIn()}
         testSignIn={testSignIn}
         createSignedInClients={createSignedInClients}
         developerEntry={options.developerEntry}
