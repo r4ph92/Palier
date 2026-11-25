@@ -40,6 +40,14 @@ function newAccountName(identity: VerifiedIdentity, supplied: SuppliedName | und
   };
 }
 
+const FIRST_PRINTABLE = 0x20;
+const DELETE = 0x7f;
+
 export function cleanName(name: string | null | undefined): string {
-  return (name ?? '').trim().slice(0, NAME_MAX_LENGTH);
+  return withoutControlCharacters(name ?? '').trim().slice(0, NAME_MAX_LENGTH);
+}
+
+// Postgres refuses NUL in text, and no control character belongs in a name.
+function withoutControlCharacters(text: string): string {
+  return [...text].filter((character) => character.charCodeAt(0) >= FIRST_PRINTABLE && character.charCodeAt(0) !== DELETE).join('');
 }

@@ -169,6 +169,26 @@ describe('driver routes', () => {
       expect(me.json<{ firstName: string }>().firstName).toBe('Julie');
     });
 
+    it('drops control characters, which Postgres refuses in text', async () => {
+      startServer();
+      const headers = await consentedJulie();
+
+      const response = await server.inject({ method: 'PUT', url: '/v1/me/name', headers, payload: { firstName: 'Ju\u0000li\u001be', lastName: '' } });
+      const me = await server.inject({ method: 'GET', url: '/v1/me', headers });
+
+      expect(response.statusCode).toBe(204);
+      expect(me.json<{ firstName: string }>().firstName).toBe('Julie');
+    });
+
+    it('answers 400 for a first name made only of control characters', async () => {
+      startServer();
+      const headers = await consentedJulie();
+
+      const response = await server.inject({ method: 'PUT', url: '/v1/me/name', headers, payload: { firstName: '\u0000\u0007', lastName: '' } });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('answers 401 without a token', async () => {
       startServer();
 
