@@ -53,7 +53,7 @@ import { registerSpotHoldRoutes, type SpotHoldServices } from './routes/spotHold
 import { registerVehicleRoutes } from './routes/vehicleRoutes.ts';
 import { registerTestClockRoutes, type TestClockRouteDependencies } from './routes/testClockRoutes.ts';
 import { registerTestSignInRoutes } from './routes/testSignInRoutes.ts';
-import { registerIdentitySignInRoutes, type IdentitySignInServices } from './routes/identitySignInRoutes.ts';
+import type { IdentitySignInServices } from './routes/identitySignInRoutes.ts';
 
 // Gateway and webhook reader are null without their Stripe settings: onboarding answers 503 and the webhook route does not exist.
 export interface OperatorStripeDependencies {
@@ -177,8 +177,7 @@ function registerAppRoutes(server: FastifyInstance, { repositories, cardGateway,
   const clock = testTools?.testClock.now ?? systemClock;
   registerLotsRoutes(server, repositories.lotAvailabilityRepository, driverAccess);
   registerVehicleRoutes(server, repositories.vehicleRepository, driverAccess);
-  registerDriverRoutes(server, driverAccess);
-  registerIdentitySignInRoutes(server, { users: repositories.userDirectory, sessions: repositories.sessionTokenRepository }, identitySignIn);
+  registerDriverRoutes(server, driverAccess, { users: repositories.userDirectory, services: identitySignIn });
   registerPaymentMethodRoutes(server, driverAccess, cardGateway);
   registerEntryRoutes(server, driverAccess, entries);
   registerParkingSessionRoutes(server, driverAccess, { repositories, clock });
@@ -204,8 +203,7 @@ function registerParkingSessionRoutes(server: FastifyInstance, driverAccess: Dri
   registerReceiptRoutes(server, driverAccess, repositories.receipts);
 }
 
-type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock' | 'operatorStripe' | 'cardHolds' | 'identitySignIn'> &
-  Pick<ServerDependencies, 'testClock' | 'identitySignIn'>;
+type AppRouteDependencies = Omit<Required<ServerDependencies>, 'gates' | 'testClock' | 'operatorStripe' | 'cardHolds' | 'identitySignIn'> & Pick<ServerDependencies, 'testClock' | 'identitySignIn'>;
 
 // The clock the app's routes share: the test clock exactly when test sign-in is on.
 function composedClockOf(settings: ServerSettings, repositories: ServerDependencies['repositories'], testClock: TestClock | undefined): Clock {

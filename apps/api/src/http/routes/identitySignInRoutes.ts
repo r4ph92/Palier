@@ -32,33 +32,32 @@ export function registerIdentitySignInRoutes(server: FastifyInstance, access: Se
   server.post<IdentitySignInRequest>(
     '/v1/sign-in/apple',
     { schema: { body: appleSignInBodySchema, response: { 200: signInResponseSchema } } },
-    (request, reply) => signInWith('APPLE', context, request, reply),
+    signInWith('APPLE', context),
   );
   server.post<IdentitySignInRequest>(
     '/v1/sign-in/google',
     { schema: { body: googleSignInBodySchema, response: { 200: signInResponseSchema } } },
-    (request, reply) => signInWith('GOOGLE', context, request, reply),
+    signInWith('GOOGLE', context),
   );
 }
 
-async function signInWith(
-  provider: IdentityProvider,
-  { access, services, limiter }: RouteContext,
-  request: FastifyRequest<IdentitySignInRequest>,
-  reply: FastifyReply,
-): Promise<SignInResponse | FastifyReply> {
-  if (!limiter.allow(request.ip)) {
-    return refuseTooManySignIns(reply);
-  }
-  if (services === undefined || !services.verifier.accepts(provider)) {
-    return reply
-      .status(SERVICE_UNAVAILABLE)
-      .send({ statusCode: SERVICE_UNAVAILABLE, error: 'SIGN_IN_UNAVAILABLE', message: 'This sign-in provider is not configured.' });
-  }
-  const { identityToken, firstName, lastName } = request.body;
-  const signedIn = await signInWithIdentity({ ...services, access }, { provider, identityToken, name: { firstName, lastName } });
-  if (signedIn === null) {
-    return reply.status(UNAUTHORIZED).send({ statusCode: UNAUTHORIZED, error: 'Unauthorized', message: 'The identity token was refused.' });
-  }
-  return { token: signedIn.token, driver: { id: signedIn.driver.id, firstName: signedIn.driver.firstName } };
+function signInWith(provider: IdentityProvider, { access, services, limiter }: RouteContext) {
+  return async (request: FastifyRequest<IdentitySignInRequest>, reply: FastifyReply): Promise<SignInResponse | FastifyReply> => {
+    if (!limiter.allow(request.ip)) {
+      return refuseTooManySignIns(reply);
+    }
+    if (services === undefined || !services.verifier.accepts(provider)) {
+      return refuseUnavailable(reply);
+    }
+    const { identityToken, firstName, lastName } = request.body;
+    const signedIn = await signInWithIdentity({ ...services, access }, { provider, identityToken, name: { firstName, lastName } });
+    if (signedIn === null) {
+      return reply.status(UNAUTHORIZED).send({ statusCode: UNAUTHORIZED, error: 'Unauthorized', message: 'The identity token was refused.' });
+    }
+    return { token: signedIn.token, driver: { id: signedIn.driver.id, firstName: signedIn.driver.firstName } };
+  };
+}
+
+function refuseUnavailable(reply: FastifyReply): FastifyReply {
+  return reply.status(SERVICE_UNAVAILABLE).send({ statusCode: SERVICE_UNAVAILABLE, error: 'SIGN_IN_UNAVAILABLE', message: 'This sign-in provider is not configured.' });
 }
