@@ -80,7 +80,8 @@ function useSaveName({ authClient, state, setState, expire }: AcceptNoticeDepend
         }
         throw error;
       }
-      setState({ ...state, driver: await authClient.fetchMe(state.token) });
+      // The API keeps the name as sent (trimmed, 50 characters at most, as the screen allows), so no read is needed.
+      setState({ ...state, driver: { ...state.driver, firstName } });
     },
     [authClient, state, setState, expire],
   );
