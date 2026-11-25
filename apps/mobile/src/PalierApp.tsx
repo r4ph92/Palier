@@ -92,7 +92,7 @@ function SignedInApp({ signedIn, session, createClients, device }: SignedInAppPr
   }
   // The notice comes first: the name is personal data, asked for only once the driver has accepted it.
   if (driver.firstName === '') {
-    return <NameScreen onSave={session.saveName} />;
+    return <NameScreen onSave={session.saveName} onSignOut={session.signOut} />;
   }
   return <SignedInTabs firstName={driver.firstName} clients={clients} device={device} onSignOut={session.signOut} />;
 }

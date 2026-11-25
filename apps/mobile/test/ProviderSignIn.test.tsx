@@ -138,6 +138,26 @@ describe('asking for the name the provider did not give', () => {
     expect(screen.getByLabelText('Prénom')).toBeOnTheScreen();
   });
 
+  it('keeps the saved name even when Palier cannot be read right after', async () => {
+    const { authClient, user } = await acceptNotice();
+    authClient.isReachable = false;
+
+    await user.type(await screen.findByLabelText('Prénom'), 'Nadia');
+    await user.press(screen.getByRole('button', { name: 'Continuer' }));
+
+    expect(await screen.findByText('Bonjour Nadia')).toBeOnTheScreen();
+    expect(screen.queryByText('Le nom n’a pas été enregistré. Réessayez.')).not.toBeOnTheScreen();
+  });
+
+  it('lets the person sign out instead of giving a name', async () => {
+    const { tokenStore, user } = await acceptNotice();
+
+    await user.press(await screen.findByRole('button', { name: 'Se déconnecter' }));
+
+    expect(await screen.findByRole('button', { name: 'Continuer avec Apple' })).toBeOnTheScreen();
+    expect(tokenStore.token).toBeNull();
+  });
+
   it('reads in English on an English device', async () => {
     await acceptNotice('en');
 

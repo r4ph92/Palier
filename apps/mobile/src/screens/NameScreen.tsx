@@ -4,6 +4,7 @@ import { FieldError } from '../components/FieldError';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { ScreenFrame } from '../components/ScreenFrame';
 import { BODY_TEXT_MAX_FONT_SCALE, ScreenHeader } from '../components/ScreenHeader';
+import { TextButton } from '../components/TextButton';
 import { i18n } from '../i18n/i18n';
 import { useColors } from '../theme/useColors';
 import { MINIMUM_TOUCH_TARGET, spacing } from '../theme/tokens';
@@ -15,12 +16,14 @@ const NAME_MAX_LENGTH = 50;
 
 interface NameScreenProps {
   readonly onSave: (firstName: string, lastName: string) => Promise<void>;
+  // A way out for someone who signed in with the wrong account or does not want to give a name.
+  readonly onSignOut: () => void;
 }
 
 type NameError = 'firstNameRequired' | 'failed' | null;
 
 // Shown after the notice when the provider gave no name, as Apple does after the first sign-in.
-export function NameScreen({ onSave }: NameScreenProps) {
+export function NameScreen({ onSave, onSignOut }: NameScreenProps) {
   const colors = useColors();
   const { firstName, setFirstName, lastName, setLastName, error, saving, save } = useNameForm(onSave);
   return (
@@ -32,6 +35,7 @@ export function NameScreen({ onSave }: NameScreenProps) {
       <NameField label={i18n.t('name.lastName')} value={lastName} onChange={setLastName} autoComplete="family-name" />
       <PrimaryButton label={i18n.t('name.save')} busy={saving} busyLabel={i18n.t('name.busy')} onPress={save} />
       {error === 'failed' ? <FieldError message={i18n.t('name.failed')} /> : null}
+      <TextButton label={i18n.t('account.signOut')} onPress={onSignOut} />
     </ScreenFrame>
   );
 }
