@@ -15,6 +15,18 @@ const APPLE_KEYS_URL = new URL('https://appleid.apple.com/auth/keys');
 const GOOGLE_ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
 const GOOGLE_KEYS_URL = new URL('https://www.googleapis.com/oauth2/v3/certs');
 
+// The errors a token itself causes. Any other one (key set unreachable, unreadable) is rethrown.
+const TOKEN_REFUSALS = [
+  errors.JWTExpired,
+  errors.JWTClaimValidationFailed,
+  errors.JWTInvalid,
+  errors.JWSInvalid,
+  errors.JWSSignatureVerificationFailed,
+  errors.JOSEAlgNotAllowed,
+  errors.JOSENotSupported,
+  errors.JWKSNoMatchingKey,
+];
+
 // Only a provider with an audience is trusted; the other one answers as not configured.
 export function providerTrustsFor(audiences: { readonly apple: string | undefined; readonly google: string | undefined }): ProviderTrusts {
   return {
@@ -48,8 +60,8 @@ export class JoseIdentityTokenVerifier implements IdentityTokenVerifier {
       });
       return identityOf(provider, payload);
     } catch (error) {
-      // A token that fails a check is untrusted; a key set Palier could not fetch is an outage, not a refusal.
-      if (error instanceof errors.JOSEError && !(error instanceof errors.JWKSTimeout)) {
+      // A token that fails a check is untrusted; a key set Palier could not fetch or read is an outage, not a refusal.
+      if (TOKEN_REFUSALS.some((refusal) => error instanceof refusal)) {
         return null;
       }
       throw error;

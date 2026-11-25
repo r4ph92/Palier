@@ -1,4 +1,4 @@
-import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWTPayload } from 'jose';
+import { createLocalJWKSet, errors, exportJWK, generateKeyPair, SignJWT, type JWTPayload } from 'jose';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { JoseIdentityTokenVerifier, type ProviderTrusts } from '../../src/infrastructure/identity/JoseIdentityTokenVerifier.ts';
 
@@ -105,6 +105,14 @@ describe('JoseIdentityTokenVerifier', () => {
     const unsigned = `${Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64url')}.${payload}.`;
 
     expect(await verifier.verify('APPLE', unsigned)).toBeNull();
+  });
+
+  it('rethrows a key set it could not fetch, so an outage is not read as a refused token', async () => {
+    const unreachable = new JoseIdentityTokenVerifier({
+      APPLE: { issuers: ['https://appleid.apple.com'], audience: APPLE_AUDIENCE, keys: () => Promise.reject(new errors.JOSEError('Expected 200 OK from the JSON Web Key Set HTTP response')) },
+    });
+
+    await expect(unreachable.verify('APPLE', await appleToken())).rejects.toBeInstanceOf(errors.JOSEError);
   });
 
   it('accepts only the providers it has an audience for', async () => {
