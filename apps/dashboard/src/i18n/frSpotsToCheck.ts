@@ -13,7 +13,7 @@ export const frSpotsToCheck = {
   reasonColumn: 'Raison',
   checkColumn: 'Vérification',
   place: '%{level} · allée\u00a0%{aisle}',
-  reasons: { WRONG_AISLE: 'allée différente', WRONG_SPOT: 'autre place de l’allée', REPORTED_TAKEN: 'place signalée prise', NOT_RECORDED: 'raison non enregistrée' },
+  reasons: { WRONG_AISLE: 'allée différente', WRONG_SPOT: 'autre place de l’allée', REPORTED_TAKEN: 'place signalée prise', STALE_SESSION: 'session close sans sortie', NOT_RECORDED: 'raison non enregistrée' },
   checked: { shown: 'Vérifiée', name: 'Place %{number} vérifiée' },
   checking: { shown: 'Vérification…', status: 'Vérification de la place %{number}…' },
   cleared: 'Place %{number} vérifiée.',

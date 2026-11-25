@@ -111,7 +111,8 @@ function refusalFor(session: ExitableSession | null): ExitRefusal | null {
   if (session.state === 'CREATED') {
     return 'entry-not-confirmed';
   }
-  return session.state === 'CANCELLED' ? 'closed' : null;
+  // A session an operator closed at its last proof had its card hold cancelled: nothing is ever captured on it (decision 043).
+  return session.state === 'CANCELLED' || session.state === 'CLOSED_BY_STAFF' ? 'closed' : null;
 }
 
 export function receiptOf(session: Pick<ExitableSession, 'enteredAt' | 'pricing'>, { exitedAt, capturedCents, surplusPaidCents, unpaidCents }: PaidExit): ExitReceipt {

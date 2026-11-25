@@ -5,6 +5,8 @@ import { formatRecentDateTime } from '../i18n/formatNumbers.ts';
 import { interpolate } from '../i18n/interpolate.ts';
 import { interpolateKeepingValuesWhole } from '../i18n/interpolateKeepingValuesWhole.tsx';
 import { useLanguage, useText } from '../i18n/LanguageContext.tsx';
+import { closesOnEscape } from '../lotMap/closesOnEscape.ts';
+import { useFocusWhen } from '../lotMap/useFocusWhen.ts';
 import { sessionPath } from '../navigation/routes.ts';
 import { presenceButtonId, presenceErrorId } from './staleSessionIds.ts';
 import type { PresenceConfirmation, RowRefusal } from './usePresenceConfirmation.ts';
@@ -63,7 +65,7 @@ function StaleSessionRow({ lotId, session, confirmation }: RowProps) {
       <LastProofCell session={session} />
       <InstantCell instant={session.flaggedAt} />
       <td role="cell" className="check-action">
-        <PresenceButton session={session} confirmation={confirmation} />
+        {confirmation.question.askingId === session.id ? <CloseQuestion session={session} confirmation={confirmation} /> : <RowButtons session={session} confirmation={confirmation} />}
       </td>
     </tr>
   );
@@ -101,23 +103,68 @@ function InstantText({ instant }: { readonly instant: string }) {
   return <time dateTime={instant}>{formatRecentDateTime(new Date(instant), language, new Date())}</time>;
 }
 
+function RowButtons({ session, confirmation }: Pick<RowProps, 'session' | 'confirmation'>) {
+  return (
+    <span className="row-actions">
+      <PresenceButton session={session} confirmation={confirmation} />
+      <CloseButton session={session} confirmation={confirmation} />
+      <PresenceOutcome session={session} confirmation={confirmation} />
+    </span>
+  );
+}
+
 function PresenceButton({ session, confirmation }: Pick<RowProps, 'session' | 'confirmation'>) {
   const { staleSessions: text } = useText();
   const refused = rowRefusalOf(session, confirmation);
   return (
-    <span className="row-actions">
-      <button
-        type="button"
-        id={presenceButtonId(session.id)}
-        className="text-button"
-        aria-label={interpolate(text.present.name, { plate: session.plate })}
-        aria-describedby={refused === null ? undefined : presenceErrorId(session.id)}
-        aria-disabled={confirmation.confirmingId !== null}
-        onClick={() => void confirmation.confirm(session)}
-      >
-        {text.present.shown}
+    <button
+      type="button"
+      id={presenceButtonId(session.id)}
+      className="text-button"
+      aria-label={interpolate(text.present.name, { plate: session.plate })}
+      aria-describedby={refused === null || confirmation.action !== 'PRESENCE' ? undefined : presenceErrorId(session.id)}
+      aria-disabled={confirmation.confirmingId !== null}
+      onClick={() => void confirmation.confirm(session)}
+    >
+      {text.present.shown}
+    </button>
+  );
+}
+
+// The closing cannot be undone, so the button only opens a question on its row.
+function CloseButton({ session, confirmation }: Pick<RowProps, 'session' | 'confirmation'>) {
+  const { staleSessions: text } = useText();
+  const closeRef = useFocusWhen<HTMLButtonElement>(confirmation.question.cancelledId === session.id);
+  const busy = confirmation.confirmingId !== null;
+  const refused = rowRefusalOf(session, confirmation) !== null && confirmation.action === 'CLOSE';
+  return (
+    <button
+      type="button"
+      ref={closeRef}
+      className="text-button"
+      aria-label={interpolate(text.close.name, { plate: session.plate })}
+      aria-describedby={refused ? presenceErrorId(session.id) : undefined}
+      aria-disabled={busy}
+      onClick={() => (busy ? undefined : confirmation.question.ask(session))}
+    >
+      {text.close.shown}
+    </button>
+  );
+}
+
+function CloseQuestion({ session, confirmation }: Pick<RowProps, 'session' | 'confirmation'>) {
+  const { staleSessions: text } = useText();
+  const confirmRef = useFocusWhen<HTMLButtonElement>(true);
+  const closing = confirmation.confirmingId === session.id;
+  return (
+    <span className="row-actions delete-question" onKeyDown={(event) => closesOnEscape(event, confirmation.question.cancel)}>
+      <span>{interpolateKeepingValuesWhole(text.closeQuestion, { plate: session.plate })}</span>
+      <button type="button" ref={confirmRef} className="text-button" aria-label={interpolate(text.closeConfirm.name, { plate: session.plate })} aria-disabled={confirmation.confirmingId !== null} onClick={() => void confirmation.close(session)}>
+        {closing ? text.closing.shown : text.closeConfirm.shown}
       </button>
-      <PresenceOutcome session={session} confirmation={confirmation} />
+      <button type="button" className="text-button" onClick={confirmation.question.cancel}>
+        {text.closeCancel}
+      </button>
     </span>
   );
 }
@@ -128,7 +175,7 @@ function PresenceOutcome({ session, confirmation }: Pick<RowProps, 'session' | '
   if (confirmation.confirmingId === session.id) {
     return (
       <span className="muted check-busy-word" aria-hidden="true">
-        {text.confirming.shown}
+        {confirmation.action === 'CLOSE' ? text.closing.shown : text.confirming.shown}
       </span>
     );
   }

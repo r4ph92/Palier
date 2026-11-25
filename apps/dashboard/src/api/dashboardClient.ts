@@ -174,6 +174,8 @@ export const dashboardClient = {
   staleSessions: (lotId: string) => dashboardRequest<DashboardStaleSessions>(`${lotPathOf(lotId)}/stale-sessions`),
   confirmPresence: (lotId: string, sessionId: string) =>
     dashboardRequest<DashboardStaleSessions>(`${lotPathOf(lotId)}/stale-sessions/${encodeURIComponent(sessionId)}/presence`, { method: 'POST' }),
+  closeAtLastProof: (lotId: string, sessionId: string) =>
+    dashboardRequest<DashboardStaleSessions>(`${lotPathOf(lotId)}/stale-sessions/${encodeURIComponent(sessionId)}/close`, { method: 'POST' }),
   exitShares: (lotId: string) => dashboardRequest<LotExitShares>(`${lotPathOf(lotId)}/exits`),
   lotGates: (lotId: string) => dashboardRequest<DashboardLotGates>(`${lotPathOf(lotId)}/gates`),
   addGate: (lotId: string, draft: GateDraft) => dashboardRequest<CreatedGate>(`${lotPathOf(lotId)}/gates`, { method: 'POST', body: draft }),

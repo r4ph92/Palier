@@ -2,7 +2,8 @@ import type { DashboardLotDetails } from '@palier/shared-types';
 import { type FakeApiState, type FakeResponse, refused } from './fakeDashboardData.ts';
 
 const STALE_SESSIONS_REQUEST = /^GET \/lots\/([^/]+)\/stale-sessions$/;
-const PRESENCE_REQUEST = /^POST \/lots\/([^/]+)\/stale-sessions\/([^/]+)\/presence$/;
+// A presence check and a closing at the last proof both take the session off the flagged list.
+const PRESENCE_REQUEST = /^POST \/lots\/([^/]+)\/stale-sessions\/([^/]+)\/(?:presence|close)$/;
 
 export function isStaleSessionRequest(request: string): boolean {
   return STALE_SESSIONS_REQUEST.test(request) || PRESENCE_REQUEST.test(request);
@@ -13,7 +14,7 @@ interface MemberStaleSessions {
   readonly lots: readonly DashboardLotDetails[];
 }
 
-// Keeps the API's rules: a member's own lot, and a presence check only on a session still in the flagged list.
+// Keeps the API's rules: a member's own lot, and a presence check or a closing only on a session still in the flagged list.
 export function routeStaleSessions({ staleSessions, lots }: MemberStaleSessions, request: string): FakeResponse {
   const [, readLotId] = STALE_SESSIONS_REQUEST.exec(request) ?? [];
   const [, confirmLotId = '', sessionId = ''] = PRESENCE_REQUEST.exec(request) ?? [];

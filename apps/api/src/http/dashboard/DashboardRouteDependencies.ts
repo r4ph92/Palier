@@ -1,3 +1,4 @@
+import type { CardHoldCanceller } from '../../domain/dashboard/CardHoldCanceller.ts';
 import type { ExitIdentificationReader } from '../../domain/dashboard/ExitIdentificationReader.ts';
 import type { GateSecretRepository } from '../../domain/dashboard/GateSecretRepository.ts';
 import type { LevelOccupancyReader } from '../../domain/dashboard/LevelOccupancyReader.ts';
@@ -35,6 +36,8 @@ export interface DashboardRouteDependencies {
   readonly spotChecks: SpotCheckRepository;
   readonly sessionTimelines: SessionTimelineRepository;
   readonly staleSessionReviews: StaleSessionReviewRepository;
+  // Cancels the card hold of a session closed at its last proof; null without a Stripe key, the release job then waits for one.
+  readonly holds: CardHoldCanceller | null;
   readonly exitIdentifications: ExitIdentificationReader;
   readonly gates: LotGateRepository;
   readonly gateSecrets: GateSecretRepository;

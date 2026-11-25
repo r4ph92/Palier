@@ -68,6 +68,7 @@ export class FakeExits implements ExitRepository {
     if (found.session.paidExit !== null || found.session.state === 'CLOSED_CAPTURE_PENDING') {
       return Promise.resolve({ outcome: 'already', exit: found.session.paidExit });
     }
+    assertExitClosable(found.session);
     const exit: PaidExit = closing.exit;
     this.closings.push(closing);
     found.session = { ...found.session, state: 'CLOSED_PAID', paidExit: exit };
@@ -85,6 +86,7 @@ export class FakeExits implements ExitRepository {
     if (found.session.paidExit !== null || found.session.state === 'CLOSED_CAPTURE_PENDING') {
       return Promise.resolve({ outcome: 'already' });
     }
+    assertExitClosable(found.session);
     this.pendingClosings.push(closing);
     found.session = { ...found.session, state: 'CLOSED_CAPTURE_PENDING' };
     return Promise.resolve({ outcome: 'closed' });
@@ -121,5 +123,13 @@ export class FakeExits implements ExitRepository {
 
   #isLeavable({ state }: ExitableSession): boolean {
     return state !== 'CREATED' && state !== 'CANCELLED' && state !== 'CLOSED_PAID' && state !== 'CLOSED_CAPTURE_PENDING';
+  }
+}
+
+// Like the SQL guard of the exit's close: an active session, or one an operator closed while the capture was out (decision 043). Any
+// other state is the error readPaidExit throws.
+function assertExitClosable({ state }: ExitableSession): void {
+  if (state === 'CREATED' || state === 'CANCELLED') {
+    throw new Error(`Session in state ${state} is neither leavable nor closed: it cannot be exited.`);
   }
 }

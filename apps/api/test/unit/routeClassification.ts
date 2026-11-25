@@ -91,6 +91,7 @@ export const DASHBOARD_PROTECTED = [
   'GET /v1/dashboard/lots/:id/sessions/:sessionId',
   'GET /v1/dashboard/lots/:id/stale-sessions',
   'POST /v1/dashboard/lots/:id/stale-sessions/:sessionId/presence',
+  'POST /v1/dashboard/lots/:id/stale-sessions/:sessionId/close',
   'GET /v1/dashboard/lots/:id/gates',
   'POST /v1/dashboard/lots/:id/gates',
   'PUT /v1/dashboard/lots/:id/gates/:gateId',

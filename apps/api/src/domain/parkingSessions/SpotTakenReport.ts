@@ -34,6 +34,7 @@ const SESSION_REFUSALS: Readonly<Record<EntrySessionState, SessionRefusal | null
   CANCELLED: 'closed',
   CLOSED_PAID: 'closed',
   CLOSED_CAPTURE_PENDING: 'closed',
+  CLOSED_BY_STAFF: 'closed',
 };
 
 export interface ReportFacts {

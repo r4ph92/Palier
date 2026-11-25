@@ -2,7 +2,7 @@ import type { SessionExitMethod } from './sessionTimeline.ts';
 
 export const EXIT_SHARE_WINDOW_DAYS = 30;
 
-// Staff is listed from the start so the list does not change when a staff exit exists (decision 045); nothing records one yet, so it reads 0.
+// Staff counts the stale sessions an operator closed at their last known proof (decision 043, amending 045).
 export const EXIT_SHARE_METHODS = ['BEACON', 'APP', 'PLATE', 'TRANSPONDER', 'STAFF'] as const;
 export type ExitShareMethod = (typeof EXIT_SHARE_METHODS)[number];
 

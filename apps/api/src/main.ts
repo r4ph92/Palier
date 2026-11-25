@@ -105,6 +105,7 @@ const server = buildServer({
   cardGateway: stripeKey === null ? undefined : new StripeCardGateway(new Stripe(stripeKey)),
   entries: entries.routes,
   exits: { exits: new PostgresExitRepository(connection.database), payments: entries.payments },
+  cardHolds: entries.payments,
   spotHolds: composeSpotHolds({ database: connection.database, demoMode: environment.demoMode, prerequisites: { vehicles: vehicleRepository, drivers: driverRepository }, sessions: entries.routes.sessions }),
   operatorStripe: composeOperatorStripe({
     database: connection.database,

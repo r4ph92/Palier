@@ -78,7 +78,7 @@ function FlaggedSessions({ lotId, confirmation }: { readonly lotId: string; read
 }
 
 // The line takes focus when the last session is confirmed, since the button that had it is gone.
-type StatusProps = { readonly status: Pick<PresenceConfirmation, 'confirmingPlate' | 'confirmedPlate'> };
+type StatusProps = { readonly status: Pick<PresenceConfirmation, 'confirmingPlate' | 'confirmedPlate' | 'action'> };
 
 function ConfirmationStatusLine({ status }: StatusProps) {
   return (
@@ -88,12 +88,13 @@ function ConfirmationStatusLine({ status }: StatusProps) {
   );
 }
 
-function ConfirmationStatusText({ status: { confirmingPlate, confirmedPlate } }: StatusProps) {
+function ConfirmationStatusText({ status: { confirmingPlate, confirmedPlate, action } }: StatusProps) {
   const { staleSessions: text } = useText();
+  const closes = action === 'CLOSE';
   if (confirmingPlate !== null) {
-    return <span className="muted">{interpolate(text.confirming.status, { plate: confirmingPlate })}</span>;
+    return <span className="muted">{interpolate(closes ? text.closing.status : text.confirming.status, { plate: confirmingPlate })}</span>;
   }
-  return confirmedPlate === null ? null : <StateMark tone="free" label={interpolate(text.confirmed, { plate: confirmedPlate })} wraps />;
+  return confirmedPlate === null ? null : <StateMark tone="free" label={interpolate(closes ? text.closed : text.confirmed, { plate: confirmedPlate })} wraps />;
 }
 
 function EmptyList() {

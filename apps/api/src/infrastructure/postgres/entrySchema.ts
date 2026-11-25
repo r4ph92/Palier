@@ -18,6 +18,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { ENTRY_SESSION_STATES } from '@palier/shared-types/entries';
 import { PRESUMPTION_EVIDENCES } from '../../domain/parkingSessions/PresumptionEvidence.ts';
+import { stateChecks } from './sessionStateChecks.ts';
 import { ACTIVE_SESSION } from './activeSessionStates.ts';
 import { appUser, vehicle } from './driverSchema.ts';
 import { gate } from './gateSchema.ts';
@@ -36,23 +37,10 @@ export function sameLotForeignKey(name: string, columns: [AnyPgColumn, AnyPgColu
 
 export const parkingSessionState = pgEnum('parking_session_state', ENTRY_SESSION_STATES);
 // How the vehicle was identified at the exit: the tap in the app, the gate's plate or transponder reader, or the exit beacon seen by
-// the app together with a vehicle at the gate (docs/03, sequence C).
-export const exitIdentification = pgEnum('exit_identification', ['APP', 'PLATE', 'TRANSPONDER', 'BEACON']);
+// the app together with a vehicle at the gate (docs/03, sequence C). STAFF: an operator closed a stale session at its last known proof (decision 043).
+export const exitIdentification = pgEnum('exit_identification', ['APP', 'PLATE', 'TRANSPONDER', 'BEACON', 'STAFF']);
 export const parkingSessionPresumption = pgEnum('parking_session_presumption', PRESUMPTION_EVIDENCES);
 export const gateCommandKind = pgEnum('gate_command_kind', ['OPEN']);
-
-interface StateColumns {
-  readonly state: AnyPgColumn;
-  readonly parkedAisleId: AnyPgColumn;
-  readonly parkedAskedAt: AnyPgColumn;
-  readonly presumedBy: AnyPgColumn;
-  readonly confirmedSpotId: AnyPgColumn;
-  readonly parkedAnsweredAt: AnyPgColumn;
-  readonly exitAt: AnyPgColumn;
-  readonly exitIdentification: AnyPgColumn;
-  readonly capturedCents: AnyPgColumn;
-  readonly pendingCaptureCents: AnyPgColumn;
-}
 
 interface SpotColumns {
   readonly assignedSpotId: AnyPgColumn;
@@ -65,29 +53,6 @@ function spotHistoryIndexes(table: SpotColumns) {
   return [
     index('parking_session_assigned_spot_id_lot_id_index').on(table.assignedSpotId, table.lotId),
     index('parking_session_confirmed_spot_id_lot_id_index').on(table.confirmedSpotId, table.lotId),
-  ];
-}
-
-// Compared as text: a check on the enum itself would block the next migration that recreates the enum.
-function stateChecks(table: StateColumns) {
-  return [
-    check('parking_session_unconfirmed_has_aisle', sql`${table.state}::text <> 'PARKED_UNCONFIRMED' or ${table.parkedAisleId} is not null`),
-    check('parking_session_unconfirmed_has_question', sql`${table.state}::text <> 'PARKED_UNCONFIRMED' or ${table.parkedAskedAt} is not null`),
-    check('parking_session_presumed_has_evidence', sql`${table.state}::text <> 'PARKED_PRESUMED' or ${table.presumedBy} is not null`),
-    check(
-      'parking_session_confirmed_has_spot',
-      sql`${table.state}::text <> 'PARKED_CONFIRMED' or (${table.confirmedSpotId} is not null and ${table.parkedAnsweredAt} is not null)`,
-    ),
-    // A paid session always says when, how and how much.
-    check(
-      'parking_session_paid_has_exit',
-      sql`${table.state}::text <> 'CLOSED_PAID' or (${table.exitAt} is not null and ${table.exitIdentification} is not null and ${table.capturedCents} is not null)`,
-    ),
-    // A session left with its capture pending says when, how, and the amount the retry takes (decision 026).
-    check(
-      'parking_session_pending_has_exit',
-      sql`${table.state}::text <> 'CLOSED_CAPTURE_PENDING' or (${table.exitAt} is not null and ${table.exitIdentification} is not null and ${table.pendingCaptureCents} is not null)`,
-    ),
   ];
 }
 
@@ -150,6 +115,8 @@ export const parkingSession = pgTable(
     // The operator's physical check: a proof of presence that restarts the 7 days. The member is kept here, never in the event payload (decision 037).
     presenceConfirmedAt: timestamp('presence_confirmed_at', { withTimezone: true }),
     presenceConfirmedBy: uuid('presence_confirmed_by').references(() => appUser.id),
+    // The dashboard user who closed the stale session at its last proof; kept here, never in the event payload (decision 037).
+    staffClosedBy: uuid('staff_closed_by').references(() => appUser.id),
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
     // Set together when the exit captures the amount and closes the session as CLOSED_PAID (decision 023).
     exitAt: timestamp('exit_at', { withTimezone: true }),

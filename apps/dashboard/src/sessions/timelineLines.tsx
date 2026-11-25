@@ -45,6 +45,7 @@ const LABELS: Readonly<Record<TimelineKind, LabelOf>> = {
     amountCents === undefined ? steps.CAPTURE_PENDING.unknown : amountLabel(steps.CAPTURE_PENDING.amount, amountCents, language),
   EXIT_LOOP_CLOSED: ({ steps }) => steps.EXIT_LOOP_CLOSED,
   PRESENCE_CONFIRMED: ({ steps }) => steps.PRESENCE_CONFIRMED,
+  CLOSED_BY_STAFF: ({ steps }) => steps.CLOSED_BY_STAFF,
   UNKNOWN: ({ steps }) => steps.UNKNOWN,
 };
 

@@ -2,15 +2,18 @@ import { sql } from 'drizzle-orm';
 import type { EntrySessionState } from '@palier/shared-types';
 import type { ClosedExit, ClosedPendingExit, ExitableSession, ExitClosing, ExitIdentification, ExitRepository, PaidExit, PendingExitClosing, ReadIdentifierKind } from '../../domain/exits/ExitRepository.ts';
 import type { OpeningWindow } from '../../domain/gates/OpeningWindow.ts';
-import { spotsFreedOnExit, type SpotOfExit } from '../../domain/exits/spotsFreedOnExit.ts';
-import type { SpotState } from '../../domain/spots/spotStates.ts';
-import { EXITABLE_COLUMNS, exitableSessionOf, LEAVABLE_STATES, paidExitOf, type ExitableRow } from './exitableSessionSql.ts';
-import { activeSessionOf } from './activeSessionStates.ts';
+import { EXIT_CLOSABLE_STATES, EXITABLE_COLUMNS, exitableSessionOf, LEAVABLE_STATES, paidExitOf, type ExitableRow } from './exitableSessionSql.ts';
 import type { Database, Transaction } from './database.ts';
 import { logPaidExit, logPendingExit } from './exitEventStatements.ts';
 import { storeOpenCommand } from './gateCommandStatements.ts';
 import { inLotLock, orLotBusy } from './lockParkingLot.ts';
 import { isWithinOpeningWindow } from './openingWindowSql.ts';
+import { freeSpots, type ClosedSessionRow } from './sessionSpotRelease.ts';
+
+interface ExitClosedRow extends ClosedSessionRow {
+  // The operator's closing already freed and flagged the spots: the exit leaves them as they are now.
+  readonly was_closed_by_staff: boolean;
+}
 
 interface PaidExitRow extends Record<string, unknown> {
   readonly state: EntrySessionState;
@@ -18,17 +21,6 @@ interface PaidExitRow extends Record<string, unknown> {
   readonly captured_cents: number | null;
   readonly surplus_paid_cents: number;
   readonly unpaid_cents: number;
-}
-
-interface ClosedSessionRow extends Record<string, unknown> {
-  readonly assigned_spot_id: string;
-  readonly confirmed_spot_id: string | null;
-}
-
-interface SpotRow extends Record<string, unknown> {
-  readonly id: string;
-  readonly state: SpotState;
-  readonly held_by_another_session: boolean;
 }
 
 export class PostgresExitRepository implements ExitRepository {
@@ -134,23 +126,27 @@ interface GateOpening {
   readonly sessionId: string;
   readonly lotId: string;
   readonly exitGateId: string;
-  readonly session: ClosedSessionRow;
+  readonly session: ExitClosedRow;
   readonly now: Date;
 }
 
 async function openGate(tx: Transaction, { sessionId, lotId, exitGateId, session, now }: GateOpening): Promise<void> {
-  await freeSpots(tx, { sessionId, session, now });
+  if (!session.was_closed_by_staff) {
+    await freeSpots(tx, { sessionId, session, now });
+  }
   await storeOpenCommand(tx, { gateId: exitGateId, lotId, sessionId }, 'EXIT');
 }
 
-// Null when the session is not leavable any more: another request closed it first.
-async function closeSession(tx: Transaction, sessionId: string, { identification, exitedAt, capturedCents, surplusPaidCents, unpaidCents }: PaidExit & IdentifiedExit): Promise<ClosedSessionRow | null> {
-  const rows = await tx.execute<ClosedSessionRow>(sql`
+// Null when another request closed the session first. A driver at the exit gate proves the car was there, so a staff closing gives way:
+// the hold the operator meant to cancel now pays the stay, and the #50 job stops cancelling it. staff_closed_by stays as history.
+async function closeSession(tx: Transaction, sessionId: string, { identification, exitedAt, capturedCents, surplusPaidCents, unpaidCents }: PaidExit & IdentifiedExit): Promise<ExitClosedRow | null> {
+  const rows = await tx.execute<ExitClosedRow>(sql`
+    with previous as (select state from parking_session where id = ${sessionId})
     update parking_session
     set state = 'CLOSED_PAID', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = ${identification}, captured_cents = ${capturedCents},
-      surplus_paid_cents = ${surplusPaidCents}, unpaid_cents = ${unpaidCents}
-    where id = ${sessionId} and state in ${LEAVABLE_STATES}
-    returning assigned_spot_id, confirmed_spot_id`);
+      surplus_paid_cents = ${surplusPaidCents}, unpaid_cents = ${unpaidCents}, hold_release_pending = false
+    where id = ${sessionId} and state in ${EXIT_CLOSABLE_STATES}
+    returning assigned_spot_id, confirmed_spot_id, (select state = 'CLOSED_BY_STAFF' from previous) as was_closed_by_staff`);
   return rows[0] ?? null;
 }
 
@@ -164,49 +160,14 @@ async function readPaidExit(tx: Transaction, sessionId: string): Promise<PaidExi
   return row.state === 'CLOSED_PAID' && row.captured_cents !== null ? paidExitOf(row, row.exit_at, row.captured_cents) : null;
 }
 
-// Null when the session is not leavable any more: another request closed it first.
-async function closePendingSession(tx: Transaction, sessionId: string, { identification, exitedAt, pendingCaptureCents, pendingSurplusCents }: Omit<PendingExitClosing, 'sessionId' | 'lotId' | 'exitGateId'>): Promise<ClosedSessionRow | null> {
-  const rows = await tx.execute<ClosedSessionRow>(sql`
+// Null when another request closed the session first; a staff closing gives way as for a paid exit, and the retry takes the capture.
+async function closePendingSession(tx: Transaction, sessionId: string, { identification, exitedAt, pendingCaptureCents, pendingSurplusCents }: Omit<PendingExitClosing, 'sessionId' | 'lotId' | 'exitGateId'>): Promise<ExitClosedRow | null> {
+  const rows = await tx.execute<ExitClosedRow>(sql`
+    with previous as (select state from parking_session where id = ${sessionId})
     update parking_session
     set state = 'CLOSED_CAPTURE_PENDING', exit_at = ${exitedAt.toISOString()}::timestamptz, exit_identification = ${identification},
-      pending_capture_cents = ${pendingCaptureCents}, pending_surplus_cents = ${pendingSurplusCents}
-    where id = ${sessionId} and state in ${LEAVABLE_STATES}
-    returning assigned_spot_id, confirmed_spot_id`);
+      pending_capture_cents = ${pendingCaptureCents}, pending_surplus_cents = ${pendingSurplusCents}, hold_release_pending = false
+    where id = ${sessionId} and state in ${EXIT_CLOSABLE_STATES}
+    returning assigned_spot_id, confirmed_spot_id, (select state = 'CLOSED_BY_STAFF' from previous) as was_closed_by_staff`);
   return rows[0] ?? null;
-}
-
-interface SpotsToFree {
-  readonly sessionId: string;
-  readonly session: ClosedSessionRow;
-  readonly now: Date;
-}
-
-// The car's spot is the confirmed one once the driver answered, the assigned one before; the others are the history of the session.
-async function freeSpots(tx: Transaction, { sessionId, session, now }: SpotsToFree): Promise<void> {
-  const ownSpotId = session.confirmed_spot_id ?? session.assigned_spot_id;
-  const freed = spotsFreedOnExit(ownSpotId, await lockSpotsOfSession(tx, sessionId, session));
-  if (freed.length === 0) {
-    return;
-  }
-  await tx.execute(sql`
-    update spot set needs_check = needs_check or state = 'OCCUPIED_UNKNOWN',
-      needs_check_since = coalesce(needs_check_since, case when state = 'OCCUPIED_UNKNOWN' then ${now.toISOString()}::timestamptz end),
-      state = 'AVAILABLE', state_changed_at = ${now.toISOString()}::timestamptz
-    where id in (${sql.join(freed.map((id) => sql`${id}`), sql`, `)})`);
-}
-
-async function lockSpotsOfSession(tx: Transaction, sessionId: string, session: ClosedSessionRow): Promise<SpotOfExit[]> {
-  const ownSpotId = session.confirmed_spot_id ?? session.assigned_spot_id;
-  const rows = await tx.execute<SpotRow>(sql`
-    select spot.id, spot.state,
-      exists (
-        select 1 from parking_session other
-        where other.id <> ${sessionId} and ${activeSessionOf('other')} and (other.assigned_spot_id = spot.id or other.confirmed_spot_id = spot.id)
-      ) as held_by_another_session
-    from spot
-    where spot.id = ${ownSpotId} or spot.id = ${session.assigned_spot_id}
-      or spot.id in (select spot_id from parking_session_reported_spot where session_id = ${sessionId})
-    order by spot.id
-    for update of spot`);
-  return rows.map((row) => ({ id: row.id, state: row.state, heldByAnotherSession: row.held_by_another_session }));
 }

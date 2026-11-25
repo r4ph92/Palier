@@ -93,12 +93,29 @@ describe('exitParking', () => {
   it.each([
     { state: 'CREATED', outcome: 'entry-not-confirmed' },
     { state: 'CANCELLED', outcome: 'closed' },
+    { state: 'CLOSED_BY_STAFF', outcome: 'closed' },
   ] as const)('refuses a $state session without taking anything', async ({ state, outcome }) => {
     const { exits, payments, exit } = setup();
     exits.add(JULIE_ID, { ...julieInside(enteredAt), state });
 
     expect(await exit()).toEqual({ outcome });
     expect(payments.captured).toEqual([]);
+  });
+
+  it.each([
+    { captureOutcome: 'captured', closed: 'closings', outcome: 'left' },
+    { captureOutcome: 'failed', closed: 'pendingClosings', outcome: 'capture-pending' },
+  ] as const)('lets Julie out when an operator closes her session while Stripe answers ($captureOutcome, decision 043)', async ({ captureOutcome, closed, outcome }) => {
+    const { exits, payments, exit } = setup();
+    payments.captureOutcome = captureOutcome;
+    const capture = payments.capture.bind(payments);
+    payments.capture = (request) => {
+      exits.add(JULIE_ID, { ...julieInside(enteredAt), state: 'CLOSED_BY_STAFF' });
+      return capture(request);
+    };
+
+    expect(await exit()).toMatchObject({ outcome });
+    expect(exits[closed]).toHaveLength(1);
   });
 
   it('leaves the session open and takes nothing when the lot has no exit gate', async () => {

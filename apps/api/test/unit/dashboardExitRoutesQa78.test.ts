@@ -26,7 +26,7 @@ class RecordingExitReader implements ExitIdentificationReader {
   }
 }
 
-const demoExits: ExitCountsRead = { lotName: 'Parking Démo', counts: { BEACON: 5, APP: 3, PLATE: 2, TRANSPONDER: 0 } };
+const demoExits: ExitCountsRead = { lotName: 'Parking Démo', counts: { BEACON: 5, APP: 3, PLATE: 2, TRANSPONDER: 0, STAFF: 0 } };
 
 describe('QA #78: the exit shares route, attacked', () => {
   let server: FastifyInstance | undefined;
