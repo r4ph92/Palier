@@ -51,6 +51,59 @@ describe('HttpAuthClient', () => {
     expect(fetchFunction.mock.calls[0]?.[1]).toMatchObject({ method: 'POST', headers: { Authorization: 'Bearer julie-token' } });
   });
 
+  it('posts the Apple identity token, with the name Apple gave, and answers the Palier token', async () => {
+    const { client, fetchFunction } = clientRecording(() => jsonResponse({ token: 'palier-token', driver: julie }));
+
+    await expect(client.signInWithApple({ identityToken: 'apple-jwt', firstName: 'Julie', lastName: 'Tremblay' })).resolves.toBe('palier-token');
+    expect(fetchFunction.mock.calls[0]?.[0]).toBe(`${BASE_URL}/v1/sign-in/apple`);
+    expect(fetchFunction.mock.calls[0]?.[1]).toMatchObject({
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identityToken: 'apple-jwt', firstName: 'Julie', lastName: 'Tremblay' }),
+    });
+  });
+
+  it('leaves out the name Apple did not give', async () => {
+    const { client, fetchFunction } = clientRecording(() => jsonResponse({ token: 'palier-token', driver: julie }));
+
+    await client.signInWithApple({ identityToken: 'apple-jwt', firstName: null, lastName: null });
+
+    expect(fetchFunction.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ identityToken: 'apple-jwt' }));
+  });
+
+  it('posts the Google identity token and answers the Palier token', async () => {
+    const { client, fetchFunction } = clientRecording(() => jsonResponse({ token: 'palier-token', driver: julie }));
+
+    await expect(client.signInWithGoogle('google-jwt')).resolves.toBe('palier-token');
+    expect(fetchFunction.mock.calls[0]?.[0]).toBe(`${BASE_URL}/v1/sign-in/google`);
+    expect(fetchFunction.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ identityToken: 'google-jwt' }));
+  });
+
+  it('reports an identity token the API refuses as unauthorized', async () => {
+    const { client } = clientRecording(() => jsonResponse({ error: 'Unauthorized' }, 401));
+
+    await expect(client.signInWithGoogle('forged')).rejects.toBeInstanceOf(PalierUnauthorizedError);
+  });
+
+  it('treats a sign-in answer without a token as unreachable', async () => {
+    const { client } = clientRecording(() => jsonResponse({ driver: julie }));
+
+    await expect(client.signInWithGoogle('google-jwt')).rejects.toBeInstanceOf(PalierUnreachableError);
+  });
+
+  it('puts the name with the token', async () => {
+    const { client, fetchFunction } = clientRecording(() => Promise.resolve(new Response(null, { status: 204 })));
+
+    await client.saveName('julie-token', 'Julie', 'Tremblay');
+
+    expect(fetchFunction.mock.calls[0]?.[0]).toBe(`${BASE_URL}/v1/me/name`);
+    expect(fetchFunction.mock.calls[0]?.[1]).toMatchObject({
+      method: 'PUT',
+      headers: { Authorization: 'Bearer julie-token', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firstName: 'Julie', lastName: 'Tremblay' }),
+    });
+  });
+
   it('reports a refused token as unauthorized', async () => {
     const { client } = clientRecording(() => jsonResponse({}, 401));
 
