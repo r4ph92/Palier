@@ -8,6 +8,11 @@ const LOCATION_ALWAYS_REASON_FR =
 const LOCATION_ALWAYS_REASON_EN =
   'Palier stays active for 2 to 3 minutes after your scan to detect the spot where you park. Your position is never sent.';
 
+// Apple refuses the build without this reason because the Stripe SDK links camera code. iOS shows it only once the
+// scanner reads the entry QR with the camera; until then the QR is typed and the camera is never requested.
+const CAMERA_REASON_FR = 'Palier utilise la caméra pour lire le QR de la borne à l’entrée du stationnement.';
+const CAMERA_REASON_EN = 'Palier uses the camera to read the terminal’s QR at the parking entrance.';
+
 const config: ExpoConfig = {
   name: 'Palier',
   slug: 'palier',
@@ -19,10 +24,11 @@ const config: ExpoConfig = {
   ios: {
     bundleIdentifier: 'ca.palier.app',
     supportsTablet: false,
+    infoPlist: { NSCameraUsageDescription: CAMERA_REASON_FR },
   },
   locales: {
-    fr: { NSLocationWhenInUseUsageDescription: LOCATION_REASON_FR, NSLocationAlwaysAndWhenInUseUsageDescription: LOCATION_ALWAYS_REASON_FR },
-    en: { NSLocationWhenInUseUsageDescription: LOCATION_REASON_EN, NSLocationAlwaysAndWhenInUseUsageDescription: LOCATION_ALWAYS_REASON_EN },
+    fr: { NSLocationWhenInUseUsageDescription: LOCATION_REASON_FR, NSLocationAlwaysAndWhenInUseUsageDescription: LOCATION_ALWAYS_REASON_FR, NSCameraUsageDescription: CAMERA_REASON_FR },
+    en: { NSLocationWhenInUseUsageDescription: LOCATION_REASON_EN, NSLocationAlwaysAndWhenInUseUsageDescription: LOCATION_ALWAYS_REASON_EN, NSCameraUsageDescription: CAMERA_REASON_EN },
   },
   plugins: [
     'expo-status-bar',
