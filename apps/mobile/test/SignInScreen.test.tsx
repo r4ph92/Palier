@@ -28,6 +28,7 @@ async function renderSignInScreen(options: RenderOptions = {}) {
       <SignInScreen
         testSignIn={testSignIn}
         onSignIn={options.onSignIn ?? (() => Promise.resolve())}
+        onContinueWith={() => Promise.resolve()}
       />
     </SafeAreaProvider>,
   );

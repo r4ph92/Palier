@@ -12,7 +12,7 @@ export const amelie: Driver = { id: '00000000-0000-4000-8000-000000000503', firs
 
 // Drivers and the user directory read the same user rows, so one fake plays both.
 export class FakeDriverRepository implements DriverRepository, UserDirectory {
-  readonly #drivers: readonly Driver[];
+  #drivers: readonly Driver[];
   // Session tokens join the same user rows, so the fake keeps them beside the drivers it knows.
   readonly sessions: FakeSessionTokenRepository;
   readonly #noticeVersions = new Map<string, string>();
@@ -43,6 +43,20 @@ export class FakeDriverRepository implements DriverRepository, UserDirectory {
   saveNoticeAcceptance(driverId: string, noticeVersion: string): Promise<void> {
     this.#noticeVersions.set(driverId, noticeVersion);
     return Promise.resolve();
+  }
+
+  saveName(driverId: string, firstName: string, lastName: string): Promise<void> {
+    this.#replaceDrivers(this.#drivers.map((driver) => (driver.id === driverId ? { ...driver, firstName, lastName } : driver)));
+    return Promise.resolve();
+  }
+
+  addDriver(driver: Driver): void {
+    this.#replaceDrivers([...this.#drivers, driver]);
+  }
+
+  #replaceDrivers(drivers: readonly Driver[]): void {
+    this.#drivers = drivers;
+    this.sessions.replaceUsers(drivers);
   }
 
   findStripeCustomerId(driverId: string): Promise<string | null> {

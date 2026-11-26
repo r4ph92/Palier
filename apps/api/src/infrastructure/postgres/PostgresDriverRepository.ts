@@ -25,6 +25,10 @@ export class PostgresDriverRepository implements DriverRepository {
     return (await this.findLatestNoticeVersion(driverId)) === noticeVersion;
   }
 
+  async saveName(driverId: string, firstName: string, lastName: string): Promise<void> {
+    await this.#database.update(appUser).set({ firstName, lastName }).where(eq(appUser.id, driverId));
+  }
+
   // Accepting an older version again makes it the latest, so the guard and /v1/me see the rollback.
   async saveNoticeAcceptance(driverId: string, noticeVersion: string): Promise<void> {
     await this.#database

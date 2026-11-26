@@ -5,7 +5,7 @@ Allocation de places en stationnement intérieur, multi-opérateurs: le conducte
 ## Stack
 
 TypeScript 6 on Node 24 (`.nvmrc`), npm workspaces. API: Fastify 5, Drizzle ORM, postgres-js, Postgres 17 in Docker on port 5433, Stripe for cards.
-App: React Native with Expo SDK 58, iOS only, run in Expo Go, `@stripe/stripe-react-native` for cards. Tests: Vitest (API), Jest with `jest-expo` (app). Locales: fr default, en on an English device.
+App: React Native with Expo SDK 58, iOS only, run in an `expo-dev-client` development build (`docs/decisions/049`), `@stripe/stripe-react-native` for cards. Tests: Vitest (API), Jest with `jest-expo` (app). Locales: fr default, en on an English device.
 
 ## Commands
 
@@ -28,7 +28,7 @@ steps. No integration or browser tests: `docs/decisions/002-tests-unitaires-seul
 
 ## Personas
 
-Sign-in is the "Connexion de test" section of the Connexion screen, no password. The seed adds the
+In development, sign-in is the "Connexion de test" section of the Connexion screen, no password; "Continuer avec Apple/Google" is the real sign-in. The seed adds the
 five drivers below plus Conducteur Test 01 to 20.
 
 | Persona | Login | Role |

@@ -1,7 +1,8 @@
 import type { CurrentDriver, DriverProfile, SignInResponse, TestDriverListResponse } from '@palier/shared-types';
 import { PRIVACY_NOTICE_VERSION } from '@palier/shared-types/privacy';
-import { PalierUnauthorizedError, type AuthClient } from '../src/api/AuthClient';
-import { PalierUnreachableError } from '../src/api/LotsClient';
+import { PalierUnauthorizedError, type AppleIdentity, type AuthClient } from '../src/api/AuthClient';
+import type { ProviderSignIn } from '../src/auth/ProviderSignIn';
+import { PalierStatusError, PalierUnreachableError } from '../src/api/LotsClient';
 import type { TokenStore } from '../src/auth/TokenStore';
 import type { TestSignInClient } from '../src/testSignIn/TestSignInClient';
 
@@ -18,13 +19,53 @@ export class FakeAuthClient implements AuthClient {
   acceptedNoticeVersion: string | null = PRIVACY_NOTICE_VERSION;
   acceptedNotices: string[] = [];
   signedOutTokens: string[] = [];
+  firstName = julie.firstName;
+  // Identity tokens the API trusts, each opening the account with this Palier token.
+  trustedIdentityTokens = new Map<string, string>();
+  appleNames: { firstName: string | null; lastName: string | null }[] = [];
+  savedNames: { firstName: string; lastName: string }[] = [];
+  saveNameIsReachable = true;
+  notLinkableIdentityTokens = new Set<string>();
 
   fetchMe(token: string): Promise<CurrentDriver> {
     if (!this.isReachable) {
       return Promise.reject(new PalierUnreachableError('fake'));
     }
-    const driver = { ...julie, acceptedNoticeVersion: this.acceptedNoticeVersion };
+    const driver = { ...julie, firstName: this.firstName, acceptedNoticeVersion: this.acceptedNoticeVersion };
     return this.validTokens.has(token) ? Promise.resolve(driver) : Promise.reject(new PalierUnauthorizedError());
+  }
+
+  signInWithApple({ identityToken, firstName, lastName }: AppleIdentity): Promise<string> {
+    this.appleNames.push({ firstName, lastName });
+    return this.#signInWith(identityToken);
+  }
+
+  signInWithGoogle(identityToken: string): Promise<string> {
+    return this.#signInWith(identityToken);
+  }
+
+  saveName(token: string, firstName: string, lastName: string): Promise<void> {
+    if (!this.saveNameIsReachable) {
+      return Promise.reject(new PalierUnreachableError('fake'));
+    }
+    if (!this.validTokens.has(token)) {
+      return Promise.reject(new PalierUnauthorizedError());
+    }
+    this.savedNames.push({ firstName, lastName });
+    this.firstName = firstName;
+    return Promise.resolve();
+  }
+
+  #signInWith(identityToken: string): Promise<string> {
+    if (this.notLinkableIdentityTokens.has(identityToken)) {
+      return Promise.reject(new PalierStatusError(409));
+    }
+    const token = this.trustedIdentityTokens.get(identityToken);
+    if (token === undefined) {
+      return Promise.reject(new PalierUnauthorizedError());
+    }
+    this.validTokens.add(token);
+    return Promise.resolve(token);
   }
 
   acceptNotice(token: string, noticeVersion: string): Promise<void> {
@@ -84,5 +125,20 @@ export class MemoryTokenStore implements TokenStore {
   clear(): Promise<void> {
     this.token = null;
     return Promise.resolve();
+  }
+}
+
+// Stands for the Apple and Google sheets: each answers what a test sets, null when the person closes it.
+export class FakeProviderSignIn implements ProviderSignIn {
+  appleIdentity: AppleIdentity | null = { identityToken: 'apple-identity', firstName: null, lastName: null };
+  googleIdentityToken: string | null = 'google-identity';
+  sheetFails = false;
+
+  apple(): Promise<AppleIdentity | null> {
+    return this.sheetFails ? Promise.reject(new Error('sheet failed')) : Promise.resolve(this.appleIdentity);
+  }
+
+  google(): Promise<string | null> {
+    return this.sheetFails ? Promise.reject(new Error('sheet failed')) : Promise.resolve(this.googleIdentityToken);
   }
 }

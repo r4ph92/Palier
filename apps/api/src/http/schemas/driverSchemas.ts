@@ -49,3 +49,29 @@ export const acceptNoticeBodySchema = {
   additionalProperties: false,
   properties: { noticeVersion: { type: 'string', minLength: 1, maxLength: 64 } },
 } as const;
+
+// An identity token is a JWT of a few hundred to a couple of thousand characters; anything longer is not one.
+const identityTokenSchema = { type: 'string', minLength: 1, maxLength: 4096 } as const;
+const nameSchema = { type: 'string', maxLength: 50 } as const;
+
+export const googleSignInBodySchema = {
+  type: 'object',
+  required: ['identityToken'],
+  additionalProperties: false,
+  properties: { identityToken: identityTokenSchema },
+} as const;
+
+// Apple hands the name to the app only, on the first sign-in, so the app passes it along with the token.
+export const appleSignInBodySchema = {
+  type: 'object',
+  required: ['identityToken'],
+  additionalProperties: false,
+  properties: { identityToken: identityTokenSchema, firstName: nameSchema, lastName: nameSchema },
+} as const;
+
+export const driverNameBodySchema = {
+  type: 'object',
+  required: ['firstName', 'lastName'],
+  additionalProperties: false,
+  properties: { firstName: { ...nameSchema, minLength: 1 }, lastName: nameSchema },
+} as const;

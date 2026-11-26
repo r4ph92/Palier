@@ -134,3 +134,17 @@ export function readDashboardUrl(variables: NodeJS.ProcessEnv): string | null {
   }
   return url.origin;
 }
+
+export interface IdentityAudiences {
+  readonly apple: string | undefined;
+  readonly google: string | undefined;
+}
+
+// The app's ids at Apple (its bundle id) and Google (its iOS client id); a provider left empty answers 503 to sign-in.
+export function readIdentityAudiences(variables: NodeJS.ProcessEnv): IdentityAudiences {
+  return { apple: nonEmpty(variables['APPLE_BUNDLE_ID']), google: nonEmpty(variables['GOOGLE_IOS_CLIENT_ID']) };
+}
+
+function nonEmpty(value: string | undefined): string | undefined {
+  return value === undefined || value.trim() === '' ? undefined : value.trim();
+}

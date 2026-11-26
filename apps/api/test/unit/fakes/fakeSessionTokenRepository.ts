@@ -18,10 +18,15 @@ function isActive(token: StoredToken, now: Date): boolean {
 
 // Mirrors the Postgres repository: every lookup and the per-user cap are limited to one scope.
 export class FakeSessionTokenRepository implements SessionTokenRepository {
-  readonly #users: readonly SessionUser[];
+  #users: readonly SessionUser[];
   readonly #tokens = new Map<string, StoredToken>();
 
   constructor(users: readonly SessionUser[]) {
+    this.#users = users;
+  }
+
+  // The driver fake calls it when it adds or renames a user, so a token reads the user as stored now.
+  replaceUsers(users: readonly SessionUser[]): void {
     this.#users = users;
   }
 

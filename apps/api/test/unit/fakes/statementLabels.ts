@@ -1,4 +1,5 @@
 import { DASHBOARD_STATEMENT_PATTERNS, type DashboardStatementLabel } from './dashboardStatementLabels.ts';
+import { IDENTITY_STATEMENT_PATTERNS, type IdentityStatementLabel } from './identityStatementLabels.ts';
 
 // Names each statement the repositories run by the text it matches, so a test scripts and inspects statements by label.
 export type StatementLabel =
@@ -97,13 +98,13 @@ export type StatementLabel =
   | 'log-entry-without-loop'
   | 'backdate-entry'
   | 'append-session-event'
-  | DashboardStatementLabel
+  | (DashboardStatementLabel | IdentityStatementLabel)
   | 'unknown';
 
 // Checked in order: the claim also tests state = 'AVAILABLE', so it must match before the free-spot read.
 const STATEMENT_PATTERNS: readonly (readonly [StatementLabel, RegExp])[] = [
   ['limit-lock-wait', /set local lock_timeout/],
-  ...DASHBOARD_STATEMENT_PATTERNS,
+  ...[...IDENTITY_STATEMENT_PATTERNS, ...DASHBOARD_STATEMENT_PATTERNS],
   ['insert-lot', /insert into parking_lot/],
   ['lock-owned-lot', /from parking_lot where id = \$1 and operator_id = \$2 for no key update/],
   ['read-lot-map', /aisle\.is_exit_lane, aisle\.map_polygon/],

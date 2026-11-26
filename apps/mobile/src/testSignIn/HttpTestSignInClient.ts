@@ -1,6 +1,7 @@
 import type { SignInResponse, TestDriverListResponse } from '@palier/shared-types';
 import { AuthRequester, type AuthRequesterOptions } from '../api/AuthRequester';
-import { parseSignInResponse, parseTestDrivers } from './parseTestSignInResponses';
+import { parseSignInResponse } from '../api/parseDriverResponses';
+import { parseTestDrivers } from './parseTestSignInResponses';
 import type { TestSignInClient } from './TestSignInClient';
 
 export class HttpTestSignInClient implements TestSignInClient {

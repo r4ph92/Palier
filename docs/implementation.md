@@ -8,7 +8,7 @@ ligne par choix ; la raison suit le tiret.
 - **Monorepo npm workspaces** (`apps/api`, `apps/mobile`, `apps/dashboard`, `packages/shared-types`) — un seul `npm install`, types partagés sans publication.
 - **API : Fastify 5, Drizzle ORM, postgres-js**, exécutée directement par Node 24 (suppression native des types, sans étape de build) — moins d'outillage pour un prototype.
 - **Couches** : `http/` (routes), `domain/` (règles, ports), `infrastructure/postgres/` (schéma, dépôts), comme dans `docs/04`.
-- **App : Expo SDK 58**, configuration dans `app.config.ts`, dossiers `ios/` et `android/` générés et ignorés par git ; Expo Go suffit tant qu'aucun module natif n'existe. Le module balises (P03) passera à `expo-dev-client`.
+- **App : Expo SDK 58**, configuration dans `app.config.ts`, dossiers `ios/` et `android/` générés et ignorés par git ; build de développement `expo-dev-client` depuis #30 (`docs/decisions/049`).
 - **Node 24** (`.nvmrc`, `engines`) — Expo 58 refuse Node 25.
 - **Tests** : Vitest pour l'API, Jest (`jest-expo`) et Testing Library pour l'app. `npm run gate` n'exécute que des tests unitaires. Le projet n'a aucun test de base de données, d'intégration ou de navigateur (voir `docs/decisions/005-tests-unitaires-uniquement.md`).
 - **Postgres 17 dans Docker sur le port 5433**, base de test créée par `docker/postgres/init`.
@@ -105,7 +105,7 @@ ligne par choix ; la raison suit le tiret.
 - Navigation : un état `lots | scan | account` dans `PalierApp` et une barre d'onglets maison, sans bibliothèque de navigation. Depuis « Scanner », « Ajouter une plaque » et « Ajouter une carte » ouvrent directement la page correspondante de « Compte ».
 - « Scanner » (#36) prend le contenu du QR dans un champ texte : Expo Go n'a pas de lecteur de code-barres et la caméra arrive avec #45. Le résultat n'est pas conservé quand on change d'onglet ; la session en cours prend le relais (#38).
 - Les clients authentifiés (véhicules, entrée) passent par `api/authorizedRequest.ts` : 401 déconnecte, 403 `CONSENT_REQUIRED` remontre l'avis, les statuts de refus listés par le client portent le code de l'API, tout autre statut lève `PalierStatusError`.
-- « Connexion de test » n'apparaît que dans un bundle de développement (Expo Go) dont le `.env` porte `EXPO_PUBLIC_TEST_SIGN_IN=true` (voir `apps/mobile/.env.example`) ; un export de production ne la contient jamais.
+- « Connexion de test » n'apparaît que dans un bundle de développement dont le `.env` porte `EXPO_PUBLIC_TEST_SIGN_IN=true` (voir `apps/mobile/.env.example`) ; un export de production ne la contient jamais.
 - Signaux de positionnement : `positioning/` porte le port `PositioningModule` et `PositioningCore` (commandes transmises, événements diffusés). Le module simulé et le panneau « Signaux simulés » vivent dans `dev/` et ne sont chargés que par `dev/loadDeveloperTools.ts`, derrière un ternaire `__DEV__` que Metro évalue à la compilation : ils sont absents du bundle de production (voir `docs/pont-natif.md`).
 
 ## Tableau de bord opérateur (#62)
@@ -262,3 +262,11 @@ curl -X DELETE localhost:3000/v1/test/clock
 - Règles et choix : `docs/decisions/044`. Migration 0044 : `gate_passage.armed_at`, `CHECK` et index partiel. `presenceArmingOf` (`domain/gates/passageRules.ts`) garde l'armement reçu seulement s'il est représentable et antérieur à la fermeture d'au plus 7 jours (`PRESENCE_WINDOW_DAYS`) ; un `armedAt` mal formé donne 400.
 - Lecture : `LotEquipmentReader.readGatePresence` (`readGatePresenceStatement`) fusionnée dans `domain/dashboard/lotEquipment.ts` ; la page Équipement affiche la ligne sous l'état de chaque barrière.
 - Console : `presenceArming.js` tient l'instant d'armement ; `postPassage` reçoit `{ closedAt, armedAt }`.
+
+## Connexion avec Apple ou Google (#30)
+
+- Règles et choix : `docs/decisions/049`. Migration 0050 : enum `identity_provider` (`APPLE`, `GOOGLE`), table `user_identity`, unique `(provider, subject)`, index sur `user_id`.
+- API : `domain/identity/` (ports, `signInWithIdentity`, `cleanName` à 50 caractères), `infrastructure/identity/JoseIdentityTokenVerifier.ts` (JWKS d'Apple et de Google, `providerTrustsFor`), `PostgresIdentityRepository` (une transaction : identité, sinon insertion de l'utilisateur, sinon compte du même courriel, puis liaison et relecture). Routes : `http/routes/identitySignInRoutes.ts`, et `PUT /v1/me/name` dans `driverRoutes.ts` (consentement exigé, prénom vide refusé par 400 `FIRST_NAME_REQUIRED`).
+- Configuration (`apps/api/.env.example`) : `APPLE_BUNDLE_ID`, `GOOGLE_IOS_CLIENT_ID`, lus par `readIdentityAudiences`. Un fournisseur absent répond 503.
+- App : `src/auth/ProviderSignIn.ts` (port), `nativeProviderSignIn.ts` (feuilles d'Apple et de Google, `null` quand la personne ferme la feuille), `continueWithProvider.ts`, `googleClient.ts`. Écrans : boutons dans `SignInScreen`, `NameScreen` après l'avis quand le prénom est vide. Tests : `ProviderSignIn.test.tsx` avec `FakeProviderSignIn`.
+- Pour essayer : build de développement installé (README), `APPLE_BUNDLE_ID` et `GOOGLE_IOS_CLIENT_ID` dans `apps/api/.env`, puis « Continuer avec Apple ».

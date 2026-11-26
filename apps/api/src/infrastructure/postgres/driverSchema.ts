@@ -30,6 +30,22 @@ export const userSessionToken = pgTable(
   (table) => [index('user_session_token_user_id_index').on(table.userId)],
 );
 
+// A driver signs in with Apple or Google: the provider's subject finds the account, whatever email it carries later.
+export const identityProvider = pgEnum('identity_provider', ['APPLE', 'GOOGLE']);
+
+export const userIdentity = pgTable(
+  'user_identity',
+  {
+    provider: identityProvider('provider').notNull(),
+    subject: text('subject').notNull(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => appUser.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique('user_identity_provider_subject_unique').on(table.provider, table.subject), index('user_identity_user_id_index').on(table.userId)],
+);
+
 export const userConsent = pgTable(
   'user_consent',
   {

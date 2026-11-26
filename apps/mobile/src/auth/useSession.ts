@@ -15,6 +15,7 @@ export interface SessionController {
   readonly state: SessionState;
   signIn(token: string): Promise<void>;
   acceptNotice(): Promise<void>;
+  saveName(firstName: string, lastName: string): Promise<void>;
   signOut(): Promise<void>;
   expire(): void;
   retry(): void;
@@ -38,8 +39,9 @@ export function useSession(authClient: AuthClient, tokenStore: TokenStore): Sess
     expire();
   }, [authClient, state, expire]);
   const acceptNotice = useAcceptNotice({ authClient, state, setState, expire });
+  const saveName = useSaveName({ authClient, state, setState, expire });
   const refreshDriver = useRefreshDriver(authClient, setState);
-  return { state, signIn, acceptNotice, signOut, expire, retry, refreshDriver };
+  return { state, signIn, acceptNotice, saveName, signOut, expire, retry, refreshDriver };
 }
 
 interface AcceptNoticeDependencies {
@@ -61,6 +63,28 @@ function useAcceptNotice({ authClient, state, setState, expire }: AcceptNoticeDe
       expire();
     }
   }, [authClient, state, setState, expire]);
+}
+
+function useSaveName({ authClient, state, setState, expire }: AcceptNoticeDependencies) {
+  return useCallback(
+    async (firstName: string, lastName: string) => {
+      if (state.status !== 'signedIn') {
+        return;
+      }
+      try {
+        await authClient.saveName(state.token, firstName, lastName);
+      } catch (error) {
+        if (error instanceof PalierUnauthorizedError) {
+          expire();
+          return;
+        }
+        throw error;
+      }
+      // The API keeps the name as sent (trimmed, 50 characters at most, as the screen allows), so no read is needed.
+      setState({ ...state, driver: { ...state.driver, firstName } });
+    },
+    [authClient, state, setState, expire],
+  );
 }
 
 // A token revoked while the notice was open ends the session, as it does at launch.
